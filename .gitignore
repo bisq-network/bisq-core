@@ -1,0 +1,12 @@
+# IDEA
+.idea
+*.iml
+
+# macOS
+.DS_Store
+
+# Maven
+target
+
+# Vim
+*.sw[op]
