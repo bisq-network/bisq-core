@@ -5,6 +5,7 @@ import io.bisq.core.btc.BitcoinNodes.BtcNode;
 import io.bisq.core.btc.wallet.BtcNodeConverter.Facade;
 import io.bisq.network.DnsLookupException;
 import org.bitcoinj.core.PeerAddress;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -45,6 +46,7 @@ public class BtcNodeConverterTest {
         assertNull(peerAddress);
     }
 
+    @Ignore
     @Test
     public void testConvertClearNode() {
         final String ip = "192.168.0.1";
