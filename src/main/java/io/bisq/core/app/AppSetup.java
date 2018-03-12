@@ -19,7 +19,7 @@ package io.bisq.core.app;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.KeyRing;
-import io.bisq.network.crypto.EncryptionService;
+import bisq.network.crypto.EncryptionService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

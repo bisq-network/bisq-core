@@ -21,8 +21,8 @@ import com.google.protobuf.ByteString;
 import bisq.common.app.Version;
 import bisq.common.util.Utilities;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.MailboxMessage;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.MailboxMessage;
+import bisq.network.p2p.NodeAddress;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 

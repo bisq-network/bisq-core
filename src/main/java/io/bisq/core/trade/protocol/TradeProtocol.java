@@ -25,9 +25,9 @@ import io.bisq.core.trade.MakerTrade;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.trade.TradeManager;
 import io.bisq.core.trade.messages.TradeMessage;
-import io.bisq.network.p2p.DecryptedDirectMessageListener;
-import io.bisq.network.p2p.DecryptedMessageWithPubKey;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.DecryptedDirectMessageListener;
+import bisq.network.p2p.DecryptedMessageWithPubKey;
+import bisq.network.p2p.NodeAddress;
 import javafx.beans.value.ChangeListener;
 import lombok.extern.slf4j.Slf4j;
 

@@ -19,10 +19,10 @@ import io.bisq.core.trade.TradableList;
 import io.bisq.core.user.PreferencesPayload;
 import io.bisq.core.user.UserPayload;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.peers.peerexchange.PeerList;
-import io.bisq.network.p2p.storage.PersistableNetworkPayloadCollection;
-import io.bisq.network.p2p.storage.PersistedEntryMap;
-import io.bisq.network.p2p.storage.SequenceNumberMap;
+import bisq.network.p2p.peers.peerexchange.PeerList;
+import bisq.network.p2p.storage.PersistableNetworkPayloadCollection;
+import bisq.network.p2p.storage.PersistedEntryMap;
+import bisq.network.p2p.storage.SequenceNumberMap;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

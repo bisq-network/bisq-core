@@ -1,7 +1,7 @@
 package io.bisq.core.network.p2p.seed;
 
 import io.bisq.core.app.BisqEnvironment;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
 import org.junit.Test;

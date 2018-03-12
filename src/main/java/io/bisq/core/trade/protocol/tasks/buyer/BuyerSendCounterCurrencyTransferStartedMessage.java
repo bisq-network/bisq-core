@@ -23,7 +23,7 @@ import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.trade.messages.CounterCurrencyTransferStartedMessage;
 import io.bisq.core.trade.protocol.tasks.TradeTask;
-import io.bisq.network.p2p.SendMailboxMessageListener;
+import bisq.network.p2p.SendMailboxMessageListener;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.UUID;

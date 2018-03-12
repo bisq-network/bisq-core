@@ -11,7 +11,7 @@ import io.bisq.core.btc.BitcoinNodes;
 import io.bisq.core.btc.BtcOptionKeys;
 import io.bisq.core.btc.Restrictions;
 import io.bisq.core.payment.PaymentAccount;
-import io.bisq.network.p2p.network.BridgeAddressProvider;
+import bisq.network.p2p.network.BridgeAddressProvider;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;

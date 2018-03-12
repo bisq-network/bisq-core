@@ -26,10 +26,10 @@ import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.provider.price.PriceFeedService;
-import io.bisq.network.p2p.BootstrapListener;
-import io.bisq.network.p2p.P2PService;
-import io.bisq.network.p2p.storage.HashMapChangedListener;
-import io.bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+import bisq.network.p2p.BootstrapListener;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

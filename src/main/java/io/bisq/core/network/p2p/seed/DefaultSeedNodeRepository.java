@@ -1,7 +1,7 @@
 package io.bisq.core.network.p2p.seed;
 
-import io.bisq.network.p2p.NodeAddress;
-import io.bisq.network.p2p.seed.SeedNodeRepository;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.seed.SeedNodeRepository;
 
 import javax.inject.Inject;
 import java.util.Set;

@@ -4,8 +4,8 @@ import bisq.common.app.Version;
 import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.DirectMessage;
-import io.bisq.network.p2p.ExtendedDataSizePermission;
+import bisq.network.p2p.DirectMessage;
+import bisq.network.p2p.ExtendedDataSizePermission;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

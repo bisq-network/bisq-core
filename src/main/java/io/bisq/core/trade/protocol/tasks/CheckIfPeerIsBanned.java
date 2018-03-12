@@ -21,7 +21,7 @@ import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.filter.PaymentAccountFilter;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.trade.Trade;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;

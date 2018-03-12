@@ -19,7 +19,7 @@ package io.bisq.core.trade.protocol;
 
 import bisq.common.crypto.Hash;
 import io.bisq.core.offer.Offer;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

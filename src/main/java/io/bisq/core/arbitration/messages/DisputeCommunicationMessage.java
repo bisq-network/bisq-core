@@ -20,7 +20,7 @@ package io.bisq.core.arbitration.messages;
 import bisq.common.app.Version;
 import io.bisq.core.arbitration.Attachment;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;

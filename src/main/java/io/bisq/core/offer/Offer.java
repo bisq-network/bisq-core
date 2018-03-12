@@ -20,7 +20,7 @@ import io.bisq.core.payment.payload.PaymentMethod;
 import io.bisq.core.provider.price.MarketPrice;
 import io.bisq.core.provider.price.PriceFeedService;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import javafx.beans.property.*;
 import lombok.Getter;
 import lombok.Setter;

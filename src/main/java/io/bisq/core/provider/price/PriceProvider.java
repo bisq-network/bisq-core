@@ -22,7 +22,7 @@ import bisq.common.app.Version;
 import bisq.common.util.MathUtils;
 import bisq.common.util.Tuple2;
 import io.bisq.core.provider.HttpClientProvider;
-import io.bisq.network.http.HttpClient;
+import bisq.network.http.HttpClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

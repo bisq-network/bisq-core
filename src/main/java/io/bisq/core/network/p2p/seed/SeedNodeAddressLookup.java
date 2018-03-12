@@ -19,8 +19,8 @@ package io.bisq.core.network.p2p.seed;
 
 import com.google.inject.name.Named;
 import io.bisq.core.app.BisqEnvironment;
-import io.bisq.network.NetworkOptionKeys;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.NetworkOptionKeys;
+import bisq.network.p2p.NodeAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

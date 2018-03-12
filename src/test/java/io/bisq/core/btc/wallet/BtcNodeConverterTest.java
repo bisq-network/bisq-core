@@ -3,7 +3,7 @@ package io.bisq.core.btc.wallet;
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
 import io.bisq.core.btc.BitcoinNodes.BtcNode;
 import io.bisq.core.btc.wallet.BtcNodeConverter.Facade;
-import io.bisq.network.DnsLookupException;
+import bisq.network.DnsLookupException;
 import org.bitcoinj.core.PeerAddress;
 import org.junit.Ignore;
 import org.junit.Test;

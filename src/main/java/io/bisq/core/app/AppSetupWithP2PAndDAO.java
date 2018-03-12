@@ -23,8 +23,8 @@ import io.bisq.core.dao.request.compensation.CompensationRequestManager;
 import io.bisq.core.filter.FilterManager;
 import io.bisq.core.payment.AccountAgeWitnessService;
 import io.bisq.core.trade.statistics.TradeStatisticsManager;
-import io.bisq.network.crypto.EncryptionService;
-import io.bisq.network.p2p.P2PService;
+import bisq.network.crypto.EncryptionService;
+import bisq.network.p2p.P2PService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

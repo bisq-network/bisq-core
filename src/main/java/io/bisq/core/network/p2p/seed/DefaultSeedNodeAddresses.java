@@ -18,7 +18,7 @@
 package io.bisq.core.network.p2p.seed;
 
 import com.google.common.collect.ImmutableSet;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 
 import java.util.Set;
 

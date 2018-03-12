@@ -21,7 +21,7 @@ import bisq.common.app.Capabilities;
 import bisq.common.app.Version;
 import bisq.common.crypto.PubKeyRing;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.SupportedCapabilitiesMessage;
+import bisq.network.p2p.SupportedCapabilitiesMessage;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 

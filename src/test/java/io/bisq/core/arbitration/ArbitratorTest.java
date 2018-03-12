@@ -2,7 +2,7 @@ package io.bisq.core.arbitration;
 
 import com.google.common.collect.Lists;
 import bisq.common.crypto.PubKeyRing;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Ignore;
 

@@ -17,7 +17,7 @@
 
 package io.bisq.core.network.p2p.seed;
 
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;

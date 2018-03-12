@@ -18,7 +18,7 @@
 package io.bisq.core.arbitration.messages;
 
 import bisq.common.proto.network.NetworkEnvelope;
-import io.bisq.network.p2p.MailboxMessage;
+import bisq.network.p2p.MailboxMessage;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

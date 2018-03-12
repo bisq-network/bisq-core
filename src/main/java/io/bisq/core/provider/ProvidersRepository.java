@@ -19,7 +19,7 @@ package io.bisq.core.provider;
 import com.google.inject.Inject;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.app.BisqEnvironment;
-import io.bisq.network.NetworkOptionKeys;
+import bisq.network.NetworkOptionKeys;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

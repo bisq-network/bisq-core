@@ -10,9 +10,9 @@ import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import io.bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import io.bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import io.bisq.network.p2p.network.CloseConnectionReason;
-import io.bisq.network.p2p.network.Connection;
-import io.bisq.network.p2p.network.NetworkNode;
+import bisq.network.p2p.network.CloseConnectionReason;
+import bisq.network.p2p.network.Connection;
+import bisq.network.p2p.network.NetworkNode;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 

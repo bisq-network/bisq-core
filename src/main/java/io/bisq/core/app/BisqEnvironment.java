@@ -29,7 +29,7 @@ import io.bisq.core.btc.UserAgent;
 import io.bisq.core.dao.DaoOptionKeys;
 import io.bisq.core.exceptions.BisqException;
 import io.bisq.core.filter.FilterManager;
-import io.bisq.network.NetworkOptionKeys;
+import bisq.network.NetworkOptionKeys;
 import joptsimple.OptionSet;
 import lombok.Getter;
 import lombok.Setter;

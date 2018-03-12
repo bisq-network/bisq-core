@@ -26,7 +26,7 @@ import io.bisq.core.trade.messages.TradeMessage;
 import io.bisq.core.trade.protocol.MakerProtocol;
 import io.bisq.core.trade.protocol.SellerAsMakerProtocol;
 import io.bisq.generated.protobuffer.PB;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.bitcoinj.core.Coin;
 

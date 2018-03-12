@@ -26,7 +26,7 @@ import io.bisq.core.provider.ProvidersRepository;
 import io.bisq.core.provider.fee.FeeProvider;
 import io.bisq.core.provider.fee.FeeService;
 import io.bisq.core.provider.price.PriceFeedService;
-import io.bisq.network.http.HttpClient;
+import bisq.network.http.HttpClient;
 import org.springframework.core.env.Environment;
 
 import java.io.File;

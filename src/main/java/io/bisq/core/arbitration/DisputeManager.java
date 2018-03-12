@@ -45,7 +45,7 @@ import io.bisq.core.trade.Tradable;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.trade.TradeManager;
 import io.bisq.core.trade.closed.ClosedTradableManager;
-import io.bisq.network.p2p.*;
+import bisq.network.p2p.*;
 import javafx.collections.ObservableList;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Transaction;

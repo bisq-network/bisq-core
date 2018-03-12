@@ -23,9 +23,9 @@ import bisq.common.handlers.ResultHandler;
 import bisq.common.util.Utilities;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.filter.FilterManager;
-import io.bisq.network.p2p.NodeAddress;
-import io.bisq.network.p2p.P2PService;
-import io.bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

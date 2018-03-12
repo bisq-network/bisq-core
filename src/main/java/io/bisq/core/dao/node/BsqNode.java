@@ -24,8 +24,8 @@ import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.SnapshotManager;
 import io.bisq.core.dao.blockchain.WritableBsqBlockChain;
 import io.bisq.core.provider.fee.FeeService;
-import io.bisq.network.p2p.P2PService;
-import io.bisq.network.p2p.P2PServiceListener;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.P2PServiceListener;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

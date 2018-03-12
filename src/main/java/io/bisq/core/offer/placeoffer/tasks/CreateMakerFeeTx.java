@@ -30,7 +30,7 @@ import io.bisq.core.btc.wallet.WalletService;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.offer.placeoffer.PlaceOfferModel;
 import io.bisq.core.trade.protocol.ArbitratorSelectionRule;
-import io.bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.NodeAddress;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Transaction;
 import org.jetbrains.annotations.NotNull;

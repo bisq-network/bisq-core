@@ -1,7 +1,7 @@
 package io.bisq.core.btc.wallet;
 
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
-import io.bisq.network.Socks5MultiDiscovery;
+import bisq.network.Socks5MultiDiscovery;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.junit.Before;

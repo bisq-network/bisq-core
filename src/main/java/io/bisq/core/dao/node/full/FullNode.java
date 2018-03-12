@@ -30,7 +30,7 @@ import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import io.bisq.core.dao.node.BsqNode;
 import io.bisq.core.dao.node.full.network.FullNodeNetworkManager;
 import io.bisq.core.provider.fee.FeeService;
-import io.bisq.network.p2p.P2PService;
+import bisq.network.p2p.P2PService;
 import lombok.extern.slf4j.Slf4j;
 
 /**

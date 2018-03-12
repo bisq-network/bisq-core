@@ -21,8 +21,8 @@ import bisq.common.crypto.PubKeyRing;
 import bisq.common.taskrunner.Model;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.offer.messages.OfferAvailabilityResponse;
-import io.bisq.network.p2p.NodeAddress;
-import io.bisq.network.p2p.P2PService;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.P2PService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

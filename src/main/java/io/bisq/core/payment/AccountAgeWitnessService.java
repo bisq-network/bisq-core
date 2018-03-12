@@ -28,9 +28,9 @@ import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.payment.payload.PaymentMethod;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.user.User;
-import io.bisq.network.p2p.BootstrapListener;
-import io.bisq.network.p2p.P2PService;
-import io.bisq.network.p2p.storage.P2PDataStorage;
+import bisq.network.p2p.BootstrapListener;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.P2PDataStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.bitcoinj.core.Coin;
 

@@ -33,7 +33,7 @@ import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.provider.ProvidersRepository;
 import io.bisq.core.trade.statistics.TradeStatistics2;
 import io.bisq.core.user.Preferences;
-import io.bisq.network.http.HttpClient;
+import bisq.network.http.HttpClient;
 import javafx.beans.property.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

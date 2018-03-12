@@ -29,7 +29,7 @@ import io.bisq.core.offer.availability.tasks.SendOfferAvailabilityRequest;
 import io.bisq.core.offer.messages.OfferAvailabilityResponse;
 import io.bisq.core.offer.messages.OfferMessage;
 import io.bisq.core.util.Validator;
-import io.bisq.network.p2p.DecryptedDirectMessageListener;
+import bisq.network.p2p.DecryptedDirectMessageListener;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OfferAvailabilityProtocol {

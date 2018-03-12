@@ -8,10 +8,10 @@ import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.util.Tuple2;
 import io.bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import io.bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
-import io.bisq.network.p2p.NodeAddress;
-import io.bisq.network.p2p.network.*;
-import io.bisq.network.p2p.peers.PeerManager;
-import io.bisq.network.p2p.seed.SeedNodeRepository;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.network.*;
+import bisq.network.p2p.peers.PeerManager;
+import bisq.network.p2p.seed.SeedNodeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
