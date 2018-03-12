@@ -17,10 +17,12 @@
 
 package bisq.core.payment;
 
-import bisq.common.locale.FiatCurrency;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.payment.payload.SwishAccountPayload;
+
+import bisq.common.locale.FiatCurrency;
+
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)

@@ -17,9 +17,10 @@
 
 package bisq.core.trade.protocol.tasks;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.trade.Trade;
 import bisq.core.trade.statistics.TradeStatistics2;
+
+import bisq.common.taskrunner.TaskRunner;
 
 public class PublishTradeStatistics extends TradeTask {
     public PublishTradeStatistics(TaskRunner taskHandler, Trade trade) {

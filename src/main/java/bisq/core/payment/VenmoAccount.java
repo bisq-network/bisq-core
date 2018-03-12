@@ -17,10 +17,12 @@
 
 package bisq.core.payment;
 
-import bisq.common.locale.FiatCurrency;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.payment.payload.VenmoAccountPayload;
+
+import bisq.common.locale.FiatCurrency;
+
 import lombok.EqualsAndHashCode;
 
 //TODO missing support for selected trade currency

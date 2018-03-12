@@ -23,7 +23,6 @@ import bisq.core.dao.request.VoteRequest;
  * Request for removing an altcoin. Altcoins are added if they fulfill the formal requirements but can be requested by
  * stakeholders to get removed for any reasons (e.g. majority of stakeholder consider it a scam coin).
  */
-
 // TODO implement
 public class RemoveAltcoinRequest extends VoteRequest {
 

@@ -17,12 +17,15 @@
 
 package bisq.core.arbitration;
 
-import com.google.common.collect.Lists;
-import bisq.common.crypto.PubKeyRing;
 import bisq.network.p2p.NodeAddress;
-import org.junit.Ignore;
+
+import bisq.common.crypto.PubKeyRing;
+
+import com.google.common.collect.Lists;
 
 import java.util.Date;
+
+import org.junit.Ignore;
 
 import static bisq.core.arbitration.ArbitratorTest.getBytes;
 

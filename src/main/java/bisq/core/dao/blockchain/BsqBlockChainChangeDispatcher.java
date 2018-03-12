@@ -17,10 +17,10 @@
 
 package bisq.core.dao.blockchain;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Passing the BsqNode directly to the classes interested in onBsqBlockChainChanged events cause Guice dependency issues,

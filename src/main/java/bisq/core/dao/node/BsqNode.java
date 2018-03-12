@@ -17,20 +17,24 @@
 
 package bisq.core.dao.node;
 
-import com.google.inject.Inject;
-import bisq.common.handlers.ErrorMessageHandler;
 import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.provider.fee.FeeService;
+
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.handlers.ErrorMessageHandler;
+
+import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for the lite and full node.

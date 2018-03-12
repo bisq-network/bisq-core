@@ -17,16 +17,21 @@
 
 package bisq.core.trade;
 
-import bisq.common.storage.Storage;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.offer.Offer;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.protocol.BuyerAsTakerProtocol;
 import bisq.core.trade.protocol.TakerProtocol;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.storage.Storage;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

@@ -17,23 +17,28 @@
 
 package bisq.core.trade.protocol;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.proto.ProtoUtil;
-import bisq.common.proto.persistable.PersistablePayload;
 import bisq.core.btc.data.RawTransactionInput;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.proto.CoreProtoResolver;
+
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistablePayload;
+
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Getter

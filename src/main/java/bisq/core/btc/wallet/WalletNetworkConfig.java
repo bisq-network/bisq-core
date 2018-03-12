@@ -17,16 +17,20 @@
 
 package bisq.core.btc.wallet;
 
-import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
 import bisq.network.Socks5MultiDiscovery;
+
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.params.MainNetParams;
+
+import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 class WalletNetworkConfig {
     private static final Logger log = LoggerFactory.getLogger(WalletNetworkConfig.class);

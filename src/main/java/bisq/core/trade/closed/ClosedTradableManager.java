@@ -17,22 +17,28 @@
 
 package bisq.core.trade.closed;
 
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import bisq.common.crypto.KeyRing;
-import bisq.common.proto.persistable.PersistedDataHost;
-import bisq.common.proto.persistable.PersistenceProtoResolver;
-import bisq.common.storage.Storage;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.offer.Offer;
 import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Tradable;
 import bisq.core.trade.TradableList;
 import bisq.core.trade.Trade;
-import javafx.collections.ObservableList;
+
+import bisq.common.crypto.KeyRing;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
+
+import com.google.inject.Inject;
 
 import javax.inject.Named;
+
+import com.google.common.collect.ImmutableList;
+
+import javafx.collections.ObservableList;
+
 import java.io.File;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

@@ -22,18 +22,23 @@ import bisq.common.crypto.CryptoUtils;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.util.JsonExclude;
 import bisq.common.util.Utilities;
+
 import io.bisq.generated.protobuffer.PB;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.nio.charset.Charset;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nullable;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

@@ -17,13 +17,15 @@
 
 package bisq.core.dao.request.compensation.consensus;
 
+import bisq.core.dao.OpReturnTypes;
+
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
-import bisq.core.dao.OpReturnTypes;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class OpReturnData {

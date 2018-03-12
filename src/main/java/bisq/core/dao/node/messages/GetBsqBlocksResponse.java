@@ -17,18 +17,22 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.common.app.Version;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.dao.blockchain.vo.BsqBlock;
+
 import bisq.network.p2p.DirectMessage;
 import bisq.network.p2p.ExtendedDataSizePermission;
+
+import bisq.common.app.Version;
+import bisq.common.proto.network.NetworkEnvelope;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter

@@ -21,10 +21,12 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.vo.BsqBlock;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+
 import java.util.LinkedList;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BsqBlockController {

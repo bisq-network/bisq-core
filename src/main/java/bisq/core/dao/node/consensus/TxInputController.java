@@ -23,10 +23,12 @@ import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provide spendable TxOutput and apply state change.

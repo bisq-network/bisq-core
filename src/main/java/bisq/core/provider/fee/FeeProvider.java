@@ -16,19 +16,25 @@
  */
 package bisq.core.provider.fee;
 
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
-import com.google.inject.Inject;
-import bisq.common.app.Version;
-import bisq.common.util.Tuple2;
 import bisq.core.provider.HttpClientProvider;
 import bisq.core.provider.ProvidersRepository;
+
 import bisq.network.http.HttpClient;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.app.Version;
+import bisq.common.util.Tuple2;
+
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+
+import com.google.inject.Inject;
 
 import java.io.IOException;
+
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FeeProvider extends HttpClientProvider {

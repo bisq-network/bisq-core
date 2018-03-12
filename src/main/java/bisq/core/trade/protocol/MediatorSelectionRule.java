@@ -17,15 +17,18 @@
 
 package bisq.core.trade.protocol;
 
-import bisq.common.crypto.Hash;
 import bisq.core.offer.Offer;
+
 import bisq.network.p2p.NodeAddress;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.crypto.Hash;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

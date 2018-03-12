@@ -17,11 +17,14 @@
 
 package bisq.core.btc.data;
 
-import com.google.protobuf.ByteString;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.Utilities;
+
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
+
 import lombok.EqualsAndHashCode;
 
 import javax.annotation.concurrent.Immutable;

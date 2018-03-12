@@ -17,11 +17,14 @@
 
 package bisq.core.trade.protocol.tasks;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.filter.PaymentAccountFilter;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.trade.Trade;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;

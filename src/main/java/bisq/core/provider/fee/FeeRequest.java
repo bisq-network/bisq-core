@@ -16,14 +16,21 @@
  */
 package bisq.core.provider.fee;
 
-import com.google.common.util.concurrent.*;
 import bisq.common.util.Tuple2;
 import bisq.common.util.Utilities;
-import org.jetbrains.annotations.NotNull;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.SettableFuture;
+
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 public class FeeRequest {
     private static final Logger log = LoggerFactory.getLogger(FeeRequest.class);

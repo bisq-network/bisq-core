@@ -18,16 +18,18 @@
 package bisq.core.payment;
 
 import bisq.core.offer.Offer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 class PaymentAccounts {
     private static final Logger log = LoggerFactory.getLogger(PaymentAccounts.class);

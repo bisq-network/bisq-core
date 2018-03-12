@@ -19,13 +19,16 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+
+import javax.inject.Inject;
+
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import java.util.List;
 
 /**
  * Iterates all outputs and applies the verification for BSQ outputs.

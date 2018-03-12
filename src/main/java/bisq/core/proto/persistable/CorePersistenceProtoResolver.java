@@ -17,13 +17,6 @@
 
 package bisq.core.proto.persistable;
 
-import com.google.inject.Provider;
-import bisq.common.proto.ProtobufferException;
-import bisq.common.proto.network.NetworkProtoResolver;
-import bisq.common.proto.persistable.NavigationPath;
-import bisq.common.proto.persistable.PersistableEnvelope;
-import bisq.common.proto.persistable.PersistenceProtoResolver;
-import bisq.common.storage.Storage;
 import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
@@ -35,16 +28,29 @@ import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
 import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
+
 import bisq.network.p2p.peers.peerexchange.PeerList;
 import bisq.network.p2p.storage.PersistableNetworkPayloadCollection;
 import bisq.network.p2p.storage.PersistedEntryMap;
 import bisq.network.p2p.storage.SequenceNumberMap;
+
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.network.NetworkProtoResolver;
+import bisq.common.proto.persistable.NavigationPath;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.inject.Provider;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+
 import java.io.File;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CorePersistenceProtoResolver extends CoreProtoResolver implements PersistenceProtoResolver {

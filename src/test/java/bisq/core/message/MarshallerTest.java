@@ -18,12 +18,14 @@
 package bisq.core.message;
 
 import io.bisq.generated.protobuffer.PB;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 

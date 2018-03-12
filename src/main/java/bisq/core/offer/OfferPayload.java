@@ -17,28 +17,34 @@
 
 package bisq.core.offer;
 
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.network.p2p.storage.payload.RequiresOwnerIsOnlinePayload;
+
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.locale.CurrencyUtil;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.util.JsonExclude;
-import bisq.network.p2p.NodeAddress;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-import bisq.network.p2p.storage.payload.RequiresOwnerIsOnlinePayload;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
 import java.security.PublicKey;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

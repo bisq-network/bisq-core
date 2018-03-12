@@ -17,9 +17,6 @@
 
 package bisq.core.trade.protocol.tasks.taker;
 
-import com.google.common.util.concurrent.FutureCallback;
-import bisq.common.UserThread;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BsqWalletService;
@@ -30,10 +27,19 @@ import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.ArbitratorSelectionRule;
 import bisq.core.trade.protocol.tasks.TradeTask;
 import bisq.core.user.User;
+
 import bisq.network.p2p.NodeAddress;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.UserThread;
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Transaction;
+
+import com.google.common.util.concurrent.FutureCallback;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;

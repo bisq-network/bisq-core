@@ -17,15 +17,19 @@
 
 package bisq.core.dao.blockchain;
 
-import com.google.common.annotations.VisibleForTesting;
+import bisq.core.dao.blockchain.vo.BsqBlock;
+
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.File;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

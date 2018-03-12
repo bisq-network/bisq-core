@@ -18,6 +18,7 @@
 package bisq.core.btc;
 
 import org.bitcoinj.core.Coin;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;

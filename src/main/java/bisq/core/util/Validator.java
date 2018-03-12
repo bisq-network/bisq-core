@@ -18,6 +18,7 @@
 package bisq.core.util;
 
 import bisq.core.trade.messages.TradeMessage;
+
 import org.bitcoinj.core.Coin;
 
 import static com.google.common.base.Preconditions.checkArgument;

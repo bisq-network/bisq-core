@@ -34,8 +34,10 @@
  */
 package bisq.core.btc;
 
-import javax.net.SocketFactory;
 import java.io.IOException;
+
+import javax.net.SocketFactory;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;

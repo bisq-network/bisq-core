@@ -20,12 +20,14 @@ package bisq.core.btc.wallet;
 import bisq.core.btc.BitcoinNodes;
 import bisq.core.btc.BitcoinNodes.BtcNode;
 import bisq.core.user.Preferences;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import java.util.List;
+
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static bisq.core.btc.BitcoinNodes.BitcoinNodesOption.CUSTOM;
 import static bisq.core.btc.BitcoinNodes.BitcoinNodesOption.PUBLIC;

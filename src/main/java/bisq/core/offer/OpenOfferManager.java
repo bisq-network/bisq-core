@@ -17,6 +17,9 @@
 
 package bisq.core.offer;
 
+import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.exceptions.TradePriceOutOfToleranceException;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
 import bisq.core.offer.messages.OfferAvailabilityResponse;
@@ -26,6 +29,18 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.TradableList;
 import bisq.core.trade.closed.ClosedTradableManager;
 import bisq.core.trade.handlers.TransactionResultHandler;
+import bisq.core.user.Preferences;
+import bisq.core.user.User;
+import bisq.core.util.Validator;
+
+import bisq.network.p2p.BootstrapListener;
+import bisq.network.p2p.DecryptedDirectMessageListener;
+import bisq.network.p2p.DecryptedMessageWithPubKey;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.SendDirectMessageListener;
+import bisq.network.p2p.peers.PeerManager;
+
 import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
@@ -36,24 +51,16 @@ import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
-import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.btc.wallet.TradeWalletService;
-import bisq.core.user.Preferences;
-import bisq.core.user.User;
-import bisq.core.util.Validator;
-import bisq.network.p2p.*;
-import bisq.network.p2p.peers.PeerManager;
-import javafx.collections.ObservableList;
-import org.bitcoinj.core.Coin;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.bitcoinj.core.Coin;
+
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import javafx.collections.ObservableList;
+
 import java.io.File;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,8 +68,14 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMessageListener, PersistedDataHost {
     private static final Logger log = LoggerFactory.getLogger(OpenOfferManager.class);

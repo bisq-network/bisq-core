@@ -17,14 +17,6 @@
 
 package bisq.core.dao.vote;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import bisq.common.app.Version;
-import bisq.common.proto.ProtoUtil;
-import bisq.common.proto.persistable.PersistableList;
-import bisq.common.proto.persistable.PersistedDataHost;
-import bisq.common.storage.Storage;
-import bisq.common.util.Utilities;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
@@ -33,15 +25,35 @@ import bisq.core.dao.request.compensation.CompensationRequest;
 import bisq.core.dao.request.compensation.CompensationRequestManager;
 import bisq.core.dao.request.compensation.CompensationRequestPayload;
 import bisq.core.provider.fee.FeeService;
+
+import bisq.common.app.Version;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistableList;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+
 import org.bitcoinj.core.Utils;
+
+import com.google.inject.Inject;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

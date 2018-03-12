@@ -20,6 +20,7 @@ package bisq.core.payment;
 import bisq.core.payment.payload.CryptoCurrencyAccountPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
+
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)

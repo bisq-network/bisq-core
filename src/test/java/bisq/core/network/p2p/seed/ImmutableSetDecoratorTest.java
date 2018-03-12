@@ -18,9 +18,10 @@
 package bisq.core.network.p2p.seed;
 
 import com.google.common.collect.Sets;
-import org.junit.Test;
 
 import java.util.Set;
+
+import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 

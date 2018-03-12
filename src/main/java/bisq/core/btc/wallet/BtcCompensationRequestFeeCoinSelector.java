@@ -17,19 +17,29 @@
 
 package bisq.core.btc.wallet;
 
-import com.google.common.annotations.VisibleForTesting;
 import bisq.core.btc.Restrictions;
-import org.bitcoinj.core.*;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import java.math.BigInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO not used, can be removed
 /**

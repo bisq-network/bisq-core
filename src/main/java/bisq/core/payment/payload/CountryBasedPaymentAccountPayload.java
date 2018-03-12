@@ -18,16 +18,20 @@
 package bisq.core.payment.payload;
 
 import io.bisq.generated.protobuffer.PB;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.nio.charset.Charset;
+
+import java.util.Map;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nullable;
-import java.nio.charset.Charset;
-import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @ToString

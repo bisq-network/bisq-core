@@ -17,22 +17,27 @@
 
 package bisq.core.payment.payload;
 
+import bisq.core.app.BisqEnvironment;
+
 import bisq.common.locale.Res;
 import bisq.common.proto.persistable.PersistablePayload;
-import bisq.core.app.BisqEnvironment;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bitcoinj.core.Coin;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
 
 @EqualsAndHashCode(exclude = {"maxTradePeriod", "maxTradeLimit"})
 @ToString

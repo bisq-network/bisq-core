@@ -17,13 +17,17 @@
 
 package bisq.core.arbitration;
 
-import com.google.common.collect.Lists;
-import bisq.common.crypto.PubKeyRing;
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.crypto.PubKeyRing;
+
+import com.google.common.collect.Lists;
+
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Ignore;
 
 import java.util.Date;
+
+import org.junit.Ignore;
 
 @SuppressWarnings({"SameParameterValue", "UnusedAssignment"})
 public class ArbitratorTest {

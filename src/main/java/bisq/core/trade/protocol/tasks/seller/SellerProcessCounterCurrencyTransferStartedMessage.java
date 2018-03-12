@@ -17,11 +17,13 @@
 
 package bisq.core.trade.protocol.tasks.seller;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.trade.Trade;
 import bisq.core.trade.messages.CounterCurrencyTransferStartedMessage;
 import bisq.core.trade.protocol.tasks.TradeTask;
 import bisq.core.util.Validator;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;

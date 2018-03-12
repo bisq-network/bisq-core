@@ -17,17 +17,19 @@
 
 package bisq.core.btc.wallet;
 
-import bisq.common.util.Utilities;
 import bisq.core.btc.BitcoinNodes;
 import bisq.core.btc.BitcoinNodes.BitcoinNodesOption;
 import bisq.core.btc.BitcoinNodes.BtcNode;
 import bisq.core.user.Preferences;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import bisq.common.util.Utilities;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static bisq.core.btc.BitcoinNodes.BitcoinNodesOption.CUSTOM;
 import static bisq.core.btc.wallet.WalletsSetup.DEFAULT_CONNECTIONS;

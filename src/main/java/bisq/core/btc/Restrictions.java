@@ -18,6 +18,7 @@
 package bisq.core.btc;
 
 import bisq.core.app.BisqEnvironment;
+
 import org.bitcoinj.core.Coin;
 
 public class Restrictions {

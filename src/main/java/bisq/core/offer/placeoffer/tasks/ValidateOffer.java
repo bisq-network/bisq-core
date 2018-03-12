@@ -17,18 +17,20 @@
 
 package bisq.core.offer.placeoffer.tasks;
 
-import bisq.common.taskrunner.Task;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.offer.Offer;
 import bisq.core.offer.placeoffer.PlaceOfferModel;
 import bisq.core.trade.messages.TradeMessage;
+
+import bisq.common.taskrunner.Task;
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Coin;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 
 public class ValidateOffer extends Task<PlaceOfferModel> {
     @SuppressWarnings("unused")

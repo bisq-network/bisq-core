@@ -17,19 +17,24 @@
 
 package bisq.core.network.p2p.seed;
 
-import com.google.inject.name.Named;
 import bisq.core.app.BisqEnvironment;
+
 import bisq.network.NetworkOptionKeys;
 import bisq.network.p2p.NodeAddress;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import com.google.inject.name.Named;
+
 import javax.inject.Inject;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 public class SeedNodeAddressLookup {
     private static final Logger log = LoggerFactory.getLogger(SeedNodeAddressLookup.class);

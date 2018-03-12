@@ -17,14 +17,6 @@
 
 package bisq.core.dao.request.compensation;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.inject.Inject;
-import bisq.common.UserThread;
-import bisq.common.app.DevEnv;
-import bisq.common.crypto.KeyRing;
-import bisq.common.proto.persistable.PersistedDataHost;
-import bisq.common.storage.Storage;
-import bisq.common.util.Utilities;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
@@ -37,26 +29,45 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.request.compensation.consensus.OpReturnData;
 import bisq.core.dao.request.compensation.consensus.Restrictions;
 import bisq.core.provider.fee.FeeService;
+
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+
+import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.DeterministicKey;
+
+import com.google.inject.Inject;
+
+import com.google.common.util.concurrent.FutureCallback;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+
+import java.security.PublicKey;
+
+import java.util.Optional;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.security.PublicKey;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

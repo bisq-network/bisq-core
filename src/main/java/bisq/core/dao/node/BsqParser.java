@@ -17,24 +17,27 @@
 
 package bisq.core.dao.node;
 
-import bisq.common.app.DevEnv;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
-import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.concurrent.Immutable;
+import bisq.common.app.DevEnv;
+
 import javax.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.concurrent.Immutable;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Base class for lite node parser and full node parser. Iterates blocks to find BSQ relevant transactions.

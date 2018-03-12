@@ -18,24 +18,30 @@
 package bisq.core.offer.placeoffer.tasks;
 
 import bisq.core.arbitration.Arbitrator;
-import bisq.core.offer.placeoffer.PlaceOfferModel;
-import bisq.core.trade.protocol.ArbitratorSelectionRule;
-import bisq.common.UserThread;
-import bisq.common.taskrunner.Task;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.btc.wallet.WalletService;
 import bisq.core.offer.Offer;
+import bisq.core.offer.placeoffer.PlaceOfferModel;
+import bisq.core.trade.protocol.ArbitratorSelectionRule;
+
 import bisq.network.p2p.NodeAddress;
-import com.google.common.util.concurrent.FutureCallback;
+
+import bisq.common.UserThread;
+import bisq.common.taskrunner.Task;
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Transaction;
-import org.jetbrains.annotations.NotNull;
+
+import com.google.common.util.concurrent.FutureCallback;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 

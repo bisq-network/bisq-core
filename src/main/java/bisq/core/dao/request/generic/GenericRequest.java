@@ -22,7 +22,6 @@ import bisq.core.dao.request.VoteRequest;
 /**
  * Request for anything not covered by specific vote requests.
  */
-
 // TODO implement
 public class GenericRequest extends VoteRequest {
 

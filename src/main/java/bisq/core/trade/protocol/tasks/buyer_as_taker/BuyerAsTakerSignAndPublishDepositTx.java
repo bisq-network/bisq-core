@@ -17,23 +17,28 @@
 
 package bisq.core.trade.protocol.tasks.buyer_as_taker;
 
-import com.google.common.util.concurrent.FutureCallback;
-import bisq.common.crypto.Hash;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.data.RawTransactionInput;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.TradingPeer;
 import bisq.core.trade.protocol.tasks.TradeTask;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.crypto.Hash;
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
-import org.jetbrains.annotations.NotNull;
+
+import com.google.common.util.concurrent.FutureCallback;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

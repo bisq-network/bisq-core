@@ -17,16 +17,19 @@
 
 package bisq.core.dao.vote;
 
-import com.google.protobuf.Message;
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistablePayload;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.Getter;
+
+import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 
 public final class VoteItemsList implements PersistablePayload {
     private final CompensationRequestVoteItemCollection compensationRequest;

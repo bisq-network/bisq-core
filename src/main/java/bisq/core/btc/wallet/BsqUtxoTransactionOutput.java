@@ -21,6 +21,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

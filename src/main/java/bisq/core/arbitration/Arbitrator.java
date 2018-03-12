@@ -17,25 +17,32 @@
 
 package bisq.core.arbitration;
 
-import com.google.protobuf.ByteString;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.util.Utilities;
-import bisq.network.p2p.NodeAddress;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.ByteString;
+
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
 import java.security.PublicKey;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 @EqualsAndHashCode
 @Slf4j

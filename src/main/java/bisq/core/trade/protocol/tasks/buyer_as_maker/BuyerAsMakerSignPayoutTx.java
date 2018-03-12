@@ -17,17 +17,21 @@
 
 package bisq.core.trade.protocol.tasks.buyer_as_maker;
 
-import com.google.common.base.Preconditions;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.tasks.TradeTask;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.crypto.DeterministicKey;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Arrays;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

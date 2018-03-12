@@ -17,28 +17,35 @@
 
 package bisq.core.offer;
 
-import com.google.inject.name.Named;
+import bisq.core.app.AppOptionKeys;
+import bisq.core.provider.price.PriceFeedService;
+
+import bisq.network.p2p.BootstrapListener;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+
 import bisq.common.UserThread;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.storage.JsonFileManager;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;
-import bisq.core.app.AppOptionKeys;
-import bisq.core.provider.price.PriceFeedService;
-import bisq.network.p2p.BootstrapListener;
-import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.HashMapChangedListener;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+
+import com.google.inject.name.Named;
+
+import javax.inject.Inject;
+
+import java.io.File;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Handles storage and retrieval of offers.

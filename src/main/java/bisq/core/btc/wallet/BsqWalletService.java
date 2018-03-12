@@ -28,10 +28,19 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.*;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ScriptException;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.SendRequest;
@@ -39,10 +48,20 @@ import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.AbstractWalletEventListener;
 
 import javax.inject.Inject;
-import java.util.*;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;

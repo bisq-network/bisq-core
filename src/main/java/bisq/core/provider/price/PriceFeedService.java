@@ -16,10 +16,13 @@
  */
 package bisq.core.provider.price;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.inject.Inject;
+import bisq.core.app.BisqEnvironment;
+import bisq.core.provider.ProvidersRepository;
+import bisq.core.trade.statistics.TradeStatistics2;
+import bisq.core.user.Preferences;
+
+import bisq.network.http.HttpClient;
+
 import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
@@ -29,19 +32,35 @@ import bisq.common.locale.TradeCurrency;
 import bisq.common.monetary.Price;
 import bisq.common.util.MathUtils;
 import bisq.common.util.Tuple2;
-import bisq.core.app.BisqEnvironment;
-import bisq.core.provider.ProvidersRepository;
-import bisq.core.trade.statistics.TradeStatistics2;
-import bisq.core.user.Preferences;
-import bisq.network.http.HttpClient;
-import javafx.beans.property.*;
+
+import com.google.inject.Inject;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
+
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.Consumer;
+
+import java.time.Instant;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

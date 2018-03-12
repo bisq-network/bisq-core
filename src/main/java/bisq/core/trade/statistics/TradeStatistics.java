@@ -17,7 +17,11 @@
 
 package bisq.core.trade.statistics;
 
-import com.google.protobuf.ByteString;
+import bisq.core.offer.OfferPayload;
+
+import bisq.network.p2p.storage.payload.LazyProcessedPayload;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+
 import bisq.common.crypto.Sig;
 import bisq.common.locale.CurrencyUtil;
 import bisq.common.monetary.Altcoin;
@@ -26,24 +30,29 @@ import bisq.common.monetary.Price;
 import bisq.common.monetary.Volume;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
-import bisq.core.offer.OfferPayload;
+
 import io.bisq.generated.protobuffer.PB;
-import bisq.network.p2p.storage.payload.LazyProcessedPayload;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.ByteString;
+
+import org.springframework.util.CollectionUtils;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
-import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
 import java.security.PublicKey;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 /**
  *

@@ -24,12 +24,14 @@ import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Parser for lite nodes. Iterates blocks to find BSQ relevant transactions.

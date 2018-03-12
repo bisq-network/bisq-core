@@ -21,10 +21,12 @@ import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Calculate the available BSQ balance from all inputs and apply state change.

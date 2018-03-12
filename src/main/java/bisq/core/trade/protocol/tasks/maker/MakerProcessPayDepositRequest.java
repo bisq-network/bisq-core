@@ -17,19 +17,22 @@
 
 package bisq.core.trade.protocol.tasks.maker;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.exceptions.TradePriceOutOfToleranceException;
 import bisq.core.trade.Trade;
 import bisq.core.trade.messages.PayDepositRequest;
 import bisq.core.trade.protocol.TradingPeer;
 import bisq.core.trade.protocol.tasks.TradeTask;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Coin;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import lombok.extern.slf4j.Slf4j;
+
 import static bisq.core.util.Validator.checkTradeId;
 import static bisq.core.util.Validator.nonEmptyStringOf;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class MakerProcessPayDepositRequest extends TradeTask {

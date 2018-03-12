@@ -17,16 +17,21 @@
 
 package bisq.core.btc.blockchain.providers;
 
+import bisq.network.http.HttpClient;
+
+import bisq.common.app.Log;
+
+import org.bitcoinj.core.Coin;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import bisq.common.app.Log;
-import bisq.network.http.HttpClient;
-import org.bitcoinj.core.Coin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+
 import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockTrailProvider extends BlockchainTxProvider {
     private static final Logger log = LoggerFactory.getLogger(BlockTrailProvider.class);

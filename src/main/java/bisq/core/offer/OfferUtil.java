@@ -17,12 +17,14 @@
 
 package bisq.core.offer;
 
-import bisq.common.util.MathUtils;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 import bisq.core.util.CoinUtil;
+
+import bisq.common.util.MathUtils;
+
 import org.bitcoinj.core.Coin;
 
 import javax.annotation.Nullable;

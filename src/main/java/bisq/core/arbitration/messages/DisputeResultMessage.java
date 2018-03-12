@@ -17,10 +17,14 @@
 
 package bisq.core.arbitration.messages;
 
-import bisq.common.app.Version;
 import bisq.core.arbitration.DisputeResult;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.app.Version;
+
 import io.bisq.generated.protobuffer.PB;
+
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 

@@ -17,13 +17,18 @@
 
 package bisq.core.trade.protocol.tasks.seller;
 
-import com.google.common.util.concurrent.FutureCallback;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.tasks.TradeTask;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
+
+import com.google.common.util.concurrent.FutureCallback;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.checkNotNull;

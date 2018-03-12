@@ -18,9 +18,6 @@
 package bisq.core.trade.protocol;
 
 
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.trade.BuyerAsTakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.messages.PayoutTxPublishedMessage;
@@ -35,9 +32,23 @@ import bisq.core.trade.protocol.tasks.buyer.BuyerSetupPayoutTxListener;
 import bisq.core.trade.protocol.tasks.buyer_as_maker.BuyerAsMakerSignPayoutTx;
 import bisq.core.trade.protocol.tasks.buyer_as_taker.BuyerAsTakerCreatesDepositTxInputs;
 import bisq.core.trade.protocol.tasks.buyer_as_taker.BuyerAsTakerSignAndPublishDepositTx;
-import bisq.core.trade.protocol.tasks.taker.*;
+import bisq.core.trade.protocol.tasks.taker.CreateTakerFeeTx;
+import bisq.core.trade.protocol.tasks.taker.TakerProcessPublishDepositTxRequest;
+import bisq.core.trade.protocol.tasks.taker.TakerSelectArbitrator;
+import bisq.core.trade.protocol.tasks.taker.TakerSelectMediator;
+import bisq.core.trade.protocol.tasks.taker.TakerSendDepositTxPublishedMessage;
+import bisq.core.trade.protocol.tasks.taker.TakerSendPayDepositRequest;
+import bisq.core.trade.protocol.tasks.taker.TakerVerifyAndSignContract;
+import bisq.core.trade.protocol.tasks.taker.TakerVerifyMakerAccount;
+import bisq.core.trade.protocol.tasks.taker.TakerVerifyMakerFeePayment;
+
 import bisq.network.p2p.MailboxMessage;
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.network.NetworkEnvelope;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

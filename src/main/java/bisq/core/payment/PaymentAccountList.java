@@ -17,11 +17,14 @@
 
 package bisq.core.payment;
 
-import com.google.protobuf.Message;
+import bisq.core.proto.CoreProtoResolver;
+
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
-import bisq.core.proto.CoreProtoResolver;
+
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.List;

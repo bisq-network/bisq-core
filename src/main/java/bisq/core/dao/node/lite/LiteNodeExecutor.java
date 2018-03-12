@@ -17,20 +17,25 @@
 
 package bisq.core.dao.node.lite;
 
+import bisq.core.dao.blockchain.vo.BsqBlock;
+
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.util.Utilities;
-import bisq.core.dao.blockchain.vo.BsqBlock;
+
+import javax.inject.Inject;
+
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Consumer;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Processes tasks in custom thread. Results are mapped back to user thread so client don't need to deal with threading.

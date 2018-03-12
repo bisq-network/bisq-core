@@ -18,9 +18,6 @@
 package bisq.core.trade.protocol;
 
 
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.trade.SellerAsMakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.messages.CounterCurrencyTransferStartedMessage;
@@ -30,15 +27,29 @@ import bisq.core.trade.messages.TradeMessage;
 import bisq.core.trade.protocol.tasks.CheckIfPeerIsBanned;
 import bisq.core.trade.protocol.tasks.PublishTradeStatistics;
 import bisq.core.trade.protocol.tasks.VerifyPeersAccountAgeWitness;
-import bisq.core.trade.protocol.tasks.maker.*;
+import bisq.core.trade.protocol.tasks.maker.MakerCreateAndSignContract;
+import bisq.core.trade.protocol.tasks.maker.MakerProcessDepositTxPublishedMessage;
+import bisq.core.trade.protocol.tasks.maker.MakerProcessPayDepositRequest;
+import bisq.core.trade.protocol.tasks.maker.MakerSendPublishDepositTxRequest;
+import bisq.core.trade.protocol.tasks.maker.MakerSetupDepositTxListener;
+import bisq.core.trade.protocol.tasks.maker.MakerVerifyArbitratorSelection;
+import bisq.core.trade.protocol.tasks.maker.MakerVerifyMediatorSelection;
+import bisq.core.trade.protocol.tasks.maker.MakerVerifyTakerAccount;
+import bisq.core.trade.protocol.tasks.maker.MakerVerifyTakerFeePayment;
 import bisq.core.trade.protocol.tasks.seller.SellerBroadcastPayoutTx;
 import bisq.core.trade.protocol.tasks.seller.SellerProcessCounterCurrencyTransferStartedMessage;
 import bisq.core.trade.protocol.tasks.seller.SellerSendPayoutTxPublishedMessage;
 import bisq.core.trade.protocol.tasks.seller.SellerSignAndFinalizePayoutTx;
 import bisq.core.trade.protocol.tasks.seller_as_maker.SellerAsMakerCreatesAndSignsDepositTx;
 import bisq.core.util.Validator;
+
 import bisq.network.p2p.MailboxMessage;
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.network.NetworkEnvelope;
+
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;

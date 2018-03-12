@@ -18,16 +18,17 @@
 package bisq.core.util;
 
 import bisq.common.util.MathUtils;
+
 import org.bitcoinj.core.Coin;
 
 public class CoinUtil {
+
     public static Coin getFeePerBtc(Coin feePerBtc, Coin amount) {
         double feePerBtcAsDouble = (double) feePerBtc.value;
         double amountAsDouble = (double) amount.value;
         double btcAsDouble = (double) Coin.COIN.value;
         return Coin.valueOf(Math.round(feePerBtcAsDouble * (amountAsDouble / btcAsDouble)));
     }
-
 
     public static Coin minCoin(Coin a, Coin b) {
         return a.compareTo(b) <= 0 ? a : b;

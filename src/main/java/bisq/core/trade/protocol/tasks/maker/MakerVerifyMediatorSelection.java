@@ -17,11 +17,14 @@
 
 package bisq.core.trade.protocol.tasks.maker;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.MediatorSelectionRule;
 import bisq.core.trade.protocol.tasks.TradeTask;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

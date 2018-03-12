@@ -19,19 +19,23 @@ package bisq.core.payment;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Sig;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
+
+import java.io.IOException;
+
 import java.util.Date;
 import java.util.GregorianCalendar;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

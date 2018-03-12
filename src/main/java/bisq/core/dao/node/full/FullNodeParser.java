@@ -26,17 +26,21 @@ import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.full.rpc.RpcService;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+
 import com.neemre.btcdcli4j.core.domain.Block;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Parser for full nodes. Request blockchain data via rpc from Bitcoin Core and iterates blocks to find BSQ relevant transactions.

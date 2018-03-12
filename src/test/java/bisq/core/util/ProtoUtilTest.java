@@ -17,10 +17,13 @@
 
 package bisq.core.util;
 
-import bisq.common.proto.ProtoUtil;
 import bisq.core.offer.OpenOffer;
+
+import bisq.common.proto.ProtoUtil;
+
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.generated.protobuffer.PB.OfferPayload;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

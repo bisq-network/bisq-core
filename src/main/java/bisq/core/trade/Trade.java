@@ -17,20 +17,6 @@
 
 package bisq.core.trade;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
-import bisq.common.app.Log;
-import bisq.common.crypto.KeyRing;
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.monetary.Price;
-import bisq.common.monetary.Volume;
-import bisq.common.proto.ProtoUtil;
-import bisq.common.storage.Storage;
-import bisq.common.taskrunner.Model;
-import bisq.common.util.Utilities;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.arbitration.Mediator;
 import bisq.core.btc.wallet.BsqWalletService;
@@ -44,25 +30,54 @@ import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.protocol.ProcessModel;
 import bisq.core.trade.protocol.TradeProtocol;
 import bisq.core.user.User;
+
 import bisq.network.p2p.DecryptedMessageWithPubKey;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
+
+import bisq.common.app.Log;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.monetary.Price;
+import bisq.common.monetary.Volume;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.storage.Storage;
+import bisq.common.taskrunner.Model;
+import bisq.common.util.Utilities;
+
 import io.bisq.generated.protobuffer.PB;
-import javafx.beans.property.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
-import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

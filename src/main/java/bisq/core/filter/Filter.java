@@ -17,24 +17,32 @@
 
 package bisq.core.filter;
 
-import bisq.common.crypto.Sig;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.ByteString;
+
+import bisq.common.crypto.Sig;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.ByteString;
+
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
+import com.google.common.annotations.VisibleForTesting;
+
 import java.security.PublicKey;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

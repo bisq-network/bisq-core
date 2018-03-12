@@ -17,22 +17,29 @@
 
 package bisq.core.btc;
 
-import com.google.protobuf.ByteString;
+import bisq.core.app.BisqEnvironment;
+
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.Utilities;
-import bisq.core.app.BisqEnvironment;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.ByteString;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.crypto.DeterministicKey;
+
+import java.util.Optional;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -17,12 +17,13 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.common.app.Version;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+
+import bisq.common.app.Version;
 
 import javax.inject.Inject;
 

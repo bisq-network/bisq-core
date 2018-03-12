@@ -17,10 +17,12 @@
 
 package bisq.core.trade.protocol.tasks;
 
-import bisq.common.taskrunner.Task;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.ProcessModel;
+
+import bisq.common.taskrunner.Task;
+import bisq.common.taskrunner.TaskRunner;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

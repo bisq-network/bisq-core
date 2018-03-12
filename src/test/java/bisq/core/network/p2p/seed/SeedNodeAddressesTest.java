@@ -17,17 +17,21 @@
 
 package bisq.core.network.p2p.seed;
 
+import bisq.network.p2p.NodeAddress;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import bisq.network.p2p.NodeAddress;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.security.Security;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

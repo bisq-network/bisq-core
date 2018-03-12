@@ -17,14 +17,18 @@
 
 package bisq.core.payment;
 
-import com.google.common.collect.Lists;
-import bisq.common.locale.CryptoCurrency;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentMethod;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import bisq.common.locale.CryptoCurrency;
+
+import com.google.common.collect.Lists;
+
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

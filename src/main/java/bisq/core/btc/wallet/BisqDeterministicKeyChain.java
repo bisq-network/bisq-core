@@ -17,17 +17,20 @@
 
 package bisq.core.btc.wallet;
 
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableList;
+
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.security.SecureRandom;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class BisqDeterministicKeyChain extends DeterministicKeyChain {
     private static final Logger log = LoggerFactory.getLogger(BisqDeterministicKeyChain.class);

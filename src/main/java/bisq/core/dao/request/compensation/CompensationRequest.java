@@ -17,22 +17,28 @@
 
 package bisq.core.dao.request.compensation;
 
-import bisq.common.proto.persistable.PersistablePayload;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.dao.request.VoteRequest;
+
+import bisq.common.proto.persistable.PersistablePayload;
+
 import io.bisq.generated.protobuffer.PB;
+
+import org.springframework.util.CollectionUtils;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Transaction;
+
+import java.util.Map;
+import java.util.Optional;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Transaction;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

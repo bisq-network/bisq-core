@@ -17,29 +17,34 @@
 
 package bisq.core.trade.messages;
 
-import com.google.protobuf.ByteString;
-import bisq.common.app.Version;
-import bisq.common.proto.ProtoUtil;
-import bisq.common.util.Utilities;
 import bisq.core.btc.data.RawTransactionInput;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.proto.CoreProtoResolver;
+
 import bisq.network.p2p.MailboxMessage;
 import bisq.network.p2p.NodeAddress;
-import io.bisq.generated.protobuffer.PB;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 
-import javax.annotation.Nullable;
+import bisq.common.app.Version;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.util.Utilities;
+
+import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+
+import javax.annotation.Nullable;
+
 // We use a MailboxMessage here because the taker has paid already the trade fee and it could be that
 // we lost connection to him but we are complete on our side. So even if the peer is offline he can
 // continue later to complete the deposit tx.
-
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class PublishDepositTxRequest extends TradeMessage implements MailboxMessage {

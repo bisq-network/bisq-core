@@ -18,9 +18,11 @@
 package bisq.core.dao.vote;
 
 import bisq.common.app.Version;
-import org.junit.Ignore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.junit.Ignore;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringStartsWith.startsWith;

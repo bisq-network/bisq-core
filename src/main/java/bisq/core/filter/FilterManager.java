@@ -17,9 +17,6 @@
 
 package bisq.core.filter;
 
-import bisq.common.UserThread;
-import bisq.common.app.DevEnv;
-import bisq.common.crypto.KeyRing;
 import bisq.core.app.AppOptionKeys;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BitcoinNodes;
@@ -28,30 +25,44 @@ import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.provider.ProvidersRepository;
 import bisq.core.user.Preferences;
 import bisq.core.user.User;
-import io.bisq.generated.protobuffer.PB;
+
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+
+import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
+
+import io.bisq.generated.protobuffer.PB;
+
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
 import java.security.SignatureException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import java.math.BigInteger;
+
+import java.lang.reflect.Method;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 import static org.bitcoinj.core.Utils.HEX;
 

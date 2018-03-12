@@ -17,21 +17,25 @@
 
 package bisq.core.trade.protocol;
 
-import bisq.common.Timer;
-import bisq.common.UserThread;
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.trade.MakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.messages.TradeMessage;
+
 import bisq.network.p2p.DecryptedDirectMessageListener;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.network.NetworkEnvelope;
+
 import javafx.beans.value.ChangeListener;
-import lombok.extern.slf4j.Slf4j;
 
 import java.security.PublicKey;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static bisq.core.util.Validator.nonEmptyStringOf;
 

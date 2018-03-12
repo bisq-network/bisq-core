@@ -20,9 +20,10 @@ package bisq.core.payment;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.payment.payload.SpecificBanksAccountPayload;
-import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
+
+import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 public final class SpecificBanksAccount extends CountryBasedPaymentAccount implements BankNameRestrictedBankAccount, SameCountryRestrictedBankAccount {

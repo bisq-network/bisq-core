@@ -17,20 +17,24 @@
 
 package bisq.core.offer.availability;
 
-import bisq.common.Timer;
-import bisq.common.UserThread;
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
-import bisq.common.proto.network.NetworkEnvelope;
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.offer.Offer;
 import bisq.core.offer.availability.tasks.ProcessOfferAvailabilityResponse;
 import bisq.core.offer.availability.tasks.SendOfferAvailabilityRequest;
 import bisq.core.offer.messages.OfferAvailabilityResponse;
 import bisq.core.offer.messages.OfferMessage;
 import bisq.core.util.Validator;
+
 import bisq.network.p2p.DecryptedDirectMessageListener;
+
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.taskrunner.TaskRunner;
+
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class OfferAvailabilityProtocol {
     private static final long TIMEOUT = 90;

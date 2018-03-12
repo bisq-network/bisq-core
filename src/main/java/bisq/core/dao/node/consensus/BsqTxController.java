@@ -19,11 +19,12 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
+
+import javax.inject.Inject;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.inject.Inject;
 
 /**
  * Verifies if a given transaction is a BSQ transaction.

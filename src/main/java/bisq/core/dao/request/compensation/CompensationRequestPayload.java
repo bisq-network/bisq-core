@@ -17,25 +17,37 @@
 
 package bisq.core.dao.request.compensation;
 
-import bisq.common.app.Capabilities;
-import bisq.common.app.Version;
-import bisq.common.crypto.Sig;
-import bisq.common.util.JsonExclude;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.PersistableProtectedPayload;
+
+import bisq.common.app.Capabilities;
+import bisq.common.app.Version;
+import bisq.common.crypto.Sig;
+import bisq.common.util.JsonExclude;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Utils;
+
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Utils;
+
 import java.security.PublicKey;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 /**
  * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request

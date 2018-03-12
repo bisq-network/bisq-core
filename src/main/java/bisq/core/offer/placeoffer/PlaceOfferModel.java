@@ -17,18 +17,21 @@
 
 package bisq.core.offer.placeoffer;
 
-import bisq.common.taskrunner.Model;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferBookService;
 import bisq.core.user.User;
+
+import bisq.common.taskrunner.Model;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Transaction;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Transaction;
 
 @Slf4j
 @Getter

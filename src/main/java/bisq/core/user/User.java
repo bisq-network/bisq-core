@@ -17,33 +17,43 @@
 
 package bisq.core.user;
 
-import bisq.common.crypto.KeyRing;
-import bisq.common.locale.LanguageUtil;
-import bisq.common.locale.TradeCurrency;
-import bisq.common.proto.persistable.PersistedDataHost;
-import bisq.common.storage.Storage;
 import bisq.core.alert.Alert;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.arbitration.Mediator;
 import bisq.core.filter.Filter;
 import bisq.core.payment.PaymentAccount;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.crypto.KeyRing;
+import bisq.common.locale.LanguageUtil;
+import bisq.common.locale.TradeCurrency;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
+
+import javax.inject.Inject;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 
 /**
  * The User is persisted locally.

@@ -17,17 +17,20 @@
 
 package bisq.core.app;
 
-import bisq.common.crypto.KeyRing;
 import bisq.core.dao.DaoManager;
 import bisq.core.dao.request.compensation.CompensationRequestManager;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
+
 import bisq.network.crypto.EncryptionService;
 import bisq.network.p2p.P2PService;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.crypto.KeyRing;
 
 import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {

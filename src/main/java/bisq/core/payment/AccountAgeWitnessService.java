@@ -17,27 +17,43 @@
 
 package bisq.core.payment;
 
-import bisq.common.UserThread;
-import bisq.common.crypto.*;
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.util.MathUtils;
-import bisq.common.util.Utilities;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.trade.Trade;
 import bisq.core.user.User;
+
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.P2PDataStorage;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.UserThread;
+import bisq.common.crypto.CryptoException;
+import bisq.common.crypto.Hash;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.crypto.Sig;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.util.MathUtils;
+import bisq.common.util.Utilities;
+
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
+
 import java.security.PublicKey;
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -17,13 +17,15 @@
 
 package bisq.core.payment;
 
-import bisq.common.locale.CountryUtil;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.payment.payload.SepaInstantAccountPayload;
-import lombok.EqualsAndHashCode;
+
+import bisq.common.locale.CountryUtil;
 
 import java.util.List;
+
+import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 public final class SepaInstantAccount extends CountryBasedPaymentAccount implements BankAccount {

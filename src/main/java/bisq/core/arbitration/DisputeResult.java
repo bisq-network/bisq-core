@@ -17,25 +17,32 @@
 
 package bisq.core.arbitration;
 
-import com.google.protobuf.ByteString;
+import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.network.NetworkPayload;
-import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
+
+import org.bitcoinj.core.Coin;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+
+import java.util.Date;
+import java.util.Optional;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.Coin;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.Optional;
 
 @EqualsAndHashCode
 @Getter

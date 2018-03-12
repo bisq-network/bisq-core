@@ -22,7 +22,6 @@ import bisq.core.dao.request.VoteRequest;
 /**
  * Request for changing certain parameters used in Bisq like trading fee, default security deposit, trade limits,...
  */
-
 // TODO implement
 public class ChangeParamRequest extends VoteRequest {
 

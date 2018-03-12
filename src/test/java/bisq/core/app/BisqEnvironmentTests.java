@@ -17,11 +17,12 @@
 
 package bisq.core.app;
 
-import org.junit.Test;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.mock.env.MockPropertySource;
+
+import org.junit.Test;
 
 import static bisq.core.app.BisqEnvironment.*;
 import static org.hamcrest.CoreMatchers.equalTo;

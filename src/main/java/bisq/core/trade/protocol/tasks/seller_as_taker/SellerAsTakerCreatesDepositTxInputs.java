@@ -17,15 +17,18 @@
 
 package bisq.core.trade.protocol.tasks.seller_as_taker;
 
-import bisq.common.taskrunner.TaskRunner;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.data.InputsAndChangeOutput;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.tasks.TradeTask;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.taskrunner.TaskRunner;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SellerAsTakerCreatesDepositTxInputs extends TradeTask {

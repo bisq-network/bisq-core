@@ -17,22 +17,29 @@
 
 package bisq.core.alert;
 
-import com.google.protobuf.ByteString;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
+
 import io.bisq.generated.protobuffer.PB;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+
+import com.google.protobuf.ByteString;
+
+import org.springframework.util.CollectionUtils;
+
+import java.security.PublicKey;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
-import java.security.PublicKey;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

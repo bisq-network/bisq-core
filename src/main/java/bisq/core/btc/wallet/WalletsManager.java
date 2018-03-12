@@ -17,20 +17,25 @@
 
 package bisq.core.btc.wallet;
 
-import com.google.inject.Inject;
+import bisq.core.app.BisqEnvironment;
+import bisq.core.crypto.ScryptUtil;
+
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.locale.Res;
-import bisq.core.app.BisqEnvironment;
-import bisq.core.crypto.ScryptUtil;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
+
+import com.google.inject.Inject;
+
+import org.spongycastle.crypto.params.KeyParameter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 

@@ -17,14 +17,24 @@
 
 package bisq.core.payment;
 
+import bisq.core.payment.payload.PaymentAccountPayload;
+import bisq.core.payment.payload.PaymentMethod;
+import bisq.core.proto.CoreProtoResolver;
+
 import bisq.common.locale.TradeCurrency;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.Utilities;
-import bisq.core.payment.payload.PaymentAccountPayload;
-import bisq.core.payment.payload.PaymentMethod;
-import bisq.core.proto.CoreProtoResolver;
+
 import io.bisq.generated.protobuffer.PB;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,8 +42,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

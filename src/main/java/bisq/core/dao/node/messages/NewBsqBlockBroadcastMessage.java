@@ -17,11 +17,15 @@
 
 package bisq.core.dao.node.messages;
 
+import bisq.core.dao.blockchain.vo.BsqBlock;
+
+import bisq.network.p2p.storage.messages.BroadcastMessage;
+
 import bisq.common.app.Version;
 import bisq.common.proto.network.NetworkEnvelope;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.network.p2p.storage.messages.BroadcastMessage;
+
 import io.bisq.generated.protobuffer.PB;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

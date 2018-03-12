@@ -17,27 +17,39 @@
 
 package bisq.core.arbitration;
 
-import com.google.protobuf.ByteString;
+import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+import bisq.core.proto.CoreProtoResolver;
+import bisq.core.trade.Contract;
+
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;
-import bisq.core.arbitration.messages.DisputeCommunicationMessage;
-import bisq.core.proto.CoreProtoResolver;
-import bisq.core.trade.Contract;
+
 import io.bisq.generated.protobuffer.PB;
-import javafx.beans.property.*;
+
+import com.google.protobuf.ByteString;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.util.Date;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @EqualsAndHashCode

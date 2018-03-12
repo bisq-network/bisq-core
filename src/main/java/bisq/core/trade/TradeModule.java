@@ -17,14 +17,17 @@
 
 package bisq.core.trade;
 
-import com.google.inject.Singleton;
-import bisq.common.app.AppModule;
 import bisq.core.app.AppOptionKeys;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.closed.ClosedTradableManager;
 import bisq.core.trade.failed.FailedTradesManager;
 import bisq.core.trade.statistics.TradeStatisticsManager;
+
+import bisq.common.app.AppModule;
+
 import org.springframework.core.env.Environment;
+
+import com.google.inject.Singleton;
 
 import static com.google.inject.name.Names.named;
 

@@ -17,41 +17,69 @@
 
 package bisq.core.btc.wallet;
 
+import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.AddressEntry;
+import bisq.core.btc.AddressEntryList;
+import bisq.core.btc.BitcoinNodes;
+import bisq.core.btc.BitcoinNodes.BtcNode;
+import bisq.core.btc.BtcOptionKeys;
+import bisq.core.btc.RegTestHost;
 import bisq.core.user.Preferences;
+
+import bisq.network.Socks5MultiDiscovery;
+import bisq.network.Socks5ProxyProvider;
+
 import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.storage.FileUtil;
-import bisq.core.app.BisqEnvironment;
-import bisq.core.btc.*;
-import bisq.core.btc.BitcoinNodes.BtcNode;
-import bisq.network.Socks5MultiDiscovery;
-import bisq.network.Socks5ProxyProvider;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Service;
-import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
-import javafx.beans.property.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.bitcoinj.core.*;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
-import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
+
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Service;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
+import java.nio.file.Paths;
+
 import java.io.File;
 import java.io.IOException;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Paths;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +87,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

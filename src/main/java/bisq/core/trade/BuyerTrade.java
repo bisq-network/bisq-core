@@ -17,15 +17,19 @@
 
 package bisq.core.trade;
 
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
-import bisq.common.storage.Storage;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.offer.Offer;
 import bisq.core.trade.protocol.BuyerProtocol;
+
 import bisq.network.p2p.NodeAddress;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.storage.Storage;
+
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

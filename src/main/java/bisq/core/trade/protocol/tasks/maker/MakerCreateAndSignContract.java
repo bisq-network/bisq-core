@@ -17,10 +17,6 @@
 
 package bisq.core.trade.protocol.tasks.maker;
 
-import com.google.common.base.Preconditions;
-import bisq.common.crypto.Sig;
-import bisq.common.taskrunner.TaskRunner;
-import bisq.common.util.Utilities;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.payment.payload.PaymentAccountPayload;
@@ -29,7 +25,15 @@ import bisq.core.trade.Contract;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.TradingPeer;
 import bisq.core.trade.protocol.tasks.TradeTask;
+
 import bisq.network.p2p.NodeAddress;
+
+import bisq.common.crypto.Sig;
+import bisq.common.taskrunner.TaskRunner;
+import bisq.common.util.Utilities;
+
+import com.google.common.base.Preconditions;
+
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;

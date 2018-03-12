@@ -17,19 +17,24 @@
 
 package bisq.core.btc.wallet;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import bisq.common.Timer;
 import bisq.common.UserThread;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.wallet.Wallet;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.Set;
 
 @Slf4j
 public class Broadcaster {

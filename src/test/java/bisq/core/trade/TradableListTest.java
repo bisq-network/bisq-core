@@ -17,13 +17,17 @@
 
 package bisq.core.trade;
 
-import bisq.common.storage.Storage;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.OpenOffer;
+
+import bisq.common.storage.Storage;
+
 import io.bisq.generated.protobuffer.PB;
+
 import mockit.Mocked;
 import mockit.integration.junit4.JMockit;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

@@ -17,10 +17,13 @@
 
 package bisq.core.alert;
 
-import com.google.inject.Singleton;
-import bisq.common.app.AppModule;
 import bisq.core.app.AppOptionKeys;
+
+import bisq.common.app.AppModule;
+
 import org.springframework.core.env.Environment;
+
+import com.google.inject.Singleton;
 
 import static com.google.inject.name.Names.named;
 

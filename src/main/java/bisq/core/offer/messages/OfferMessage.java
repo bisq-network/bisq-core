@@ -17,8 +17,10 @@
 
 package bisq.core.offer.messages;
 
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.network.p2p.DirectMessage;
+
+import bisq.common.proto.network.NetworkEnvelope;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

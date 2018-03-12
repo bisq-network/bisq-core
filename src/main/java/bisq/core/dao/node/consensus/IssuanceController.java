@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class IssuanceController {

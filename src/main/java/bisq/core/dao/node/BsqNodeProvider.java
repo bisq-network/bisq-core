@@ -17,15 +17,17 @@
 
 package bisq.core.dao.node;
 
-import com.google.inject.Inject;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.lite.LiteNode;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.inject.Inject;
 
 import javax.inject.Named;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Returns a FullNode or LiteNode based on the DaoOptionKeys.FULL_DAO_NODE option.

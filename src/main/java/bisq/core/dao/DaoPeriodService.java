@@ -17,20 +17,25 @@
 
 package bisq.core.dao;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import bisq.common.app.DevEnv;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.VotingDefaultValues;
 import bisq.core.dao.vote.VotingService;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.app.DevEnv;
+
+import com.google.inject.Inject;
 
 import javax.inject.Named;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provide information about the phase and cycle of the request/voting cycle.

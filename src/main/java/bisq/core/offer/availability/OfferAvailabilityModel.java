@@ -17,12 +17,15 @@
 
 package bisq.core.offer.availability;
 
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.taskrunner.Model;
 import bisq.core.offer.Offer;
 import bisq.core.offer.messages.OfferAvailabilityResponse;
+
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
+
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.taskrunner.Model;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

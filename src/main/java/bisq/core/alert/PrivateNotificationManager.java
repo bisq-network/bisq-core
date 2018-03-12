@@ -17,28 +17,36 @@
 
 package bisq.core.alert;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import bisq.common.app.DevEnv;
-import bisq.common.crypto.KeyRing;
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.app.AppOptionKeys;
+
 import bisq.network.p2p.DecryptedMessageWithPubKey;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.SendMailboxMessageListener;
+
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.network.NetworkEnvelope;
+
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Utils;
+
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.security.SignatureException;
+
+import java.util.UUID;
 
 import java.math.BigInteger;
-import java.security.SignatureException;
-import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.bitcoinj.core.Utils.HEX;
 

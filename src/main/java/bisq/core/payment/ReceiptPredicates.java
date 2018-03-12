@@ -17,17 +17,20 @@
 
 package bisq.core.payment;
 
-import com.google.common.base.Preconditions;
-import bisq.common.locale.TradeCurrency;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentMethod;
-import lombok.extern.slf4j.Slf4j;
+
+import bisq.common.locale.TradeCurrency;
+
+import com.google.common.base.Preconditions;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class ReceiptPredicates {

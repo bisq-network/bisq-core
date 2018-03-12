@@ -21,6 +21,7 @@ import bisq.core.payment.payload.BankAccountPayload;
 import bisq.core.payment.payload.NationalBankAccountPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
+
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)

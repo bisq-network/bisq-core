@@ -17,22 +17,27 @@
 
 package bisq.core.btc;
 
-import com.google.inject.Inject;
-import com.google.protobuf.Message;
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
+
 import io.bisq.generated.protobuffer.PB;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
+
+import com.google.protobuf.Message;
+
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.wallet.Wallet;
+
+import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The List supporting our persistence solution.

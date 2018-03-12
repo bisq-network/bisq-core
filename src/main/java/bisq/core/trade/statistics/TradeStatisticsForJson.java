@@ -17,16 +17,19 @@
 
 package bisq.core.trade.statistics;
 
+import bisq.core.offer.OfferPayload;
+
 import bisq.common.locale.CurrencyUtil;
 import bisq.common.locale.Res;
 import bisq.common.monetary.Price;
 import bisq.common.monetary.Volume;
 import bisq.common.util.MathUtils;
-import bisq.core.offer.OfferPayload;
+
+import org.bitcoinj.core.Coin;
+
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.bitcoinj.core.Coin;
 
 import javax.annotation.concurrent.Immutable;
 

@@ -20,10 +20,12 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bitcoinj.core.Utils;
 
 import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

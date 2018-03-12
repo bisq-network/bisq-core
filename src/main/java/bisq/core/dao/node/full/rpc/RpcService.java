@@ -23,8 +23,10 @@ import bisq.core.dao.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Utils;
+
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -36,21 +38,27 @@ import com.neemre.btcdcli4j.core.domain.enums.ScriptTypes;
 import com.neemre.btcdcli4j.daemon.BtcdDaemon;
 import com.neemre.btcdcli4j.daemon.BtcdDaemonImpl;
 import com.neemre.btcdcli4j.daemon.event.BlockListener;
+
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
 
 import javax.inject.Named;
-import java.math.BigDecimal;
+
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import java.math.BigDecimal;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Request blockchain data vai via RPC from Bitcoin Core.

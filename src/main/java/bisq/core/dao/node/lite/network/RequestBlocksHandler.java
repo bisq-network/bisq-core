@@ -17,27 +17,32 @@
 
 package bisq.core.dao.node.lite.network;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
-import bisq.common.Timer;
-import bisq.common.UserThread;
-import bisq.common.app.Log;
-import bisq.common.proto.network.NetworkEnvelope;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
+
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
 import bisq.network.p2p.network.NetworkNode;
 import bisq.network.p2p.peers.PeerManager;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.app.Log;
+import bisq.common.proto.network.NetworkEnvelope;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.Random;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

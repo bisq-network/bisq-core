@@ -17,21 +17,12 @@
 
 package bisq.core.arbitration;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.inject.Inject;
-import bisq.common.Timer;
-import bisq.common.UserThread;
-import bisq.common.app.Log;
-import bisq.common.crypto.KeyRing;
-import bisq.common.crypto.PubKeyRing;
-import bisq.common.handlers.FaultHandler;
-import bisq.common.handlers.ResultHandler;
-import bisq.common.locale.Res;
-import bisq.common.proto.network.NetworkEnvelope;
-import bisq.common.proto.persistable.PersistedDataHost;
-import bisq.common.proto.persistable.PersistenceProtoResolver;
-import bisq.common.storage.Storage;
-import bisq.core.arbitration.messages.*;
+import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+import bisq.core.arbitration.messages.DisputeMessage;
+import bisq.core.arbitration.messages.DisputeResultMessage;
+import bisq.core.arbitration.messages.OpenNewDisputeMessage;
+import bisq.core.arbitration.messages.PeerOpenedDisputeMessage;
+import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
@@ -45,21 +36,55 @@ import bisq.core.trade.Tradable;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.closed.ClosedTradableManager;
-import bisq.network.p2p.*;
-import javafx.collections.ObservableList;
+
+import bisq.network.p2p.BootstrapListener;
+import bisq.network.p2p.DecryptedMessageWithPubKey;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.P2PService;
+import bisq.network.p2p.SendMailboxMessageListener;
+
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.app.Log;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.handlers.FaultHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.locale.Res;
+import bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
+
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.DeterministicKey;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
 
 import javax.inject.Named;
+
+import com.google.common.util.concurrent.FutureCallback;
+
+import javafx.collections.ObservableList;
+
 import java.io.File;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.jetbrains.annotations.NotNull;
 
 public class DisputeManager implements PersistedDataHost {
     private static final Logger log = LoggerFactory.getLogger(DisputeManager.class);

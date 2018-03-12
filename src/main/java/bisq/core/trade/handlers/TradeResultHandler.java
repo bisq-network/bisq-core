@@ -19,7 +19,6 @@ package bisq.core.trade.handlers;
 
 import bisq.core.trade.Trade;
 
-
 public interface TradeResultHandler {
     void handleResult(Trade trade);
 }
