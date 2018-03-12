@@ -17,8 +17,8 @@
 package io.bisq.core.provider.price;
 
 import com.google.common.util.concurrent.*;
-import io.bisq.common.util.Tuple2;
-import io.bisq.common.util.Utilities;
+import bisq.common.util.Tuple2;
+import bisq.common.util.Utilities;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 

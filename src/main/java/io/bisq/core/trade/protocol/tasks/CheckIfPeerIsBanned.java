@@ -17,7 +17,7 @@
 
 package io.bisq.core.trade.protocol.tasks;
 
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.filter.PaymentAccountFilter;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.trade.Trade;

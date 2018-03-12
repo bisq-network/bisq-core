@@ -17,7 +17,7 @@
 
 package io.bisq.core.arbitration.messages;
 
-import io.bisq.common.app.Version;
+import bisq.common.app.Version;
 import io.bisq.core.arbitration.Dispute;
 import io.bisq.core.proto.CoreProtoResolver;
 import io.bisq.generated.protobuffer.PB;

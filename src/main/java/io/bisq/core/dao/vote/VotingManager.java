@@ -19,12 +19,12 @@ package io.bisq.core.dao.vote;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import io.bisq.common.app.Version;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistableList;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.storage.Storage;
-import io.bisq.common.util.Utilities;
+import bisq.common.app.Version;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistableList;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.wallet.BsqWalletService;
 import io.bisq.core.btc.wallet.BtcWalletService;

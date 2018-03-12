@@ -2,7 +2,7 @@ package io.bisq.core.btc.blockchain.providers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.bisq.common.app.Log;
+import bisq.common.app.Log;
 import io.bisq.network.http.HttpClient;
 import org.bitcoinj.core.Coin;
 import org.slf4j.Logger;

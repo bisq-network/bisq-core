@@ -18,8 +18,8 @@
 package io.bisq.core.dao.vote;
 
 import com.google.protobuf.Message;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.generated.protobuffer.PB;
 import lombok.Getter;
 

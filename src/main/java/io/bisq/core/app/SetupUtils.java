@@ -17,11 +17,11 @@
 
 package io.bisq.core.app;
 
-import io.bisq.common.UserThread;
-import io.bisq.common.crypto.CryptoException;
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.crypto.SealedAndSigned;
-import io.bisq.common.handlers.ResultHandler;
+import bisq.common.UserThread;
+import bisq.common.crypto.CryptoException;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.SealedAndSigned;
+import bisq.common.handlers.ResultHandler;
 import io.bisq.core.btc.BaseCurrencyNetwork;
 import io.bisq.network.crypto.DecryptedDataTuple;
 import io.bisq.network.crypto.EncryptionService;

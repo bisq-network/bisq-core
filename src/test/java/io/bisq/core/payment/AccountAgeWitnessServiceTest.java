@@ -1,7 +1,7 @@
 package io.bisq.core.payment;
 
-import io.bisq.common.crypto.CryptoException;
-import io.bisq.common.crypto.Sig;
+import bisq.common.crypto.CryptoException;
+import bisq.common.crypto.Sig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;

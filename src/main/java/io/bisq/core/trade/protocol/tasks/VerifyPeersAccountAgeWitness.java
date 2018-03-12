@@ -17,9 +17,9 @@
 
 package io.bisq.core.trade.protocol.tasks;
 
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.payment.AccountAgeWitnessService;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.trade.Trade;

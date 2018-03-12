@@ -18,9 +18,9 @@
 package io.bisq.core.btc.wallet;
 
 import com.google.inject.Inject;
-import io.bisq.common.handlers.ExceptionHandler;
-import io.bisq.common.handlers.ResultHandler;
-import io.bisq.common.locale.Res;
+import bisq.common.handlers.ExceptionHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.locale.Res;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.crypto.ScryptUtil;
 import org.bitcoinj.core.Coin;

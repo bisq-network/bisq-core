@@ -17,7 +17,7 @@
 
 package io.bisq.core.payment;
 
-import io.bisq.common.locale.CurrencyUtil;
+import bisq.common.locale.CurrencyUtil;
 import io.bisq.core.payment.payload.OKPayAccountPayload;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.payment.payload.PaymentMethod;

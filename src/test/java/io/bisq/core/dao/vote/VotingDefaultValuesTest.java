@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class VotingDefaultValuesTest {
     private static final Logger log = LoggerFactory.getLogger(VotingDefaultValuesTest.class);
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testValidTxs() {
         VotingDefaultValues votingDefaultValues = new VotingDefaultValues();
 

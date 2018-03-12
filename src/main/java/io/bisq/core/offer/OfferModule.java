@@ -18,7 +18,7 @@
 package io.bisq.core.offer;
 
 import com.google.inject.Singleton;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 

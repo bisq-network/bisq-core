@@ -17,8 +17,8 @@
 
 package io.bisq.core.dao.vote;
 
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

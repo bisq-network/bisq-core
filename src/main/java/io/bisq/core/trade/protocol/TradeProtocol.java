@@ -17,10 +17,10 @@
 
 package io.bisq.core.trade.protocol;
 
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.core.trade.MakerTrade;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.trade.TradeManager;

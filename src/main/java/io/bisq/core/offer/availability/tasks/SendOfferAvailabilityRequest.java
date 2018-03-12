@@ -17,8 +17,8 @@
 
 package io.bisq.core.offer.availability.tasks;
 
-import io.bisq.common.taskrunner.Task;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.taskrunner.Task;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.offer.availability.OfferAvailabilityModel;
 import io.bisq.core.offer.messages.OfferAvailabilityRequest;

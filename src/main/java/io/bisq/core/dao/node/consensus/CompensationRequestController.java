@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.node.consensus;
 
-import io.bisq.common.app.Version;
+import bisq.common.app.Version;
 import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.vo.Tx;
 import io.bisq.core.dao.blockchain.vo.TxOutput;

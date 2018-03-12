@@ -17,8 +17,8 @@
 
 package io.bisq.core.offer.availability;
 
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.taskrunner.Model;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.taskrunner.Model;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.offer.messages.OfferAvailabilityResponse;
 import io.bisq.network.p2p.NodeAddress;

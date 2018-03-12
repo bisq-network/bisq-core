@@ -18,9 +18,9 @@
 package io.bisq.core.arbitration;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.util.Utilities;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.util.Utilities;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.NodeAddress;
 import io.bisq.network.p2p.storage.payload.ProtectedStoragePayload;

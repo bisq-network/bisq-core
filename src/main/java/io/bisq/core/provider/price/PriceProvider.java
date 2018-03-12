@@ -18,9 +18,9 @@ package io.bisq.core.provider.price;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import io.bisq.common.app.Version;
-import io.bisq.common.util.MathUtils;
-import io.bisq.common.util.Tuple2;
+import bisq.common.app.Version;
+import bisq.common.util.MathUtils;
+import bisq.common.util.Tuple2;
 import io.bisq.core.provider.HttpClientProvider;
 import io.bisq.network.http.HttpClient;
 import lombok.extern.slf4j.Slf4j;

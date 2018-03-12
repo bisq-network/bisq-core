@@ -19,7 +19,7 @@ package io.bisq.core.dao;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import io.bisq.common.app.DevEnv;
+import bisq.common.app.DevEnv;
 import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.dao.blockchain.BsqBlockChain;
 import io.bisq.core.dao.blockchain.vo.Tx;

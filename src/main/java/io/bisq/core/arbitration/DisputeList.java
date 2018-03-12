@@ -18,10 +18,10 @@
 package io.bisq.core.arbitration;
 
 import com.google.protobuf.Message;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.storage.Storage;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
 import io.bisq.core.proto.CoreProtoResolver;
 import io.bisq.generated.protobuffer.PB;
 import javafx.collections.FXCollections;

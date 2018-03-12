@@ -18,8 +18,8 @@
 package io.bisq.core.trade.protocol.tasks.taker;
 
 import com.google.common.util.concurrent.FutureCallback;
-import io.bisq.common.UserThread;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.UserThread;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.arbitration.Arbitrator;
 import io.bisq.core.btc.AddressEntry;
 import io.bisq.core.btc.wallet.BsqWalletService;

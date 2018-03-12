@@ -19,8 +19,8 @@ package io.bisq.core.btc.wallet;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.ResultHandler;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.exceptions.TransactionVerificationException;
 import io.bisq.core.btc.exceptions.WalletException;

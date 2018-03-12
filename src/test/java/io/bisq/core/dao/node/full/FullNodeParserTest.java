@@ -3,7 +3,7 @@ package io.bisq.core.dao.node.full;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.domain.Block;
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
 import io.bisq.core.dao.blockchain.BsqBlockChain;
 import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.WritableBsqBlockChain;

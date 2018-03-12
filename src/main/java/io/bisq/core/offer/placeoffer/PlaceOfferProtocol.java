@@ -17,8 +17,8 @@
 
 package io.bisq.core.offer.placeoffer;
 
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.offer.placeoffer.tasks.AddToOfferBook;
 import io.bisq.core.offer.placeoffer.tasks.CreateMakerFeeTx;
 import io.bisq.core.offer.placeoffer.tasks.ValidateOffer;

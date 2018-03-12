@@ -18,10 +18,10 @@
 package io.bisq.core.trade.failed;
 
 import com.google.inject.Inject;
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
-import io.bisq.common.storage.Storage;
+import bisq.common.crypto.KeyRing;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
 import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.provider.price.PriceFeedService;

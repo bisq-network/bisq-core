@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class PaymentAccountTest {
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void test() {
         OKPayAccount account = new OKPayAccount();
         String name = "name";

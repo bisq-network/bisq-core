@@ -18,7 +18,7 @@
 package io.bisq.core.trade;
 
 import com.google.inject.Singleton;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.payment.AccountAgeWitnessService;
 import io.bisq.core.trade.closed.ClosedTradableManager;

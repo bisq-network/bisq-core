@@ -17,8 +17,8 @@
 
 package io.bisq.core.app;
 
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.crypto.KeyRing;
+import bisq.common.proto.persistable.PersistedDataHost;
 import io.bisq.core.filter.FilterManager;
 import io.bisq.core.payment.AccountAgeWitnessService;
 import io.bisq.core.trade.statistics.TradeStatisticsManager;

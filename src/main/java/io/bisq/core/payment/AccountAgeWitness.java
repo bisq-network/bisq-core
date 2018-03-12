@@ -18,9 +18,9 @@
 package io.bisq.core.payment;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.app.Capabilities;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.util.Utilities;
+import bisq.common.app.Capabilities;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.util.Utilities;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.storage.P2PDataStorage;
 import io.bisq.network.p2p.storage.payload.CapabilityRequiringPayload;

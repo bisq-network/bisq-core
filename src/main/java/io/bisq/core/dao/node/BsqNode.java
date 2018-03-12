@@ -18,7 +18,7 @@
 package io.bisq.core.dao.node;
 
 import com.google.inject.Inject;
-import io.bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ErrorMessageHandler;
 import io.bisq.core.dao.blockchain.BsqBlockChainListener;
 import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.SnapshotManager;

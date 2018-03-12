@@ -19,8 +19,8 @@ package io.bisq.core.alert;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.bisq.common.app.DevEnv;
-import io.bisq.common.crypto.KeyRing;
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.user.User;
 import io.bisq.network.p2p.P2PService;

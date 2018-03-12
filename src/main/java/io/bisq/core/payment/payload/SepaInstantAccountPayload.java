@@ -18,8 +18,8 @@
 package io.bisq.core.payment.payload;
 
 import com.google.protobuf.Message;
-import io.bisq.common.locale.Country;
-import io.bisq.common.locale.CountryUtil;
+import bisq.common.locale.Country;
+import bisq.common.locale.CountryUtil;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.blockchain.json;
 
-import io.bisq.common.app.Version;
+import bisq.common.app.Version;
 import lombok.Value;
 
 @Value

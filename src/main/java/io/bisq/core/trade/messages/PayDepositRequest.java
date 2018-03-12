@@ -18,9 +18,9 @@
 package io.bisq.core.trade.messages;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.util.Utilities;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.util.Utilities;
 import io.bisq.core.btc.data.RawTransactionInput;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.proto.CoreProtoResolver;

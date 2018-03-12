@@ -1,6 +1,6 @@
 package io.bisq.core.filter;
 
-import io.bisq.common.proto.network.NetworkPayload;
+import bisq.common.proto.network.NetworkPayload;
 import io.bisq.generated.protobuffer.PB;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;

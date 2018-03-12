@@ -1,16 +1,16 @@
 package io.bisq.core.trade.statistics;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.app.Capabilities;
-import io.bisq.common.crypto.Hash;
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.monetary.Altcoin;
-import io.bisq.common.monetary.AltcoinExchangeRate;
-import io.bisq.common.monetary.Price;
-import io.bisq.common.monetary.Volume;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.util.JsonExclude;
-import io.bisq.common.util.Utilities;
+import bisq.common.app.Capabilities;
+import bisq.common.crypto.Hash;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.monetary.Altcoin;
+import bisq.common.monetary.AltcoinExchangeRate;
+import bisq.common.monetary.Price;
+import bisq.common.monetary.Volume;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.util.JsonExclude;
+import bisq.common.util.Utilities;
 import io.bisq.core.offer.OfferPayload;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.storage.payload.CapabilityRequiringPayload;

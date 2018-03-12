@@ -17,8 +17,8 @@
 
 package io.bisq.core.payment.payload;
 
-import io.bisq.common.locale.BankUtil;
-import io.bisq.common.locale.CountryUtil;
+import bisq.common.locale.BankUtil;
+import bisq.common.locale.CountryUtil;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

@@ -1,7 +1,7 @@
 package io.bisq.core.arbitration;
 
 import com.google.common.collect.Lists;
-import io.bisq.common.crypto.PubKeyRing;
+import bisq.common.crypto.PubKeyRing;
 import io.bisq.network.p2p.NodeAddress;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Ignore;
@@ -27,7 +27,7 @@ import java.util.Date;
 @SuppressWarnings({"SameParameterValue", "UnusedAssignment"})
 public class ArbitratorTest {
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testRoundtrip() {
         Arbitrator arbitrator = getArbitratorMock();
 

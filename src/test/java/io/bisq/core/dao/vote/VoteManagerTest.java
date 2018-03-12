@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.vote;
 
-import io.bisq.common.app.Version;
+import bisq.common.app.Version;
 import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 public class VoteManagerTest {
     private static final Logger log = LoggerFactory.getLogger(VoteManagerTest.class);
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testGetVoteItemListFromOpReturnData() {
         VotingManager votingManager = new VotingManager(new VotingDefaultValues());
         byte[] opReturnData;
@@ -176,7 +176,7 @@ public class VoteManagerTest {
     }
 
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testCalculateHash() {
         VotingManager votingManager = new VotingManager(new VotingDefaultValues());
 

@@ -18,16 +18,16 @@
 package io.bisq.core.trade;
 
 import com.google.common.util.concurrent.FutureCallback;
-import io.bisq.common.UserThread;
-import io.bisq.common.app.Log;
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.FaultHandler;
-import io.bisq.common.handlers.ResultHandler;
-import io.bisq.common.proto.network.NetworkEnvelope;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
-import io.bisq.common.storage.Storage;
+import bisq.common.UserThread;
+import bisq.common.app.Log;
+import bisq.common.crypto.KeyRing;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.FaultHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
 import io.bisq.core.btc.AddressEntry;
 import io.bisq.core.btc.AddressEntryException;
 import io.bisq.core.btc.wallet.BsqWalletService;

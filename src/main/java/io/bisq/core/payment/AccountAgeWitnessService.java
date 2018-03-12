@@ -17,12 +17,12 @@
 
 package io.bisq.core.payment;
 
-import io.bisq.common.UserThread;
-import io.bisq.common.crypto.*;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.util.MathUtils;
-import io.bisq.common.util.Utilities;
+import bisq.common.UserThread;
+import bisq.common.crypto.*;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.util.MathUtils;
+import bisq.common.util.Utilities;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.payment.payload.PaymentMethod;

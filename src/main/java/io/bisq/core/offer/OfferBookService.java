@@ -18,12 +18,12 @@
 package io.bisq.core.offer;
 
 import com.google.inject.name.Named;
-import io.bisq.common.UserThread;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.ResultHandler;
-import io.bisq.common.storage.JsonFileManager;
-import io.bisq.common.storage.Storage;
-import io.bisq.common.util.Utilities;
+import bisq.common.UserThread;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.storage.JsonFileManager;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.provider.price.PriceFeedService;
 import io.bisq.network.p2p.BootstrapListener;

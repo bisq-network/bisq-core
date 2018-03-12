@@ -17,8 +17,8 @@
 
 package io.bisq.core.payment.payload;
 
-import io.bisq.common.locale.Res;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.locale.Res;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;

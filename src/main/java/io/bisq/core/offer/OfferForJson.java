@@ -1,11 +1,11 @@
 package io.bisq.core.offer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.locale.Res;
-import io.bisq.common.monetary.Price;
-import io.bisq.common.monetary.Volume;
-import io.bisq.common.util.MathUtils;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.locale.Res;
+import bisq.common.monetary.Price;
+import bisq.common.monetary.Volume;
+import bisq.common.util.MathUtils;
 import io.bisq.core.payment.payload.PaymentMethod;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.utils.MonetaryFormat;

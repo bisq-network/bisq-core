@@ -17,10 +17,10 @@
 
 package io.bisq.core.offer;
 
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.util.JsonExclude;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.util.JsonExclude;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.NodeAddress;
 import io.bisq.network.p2p.storage.payload.ProtectedStoragePayload;

@@ -17,10 +17,10 @@
 
 package io.bisq.core.offer;
 
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.storage.Storage;
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.storage.Storage;
 import io.bisq.core.trade.Tradable;
 import io.bisq.core.trade.TradableList;
 import io.bisq.generated.protobuffer.PB;

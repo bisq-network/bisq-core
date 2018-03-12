@@ -2,12 +2,12 @@ package io.bisq.core.user;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.Message;
-import io.bisq.common.locale.Country;
-import io.bisq.common.locale.CryptoCurrency;
-import io.bisq.common.locale.FiatCurrency;
-import io.bisq.common.locale.TradeCurrency;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.locale.Country;
+import bisq.common.locale.CryptoCurrency;
+import bisq.common.locale.FiatCurrency;
+import bisq.common.locale.TradeCurrency;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistableEnvelope;
 import io.bisq.core.btc.Restrictions;
 import io.bisq.core.payment.PaymentAccount;
 import io.bisq.core.proto.CoreProtoResolver;

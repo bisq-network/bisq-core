@@ -1,10 +1,10 @@
 package io.bisq.core.user;
 
-import io.bisq.common.GlobalSettings;
-import io.bisq.common.locale.*;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.storage.Storage;
-import io.bisq.common.util.Utilities;
+import bisq.common.GlobalSettings;
+import bisq.common.locale.*;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.BaseCurrencyNetwork;
 import io.bisq.core.btc.BitcoinNodes;

@@ -18,7 +18,7 @@
 package io.bisq.core.filter;
 
 import com.google.inject.Singleton;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import io.bisq.core.app.AppOptionKeys;
 import org.springframework.core.env.Environment;
 

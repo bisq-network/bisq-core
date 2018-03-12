@@ -17,8 +17,8 @@
 
 package io.bisq.core.trade.protocol.tasks.buyer_as_maker;
 
-import io.bisq.common.crypto.Hash;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.crypto.Hash;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.btc.AddressEntry;
 import io.bisq.core.btc.data.PreparedDepositTxAndMakerInputs;
 import io.bisq.core.btc.data.RawTransactionInput;

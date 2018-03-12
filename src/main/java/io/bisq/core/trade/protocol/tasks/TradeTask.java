@@ -17,8 +17,8 @@
 
 package io.bisq.core.trade.protocol.tasks;
 
-import io.bisq.common.taskrunner.Task;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.taskrunner.Task;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.trade.Trade;
 import io.bisq.core.trade.protocol.ProcessModel;
 import lombok.extern.slf4j.Slf4j;

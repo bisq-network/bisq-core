@@ -18,7 +18,7 @@
 package io.bisq.core.dao;
 
 import com.google.inject.Inject;
-import io.bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ErrorMessageHandler;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.dao.node.BsqNode;
 import io.bisq.core.dao.node.BsqNodeProvider;

@@ -19,9 +19,9 @@ package io.bisq.core.filter;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.bisq.common.UserThread;
-import io.bisq.common.app.DevEnv;
-import io.bisq.common.crypto.KeyRing;
+import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.BitcoinNodes;

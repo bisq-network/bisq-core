@@ -1,8 +1,8 @@
 package io.bisq.core.dao.node.full.network;
 
-import io.bisq.common.UserThread;
-import io.bisq.common.app.Log;
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.UserThread;
+import bisq.common.app.Log;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import io.bisq.core.dao.node.messages.GetBsqBlocksRequest;

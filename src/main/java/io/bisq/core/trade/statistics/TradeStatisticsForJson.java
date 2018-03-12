@@ -1,10 +1,10 @@
 package io.bisq.core.trade.statistics;
 
-import io.bisq.common.locale.CurrencyUtil;
-import io.bisq.common.locale.Res;
-import io.bisq.common.monetary.Price;
-import io.bisq.common.monetary.Volume;
-import io.bisq.common.util.MathUtils;
+import bisq.common.locale.CurrencyUtil;
+import bisq.common.locale.Res;
+import bisq.common.monetary.Price;
+import bisq.common.monetary.Volume;
+import bisq.common.util.MathUtils;
 import io.bisq.core.offer.OfferPayload;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

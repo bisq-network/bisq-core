@@ -18,11 +18,11 @@
 package io.bisq.core.arbitration;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.network.NetworkPayload;
-import io.bisq.common.storage.Storage;
-import io.bisq.common.util.Utilities;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.network.NetworkPayload;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
 import io.bisq.core.arbitration.messages.DisputeCommunicationMessage;
 import io.bisq.core.proto.CoreProtoResolver;
 import io.bisq.core.trade.Contract;

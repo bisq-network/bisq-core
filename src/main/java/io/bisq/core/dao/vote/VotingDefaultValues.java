@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.vote;
 
-import io.bisq.common.locale.Res;
+import bisq.common.locale.Res;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

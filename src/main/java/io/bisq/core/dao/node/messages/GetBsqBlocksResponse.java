@@ -1,7 +1,7 @@
 package io.bisq.core.dao.node.messages;
 
-import io.bisq.common.app.Version;
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.app.Version;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.DirectMessage;

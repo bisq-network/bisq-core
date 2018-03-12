@@ -17,7 +17,7 @@
 
 package io.bisq.core.offer;
 
-import io.bisq.common.util.MathUtils;
+import bisq.common.util.MathUtils;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.wallet.BsqWalletService;
 import io.bisq.core.provider.fee.FeeService;

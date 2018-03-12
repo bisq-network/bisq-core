@@ -17,10 +17,10 @@
 
 package io.bisq.core.payment;
 
-import io.bisq.common.locale.TradeCurrency;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistablePayload;
-import io.bisq.common.util.Utilities;
+import bisq.common.locale.TradeCurrency;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.util.Utilities;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.payment.payload.PaymentMethod;
 import io.bisq.core.proto.CoreProtoResolver;

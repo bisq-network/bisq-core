@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.request.compensation;
 
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.core.btc.wallet.BsqWalletService;
 import io.bisq.core.dao.request.VoteRequest;
 import io.bisq.generated.protobuffer.PB;

@@ -17,7 +17,7 @@
 
 package io.bisq.core.payment;
 
-import io.bisq.common.locale.FiatCurrency;
+import bisq.common.locale.FiatCurrency;
 import io.bisq.core.payment.payload.ChaseQuickPayAccountPayload;
 import io.bisq.core.payment.payload.PaymentAccountPayload;
 import io.bisq.core.payment.payload.PaymentMethod;

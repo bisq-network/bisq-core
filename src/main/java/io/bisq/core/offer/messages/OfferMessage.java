@@ -17,7 +17,7 @@
 
 package io.bisq.core.offer.messages;
 
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.network.p2p.DirectMessage;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

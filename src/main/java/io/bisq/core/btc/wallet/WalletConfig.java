@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
-import io.bisq.common.app.Version;
+import bisq.common.app.Version;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.ProxySocketFactory;
 import lombok.Getter;

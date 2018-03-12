@@ -17,12 +17,12 @@
 
 package io.bisq.core.offer.availability;
 
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.ResultHandler;
-import io.bisq.common.proto.network.NetworkEnvelope;
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.offer.availability.tasks.ProcessOfferAvailabilityResponse;
 import io.bisq.core.offer.availability.tasks.SendOfferAvailabilityRequest;

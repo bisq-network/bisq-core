@@ -19,8 +19,8 @@ package io.bisq.core.btc.wallet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
-import io.bisq.common.app.Log;
-import io.bisq.common.locale.Res;
+import bisq.common.app.Log;
+import bisq.common.locale.Res;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.AddressEntry;
 import io.bisq.core.btc.data.InputsAndChangeOutput;

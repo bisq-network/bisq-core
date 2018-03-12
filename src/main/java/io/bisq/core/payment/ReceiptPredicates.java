@@ -1,7 +1,7 @@
 package io.bisq.core.payment;
 
 import com.google.common.base.Preconditions;
-import io.bisq.common.locale.TradeCurrency;
+import bisq.common.locale.TradeCurrency;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.payment.payload.PaymentMethod;
 import lombok.extern.slf4j.Slf4j;

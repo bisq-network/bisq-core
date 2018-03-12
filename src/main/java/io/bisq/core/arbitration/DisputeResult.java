@@ -18,8 +18,8 @@
 package io.bisq.core.arbitration;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.network.NetworkPayload;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.network.NetworkPayload;
 import io.bisq.core.arbitration.messages.DisputeCommunicationMessage;
 import io.bisq.generated.protobuffer.PB;
 import javafx.beans.property.BooleanProperty;

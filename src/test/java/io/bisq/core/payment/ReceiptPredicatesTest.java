@@ -1,7 +1,7 @@
 package io.bisq.core.payment;
 
 import com.google.common.collect.Lists;
-import io.bisq.common.locale.CryptoCurrency;
+import bisq.common.locale.CryptoCurrency;
 import io.bisq.core.offer.Offer;
 import io.bisq.core.payment.payload.PaymentMethod;
 import org.junit.Test;

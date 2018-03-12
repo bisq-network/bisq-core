@@ -19,7 +19,7 @@ package io.bisq.core.btc;
 
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.core.btc.wallet.*;
 import io.bisq.core.provider.ProvidersRepository;

@@ -18,11 +18,11 @@
 package io.bisq.core.trade.protocol;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistablePayload;
-import io.bisq.common.taskrunner.Model;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.taskrunner.Model;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.btc.data.RawTransactionInput;
 import io.bisq.core.btc.wallet.BsqWalletService;

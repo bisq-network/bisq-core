@@ -18,9 +18,9 @@
 package io.bisq.core.btc.data;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.proto.network.NetworkPayload;
-import io.bisq.common.proto.persistable.PersistablePayload;
-import io.bisq.common.util.Utilities;
+import bisq.common.proto.network.NetworkPayload;
+import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.util.Utilities;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 

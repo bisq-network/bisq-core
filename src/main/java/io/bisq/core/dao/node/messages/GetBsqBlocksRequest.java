@@ -1,8 +1,8 @@
 package io.bisq.core.dao.node.messages;
 
-import io.bisq.common.app.Capabilities;
-import io.bisq.common.app.Version;
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.app.Capabilities;
+import bisq.common.app.Version;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.DirectMessage;
 import io.bisq.network.p2p.storage.payload.CapabilityRequiringPayload;

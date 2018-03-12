@@ -1,9 +1,9 @@
 package io.bisq.core.btc.blockchain;
 
 import com.google.common.util.concurrent.*;
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
-import io.bisq.common.util.Utilities;
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.util.Utilities;
 import io.bisq.core.btc.blockchain.providers.BlockchainTxProvider;
 import org.bitcoinj.core.Coin;
 import org.jetbrains.annotations.NotNull;

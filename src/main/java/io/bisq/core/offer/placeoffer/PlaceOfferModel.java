@@ -17,7 +17,7 @@
 
 package io.bisq.core.offer.placeoffer;
 
-import io.bisq.common.taskrunner.Model;
+import bisq.common.taskrunner.Model;
 import io.bisq.core.btc.wallet.BsqWalletService;
 import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.btc.wallet.TradeWalletService;

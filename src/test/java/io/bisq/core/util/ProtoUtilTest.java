@@ -17,7 +17,7 @@
 
 package io.bisq.core.util;
 
-import io.bisq.common.proto.ProtoUtil;
+import bisq.common.proto.ProtoUtil;
 import io.bisq.core.offer.OpenOffer;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.generated.protobuffer.PB.OfferPayload;
@@ -29,7 +29,7 @@ import static org.junit.Assert.fail;
 @SuppressWarnings("UnusedAssignment")
 public class ProtoUtilTest {
 
-    //TODO Use NetworkProtoResolver, PersistenceProtoResolver or ProtoResolver which are all in io.bisq.common. 
+    //TODO Use NetworkProtoResolver, PersistenceProtoResolver or ProtoResolver which are all in bisq.common.
     @Test
     public void testEnum() {
         OfferPayload.Direction direction = OfferPayload.Direction.SELL;

@@ -17,8 +17,8 @@
 
 package io.bisq.core.trade.protocol;
 
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.ResultHandler;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
 
 public interface SellerProtocol {
     void onFiatPaymentReceived(ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler);

@@ -1,12 +1,12 @@
 package io.bisq.core.proto.persistable;
 
 import com.google.inject.Provider;
-import io.bisq.common.proto.ProtobufferException;
-import io.bisq.common.proto.network.NetworkProtoResolver;
-import io.bisq.common.proto.persistable.NavigationPath;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
-import io.bisq.common.storage.Storage;
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.network.NetworkProtoResolver;
+import bisq.common.proto.persistable.NavigationPath;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
 import io.bisq.core.arbitration.DisputeList;
 import io.bisq.core.btc.AddressEntryList;
 import io.bisq.core.btc.wallet.BtcWalletService;

@@ -19,9 +19,9 @@ package io.bisq.core.btc;
 
 import com.google.inject.Inject;
 import com.google.protobuf.Message;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.storage.Storage;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
 import io.bisq.generated.protobuffer.PB;
 import lombok.Getter;
 import lombok.ToString;

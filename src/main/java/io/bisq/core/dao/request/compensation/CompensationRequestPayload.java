@@ -17,10 +17,10 @@
 
 package io.bisq.core.dao.request.compensation;
 
-import io.bisq.common.app.Capabilities;
-import io.bisq.common.app.Version;
-import io.bisq.common.crypto.Sig;
-import io.bisq.common.util.JsonExclude;
+import bisq.common.app.Capabilities;
+import bisq.common.app.Version;
+import bisq.common.crypto.Sig;
+import bisq.common.util.JsonExclude;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.NodeAddress;
 import io.bisq.network.p2p.storage.payload.CapabilityRequiringPayload;

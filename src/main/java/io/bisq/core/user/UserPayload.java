@@ -17,8 +17,8 @@
 
 package io.bisq.core.user;
 
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistableEnvelope;
 import io.bisq.core.alert.Alert;
 import io.bisq.core.arbitration.Arbitrator;
 import io.bisq.core.arbitration.Mediator;

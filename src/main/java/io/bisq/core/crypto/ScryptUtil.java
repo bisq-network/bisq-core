@@ -1,8 +1,8 @@
 package io.bisq.core.crypto;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.UserThread;
-import io.bisq.common.util.Utilities;
+import bisq.common.UserThread;
+import bisq.common.util.Utilities;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;

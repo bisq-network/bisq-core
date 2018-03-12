@@ -19,8 +19,8 @@ package io.bisq.core.btc.wallet;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
+import bisq.common.Timer;
+import bisq.common.UserThread;
 import lombok.extern.slf4j.Slf4j;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;

@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.blockchain;
 
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

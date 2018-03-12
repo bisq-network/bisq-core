@@ -18,7 +18,7 @@
 package io.bisq.core.payment.payload;
 
 import com.google.protobuf.Message;
-import io.bisq.common.locale.Res;
+import bisq.common.locale.Res;
 import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

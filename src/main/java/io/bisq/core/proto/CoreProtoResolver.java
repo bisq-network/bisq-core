@@ -1,8 +1,8 @@
 package io.bisq.core.proto;
 
-import io.bisq.common.proto.ProtoResolver;
-import io.bisq.common.proto.ProtobufferException;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.ProtoResolver;
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.persistable.PersistableEnvelope;
 import io.bisq.core.payment.AccountAgeWitness;
 import io.bisq.core.payment.payload.*;
 import io.bisq.core.trade.statistics.TradeStatistics2;

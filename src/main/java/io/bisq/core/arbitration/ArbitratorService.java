@@ -17,10 +17,10 @@
 
 package io.bisq.core.arbitration;
 
-import io.bisq.common.app.DevEnv;
-import io.bisq.common.handlers.ErrorMessageHandler;
-import io.bisq.common.handlers.ResultHandler;
-import io.bisq.common.util.Utilities;
+import bisq.common.app.DevEnv;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.util.Utilities;
 import io.bisq.core.app.BisqEnvironment;
 import io.bisq.core.filter.FilterManager;
 import io.bisq.network.p2p.NodeAddress;

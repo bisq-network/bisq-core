@@ -26,14 +26,14 @@ import org.junit.Ignore;
  */
 @SuppressWarnings("UnusedAssignment")
 public class UserPayloadModelVOTest {
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testRoundtrip() {
         UserPayload vo = new UserPayload();
         vo.setAccountId("accountId");
         UserPayload newVo = UserPayload.fromProto(vo.toProtoMessage().getUserPayload(), new CoreProtoResolver());
     }
 
-    @Ignore("TODO InvalidKeySpecException at io.bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
+    @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
     public void testRoundtripFull() {
         UserPayload vo = new UserPayload();
         vo.setAccountId("accountId");

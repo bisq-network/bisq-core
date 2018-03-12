@@ -19,10 +19,10 @@ package io.bisq.core.alert;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.bisq.common.app.DevEnv;
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.crypto.PubKeyRing;
-import io.bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
+import bisq.common.proto.network.NetworkEnvelope;
 import io.bisq.core.app.AppOptionKeys;
 import io.bisq.network.p2p.DecryptedMessageWithPubKey;
 import io.bisq.network.p2p.NodeAddress;

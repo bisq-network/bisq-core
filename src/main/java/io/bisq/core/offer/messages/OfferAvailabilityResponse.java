@@ -18,9 +18,9 @@
 package io.bisq.core.offer.messages;
 
 
-import io.bisq.common.app.Capabilities;
-import io.bisq.common.app.Version;
-import io.bisq.common.proto.ProtoUtil;
+import bisq.common.app.Capabilities;
+import bisq.common.app.Version;
+import bisq.common.proto.ProtoUtil;
 import io.bisq.core.offer.AvailabilityResult;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.SupportedCapabilitiesMessage;

@@ -17,11 +17,11 @@
 
 package io.bisq.core.user;
 
-import io.bisq.common.crypto.KeyRing;
-import io.bisq.common.locale.LanguageUtil;
-import io.bisq.common.locale.TradeCurrency;
-import io.bisq.common.proto.persistable.PersistedDataHost;
-import io.bisq.common.storage.Storage;
+import bisq.common.crypto.KeyRing;
+import bisq.common.locale.LanguageUtil;
+import bisq.common.locale.TradeCurrency;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.storage.Storage;
 import io.bisq.core.alert.Alert;
 import io.bisq.core.arbitration.Arbitrator;
 import io.bisq.core.arbitration.Mediator;

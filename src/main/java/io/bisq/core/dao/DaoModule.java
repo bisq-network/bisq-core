@@ -19,7 +19,7 @@ package io.bisq.core.dao;
 
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import io.bisq.core.dao.blockchain.*;
 import io.bisq.core.dao.blockchain.json.JsonBlockChainExporter;
 import io.bisq.core.dao.node.BsqNodeProvider;

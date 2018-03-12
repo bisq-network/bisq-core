@@ -17,7 +17,7 @@
 
 package io.bisq.core.app;
 
-import io.bisq.common.CommonOptionKeys;
+import bisq.common.CommonOptionKeys;
 import io.bisq.core.btc.BtcOptionKeys;
 import io.bisq.core.btc.RegTestHost;
 import io.bisq.core.dao.DaoOptionKeys;

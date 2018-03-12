@@ -18,7 +18,7 @@
 package io.bisq.core.dao.vote;
 
 import com.google.protobuf.Message;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.core.dao.request.compensation.CompensationRequest;
 
 public final class CompensationRequestVoteItem implements PersistablePayload {

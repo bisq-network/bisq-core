@@ -17,7 +17,7 @@
 
 package io.bisq.core.btc.wallet;
 
-import io.bisq.common.util.Utilities;
+import bisq.common.util.Utilities;
 import io.bisq.core.btc.BitcoinNodes;
 import io.bisq.core.btc.BitcoinNodes.BitcoinNodesOption;
 import io.bisq.core.btc.BitcoinNodes.BtcNode;

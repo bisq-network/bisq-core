@@ -18,10 +18,10 @@
 package io.bisq.core.trade;
 
 import com.google.protobuf.Message;
-import io.bisq.common.proto.ProtoUtil;
-import io.bisq.common.proto.ProtobufferException;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.storage.Storage;
+import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.storage.Storage;
 import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.offer.OpenOffer;
 import io.bisq.core.proto.CoreProtoResolver;

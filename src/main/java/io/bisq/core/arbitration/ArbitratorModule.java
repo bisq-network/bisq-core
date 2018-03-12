@@ -18,7 +18,7 @@
 package io.bisq.core.arbitration;
 
 import com.google.inject.Singleton;
-import io.bisq.common.app.AppModule;
+import bisq.common.app.AppModule;
 import org.springframework.core.env.Environment;
 
 public class ArbitratorModule extends AppModule {

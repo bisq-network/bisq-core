@@ -18,8 +18,8 @@
 package io.bisq.core.dao.blockchain;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.bisq.common.proto.persistable.PersistenceProtoResolver;
-import io.bisq.common.storage.Storage;
+import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.Storage;
 import io.bisq.core.dao.blockchain.vo.BsqBlock;
 import lombok.extern.slf4j.Slf4j;
 

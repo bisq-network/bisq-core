@@ -18,11 +18,11 @@
 package io.bisq.core.app;
 
 import ch.qos.logback.classic.Level;
-import io.bisq.common.CommonOptionKeys;
-import io.bisq.common.app.Version;
-import io.bisq.common.crypto.KeyStorage;
-import io.bisq.common.storage.Storage;
-import io.bisq.common.util.Utilities;
+import bisq.common.CommonOptionKeys;
+import bisq.common.app.Version;
+import bisq.common.crypto.KeyStorage;
+import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
 import io.bisq.core.btc.BaseCurrencyNetwork;
 import io.bisq.core.btc.BtcOptionKeys;
 import io.bisq.core.btc.UserAgent;

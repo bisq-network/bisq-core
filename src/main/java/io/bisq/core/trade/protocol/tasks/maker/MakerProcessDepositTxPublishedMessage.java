@@ -17,7 +17,7 @@
 
 package io.bisq.core.trade.protocol.tasks.maker;
 
-import io.bisq.common.taskrunner.TaskRunner;
+import bisq.common.taskrunner.TaskRunner;
 import io.bisq.core.btc.AddressEntry;
 import io.bisq.core.btc.wallet.BtcWalletService;
 import io.bisq.core.trade.Trade;

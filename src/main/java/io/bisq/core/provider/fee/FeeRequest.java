@@ -17,8 +17,8 @@
 package io.bisq.core.provider.fee;
 
 import com.google.common.util.concurrent.*;
-import io.bisq.common.util.Tuple2;
-import io.bisq.common.util.Utilities;
+import bisq.common.util.Tuple2;
+import bisq.common.util.Utilities;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

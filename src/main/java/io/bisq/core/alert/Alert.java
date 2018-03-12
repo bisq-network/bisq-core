@@ -18,8 +18,8 @@
 package io.bisq.core.alert;
 
 import com.google.protobuf.ByteString;
-import io.bisq.common.app.Version;
-import io.bisq.common.crypto.Sig;
+import bisq.common.app.Version;
+import bisq.common.crypto.Sig;
 import io.bisq.generated.protobuffer.PB;
 import io.bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import lombok.EqualsAndHashCode;

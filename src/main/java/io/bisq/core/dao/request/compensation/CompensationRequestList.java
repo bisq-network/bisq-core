@@ -18,8 +18,8 @@
 package io.bisq.core.dao.request.compensation;
 
 import com.google.protobuf.Message;
-import io.bisq.common.proto.persistable.PersistableEnvelope;
-import io.bisq.common.proto.persistable.PersistableList;
+import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistableList;
 import io.bisq.generated.protobuffer.PB;
 
 import java.util.ArrayList;

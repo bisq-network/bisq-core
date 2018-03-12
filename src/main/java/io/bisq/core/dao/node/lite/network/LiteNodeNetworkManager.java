@@ -1,11 +1,11 @@
 package io.bisq.core.dao.node.lite.network;
 
-import io.bisq.common.Timer;
-import io.bisq.common.UserThread;
-import io.bisq.common.app.DevEnv;
-import io.bisq.common.app.Log;
-import io.bisq.common.proto.network.NetworkEnvelope;
-import io.bisq.common.util.Tuple2;
+import bisq.common.Timer;
+import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
+import bisq.common.app.Log;
+import bisq.common.proto.network.NetworkEnvelope;
+import bisq.common.util.Tuple2;
 import io.bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import io.bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 import io.bisq.network.p2p.NodeAddress;

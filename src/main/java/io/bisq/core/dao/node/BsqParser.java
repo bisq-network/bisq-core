@@ -17,7 +17,7 @@
 
 package io.bisq.core.dao.node;
 
-import io.bisq.common.app.DevEnv;
+import bisq.common.app.DevEnv;
 import io.bisq.core.dao.blockchain.vo.Tx;
 import io.bisq.core.dao.blockchain.vo.TxInput;
 import io.bisq.core.dao.node.consensus.BsqBlockController;

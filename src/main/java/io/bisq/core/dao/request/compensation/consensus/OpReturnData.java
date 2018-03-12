@@ -17,8 +17,8 @@
 
 package io.bisq.core.dao.request.compensation.consensus;
 
-import io.bisq.common.app.Version;
-import io.bisq.common.crypto.Hash;
+import bisq.common.app.Version;
+import bisq.common.crypto.Hash;
 import io.bisq.core.dao.OpReturnTypes;
 import lombok.extern.slf4j.Slf4j;
 

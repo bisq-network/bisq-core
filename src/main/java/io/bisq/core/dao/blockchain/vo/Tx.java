@@ -17,8 +17,8 @@
 
 package io.bisq.core.dao.blockchain.vo;
 
-import io.bisq.common.app.Version;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.app.Version;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.generated.protobuffer.PB;
 import lombok.Data;
 

@@ -18,7 +18,7 @@
 package io.bisq.core.dao.blockchain.btcd;
 
 import com.google.common.collect.ImmutableList;
-import io.bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.generated.protobuffer.PB;
 import lombok.AllArgsConstructor;
 import lombok.Value;
