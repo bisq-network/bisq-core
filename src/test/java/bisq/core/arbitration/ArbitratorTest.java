@@ -1,13 +1,3 @@
-package bisq.core.arbitration;
-
-import com.google.common.collect.Lists;
-import bisq.common.crypto.PubKeyRing;
-import bisq.network.p2p.NodeAddress;
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.Ignore;
-
-import java.util.Date;
-
 /*
  * This file is part of Bisq.
  *
@@ -24,6 +14,17 @@ import java.util.Date;
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
+
+package bisq.core.arbitration;
+
+import com.google.common.collect.Lists;
+import bisq.common.crypto.PubKeyRing;
+import bisq.network.p2p.NodeAddress;
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.Ignore;
+
+import java.util.Date;
+
 @SuppressWarnings({"SameParameterValue", "UnusedAssignment"})
 public class ArbitratorTest {
 

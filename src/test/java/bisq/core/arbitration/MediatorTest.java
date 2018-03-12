@@ -1,14 +1,3 @@
-package bisq.core.arbitration;
-
-import com.google.common.collect.Lists;
-import bisq.common.crypto.PubKeyRing;
-import bisq.network.p2p.NodeAddress;
-import org.junit.Ignore;
-
-import java.util.Date;
-
-import static bisq.core.arbitration.ArbitratorTest.getBytes;
-
 /*
  * This file is part of Bisq.
  *
@@ -25,6 +14,18 @@ import static bisq.core.arbitration.ArbitratorTest.getBytes;
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
+
+package bisq.core.arbitration;
+
+import com.google.common.collect.Lists;
+import bisq.common.crypto.PubKeyRing;
+import bisq.network.p2p.NodeAddress;
+import org.junit.Ignore;
+
+import java.util.Date;
+
+import static bisq.core.arbitration.ArbitratorTest.getBytes;
+
 public class MediatorTest {
 
     @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")

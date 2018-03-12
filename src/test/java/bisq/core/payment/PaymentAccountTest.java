@@ -1,10 +1,3 @@
-package bisq.core.payment;
-
-import bisq.core.proto.CoreProtoResolver;
-import org.junit.Ignore;
-
-import static org.junit.Assert.assertEquals;
-
 /*
  * This file is part of Bisq.
  *
@@ -21,6 +14,14 @@ import static org.junit.Assert.assertEquals;
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
+
+package bisq.core.payment;
+
+import bisq.core.proto.CoreProtoResolver;
+import org.junit.Ignore;
+
+import static org.junit.Assert.assertEquals;
+
 public class PaymentAccountTest {
 
     @Ignore("TODO InvalidKeySpecException at bisq.common.crypto.Sig.getPublicKeyFromBytes(Sig.java:135)")
