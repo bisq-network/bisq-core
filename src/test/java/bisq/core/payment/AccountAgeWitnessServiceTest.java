@@ -19,6 +19,7 @@ package bisq.core.payment;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Sig;
+import bisq.common.util.Utilities;
 
 import java.security.KeyPair;
 import java.security.KeyStoreException;
@@ -45,6 +46,10 @@ public class AccountAgeWitnessServiceTest {
     private PublicKey publicKey;
     private KeyPair keypair;
     private AccountAgeWitnessService service;
+
+    static {
+        Utilities.removeCryptographyRestrictions();
+    }
 
     @Before
     public void setup() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, CryptoException {
