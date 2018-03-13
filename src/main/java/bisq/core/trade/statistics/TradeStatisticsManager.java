@@ -18,6 +18,9 @@
 package bisq.core.trade.statistics;
 
 import bisq.core.app.AppOptionKeys;
+import bisq.core.locale.CurrencyTuple;
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.locale.Res;
 import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
@@ -27,9 +30,6 @@ import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.UserThread;
-import bisq.common.locale.CurrencyTuple;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.locale.Res;
 import bisq.common.storage.JsonFileManager;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;

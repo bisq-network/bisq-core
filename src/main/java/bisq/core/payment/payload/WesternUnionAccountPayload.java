@@ -17,8 +17,8 @@
 
 package bisq.core.payment.payload;
 
-import bisq.common.locale.BankUtil;
-import bisq.common.locale.CountryUtil;
+import bisq.core.locale.BankUtil;
+import bisq.core.locale.CountryUtil;
 
 import io.bisq.generated.protobuffer.PB;
 

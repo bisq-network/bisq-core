@@ -17,13 +17,13 @@
 
 package bisq.core.trade.protocol.tasks;
 
+import bisq.core.locale.CurrencyUtil;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.TradingPeer;
 
 import bisq.common.crypto.PubKeyRing;
-import bisq.common.locale.CurrencyUtil;
 import bisq.common.taskrunner.TaskRunner;
 
 import java.util.Date;

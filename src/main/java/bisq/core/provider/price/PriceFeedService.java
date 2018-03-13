@@ -17,6 +17,9 @@
 package bisq.core.provider.price;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.locale.TradeCurrency;
+import bisq.core.monetary.Price;
 import bisq.core.provider.ProvidersRepository;
 import bisq.core.trade.statistics.TradeStatistics2;
 import bisq.core.user.Preferences;
@@ -27,9 +30,6 @@ import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.handlers.FaultHandler;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.locale.TradeCurrency;
-import bisq.common.monetary.Price;
 import bisq.common.util.MathUtils;
 import bisq.common.util.Tuple2;
 

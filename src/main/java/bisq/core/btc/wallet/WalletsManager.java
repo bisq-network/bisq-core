@@ -19,10 +19,10 @@ package bisq.core.btc.wallet;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.crypto.ScryptUtil;
+import bisq.core.locale.Res;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.locale.Res;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.crypto.KeyCrypter;

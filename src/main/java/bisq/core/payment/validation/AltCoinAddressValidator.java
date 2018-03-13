@@ -18,6 +18,7 @@
 package bisq.core.payment.validation;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.ByteballAddressValidator;
 import bisq.core.payment.validation.altcoins.NxtReedSolomonValidator;
 import bisq.core.payment.validation.altcoins.OctocoinAddressValidator;
@@ -45,8 +46,6 @@ import bisq.core.payment.validation.params.XspecParams;
 import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
-
-import bisq.common.locale.Res;
 
 import org.libdohj.params.DashMainNetParams;
 import org.libdohj.params.DashRegTestParams;

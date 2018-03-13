@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote;
 
-import bisq.common.locale.Res;
+import bisq.core.locale.Res;
 
 import javax.inject.Inject;
 

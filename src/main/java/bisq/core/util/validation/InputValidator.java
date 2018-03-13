@@ -17,7 +17,7 @@
 
 package bisq.core.util.validation;
 
-import bisq.common.locale.Res;
+import bisq.core.locale.Res;
 
 public class InputValidator {
 

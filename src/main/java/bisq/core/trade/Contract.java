@@ -17,6 +17,7 @@
 
 package bisq.core.trade;
 
+import bisq.core.monetary.Price;
 import bisq.core.offer.OfferPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.proto.CoreProtoResolver;
@@ -24,7 +25,6 @@ import bisq.core.proto.CoreProtoResolver;
 import bisq.network.p2p.NodeAddress;
 
 import bisq.common.crypto.PubKeyRing;
-import bisq.common.monetary.Price;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.util.JsonExclude;
 import bisq.common.util.Utilities;

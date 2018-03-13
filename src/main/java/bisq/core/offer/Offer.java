@@ -18,6 +18,10 @@
 package bisq.core.offer;
 
 import bisq.core.exceptions.TradePriceOutOfToleranceException;
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.monetary.Altcoin;
+import bisq.core.monetary.Price;
+import bisq.core.monetary.Volume;
 import bisq.core.offer.availability.OfferAvailabilityModel;
 import bisq.core.offer.availability.OfferAvailabilityProtocol;
 import bisq.core.payment.payload.PaymentMethod;
@@ -30,10 +34,6 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.monetary.Altcoin;
-import bisq.common.monetary.Price;
-import bisq.common.monetary.Volume;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
