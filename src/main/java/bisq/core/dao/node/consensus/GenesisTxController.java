@@ -21,7 +21,6 @@ import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxType;
 
 import javax.inject.Inject;
@@ -34,16 +33,19 @@ public class GenesisTxController {
 
     private final WritableBsqBlockChain writableBsqBlockChain;
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final GenesisTxOutputController genesisTxOutputController;
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
     @Inject
     public GenesisTxController(WritableBsqBlockChain writableBsqBlockChain,
                                ReadableBsqBlockChain readableBsqBlockChain,
+                               GenesisTxOutputController genesisTxOutputController,
                                @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                                @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.writableBsqBlockChain = writableBsqBlockChain;
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.genesisTxOutputController = genesisTxOutputController;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
     }
@@ -52,19 +54,11 @@ public class GenesisTxController {
         return tx.getId().equals(genesisTxId) && blockHeight == genesisBlockHeight;
     }
 
-    // TODO Refactor to new GenesisTxOutputsController class to separate verification logic
-    // from state change
     public void applyStateChange(Tx tx) {
-        long totalOutput = 0;
+        BsqTxController.BsqInputBalance remainingAmount =
+                new BsqTxController.BsqInputBalance(readableBsqBlockChain.getIssuedAmount().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
-            TxOutput txOutput = tx.getOutputs().get(i);
-            totalOutput += txOutput.getValue();
-            // Handle change from genesis transaction, only count outputs below the issuance amount as BSQ outputs
-            if (totalOutput <= readableBsqBlockChain.getIssuedAmount().getValue()) {
-                txOutput.setUnspent(true);
-                txOutput.setVerified(true);
-                writableBsqBlockChain.addUnspentTxOutput(txOutput);
-            }
+            genesisTxOutputController.verify(tx.getOutputs().get(i), remainingAmount);
         }
         tx.setTxType(TxType.GENESIS);
 
