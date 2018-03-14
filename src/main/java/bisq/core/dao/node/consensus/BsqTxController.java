@@ -42,6 +42,8 @@ public class BsqTxController {
         this.txOutputsController = txOutputsController;
     }
 
+    // Apply state changes to tx, inputs and outputs
+    // return true if any input contained BSQ
     public boolean isBsqTx(int blockHeight, Tx tx) {
         BsqInputBalance bsqInputBalance = txInputsController.getBsqInputBalance(tx, blockHeight);
 
@@ -74,6 +76,10 @@ public class BsqTxController {
         private long value = 0;
 
         BsqInputBalance() {
+        }
+
+        BsqInputBalance(long value) {
+            this.value = value;
         }
 
         public void add(long value) {

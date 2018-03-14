@@ -27,6 +27,7 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.CompensationRequestController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.node.consensus.GenesisTxOutputController;
 import bisq.core.dao.node.consensus.IssuanceController;
 import bisq.core.dao.node.consensus.OpReturnController;
 import bisq.core.dao.node.consensus.TxInputController;
@@ -84,6 +85,7 @@ public class DaoModule extends AppModule {
         bind(BsqBlockChainChangeDispatcher.class).in(Singleton.class);
 
         bind(GenesisTxController.class).in(Singleton.class);
+        bind(GenesisTxOutputController.class).in(Singleton.class);
         bind(BsqTxController.class).in(Singleton.class);
         bind(TxInputsController.class).in(Singleton.class);
         bind(TxInputController.class).in(Singleton.class);

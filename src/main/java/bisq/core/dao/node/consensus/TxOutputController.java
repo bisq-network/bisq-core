@@ -96,14 +96,14 @@ public class TxOutputController {
         }
     }
 
-    private void applyStateChangeForBsqOutput(TxOutput txOutput) {
+    protected void applyStateChangeForBsqOutput(TxOutput txOutput) {
         txOutput.setVerified(true);
         txOutput.setUnspent(true);
         txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
         writableBsqBlockChain.addUnspentTxOutput(txOutput);
     }
 
-    private void applyStateChangeForBtcOutput(TxOutput txOutput) {
+    protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
         txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
     }
 }
