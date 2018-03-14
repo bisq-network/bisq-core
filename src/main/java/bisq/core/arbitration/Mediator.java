@@ -18,6 +18,7 @@
 package bisq.core.arbitration;
 
 import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.crypto.PubKeyRing;
@@ -48,7 +49,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @ToString
 @Getter
-public final class Mediator implements ProtectedStoragePayload {
+public final class Mediator implements ProtectedStoragePayload, ExpirablePayload {
     private final PubKeyRing pubKeyRing;
     private final NodeAddress nodeAddress;
     private final List<String> languageCodes;

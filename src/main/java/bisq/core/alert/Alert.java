@@ -17,6 +17,7 @@
 
 package bisq.core.alert;
 
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Version;
@@ -47,7 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Getter
 @ToString
 @Slf4j
-public final class Alert implements ProtectedStoragePayload {
+public final class Alert implements ProtectedStoragePayload, ExpirablePayload {
     private final String message;
     private final boolean isUpdateInfo;
     private final String version;

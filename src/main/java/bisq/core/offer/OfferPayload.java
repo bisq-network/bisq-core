@@ -18,6 +18,7 @@
 package bisq.core.offer;
 
 import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import bisq.network.p2p.storage.payload.RequiresOwnerIsOnlinePayload;
 
@@ -53,7 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @EqualsAndHashCode
 @Getter
 @Slf4j
-public final class OfferPayload implements ProtectedStoragePayload, RequiresOwnerIsOnlinePayload {
+public final class OfferPayload implements ProtectedStoragePayload, ExpirablePayload, RequiresOwnerIsOnlinePayload {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum

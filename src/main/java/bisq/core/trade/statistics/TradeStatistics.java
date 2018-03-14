@@ -19,6 +19,7 @@ package bisq.core.trade.statistics;
 
 import bisq.core.offer.OfferPayload;
 
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
@@ -62,7 +63,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @EqualsAndHashCode(exclude = {"signaturePubKeyBytes", "signaturePubKey"})
 @Value
-public final class TradeStatistics implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload {
+public final class TradeStatistics implements LazyProcessedPayload, ProtectedStoragePayload, ExpirablePayload, PersistablePayload {
     private final OfferPayload.Direction direction;
     private final String baseCurrency;
     private final String counterCurrency;

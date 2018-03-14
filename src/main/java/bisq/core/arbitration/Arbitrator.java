@@ -18,6 +18,7 @@
 package bisq.core.arbitration;
 
 import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.crypto.PubKeyRing;
@@ -47,7 +48,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode
 @Slf4j
 @Getter
-public final class Arbitrator implements ProtectedStoragePayload {
+public final class Arbitrator implements ProtectedStoragePayload, ExpirablePayload {
     public static final long TTL = TimeUnit.DAYS.toMillis(10);
 
     private final NodeAddress nodeAddress;

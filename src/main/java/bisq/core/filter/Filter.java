@@ -17,6 +17,7 @@
 
 package bisq.core.filter;
 
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.crypto.Sig;
@@ -50,7 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Getter
 @EqualsAndHashCode
 @ToString
-public final class Filter implements ProtectedStoragePayload {
+public final class Filter implements ProtectedStoragePayload, ExpirablePayload {
     private final List<String> bannedOfferIds;
     private final List<String> bannedNodeAddress;
     private final List<PaymentAccountFilter> bannedPaymentAccounts;
