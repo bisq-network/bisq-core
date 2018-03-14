@@ -109,8 +109,8 @@ public class MakerSetupDepositTxListener extends TradeTask {
 
     private boolean isInNetwork(TransactionConfidence confidence) {
         return confidence != null &&
-            (confidence.getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING) ||
-                confidence.getConfidenceType().equals(TransactionConfidence.ConfidenceType.PENDING));
+                (confidence.getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING) ||
+                        confidence.getConfidenceType().equals(TransactionConfidence.ConfidenceType.PENDING));
     }
 
     private void swapReservedForTradeEntry() {

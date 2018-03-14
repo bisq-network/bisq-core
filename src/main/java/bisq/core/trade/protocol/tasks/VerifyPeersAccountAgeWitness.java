@@ -49,7 +49,7 @@ public class VerifyPeersAccountAgeWitness extends TradeTask {
                 final AccountAgeWitnessService accountAgeWitnessService = processModel.getAccountAgeWitnessService();
                 final TradingPeer tradingPeer = processModel.getTradingPeer();
                 final PaymentAccountPayload peersPaymentAccountPayload = checkNotNull(tradingPeer.getPaymentAccountPayload(),
-                    "Peers peersPaymentAccountPayload must not be null");
+                        "Peers peersPaymentAccountPayload must not be null");
                 final PubKeyRing peersPubKeyRing = checkNotNull(tradingPeer.getPubKeyRing(), "peersPubKeyRing must not be null");
                 byte[] nonce = tradingPeer.getAccountAgeWitnessNonce();
                 byte[] signature = tradingPeer.getAccountAgeWitnessSignature();
@@ -59,12 +59,12 @@ public class VerifyPeersAccountAgeWitness extends TradeTask {
                     // In case the peer has an older version we get 0, so we use our time instead
                     final Date peersCurrentDate = currentDateAsLong > 0 ? new Date(currentDateAsLong) : new Date();
                     boolean result = accountAgeWitnessService.verifyAccountAgeWitness(trade,
-                        peersPaymentAccountPayload,
-                        peersCurrentDate,
-                        peersPubKeyRing,
-                        nonce,
-                        signature,
-                        errorMessage -> errorMsg[0] = errorMessage);
+                            peersPaymentAccountPayload,
+                            peersCurrentDate,
+                            peersPubKeyRing,
+                            nonce,
+                            signature,
+                            errorMessage -> errorMsg[0] = errorMessage);
                     if (result)
                         complete();
                     else

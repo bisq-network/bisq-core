@@ -72,7 +72,7 @@ public class SellerSignAndFinalizePayoutTx extends TradeTask {
 
             Optional<AddressEntry> MultiSigAddressEntryOptional = walletService.getAddressEntry(id, AddressEntry.Context.MULTI_SIG);
             checkArgument(MultiSigAddressEntryOptional.isPresent() && Arrays.equals(sellerMultiSigPubKey,
-                            MultiSigAddressEntryOptional.get().getPubKey()),
+                    MultiSigAddressEntryOptional.get().getPubKey()),
                     "sellerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             DeterministicKey multiSigKeyPair = walletService.getMultiSigKeyPair(id, sellerMultiSigPubKey);

@@ -177,16 +177,16 @@ public class VotingDefaultValues {
                 break;
 
             case COMPENSATION_REQUEST_PERIOD_IN_BLOCKS:
-                compensationRequestPeriodInBlocks = (int)value;
+                compensationRequestPeriodInBlocks = (int) value;
                 break;
             case VOTING_PERIOD_IN_BLOCKS:
-                votingPeriodInBlocks = (int)value;
+                votingPeriodInBlocks = (int) value;
                 break;
             case FUNDING_PERIOD_IN_BLOCKS:
-                fundingPeriodInBlocks = (int)value;
+                fundingPeriodInBlocks = (int) value;
                 break;
             case BREAK_BETWEEN_PERIODS_IN_BLOCKS:
-                breakBetweenPeriodsInBlocks =(int) value;
+                breakBetweenPeriodsInBlocks = (int) value;
                 break;
 
             case QUORUM_FOR_COMPENSATION_REQUEST_VOTING:

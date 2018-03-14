@@ -132,7 +132,7 @@ public final class CompensationRequest extends VoteRequest implements Persistabl
         return payload.getRequestedBsq();
     }
 
-    public Address getIssuanceAddress (BsqWalletService bsqWalletService) {
+    public Address getIssuanceAddress(BsqWalletService bsqWalletService) {
         checkNotNull(payload);
         // Remove leading 'B'
         String underlyingBtcAddress = payload.getBsqAddress().substring(1, payload.getBsqAddress().length());

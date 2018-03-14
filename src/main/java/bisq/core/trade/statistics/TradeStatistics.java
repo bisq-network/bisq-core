@@ -56,8 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 /**
- *
- * @deprecated  Was used in pre v0.6.0 version
+ * @deprecated Was used in pre v0.6.0 version
  */
 @Deprecated
 @Slf4j

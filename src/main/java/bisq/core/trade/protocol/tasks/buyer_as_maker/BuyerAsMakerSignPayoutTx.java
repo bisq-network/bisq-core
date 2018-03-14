@@ -64,7 +64,7 @@ public class BuyerAsMakerSignPayoutTx extends TradeTask {
 
             byte[] buyerMultiSigPubKey = processModel.getMyMultiSigPubKey();
             checkArgument(Arrays.equals(buyerMultiSigPubKey,
-                            walletService.getOrCreateAddressEntry(id, AddressEntry.Context.MULTI_SIG).getPubKey()),
+                    walletService.getOrCreateAddressEntry(id, AddressEntry.Context.MULTI_SIG).getPubKey()),
                     "buyerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
             final byte[] sellerMultiSigPubKey = processModel.getTradingPeer().getMultiSigPubKey();
 

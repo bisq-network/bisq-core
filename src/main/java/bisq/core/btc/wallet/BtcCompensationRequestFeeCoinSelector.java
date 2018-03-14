@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO not used, can be removed
+
 /**
  * We use a specialized version of the CoinSelector based on the DefaultCoinSelector implementation.
  * We lookup for spendable outputs which matches our address.

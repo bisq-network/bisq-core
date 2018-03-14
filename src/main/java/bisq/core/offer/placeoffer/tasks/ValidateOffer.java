@@ -73,15 +73,15 @@ public class ValidateOffer extends Task<PlaceOfferModel> {
                 "MinAmount is less then " + Restrictions.getMinTradeAmount().toFriendlyString());*/
 
             checkArgument(offer.getAmount().compareTo(offer.getPaymentMethod().getMaxTradeLimitAsCoin(offer.getCurrencyCode())) <= 0,
-                "Amount is larger then " + offer.getPaymentMethod().getMaxTradeLimitAsCoin(offer.getCurrencyCode()).toFriendlyString());
+                    "Amount is larger then " + offer.getPaymentMethod().getMaxTradeLimitAsCoin(offer.getCurrencyCode()).toFriendlyString());
             checkArgument(offer.getAmount().compareTo(offer.getMinAmount()) >= 0, "MinAmount is larger then Amount");
 
             checkNotNull(offer.getPrice(), "Price is null");
             checkArgument(offer.getPrice().isPositive(),
-                "Price must be positive. price=" + offer.getPrice().toFriendlyString());
+                    "Price must be positive. price=" + offer.getPrice().toFriendlyString());
 
             checkArgument(offer.getDate().getTime() > 0,
-                "Date must not be 0. date=" + offer.getDate().toString());
+                    "Date must not be 0. date=" + offer.getDate().toString());
 
             checkNotNull(offer.getArbitratorNodeAddresses(), "Arbitrator is null");
             checkNotNull(offer.getMediatorNodeAddresses(), "Mediator is null");
@@ -95,15 +95,15 @@ public class ValidateOffer extends Task<PlaceOfferModel> {
             checkNotNull(offer.getMakerFee(), "MakerFee is null");
             checkNotNull(offer.getVersionNr(), "VersionNr is null");
             checkArgument(offer.getMaxTradePeriod() > 0,
-                "maxTradePeriod must be positive. maxTradePeriod=" + offer.getMaxTradePeriod());
+                    "maxTradePeriod must be positive. maxTradePeriod=" + offer.getMaxTradePeriod());
             // TODO check upper and lower bounds for fiat
             // TODO check rest of new parameters
 
             complete();
         } catch (Exception e) {
             offer.setErrorMessage("An error occurred.\n" +
-                "Error message:\n"
-                + e.getMessage());
+                    "Error message:\n"
+                    + e.getMessage());
             failed(e);
         }
     }
@@ -111,7 +111,7 @@ public class ValidateOffer extends Task<PlaceOfferModel> {
     public static void checkCoinNotNullOrZero(Coin value, String name) {
         checkNotNull(value, name + " is null");
         checkArgument(value.isPositive(),
-            name + " must be positive. " + name + "=" + value.toFriendlyString());
+                name + " must be positive. " + name + "=" + value.toFriendlyString());
     }
 
     public static String nonEmptyStringOf(String value) {

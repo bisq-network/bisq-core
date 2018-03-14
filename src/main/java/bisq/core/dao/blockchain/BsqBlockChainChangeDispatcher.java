@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Passing the BsqNode directly to the classes interested in onBsqBlockChainChanged events cause Guice dependency issues,
  * so we use that object to isolate that concern.
- *
+ * <p>
  * TODO check if refactorings has solved the dependency problems.
  */
 @Slf4j

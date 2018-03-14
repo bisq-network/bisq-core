@@ -88,7 +88,7 @@ public class SellerAsMakerCreatesAndSignsDepositTx extends TradeTask {
             final byte[] buyerPubKey = tradingPeer.getMultiSigPubKey();
             final byte[] sellerPubKey = processModel.getMyMultiSigPubKey();
             checkArgument(Arrays.equals(sellerPubKey,
-                            makerMultiSigAddressEntry.getPubKey()),
+                    makerMultiSigAddressEntry.getPubKey()),
                     "sellerPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             final byte[] arbitratorBtcPubKey = trade.getArbitratorBtcPubKey();

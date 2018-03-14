@@ -73,7 +73,7 @@ public class TakerVerifyAndSignContract extends TradeTask {
             AddressEntry takerMultiSigAddressEntry = walletService.getOrCreateAddressEntry(id, AddressEntry.Context.MULTI_SIG);
             byte[] takerMultiSigPubKey = processModel.getMyMultiSigPubKey();
             checkArgument(Arrays.equals(takerMultiSigPubKey,
-                            takerMultiSigAddressEntry.getPubKey()),
+                    takerMultiSigAddressEntry.getPubKey()),
                     "takerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             final Coin tradeAmount = trade.getTradeAmount();

@@ -66,7 +66,7 @@ public class TakerSendPayDepositRequest extends TradeTask {
             String id = processModel.getOffer().getId();
 
             checkArgument(!walletService.getAddressEntry(id, AddressEntry.Context.MULTI_SIG).isPresent(),
-                "addressEntry must not be set here.");
+                    "addressEntry must not be set here.");
             AddressEntry addressEntry = walletService.getOrCreateAddressEntry(id, AddressEntry.Context.MULTI_SIG);
             byte[] takerMultiSigPubKey = addressEntry.getPubKey();
             processModel.setMyMultiSigPubKey(takerMultiSigPubKey);
@@ -82,48 +82,48 @@ public class TakerSendPayDepositRequest extends TradeTask {
             byte[] sig = Sig.sign(processModel.getKeyRing().getSignatureKeyPair().getPrivate(), offerId.getBytes());
 
             PayDepositRequest message = new PayDepositRequest(
-                offerId,
-                processModel.getMyNodeAddress(),
-                trade.getTradeAmount().value,
-                trade.getTradePrice().getValue(),
-                trade.getTxFee().getValue(),
-                trade.getTakerFee().getValue(),
-                trade.isCurrencyForTakerFeeBtc(),
-                processModel.getRawTransactionInputs(),
-                processModel.getChangeOutputValue(),
-                processModel.getChangeOutputAddress(),
-                takerMultiSigPubKey,
-                takerPayoutAddressString,
-                processModel.getPubKeyRing(),
-                paymentAccountPayload,
-                processModel.getAccountId(),
-                trade.getTakerFeeTxId(),
-                new ArrayList<>(acceptedArbitratorAddresses),
-                new ArrayList<>(acceptedMediatorAddresses),
-                trade.getArbitratorNodeAddress(),
-                trade.getMediatorNodeAddress(),
-                UUID.randomUUID().toString(),
-                Version.getP2PMessageVersion(),
-                sig,
-                new Date().getTime());
+                    offerId,
+                    processModel.getMyNodeAddress(),
+                    trade.getTradeAmount().value,
+                    trade.getTradePrice().getValue(),
+                    trade.getTxFee().getValue(),
+                    trade.getTakerFee().getValue(),
+                    trade.isCurrencyForTakerFeeBtc(),
+                    processModel.getRawTransactionInputs(),
+                    processModel.getChangeOutputValue(),
+                    processModel.getChangeOutputAddress(),
+                    takerMultiSigPubKey,
+                    takerPayoutAddressString,
+                    processModel.getPubKeyRing(),
+                    paymentAccountPayload,
+                    processModel.getAccountId(),
+                    trade.getTakerFeeTxId(),
+                    new ArrayList<>(acceptedArbitratorAddresses),
+                    new ArrayList<>(acceptedMediatorAddresses),
+                    trade.getArbitratorNodeAddress(),
+                    trade.getMediatorNodeAddress(),
+                    UUID.randomUUID().toString(),
+                    Version.getP2PMessageVersion(),
+                    sig,
+                    new Date().getTime());
 
             processModel.getP2PService().sendEncryptedDirectMessage(
-                trade.getTradingPeerNodeAddress(),
-                processModel.getTradingPeer().getPubKeyRing(),
-                message,
-                new SendDirectMessageListener() {
-                    @Override
-                    public void onArrived() {
-                        log.debug("Message arrived at peer. tradeId={}, message{}", id, message);
-                        complete();
-                    }
+                    trade.getTradingPeerNodeAddress(),
+                    processModel.getTradingPeer().getPubKeyRing(),
+                    message,
+                    new SendDirectMessageListener() {
+                        @Override
+                        public void onArrived() {
+                            log.debug("Message arrived at peer. tradeId={}, message{}", id, message);
+                            complete();
+                        }
 
-                    @Override
-                    public void onFault() {
-                        appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
-                        failed();
+                        @Override
+                        public void onFault() {
+                            appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
+                            failed();
+                        }
                     }
-                }
             );
         } catch (Throwable t) {
             failed(t);

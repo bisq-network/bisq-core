@@ -19,4 +19,5 @@
  * Vote package was based on outdated vote concept. Ignore it for now...
  */
 //TODO impl. new concept for blind voting
+
 package bisq.core.dao.vote;

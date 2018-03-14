@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Base class for lite node parser and full node parser. Iterates blocks to find BSQ relevant transactions.
- *
+ * <p>
  * We are in threaded context. Don't mix up with UserThread.
  */
 @Slf4j

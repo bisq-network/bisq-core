@@ -59,7 +59,7 @@ public class MakerSendPublishDepositTxRequest extends TradeTask {
             byte[] makerMultiSigPubKey = processModel.getMyMultiSigPubKey();
             checkArgument(Arrays.equals(makerMultiSigPubKey,
                     addressEntryOptional.get().getPubKey()),
-                "makerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
+                    "makerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             final byte[] preparedDepositTx = processModel.getPreparedDepositTx();
 
@@ -70,49 +70,49 @@ public class MakerSendPublishDepositTxRequest extends TradeTask {
             byte[] sig = Sig.sign(processModel.getKeyRing().getSignatureKeyPair().getPrivate(), preparedDepositTx);
 
             PublishDepositTxRequest message = new PublishDepositTxRequest(
-                processModel.getOfferId(),
-                paymentAccountPayload,
-                processModel.getAccountId(),
-                makerMultiSigPubKey,
-                trade.getContractAsJson(),
-                trade.getMakerContractSignature(),
-                makerPayoutAddressEntry.getAddressString(),
-                preparedDepositTx,
-                processModel.getRawTransactionInputs(),
-                processModel.getMyNodeAddress(),
-                UUID.randomUUID().toString(),
-                sig,
-                new Date().getTime());
+                    processModel.getOfferId(),
+                    paymentAccountPayload,
+                    processModel.getAccountId(),
+                    makerMultiSigPubKey,
+                    trade.getContractAsJson(),
+                    trade.getMakerContractSignature(),
+                    makerPayoutAddressEntry.getAddressString(),
+                    preparedDepositTx,
+                    processModel.getRawTransactionInputs(),
+                    processModel.getMyNodeAddress(),
+                    UUID.randomUUID().toString(),
+                    sig,
+                    new Date().getTime());
 
             trade.setState(Trade.State.MAKER_SENT_PUBLISH_DEPOSIT_TX_REQUEST);
 
             processModel.getP2PService().sendEncryptedMailboxMessage(
-                trade.getTradingPeerNodeAddress(),
-                processModel.getTradingPeer().getPubKeyRing(),
-                message,
-                new SendMailboxMessageListener() {
-                    @Override
-                    public void onArrived() {
-                        log.info("Message arrived at peer. tradeId={}", id);
-                        trade.setState(Trade.State.MAKER_SAW_ARRIVED_PUBLISH_DEPOSIT_TX_REQUEST);
-                        complete();
-                    }
+                    trade.getTradingPeerNodeAddress(),
+                    processModel.getTradingPeer().getPubKeyRing(),
+                    message,
+                    new SendMailboxMessageListener() {
+                        @Override
+                        public void onArrived() {
+                            log.info("Message arrived at peer. tradeId={}", id);
+                            trade.setState(Trade.State.MAKER_SAW_ARRIVED_PUBLISH_DEPOSIT_TX_REQUEST);
+                            complete();
+                        }
 
-                    @Override
-                    public void onStoredInMailbox() {
-                        log.info("Message stored in mailbox. tradeId={}", id);
-                        trade.setState(Trade.State.MAKER_STORED_IN_MAILBOX_PUBLISH_DEPOSIT_TX_REQUEST);
-                        complete();
-                    }
+                        @Override
+                        public void onStoredInMailbox() {
+                            log.info("Message stored in mailbox. tradeId={}", id);
+                            trade.setState(Trade.State.MAKER_STORED_IN_MAILBOX_PUBLISH_DEPOSIT_TX_REQUEST);
+                            complete();
+                        }
 
-                    @Override
-                    public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. message=" + message);
-                        trade.setState(Trade.State.MAKER_SEND_FAILED_PUBLISH_DEPOSIT_TX_REQUEST);
-                        appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
-                        failed(errorMessage);
+                        @Override
+                        public void onFault(String errorMessage) {
+                            log.error("sendEncryptedMailboxMessage failed. message=" + message);
+                            trade.setState(Trade.State.MAKER_SEND_FAILED_PUBLISH_DEPOSIT_TX_REQUEST);
+                            appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
+                            failed(errorMessage);
+                        }
                     }
-                }
             );
         } catch (Throwable t) {
             failed(t);

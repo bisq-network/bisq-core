@@ -72,7 +72,7 @@ public class SellerAsTakerSignAndPublishDepositTx extends TradeTask {
             AddressEntry sellerMultiSigAddressEntry = addressEntryOptional.get();
             byte[] sellerMultiSigPubKey = processModel.getMyMultiSigPubKey();
             checkArgument(Arrays.equals(sellerMultiSigPubKey,
-                            sellerMultiSigAddressEntry.getPubKey()),
+                    sellerMultiSigAddressEntry.getPubKey()),
                     "sellerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             Coin sellerInput = Coin.valueOf(sellerInputs.stream().mapToLong(input -> input.value).sum());
