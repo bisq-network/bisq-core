@@ -18,13 +18,13 @@
 package bisq.core.user;
 
 import bisq.core.btc.Restrictions;
+import bisq.core.locale.Country;
+import bisq.core.locale.CryptoCurrency;
+import bisq.core.locale.FiatCurrency;
+import bisq.core.locale.TradeCurrency;
 import bisq.core.payment.PaymentAccount;
 import bisq.core.proto.CoreProtoResolver;
 
-import bisq.common.locale.Country;
-import bisq.common.locale.CryptoCurrency;
-import bisq.common.locale.FiatCurrency;
-import bisq.common.locale.TradeCurrency;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.persistable.PersistableEnvelope;
 

@@ -22,17 +22,17 @@ import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.btc.BitcoinNodes;
 import bisq.core.btc.BtcOptionKeys;
 import bisq.core.btc.Restrictions;
+import bisq.core.locale.Country;
+import bisq.core.locale.CountryUtil;
+import bisq.core.locale.CryptoCurrency;
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.locale.FiatCurrency;
+import bisq.core.locale.GlobalSettings;
+import bisq.core.locale.TradeCurrency;
 import bisq.core.payment.PaymentAccount;
 
 import bisq.network.p2p.network.BridgeAddressProvider;
 
-import bisq.common.GlobalSettings;
-import bisq.common.locale.Country;
-import bisq.common.locale.CountryUtil;
-import bisq.common.locale.CryptoCurrency;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.locale.FiatCurrency;
-import bisq.common.locale.TradeCurrency;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;

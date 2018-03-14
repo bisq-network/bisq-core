@@ -17,11 +17,10 @@
 
 package bisq.core.payment;
 
+import bisq.core.locale.Country;
+import bisq.core.locale.CountryUtil;
 import bisq.core.payment.payload.CountryBasedPaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
-
-import bisq.common.locale.Country;
-import bisq.common.locale.CountryUtil;
 
 import lombok.EqualsAndHashCode;
 

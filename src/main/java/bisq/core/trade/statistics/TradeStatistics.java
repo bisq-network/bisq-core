@@ -17,6 +17,11 @@
 
 package bisq.core.trade.statistics;
 
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.monetary.Altcoin;
+import bisq.core.monetary.AltcoinExchangeRate;
+import bisq.core.monetary.Price;
+import bisq.core.monetary.Volume;
 import bisq.core.offer.OfferPayload;
 
 import bisq.network.p2p.storage.payload.ExpirablePayload;
@@ -24,11 +29,6 @@ import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.crypto.Sig;
-import bisq.common.locale.CurrencyUtil;
-import bisq.common.monetary.Altcoin;
-import bisq.common.monetary.AltcoinExchangeRate;
-import bisq.common.monetary.Price;
-import bisq.common.monetary.Volume;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
 

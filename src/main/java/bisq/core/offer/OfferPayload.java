@@ -17,13 +17,14 @@
 
 package bisq.core.offer;
 
+import bisq.core.locale.CurrencyUtil;
+
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import bisq.network.p2p.storage.payload.RequiresOwnerIsOnlinePayload;
 
 import bisq.common.crypto.PubKeyRing;
-import bisq.common.locale.CurrencyUtil;
 import bisq.common.proto.ProtoUtil;
 import bisq.common.util.JsonExclude;
 

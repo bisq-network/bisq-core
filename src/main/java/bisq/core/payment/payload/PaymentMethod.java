@@ -18,8 +18,8 @@
 package bisq.core.payment.payload;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.locale.Res;
 
-import bisq.common.locale.Res;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;

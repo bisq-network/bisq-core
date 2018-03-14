@@ -21,13 +21,13 @@ import bisq.core.alert.Alert;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.arbitration.Mediator;
 import bisq.core.filter.Filter;
+import bisq.core.locale.LanguageUtil;
+import bisq.core.locale.TradeCurrency;
 import bisq.core.payment.PaymentAccount;
 
 import bisq.network.p2p.NodeAddress;
 
 import bisq.common.crypto.KeyRing;
-import bisq.common.locale.LanguageUtil;
-import bisq.common.locale.TradeCurrency;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 

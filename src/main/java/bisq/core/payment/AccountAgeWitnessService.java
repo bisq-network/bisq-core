@@ -17,6 +17,7 @@
 
 package bisq.core.payment;
 
+import bisq.core.locale.CurrencyUtil;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
@@ -34,7 +35,6 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.crypto.Sig;
 import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.locale.CurrencyUtil;
 import bisq.common.util.MathUtils;
 import bisq.common.util.Utilities;
 

@@ -17,11 +17,10 @@
 
 package bisq.core.payment;
 
+import bisq.core.locale.CountryUtil;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.payment.payload.SepaAccountPayload;
-
-import bisq.common.locale.CountryUtil;
 
 import java.util.List;
 

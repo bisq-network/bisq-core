@@ -17,10 +17,9 @@
 
 package bisq.core.payment;
 
+import bisq.core.locale.CryptoCurrency;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentMethod;
-
-import bisq.common.locale.CryptoCurrency;
 
 import com.google.common.collect.Lists;
 

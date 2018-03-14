@@ -17,10 +17,9 @@
 
 package bisq.core.payment;
 
+import bisq.core.locale.TradeCurrency;
 import bisq.core.offer.Offer;
 import bisq.core.payment.payload.PaymentMethod;
-
-import bisq.common.locale.TradeCurrency;
 
 import com.google.common.base.Preconditions;
 
