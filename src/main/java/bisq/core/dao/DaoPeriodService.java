@@ -20,8 +20,6 @@ package bisq.core.dao;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.vote.VotingDefaultValues;
-import bisq.core.dao.vote.VotingService;
 
 import bisq.common.app.DevEnv;
 
@@ -58,7 +56,7 @@ public class DaoPeriodService {
         BREAK1(2),
         OPEN_FOR_VOTING(2),
         BREAK2(2),
-        VOTE_CONFIRMATION(2),
+        VOTE_REVEAL(2),
         BREAK3(2);
 
       /* UNDEFINED(0),
@@ -66,7 +64,7 @@ public class DaoPeriodService {
         BREAK1(10),
         OPEN_FOR_VOTING(144 * 4),
         BREAK2(10),
-        VOTE_CONFIRMATION(144 * 3),
+        VOTE_REVEAL(144 * 3),
         BREAK3(10);*/
 
         /**
@@ -87,8 +85,6 @@ public class DaoPeriodService {
 
     private final BtcWalletService btcWalletService;
     private BsqBlockChain bsqBlockChain;
-    private final VotingDefaultValues votingDefaultValues;
-    private final VotingService votingService;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
@@ -102,13 +98,9 @@ public class DaoPeriodService {
     @Inject
     public DaoPeriodService(BtcWalletService btcWalletService,
                             BsqBlockChain bsqBlockChain,
-                            VotingDefaultValues votingDefaultValues,
-                            VotingService votingService,
                             @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.btcWalletService = btcWalletService;
         this.bsqBlockChain = bsqBlockChain;
-        this.votingDefaultValues = votingDefaultValues;
-        this.votingService = votingService;
         this.genesisBlockHeight = genesisBlockHeight;
     }
 
@@ -180,14 +172,6 @@ public class DaoPeriodService {
                 getNumBlocksOfCycle());
     }
 
-    //TODO
-    public long getVotingResultPeriod() {
-        return votingDefaultValues.getCompensationRequestPeriodInBlocks() +
-                votingDefaultValues.getBreakBetweenPeriodsInBlocks() +
-                votingDefaultValues.getVotingPeriodInBlocks() +
-                votingDefaultValues.getBreakBetweenPeriodsInBlocks();
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private methods
@@ -225,13 +209,13 @@ public class DaoPeriodService {
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_CONFIRMATION.getDurationInBlocks())
-            return Phase.VOTE_CONFIRMATION;
+                Phase.VOTE_REVEAL.getDurationInBlocks())
+            return Phase.VOTE_REVEAL;
         else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_CONFIRMATION.getDurationInBlocks() +
+                Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks())
             return Phase.BREAK3;
         else {
@@ -321,19 +305,5 @@ public class DaoPeriodService {
             blocks += Phase.values()[i].getDurationInBlocks();
         }
         return blocks;
-    }
-
-    //TODO
-    private void applyVotingResults(VotingDefaultValues votingDefaultValues, int bestChainHeight, int genesisBlockHeight) {
-        int pastBlocks = bestChainHeight - genesisBlockHeight;
-        int from = genesisBlockHeight;
-        boolean hasVotingPeriods = pastBlocks > from + getVotingResultPeriod();
-        while (hasVotingPeriods) {
-            long currentRoundPeriod = getNumBlocksOfCycle();
-            votingService.applyVotingResultsForRound(votingDefaultValues, from);
-            // Don't take getTotalPeriodInBlocks() as voting might have changed periods
-            from += currentRoundPeriod;
-            hasVotingPeriods = pastBlocks > from + getVotingResultPeriod();
-        }
     }
 }

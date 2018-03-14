@@ -76,7 +76,7 @@ public abstract class BsqNode {
         genesisBlockHeight = readableBsqBlockChain.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
 
-        writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getCreateCompensationRequestFee().value,
+        writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
         writableBsqBlockChain.setVotingFee(feeService.getVotingTxFee().value,
                 genesisBlockHeight);

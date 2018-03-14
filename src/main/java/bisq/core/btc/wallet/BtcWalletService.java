@@ -251,6 +251,22 @@ public class BtcWalletService extends WalletService {
         return resultTx;
     }
 
+    //TODO Similar like completePreparedCompensationRequestTx but without second output for BSQ issuance
+    public Transaction completePreparedGenericProposalTx(Transaction preparedBurnFeeTx, byte[] opReturnData) {
+        try {
+            //TODO dummy
+            return completePreparedCompensationRequestTx(Coin.valueOf(10000), getOrCreateUnusedAddressEntry(AddressEntry.Context.AVAILABLE).getAddress(),
+                    preparedBurnFeeTx, opReturnData);
+        } catch (TransactionVerificationException e) {
+            e.printStackTrace();
+        } catch (WalletException e) {
+            e.printStackTrace();
+        } catch (InsufficientMoneyException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException("Not implemented yet.");
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Add fee input to prepared BSQ send tx

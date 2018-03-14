@@ -20,8 +20,7 @@ package bisq.core.dao;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.request.compensation.CompensationRequestManager;
-import bisq.core.dao.vote.VotingManager;
+import bisq.core.dao.proposal.ProposalCollectionsManager;
 
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -32,8 +31,7 @@ import com.google.inject.Inject;
  */
 public class DaoManager {
     private final DaoPeriodService daoPeriodService;
-    private final VotingManager voteManager;
-    private final CompensationRequestManager compensationRequestManager;
+    private final ProposalCollectionsManager proposalCollectionsManager;
     private final BsqNode bsqNode;
 
 
@@ -44,27 +42,23 @@ public class DaoManager {
     @Inject
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
-                      VotingManager voteManager,
-                      CompensationRequestManager compensationRequestManager) {
+                      ProposalCollectionsManager proposalCollectionsManager) {
         this.daoPeriodService = daoPeriodService;
-        this.voteManager = voteManager;
-        this.compensationRequestManager = compensationRequestManager;
+        this.proposalCollectionsManager = proposalCollectionsManager;
         bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
             daoPeriodService.onAllServicesInitialized();
-            voteManager.onAllServicesInitialized();
-            compensationRequestManager.onAllServicesInitialized();
+            proposalCollectionsManager.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
         }
     }
 
     public void shutDown() {
         daoPeriodService.shutDown();
-        voteManager.shutDown();
-        compensationRequestManager.shutDown();
+        proposalCollectionsManager.shutDown();
         bsqNode.shutDown();
     }
 }

@@ -19,7 +19,6 @@ package bisq.core.proto;
 
 import bisq.core.arbitration.DisputeResult;
 import bisq.core.btc.AddressEntry;
-import bisq.core.dao.vote.VotingType;
 import bisq.core.offer.AvailabilityResult;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferPayload;
@@ -72,18 +71,6 @@ public class ProtoDevUtil {
         sb.append("        PB_ERROR = 0;\n");
         for (int i = 0; i < Trade.TradePeriodState.values().length; i++) {
             Trade.TradePeriodState s = Trade.TradePeriodState.values()[i];
-            sb.append("        ");
-            sb.append(s.toString());
-            sb.append(" = ");
-            sb.append(s.ordinal() + 1);
-            sb.append(";\n");
-        }
-        sb.append("    }\n\n\n");
-
-        sb.append("    enum VotingType {\n");
-        sb.append("        PB_ERROR = 0;\n");
-        for (int i = 0; i < VotingType.values().length; i++) {
-            VotingType s = VotingType.values()[i];
             sb.append("        ");
             sb.append(s.toString());
             sb.append(" = ");

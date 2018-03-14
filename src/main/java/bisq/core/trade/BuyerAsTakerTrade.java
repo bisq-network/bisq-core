@@ -73,7 +73,7 @@ public final class BuyerAsTakerTrade extends BuyerTrade implements TakerTrade {
                                      BtcWalletService btcWalletService,
                                      CoreProtoResolver coreProtoResolver) {
         PB.Trade proto = buyerAsTakerTradeProto.getTrade();
-        return Trade.fromProto(new BuyerAsTakerTrade(
+        return fromProto(new BuyerAsTakerTrade(
                         Offer.fromProto(proto.getOffer()),
                         Coin.valueOf(proto.getTradeAmountAsLong()),
                         Coin.valueOf(proto.getTxFeeAsLong()),

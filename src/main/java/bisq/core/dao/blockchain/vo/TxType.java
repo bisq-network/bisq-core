@@ -29,6 +29,7 @@ public enum TxType {
     TRANSFER_BSQ,
     PAY_TRADE_FEE,
     COMPENSATION_REQUEST,
+    PROPOSAL,
     VOTE,
     VOTE_REVEAL,
     ISSUANCE,

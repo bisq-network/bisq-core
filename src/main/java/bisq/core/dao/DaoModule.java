@@ -43,10 +43,9 @@ import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
-import bisq.core.dao.request.compensation.CompensationRequestManager;
-import bisq.core.dao.vote.VotingDefaultValues;
-import bisq.core.dao.vote.VotingManager;
-import bisq.core.dao.vote.VotingService;
+import bisq.core.dao.proposal.ProposalCollectionsManager;
+import bisq.core.dao.proposal.compensation.CompensationRequestManager;
+import bisq.core.dao.proposal.generic.GenericProposalManager;
 
 import bisq.common.app.AppModule;
 
@@ -97,11 +96,10 @@ public class DaoModule extends AppModule {
 
         bind(JsonBlockChainExporter.class).in(Singleton.class);
         bind(DaoPeriodService.class).in(Singleton.class);
-        bind(VotingService.class).in(Singleton.class);
 
+        bind(ProposalCollectionsManager.class).in(Singleton.class);
         bind(CompensationRequestManager.class).in(Singleton.class);
-        bind(VotingManager.class).in(Singleton.class);
-        bind(VotingDefaultValues.class).in(Singleton.class);
+        bind(GenericProposalManager.class).in(Singleton.class);
 
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PASSWORD)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PASSWORD));

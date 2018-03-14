@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 //TODO add tests; check if current logic is correct.
 @Slf4j
 public class SnapshotManager implements BsqBlockChain.Listener {
-    private static final int SNAPSHOT_GRID = 10;
+    private static final int SNAPSHOT_GRID = 100;
 
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final WritableBsqBlockChain writableBsqBlockChain;

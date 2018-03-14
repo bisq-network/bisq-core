@@ -201,7 +201,6 @@ public class FeeService {
         return currencyForMakerFeeBtc ? Coin.valueOf(MIN_MAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_MAKER_FEE_IN_CENTI_BSQ);
     }
 
-
     public static Coin getTakerFeePerBtc(boolean currencyForTakerFeeBtc) {
         return currencyForTakerFeeBtc ? Coin.valueOf(DEFAULT_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(DEFAULT_TAKER_FEE_IN_CENTI_BSQ);
     }
@@ -210,8 +209,7 @@ public class FeeService {
         return currencyForTakerFeeBtc ? Coin.valueOf(MIN_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_TAKER_FEE_IN_CENTI_BSQ);
     }
 
-
-    public Coin getCreateCompensationRequestFee() {
+    public Coin getMakeProposalFee() {
         return Coin.valueOf(100);
     }
 

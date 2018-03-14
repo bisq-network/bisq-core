@@ -83,7 +83,7 @@ public final class TradeStatistics2 implements LazyProcessedPayload, Persistable
     private final String depositTxId;
 
     // hash get set in constructor from json of all the other data fields (with hash = null).
-    private final byte[] hash; // Ripemd160(Sha256(concatenated accountHash, signature and sigPubKey)); 20 bytes
+    private final byte[] hash;
     // PB field signature_pub_key_bytes not used anymore from v0.6 on
 
     // Should be only used in emergency case if we need to add data but do not want to break backward compatibility

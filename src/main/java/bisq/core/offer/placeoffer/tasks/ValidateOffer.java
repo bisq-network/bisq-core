@@ -60,17 +60,17 @@ public class ValidateOffer extends Task<PlaceOfferModel> {
             /*checkArgument(offer.getMakerFee().value >= FeeService.getMinMakerFee(offer.isCurrencyForMakerFeeBtc()).value,
                 "createOfferFee must not be less than FeeService.MIN_CREATE_OFFER_FEE_IN_BTC. " +
                     "MakerFee=" + offer.getMakerFee().toFriendlyString());*/
-            /*checkArgument(offer.getBuyerSecurityDeposit().value >= Restrictions.getMinBuyerSecurityDeposit().value,
-                "buyerSecurityDeposit must not be less than Restrictions.MIN_BUYER_SECURITY_DEPOSIT. " +
+            /*checkArgument(offer.getBuyerSecurityDeposit().value >= ProposalRestrictions.getMinBuyerSecurityDeposit().value,
+                "buyerSecurityDeposit must not be less than ProposalRestrictions.MIN_BUYER_SECURITY_DEPOSIT. " +
                     "buyerSecurityDeposit=" + offer.getBuyerSecurityDeposit().toFriendlyString());
-            checkArgument(offer.getBuyerSecurityDeposit().value <= Restrictions.getMaxBuyerSecurityDeposit().value,
-                "buyerSecurityDeposit must not be larger than Restrictions.MAX_BUYER_SECURITY_DEPOSIT. " +
+            checkArgument(offer.getBuyerSecurityDeposit().value <= ProposalRestrictions.getMaxBuyerSecurityDeposit().value,
+                "buyerSecurityDeposit must not be larger than ProposalRestrictions.MAX_BUYER_SECURITY_DEPOSIT. " +
                     "buyerSecurityDeposit=" + offer.getBuyerSecurityDeposit().toFriendlyString());
-            checkArgument(offer.getSellerSecurityDeposit().value == Restrictions.getSellerSecurityDeposit().value,
-                "sellerSecurityDeposit must be equal to Restrictions.SELLER_SECURITY_DEPOSIT. " +
+            checkArgument(offer.getSellerSecurityDeposit().value == ProposalRestrictions.getSellerSecurityDeposit().value,
+                "sellerSecurityDeposit must be equal to ProposalRestrictions.SELLER_SECURITY_DEPOSIT. " +
                     "sellerSecurityDeposit=" + offer.getSellerSecurityDeposit().toFriendlyString());*/
-            /*checkArgument(offer.getMinAmount().compareTo(Restrictions.getMinTradeAmount()) >= 0,
-                "MinAmount is less then " + Restrictions.getMinTradeAmount().toFriendlyString());*/
+            /*checkArgument(offer.getMinAmount().compareTo(ProposalRestrictions.getMinTradeAmount()) >= 0,
+                "MinAmount is less then " + ProposalRestrictions.getMinTradeAmount().toFriendlyString());*/
 
             checkArgument(offer.getAmount().compareTo(offer.getPaymentMethod().getMaxTradeLimitAsCoin(offer.getCurrencyCode())) <= 0,
                     "Amount is larger then " + offer.getPaymentMethod().getMaxTradeLimitAsCoin(offer.getCurrencyCode()).toFriendlyString());

@@ -37,9 +37,9 @@ public class IssuanceController {
             TxOutput btcTxOutput = outputs.get(1);
             final String btcAddress = btcTxOutput.getAddress();
             // TODO find address by block range/cycle
-            final Optional<CompensationRequest> compensationRequest = compensationRequestManager.findByAddress(btcAddress);
+            final Optional<Proposal> compensationRequest = compensationRequestManager.findByAddress(btcAddress);
             if (compensationRequest.isPresent()) {
-                final CompensationRequest compensationRequest1 = compensationRequest.get();
+                final Proposal compensationRequest1 = compensationRequest.get();
                 final long bsqAmount = bsqTxOutput.getValue();
                 final long requestedBtc = compensationRequest1.getPayload().getRequestedBsq().value;
                 long alreadyFundedBtc = 0;
