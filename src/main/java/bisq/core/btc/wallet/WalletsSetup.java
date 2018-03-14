@@ -72,13 +72,13 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import java.nio.file.Paths;
 
 import java.io.File;
 import java.io.IOException;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import java.util.ArrayList;
 import java.util.Date;

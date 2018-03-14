@@ -48,9 +48,9 @@ import org.bitcoinj.utils.MonetaryFormat;
 
 import com.google.common.base.Stopwatch;
 
-import java.util.concurrent.TimeUnit;
-
 import java.math.BigInteger;
+
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

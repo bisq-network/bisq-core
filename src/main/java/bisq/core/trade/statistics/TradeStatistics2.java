@@ -38,11 +38,11 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
 
-import org.springframework.util.CollectionUtils;
-
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
+
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

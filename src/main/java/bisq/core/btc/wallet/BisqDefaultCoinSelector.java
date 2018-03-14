@@ -28,12 +28,12 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
 
+import java.math.BigInteger;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import java.math.BigInteger;
 
 import lombok.extern.slf4j.Slf4j;
 

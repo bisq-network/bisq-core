@@ -46,6 +46,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+import java.time.Instant;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -54,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
-
-import java.time.Instant;
 
 import lombok.extern.slf4j.Slf4j;
 

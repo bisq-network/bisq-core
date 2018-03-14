@@ -15,6 +15,14 @@
         <value>
           <package name="bisq.monitor" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="bisq.price" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="bisq.statistics" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="bisq.seednode" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="bisq.desktop" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="bisq.core" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="bisq.network" withSubpackages="true" static="false" />
@@ -27,7 +35,7 @@
           <emptyLine />
           <package name="net.gpedro.integrations.slack" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="org.springframework" withSubpackages="true" static="false" />
+          <package name="org.knowm.xchange" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="org.libdohj" withSubpackages="true" static="false" />
           <emptyLine />
@@ -35,13 +43,25 @@
           <emptyLine />
           <package name="com.neemre.btcdcli4j" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="net.glxn.qrgen" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="org.springframework" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="org.apache.http" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javax.servlet" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="org.berndpruenster.netlayer" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="com.runjva" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="com.fasterxml" withSubpackages="true" static="false" />
+          <package name="com.googlecode.jcsv" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.fasterxml.jackson" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="com.google.gson" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="org.json.simple" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="joptsimple" withSubpackages="true" static="false" />
           <emptyLine />
@@ -53,33 +73,71 @@
           <emptyLine />
           <package name="org.apache.commons" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="de.jensd.fx.fontawesome" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="org.controlsfx" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="org.reactfx" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.application" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.fxml" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.animation" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.stage" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.scene" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.sun.javafx.scene" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.sun.javafx.tk.quantum" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.css" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.sun.javafx.css" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.geometry" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="org.fxmisc.easybind" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="javafx.beans" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="javafx.event" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="javafx.collections" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.sun.javafx.collections" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javafx.util" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="java.awt" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="javax.imageio" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="org.spongycastle" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="org.bouncycastle" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="javax.crypto" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="java.security" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="java.nio" withSubpackages="true" static="false" />
+          <package name="java.time" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="java.io" withSubpackages="true" static="false" />
+          <package name="java.text" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="javax.net" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="java.net" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="java.text" withSubpackages="true" static="false" />
+          <package name="java.nio" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="java.util" withSubpackages="true" static="false" />
-          <emptyLine />
-          <package name="java.time" withSubpackages="true" static="false" />
+          <package name="java.io" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="java.math" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="java.util" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="java.lang" withSubpackages="true" static="false" />
           <emptyLine />
@@ -92,6 +150,8 @@
           <package name="org.jetbrains.annotations" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="javax.annotation" withSubpackages="true" static="false" />
+          <emptyLine />
+          <package name="com.natpryce.makeiteasy" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="org.powermock" withSubpackages="true" static="false" />
           <emptyLine />

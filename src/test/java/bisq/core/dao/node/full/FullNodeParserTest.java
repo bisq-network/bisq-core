@@ -43,11 +43,11 @@ import com.neemre.btcdcli4j.core.domain.Block;
 
 import java.io.File;
 
+import java.math.BigDecimal;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
-
-import java.math.BigDecimal;
 
 import mockit.Expectations;
 import mockit.Injectable;

@@ -48,6 +48,8 @@ import javafx.collections.ObservableMap;
 import java.security.PublicKey;
 import java.security.SignatureException;
 
+import java.math.BigInteger;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +58,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import java.math.BigInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

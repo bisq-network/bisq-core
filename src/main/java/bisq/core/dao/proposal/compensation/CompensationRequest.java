@@ -25,10 +25,10 @@ import bisq.core.dao.vote.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.springframework.util.CollectionUtils;
-
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
+
+import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
 

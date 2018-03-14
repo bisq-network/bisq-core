@@ -26,10 +26,10 @@ import bisq.common.app.Version;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.springframework.util.CollectionUtils;
-
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Utils;
+
+import org.springframework.util.CollectionUtils;
 
 import java.security.PublicKey;
 

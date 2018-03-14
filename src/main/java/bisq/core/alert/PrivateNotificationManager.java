@@ -41,9 +41,9 @@ import javafx.beans.property.SimpleObjectProperty;
 
 import java.security.SignatureException;
 
-import java.util.UUID;
-
 import java.math.BigInteger;
+
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -21,14 +21,14 @@ import bisq.common.app.DevEnv;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.text.MessageFormat;
 
 import java.net.URL;
 import java.net.URLConnection;
 
-import java.text.MessageFormat;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import java.util.Locale;
 import java.util.MissingResourceException;

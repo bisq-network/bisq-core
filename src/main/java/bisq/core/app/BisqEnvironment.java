@@ -32,6 +32,8 @@ import bisq.common.crypto.KeyStorage;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;
 
+import org.bitcoinj.core.NetworkParameters;
+
 import org.springframework.core.env.JOptCommandLinePropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -41,8 +43,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePropertySource;
-
-import org.bitcoinj.core.NetworkParameters;
 
 import joptsimple.OptionSet;
 
