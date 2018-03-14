@@ -42,7 +42,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -194,12 +193,6 @@ public final class CompensationRequestPayload implements LazyProcessedPayload, P
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    //TODO not needed?
-    @Override
-    public long getTTL() {
-        return TimeUnit.DAYS.toMillis(30);
-    }
 
     @Override
     public PublicKey getOwnerPubKey() {
