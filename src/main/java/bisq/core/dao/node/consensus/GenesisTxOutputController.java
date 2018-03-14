@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Checks if an output is a BSQ output and apply state change.
  */
-
 @Slf4j
 public class GenesisTxOutputController extends TxOutputController {
     @Inject
