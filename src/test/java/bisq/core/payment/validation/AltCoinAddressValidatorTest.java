@@ -823,7 +823,7 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("0123456789Abcdefghijklmnopqrstuvwxyz").isValid);
         assertFalse(validator.validate("").isValid);
     }
-	
+
     @Test
     public void testRTO() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
