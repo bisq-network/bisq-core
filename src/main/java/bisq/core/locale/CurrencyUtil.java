@@ -185,6 +185,7 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("NAH", "Strayacoin"));
         result.add(new CryptoCurrency("ROI", "ROIcoin"));
         result.add(new CryptoCurrency("RTO", "Arto"));
+        result.add(new CryptoCurrency("GEO", "GeoCoin", true));
 
         result.sort(TradeCurrency::compareTo);
 
