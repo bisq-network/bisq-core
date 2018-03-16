@@ -113,7 +113,7 @@ public class TradeStatisticsManager {
                 addToMap((TradeStatistics2) payload, true);
         });
 
-        p2PService.getP2PDataStorage().getPersistableNetworkPayloadCollection().getMap().values().forEach(e -> {
+        p2PService.getP2PDataStorage().getPersistableNetworkPayloadList().getMap().values().forEach(e -> {
             if (e instanceof TradeStatistics2)
                 addToMap((TradeStatistics2) e, false);
         });

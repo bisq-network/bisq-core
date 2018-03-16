@@ -28,6 +28,7 @@ import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
 import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
@@ -58,8 +59,7 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 @Data
-//TODO removed PersistableProtectedPayload
-public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, CapabilityRequiringPayload {
+public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload, CapabilityRequiringPayload {
     protected final String uid;
     protected final String name;
     protected final String title;

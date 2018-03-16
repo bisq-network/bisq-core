@@ -29,7 +29,7 @@ import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
 
 import bisq.network.p2p.peers.peerexchange.PeerList;
-import bisq.network.p2p.storage.PersistableNetworkPayloadCollection;
+import bisq.network.p2p.storage.PersistableNetworkPayloadList;
 import bisq.network.p2p.storage.PersistedEntryMap;
 import bisq.network.p2p.storage.SequenceNumberMap;
 
@@ -102,7 +102,7 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                 case BSQ_BLOCK_CHAIN:
                     return BsqBlockChain.fromProto(proto.getBsqBlockChain());
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
-                    return PersistableNetworkPayloadCollection.fromProto(proto.getPersistableNetworkPayloadList(), this);
+                    return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case PROPOSAL_LIST:
                     return ProposalList.fromProto(proto.getProposalList());
                 default:

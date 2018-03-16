@@ -59,7 +59,7 @@ public class LiteNodeParser extends BsqParser {
 
     void parseBsqBlock(BsqBlock bsqBlock) throws BlockNotConnectingException {
         int blockHeight = bsqBlock.getHeight();
-        log.info("Parse block at height={} ", blockHeight);
+        log.debug("Parse block at height={} ", blockHeight);
         List<Tx> txList = new ArrayList<>(bsqBlock.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
         bsqBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
