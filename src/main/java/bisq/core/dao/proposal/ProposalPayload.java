@@ -59,7 +59,9 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 @Data
-public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload, CapabilityRequiringPayload {
+public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
+        CapabilityRequiringPayload {
+
     protected final String uid;
     protected final String name;
     protected final String title;
