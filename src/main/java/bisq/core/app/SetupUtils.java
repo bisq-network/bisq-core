@@ -87,21 +87,18 @@ public class SetupUtils {
 
     public static BooleanProperty readFromResources(P2PDataStorage p2PDataStorage) {
         BooleanProperty result = new SimpleBooleanProperty();
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                Thread.currentThread().setName("readFromResourcesThread");
-                // Used to load different files per base currency (EntryMap_BTC_MAINNET, EntryMap_LTC,...)
-                final BaseCurrencyNetwork baseCurrencyNetwork = BisqEnvironment.getBaseCurrencyNetwork();
-                final String storageFileName = "PersistableNetworkPayloadMap_"
-                        + baseCurrencyNetwork.getCurrencyCode() + "_"
-                        + baseCurrencyNetwork.getNetwork();
-                long ts = new Date().getTime();
-                p2PDataStorage.readFromResources(storageFileName);
-                log.info("readPersistableNetworkPayloadMapFromResources took {} ms", (new Date().getTime() - ts));
-                UserThread.execute(() -> result.set(true));
-            }
-        };
+        Thread thread = new Thread(() -> {
+            Thread.currentThread().setName("readFromResourcesThread");
+            // Used to load different files per base currency (EntryMap_BTC_MAINNET, EntryMap_LTC,...)
+            final BaseCurrencyNetwork baseCurrencyNetwork = BisqEnvironment.getBaseCurrencyNetwork();
+            final String postFix = "_" + baseCurrencyNetwork.getCurrencyCode() + "_"
+                    + baseCurrencyNetwork.getNetwork();
+            long ts = new Date().getTime();
+            p2PDataStorage.readFromResources(P2PDataStorage.PERSISTABLE_NETWORK_PAYLOAD_MAP_FILE_NAME, postFix);
+            p2PDataStorage.readFromResources(P2PDataStorage.PERSISTED_ENTRY_MAP_FILE_NAME, postFix);
+            log.info("readFromResources took {} ms", (new Date().getTime() - ts));
+            UserThread.execute(() -> result.set(true));
+        });
         thread.start();
         return result;
     }

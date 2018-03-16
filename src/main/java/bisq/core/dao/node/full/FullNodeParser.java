@@ -100,7 +100,7 @@ public class FullNodeParser extends BsqParser {
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));
         bsqBlockController.addBlockIfValid(bsqBlock);
-        log.info("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
+        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
                 System.currentTimeMillis() - startTs, bsqBlock.getHeight(), bsqTxsInBlock.size());
         return bsqBlock;
     }
@@ -132,7 +132,7 @@ public class FullNodeParser extends BsqParser {
             txList.add(tx);
             checkForGenesisTx(blockHeight, bsqTxsInBlock, tx);
         }
-        log.info("Requesting {} transactions took {} ms",
+        log.debug("Requesting {} transactions took {} ms",
                 btcdBlock.getTx().size(), System.currentTimeMillis() - startTs);
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).

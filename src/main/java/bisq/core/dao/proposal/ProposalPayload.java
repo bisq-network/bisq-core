@@ -23,13 +23,12 @@ import bisq.core.dao.proposal.generic.GenericProposalPayload;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
-import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Capabilities;
-import bisq.common.crypto.Hash;
 import bisq.common.crypto.Sig;
 import bisq.common.proto.ProtobufferException;
-import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
@@ -45,7 +44,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import lombok.Data;
@@ -61,8 +59,9 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 @Data
-//TODO removed PersistableProtectedPayload
-public abstract class ProposalPayload implements LazyProcessedPayload, PersistableNetworkPayload, PersistableEnvelope, CapabilityRequiringPayload {
+public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
+        CapabilityRequiringPayload {
+
     protected final String uid;
     protected final String name;
     protected final String title;
@@ -147,8 +146,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Persistab
         return builder;
     }
 
-    public PB.PersistableNetworkPayload toProtoMessage() {
-        return PB.PersistableNetworkPayload.newBuilder().setProposalPayload(getPayloadBuilder()).build();
+    @Override
+    public PB.StoragePayload toProtoMessage() {
+        return PB.StoragePayload.newBuilder().setProposalPayload(getPayloadBuilder()).build();
     }
 
     //TODO add other proposal types
@@ -202,22 +202,4 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Persistab
     }
 
     public abstract ProposalType getType();
-
-    @Override
-    public byte[] getHash() {
-        if (hash == null)
-            // We create hash from all fields excluding hash itself.
-            // We handle hash as nullable in PB methods even it is never null. Using getHash() would create a endless
-            // recursion.
-            // We use lazy setting because if called in constructor it would not include the data fields from the
-            // sub classes as super() is called before setting those.
-            this.hash = Hash.getSha256Ripemd160hash(toProtoMessage().toByteArray());
-
-        return hash;
-    }
-
-    @Override
-    public boolean verifyHashSize() {
-        return Objects.requireNonNull(hash).length == 20;
-    }
 }
