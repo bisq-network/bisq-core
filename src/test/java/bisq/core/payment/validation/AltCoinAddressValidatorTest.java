@@ -841,7 +841,7 @@ public class AltCoinAddressValidatorTest {
     @Test
     public void testUBQ() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
-        validator.setCurrencyCode("ETH");
+        validator.setCurrencyCode("UBQ");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
         assertTrue(validator.validate("2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
