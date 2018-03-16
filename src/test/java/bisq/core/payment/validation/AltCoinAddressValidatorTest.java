@@ -157,6 +157,7 @@ public class AltCoinAddressValidatorTest {
         assertTrue(validator.validate("PKfuRcjwzKFq3dbqE9gq8Ztxn922W4GZhm").isValid);
 
         assertFalse(validator.validate("pGXsgFjSMzh1dSqggRvHjPvE3cnwvuXC7s").isValid);
+        assertFalse(validator.validate("PKfRRcjwzKFq3dbqE9gq8Ztxn922W4GZhm").isValid);
         assertFalse(validator.validate("PXP75NnwDryYswQb9RaPFBchqLRSvBmDP").isValid);
         assertFalse(validator.validate("PKr3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
         assertFalse(validator.validate("PKr3vQ7S").isValid);
