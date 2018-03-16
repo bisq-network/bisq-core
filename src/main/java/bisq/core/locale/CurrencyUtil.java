@@ -156,7 +156,7 @@ public class CurrencyUtil {
 
         result.add(new CryptoCurrency("TRC", "Terracoin"));
         result.add(new CryptoCurrency("MVT", "The Movement", true));
-
+        result.add(new CryptoCurrency("UBQ", "Ubiq"));
         result.add(new CryptoCurrency("UNO", "Unobtanium"));
         result.add(new CryptoCurrency("CRED", "Verify", true));
         result.add(new CryptoCurrency("WAC", "WACoins"));
