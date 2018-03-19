@@ -124,4 +124,6 @@ public abstract class Proposal implements PersistablePayload {
     }
 
     abstract public ProposalType getType();
+
+
 }
