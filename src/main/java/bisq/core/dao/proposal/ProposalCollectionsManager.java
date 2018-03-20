@@ -276,7 +276,11 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
 
     private void removeProposalFromList(Proposal proposal) {
         removeFromList(proposal);
-        proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 500);
+        queueUpForSave();
+    }
+
+    public void queueUpForSave() {
+        proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 100);
     }
 
     public boolean isMine(Proposal proposal) {
