@@ -126,7 +126,7 @@ public final class GenericProposalPayload extends ProposalPayload {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.COMPENSATION_REQUEST;
+        return ProposalType.GENERIC;
     }
 
 }

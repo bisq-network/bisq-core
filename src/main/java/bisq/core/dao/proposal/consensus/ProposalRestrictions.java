@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.proposal;
+package bisq.core.dao.proposal.consensus;
 
 public class ProposalRestrictions {
 
@@ -23,4 +23,7 @@ public class ProposalRestrictions {
         return 100;
     }
 
+    public static boolean isDescriptionSizeValid(String description) {
+        return description.length() <= getMaxLengthDescriptionText();
+    }
 }

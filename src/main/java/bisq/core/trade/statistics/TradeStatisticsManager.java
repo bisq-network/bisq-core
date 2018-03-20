@@ -299,6 +299,7 @@ public class TradeStatisticsManager {
         newlyAdded.add("ROI");
         newlyAdded.add("WMCC");
         newlyAdded.add("RTO");
+        newlyAdded.add("KOTO");
         newlyAdded.add("QWARK");
 
         coinsWithValidator.addAll(newlyAdded);

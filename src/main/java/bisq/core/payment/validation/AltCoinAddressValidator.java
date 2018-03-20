@@ -26,6 +26,7 @@ import bisq.core.payment.validation.altcoins.PNCAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.XCNAddressValidator;
 import bisq.core.payment.validation.altcoins.YTNAddressValidator;
+import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
@@ -536,6 +537,8 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
+                case "KOTO":
+                    return KOTOAddressValidator.ValidateAddress(input);
                 case "QWARK":
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
                         return regexTestFailed;
