@@ -142,7 +142,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("PART", "Particl"));
         result.add(new CryptoCurrency("PASC", "Pascal Coin", true));
         result.add(new CryptoCurrency("PEPECASH", "Pepe Cash"));
-        result.add(new CryptoCurrency("PHR", "Phore"));
         result.add(new CryptoCurrency("PIVX", "PIVX"));
         result.add(new CryptoCurrency("POST", "PostCoin"));
         result.add(new CryptoCurrency("PNC", "Pranacoin"));
@@ -192,6 +191,7 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("GEO", "GeoCoin", true));
         result.add(new CryptoCurrency("GRANS", "10grans", true));
         result.add(new CryptoCurrency("ICH", "ICH"));
+        result.add(new CryptoCurrency("PHR", "Phore"));
 
         result.sort(TradeCurrency::compareTo);
 
