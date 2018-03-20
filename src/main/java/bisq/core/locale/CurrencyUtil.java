@@ -192,6 +192,7 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("GRANS", "10grans", true));
         result.add(new CryptoCurrency("ICH", "ICH"));
         result.add(new CryptoCurrency("PHR", "Phore"));
+        result.add(new CryptoCurrency("RIN", "Ringo"));
 
         result.sort(TradeCurrency::compareTo);
 

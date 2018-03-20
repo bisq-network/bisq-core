@@ -306,6 +306,7 @@ public class TradeStatisticsManager {
         newlyAdded.add("GEO");
         newlyAdded.add("GRANS");
         newlyAdded.add("ICH");
+        newlyAdded.add("RIN");
 
         coinsWithValidator.addAll(newlyAdded);
 
