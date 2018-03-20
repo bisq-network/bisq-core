@@ -31,6 +31,7 @@ import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
+import bisq.core.payment.validation.params.ICHParams;
 import bisq.core.payment.validation.params.IOPParams;
 import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.OctocoinParams;
@@ -573,6 +574,18 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
+                case "ICH":
+                    if (input.matches("^[A][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
+                        //noinspection ConstantConditions
+                        try {
+                            Address.fromBase58(ICHParams.get(), input);
+                            return new ValidationResult(true);
+                        } catch (AddressFormatException e) {
+                            return new ValidationResult(false, getErrorMessage(e));
+                        }
+                    } else {
+                        return regexTestFailed;
+                    }
 
                     // Add new coins at the end...
                 default:
