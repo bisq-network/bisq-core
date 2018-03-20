@@ -298,7 +298,7 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {
         return readableBsqBlockChain.getTxMap().get(payload.getTxId()) == null ||
-                daoPeriodService.isTxInPhase(payload.getTxId(), DaoPeriodService.Phase.COMPENSATION_REQUESTS);
+                daoPeriodService.isTxInPhase(payload.getTxId(), DaoPeriodService.Phase.PROPOSAL);
     }
 
     private boolean isMine(ProposalPayload proposalPayload) {

@@ -52,7 +52,7 @@ public class DaoPeriodService {
     public enum Phase {
         // TODO for testing
         UNDEFINED(0),
-        COMPENSATION_REQUESTS(10),
+        PROPOSAL(10),
         BREAK1(2),
         OPEN_FOR_VOTING(2),
         BREAK2(2),
@@ -191,27 +191,27 @@ public class DaoPeriodService {
     @VisibleForTesting
     Phase calculatePhase(int blocksInNewPhase) {
         log.info("blocksInNewPhase={}", blocksInNewPhase);
-        if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks())
-            return Phase.COMPENSATION_REQUESTS;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks())
+            return Phase.PROPOSAL;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks())
             return Phase.BREAK1;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks())
             return Phase.OPEN_FOR_VOTING;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks())
             return Phase.BREAK2;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks())
             return Phase.VOTE_REVEAL;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
