@@ -147,6 +147,25 @@ public class AltCoinAddressValidatorTest {
     }
 
     @Test
+    public void testPHR() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("PHR");
+
+        assertTrue(validator.validate("PJCKDPyvfbf1yV7mYNeJ8Zb47hKRwVPYDj").isValid);
+        assertTrue(validator.validate("PJPmiib7JzMDiMQBBFCz92erB8iUvJqBqt").isValid);
+        assertTrue(validator.validate("PS6yeJnJUD2pe9fpDQvtm4KkLDwCWpa8ub").isValid);
+        assertTrue(validator.validate("PKfuRcjwzKFq3dbqE9gq8Ztxn922W4GZhm").isValid);
+
+        assertFalse(validator.validate("pGXsgFjSMzh1dSqggRvHjPvE3cnwvuXC7s").isValid);
+        assertFalse(validator.validate("PKfRRcjwzKFq3dbqE9gq8Ztxn922W4GZhm").isValid);
+        assertFalse(validator.validate("PXP75NnwDryYswQb9RaPFBchqLRSvBmDP").isValid);
+        assertFalse(validator.validate("PKr3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
+        assertFalse(validator.validate("PKr3vQ7S").isValid);
+        assertFalse(validator.validate("P0r3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
+
+    @Test
     public void testIOP() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
         validator.setCurrencyCode("IOP");
@@ -854,7 +873,21 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("zkPRkLZKf4BuzBsC6r9Ls5suw1ZV9tCwiBTF5vcz2NZLUDsoXGp5rAFUjKnb7DdkFbLp7aSpejCcC4FTxsVvDxq9YKSprzf").isValid);
         assertFalse(validator.validate("").isValid);
     }
-  
+
+    @Test
+    public void testUBQ() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("UBQ");
+
+        assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
+        assertTrue(validator.validate("2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
+
+        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d1641353982266").isValid);
+        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
+        assertFalse(validator.validate("2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
+
     @Test
     public void testQWARK() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
