@@ -300,6 +300,7 @@ public class TradeStatisticsManager {
         newlyAdded.add("WMCC");
         newlyAdded.add("RTO");
         newlyAdded.add("KOTO");
+        newlyAdded.add("PHR");
         newlyAdded.add("UBQ");
 
         coinsWithValidator.addAll(newlyAdded);
