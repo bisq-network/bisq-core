@@ -37,6 +37,7 @@ import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.OctocoinParams;
 import bisq.core.payment.validation.params.OnionParams;
 import bisq.core.payment.validation.params.PARTParams;
+import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.PNCParams;
 import bisq.core.payment.validation.params.PivxParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
@@ -201,6 +202,19 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
+                case "PHR":
+                    if (input.matches("^[P][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
+                        //noinspection ConstantConditions
+                        try {
+                            Address.fromBase58(PhoreParams.get(), input);
+                            return new ValidationResult(true);
+                        } catch (AddressFormatException e) {
+                            return new ValidationResult(false, getErrorMessage(e));
+                        }
+                    } else {
+                        return regexTestFailed;
+                    }
+
                 case "PIVX":
                     if (input.matches("^[D][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
@@ -540,7 +554,26 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return new ValidationResult(true);
                 case "KOTO":
                     return KOTOAddressValidator.ValidateAddress(input);
-
+                case "UBQ":
+                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
+                case "QWARK":
+                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
+                case "GEO":
+                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
+                case "GRANS":
+                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
                 case "ICH":
                     if (input.matches("^[A][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
