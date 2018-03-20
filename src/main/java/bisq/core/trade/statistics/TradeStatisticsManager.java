@@ -303,6 +303,7 @@ public class TradeStatisticsManager {
         newlyAdded.add("PHR");
         newlyAdded.add("UBQ");
         newlyAdded.add("QWARK");
+        newlyAdded.add("GEO");
 
         coinsWithValidator.addAll(newlyAdded);
 
