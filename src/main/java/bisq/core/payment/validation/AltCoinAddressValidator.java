@@ -40,6 +40,7 @@ import bisq.core.payment.validation.params.PARTParams;
 import bisq.core.payment.validation.params.PNCParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.PivxParams;
+import bisq.core.payment.validation.params.NEETParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.TerracoinParams;
@@ -439,6 +440,13 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
+                case "NEET":
+                    try {
+                        Address.fromBase58(NEETParams.get(), input);
+                        return new ValidationResult(true);
+                    } catch (AddressFormatException e) {
+                        return new ValidationResult(false, getErrorMessage(e));
+                    }
                 case "STL":
                     if (!input.matches("^(Se)\\d[0-9A-Za-z]{94}$"))
                         return regexTestFailed;
