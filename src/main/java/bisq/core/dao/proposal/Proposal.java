@@ -29,6 +29,9 @@ import io.bisq.generated.protobuffer.PB;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,7 +47,6 @@ import javax.annotation.Nullable;
  */
 @Getter
 public abstract class Proposal implements PersistablePayload {
-    @Setter
     @Nullable
     protected VoteResult voteResult;
     @Setter
@@ -58,6 +60,8 @@ public abstract class Proposal implements PersistablePayload {
 
     @Nullable
     protected Map<String, String> extraDataMap;
+
+    protected transient ObjectProperty<VoteResult> voteResultProperty = new SimpleObjectProperty<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -119,11 +123,14 @@ public abstract class Proposal implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public void setVoteResult(@Nullable VoteResult voteResult) {
+        this.voteResult = voteResult;
+        voteResultProperty.set(voteResult);
+    }
+
     public Coin getFeeAsCoin() {
         return Coin.valueOf(fee);
     }
 
     abstract public ProposalType getType();
-
-
 }
