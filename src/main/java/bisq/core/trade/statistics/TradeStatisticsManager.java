@@ -304,6 +304,7 @@ public class TradeStatisticsManager {
         newlyAdded.add("UBQ");
         newlyAdded.add("QWARK");
         newlyAdded.add("GEO");
+        newlyAdded.add("GRANS");
 
         coinsWithValidator.addAll(newlyAdded);
 

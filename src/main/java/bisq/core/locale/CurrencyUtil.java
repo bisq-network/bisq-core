@@ -190,6 +190,7 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("UBQ", "Ubiq"));
         result.add(new CryptoCurrency("QWARK", "Qwark", true));
         result.add(new CryptoCurrency("GEO", "GeoCoin", true));
+        result.add(new CryptoCurrency("GRANS", "10grans"));
 
         result.sort(TradeCurrency::compareTo);
 
