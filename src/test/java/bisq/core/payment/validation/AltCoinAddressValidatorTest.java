@@ -948,4 +948,23 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("P0r3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
         assertFalse(validator.validate("").isValid);
     }
+
+    @Test
+    public void testKUMA() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("KUMA");
+
+        assertTrue(validator.validate("KKeZ46ELdrcnB9TT8R7GiU3cdd29gA6mQm").isValid);
+        assertTrue(validator.validate("KD5xtaJFmKpR5fqJGApfisMT2Mh4uNZdLF").isValid);
+        assertTrue(validator.validate("4FmFUcHecwkepmAtwFZoJGJUnQsLMqKY3k").isValid);
+        assertTrue(validator.validate("4EvJMtRRnkCtaocadbr6CQUP2qRh6Pwcjp").isValid);
+
+        assertFalse(validator.validate("KKeZ46ELdrcnB9TT8R7GiU3cdd29gA6mQmm").isValid);
+        assertFalse(validator.validate("KKeZ46ELdrcnB9TT8R7GiU3cdd29gA6mQ").isValid);
+        assertFalse(validator.validate("KKeZ46ELdrcnB9TT8R7GiU3cdd29gA6mQm#").isValid);
+        assertFalse(validator.validate("4FmFUcHecwkepmAtwFZoJGJUnQsLMqKY3kk").isValid);
+        assertFalse(validator.validate("4FmFUcHecwkepmAtwFZoJGJUnQsLMqKY3").isValid);
+        assertFalse(validator.validate("4FmFUcHecwkepmAtwFZoJGJUnQsLMqKY3k#").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
 }
