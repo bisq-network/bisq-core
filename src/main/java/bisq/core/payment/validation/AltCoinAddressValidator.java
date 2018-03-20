@@ -26,6 +26,7 @@ import bisq.core.payment.validation.altcoins.PNCAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.XCNAddressValidator;
 import bisq.core.payment.validation.altcoins.YTNAddressValidator;
+import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
@@ -545,8 +546,15 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return new ValidationResult(true);
                 case "WMCC":
                     return WMCCAddressValidator.ValidateAddress(WMCCParams.get(), input);
+                case "RTO":
+                    if (!input.matches("^[A][0-9A-Za-z]{94}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
+                case "KOTO":
+                    return KOTOAddressValidator.ValidateAddress(input);
 
-                // Add new coins at the end...
+                    // Add new coins at the end...
                 default:
                     log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
                     return validationResult;

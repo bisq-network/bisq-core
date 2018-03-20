@@ -145,8 +145,7 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         if (protectedStoragePayload instanceof ProposalPayload) {
             findProposal((ProposalPayload) protectedStoragePayload).ifPresent(proposal -> {
                 if (isInPhaseOrUnconfirmed(proposal.getProposalPayload())) {
-                    removeFromList(proposal);
-                    proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 500);
+                    removeProposalFromList(proposal);
                 } else {
                     final String msg = "onRemoved called of a Proposal which is outside of the Request phase is invalid and we ignore it.";
                     log.warn(msg);
@@ -179,17 +178,11 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     public void onAllServicesInitialized() {
         p2PService.addHashSetChangedListener(this);
 
-       /* // At startup the P2PDataStorage initializes earlier, otherwise we get the listener called.
+        // At startup the P2PDataStorage initializes earlier, otherwise we get the listener called.
         p2PService.getP2PDataStorage().getMap().values().forEach(e -> {
             final ProtectedStoragePayload protectedStoragePayload = e.getProtectedStoragePayload();
             if (protectedStoragePayload instanceof ProposalPayload)
                 addProposal((ProposalPayload) protectedStoragePayload, false);
-        });*/
-
-        //TODO
-        p2PService.getP2PDataStorage().addPersistableNetworkPayloadMapListener(payload -> {
-            if (payload instanceof ProposalPayload)
-                addProposal((ProposalPayload) payload, true);
         });
 
         // Republish own active voteRequests after a 30 sec. (delay to be better connected)
@@ -258,11 +251,13 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         // We allow removal which are not confirmed yet or if it we are in the right phase
         if (isMine(proposal)) {
             if (isInPhaseOrUnconfirmed(proposalPayload)) {
-                removeFromList(proposal);
-                proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 500);
-                // TODO
-                return true;
-                // return p2PService.removeData(proposalPayload, true);
+                final boolean success = p2PService.removeData(proposalPayload, true);
+                if (success)
+                    removeProposalFromList(proposal);
+                else
+                    log.warn("Could not remove proposal from p2p network. proposal={}", proposal);
+
+                return success;
             } else {
                 final String msg = "removeProposal called with a Proposal which is outside of the Proposal phase.";
                 log.warn(msg);
@@ -279,6 +274,11 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         }
     }
 
+    private void removeProposalFromList(Proposal proposal) {
+        removeFromList(proposal);
+        proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 500);
+    }
+
     public boolean isMine(Proposal proposal) {
         return isMine(proposal.getProposalPayload());
     }
@@ -289,7 +289,7 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addToP2PNetwork(ProposalPayload proposalPayload) {
-        p2PService.addPersistableNetworkPayload(proposalPayload, true);
+        p2PService.addProtectedStorageEntry(proposalPayload, true);
     }
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {

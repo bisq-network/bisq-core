@@ -42,6 +42,6 @@ public class CurrencyUtilTest {
 
         assertTrue(euro.isPresent());
         assertTrue(naira.isPresent());
-        assertFalse("Fake currency shouldn't exist",fake.isPresent());
+        assertFalse("Fake currency shouldn't exist", fake.isPresent());
     }
 }
