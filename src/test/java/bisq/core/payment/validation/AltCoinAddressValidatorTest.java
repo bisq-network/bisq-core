@@ -839,6 +839,23 @@ public class AltCoinAddressValidatorTest {
     }
 
     @Test
+    public void testKOTO() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("KOTO");
+
+        assertTrue(validator.validate("k13dNgJJjf1SCU2Xv2jLnuUb5Q7zZx7P9vW").isValid);
+        assertTrue(validator.validate("k1BGB7dreqk9yCVEjC5sqjStfRxMUHiVtTg").isValid);
+        assertTrue(validator.validate("jzz6Cgk8wYy7MXZH5TCSxHbe6exCKmhXk8N").isValid);
+
+        assertFalse(validator.validate("K1JqGEiRi3pApex3rButyuFN8HVEji9dygo").isValid);
+        assertFalse(validator.validate("k2De32yyMZ8xdDFBJXjVseiN99S9eJpvty5").isValid);
+        assertFalse(validator.validate("jyzCuxaXN38djCzdkb8nQs7v1joHWtkC4v8").isValid);
+        assertFalse(validator.validate("JzyNxmc9iDaGokmMrkmMCncfMQvw5vbHBKv").isValid);
+        assertFalse(validator.validate("zkPRkLZKf4BuzBsC6r9Ls5suw1ZV9tCwiBTF5vcz2NZLUDsoXGp5rAFUjKnb7DdkFbLp7aSpejCcC4FTxsVvDxq9YKSprzf").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
+  
+    @Test
     public void testUBQ() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
         validator.setCurrencyCode("UBQ");
