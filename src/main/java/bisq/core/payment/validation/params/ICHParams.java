@@ -53,7 +53,8 @@ public class ICHParams extends NetworkParameters {
     }
 
     @Override
-    public void checkDifficultyTransitions(StoredBlock storedPrev, Block next, BlockStore blockStore) throws VerificationException, BlockStoreException {
+    public void checkDifficultyTransitions(StoredBlock storedPrev, Block next, BlockStore blockStore)
+            throws VerificationException, BlockStoreException {
     }
 
     @Override
