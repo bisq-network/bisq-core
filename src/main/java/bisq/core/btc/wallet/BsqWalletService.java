@@ -415,7 +415,22 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException, ChangeBelowDustException {
-        return getPreparedFeeTx(fee, fee);
+        final Transaction tx = new Transaction(params);
+        CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
+            if (change.isPositive())
+                tx.addOutput(change, getUnusedAddress());
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+
+        printTx("getPreparedFeeTx", tx);
+        return tx;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -424,17 +439,14 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
 
     public Transaction getPreparedVoteFeeTx(Coin fee, Coin stake)
             throws InsufficientBsqException, ChangeBelowDustException {
-        return getPreparedFeeTx(fee, stake.add(fee));
-    }
-
-    private Transaction getPreparedFeeTx(Coin fee, Coin requiredInput) throws
-            InsufficientBsqException, ChangeBelowDustException {
         Transaction tx = new Transaction(params);
-
-        CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
+        tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
+        final Coin sum = fee.add(stake);
+        CoinSelection coinSelection = bsqCoinSelector.select(sum, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            // We add her stake as we have that output added
+            Coin change = bsqCoinSelector.getChangeExcludingFee(sum, coinSelection);
             if (!Restrictions.isAboveDust(change))
                 throw new ChangeBelowDustException(change);
 
