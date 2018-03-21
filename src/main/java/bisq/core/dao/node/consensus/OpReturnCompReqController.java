@@ -50,7 +50,8 @@ public class OpReturnCompReqController {
 
     public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
         opReturnTxOutput.setTxOutputType(TxOutputType.COMPENSATION_REQUEST_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null, "mutableState.getCompRequestIssuanceOutputCandidate() must nto be null");
+        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null,
+                "mutableState.getCompRequestIssuanceOutputCandidate() must not be null");
         mutableState.getCompRequestIssuanceOutputCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
         tx.setTxType(TxType.COMPENSATION_REQUEST);
     }

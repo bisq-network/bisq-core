@@ -59,6 +59,8 @@ public class TxOutputsController {
         @Nullable
         private TxOutput compRequestIssuanceOutputCandidate;
         @Nullable
+        private TxOutput voteStakeOutput;
+        @Nullable
         private TxOutput bsqOutput;
 
         MutableState() {

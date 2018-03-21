@@ -29,6 +29,8 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Slf4j
 public class OpReturnVoteController {
 
@@ -39,17 +41,19 @@ public class OpReturnVoteController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight) {
-        return opReturnData.length == 22 &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
+        return mutableState.getVoteStakeOutput() != null &&
+                opReturnData.length == 22 &&
                 Version.VOTING_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getVotingFee(blockHeight) &&
                 readableBsqBlockChain.isVotePeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput) {
+    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
         opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
-        // TODO mark BSQ output for stake for release tx? we need to use that for the
-        // Vote release tx!
+        checkArgument(mutableState.getVoteStakeOutput() != null,
+                "mutableState.getVoteStakeOutput() must not be null");
+        mutableState.getVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
         tx.setTxType(TxType.VOTE);
     }
 }

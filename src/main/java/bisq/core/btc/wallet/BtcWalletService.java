@@ -277,12 +277,14 @@ public class BtcWalletService extends WalletService {
 
         // (BsqFee)tx has following structure:
         // inputs [1-n] BSQ inputs (fee + stake)
-        // outputs [1] BSQ fee change output + stake (>= 2730 Satoshi)
+        // outputs [1] BSQ stake
+        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
 
         // preparedVoteTx has following structure:
         // inputs [1-n] BSQ inputs for vote fee
         // inputs [1-n] BTC inputs for miner fee
-        // outputs [1] BSQ change output for fee + stake (>= 2730 Satoshi)
+        // outputs [1] BSQ stake
+        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
         // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
         // outputs [0-1] OP_RETURN with opReturnData and amount 0
         // mining fee: BTC mining fee + burned BSQ fee

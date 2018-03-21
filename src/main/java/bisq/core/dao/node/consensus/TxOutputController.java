@@ -71,12 +71,20 @@ public class TxOutputController {
 
                     // We store the output as BSQ output for use in further iterations.
                     mutableState.setBsqOutput(txOutput);
-                } else if (bsqInputBalance.isPositive() && mutableState.getCompRequestIssuanceOutputCandidate() == null) {
-                    // We don't know yes if the tx is a compensation request tx as that will be detected in the last
-                    // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN
-                    // verification.
-                    mutableState.setCompRequestIssuanceOutputCandidate(txOutput);
-                    log.debug("Maybe a BTC output of BSQ issuance output from a compensation request tx");
+                } else if (bsqInputBalance.isPositive()) {
+                    if (mutableState.getCompRequestIssuanceOutputCandidate() == null) {
+                        // We don't know yes if the tx is a compensation request tx as that will be detected in the last
+                        // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN
+                        // verification.
+                        mutableState.setCompRequestIssuanceOutputCandidate(txOutput);
+                    }
+
+                    if (mutableState.getVoteStakeOutput() == null) {
+                        // We don't know yes if the tx is a vote tx as that will be detected in the last
+                        // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN
+                        // verification.
+                        mutableState.setVoteStakeOutput(txOutput);
+                    }
 
                     // As we have not verified the OP_RETURN yet we set it temporary to BTC_OUTPUT so we cover the case
                     // if it was normal tx with a non BSQ OP_RETURN output.

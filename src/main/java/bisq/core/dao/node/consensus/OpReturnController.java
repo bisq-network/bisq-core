@@ -63,8 +63,8 @@ public class OpReturnController {
                         // TODO
                         break;
                     case OpReturnTypes.VOTE:
-                        if (opReturnVoteController.verify(opReturnData, bsqFee, blockHeight)) {
-                            opReturnVoteController.applyStateChange(tx, txOutput);
+                        if (opReturnVoteController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnVoteController.applyStateChange(tx, txOutput, mutableState);
                         }
                         break;
                     case OpReturnTypes.VOTE_RELEASE:
