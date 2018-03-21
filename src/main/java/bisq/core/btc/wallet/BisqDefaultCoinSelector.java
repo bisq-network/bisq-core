@@ -95,14 +95,13 @@ public abstract class BisqDefaultCoinSelector implements CoinSelector {
         return new CoinSelection(Coin.valueOf(total), selected);
     }
 
-    public Coin getChange(Coin target, CoinSelection coinSelection) throws InsufficientMoneyException {
-        long targetValue = target.value;
-        long total = coinSelection.valueGathered.value;
-        long missing = targetValue - total;
-        if (missing > 0)
-            throw new InsufficientMoneyException(Coin.valueOf(missing));
+    public Coin getChangeExcludingFee(Coin fee, CoinSelection coinSelection) throws InsufficientMoneyException {
+        long feeValue = fee.value;
+        long available = coinSelection.valueGathered.value;
+        long change = available - feeValue;
+        if (change < 0)
+            throw new InsufficientMoneyException(Coin.valueOf(change * -1));
 
-        long change = total - targetValue;
         return Coin.valueOf(change);
     }
 

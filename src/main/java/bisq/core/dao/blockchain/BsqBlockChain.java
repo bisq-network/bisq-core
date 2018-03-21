@@ -501,10 +501,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public boolean isCompensationRequestPeriodValid(int blockHeight) {
         return lock.read(() -> true);
-
     }
 
-    long getVotingFee(int blockHeight) {
+    @Override
+    public long getVotingFee(int blockHeight) {
         return lock.read(() -> {
             long fee = -1;
             for (Tuple2<Long, Integer> feeAtHeight : votingFees) {
@@ -517,7 +517,8 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     //TODO not impl yet
-    boolean isVotingPeriodValid(int blockHeight) {
+    @Override
+    public boolean isVotePeriodValid(int blockHeight) {
         return lock.read(() -> true);
     }
 

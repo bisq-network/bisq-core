@@ -22,6 +22,7 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.proposal.ProposalList;
+import bisq.core.dao.vote.VoteList;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
@@ -105,6 +106,9 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case PROPOSAL_LIST:
                     return ProposalList.fromProto(proto.getProposalList());
+                case VOTE_LIST:
+                    return VoteList.fromProto(proto.getVoteList());
+
                 default:
                     throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());
             }

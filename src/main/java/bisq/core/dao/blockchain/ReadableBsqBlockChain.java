@@ -70,7 +70,11 @@ public interface ReadableBsqBlockChain {
 
     boolean isCompensationRequestPeriodValid(int blockHeight);
 
+    boolean isVotePeriodValid(int blockHeight);
+
     long getCreateCompensationRequestFee(int blockHeight);
+
+    long getVotingFee(int blockHeight);
 
     Coin getTotalBurntFee();
 

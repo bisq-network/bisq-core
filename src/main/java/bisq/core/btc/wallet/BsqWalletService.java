@@ -414,39 +414,50 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     // Burn fee tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBurnFeeTx(Coin fee) throws
-            InsufficientBsqException {
+    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException, ChangeBelowDustException {
+        return getPreparedFeeTx(fee, fee);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Vote tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedVoteFeeTx(Coin fee, Coin stake)
+            throws InsufficientBsqException, ChangeBelowDustException {
+        return getPreparedFeeTx(fee, stake.add(fee));
+    }
+
+    private Transaction getPreparedFeeTx(Coin fee, Coin requiredInput) throws
+            InsufficientBsqException, ChangeBelowDustException {
         Transaction tx = new Transaction(params);
 
-        // We might have no output if inputs match fee.
-        // It will be checked in the final BTC tx that we have min. 1 output by increasing the BTC inputs to force a
-        // non dust BTC output.
-
-        // TODO check dust output
-        CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
+        CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = bsqCoinSelector.getChange(fee, coinSelection);
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
             if (change.isPositive())
                 tx.addOutput(change, getUnusedAddress());
         } catch (InsufficientMoneyException e) {
             throw new InsufficientBsqException(e.missing);
         }
 
-        //printTx("getPreparedBurnFeeTx", tx);
+        printTx("getPreparedFeeTx", tx);
         return tx;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Addresses
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected Set<Address> getAllAddressesFromActiveKeys() {
         return wallet.getActiveKeychain().getLeafKeys().stream().
                 map(key -> Address.fromP2SHHash(params, key.getPubKeyHash())).
                 collect(Collectors.toSet());
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Get unused address
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Address getUnusedAddress() {
         return wallet.currentReceiveAddress();

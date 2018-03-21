@@ -32,11 +32,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
-public class CompensationRequestController {
+public class OpReturnCompReqController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
     @Inject
-    public CompensationRequestController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnCompReqController(ReadableBsqBlockChain readableBsqBlockChain) {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 

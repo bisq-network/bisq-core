@@ -51,7 +51,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 
@@ -541,7 +540,7 @@ public abstract class Trade implements Tradable, Model {
     @Nullable
     public Transaction getDepositTx() {
         if (depositTx == null)
-            depositTx = depositTxId != null ? btcWalletService.getTransaction(Sha256Hash.wrap(depositTxId)) : null;
+            depositTx = depositTxId != null ? btcWalletService.getTransaction(depositTxId) : null;
         return depositTx;
     }
 
@@ -842,7 +841,7 @@ public abstract class Trade implements Tradable, Model {
     @Nullable
     public Transaction getPayoutTx() {
         if (payoutTx == null)
-            payoutTx = payoutTxId != null ? btcWalletService.getTransaction(Sha256Hash.wrap(payoutTxId)) : null;
+            payoutTx = payoutTxId != null ? btcWalletService.getTransaction(payoutTxId) : null;
         return payoutTx;
     }
 

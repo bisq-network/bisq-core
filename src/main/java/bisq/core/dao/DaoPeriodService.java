@@ -52,9 +52,9 @@ public class DaoPeriodService {
     public enum Phase {
         // TODO for testing
         UNDEFINED(0),
-        PROPOSAL(10),
+        PROPOSAL(5),
         BREAK1(2),
-        OPEN_FOR_VOTING(2),
+        OPEN_FOR_VOTING(10),
         BREAK2(2),
         VOTE_REVEAL(2),
         BREAK3(2);

@@ -20,7 +20,8 @@ package bisq.core.dao;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.proposal.ProposalCollectionsManager;
+import bisq.core.dao.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.VoteService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -31,8 +32,9 @@ import com.google.inject.Inject;
  */
 public class DaoManager {
     private final DaoPeriodService daoPeriodService;
-    private final ProposalCollectionsManager proposalCollectionsManager;
+    private final ProposalCollectionsService proposalCollectionsService;
     private final BsqNode bsqNode;
+    private final VoteService voteService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -42,23 +44,28 @@ public class DaoManager {
     @Inject
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
-                      ProposalCollectionsManager proposalCollectionsManager) {
+                      ProposalCollectionsService proposalCollectionsService,
+                      VoteService voteService) {
         this.daoPeriodService = daoPeriodService;
-        this.proposalCollectionsManager = proposalCollectionsManager;
+        this.proposalCollectionsService = proposalCollectionsService;
+        this.voteService = voteService;
+
         bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
             daoPeriodService.onAllServicesInitialized();
-            proposalCollectionsManager.onAllServicesInitialized();
+            proposalCollectionsService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
+            voteService.onAllServicesInitialized();
         }
     }
 
     public void shutDown() {
         daoPeriodService.shutDown();
-        proposalCollectionsManager.shutDown();
+        proposalCollectionsService.shutDown();
         bsqNode.shutDown();
+        voteService.shutDown();
     }
 }

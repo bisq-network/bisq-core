@@ -76,7 +76,7 @@ public class TxOutputController {
                     // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN
                     // verification.
                     mutableState.setCompRequestIssuanceOutputCandidate(txOutput);
-                    log.debug("BTC output of BSQ issuance output from a compensation request tx");
+                    log.debug("Maybe a BTC output of BSQ issuance output from a compensation request tx");
 
                     // As we have not verified the OP_RETURN yet we set it temporary to BTC_OUTPUT so we cover the case
                     // if it was normal tx with a non BSQ OP_RETURN output.
