@@ -92,8 +92,8 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
 
     @Getter
     private final List<Vote> voteList = new ArrayList<>();
-    @Getter
     private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
+    @Getter
     private final List<BlindVote> blindVoteSortedList = new SortedList<>(blindVoteList);
     private ChangeListener<Number> numConnectedPeersListener;
 
@@ -150,7 +150,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
 
     @Override
     public void onRemoved(ProtectedStorageEntry data) {
-        // Removal is not implemented
+        // Removal is not supported
     }
 
 
@@ -170,19 +170,18 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
 
         // Republish own active blindVotes once we are well connected
         numConnectedPeersListener = (observable, oldValue, newValue) -> {
-            UserThread.runAfter(() -> rebroadcastBlindVotes((int) newValue), 2);
+            // Delay a bit for localhost testing to not fail as isBootstrapped is false
+            UserThread.runAfter(() -> {
+                if (((int) newValue > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
+                    p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+                    voteList.stream()
+                            .filter(vote -> daoPeriodService.isTxInPhase(vote.getBlindVote().getTxId(),
+                                    DaoPeriodService.Phase.OPEN_FOR_VOTING))
+                            .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
+                }
+            }, 2);
         };
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
-    }
-
-    private void rebroadcastBlindVotes(int numConnectedPeers) {
-        if ((numConnectedPeers > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-            p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-            voteList.stream()
-                    .filter(vote -> daoPeriodService.isTxInPhase(vote.getBlindVote().getTxId(),
-                            DaoPeriodService.Phase.OPEN_FOR_VOTING))
-                    .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
-        }
     }
 
     public void shutDown() {
@@ -197,7 +196,6 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
         byte[] opReturnData = VoteConsensus.getOpReturnData(encryptedProposalList);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
         BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), signaturePubKey);
-
         publishTx(blindVoteTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction result) {
@@ -206,30 +204,6 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                 voteList.add(vote);
                 voteListStorage.queueUpForSave(new VoteList(voteList), 100);
                 callback.onSuccess(result);
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable t) {
-                callback.onFailure(t);
-            }
-        });
-    }
-
-    public void publishTx(Transaction blindVoteTx, FutureCallback<Transaction> callback) {
-        // We need to create another instance, otherwise the tx would trigger an invalid state exception
-        // if it gets committed 2 times
-        // We clone before commit to avoid unwanted side effects
-        final Transaction clonedTx = btcWalletService.getClonedTransaction(blindVoteTx);
-        btcWalletService.commitTx(clonedTx);
-
-        bsqWalletService.commitTx(blindVoteTx);
-
-        bsqWalletService.broadcastTx(blindVoteTx, new FutureCallback<Transaction>() {
-            @Override
-            public void onSuccess(@Nullable Transaction transaction) {
-                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
-
-                callback.onSuccess(transaction);
             }
 
             @Override
@@ -282,6 +256,30 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
         checkArgument(!preparedVoteFeeTx.getOutputs().isEmpty(), "preparedVoteFeeTx outputs must not be empty");
         Transaction txWithBtcFee = btcWalletService.completePreparedVoteTx(preparedVoteFeeTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
+    }
+
+    private void publishTx(Transaction blindVoteTx, FutureCallback<Transaction> callback) {
+        // We need to create another instance, otherwise the tx would trigger an invalid state exception
+        // if it gets committed 2 times
+        // We clone before commit to avoid unwanted side effects
+        final Transaction clonedTx = btcWalletService.getClonedTransaction(blindVoteTx);
+        btcWalletService.commitTx(clonedTx);
+
+        bsqWalletService.commitTx(blindVoteTx);
+
+        bsqWalletService.broadcastTx(blindVoteTx, new FutureCallback<Transaction>() {
+            @Override
+            public void onSuccess(@Nullable Transaction transaction) {
+                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
+
+                callback.onSuccess(transaction);
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable t) {
+                callback.onFailure(t);
+            }
+        });
     }
 
     private void addBlindVoteToP2PNetwork(BlindVote blindVote) {
