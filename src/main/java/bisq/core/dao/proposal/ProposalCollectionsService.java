@@ -22,8 +22,8 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.DaoPeriodService;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
-import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.proposal.compensation.CompensationRequest;
 import bisq.core.dao.proposal.generic.GenericProposal;
 
@@ -67,7 +67,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Manages proposal collections.
  */
 @Slf4j
-public class ProposalCollectionsService implements PersistedDataHost, BsqBlockChainListener, HashMapChangedListener {
+public class ProposalCollectionsService implements PersistedDataHost, BsqNode.BsqBlockChainListener, HashMapChangedListener {
     private final P2PService p2PService;
     private final DaoPeriodService daoPeriodService;
     private final BsqWalletService bsqWalletService;

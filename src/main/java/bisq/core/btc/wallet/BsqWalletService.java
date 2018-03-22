@@ -22,10 +22,10 @@ import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
-import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.node.BsqNode;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -69,7 +69,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements BsqBlockChainListener {
+public class BsqWalletService extends WalletService implements BsqNode.BsqBlockChainListener {
     private final BsqCoinSelector bsqCoinSelector;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
@@ -217,6 +217,8 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
                 .valueGathered
                 .subtract(lockedForVotingBalance)
                 .subtract(lockedInBondsBalance);
+        if (availableBalance.isNegative())
+            availableBalance = Coin.ZERO;
 
         bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, pendingBalance,
                 lockedForVotingBalance, lockedInBondsBalance));

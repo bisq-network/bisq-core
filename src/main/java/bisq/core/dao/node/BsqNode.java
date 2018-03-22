@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
@@ -43,6 +42,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public abstract class BsqNode {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Interface
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public interface BsqBlockChainListener {
+        void onBsqBlockChainChanged();
+    }
 
     @SuppressWarnings("WeakerAccess")
     protected final P2PService p2PService;

@@ -447,9 +447,11 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> getAllTxOutputs().stream().filter(e -> e.isVerified() && !e.isUnspent()).collect(Collectors.toSet()));
     }
 
+    // TODO handle BOND_LOCK, BOND_UNLOCK
     @Override
     public Optional<TxOutput> getSpendableTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> getUnspentTxOutput(txIdIndexTuple)
+                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.VOTE_STAKE_OUTPUT)
                 .filter(this::isTxOutputMature));
     }
 
