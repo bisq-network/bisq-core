@@ -20,5 +20,8 @@ package bisq.core.btc.wallet;
 import org.bitcoinj.core.Coin;
 
 public interface BsqBalanceListener {
-    void updateAvailableBalance(Coin availableBalance, Coin unverifiedBalance);
+    void onUpdateBalances(Coin confirmedBalance,
+                          Coin pendingBalance,
+                          Coin lockedForVotingBalance,
+                          Coin lockedInBondsBalance);
 }

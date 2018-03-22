@@ -29,6 +29,8 @@ import org.bitcoinj.core.Utils;
 
 import javax.crypto.SecretKey;
 
+import java.util.Date;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class Vote implements PersistablePayload {
     private final ProposalList proposalList;
     private final String secretKeyAsHex;
     private final BlindVote blindVote;
+    private final long date;
 
     // Used just for caching
     @JsonExclude
@@ -50,9 +53,7 @@ public class Vote implements PersistablePayload {
     private transient SecretKey secretKey;
 
     Vote(ProposalList proposalList, String secretKeyAsHex, BlindVote blindVote) {
-        this.proposalList = proposalList;
-        this.secretKeyAsHex = secretKeyAsHex;
-        this.blindVote = blindVote;
+        this(proposalList, secretKeyAsHex, blindVote, new Date().getTime());
     }
 
 
@@ -60,19 +61,28 @@ public class Vote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private Vote(ProposalList proposalList, String secretKeyAsHex, BlindVote blindVote, long date) {
+        this.proposalList = proposalList;
+        this.secretKeyAsHex = secretKeyAsHex;
+        this.blindVote = blindVote;
+        this.date = date;
+    }
+
     @Override
     public PB.Vote toProtoMessage() {
         return PB.Vote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
                 .setProposalList(proposalList.getBuilder())
                 .setSecretKeyAsHex(secretKeyAsHex)
+                .setDate(date)
                 .build();
     }
 
     public static Vote fromProto(PB.Vote proto) {
         return new Vote(ProposalList.fromProto(proto.getProposalList()),
                 proto.getSecretKeyAsHex(),
-                BlindVote.fromProto(proto.getBlindVote()));
+                BlindVote.fromProto(proto.getBlindVote()),
+                proto.getDate());
     }
 
 

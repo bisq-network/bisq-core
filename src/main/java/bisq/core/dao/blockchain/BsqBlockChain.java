@@ -21,6 +21,7 @@ import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
@@ -422,7 +423,23 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public Set<TxOutput> getUnspentTxOutputs() {
-        return lock.read(() -> getAllTxOutputs().stream().filter(e -> e.isVerified() && e.isUnspent()).collect(Collectors.toSet()));
+        return lock.read(() -> getAllTxOutputs().stream().
+                filter(e -> e.isVerified() && e.isUnspent())
+                .collect(Collectors.toSet()));
+    }
+
+    @Override
+    public Set<TxOutput> getLockedForVoteTxOutputs() {
+        return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .collect(Collectors.toSet()));
+    }
+
+    @Override
+    public Set<TxOutput> getLockedInBondsOutputs() {
+        return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.BOND_LOCK)
+                .collect(Collectors.toSet()));
     }
 
     @Override

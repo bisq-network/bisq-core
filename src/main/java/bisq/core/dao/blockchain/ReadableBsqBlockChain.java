@@ -64,6 +64,10 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getUnspentTxOutputs();
 
+    Set<TxOutput> getLockedForVoteTxOutputs();
+
+    Set<TxOutput> getLockedInBondsOutputs();
+
     Set<TxOutput> getSpentTxOutputs();
 
     Optional<TxType> getTxType(String txId);
