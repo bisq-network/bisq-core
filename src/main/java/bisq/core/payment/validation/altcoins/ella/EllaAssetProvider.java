@@ -3,7 +3,7 @@ package bisq.core.payment.validation.altcoins.ella;
 import bisq.core.payment.validation.AbstractAssetProvider;
 import bisq.core.util.validation.InputValidator;
 
-public class EllaAddressValidator extends AbstractAssetProvider {
+public class EllaAssetProvider extends AbstractAssetProvider {
 
     @Override
     public String getCurrencyCode() {

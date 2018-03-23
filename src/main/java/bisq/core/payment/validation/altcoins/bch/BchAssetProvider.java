@@ -6,7 +6,7 @@ import bisq.core.util.validation.InputValidator;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 
-public class BchAddressValidator extends AbstractAssetProvider {
+public class BchAssetProvider extends AbstractAssetProvider {
 
     @Override
     public String getCurrencyCode() {

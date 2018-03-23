@@ -7,7 +7,7 @@ import org.junit.Test;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class BchAddressValidatorTest extends AbstractAltcoinAddressValidatorTest {
+public class BchAssetProviderTest extends AbstractAltcoinAddressValidatorTest {
 
     @Test
     public void testBCH() {
