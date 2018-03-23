@@ -1,7 +1,7 @@
 package bisq.core.payment.validation.altcoins.bch;
 
-import bisq.core.payment.validation.altcoins.AbstractAltcoinAddressValidatorTest;
 import bisq.core.payment.validation.AltCoinAddressValidator;
+import bisq.core.payment.validation.AbstractAltcoinAddressValidatorTest;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -11,7 +11,7 @@ public class BchAddressValidatorTest extends AbstractAltcoinAddressValidatorTest
 
     @Test
     public void testBCH() {
-        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("BCH");
 
         assertTrue(validator.validate("1HQQgsvLTgN9xD9hNmAgAreakzVzQUSLSH").isValid);

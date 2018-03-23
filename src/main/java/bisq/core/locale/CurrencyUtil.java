@@ -18,7 +18,7 @@
 package bisq.core.locale;
 
 import bisq.common.app.DevEnv;
-import bisq.core.payment.validation.AssetProvider;
+import bisq.core.payment.validation.AssetProviderRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -85,12 +85,11 @@ public class CurrencyUtil {
     // Don't make a PR for adding a coin but follow the steps described here:
     // https://forum.bisq.network/t/how-to-add-your-favorite-altcoin/
     public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
-        final List<CryptoCurrency> result = new ArrayList<>();
-
-        final ServiceLoader<AssetProvider> loader = ServiceLoader.load(AssetProvider.class);
-        for (AssetProvider validator : loader) {
-            result.add(new CryptoCurrency(validator.getCurrencyCode(), validator.getCurrencyName(), validator.isAsset()));
-        }
+        final List<CryptoCurrency> result = AssetProviderRegistry.getInstance()
+                .getProviders()
+                .stream()
+                .map(assetProvider -> new CryptoCurrency(assetProvider.getCurrencyCode(), assetProvider.getCurrencyName(), assetProvider.isAsset()))
+                .collect(Collectors.toList());
 
         result.add(new CryptoCurrency("BETR", "Better Betting", true));
         if (DevEnv.DAO_TRADING_ACTIVATED)

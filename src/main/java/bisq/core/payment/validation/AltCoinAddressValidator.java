@@ -24,6 +24,7 @@ import bisq.core.payment.validation.params.*;
 import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
+import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -34,21 +35,15 @@ import org.bitcoinj.params.TestNet3Params;
 import org.jetbrains.annotations.NotNull;
 import org.libdohj.params.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
-
 @Slf4j
 public final class AltCoinAddressValidator extends InputValidator {
 
+    private final AssetProviderRegistry assetProviderRegistry;
     private String currencyCode;
-    private final Map<String, AssetProvider> validators = new HashMap<>();
 
-    public AltCoinAddressValidator() {
-        final ServiceLoader<AssetProvider> loader = ServiceLoader.load(AssetProvider.class);
-        for (AssetProvider validator : loader) {
-            validators.put(validator.getCurrencyCode(), validator);
-        }
+    @Inject
+    public AltCoinAddressValidator(AssetProviderRegistry assetProviderRegistry) {
+        this.assetProviderRegistry = assetProviderRegistry;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -70,9 +65,9 @@ public final class AltCoinAddressValidator extends InputValidator {
             ValidationResult regexTestFailed = new ValidationResult(false,
                     Res.get("validation.altcoin.wrongStructure", currencyCode));
 
-            final AssetProvider validator = validators.get(currencyCode);
-            if (null != validator) {
-                return validator.validateAddress(input);
+            final AssetProvider assetProvider = assetProviderRegistry.getProviderByCurrencyCode(currencyCode);
+            if (null != assetProvider) {
+                return assetProvider.validateAddress(input);
             }
             switch (currencyCode) {
                 case "BTC":
