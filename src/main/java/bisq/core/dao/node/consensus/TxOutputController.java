@@ -73,11 +73,11 @@ public class TxOutputController {
                     mutableState.setBsqOutput(txOutput);
 
                     // First output might be Vote stake output
-                    if (mutableState.getVoteStakeOutput() == null) {
+                    if (mutableState.getBlindVoteStakeOutput() == null) {
                         // We don't know yes if the tx is a vote tx as that will be detected in the last
                         // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN
                         // verification.
-                        mutableState.setVoteStakeOutput(txOutput);
+                        mutableState.setBlindVoteStakeOutput(txOutput);
                     }
                 } else if (bsqInputBalance.isPositive()) {
                     // We have some burn fee tx

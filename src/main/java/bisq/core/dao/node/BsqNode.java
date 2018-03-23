@@ -85,8 +85,8 @@ public abstract class BsqNode {
 
         writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
-        writableBsqBlockChain.setVotingFee(feeService.getVotingTxFee().value,
-                genesisBlockHeight);
+        writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
+        writableBsqBlockChain.setVoteRevealFee(feeService.getVoteRevealTxFee().value, genesisBlockHeight);
     }
 
 

@@ -35,13 +35,16 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class OpReturnController {
     private final OpReturnCompReqController opReturnCompReqController;
-    private final OpReturnVoteController opReturnVoteController;
+    private final OpReturnBlindVoteController opReturnBlindVoteController;
+    private final OpReturnVoteRevealController opReturnVoteRevealController;
 
     @Inject
     public OpReturnController(OpReturnCompReqController opReturnCompReqController,
-                              OpReturnVoteController opReturnVoteController) {
+                              OpReturnBlindVoteController opReturnBlindVoteController,
+                              OpReturnVoteRevealController opReturnVoteRevealController) {
         this.opReturnCompReqController = opReturnCompReqController;
-        this.opReturnVoteController = opReturnVoteController;
+        this.opReturnBlindVoteController = opReturnBlindVoteController;
+        this.opReturnVoteRevealController = opReturnVoteRevealController;
     }
 
     public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
@@ -62,13 +65,15 @@ public class OpReturnController {
                     case OpReturnTypes.PROPOSAL:
                         // TODO
                         break;
-                    case OpReturnTypes.VOTE:
-                        if (opReturnVoteController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
-                            opReturnVoteController.applyStateChange(tx, txOutput, mutableState);
+                    case OpReturnTypes.BLIND_VOTE:
+                        if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnBlindVoteController.applyStateChange(tx, txOutput, mutableState);
                         }
                         break;
-                    case OpReturnTypes.VOTE_RELEASE:
-                        // TODO
+                    case OpReturnTypes.VOTE_REVEAL:
+                        if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnVoteRevealController.applyStateChange(tx, txOutput, mutableState);
+                        }
                         break;
                     case OpReturnTypes.LOCK_UP:
                         // TODO

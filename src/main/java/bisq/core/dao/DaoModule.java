@@ -28,9 +28,10 @@ import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.consensus.GenesisTxOutputController;
 import bisq.core.dao.node.consensus.IssuanceController;
+import bisq.core.dao.node.consensus.OpReturnBlindVoteController;
 import bisq.core.dao.node.consensus.OpReturnCompReqController;
 import bisq.core.dao.node.consensus.OpReturnController;
-import bisq.core.dao.node.consensus.OpReturnVoteController;
+import bisq.core.dao.node.consensus.OpReturnVoteRevealController;
 import bisq.core.dao.node.consensus.TxInputController;
 import bisq.core.dao.node.consensus.TxInputsController;
 import bisq.core.dao.node.consensus.TxOutputController;
@@ -94,7 +95,8 @@ public class DaoModule extends AppModule {
         bind(TxOutputController.class).in(Singleton.class);
         bind(OpReturnController.class).in(Singleton.class);
         bind(OpReturnCompReqController.class).in(Singleton.class);
-        bind(OpReturnVoteController.class).in(Singleton.class);
+        bind(OpReturnBlindVoteController.class).in(Singleton.class);
+        bind(OpReturnVoteRevealController.class).in(Singleton.class);
         bind(IssuanceController.class).in(Singleton.class);
 
         bind(JsonBlockChainExporter.class).in(Singleton.class);

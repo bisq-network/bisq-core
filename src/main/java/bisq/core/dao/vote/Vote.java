@@ -30,6 +30,7 @@ import org.bitcoinj.core.Utils;
 import javax.crypto.SecretKey;
 
 import java.util.Date;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -46,14 +47,25 @@ public class Vote implements PersistablePayload {
     private final String secretKeyAsHex;
     private final BlindVote blindVote;
     private final long date;
+    private long stake;
+    @Nullable
+    private String revealTxId;
 
     // Used just for caching
     @JsonExclude
     @Nullable
     private transient SecretKey secretKey;
 
-    Vote(ProposalList proposalList, String secretKeyAsHex, BlindVote blindVote) {
-        this(proposalList, secretKeyAsHex, blindVote, new Date().getTime());
+    Vote(ProposalList proposalList,
+         String secretKeyAsHex,
+         BlindVote blindVote,
+         long stake) {
+        this(proposalList,
+                secretKeyAsHex,
+                blindVote,
+                new Date().getTime(),
+                stake,
+                null);
     }
 
 
@@ -61,28 +73,39 @@ public class Vote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Vote(ProposalList proposalList, String secretKeyAsHex, BlindVote blindVote, long date) {
+    private Vote(ProposalList proposalList,
+                 String secretKeyAsHex,
+                 BlindVote blindVote,
+                 long date,
+                 long stake,
+                 @Nullable String revealTxId) {
         this.proposalList = proposalList;
         this.secretKeyAsHex = secretKeyAsHex;
         this.blindVote = blindVote;
         this.date = date;
+        this.stake = stake;
+        this.revealTxId = revealTxId;
     }
 
     @Override
     public PB.Vote toProtoMessage() {
-        return PB.Vote.newBuilder()
+        final PB.Vote.Builder builder = PB.Vote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
                 .setProposalList(proposalList.getBuilder())
                 .setSecretKeyAsHex(secretKeyAsHex)
                 .setDate(date)
-                .build();
+                .setStake(stake);
+        Optional.ofNullable(revealTxId).ifPresent(builder::setRevealTxId);
+        return builder.build();
     }
 
     public static Vote fromProto(PB.Vote proto) {
         return new Vote(ProposalList.fromProto(proto.getProposalList()),
                 proto.getSecretKeyAsHex(),
                 BlindVote.fromProto(proto.getBlindVote()),
-                proto.getDate());
+                proto.getDate(),
+                proto.getStake(),
+                proto.getRevealTxId().isEmpty() ? null : proto.getRevealTxId());
     }
 
 
@@ -94,5 +117,9 @@ public class Vote implements PersistablePayload {
         if (secretKey == null)
             secretKey = Encryption.getSecretKeyFromBytes(Utils.HEX.decode(secretKeyAsHex));
         return secretKey;
+    }
+
+    public String getTxId() {
+        return blindVote.getTxId();
     }
 }

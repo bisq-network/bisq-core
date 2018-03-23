@@ -59,7 +59,7 @@ public class TxOutputsController {
         @Nullable
         private TxOutput compRequestIssuanceOutputCandidate;
         @Nullable
-        private TxOutput voteStakeOutput;
+        private TxOutput blindVoteStakeOutput;
         @Nullable
         private TxOutput bsqOutput;
 

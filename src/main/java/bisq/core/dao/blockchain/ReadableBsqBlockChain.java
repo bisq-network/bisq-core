@@ -56,9 +56,9 @@ public interface ReadableBsqBlockChain {
 
     boolean containsTx(String txId);
 
-    Optional<TxOutput> getSpendableTxOutput(TxIdIndexTuple txIdIndexTuple);
+    Optional<TxOutput> getUnspentAnMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
 
-    Optional<TxOutput> getSpendableTxOutput(String txId, int index);
+    Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index);
 
     boolean isTxOutputSpendable(String txId, int index);
 
@@ -74,11 +74,15 @@ public interface ReadableBsqBlockChain {
 
     boolean isCompensationRequestPeriodValid(int blockHeight);
 
-    boolean isVotePeriodValid(int blockHeight);
+    boolean isBlindVotePeriodValid(int blockHeight);
+
+    boolean isVoteRevealPeriodValid(int blockHeight);
 
     long getCreateCompensationRequestFee(int blockHeight);
 
-    long getVotingFee(int blockHeight);
+    long getBlindVoteFee(int blockHeight);
+
+    long getVoteRevealFee(int blockHeight);
 
     Coin getTotalBurntFee();
 

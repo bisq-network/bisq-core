@@ -268,11 +268,10 @@ public class BtcWalletService extends WalletService {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Vote tx
+    // Blind vote tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction completePreparedVoteTx(Transaction feeTx,
-                                              byte[] opReturnData)
+    public Transaction completePreparedBlindVoteTx(Transaction feeTx, byte[] opReturnData)
             throws TransactionVerificationException, WalletException, InsufficientMoneyException {
 
         // (BsqFee)tx has following structure:
@@ -284,6 +283,112 @@ public class BtcWalletService extends WalletService {
         // inputs [1-n] BSQ inputs for vote fee
         // inputs [1-n] BTC inputs for miner fee
         // outputs [1] BSQ stake
+        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
+        // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
+        // outputs [0-1] OP_RETURN with opReturnData and amount 0
+        // mining fee: BTC mining fee + burned BSQ fee
+
+        Transaction preparedTx = new Transaction(params);
+        // Copy inputs from BSQ fee tx
+        feeTx.getInputs().forEach(preparedTx::addInput);
+        int indexOfBtcFirstInput = feeTx.getInputs().size();
+
+        // BSQ change outputs from BSQ fee inputs.
+        feeTx.getOutputs().forEach(preparedTx::addOutput);
+
+        // safety check counter to avoid endless loops
+        int counter = 0;
+        // estimated size of input sig
+        final int sigSizePerInput = 106;
+        // typical size for a tx with 3 inputs
+        int txSizeWithUnsignedInputs = 300;
+        final Coin txFeePerByte = feeService.getTxFeePerByte();
+
+        Address changeAddress = getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
+        checkNotNull(changeAddress, "changeAddress must not be null");
+
+        final BtcCoinSelector coinSelector = new BtcCoinSelector(walletsSetup.getAddressesByContext(AddressEntry.Context.AVAILABLE));
+        final List<TransactionInput> preparedBsqTxInputs = preparedTx.getInputs();
+        final List<TransactionOutput> preparedBsqTxOutputs = preparedTx.getOutputs();
+        int numInputs = preparedBsqTxInputs.size();
+        Transaction resultTx = null;
+        boolean isFeeOutsideTolerance;
+        do {
+            counter++;
+            if (counter >= 10) {
+                checkNotNull(resultTx, "resultTx must not be null");
+                log.error("Could not calculate the fee. Tx=" + resultTx);
+                break;
+            }
+
+            Transaction tx = new Transaction(params);
+            preparedBsqTxInputs.forEach(tx::addInput);
+            preparedBsqTxOutputs.forEach(tx::addOutput);
+
+            SendRequest sendRequest = SendRequest.forTx(tx);
+            sendRequest.shuffleOutputs = false;
+            sendRequest.aesKey = aesKey;
+            // signInputs needs to be false as it would try to sign all inputs (BSQ inputs are not in this wallet)
+            sendRequest.signInputs = false;
+
+            sendRequest.fee = txFeePerByte.multiply(txSizeWithUnsignedInputs + sigSizePerInput * numInputs);
+            sendRequest.feePerKb = Coin.ZERO;
+            sendRequest.ensureMinRequiredFee = false;
+
+            sendRequest.coinSelector = coinSelector;
+            sendRequest.changeAddress = changeAddress;
+            wallet.completeTx(sendRequest);
+
+            resultTx = sendRequest.tx;
+
+            // add OP_RETURN output
+            resultTx.addOutput(new TransactionOutput(params, resultTx, Coin.ZERO, ScriptBuilder.createOpReturnScript(opReturnData).getProgram()));
+
+            numInputs = resultTx.getInputs().size();
+            txSizeWithUnsignedInputs = resultTx.bitcoinSerialize().length;
+            final long estimatedFeeAsLong = txFeePerByte.multiply(txSizeWithUnsignedInputs + sigSizePerInput * numInputs).value;
+            // calculated fee must be inside of a tolerance range with tx fee
+            isFeeOutsideTolerance = Math.abs(resultTx.getFee().value - estimatedFeeAsLong) > 1000;
+        }
+        while (isFeeOutsideTolerance);
+
+        // Sign all BTC inputs
+        for (int i = indexOfBtcFirstInput; i < resultTx.getInputs().size(); i++) {
+            TransactionInput txIn = resultTx.getInputs().get(i);
+            checkArgument(txIn.getConnectedOutput() != null && txIn.getConnectedOutput().isMine(wallet),
+                    "txIn.getConnectedOutput() is not in our wallet. That must not happen.");
+            signTransactionInput(wallet, aesKey, resultTx, txIn, i);
+            checkScriptSig(resultTx, txIn, i);
+        }
+
+        checkWalletConsistency(wallet);
+        verifyTransaction(resultTx);
+
+        printTx("BTC wallet: Signed tx", resultTx);
+        return resultTx;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Vote reveal tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    //TODO is same as blind vote tx
+    public Transaction completePreparedVoteRevealTx(Transaction feeTx,
+                                                    byte[] opReturnData)
+            throws TransactionVerificationException, WalletException, InsufficientMoneyException {
+
+        // (BsqFee)tx has following structure:
+        // inputs [1] BSQ inputs (stake)
+        // inputs [1-n] BSQ inputs (fee)
+        // outputs [1] BSQ unlocked stake
+        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
+
+        // preparedVoteTx has following structure:
+        // inputs [1] BSQ inputs (stake)
+        // inputs [1-n] BSQ inputs (fee)
+        // inputs [1-n] BTC inputs for miner fee
+        // outputs [1] BSQ unlocked stake
         // outputs [0-1] BSQ change output (>= 2730 Satoshi)
         // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
         // outputs [0-1] OP_RETURN with opReturnData and amount 0

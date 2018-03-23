@@ -29,31 +29,30 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 @Slf4j
-public class OpReturnVoteController {
+public class OpReturnVoteRevealController {
 
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
     @Inject
-    public OpReturnVoteController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnVoteRevealController(ReadableBsqBlockChain readableBsqBlockChain) {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
+    //TODO check that stake input matches with stake output?
     public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
-        return mutableState.getVoteStakeOutput() != null &&
-                opReturnData.length == 22 &&
-                Version.VOTING_VERSION == opReturnData[1] &&
-                bsqFee == readableBsqBlockChain.getVotingFee(blockHeight) &&
-                readableBsqBlockChain.isVotePeriodValid(blockHeight);
+        return /*mutableState.getBlindVoteStakeOutput() != null &&*/
+                opReturnData.length == 54 &&
+                        Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
+                        bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
+                        readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
     }
 
     public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getVoteStakeOutput() != null,
+        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
+       /* checkArgument(mutableState.getBlindVoteStakeOutput() != null,
                 "mutableState.getVoteStakeOutput() must not be null");
-        mutableState.getVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
-        tx.setTxType(TxType.VOTE);
+        mutableState.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);*/
+        tx.setTxType(TxType.VOTE_REVEAL);
     }
 }

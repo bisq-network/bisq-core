@@ -56,7 +56,7 @@ public class DaoPeriodService {
         BREAK1(2),
         OPEN_FOR_VOTING(10),
         BREAK2(2),
-        VOTE_REVEAL(2),
+        VOTE_REVEAL(10),
         BREAK3(2);
 
       /* UNDEFINED(0),

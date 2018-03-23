@@ -49,7 +49,7 @@ public class TxInputController {
     Optional<TxOutput> getOptionalSpendableTxOutput(TxInput input) {
         // TODO check if Tuple indexes of inputs outputs are not messed up...
         // Get spendable BSQ output for txIdIndexTuple... (get output used as input in tx if it's spendable BSQ)
-        return readableBsqBlockChain.getSpendableTxOutput(input.getTxIdIndexTuple());
+        return readableBsqBlockChain.getUnspentAnMatureTxOutput(input.getTxIdIndexTuple());
     }
 
     void applyStateChange(TxInput input, TxOutput spendableTxOutput, int blockHeight, Tx tx, int inputIndex) {

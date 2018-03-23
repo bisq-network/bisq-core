@@ -19,6 +19,8 @@ package bisq.core.dao.vote.consensus;
 
 import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.BlindVote;
@@ -49,7 +51,7 @@ public class VoteConsensus {
     }
 
     public static List<Proposal> getSortedProposalList(List<Proposal> proposals) {
-        proposals.sort(Comparator.comparing(proposal -> proposal.getProposalPayload().getTxId()));
+        proposals.sort(Comparator.comparing(Proposal::getTxId));
         return proposals;
     }
 
@@ -57,15 +59,15 @@ public class VoteConsensus {
         return proposalList.toProtoMessage().toByteArray();
     }
 
-    public static Coin getVoteFee(ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(readableBsqBlockChain.getVotingFee(readableBsqBlockChain
+    public static Coin getBlindVoteFee(ReadableBsqBlockChain readableBsqBlockChain) {
+        return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain
                 .getChainHeadHeight()));
     }
 
-    public static byte[] getOpReturnData(byte[] encryptedProposalList) {
+    public static byte[] getOpReturnDataForBlindVote(byte[] encryptedProposalList) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnTypes.VOTE);
-            outputStream.write(Version.VOTING_VERSION);
+            outputStream.write(OpReturnTypes.BLIND_VOTE);
+            outputStream.write(Version.BLIND_VOTE_VERSION);
             outputStream.write(Hash.getSha256Ripemd160hash(encryptedProposalList));
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -78,5 +80,34 @@ public class VoteConsensus {
 
     public static SecretKey getSecretKey() {
         return Encryption.generateSecretKey();
+    }
+
+    public static byte[] getHashOfProposalList(ProposalList proposalList) {
+        // proposalList is already sorted nby TxId
+        return Hash.getSha256Ripemd160hash(proposalList.toProtoMessage().toByteArray());
+    }
+
+    public static byte[] getOpReturnDataForVoteReveal(byte[] hashOfProposalList, SecretKey secretKey) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            outputStream.write(OpReturnTypes.VOTE_REVEAL);
+            outputStream.write(Version.VOTE_REVEAL_VERSION);
+            outputStream.write(hashOfProposalList);     // hash is 20 bytes
+            outputStream.write(secretKey.getEncoded()); // SecretKey as bytes has 32 bytes
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            // Not expected to happen ever
+            e.printStackTrace();
+            log.error(e.toString());
+            return new byte[0];
+        }
+    }
+
+    public static Coin getVoteRevealFee(ReadableBsqBlockChain readableBsqBlockChain) {
+        return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain.getChainHeadHeight()));
+    }
+
+    public static void unlockStakeTxOutputType(TxOutput stakeTxOutput) {
+        // We unlock from the unspendable VOTE_STAKE_OUTPUT type
+        stakeTxOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
     }
 }

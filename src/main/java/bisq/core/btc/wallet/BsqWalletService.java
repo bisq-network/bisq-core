@@ -40,6 +40,7 @@ import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.CoinSelection;
@@ -459,10 +460,10 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Vote tx
+    // Blind vote tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedVoteFeeTx(Coin fee, Coin stake)
+    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake)
             throws InsufficientBsqException, ChangeBelowDustException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
@@ -470,7 +471,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
         CoinSelection coinSelection = bsqCoinSelector.select(sum, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            // We add her stake as we have that output added
+            // We add here stake as we have that output already added
             Coin change = bsqCoinSelector.getChangeExcludingFee(sum, coinSelection);
             if (!Restrictions.isAboveDust(change))
                 throw new ChangeBelowDustException(change);
@@ -481,7 +482,40 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
             throw new InsufficientBsqException(e.missing);
         }
 
-        printTx("getPreparedFeeTx", tx);
+        printTx("getPreparedBlindVoteTx", tx);
+        return tx;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Vote reveal tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedVoteRevealTx(Coin fee, TxOutput stakeTxOutput)
+            throws InsufficientBsqException, ChangeBelowDustException {
+        Transaction tx = new Transaction(params);
+        final Coin stake = Coin.valueOf(stakeTxOutput.getValue());
+        Transaction connectedOutputParentTransaction = getTransaction(stakeTxOutput.getTxId());
+        TransactionOutPoint transactionOutPoint = new TransactionOutPoint(params,
+                stakeTxOutput.getIndex(),
+                connectedOutputParentTransaction);
+        tx.addInput(new TransactionInput(params, tx, new byte[]{}, transactionOutPoint, stake));
+        tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
+        CoinSelection coinSelection = bsqCoinSelector.select(fee,
+                wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            // We add her stake as we have that output added
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
+            if (change.isPositive())
+                tx.addOutput(change, getUnusedAddress());
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+
+        printTx("getPreparedVoteRevealTx", tx);
         return tx;
     }
 
