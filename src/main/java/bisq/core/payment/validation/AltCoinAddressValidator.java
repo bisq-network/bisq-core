@@ -19,60 +19,37 @@ package bisq.core.payment.validation;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.locale.Res;
-import bisq.core.payment.validation.altcoins.ByteballAddressValidator;
-import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
-import bisq.core.payment.validation.altcoins.NxtReedSolomonValidator;
-import bisq.core.payment.validation.altcoins.OctocoinAddressValidator;
-import bisq.core.payment.validation.altcoins.PNCAddressValidator;
-import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
-import bisq.core.payment.validation.altcoins.XCNAddressValidator;
-import bisq.core.payment.validation.altcoins.YTNAddressValidator;
-import bisq.core.payment.validation.params.ACHParams;
-import bisq.core.payment.validation.params.AlcParams;
-import bisq.core.payment.validation.params.CageParams;
-import bisq.core.payment.validation.params.CreaParams;
-import bisq.core.payment.validation.params.ICHParams;
-import bisq.core.payment.validation.params.IOPParams;
-import bisq.core.payment.validation.params.ODNParams;
-import bisq.core.payment.validation.params.OctocoinParams;
-import bisq.core.payment.validation.params.OnionParams;
-import bisq.core.payment.validation.params.PARTParams;
-import bisq.core.payment.validation.params.PNCParams;
-import bisq.core.payment.validation.params.PhoreParams;
-import bisq.core.payment.validation.params.PivxParams;
-import bisq.core.payment.validation.params.SpeedCashParams;
-import bisq.core.payment.validation.params.StrayaParams;
-import bisq.core.payment.validation.params.TerracoinParams;
-import bisq.core.payment.validation.params.WACoinsParams;
-import bisq.core.payment.validation.params.WMCCParams;
-import bisq.core.payment.validation.params.XspecParams;
+import bisq.core.payment.validation.altcoins.*;
+import bisq.core.payment.validation.params.*;
 import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
-
-import org.libdohj.params.DashMainNetParams;
-import org.libdohj.params.DashRegTestParams;
-import org.libdohj.params.DashTestNet3Params;
-import org.libdohj.params.DogecoinMainNetParams;
-import org.libdohj.params.LitecoinMainNetParams;
-import org.libdohj.params.LitecoinRegTestParams;
-import org.libdohj.params.LitecoinTestNet3Params;
-
+import lombok.extern.slf4j.Slf4j;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
-
-import lombok.extern.slf4j.Slf4j;
-
 import org.jetbrains.annotations.NotNull;
+import org.libdohj.params.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 @Slf4j
 public final class AltCoinAddressValidator extends InputValidator {
 
     private String currencyCode;
+    private final Map<String, SpecificAltCoinAddressValidator> validators = new HashMap<>();
+
+    public AltCoinAddressValidator() {
+        final ServiceLoader<SpecificAltCoinAddressValidator> loader = ServiceLoader.load(SpecificAltCoinAddressValidator.class);
+        for (SpecificAltCoinAddressValidator validator : loader) {
+            validators.put(validator.getCurrencyCode(), validator);
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Public methods
@@ -93,6 +70,10 @@ public final class AltCoinAddressValidator extends InputValidator {
             ValidationResult regexTestFailed = new ValidationResult(false,
                     Res.get("validation.altcoin.wrongStructure", currencyCode));
 
+            final SpecificAltCoinAddressValidator validator = validators.get(currencyCode);
+            if (null != validator) {
+                return validator.validate(input);
+            }
             switch (currencyCode) {
                 case "BTC":
                     try {
@@ -314,12 +295,6 @@ public final class AltCoinAddressValidator extends InputValidator {
                         // Unhandled Exception (probably a checksum error)
                         return new ValidationResult(false);
                     }
-                case "ELLA":
-                    // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
-                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "XCN":
                     // https://bitcointalk.org/index.php?topic=1801595
                     return XCNAddressValidator.ValidateAddress(input);
@@ -352,13 +327,6 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return new ValidationResult(true);
                     else
                         return regexTestFailed;
-                case "BCH":
-                    try {
-                        Address.fromBase58(BtcMainNetParamsForValidation.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "BCHC":
                     try {
                         Address.fromBase58(BtcMainNetParamsForValidation.get(), input);

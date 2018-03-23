@@ -18,19 +18,11 @@
 package bisq.core.locale;
 
 import bisq.common.app.DevEnv;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Currency;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import bisq.core.payment.validation.SpecificAltCoinAddressValidator;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CurrencyUtil {
@@ -95,13 +87,17 @@ public class CurrencyUtil {
     public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
         final List<CryptoCurrency> result = new ArrayList<>();
 
+        final ServiceLoader<SpecificAltCoinAddressValidator> loader = ServiceLoader.load(SpecificAltCoinAddressValidator.class);
+        for (SpecificAltCoinAddressValidator validator : loader) {
+            result.add(new CryptoCurrency(validator.getCurrencyCode(), validator.getCurrencyName(), validator.isAsset()));
+        }
+
         result.add(new CryptoCurrency("BETR", "Better Betting", true));
         if (DevEnv.DAO_TRADING_ACTIVATED)
             result.add(new CryptoCurrency("BSQ", "Bisq Token"));
 
         if (!baseCurrencyCode.equals("BTC"))
             result.add(new CryptoCurrency("BTC", "Bitcoin"));
-        result.add(new CryptoCurrency("BCH", "Bitcoin Cash"));
         result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
         result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
         result.add(new CryptoCurrency("BURST", "Burstcoin"));
@@ -118,7 +114,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("ONION", "DeepOnion"));
         result.add(new CryptoCurrency("DOGE", "Dogecoin"));
         result.add(new CryptoCurrency("DMC", "DynamicCoin"));
-        result.add(new CryptoCurrency("ELLA", "Ellaism"));
         result.add(new CryptoCurrency("ESP", "Espers"));
         result.add(new CryptoCurrency("ETH", "Ether"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));

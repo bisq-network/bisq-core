@@ -1,0 +1,2 @@
+bisq.core.payment.validation.altcoins.bch.BchAddressValidator
+bisq.core.payment.validation.altcoins.ella.EllaAddressValidator
