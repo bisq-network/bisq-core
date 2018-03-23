@@ -1,9 +1,9 @@
 package bisq.core.payment.validation.altcoins.ella;
 
-import bisq.core.payment.validation.AbstractSpecificAltCoinAddressValidator;
+import bisq.core.payment.validation.AbstractAssetProvider;
 import bisq.core.util.validation.InputValidator;
 
-public class EllaAddressValidator extends AbstractSpecificAltCoinAddressValidator {
+public class EllaAddressValidator extends AbstractAssetProvider {
 
     @Override
     public String getCurrencyCode() {
@@ -21,7 +21,7 @@ public class EllaAddressValidator extends AbstractSpecificAltCoinAddressValidato
     }
 
     @Override
-    public InputValidator.ValidationResult validate(String input) {
+    public InputValidator.ValidationResult validateAddress(String input) {
         // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
         if (!input.matches("^(0x)?[0-9a-fA-F]{40}$")) {
             return getRegexTestFailed();

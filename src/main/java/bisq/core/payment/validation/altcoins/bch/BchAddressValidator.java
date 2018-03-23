@@ -1,12 +1,12 @@
 package bisq.core.payment.validation.altcoins.bch;
 
-import bisq.core.payment.validation.AbstractSpecificAltCoinAddressValidator;
+import bisq.core.payment.validation.AbstractAssetProvider;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 
-public class BchAddressValidator extends AbstractSpecificAltCoinAddressValidator {
+public class BchAddressValidator extends AbstractAssetProvider {
 
     @Override
     public String getCurrencyCode() {
@@ -24,7 +24,7 @@ public class BchAddressValidator extends AbstractSpecificAltCoinAddressValidator
     }
 
     @Override
-    public InputValidator.ValidationResult validate(String input) {
+    public InputValidator.ValidationResult validateAddress(String input) {
         try {
             Address.fromBase58(BtcMainNetParamsForValidation.get(), input);
             return new InputValidator.ValidationResult(true);

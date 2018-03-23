@@ -2,7 +2,7 @@ package bisq.core.payment.validation;
 
 import bisq.core.util.validation.InputValidator;
 
-public interface SpecificAltCoinAddressValidator {
+public interface AssetProvider {
 
     String getCurrencyCode();
 
@@ -10,5 +10,5 @@ public interface SpecificAltCoinAddressValidator {
 
     boolean isAsset();
 
-    InputValidator.ValidationResult validate(String input);
+    InputValidator.ValidationResult validateAddress(String input);
 }

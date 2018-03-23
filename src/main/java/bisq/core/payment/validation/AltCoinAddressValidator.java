@@ -42,11 +42,11 @@ import java.util.ServiceLoader;
 public final class AltCoinAddressValidator extends InputValidator {
 
     private String currencyCode;
-    private final Map<String, SpecificAltCoinAddressValidator> validators = new HashMap<>();
+    private final Map<String, AssetProvider> validators = new HashMap<>();
 
     public AltCoinAddressValidator() {
-        final ServiceLoader<SpecificAltCoinAddressValidator> loader = ServiceLoader.load(SpecificAltCoinAddressValidator.class);
-        for (SpecificAltCoinAddressValidator validator : loader) {
+        final ServiceLoader<AssetProvider> loader = ServiceLoader.load(AssetProvider.class);
+        for (AssetProvider validator : loader) {
             validators.put(validator.getCurrencyCode(), validator);
         }
     }
@@ -70,9 +70,9 @@ public final class AltCoinAddressValidator extends InputValidator {
             ValidationResult regexTestFailed = new ValidationResult(false,
                     Res.get("validation.altcoin.wrongStructure", currencyCode));
 
-            final SpecificAltCoinAddressValidator validator = validators.get(currencyCode);
+            final AssetProvider validator = validators.get(currencyCode);
             if (null != validator) {
-                return validator.validate(input);
+                return validator.validateAddress(input);
             }
             switch (currencyCode) {
                 case "BTC":

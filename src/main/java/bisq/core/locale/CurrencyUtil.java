@@ -18,7 +18,7 @@
 package bisq.core.locale;
 
 import bisq.common.app.DevEnv;
-import bisq.core.payment.validation.SpecificAltCoinAddressValidator;
+import bisq.core.payment.validation.AssetProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -87,8 +87,8 @@ public class CurrencyUtil {
     public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
         final List<CryptoCurrency> result = new ArrayList<>();
 
-        final ServiceLoader<SpecificAltCoinAddressValidator> loader = ServiceLoader.load(SpecificAltCoinAddressValidator.class);
-        for (SpecificAltCoinAddressValidator validator : loader) {
+        final ServiceLoader<AssetProvider> loader = ServiceLoader.load(AssetProvider.class);
+        for (AssetProvider validator : loader) {
             result.add(new CryptoCurrency(validator.getCurrencyCode(), validator.getCurrencyName(), validator.isAsset()));
         }
 
