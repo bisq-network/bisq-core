@@ -47,7 +47,6 @@ public class Vote implements PersistablePayload {
     private final String secretKeyAsHex;
     private final BlindVote blindVote;
     private final long date;
-    private long stake;
     @Nullable
     private String revealTxId;
 
@@ -58,13 +57,11 @@ public class Vote implements PersistablePayload {
 
     Vote(ProposalList proposalList,
          String secretKeyAsHex,
-         BlindVote blindVote,
-         long stake) {
+         BlindVote blindVote) {
         this(proposalList,
                 secretKeyAsHex,
                 blindVote,
                 new Date().getTime(),
-                stake,
                 null);
     }
 
@@ -77,13 +74,11 @@ public class Vote implements PersistablePayload {
                  String secretKeyAsHex,
                  BlindVote blindVote,
                  long date,
-                 long stake,
                  @Nullable String revealTxId) {
         this.proposalList = proposalList;
         this.secretKeyAsHex = secretKeyAsHex;
         this.blindVote = blindVote;
         this.date = date;
-        this.stake = stake;
         this.revealTxId = revealTxId;
     }
 
@@ -93,8 +88,7 @@ public class Vote implements PersistablePayload {
                 .setBlindVote(blindVote.getBuilder())
                 .setProposalList(proposalList.getBuilder())
                 .setSecretKeyAsHex(secretKeyAsHex)
-                .setDate(date)
-                .setStake(stake);
+                .setDate(date);
         Optional.ofNullable(revealTxId).ifPresent(builder::setRevealTxId);
         return builder.build();
     }
@@ -104,7 +98,6 @@ public class Vote implements PersistablePayload {
                 proto.getSecretKeyAsHex(),
                 BlindVote.fromProto(proto.getBlindVote()),
                 proto.getDate(),
-                proto.getStake(),
                 proto.getRevealTxId().isEmpty() ? null : proto.getRevealTxId());
     }
 

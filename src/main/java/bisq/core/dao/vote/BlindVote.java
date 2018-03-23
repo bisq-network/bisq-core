@@ -58,6 +58,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     private final byte[] encryptedProposalList;
     private final String txId;
+    private long stake;
     private final String ownerPubKeyAsHex;
 
     // Used just for caching
@@ -74,8 +75,9 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     BlindVote(byte[] encryptedProposalList,
               String txId,
+              long stake,
               PublicKey ownerPubKey) {
-        this(encryptedProposalList, txId, Utils.HEX.encode(ownerPubKey.getEncoded()), null);
+        this(encryptedProposalList, txId, stake, Utils.HEX.encode(ownerPubKey.getEncoded()), null);
     }
 
 
@@ -85,10 +87,12 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     private BlindVote(byte[] encryptedProposalList,
                       String txId,
+                      long stake,
                       String ownerPubKeyAsHex,
                       @Nullable Map<String, String> extraDataMap) {
         this.encryptedProposalList = encryptedProposalList;
         this.txId = txId;
+        this.stake = stake;
         this.ownerPubKeyAsHex = ownerPubKeyAsHex;
         this.extraDataMap = extraDataMap;
     }
@@ -104,6 +108,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         final PB.BlindVote.Builder builder = PB.BlindVote.newBuilder()
                 .setEncryptedProposalList(ByteString.copyFrom(encryptedProposalList))
                 .setTxId(txId)
+                .setStake(stake)
                 .setOwnerPubKeyAsHex(ownerPubKeyAsHex);
         Optional.ofNullable(getExtraDataMap()).ifPresent(builder::putAllExtraData);
         return builder;
@@ -112,6 +117,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     public static BlindVote fromProto(PB.BlindVote proto) {
         return new BlindVote(proto.getEncryptedProposalList().toByteArray(),
                 proto.getTxId(),
+                proto.getStake(),
                 proto.getOwnerPubKeyAsHex(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
