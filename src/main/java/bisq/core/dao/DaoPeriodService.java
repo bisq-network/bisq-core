@@ -112,7 +112,6 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void shutDown() {
-
     }
 
     public void onAllServicesInitialized() {

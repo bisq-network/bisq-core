@@ -67,7 +67,6 @@ public class IssuanceService implements BsqNode.BsqBlockChainListener {
     private WritableBsqBlockChain writableBsqBlockChain;
     private DaoPeriodService daoPeriodService;
     private BsqWalletService bsqWalletService;
-    private IssuanceConsensus issuanceConsensus;
 
     @Inject
     public IssuanceService(ProposalCollectionsService proposalCollectionsService,
@@ -83,7 +82,6 @@ public class IssuanceService implements BsqNode.BsqBlockChainListener {
         this.writableBsqBlockChain = writableBsqBlockChain;
         this.daoPeriodService = daoPeriodService;
         this.bsqWalletService = bsqWalletService;
-        this.issuanceConsensus = issuanceConsensus;
 
         bsqNodeProvider.getBsqNode().addBsqBlockChainListener(this);
     }
@@ -93,7 +91,6 @@ public class IssuanceService implements BsqNode.BsqBlockChainListener {
 
 
     public void shutDown() {
-
     }
 
 

@@ -24,6 +24,7 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.proposal.ProposalCollectionsService;
 import bisq.core.dao.vote.VoteService;
 
+import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
@@ -58,7 +59,7 @@ public class DaoManager {
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             daoPeriodService.onAllServicesInitialized();
             proposalCollectionsService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
@@ -68,10 +69,12 @@ public class DaoManager {
     }
 
     public void shutDown() {
-        daoPeriodService.shutDown();
-        proposalCollectionsService.shutDown();
-        bsqNode.shutDown();
-        voteService.shutDown();
-        issuanceService.shutDown();
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
+            daoPeriodService.shutDown();
+            proposalCollectionsService.shutDown();
+            bsqNode.shutDown();
+            voteService.shutDown();
+            issuanceService.shutDown();
+        }
     }
 }
