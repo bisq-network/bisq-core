@@ -24,6 +24,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.ChangeBelowDustException;
 import bisq.core.dao.DaoPeriodService;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.proposal.Proposal;
@@ -99,6 +100,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
     private final List<BlindVote> blindVoteSortedList = new SortedList<>(blindVoteList);
     private ChangeListener<Number> numConnectedPeersListener;
+    private BsqBlockChain.Listener bsqBlockChainListener;
 
     @Inject
     public VoteService(ProposalCollectionsService proposalCollectionsService,
@@ -295,26 +297,16 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     }
 
     private void onPhaseChanged(DaoPeriodService.Phase phase) {
-        switch (phase) {
-            case UNDEFINED:
-                break;
-            case PROPOSAL:
-                break;
-            case BREAK1:
-                break;
-            case OPEN_FOR_VOTING:
-                break;
-            case BREAK2:
-                break;
-            case VOTE_REVEAL:
-                revealVotes();
-                break;
-            case BREAK3:
-                break;
-            case ISSUANCE:
-                break;
-            case BREAK4:
-                break;
+        if (phase == DaoPeriodService.Phase.VOTE_REVEAL) {
+            // A phase change is triggered by a new block but we need to wait for the parser to be complete
+            //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
+            bsqBlockChainListener = bsqBlock -> revealVotes();
+            readableBsqBlockChain.addListener(bsqBlockChainListener);
+        } else {
+            // If we are not in the reveal phase we are not interested in the events.
+            if (bsqBlockChainListener != null)
+                readableBsqBlockChain.removeListener(bsqBlockChainListener);
+            bsqBlockChainListener = null;
         }
     }
 
