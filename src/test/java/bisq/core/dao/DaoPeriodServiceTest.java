@@ -48,7 +48,7 @@ public class DaoPeriodServiceTest {
 
         int phase1 = DaoPeriodService.Phase.PROPOSAL.getDurationInBlocks();
         int phase2 = phase1 + DaoPeriodService.Phase.BREAK1.getDurationInBlocks();
-        int phase3 = phase2 + DaoPeriodService.Phase.OPEN_FOR_VOTING.getDurationInBlocks();
+        int phase3 = phase2 + DaoPeriodService.Phase.BLIND_VOTE.getDurationInBlocks();
         int phase4 = phase3 + DaoPeriodService.Phase.BREAK2.getDurationInBlocks();
         int phase5 = phase4 + DaoPeriodService.Phase.VOTE_REVEAL.getDurationInBlocks();
         int phase6 = phase5 + DaoPeriodService.Phase.BREAK3.getDurationInBlocks();
@@ -57,15 +57,15 @@ public class DaoPeriodServiceTest {
         assertEquals(DaoPeriodService.Phase.PROPOSAL, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase1 - 1, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK1, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase1, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK1, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase2 - 1, totalPhaseBlocks)));
-        assertEquals(DaoPeriodService.Phase.OPEN_FOR_VOTING, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase2, totalPhaseBlocks)));
-        assertEquals(DaoPeriodService.Phase.OPEN_FOR_VOTING, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase3 - 1, totalPhaseBlocks)));
+        assertEquals(DaoPeriodService.Phase.BLIND_VOTE, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase2, totalPhaseBlocks)));
+        assertEquals(DaoPeriodService.Phase.BLIND_VOTE, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase3 - 1, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK2, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase3, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK2, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase4 - 1, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.VOTE_REVEAL, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase4, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.VOTE_REVEAL, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase5 - 1, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK3, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase5, totalPhaseBlocks)));
         assertEquals(DaoPeriodService.Phase.BREAK3, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase6 - 1, totalPhaseBlocks)));
-        assertEquals(DaoPeriodService.Phase.PROPOSAL, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase6, totalPhaseBlocks)));
+        assertEquals(DaoPeriodService.Phase.ISSUANCE, service.calculatePhase(service.getRelativeBlocksInCycle(0, phase6, totalPhaseBlocks)));
     }
 
     @Test
@@ -162,7 +162,7 @@ public class DaoPeriodServiceTest {
     @Test
     public void getCompensationRequestStartBlockTest() {
         // int chainHeight, int genesisHeight, int totalPeriodInBlocks
-        int numBlocksOfCycle = 20;
+        int numBlocksOfCycle = service.getNumBlocksOfCycle();
         int gen = 1;
         final int first = gen; // 1
         final int second = first + numBlocksOfCycle; //
@@ -182,7 +182,7 @@ public class DaoPeriodServiceTest {
     public void getCompensationRequestEndBlockTest() {
         // int chainHeight, int genesisHeight, int numBlocksOfCycle, int totalPeriodInBlocks
         int blocks = DaoPeriodService.Phase.PROPOSAL.getDurationInBlocks(); //10
-        int numBlocksOfCycle = 20;
+        int numBlocksOfCycle = service.getNumBlocksOfCycle();
         int gen = 1;
         final int first = gen + blocks - 1; //10
         final int second = first + numBlocksOfCycle; // 30
