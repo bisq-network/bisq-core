@@ -23,6 +23,7 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
+import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
@@ -103,9 +104,10 @@ public class DaoModule extends AppModule {
         bind(DaoPeriodService.class).in(Singleton.class);
 
         bind(ProposalCollectionsService.class).in(Singleton.class);
-        bind(VoteService.class).in(Singleton.class);
         bind(CompensationRequestService.class).in(Singleton.class);
         bind(GenericProposalService.class).in(Singleton.class);
+        bind(VoteService.class).in(Singleton.class);
+        bind(IssuanceService.class).in(Singleton.class);
 
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PASSWORD)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PASSWORD));

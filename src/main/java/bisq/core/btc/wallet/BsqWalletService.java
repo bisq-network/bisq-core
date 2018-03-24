@@ -487,7 +487,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Vote reveal tx
+    // MyVote reveal tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction getPreparedVoteRevealTx(Coin fee, TxOutput stakeTxOutput)
@@ -504,8 +504,8 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
                 wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            // We add her stake as we have that output added
-            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            // We add here stake as we have that output added
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee.add(stake), coinSelection);
             if (!Restrictions.isAboveDust(change))
                 throw new ChangeBelowDustException(change);
 

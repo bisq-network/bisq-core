@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class VoteList extends PersistableList<Vote> {
+public class MyVoteList extends PersistableList<MyVote> {
 
-    VoteList(List<Vote> list) {
+    MyVoteList(List<MyVote> list) {
         super(list);
     }
 
@@ -41,16 +41,16 @@ public class VoteList extends PersistableList<Vote> {
     @Override
     public Message toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder()
-                .setVoteList(PB.VoteList.newBuilder()
-                        .addAllVote(getList().stream()
-                                .map(Vote::toProtoMessage)
+                .setMyVoteList(PB.MyVoteList.newBuilder()
+                        .addAllMyVote(getList().stream()
+                                .map(MyVote::toProtoMessage)
                                 .collect(Collectors.toList())))
                 .build();
     }
 
-    public static PersistableEnvelope fromProto(PB.VoteList proto) {
-        return new VoteList(new ArrayList<>(proto.getVoteList().stream()
-                .map(Vote::fromProto)
+    public static PersistableEnvelope fromProto(PB.MyVoteList proto) {
+        return new MyVoteList(new ArrayList<>(proto.getMyVoteList().stream()
+                .map(MyVote::fromProto)
                 .collect(Collectors.toList())));
     }
 }

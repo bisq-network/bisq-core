@@ -18,6 +18,7 @@
 package bisq.core.dao;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.proposal.ProposalCollectionsService;
@@ -34,6 +35,7 @@ public class DaoManager {
     private final DaoPeriodService daoPeriodService;
     private final ProposalCollectionsService proposalCollectionsService;
     private final BsqNode bsqNode;
+    private final IssuanceService issuanceService;
     private final VoteService voteService;
 
 
@@ -45,10 +47,12 @@ public class DaoManager {
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
                       ProposalCollectionsService proposalCollectionsService,
-                      VoteService voteService) {
+                      VoteService voteService,
+                      IssuanceService issuanceService) {
         this.daoPeriodService = daoPeriodService;
         this.proposalCollectionsService = proposalCollectionsService;
         this.voteService = voteService;
+        this.issuanceService = issuanceService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
@@ -59,6 +63,7 @@ public class DaoManager {
             proposalCollectionsService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
             voteService.onAllServicesInitialized();
+            issuanceService.onAllServicesInitialized();
         }
     }
 
@@ -67,5 +72,6 @@ public class DaoManager {
         proposalCollectionsService.shutDown();
         bsqNode.shutDown();
         voteService.shutDown();
+        issuanceService.shutDown();
     }
 }

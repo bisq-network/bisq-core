@@ -95,6 +95,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         void onBlockAdded(BsqBlock bsqBlock);
     }
 
+    public interface IssuanceListener {
+        void onIssuance();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Instance fields
@@ -113,6 +117,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     private final Set<Tuple2<Long, Integer>> voteRevealFees;
 
     private final List<Listener> listeners = new ArrayList<>();
+    private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
 
     private int chainHeadHeight = 0;
     @Nullable
@@ -225,6 +230,16 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         listeners.remove(listener);
     }
 
+    @Override
+    public void addIssuanceListener(IssuanceListener listener) {
+        issuanceListeners.add(listener);
+    }
+
+    @Override
+    public void removeIssuanceListener(IssuanceListener listener) {
+        issuanceListeners.remove(listener);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: BsqBlockChain
@@ -295,6 +310,15 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> unspentTxOutputsMap.remove(txOutput.getTxIdIndexTuple()));
     }
 
+    @Override
+    public void issueBsq(TxOutput txOutput) {
+        lock.write(() -> {
+            // The magic happens, we print money! ;-)
+            //TODO maybe we should use a new type and maturity?
+            txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
+            issuanceListeners.forEach(listener -> listener.onIssuance());
+        });
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: Fees
@@ -468,6 +492,27 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     public Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index) {
         return lock.read(() -> getUnspentAnMatureTxOutput(new TxIdIndexTuple(txId, index)));
     }
+
+    public Set<TxOutput> getVoteRevealTxOutputs() {
+        return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
+                .collect(Collectors.toSet()));
+    }
+
+    @Override
+    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
+        return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .collect(Collectors.toSet()));
+    }
+
+    @Override
+    public Set<TxOutput> getCompReqIssuanceTxOutputs() {
+        return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT)
+                .collect(Collectors.toSet()));
+    }
+
 
     private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> unspentTxOutputsMap.entrySet().stream()

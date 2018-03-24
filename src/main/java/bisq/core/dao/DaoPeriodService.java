@@ -57,7 +57,9 @@ public class DaoPeriodService {
         OPEN_FOR_VOTING(10),
         BREAK2(2),
         VOTE_REVEAL(10),
-        BREAK3(2);
+        BREAK3(2),
+        ISSUANCE(1),
+        BREAK4(1);
 
       /* UNDEFINED(0),
         COMPENSATION_REQUESTS(144 * 23),
@@ -218,6 +220,23 @@ public class DaoPeriodService {
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks())
             return Phase.BREAK3;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
+                Phase.BREAK1.getDurationInBlocks() +
+                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BREAK2.getDurationInBlocks() +
+                Phase.VOTE_REVEAL.getDurationInBlocks() +
+                Phase.BREAK3.getDurationInBlocks() +
+                Phase.ISSUANCE.getDurationInBlocks())
+            return Phase.ISSUANCE;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
+                Phase.BREAK1.getDurationInBlocks() +
+                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BREAK2.getDurationInBlocks() +
+                Phase.VOTE_REVEAL.getDurationInBlocks() +
+                Phase.BREAK3.getDurationInBlocks() +
+                Phase.ISSUANCE.getDurationInBlocks() +
+                Phase.BREAK4.getDurationInBlocks())
+            return Phase.BREAK4;
         else {
             log.error("blocksInNewPhase is not covered by phase checks. blocksInNewPhase={}", blocksInNewPhase);
             if (DevEnv.isDevMode())

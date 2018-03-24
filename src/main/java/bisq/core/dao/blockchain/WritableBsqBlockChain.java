@@ -44,4 +44,6 @@ public interface WritableBsqBlockChain {
     void addListener(BsqBlockChain.Listener listener);
 
     void removeListener(BsqBlockChain.Listener listener);
+
+    void issueBsq(TxOutput txOutput);
 }

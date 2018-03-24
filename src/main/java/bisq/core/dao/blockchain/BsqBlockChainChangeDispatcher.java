@@ -39,7 +39,7 @@ public class BsqBlockChainChangeDispatcher implements BsqNode.BsqBlockChainListe
 
     @Override
     public void onBsqBlockChainChanged() {
-        bsqBlockChainListeners.stream().forEach(BsqNode.BsqBlockChainListener::onBsqBlockChainChanged);
+        bsqBlockChainListeners.forEach(BsqNode.BsqBlockChainListener::onBsqBlockChainChanged);
     }
 
     public void addBsqBlockChainListener(BsqNode.BsqBlockChainListener bsqBlockChainListener) {

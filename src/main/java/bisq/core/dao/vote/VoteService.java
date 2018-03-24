@@ -91,12 +91,12 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     private final BtcWalletService btcWalletService;
     private final P2PService p2PService;
     private final PublicKey signaturePubKey;
-    private final Storage<VoteList> voteListStorage;
+    private final Storage<MyVoteList> voteListStorage;
 
     @Getter
-    private final List<Vote> voteList = new ArrayList<>();
-    private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
+    private final List<MyVote> myVotesList = new ArrayList<>();
     @Getter
+    private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
     private final List<BlindVote> blindVoteSortedList = new SortedList<>(blindVoteList);
     private ChangeListener<Number> numConnectedPeersListener;
 
@@ -108,7 +108,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                        BtcWalletService btcWalletService,
                        P2PService p2PService,
                        KeyRing keyRing,
-                       Storage<VoteList> voteListStorage) {
+                       Storage<MyVoteList> voteListStorage) {
         this.proposalCollectionsService = proposalCollectionsService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.daoPeriodService = daoPeriodService;
@@ -130,10 +130,10 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            VoteList persisted = voteListStorage.initAndGetPersistedWithFileName("VoteList", 100);
+            MyVoteList persisted = voteListStorage.initAndGetPersistedWithFileName("MyVoteList", 100);
             if (persisted != null) {
-                this.voteList.clear();
-                this.voteList.addAll(persisted.getList());
+                this.myVotesList.clear();
+                this.myVotesList.addAll(persisted.getList());
             }
         }
     }
@@ -177,10 +177,10 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
             UserThread.runAfter(() -> {
                 if (((int) newValue > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
                     p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                    voteList.stream()
-                            .filter(vote -> daoPeriodService.isTxInPhase(vote.getTxId(),
+                    myVotesList.stream()
+                            .filter(myVote -> daoPeriodService.isTxInPhase(myVote.getTxId(),
                                     DaoPeriodService.Phase.OPEN_FOR_VOTING))
-                            .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
+                            .forEach(myVote -> addBlindVoteToP2PNetwork(myVote.getBlindVote()));
                 }
             }, 2);
         };
@@ -203,14 +203,14 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
         byte[] encryptedProposalList = getEncryptedVoteList(proposalList, secretKey);
         byte[] opReturnData = VoteConsensus.getOpReturnDataForBlindVote(encryptedProposalList);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
-        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), signaturePubKey);
+        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
         publishTx(blindVoteTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction result) {
                 addBlindVoteToP2PNetwork(blindVote);
-                Vote vote = new Vote(proposalList, Utils.HEX.encode(secretKey.getEncoded()), blindVote, stake.value);
-                voteList.add(vote);
-                voteListStorage.queueUpForSave(new VoteList(voteList), 100);
+                MyVote myVote = new MyVote(proposalList, Utils.HEX.encode(secretKey.getEncoded()), blindVote);
+                myVotesList.add(myVote);
+                voteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
                 callback.onSuccess(result);
             }
 
@@ -311,29 +311,33 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                 break;
             case BREAK3:
                 break;
+            case ISSUANCE:
+                break;
+            case BREAK4:
+                break;
         }
     }
 
     private void revealVotes() {
-        voteList.stream()
-                .filter(vote -> vote.getRevealTxId() == null)
+        myVotesList.stream()
+                .filter(myVote -> myVote.getRevealTxId() == null)
                 .forEach(this::revealVote);
     }
 
-    private void revealVote(Vote vote) {
-        ProposalList proposalList = vote.getProposalList();
+    private void revealVote(MyVote myVote) {
+        ProposalList proposalList = myVote.getProposalList();
         byte[] hashOfProposalList = VoteConsensus.getHashOfProposalList(proposalList);
-        byte[] opReturnData = VoteConsensus.getOpReturnDataForVoteReveal(hashOfProposalList, vote.getSecretKey());
+        byte[] opReturnData = VoteConsensus.getOpReturnDataForVoteReveal(hashOfProposalList, myVote.getSecretKey());
         final Set<TxOutput> lockedForVoteTxOutputs = readableBsqBlockChain.getLockedForVoteTxOutputs();
         Optional<TxOutput> optionalStakeTxOutput = lockedForVoteTxOutputs.stream()
-                .filter(txOutput -> txOutput.getTxId().equals(vote.getTxId()))
+                .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId()))
                 .findAny();
         if (optionalStakeTxOutput.isPresent()) {
             try {
                 final TxOutput stakeTxOutput = optionalStakeTxOutput.get();
                 VoteConsensus.unlockStakeTxOutputType(stakeTxOutput);
                 Transaction voteRevealTx = getVoteRevealTx(stakeTxOutput, opReturnData);
-                vote.setRevealTxId(voteRevealTx.getHashAsString());
+                myVote.setRevealTxId(voteRevealTx.getHashAsString());
                 voteListStorage.queueUpForSave();
 
                 publishRevealTx(voteRevealTx, new FutureCallback<Transaction>() {
@@ -355,7 +359,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                 e.printStackTrace();
             }
         } else {
-            log.warn("optionalStakeTxOutput is not present. vote={}", vote);
+            log.warn("optionalStakeTxOutput is not present. myVote={}", myVote);
         }
 
     }

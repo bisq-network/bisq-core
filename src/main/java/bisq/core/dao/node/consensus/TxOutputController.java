@@ -72,7 +72,7 @@ public class TxOutputController {
                     // We store the output as BSQ output for use in further iterations.
                     mutableState.setBsqOutput(txOutput);
 
-                    // First output might be Vote stake output
+                    // First output might be MyVote stake output
                     if (mutableState.getBlindVoteStakeOutput() == null) {
                         // We don't know yes if the tx is a vote tx as that will be detected in the last
                         // output which is a OP_RETURN output. We store that output for later use at the OP_RETURN

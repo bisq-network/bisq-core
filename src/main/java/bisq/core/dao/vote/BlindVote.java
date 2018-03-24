@@ -129,7 +129,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     @Override
     public PublicKey getOwnerPubKey() {
-        if (ownerPubKey == null)
+        if (ownerPubKey == null && ownerPubKeyAsHex != null && !ownerPubKeyAsHex.isEmpty())
             ownerPubKey = Sig.getPublicKeyFromBytes(Utils.HEX.decode(ownerPubKeyAsHex));
         return ownerPubKey;
     }

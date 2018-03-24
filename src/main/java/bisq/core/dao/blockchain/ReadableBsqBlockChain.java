@@ -56,6 +56,12 @@ public interface ReadableBsqBlockChain {
 
     boolean containsTx(String txId);
 
+    Set<TxOutput> getVoteRevealTxOutputs();
+
+    Set<TxOutput> getBlindVoteStakeTxOutputs();
+
+    Set<TxOutput> getCompReqIssuanceTxOutputs();
+
     Optional<TxOutput> getUnspentAnMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
 
     Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index);
@@ -89,6 +95,10 @@ public interface ReadableBsqBlockChain {
     Coin getIssuedAmount();
 
     LinkedList<BsqBlock> getBsqBlocks();
+
+    void addIssuanceListener(BsqBlockChain.IssuanceListener listener);
+
+    void removeIssuanceListener(BsqBlockChain.IssuanceListener listener);
 
     BsqBlockChain getClone();
 

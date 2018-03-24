@@ -41,8 +41,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode
 @Slf4j
 @Data
-public class Vote implements PersistablePayload {
-
+public class MyVote implements PersistablePayload {
     private final ProposalList proposalList;
     private final String secretKeyAsHex;
     private final BlindVote blindVote;
@@ -55,9 +54,9 @@ public class Vote implements PersistablePayload {
     @Nullable
     private transient SecretKey secretKey;
 
-    Vote(ProposalList proposalList,
-         String secretKeyAsHex,
-         BlindVote blindVote) {
+    MyVote(ProposalList proposalList,
+           String secretKeyAsHex,
+           BlindVote blindVote) {
         this(proposalList,
                 secretKeyAsHex,
                 blindVote,
@@ -70,11 +69,11 @@ public class Vote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Vote(ProposalList proposalList,
-                 String secretKeyAsHex,
-                 BlindVote blindVote,
-                 long date,
-                 @Nullable String revealTxId) {
+    private MyVote(ProposalList proposalList,
+                   String secretKeyAsHex,
+                   BlindVote blindVote,
+                   long date,
+                   @Nullable String revealTxId) {
         this.proposalList = proposalList;
         this.secretKeyAsHex = secretKeyAsHex;
         this.blindVote = blindVote;
@@ -83,8 +82,8 @@ public class Vote implements PersistablePayload {
     }
 
     @Override
-    public PB.Vote toProtoMessage() {
-        final PB.Vote.Builder builder = PB.Vote.newBuilder()
+    public PB.MyVote toProtoMessage() {
+        final PB.MyVote.Builder builder = PB.MyVote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
                 .setProposalList(proposalList.getBuilder())
                 .setSecretKeyAsHex(secretKeyAsHex)
@@ -93,8 +92,8 @@ public class Vote implements PersistablePayload {
         return builder.build();
     }
 
-    public static Vote fromProto(PB.Vote proto) {
-        return new Vote(ProposalList.fromProto(proto.getProposalList()),
+    public static MyVote fromProto(PB.MyVote proto) {
+        return new MyVote(ProposalList.fromProto(proto.getProposalList()),
                 proto.getSecretKeyAsHex(),
                 BlindVote.fromProto(proto.getBlindVote()),
                 proto.getDate(),
