@@ -54,7 +54,7 @@ public class DaoPeriodService {
         UNDEFINED(0),
         PROPOSAL(5),
         BREAK1(2),
-        OPEN_FOR_VOTING(10),
+        BLIND_VOTE(10),
         BREAK2(2),
         VOTE_REVEAL(10),
         BREAK3(2),
@@ -200,29 +200,29 @@ public class DaoPeriodService {
             return Phase.BREAK1;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks())
-            return Phase.OPEN_FOR_VOTING;
+                Phase.BLIND_VOTE.getDurationInBlocks())
+            return Phase.BLIND_VOTE;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks())
             return Phase.BREAK2;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks())
             return Phase.VOTE_REVEAL;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks())
             return Phase.BREAK3;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks() +
@@ -230,7 +230,7 @@ public class DaoPeriodService {
             return Phase.ISSUANCE;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks() +

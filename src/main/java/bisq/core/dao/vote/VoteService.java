@@ -179,7 +179,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                     p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
                     myVotesList.stream()
                             .filter(myVote -> daoPeriodService.isTxInPhase(myVote.getTxId(),
-                                    DaoPeriodService.Phase.OPEN_FOR_VOTING))
+                                    DaoPeriodService.Phase.BLIND_VOTE))
                             .forEach(myVote -> addBlindVoteToP2PNetwork(myVote.getBlindVote()));
                 }
             }, 2);
@@ -302,7 +302,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                 break;
             case BREAK1:
                 break;
-            case OPEN_FOR_VOTING:
+            case BLIND_VOTE:
                 break;
             case BREAK2:
                 break;
