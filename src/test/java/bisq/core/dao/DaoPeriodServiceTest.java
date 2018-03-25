@@ -33,6 +33,7 @@ public class DaoPeriodServiceTest {
         service = new DaoPeriodService(null, null, 0);
     }
 
+    //TODO update with added periods
     @Test
     public void calculatePhaseTest() {
         /*      UNDEFINED(0),
@@ -157,6 +158,7 @@ public class DaoPeriodServiceTest {
         assertEquals(2, service.getNumOfCompletedCycles(genesisHeight + numBlocksOfCycle + numBlocksOfCycle, genesisHeight, numBlocksOfCycle));
     }
 
+    //TODO update with added periods
     @Test
     public void getCompensationRequestStartBlockTest() {
         // int chainHeight, int genesisHeight, int totalPeriodInBlocks
@@ -175,6 +177,7 @@ public class DaoPeriodServiceTest {
         assertEquals(third, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, DaoPeriodService.Phase.PROPOSAL, numBlocksOfCycle));
     }
 
+    //TODO update with added periods
     @Test
     public void getCompensationRequestEndBlockTest() {
         // int chainHeight, int genesisHeight, int numBlocksOfCycle, int totalPeriodInBlocks
@@ -194,6 +197,7 @@ public class DaoPeriodServiceTest {
         assertEquals(third, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, DaoPeriodService.Phase.PROPOSAL, numBlocksOfCycle));
     }
 
+    //TODO update with added periods
     @Test
     public void getStartBlockOfPhaseTest() {
         assertEquals(0, service.getNumBlocksOfPhaseStart(DaoPeriodService.Phase.PROPOSAL));
