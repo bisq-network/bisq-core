@@ -52,12 +52,14 @@ public class DaoPeriodService {
     public enum Phase {
         // TODO for testing
         UNDEFINED(0),
-        COMPENSATION_REQUESTS(10),
-        BREAK1(2),
+        PROPOSAL(2),
+        BREAK1(1),
         OPEN_FOR_VOTING(2),
-        BREAK2(2),
+        BREAK2(1),
         VOTE_REVEAL(2),
-        BREAK3(2);
+        BREAK3(1),
+        ISSUANCE(1),
+        BREAK4(1);
 
       /* UNDEFINED(0),
         COMPENSATION_REQUESTS(144 * 23),
@@ -110,7 +112,6 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void shutDown() {
-
     }
 
     public void onAllServicesInitialized() {
@@ -191,33 +192,50 @@ public class DaoPeriodService {
     @VisibleForTesting
     Phase calculatePhase(int blocksInNewPhase) {
         log.info("blocksInNewPhase={}", blocksInNewPhase);
-        if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks())
-            return Phase.COMPENSATION_REQUESTS;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks())
+            return Phase.PROPOSAL;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks())
             return Phase.BREAK1;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks())
             return Phase.OPEN_FOR_VOTING;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks())
             return Phase.BREAK2;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks())
             return Phase.VOTE_REVEAL;
-        else if (blocksInNewPhase < Phase.COMPENSATION_REQUESTS.getDurationInBlocks() +
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
                 Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks())
             return Phase.BREAK3;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
+                Phase.BREAK1.getDurationInBlocks() +
+                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BREAK2.getDurationInBlocks() +
+                Phase.VOTE_REVEAL.getDurationInBlocks() +
+                Phase.BREAK3.getDurationInBlocks() +
+                Phase.ISSUANCE.getDurationInBlocks())
+            return Phase.ISSUANCE;
+        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
+                Phase.BREAK1.getDurationInBlocks() +
+                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BREAK2.getDurationInBlocks() +
+                Phase.VOTE_REVEAL.getDurationInBlocks() +
+                Phase.BREAK3.getDurationInBlocks() +
+                Phase.ISSUANCE.getDurationInBlocks() +
+                Phase.BREAK4.getDurationInBlocks())
+            return Phase.BREAK4;
         else {
             log.error("blocksInNewPhase is not covered by phase checks. blocksInNewPhase={}", blocksInNewPhase);
             if (DevEnv.isDevMode())

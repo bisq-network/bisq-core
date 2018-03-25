@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.Map;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -44,6 +45,7 @@ import javax.annotation.Nullable;
 /**
  * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request
  */
+@EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Data
 public final class CompensationRequestPayload extends ProposalPayload {
@@ -71,7 +73,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 creationDate.getTime(),
                 null,
                 null,
-                null,
                 null);
         this.requestedBsq = requestedBsq.value;
         this.bsqAddress = bsqAddress;
@@ -95,7 +96,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                                        long creationDate,
                                        String signature,
                                        String txId,
-                                       @Nullable byte[] hash,
                                        @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
@@ -108,7 +108,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 creationDate,
                 signature,
                 txId,
-                hash,
                 extraDataMap);
 
         this.requestedBsq = requestedBsq;
@@ -138,7 +137,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 proto.getCreationDate(),
                 proto.getSignature(),
                 proto.getTxId(),
-                proto.getHash().isEmpty() ? null : proto.getHash().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 

@@ -33,8 +33,6 @@ import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.ByteString;
-
 import org.bitcoinj.core.Utils;
 
 import java.security.PublicKey;
@@ -87,9 +85,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     @Nullable
     protected Map<String, String> extraDataMap;
 
-    @Nullable
-    private byte[] hash;
-
     // Used just for caching
     @JsonExclude
     @Nullable
@@ -111,7 +106,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                               long creationDate,
                               String signature,
                               String txId,
-                              @Nullable byte[] hash,
                               @Nullable Map<String, String> extraDataMap) {
         this.uid = uid;
         this.name = name;
@@ -125,7 +119,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         this.signature = signature;
         this.txId = txId;
         this.extraDataMap = extraDataMap;
-        this.hash = hash;
     }
 
     public PB.ProposalPayload.Builder getPayloadBuilder() {
@@ -141,7 +134,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 .setCreationDate(creationDate)
                 .setSignature(signature)
                 .setTxId(txId);
-        Optional.ofNullable(hash).ifPresent(e -> builder.setHash(ByteString.copyFrom(hash)));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
         return builder;
     }
@@ -168,8 +160,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    //TODO
-    // @Override
+    @Override
     public PublicKey getOwnerPubKey() {
         if (ownerPubKey == null)
             ownerPubKey = Sig.getPublicKeyFromBytes(Utils.HEX.decode(ownerPubPubKeyAsHex));

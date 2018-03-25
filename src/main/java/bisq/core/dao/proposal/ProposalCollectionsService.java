@@ -22,17 +22,17 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.DaoPeriodService;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
-import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.proposal.compensation.CompensationRequest;
 import bisq.core.dao.proposal.generic.GenericProposal;
-import bisq.core.provider.fee.FeeService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
+import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.KeyRing;
 import bisq.common.proto.persistable.PersistedDataHost;
@@ -67,7 +67,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Manages proposal collections.
  */
 @Slf4j
-public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockChainListener, HashMapChangedListener {
+public class ProposalCollectionsService implements PersistedDataHost, BsqNode.BsqBlockChainListener, HashMapChangedListener {
     private final P2PService p2PService;
     private final DaoPeriodService daoPeriodService;
     private final BsqWalletService bsqWalletService;
@@ -75,7 +75,6 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final Storage<ProposalList> proposalListStorage;
     private final PublicKey signaturePubKey;
-    private final FeeService feeService;
     @Getter
     private final ObservableList<Proposal> allProposals = FXCollections.observableArrayList();
     @Getter
@@ -90,22 +89,20 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalCollectionsManager(P2PService p2PService,
+    public ProposalCollectionsService(P2PService p2PService,
                                       BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
                                       DaoPeriodService daoPeriodService,
                                       ReadableBsqBlockChain readableBsqBlockChain,
                                       BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
                                       KeyRing keyRing,
-                                      Storage<ProposalList> proposalListStorage,
-                                      FeeService feeService) {
+                                      Storage<ProposalList> proposalListStorage) {
         this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.daoPeriodService = daoPeriodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.proposalListStorage = proposalListStorage;
-        this.feeService = feeService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
         bsqBlockChainChangeDispatcher.addBsqBlockChainListener(this);
@@ -163,6 +160,7 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
 
     @Override
     public void onBsqBlockChainChanged() {
+        // TODO
         // not needed with current impl. but leave it as updatePredicates might change
         // updatePredicates();
     }
@@ -171,9 +169,6 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void shutDown() {
-    }
 
     public void onAllServicesInitialized() {
         p2PService.addHashSetChangedListener(this);
@@ -185,14 +180,17 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
                 addProposal((ProposalPayload) protectedStoragePayload, false);
         });
 
-        // Republish own active voteRequests after a 30 sec. (delay to be better connected)
+        // Republish own active proposals once we are well connected
         numConnectedPeersListener = (observable, oldValue, newValue) -> {
-            if ((int) newValue > 4) {
-                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                activeProposals.stream()
-                        .filter(this::isMine)
-                        .forEach(e -> addToP2PNetwork(e.getProposalPayload()));
-            }
+            // Delay a bit for localhost testing to not fail as isBootstrapped is false
+            UserThread.runAfter(() -> {
+                if (((int) newValue > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
+                    p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+                    activeProposals.stream()
+                            .filter(this::isMine)
+                            .forEach(e -> addToP2PNetwork(e.getProposalPayload()));
+                }
+            }, 2);
         };
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
 
@@ -202,32 +200,18 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         onChainHeightChanged();
     }
 
-   /* public ProposalPayload createNewProposalPayload(String name,
-                                                    String title,
-                                                    String description,
-                                                    String link) {
-        checkArgument(p2PService.getAddress() != null, "p2PService.getAddress() must not be null");
-        return new ProposalPayload(
-                UUID.randomUUID().toString(),
-                name,
-                title,
-                description,
-                link,
-                p2PService.getAddress(),
-                signaturePubKey,
-                new Date()
-        );
-    }*/
+    public void shutDown() {
+    }
 
     public void publishProposal(Proposal proposal, FutureCallback<Transaction> callback) {
         // We need to create another instance, otherwise the tx would trigger an invalid state exception
         // if it gets committed 2 times
         // We clone before commit to avoid unwanted side effects
         final Transaction tx = proposal.getTx();
-        bsqWalletService.commitTx(tx);
-
         final Transaction clonedTx = btcWalletService.getClonedTransaction(tx);
         btcWalletService.commitTx(clonedTx);
+
+        bsqWalletService.commitTx(tx);
 
         bsqWalletService.broadcastTx(tx, new FutureCallback<Transaction>() {
             @Override
@@ -235,6 +219,8 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
                 checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
                 proposal.getProposalPayload().setTxId(transaction.getHashAsString());
                 addToP2PNetwork(proposal.getProposalPayload());
+
+                persist();
 
                 callback.onSuccess(transaction);
             }
@@ -274,13 +260,8 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         }
     }
 
-    private void removeProposalFromList(Proposal proposal) {
-        removeFromList(proposal);
-        queueUpForSave();
-    }
-
-    public void queueUpForSave() {
-        proposalListStorage.queueUpForSave(new ProposalList(getAllProposals()), 100);
+    public void persist() {
+        proposalListStorage.queueUpForSave(new ProposalList(allProposals), 100);
     }
 
     public boolean isMine(Proposal proposal) {
@@ -298,7 +279,7 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {
         return readableBsqBlockChain.getTxMap().get(payload.getTxId()) == null ||
-                daoPeriodService.isTxInPhase(payload.getTxId(), DaoPeriodService.Phase.COMPENSATION_REQUESTS);
+                daoPeriodService.isTxInPhase(payload.getTxId(), DaoPeriodService.Phase.PROPOSAL);
     }
 
     private boolean isMine(ProposalPayload proposalPayload) {
@@ -315,20 +296,19 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
             updatePredicates();
 
             if (storeLocally)
-                proposalListStorage.queueUpForSave(new ProposalList(allProposals), 500);
+                persist();
         } else {
             if (!isMine(proposalPayload))
                 log.warn("We already have an item with the same Proposal.");
         }
     }
 
-    @NotNull
     private Proposal getProposal(ProposalPayload proposalPayload) {
         switch (proposalPayload.getType()) {
             case COMPENSATION_REQUEST:
-                return new CompensationRequest(proposalPayload, feeService.getMakeProposalFee().getValue());
+                return new CompensationRequest(proposalPayload);
             case GENERIC:
-                return new GenericProposal(proposalPayload, feeService.getMakeProposalFee().getValue());
+                return new GenericProposal(proposalPayload);
             case CHANGE_PARAM:
                 //TODO
                 throw new RuntimeException("Not implemented yet");
@@ -343,8 +323,8 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
     }
 
     private void updatePredicates() {
-        activeProposals.setPredicate(proposal -> !proposal.isClosed());
-        closedProposals.setPredicate(Proposal::isClosed);
+        activeProposals.setPredicate(proposal -> !daoPeriodService.isTxInPastCycle(proposal.getTxId()));
+        closedProposals.setPredicate(proposal -> daoPeriodService.isTxInPastCycle(proposal.getTxId()));
     }
 
     private boolean contains(ProposalPayload proposalPayload) {
@@ -355,8 +335,10 @@ public class ProposalCollectionsManager implements PersistedDataHost, BsqBlockCh
         return allProposals.stream().filter(e -> e.getProposalPayload().equals(proposalPayload)).findAny();
     }
 
-    private void removeFromList(Proposal proposal) {
+    private void removeProposalFromList(Proposal proposal) {
         allProposals.remove(proposal);
-        updatePredicates();
+        // TODO
+        // updatePredicates();
+        persist();
     }
 }

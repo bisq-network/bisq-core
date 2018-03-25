@@ -27,8 +27,11 @@ public enum TxOutputType {
     BTC_OUTPUT,
     COMPENSATION_REQUEST_OP_RETURN_OUTPUT,
     COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT,
+    VOTE_STAKE_OUTPUT,
     VOTE_OP_RETURN_OUTPUT,
-    VOTE_REVEAL_OP_RETURN_OUTPUT;
+    VOTE_REVEAL_OP_RETURN_OUTPUT,
+    BOND_LOCK,
+    BOND_UNLOCK;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

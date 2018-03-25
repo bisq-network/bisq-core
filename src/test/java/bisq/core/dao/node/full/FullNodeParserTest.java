@@ -129,12 +129,12 @@ public class FullNodeParserTest {
             // Results are returned in the order they're recorded, so in this case for the first call to
             // getSpendableTxOutput("tx1", 0) the return value will be Optional.empty()
             // for the second call the return is Optional.of(new TxOutput(0,... and so on
-            readModel.getSpendableTxOutput(new TxIdIndexTuple("tx1", 0));
+            readModel.getUnspentAnMatureTxOutput(new TxIdIndexTuple("tx1", 0));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout1", null, null, null, height));
             result = Optional.of(new TxOutput(0, 0, "txout1", null, null, null, height));
 
-            readModel.getSpendableTxOutput(new TxIdIndexTuple("tx1", 1));
+            readModel.getUnspentAnMatureTxOutput(new TxIdIndexTuple("tx1", 1));
             result = Optional.of(new TxOutput(0, 0, "txout2", null, null, null, height));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout2", null, null, null, height));
@@ -231,10 +231,10 @@ public class FullNodeParserTest {
 
         // But bsq txs are added
         assertTrue(readModel.containsTx(bsqTx1Id));
-        TxOutput bsqOut1 = readModel.getSpendableTxOutput(bsqTx1Id, 0).get();
+        TxOutput bsqOut1 = readModel.getUnspentAnMatureTxOutput(bsqTx1Id, 0).get();
         assertTrue(bsqOut1.isUnspent());
         assertTrue(bsqOut1.getValue() == bsqTx1Value1);
-        TxOutput bsqOut2 = readModel.getSpendableTxOutput(bsqTx1Id, 1).get();
+        TxOutput bsqOut2 = readModel.getUnspentAnMatureTxOutput(bsqTx1Id, 1).get();
         assertTrue(bsqOut2.isUnspent());
         assertTrue(bsqOut2.getValue() == bsqTx1Value2);
         assertFalse(readModel.isTxOutputSpendable(genesisTxId, 0));

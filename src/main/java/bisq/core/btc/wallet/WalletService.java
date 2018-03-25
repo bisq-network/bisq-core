@@ -599,6 +599,12 @@ public abstract class WalletService {
         return wallet.getTransaction(hash);
     }
 
+    @Nullable
+    public Transaction getTransaction(String txId) {
+        return getTransaction(Sha256Hash.wrap(txId));
+    }
+
+
     public boolean isTransactionOutputMine(TransactionOutput transactionOutput) {
         return transactionOutput.isMine(wallet);
     }

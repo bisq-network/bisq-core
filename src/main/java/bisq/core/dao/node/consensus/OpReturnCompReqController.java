@@ -32,11 +32,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
-public class CompensationRequestController {
+public class OpReturnCompReqController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
     @Inject
-    public CompensationRequestController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnCompReqController(ReadableBsqBlockChain readableBsqBlockChain) {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
@@ -50,7 +50,8 @@ public class CompensationRequestController {
 
     public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
         opReturnTxOutput.setTxOutputType(TxOutputType.COMPENSATION_REQUEST_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null, "mutableState.getCompRequestIssuanceOutputCandidate() must nto be null");
+        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null,
+                "mutableState.getCompRequestIssuanceOutputCandidate() must not be null");
         mutableState.getCompRequestIssuanceOutputCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
         tx.setTxType(TxType.COMPENSATION_REQUEST);
     }

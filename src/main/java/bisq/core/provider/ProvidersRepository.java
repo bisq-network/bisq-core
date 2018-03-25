@@ -97,7 +97,7 @@ public class ProvidersRepository {
             baseUrl = providerList.get(index);
             index++;
 
-            if (providerList.size() == 1)
+            if (providerList.size() == 1 && BisqEnvironment.getBaseCurrencyNetwork().isMainnet())
                 log.warn("We only have one provider");
         } else {
             baseUrl = "";

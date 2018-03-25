@@ -15,8 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.proposal;
+package bisq.core.dao.vote;
 
+import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
@@ -27,26 +28,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ProposalList extends PersistableList<Proposal> {
-    public ProposalList(List<Proposal> list) {
+public class MyVoteList extends PersistableList<MyVote> {
+
+    MyVoteList(List<MyVote> list) {
         super(list);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
     public Message toProtoMessage() {
-        return PB.PersistableEnvelope.newBuilder().setProposalList(getBuilder()).build();
+        return PB.PersistableEnvelope.newBuilder()
+                .setMyVoteList(PB.MyVoteList.newBuilder()
+                        .addAllMyVote(getList().stream()
+                                .map(MyVote::toProtoMessage)
+                                .collect(Collectors.toList())))
+                .build();
     }
 
-    public PB.ProposalList.Builder getBuilder() {
-        return PB.ProposalList.newBuilder()
-                .addAllProposal(getList().stream()
-                        .map(Proposal::toProtoMessage)
-                        .collect(Collectors.toList()));
-    }
-
-    public static ProposalList fromProto(PB.ProposalList proto) {
-        return new ProposalList(new ArrayList<>(proto.getProposalList().stream()
-                .map(Proposal::fromProto)
+    public static PersistableEnvelope fromProto(PB.MyVoteList proto) {
+        return new MyVoteList(new ArrayList<>(proto.getMyVoteList().stream()
+                .map(MyVote::fromProto)
                 .collect(Collectors.toList())));
     }
 }

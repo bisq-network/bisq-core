@@ -18,10 +18,13 @@
 package bisq.core.dao;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.proposal.ProposalCollectionsManager;
+import bisq.core.dao.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.VoteService;
 
+import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
@@ -31,8 +34,10 @@ import com.google.inject.Inject;
  */
 public class DaoManager {
     private final DaoPeriodService daoPeriodService;
-    private final ProposalCollectionsManager proposalCollectionsManager;
+    private final ProposalCollectionsService proposalCollectionsService;
     private final BsqNode bsqNode;
+    private final IssuanceService issuanceService;
+    private final VoteService voteService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -42,23 +47,34 @@ public class DaoManager {
     @Inject
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
-                      ProposalCollectionsManager proposalCollectionsManager) {
+                      ProposalCollectionsService proposalCollectionsService,
+                      VoteService voteService,
+                      IssuanceService issuanceService) {
         this.daoPeriodService = daoPeriodService;
-        this.proposalCollectionsManager = proposalCollectionsManager;
+        this.proposalCollectionsService = proposalCollectionsService;
+        this.voteService = voteService;
+        this.issuanceService = issuanceService;
+
         bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             daoPeriodService.onAllServicesInitialized();
-            proposalCollectionsManager.onAllServicesInitialized();
+            proposalCollectionsService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
+            voteService.onAllServicesInitialized();
+            issuanceService.onAllServicesInitialized();
         }
     }
 
     public void shutDown() {
-        daoPeriodService.shutDown();
-        proposalCollectionsManager.shutDown();
-        bsqNode.shutDown();
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
+            daoPeriodService.shutDown();
+            proposalCollectionsService.shutDown();
+            bsqNode.shutDown();
+            voteService.shutDown();
+            issuanceService.shutDown();
+        }
     }
 }

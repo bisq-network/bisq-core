@@ -48,8 +48,8 @@ public class CompensationRequest extends Proposal {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationRequest(ProposalPayload proposalPayload, long fee) {
-        super(proposalPayload, fee, null, false, null);
+    public CompensationRequest(ProposalPayload proposalPayload) {
+        super(proposalPayload, null, null);
     }
 
 
@@ -58,14 +58,10 @@ public class CompensationRequest extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private CompensationRequest(ProposalPayload proposalPayload,
-                                long fee,
                                 @Nullable VoteResult voteResult,
-                                boolean closed,
                                 @Nullable Map<String, String> extraDataMap) {
         super(proposalPayload,
-                fee,
                 voteResult,
-                closed,
                 extraDataMap);
     }
 
@@ -77,9 +73,7 @@ public class CompensationRequest extends Proposal {
 
     public static CompensationRequest fromProto(PB.Proposal proto) {
         return new CompensationRequest(ProposalPayload.fromProto(proto.getProposalPayload()),
-                proto.getFee(),
                 proto.hasVoteResult() ? VoteResult.fromProto(proto.getVoteResult()) : null,
-                proto.getClosed(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
@@ -93,7 +87,7 @@ public class CompensationRequest extends Proposal {
         return getCompensationRequestPayload().getRequestedBsq();
     }
 
-    public Address getIssuanceAddress(BsqWalletService bsqWalletService) {
+    public Address getBsqAddress(BsqWalletService bsqWalletService) {
         checkNotNull(getCompensationRequestPayload());
         // Remove leading 'B'
         String underlyingBtcAddress = getCompensationRequestPayload().getBsqAddress().substring(1, getCompensationRequestPayload().getBsqAddress().length());

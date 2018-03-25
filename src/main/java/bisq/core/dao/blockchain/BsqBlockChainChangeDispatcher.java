@@ -17,6 +17,8 @@
 
 package bisq.core.dao.blockchain;
 
+import bisq.core.dao.node.BsqNode;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,22 +31,22 @@ import lombok.extern.slf4j.Slf4j;
  * TODO check if refactorings has solved the dependency problems.
  */
 @Slf4j
-public class BsqBlockChainChangeDispatcher implements BsqBlockChainListener {
-    private final List<BsqBlockChainListener> bsqBlockChainListeners = new ArrayList<>();
+public class BsqBlockChainChangeDispatcher implements BsqNode.BsqBlockChainListener {
+    private final List<BsqNode.BsqBlockChainListener> bsqBlockChainListeners = new ArrayList<>();
 
     public BsqBlockChainChangeDispatcher() {
     }
 
     @Override
     public void onBsqBlockChainChanged() {
-        bsqBlockChainListeners.stream().forEach(BsqBlockChainListener::onBsqBlockChainChanged);
+        bsqBlockChainListeners.forEach(BsqNode.BsqBlockChainListener::onBsqBlockChainChanged);
     }
 
-    public void addBsqBlockChainListener(BsqBlockChainListener bsqBlockChainListener) {
+    public void addBsqBlockChainListener(BsqNode.BsqBlockChainListener bsqBlockChainListener) {
         bsqBlockChainListeners.add(bsqBlockChainListener);
     }
 
-    public void removeBsqBlockChainListener(BsqBlockChainListener bsqBlockChainListener) {
+    public void removeBsqBlockChainListener(BsqNode.BsqBlockChainListener bsqBlockChainListener) {
         bsqBlockChainListeners.remove(bsqBlockChainListener);
     }
 }

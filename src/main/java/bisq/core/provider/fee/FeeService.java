@@ -213,8 +213,12 @@ public class FeeService {
         return Coin.valueOf(100);
     }
 
-    public Coin getVotingTxFee() {
-        return Coin.valueOf(500);
+    public Coin getBlindVoteTxFee() {
+        return Coin.valueOf(200);
+    }
+
+    public Coin getVoteRevealTxFee() {
+        return Coin.valueOf(200);
     }
 
     public ReadOnlyIntegerProperty feeUpdateCounterProperty() {

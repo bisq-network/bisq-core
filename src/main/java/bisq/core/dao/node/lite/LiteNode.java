@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.lite;
 
-import bisq.core.dao.blockchain.BsqBlockChainListener;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;

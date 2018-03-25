@@ -37,9 +37,13 @@ public interface WritableBsqBlockChain {
 
     void setCreateCompensationRequestFee(long value, int genesisBlockHeight);
 
-    void setVotingFee(long value, int genesisBlockHeight);
+    void setBlindVoteFee(long value, int genesisBlockHeight);
+
+    void setVoteRevealFee(long value, int genesisBlockHeight);
 
     void addListener(BsqBlockChain.Listener listener);
 
     void removeListener(BsqBlockChain.Listener listener);
+
+    void issueBsq(TxOutput txOutput);
 }

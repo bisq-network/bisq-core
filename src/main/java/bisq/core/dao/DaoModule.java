@@ -23,18 +23,20 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
+import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.consensus.BsqTxController;
-import bisq.core.dao.node.consensus.CompensationRequestController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.consensus.GenesisTxOutputController;
 import bisq.core.dao.node.consensus.IssuanceController;
+import bisq.core.dao.node.consensus.OpReturnBlindVoteController;
+import bisq.core.dao.node.consensus.OpReturnCompReqController;
 import bisq.core.dao.node.consensus.OpReturnController;
+import bisq.core.dao.node.consensus.OpReturnVoteRevealController;
 import bisq.core.dao.node.consensus.TxInputController;
 import bisq.core.dao.node.consensus.TxInputsController;
 import bisq.core.dao.node.consensus.TxOutputController;
 import bisq.core.dao.node.consensus.TxOutputsController;
-import bisq.core.dao.node.consensus.VotingController;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.full.FullNodeExecutor;
 import bisq.core.dao.node.full.FullNodeParser;
@@ -44,10 +46,10 @@ import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
-import bisq.core.dao.proposal.ProposalCollectionsManager;
-import bisq.core.dao.proposal.compensation.CompensationRequestManager;
-import bisq.core.dao.proposal.generic.GenericProposalManager;
-import bisq.core.dao.vote.VoteManager;
+import bisq.core.dao.proposal.ProposalCollectionsService;
+import bisq.core.dao.proposal.compensation.CompensationRequestService;
+import bisq.core.dao.proposal.generic.GenericProposalService;
+import bisq.core.dao.vote.VoteService;
 
 import bisq.common.app.AppModule;
 
@@ -93,17 +95,19 @@ public class DaoModule extends AppModule {
         bind(TxOutputsController.class).in(Singleton.class);
         bind(TxOutputController.class).in(Singleton.class);
         bind(OpReturnController.class).in(Singleton.class);
-        bind(CompensationRequestController.class).in(Singleton.class);
-        bind(VotingController.class).in(Singleton.class);
+        bind(OpReturnCompReqController.class).in(Singleton.class);
+        bind(OpReturnBlindVoteController.class).in(Singleton.class);
+        bind(OpReturnVoteRevealController.class).in(Singleton.class);
         bind(IssuanceController.class).in(Singleton.class);
 
         bind(JsonBlockChainExporter.class).in(Singleton.class);
         bind(DaoPeriodService.class).in(Singleton.class);
 
-        bind(ProposalCollectionsManager.class).in(Singleton.class);
-        bind(VoteManager.class).in(Singleton.class);
-        bind(CompensationRequestManager.class).in(Singleton.class);
-        bind(GenericProposalManager.class).in(Singleton.class);
+        bind(ProposalCollectionsService.class).in(Singleton.class);
+        bind(CompensationRequestService.class).in(Singleton.class);
+        bind(GenericProposalService.class).in(Singleton.class);
+        bind(VoteService.class).in(Singleton.class);
+        bind(IssuanceService.class).in(Singleton.class);
 
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PASSWORD)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PASSWORD));

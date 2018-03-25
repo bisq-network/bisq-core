@@ -19,6 +19,7 @@ package bisq.core.dao.blockchain.json;
 
 import lombok.Getter;
 
+//TODO update with changes
 public enum JsonTxType {
     UNVERIFIED("Unverified"),
     INVALID("Invalid"),
@@ -27,6 +28,8 @@ public enum JsonTxType {
     PAY_TRADE_FEE("Pay trade fee"),
     COMPENSATION_REQUEST("Compensation request"),
     VOTE("Vote"),
+    BLIND_VOTE("Blind vote"),
+    VOTE_REVEAL("Vote reveal"),
     ISSUANCE("Issuance"),
     LOCK_UP("Lockup"),
     UN_LOCK("Unlock");

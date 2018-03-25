@@ -26,7 +26,6 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
 
 import javafx.beans.property.ObjectProperty;
@@ -47,29 +46,26 @@ import javax.annotation.Nullable;
  */
 @Getter
 public abstract class Proposal implements PersistablePayload {
+    protected final ProposalPayload proposalPayload;
     @Nullable
     protected VoteResult voteResult;
-    @Setter
-    protected boolean closed;
-    protected final ProposalPayload proposalPayload;
-
-    //TODO Remove. Fee should be resolved by block height of tx so not need to store it
-    protected final long fee;
-    @Setter
-    protected Transaction tx;
-
     @Nullable
     protected Map<String, String> extraDataMap;
 
+    // Not persisted!
     protected transient ObjectProperty<VoteResult> voteResultProperty = new SimpleObjectProperty<>();
+    // Not persisted!
+    @Nullable
+    @Setter
+    private transient Transaction tx;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Proposal(ProposalPayload proposalPayload, long fee) {
-        this(proposalPayload, fee, null, false, null);
+    public Proposal(ProposalPayload proposalPayload) {
+        this(proposalPayload, null, null);
     }
 
 
@@ -78,14 +74,10 @@ public abstract class Proposal implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected Proposal(ProposalPayload proposalPayload,
-                       long fee,
                        @Nullable VoteResult voteResult,
-                       boolean closed,
                        @Nullable Map<String, String> extraDataMap) {
         this.proposalPayload = proposalPayload;
-        this.fee = fee;
         this.voteResult = voteResult;
-        this.closed = closed;
         this.extraDataMap = extraDataMap;
     }
 
@@ -97,9 +89,7 @@ public abstract class Proposal implements PersistablePayload {
     @NotNull
     protected PB.Proposal.Builder getProposalBuilder() {
         final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
-                .setProposalPayload(proposalPayload.getPayloadBuilder())
-                .setFee(fee)
-                .setClosed(closed);
+                .setProposalPayload(proposalPayload.getPayloadBuilder());
 
         Optional.ofNullable(voteResult).ifPresent(e -> builder.setVoteResult((PB.VoteResult) e.toProtoMessage()));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
@@ -128,9 +118,9 @@ public abstract class Proposal implements PersistablePayload {
         voteResultProperty.set(voteResult);
     }
 
-    public Coin getFeeAsCoin() {
-        return Coin.valueOf(fee);
-    }
-
     abstract public ProposalType getType();
+
+    public String getTxId() {
+        return proposalPayload.getTxId();
+    }
 }

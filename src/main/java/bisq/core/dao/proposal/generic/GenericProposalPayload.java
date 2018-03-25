@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.Map;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -43,6 +44,7 @@ import javax.annotation.Nullable;
 /**
  * Payload for generic proposals.
  */
+@EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Data
 public final class GenericProposalPayload extends ProposalPayload {
@@ -66,7 +68,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 creationDate.getTime(),
                 null,
                 null,
-                null,
                 null);
     }
 
@@ -86,7 +87,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                                    long creationDate,
                                    String signature,
                                    String txId,
-                                   @Nullable byte[] hash,
                                    @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
@@ -99,7 +99,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 creationDate,
                 signature,
                 txId,
-                hash,
                 extraDataMap);
     }
 
@@ -120,7 +119,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 proto.getCreationDate(),
                 proto.getSignature(),
                 proto.getTxId(),
-                proto.getHash().isEmpty() ? null : proto.getHash().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 

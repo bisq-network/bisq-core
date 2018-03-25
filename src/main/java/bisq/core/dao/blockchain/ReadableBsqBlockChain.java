@@ -56,13 +56,23 @@ public interface ReadableBsqBlockChain {
 
     boolean containsTx(String txId);
 
-    Optional<TxOutput> getSpendableTxOutput(TxIdIndexTuple txIdIndexTuple);
+    Set<TxOutput> getVoteRevealTxOutputs();
 
-    Optional<TxOutput> getSpendableTxOutput(String txId, int index);
+    Set<TxOutput> getBlindVoteStakeTxOutputs();
+
+    Set<TxOutput> getCompReqIssuanceTxOutputs();
+
+    Optional<TxOutput> getUnspentAnMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
+
+    Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index);
 
     boolean isTxOutputSpendable(String txId, int index);
 
     Set<TxOutput> getUnspentTxOutputs();
+
+    Set<TxOutput> getLockedForVoteTxOutputs();
+
+    Set<TxOutput> getLockedInBondsOutputs();
 
     Set<TxOutput> getSpentTxOutputs();
 
@@ -70,13 +80,25 @@ public interface ReadableBsqBlockChain {
 
     boolean isCompensationRequestPeriodValid(int blockHeight);
 
+    boolean isBlindVotePeriodValid(int blockHeight);
+
+    boolean isVoteRevealPeriodValid(int blockHeight);
+
     long getCreateCompensationRequestFee(int blockHeight);
+
+    long getBlindVoteFee(int blockHeight);
+
+    long getVoteRevealFee(int blockHeight);
 
     Coin getTotalBurntFee();
 
     Coin getIssuedAmount();
 
     LinkedList<BsqBlock> getBsqBlocks();
+
+    void addIssuanceListener(BsqBlockChain.IssuanceListener listener);
+
+    void removeIssuanceListener(BsqBlockChain.IssuanceListener listener);
 
     BsqBlockChain getClone();
 

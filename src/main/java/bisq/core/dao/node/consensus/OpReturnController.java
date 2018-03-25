@@ -34,14 +34,17 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class OpReturnController {
-    private final CompensationRequestController compensationRequestController;
-    private final VotingController votingController;
+    private final OpReturnCompReqController opReturnCompReqController;
+    private final OpReturnBlindVoteController opReturnBlindVoteController;
+    private final OpReturnVoteRevealController opReturnVoteRevealController;
 
     @Inject
-    public OpReturnController(CompensationRequestController compensationRequestController,
-                              VotingController votingController) {
-        this.compensationRequestController = compensationRequestController;
-        this.votingController = votingController;
+    public OpReturnController(OpReturnCompReqController opReturnCompReqController,
+                              OpReturnBlindVoteController opReturnBlindVoteController,
+                              OpReturnVoteRevealController opReturnVoteRevealController) {
+        this.opReturnCompReqController = opReturnCompReqController;
+        this.opReturnBlindVoteController = opReturnBlindVoteController;
+        this.opReturnVoteRevealController = opReturnVoteRevealController;
     }
 
     public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
@@ -55,17 +58,29 @@ public class OpReturnController {
                 // Check with the type byte which kind of OP_RETURN we have.
                 switch (opReturnData[0]) {
                     case OpReturnTypes.COMPENSATION_REQUEST:
-                        if (compensationRequestController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
-                            compensationRequestController.applyStateChange(tx, txOutput, mutableState);
+                        if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnCompReqController.applyStateChange(tx, txOutput, mutableState);
                         }
-                    case OpReturnTypes.VOTE:
+                        break;
+                    case OpReturnTypes.PROPOSAL:
                         // TODO
-                    case OpReturnTypes.VOTE_RELEASE:
-                        // TODO
+                        break;
+                    case OpReturnTypes.BLIND_VOTE:
+                        if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnBlindVoteController.applyStateChange(tx, txOutput, mutableState);
+                        }
+                        break;
+                    case OpReturnTypes.VOTE_REVEAL:
+                        if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
+                            opReturnVoteRevealController.applyStateChange(tx, txOutput, mutableState);
+                        }
+                        break;
                     case OpReturnTypes.LOCK_UP:
                         // TODO
+                        break;
                     case OpReturnTypes.UNLOCK:
                         // TODO
+                        break;
                     default:
                         log.warn("OP_RETURN version of the BSQ tx ={} does not match expected version bytes. opReturnData={}",
                                 tx.getId(), Utils.HEX.encode(opReturnData));

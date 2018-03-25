@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.BsqBlockChainListener;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
@@ -42,7 +42,15 @@ import lombok.extern.slf4j.Slf4j;
  * We are in UserThread context. We get callbacks from threaded classes which are already mapped to the UserThread.
  */
 @Slf4j
-public abstract class BsqNode {
+public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Interface
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public interface BsqBlockChainListener {
+        void onBsqBlockChainChanged();
+    }
 
     @SuppressWarnings("WeakerAccess")
     protected final P2PService p2PService;
@@ -78,8 +86,9 @@ public abstract class BsqNode {
 
         writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
-        writableBsqBlockChain.setVotingFee(feeService.getVotingTxFee().value,
-                genesisBlockHeight);
+        writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
+        writableBsqBlockChain.setVoteRevealFee(feeService.getVoteRevealTxFee().value, genesisBlockHeight);
+        readableBsqBlockChain.addIssuanceListener(this);
     }
 
 
@@ -98,6 +107,11 @@ public abstract class BsqNode {
     }
 
     public abstract void shutDown();
+
+    @Override
+    public void onIssuance() {
+        // TODO resync from block when period started
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

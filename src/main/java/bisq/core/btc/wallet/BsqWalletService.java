@@ -21,11 +21,11 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
-import bisq.core.dao.blockchain.BsqBlockChainListener;
+import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.node.BsqNode;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -40,6 +40,7 @@ import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.CoinSelection;
@@ -61,19 +62,27 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements BsqBlockChainListener {
+public class BsqWalletService extends WalletService implements BsqNode.BsqBlockChainListener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final BsqBlockChain bsqBlockChain;
+    private final ReadableBsqBlockChain readableBsqBlockChain;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
-    private Coin availableBsqBalance = Coin.ZERO;
-    private Coin unverifiedBalance = Coin.ZERO;
+
+    private Coin availableBalance = Coin.ZERO;
+    @Getter
+    private Coin pendingBalance = Coin.ZERO;
+    @Getter
+    private Coin lockedInBondsBalance = Coin.ZERO;
+    @Getter
+    private Coin lockedForVotingBalance = Coin.ZERO;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +92,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     @Inject
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
-                            BsqBlockChain bsqBlockChain,
+                            ReadableBsqBlockChain readableBsqBlockChain,
                             BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
                             Preferences preferences,
                             FeeService feeService) {
@@ -92,7 +101,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
                 feeService);
 
         this.bsqCoinSelector = bsqCoinSelector;
-        this.bsqBlockChain = bsqBlockChain;
+        this.readableBsqBlockChain = readableBsqBlockChain;
 
         if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
             walletsSetup.addSetupCompletedHandler(() -> {
@@ -179,10 +188,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void updateBsqBalance() {
-        availableBsqBalance = bsqCoinSelector.select(NetworkParameters.MAX_MONEY,
-                wallet.calculateAllSpendCandidates()).valueGathered;
-
-        unverifiedBalance = Coin.valueOf(getTransactions(false).stream()
+        pendingBalance = Coin.valueOf(getTransactions(false).stream()
                 .flatMap(tx -> tx.getOutputs().stream())
                 .filter(out -> {
                     final Transaction parentTx = out.getParentTransaction();
@@ -190,18 +196,33 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
                             out.isMine(wallet) &&
                             parentTx.getConfidence().getConfidenceType() == PENDING;
                 })
-                .mapToLong(out -> out.getValue().value).sum());
+                .mapToLong(out -> out.getValue().value)
+                .sum());
 
-        bsqBalanceListeners.stream().forEach(e -> e.updateAvailableBalance(availableBsqBalance, unverifiedBalance));
-    }
+        Set<String> confirmedTxIdSet = getTransactions(false).stream()
+                .filter(tx -> tx.getConfidence().getConfidenceType() == BUILDING)
+                .map(Transaction::getHashAsString)
+                .collect(Collectors.toSet());
 
-    @Override
-    public Coin getAvailableBalance() {
-        return availableBsqBalance;
-    }
+        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getLockedForVoteTxOutputs().stream()
+                .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
+                .mapToLong(TxOutput::getValue)
+                .sum());
 
-    public Coin getUnverifiedBalance() {
-        return unverifiedBalance;
+        lockedInBondsBalance = Coin.valueOf(readableBsqBlockChain.getLockedInBondsOutputs().stream()
+                .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
+                .mapToLong(TxOutput::getValue)
+                .sum());
+
+        availableBalance = bsqCoinSelector.select(NetworkParameters.MAX_MONEY, wallet.calculateAllSpendCandidates())
+                .valueGathered
+                .subtract(lockedForVotingBalance)
+                .subtract(lockedInBondsBalance);
+        if (availableBalance.isNegative())
+            availableBalance = Coin.ZERO;
+
+        bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, pendingBalance,
+                lockedForVotingBalance, lockedInBondsBalance));
     }
 
     public void addBsqBalanceListener(BsqBalanceListener listener) {
@@ -210,6 +231,11 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
 
     public void removeBsqBalanceListener(BsqBalanceListener listener) {
         bsqBalanceListeners.remove(listener);
+    }
+
+    @Override
+    public Coin getAvailableBalance() {
+        return availableBalance;
     }
 
 
@@ -230,13 +256,13 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     private Set<Transaction> getBsqWalletTransactions() {
         return getTransactions(false).stream()
                 .filter(transaction -> transaction.getConfidence().getConfidenceType() == PENDING ||
-                        bsqBlockChain.containsTx(transaction.getHashAsString()))
+                        readableBsqBlockChain.containsTx(transaction.getHashAsString()))
                 .collect(Collectors.toSet());
     }
 
     public Set<Transaction> getUnverifiedBsqTransactions() {
         Set<Transaction> bsqWalletTransactions = getBsqWalletTransactions();
-        Set<Transaction> walletTxs = getTransactions(false).stream().collect(Collectors.toSet());
+        Set<Transaction> walletTxs = new HashSet<>(getTransactions(false));
         checkArgument(walletTxs.size() >= bsqWalletTransactions.size(),
                 "We cannot have more txsWithOutputsFoundInBsqTxo than walletTxs");
         if (walletTxs.size() == bsqWalletTransactions.size()) {
@@ -275,7 +301,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
                     if (isConfirmed) {
                         // We lookup if we have a BSQ tx matching the parent tx
                         // We cannot make that findTx call outside of the loop as the parent tx can change at each iteration
-                        Optional<Tx> txOptional = bsqBlockChain.getOptionalTx(parentTransaction.getHash().toString());
+                        Optional<Tx> txOptional = readableBsqBlockChain.getOptionalTx(parentTransaction.getHash().toString());
                         if (txOptional.isPresent()) {
                             // BSQ tx and BitcoinJ tx have same outputs (mirrored data structure)
                             TxOutput txOutput = txOptional.get().getOutputs().get(connectedOutput.getIndex());
@@ -307,7 +333,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
         Coin result = Coin.ZERO;
         final String txId = transaction.getHashAsString();
         // We check if we have a matching BSQ tx. We do that call here to avoid repeated calls in the loop.
-        Optional<Tx> txOptional = bsqBlockChain.getOptionalTx(txId);
+        Optional<Tx> txOptional = readableBsqBlockChain.getOptionalTx(txId);
         // We check all the outputs of our tx
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             TransactionOutput output = transaction.getOutputs().get(i);
@@ -414,39 +440,94 @@ public class BsqWalletService extends WalletService implements BsqBlockChainList
     // Burn fee tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBurnFeeTx(Coin fee) throws
-            InsufficientBsqException {
-        Transaction tx = new Transaction(params);
-
-        // We might have no output if inputs match fee.
-        // It will be checked in the final BTC tx that we have min. 1 output by increasing the BTC inputs to force a
-        // non dust BTC output.
-
-        // TODO check dust output
+    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException, ChangeBelowDustException {
+        final Transaction tx = new Transaction(params);
         CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = bsqCoinSelector.getChange(fee, coinSelection);
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
             if (change.isPositive())
                 tx.addOutput(change, getUnusedAddress());
         } catch (InsufficientMoneyException e) {
             throw new InsufficientBsqException(e.missing);
         }
 
-        //printTx("getPreparedBurnFeeTx", tx);
+        printTx("getPreparedFeeTx", tx);
         return tx;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Blind vote tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake)
+            throws InsufficientBsqException, ChangeBelowDustException {
+        Transaction tx = new Transaction(params);
+        tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
+        final Coin sum = fee.add(stake);
+        CoinSelection coinSelection = bsqCoinSelector.select(sum, wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            // We add here stake as we have that output already added
+            Coin change = bsqCoinSelector.getChangeExcludingFee(sum, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
+            if (change.isPositive())
+                tx.addOutput(change, getUnusedAddress());
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+
+        printTx("getPreparedBlindVoteTx", tx);
+        return tx;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // MyVote reveal tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedVoteRevealTx(Coin fee, TxOutput stakeTxOutput)
+            throws InsufficientBsqException, ChangeBelowDustException {
+        Transaction tx = new Transaction(params);
+        final Coin stake = Coin.valueOf(stakeTxOutput.getValue());
+        Transaction connectedOutputParentTransaction = getTransaction(stakeTxOutput.getTxId());
+        TransactionOutPoint transactionOutPoint = new TransactionOutPoint(params,
+                stakeTxOutput.getIndex(),
+                connectedOutputParentTransaction);
+        tx.addInput(new TransactionInput(params, tx, new byte[]{}, transactionOutPoint, stake));
+        tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
+        CoinSelection coinSelection = bsqCoinSelector.select(fee,
+                wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            if (!Restrictions.isAboveDust(change))
+                throw new ChangeBelowDustException(change);
+
+            if (change.isPositive())
+                tx.addOutput(change, getUnusedAddress());
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+
+        printTx("getPreparedVoteRevealTx", tx);
+        return tx;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Addresses
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected Set<Address> getAllAddressesFromActiveKeys() {
         return wallet.getActiveKeychain().getLeafKeys().stream().
                 map(key -> Address.fromP2SHHash(params, key.getPubKeyHash())).
                 collect(Collectors.toSet());
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Get unused address
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Address getUnusedAddress() {
         return wallet.currentReceiveAddress();

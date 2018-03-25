@@ -17,7 +17,11 @@
 
 package bisq.core.dao.proposal.consensus;
 
-public class ProposalRestrictions {
+import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+
+import org.bitcoinj.core.Coin;
+
+public class ProposalConsensus {
 
     public static int getMaxLengthDescriptionText() {
         return 100;
@@ -25,5 +29,10 @@ public class ProposalRestrictions {
 
     public static boolean isDescriptionSizeValid(String description) {
         return description.length() <= getMaxLengthDescriptionText();
+    }
+
+    public static Coin getCreateCompensationRequestFee(ReadableBsqBlockChain readableBsqBlockChain) {
+        return Coin.valueOf(readableBsqBlockChain.getCreateCompensationRequestFee(readableBsqBlockChain
+                .getChainHeadHeight()));
     }
 }

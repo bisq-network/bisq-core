@@ -51,7 +51,6 @@ import io.bisq.generated.protobuffer.PB;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 
 import java.util.List;
@@ -276,9 +275,9 @@ public class ProcessModel implements Model, PersistablePayload {
     public Transaction resolveTakeOfferFeeTx(Trade trade) {
         if (takeOfferFeeTx == null) {
             if (BisqEnvironment.isBaseCurrencySupportingBsq() && !trade.isCurrencyForTakerFeeBtc())
-                takeOfferFeeTx = bsqWalletService.getTransaction(Sha256Hash.wrap(takeOfferFeeTxId));
+                takeOfferFeeTx = bsqWalletService.getTransaction(takeOfferFeeTxId);
             else
-                takeOfferFeeTx = btcWalletService.getTransaction(Sha256Hash.wrap(takeOfferFeeTxId));
+                takeOfferFeeTx = btcWalletService.getTransaction(takeOfferFeeTxId);
         }
         return takeOfferFeeTx;
     }

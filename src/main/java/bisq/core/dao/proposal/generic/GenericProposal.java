@@ -39,8 +39,8 @@ public class GenericProposal extends Proposal {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GenericProposal(ProposalPayload payload, long fee) {
-        super(payload, fee, null, false, null);
+    public GenericProposal(ProposalPayload payload) {
+        super(payload, null, null);
     }
 
 
@@ -49,14 +49,10 @@ public class GenericProposal extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private GenericProposal(ProposalPayload proposalPayload,
-                            long fee,
                             @Nullable VoteResult voteResult,
-                            boolean closed,
                             @Nullable Map<String, String> extraDataMap) {
         super(proposalPayload,
-                fee,
                 voteResult,
-                closed,
                 extraDataMap);
     }
 
@@ -68,9 +64,7 @@ public class GenericProposal extends Proposal {
 
     public static GenericProposal fromProto(PB.Proposal proto) {
         return new GenericProposal(ProposalPayload.fromProto(proto.getProposalPayload()),
-                proto.getFee(),
                 proto.hasVoteResult() ? VoteResult.fromProto(proto.getVoteResult()) : null,
-                proto.getClosed(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
