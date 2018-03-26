@@ -3,6 +3,7 @@ package bisq.core.payment.validation.altcoins.bch;
 import bisq.core.payment.validation.AbstractAssetProvider;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 

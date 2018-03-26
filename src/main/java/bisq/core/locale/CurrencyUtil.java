@@ -17,12 +17,22 @@
 
 package bisq.core.locale;
 
-import bisq.common.app.DevEnv;
 import bisq.core.payment.validation.AssetProviderRegistry;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import bisq.common.app.DevEnv;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Currency;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CurrencyUtil {

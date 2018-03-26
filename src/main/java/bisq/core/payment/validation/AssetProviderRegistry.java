@@ -1,8 +1,13 @@
 package bisq.core.payment.validation;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
 
 public final class AssetProviderRegistry {
 

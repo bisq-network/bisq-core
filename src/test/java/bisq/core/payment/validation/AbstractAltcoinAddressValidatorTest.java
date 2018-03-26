@@ -4,7 +4,9 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.Res;
+
 import org.jetbrains.annotations.NotNull;
+
 import org.junit.Before;
 
 public abstract class AbstractAltcoinAddressValidatorTest {

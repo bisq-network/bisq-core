@@ -2,6 +2,7 @@ package bisq.core.payment.validation.altcoins.ella;
 
 import bisq.core.payment.validation.AbstractAltcoinAddressValidatorTest;
 import bisq.core.payment.validation.AltCoinAddressValidator;
+
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;

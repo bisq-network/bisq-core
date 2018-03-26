@@ -2,7 +2,9 @@ package bisq.core.payment.validation;
 
 import bisq.core.locale.Res;
 import bisq.core.util.validation.InputValidator;
+
 import org.bitcoinj.core.AddressFormatException;
+
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractAssetProvider implements AssetProvider {

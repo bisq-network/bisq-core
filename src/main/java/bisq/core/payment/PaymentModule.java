@@ -17,8 +17,10 @@
 
 package bisq.core.payment;
 
-import bisq.common.app.AppModule;
 import bisq.core.payment.validation.AssetProviderRegistry;
+
+import bisq.common.app.AppModule;
+
 import org.springframework.core.env.Environment;
 
 public class PaymentModule extends AppModule {
