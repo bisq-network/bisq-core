@@ -26,7 +26,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testBTC() {
-        AltCoinAddressValidator validator =  getAltCoinAddressValidator();
         validator.setCurrencyCode("BTC");
 
         assertTrue(validator.validate("17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem").isValid);
@@ -42,7 +41,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testBSQ() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("BSQ");
 
         assertTrue(validator.validate("B17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem").isValid);
@@ -58,7 +56,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testLTC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("LTC");
 
         assertTrue(validator.validate("Lg3PX8wRWmApFCoCMAsPF5P9dPHYQHEWKW").isValid);
@@ -73,7 +70,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDOGE() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DOGE");
 
         assertTrue(validator.validate("DEa7damK8MsbdCJztidBasZKVsDLJifWfE").isValid);
@@ -88,7 +84,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDASH() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DASH");
 
         assertTrue(validator.validate("XjNms118hx6dGyBqsrVMTbzMUmxDVijk7Y").isValid);
@@ -103,7 +98,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testETH() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ETH");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -117,7 +111,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testPIVX() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("PIVX");
 
         assertTrue(validator.validate("DFJku78A14HYwPSzC5PtUmda7jMr5pbD2B").isValid);
@@ -133,7 +126,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testIOP() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("IOP");
 
         assertTrue(validator.validate("pKbz7iRUSiUaTgh4UuwQCnc6pWZnyCGWxM").isValid);
@@ -145,7 +137,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void test888() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("888");
 
         assertTrue(validator.validate("8TP9rh3SH6n9cSLmV22vnSNNw56LKGpLra").isValid);
@@ -160,7 +151,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testGBYTE() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("GBYTE");
 
         assertTrue(validator.validate("BN7JXKXWEG4BVJ7NW6Q3Z7SMJNZJYM3G").isValid);
@@ -174,7 +164,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testNXT() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("NXT");
 
         assertTrue(validator.validate("NXT-JM2U-U4AE-G7WF-3NP9F").isValid);
@@ -192,7 +181,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added at 0.6.0
     @Test
     public void testDCT() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DCT");
 
         assertTrue(validator.validate("ud6910c2790bda53bcc53cb131f8fa3bf").isValid);
@@ -210,7 +198,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testPNC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("PNC");
 
         assertTrue(validator.validate("3AB1qXhaU3hK5oAPQfwzN3QkM8LxAgL8vB").isValid);
@@ -225,7 +212,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testWAC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("WAC");
 
         assertTrue(validator.validate("WfEnB3VGrBqW7uamJMymymEwxMBYQKELKY").isValid);
@@ -241,7 +227,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testZEN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ZEN");
 
         assertTrue(validator.validate("znk62Ey7ptTyHgYLaLDTEwhLF6uN1DXTBfa").isValid);
@@ -258,7 +243,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testXCN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("XCN");
 
         assertTrue(validator.validate("CT49DTNo5itqYoAD6XTGyTKbe8z5nGY2D5").isValid);
@@ -279,7 +263,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testTRC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("TRC");
 
         assertTrue(validator.validate("1Bys8pZaKo4GTWcpArMg92cBgYqij8mKXt").isValid);
@@ -298,7 +281,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testINXT() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("INXT");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -312,7 +294,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testPART() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("PART");
         assertTrue(validator.validate("PZdYWHgyhuG7NHVCzEkkx3dcLKurTpvmo6").isValid);
         assertTrue(validator.validate("RJAPhgckEgRGVPZa9WoGSWW24spskSfLTQ").isValid);
@@ -328,7 +309,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.1
     @Test
     public void testMDC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("MDC");
 
         assertTrue(validator.validate("mHUisRLQ4vMXrWrVfGfiEHuD3KZqiUNvzH").isValid);
@@ -342,7 +322,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testBCHC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("BCHC");
 
         assertTrue(validator.validate("1HQQgsvLTgN9xD9hNmAgAreakzVzQUSLSH").isValid);
@@ -357,7 +336,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testBTG() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("BTG");
 
         assertTrue(validator.validate("AehvQ57Fp168uY592LCUYBbyNEpiRAPufb").isValid);
@@ -373,7 +351,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.2
     @Test
     public void testCAGE() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("CAGE");
 
         assertTrue(validator.validate("Db97PgfdBDhXk8DmrDhrUPyydTCELn8YSb").isValid);
@@ -389,7 +366,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testCRED() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("CRED");
 
         assertTrue(validator.validate("0x65767ec6d4d3d18a200842352485cdc37cbf3a21").isValid);
@@ -403,7 +379,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testXSPEC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("XSPEC");
 
         assertTrue(validator.validate("SUZRHjTLSCr581qLsGqMqBD5f3oW2JHckn").isValid);
@@ -419,7 +394,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.3
     @Test
     public void testWILD() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("WILD");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -433,7 +407,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testONION() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ONION");
 
         assertTrue(validator.validate("DbkkqXwdiWJNcpfw49f2xzTVEbvL1SYWDm").isValid);
@@ -449,7 +422,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.4
     @Test
     public void testCREA() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("CREA");
 
         assertTrue(validator.validate("CGjh99QdHxCE6g9pGUucCJNeUyQPRJr4fE").isValid);
@@ -464,7 +436,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testXIN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("XIN");
 
         assertTrue(validator.validate("XIN-FXFA-LR6Y-QZAW-9V4SX").isValid);
@@ -487,7 +458,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.5
     @Test
     public void testBETR() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("BETR");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -501,7 +471,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testMVT() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("MVT");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -515,7 +484,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testREF() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("REF");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -530,7 +498,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.6.6
     @Test
     public void testSTL() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("STL");
 
         assertTrue(validator.validate("Se3x7sVdvUnMMn2KoYLyYVHMJGRoB2R3V8K3LYuHAiEXgVac7vsmFiXUC8dSpJnjXDfwytKsQJV6HFH8MjwPagTJ2Aha46RZM").isValid);
@@ -544,7 +511,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDAI() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DAI");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -558,7 +524,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testYTN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("YTN");
         assertTrue(validator.validate("YTgSv7bk5x5p6te3uf3HbUwgnf7zEJM4Jn").isValid);
         assertTrue(validator.validate("YVz19KtQUfyTP4AJS8sbRBqi7dkGTL2ovd").isValid);
@@ -574,7 +539,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDARX() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DARX");
 
         assertTrue(validator.validate("RN8spHmkV6ZtRsquaTJMRZJujRQkkDNh2G").isValid);
@@ -588,7 +552,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testODN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ODN");
 
         assertTrue(validator.validate("XEfyuzk8yTp5eA9eVUeCW2PFbCFtNb6Jgv").isValid);
@@ -604,7 +567,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testCDT() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("CDT");
 
         assertTrue(validator.validate("DM7BjopQ3bGYxSPZ4yhfttxqnDrEkyc3sw").isValid);
@@ -622,7 +584,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDGM() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DGM");
 
         assertTrue(validator.validate("DvaAgcLKrno2AC7kYhHVDCrkhx2xHFpXUf").isValid);
@@ -636,7 +597,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testSCS() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("SCS");
 
         assertTrue(validator.validate("SNrVzPaFVCQGH4Rdch2EuhoyeWMfgWqk1J").isValid);
@@ -652,7 +612,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testSOS() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("SOS");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -666,7 +625,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testACH() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ACH");
 
         assertTrue(validator.validate("AciV7ZyJDpCg7kGGmbo97VjgjpVZkXRTMD").isValid);
@@ -681,7 +639,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testVDN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("VDN");
 
         assertTrue(validator.validate("DG1KpSsSXd3uitgwHaA1i6T1Bj1hWEwAxB").isValid);
@@ -700,7 +657,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     // Added 0.7.0
     @Test
     public void testALC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ALC");
 
         assertTrue(validator.validate("AQJTNtWcP7opxuR52Lf5vmoQTC8EHQ6GxV").isValid);
@@ -716,7 +672,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testDIN() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("DIN");
 
         assertTrue(validator.validate("DBmvak2TM8GpeiR3ZEVWAHWFZeiw9FG7jK").isValid);
@@ -732,7 +687,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testStraya() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("NAH");
 
         assertTrue(validator.validate("SZHa3vS9ctDJwx3BziaqgN3zQMkYpgyP7f").isValid);
@@ -748,7 +702,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testROI() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ROI");
 
         assertTrue(validator.validate("RSdzB2mFpQ6cR3HmEopbaRBjrEMWAwXBYn").isValid);
@@ -763,7 +716,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testWMCC() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("WMCC");
 
         assertTrue(validator.validate("wc1qke2es507uz0dcfx7eyvlfuemwys8xem48vp5rw").isValid);
@@ -782,7 +734,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testRTO() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("RTO");
 
         assertTrue(validator.validate("AHT1tiauD1GKvLnSL2RVuug1arn3cvFYw7PX5cUmCkM9MHuBn8yrGoHGHXP8ZV9FUR5Y5ntvhanwCMp8FK5bmLrqKxq7BRj").isValid);
@@ -796,7 +747,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testKOTO() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("KOTO");
 
         assertTrue(validator.validate("k13dNgJJjf1SCU2Xv2jLnuUb5Q7zZx7P9vW").isValid);
@@ -813,7 +763,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testUBQ() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("UBQ");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -827,7 +776,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testQWARK() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("QWARK");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -841,7 +789,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testGEO() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("GEO");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -855,7 +802,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testGRANS() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("GRANS");
 
         assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
@@ -869,7 +815,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testICH() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("ICH");
 
         assertTrue(validator.validate("AYx4EqKhomeMu2CTMx1AHdNMkjv6ygnvji").isValid);
@@ -888,7 +833,6 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testPHR() {
-        AltCoinAddressValidator validator = getAltCoinAddressValidator();
         validator.setCurrencyCode("PHR");
 
         assertTrue(validator.validate("PJCKDPyvfbf1yV7mYNeJ8Zb47hKRwVPYDj").isValid);

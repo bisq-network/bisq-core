@@ -18,6 +18,11 @@
 package bisq.core.payment.validation;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.asset.AddressValidationResult;
+import bisq.asset.Coin;
+import bisq.asset.Asset;
+import bisq.asset.AssetRegistry;
+import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.ByteballAddressValidator;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
@@ -31,7 +36,6 @@ import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
-import bisq.core.payment.validation.params.ICHParams;
 import bisq.core.payment.validation.params.IOPParams;
 import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.OctocoinParams;
@@ -67,6 +71,8 @@ import org.bitcoinj.params.TestNet3Params;
 
 import com.google.inject.Inject;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
@@ -74,12 +80,12 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public final class AltCoinAddressValidator extends InputValidator {
 
-    private final AssetProviderRegistry assetProviderRegistry;
+    private final AssetRegistry assetRegistry;
     private String currencyCode;
 
     @Inject
-    public AltCoinAddressValidator(AssetProviderRegistry assetProviderRegistry) {
-        this.assetProviderRegistry = assetProviderRegistry;
+    public AltCoinAddressValidator(AssetRegistry assetRegistry) {
+        this.assetRegistry = assetRegistry;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -101,38 +107,21 @@ public final class AltCoinAddressValidator extends InputValidator {
             ValidationResult regexTestFailed = new ValidationResult(false,
                     Res.get("validation.altcoin.wrongStructure", currencyCode));
 
-            final AssetProvider assetProvider = assetProviderRegistry.getProviderByCurrencyCode(currencyCode);
-            if (null != assetProvider) {
-                return assetProvider.validateAddress(input);
+            Optional<Asset> asset = assetRegistry.stream()
+                    .filter(this::assetMatchesSelectedCurrencyCode)
+                    .filter(this::assetIsNotBaseCurrencyForDifferentNetwork)
+                    .findFirst();
+
+            if (asset.isPresent()) {
+                AddressValidationResult addressValidationResult = asset.get().validateAddress(input);
+
+                if (addressValidationResult.isValid())
+                    return new ValidationResult(true);
+
+                return new ValidationResult(false, Res.get(addressValidationResult.getI18nKey(), asset.get().getTickerSymbol(), addressValidationResult.getMessage()));
             }
+
             switch (currencyCode) {
-                case "BTC":
-                    try {
-                        switch (BisqEnvironment.getBaseCurrencyNetwork()) {
-                            case BTC_MAINNET:
-                                Address.fromBase58(MainNetParams.get(), input);
-                                break;
-                            case BTC_TESTNET:
-                                Address.fromBase58(TestNet3Params.get(), input);
-                                break;
-                            case BTC_REGTEST:
-                                Address.fromBase58(RegTestParams.get(), input);
-                                break;
-                            case LTC_MAINNET:
-                            case LTC_TESTNET:
-                            case LTC_REGTEST:
-                            case DASH_MAINNET:
-                            case DASH_TESTNET:
-                            case DASH_REGTEST:
-                                // We cannot use MainNetParams because that would be one of the other base currencies,
-                                // so we cloned the MainNetParams to BtcMainNetParamsForValidation
-                                Address.fromBase58(BtcMainNetParamsForValidation.get(), input);
-                                return new ValidationResult(true);
-                        }
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "BSQ":
                     if (!input.startsWith("B"))
                         return new ValidationResult(false, Res.get("validation.altcoin.invalidAddress",
@@ -208,12 +197,6 @@ public final class AltCoinAddressValidator extends InputValidator {
                     } catch (AddressFormatException e) {
                         return new ValidationResult(false, getErrorMessage(e));
                     }
-                case "ETH":
-                    // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
-                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "PIVX":
                     if (input.matches("^[D][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
@@ -560,18 +543,6 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
-                case "ICH":
-                    if (input.matches("^[A][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(ICHParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "PHR":
                     if (input.matches("^[P][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
@@ -597,4 +568,17 @@ public final class AltCoinAddressValidator extends InputValidator {
     private String getErrorMessage(AddressFormatException e) {
         return Res.get("validation.altcoin.invalidAddress", currencyCode, e.getMessage());
     }
+
+    private boolean assetMatchesSelectedCurrencyCode(Asset a) {
+        return currencyCode.equals(a.getTickerSymbol());
+    }
+
+    private boolean assetIsNotBaseCurrencyForDifferentNetwork(Asset asset) {
+        BaseCurrencyNetwork baseCurrencyNetwork = BisqEnvironment.getBaseCurrencyNetwork();
+
+        return !(asset instanceof Coin)
+                || !asset.getTickerSymbol().equals(baseCurrencyNetwork.getCurrencyCode())
+                || (((Coin) asset).getNetwork().name().equals(baseCurrencyNetwork.getNetwork()));
+    }
+
 }

@@ -17,7 +17,9 @@
 
 package bisq.core.locale;
 
-import bisq.core.payment.validation.AssetProviderRegistry;
+import bisq.asset.Asset;
+import bisq.asset.AssetRegistry;
+import bisq.asset.Token;
 
 import bisq.common.app.DevEnv;
 
@@ -36,6 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CurrencyUtil {
+
+    private static final AssetRegistry assetRegistry = new AssetRegistry();
+
     private static String baseCurrencyCode = "BTC";
 
     public static void setBaseCurrencyCode(String baseCurrencyCode) {
@@ -92,21 +97,16 @@ public class CurrencyUtil {
         return allSortedCryptoCurrencies;
     }
 
-    // Don't make a PR for adding a coin but follow the steps described here:
-    // https://forum.bisq.network/t/how-to-add-your-favorite-altcoin/
-    public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
-        final List<CryptoCurrency> result = AssetProviderRegistry.getInstance()
-                .getProviders()
-                .stream()
-                .map(assetProvider -> new CryptoCurrency(assetProvider.getCurrencyCode(), assetProvider.getCurrencyName(), assetProvider.isAsset()))
+    private static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
+        List<CryptoCurrency> result = assetRegistry.stream()
+                .filter(CurrencyUtil::assetIsNotBaseCurrency)
+                .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
         result.add(new CryptoCurrency("BETR", "Better Betting", true));
         if (DevEnv.DAO_TRADING_ACTIVATED)
             result.add(new CryptoCurrency("BSQ", "Bisq Token"));
 
-        if (!baseCurrencyCode.equals("BTC"))
-            result.add(new CryptoCurrency("BTC", "Bitcoin"));
         result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
         result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
         result.add(new CryptoCurrency("BURST", "Burstcoin"));
@@ -124,7 +124,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("DOGE", "Dogecoin"));
         result.add(new CryptoCurrency("DMC", "DynamicCoin"));
         result.add(new CryptoCurrency("ESP", "Espers"));
-        result.add(new CryptoCurrency("ETH", "Ether"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));
         result.add(new CryptoCurrency("XIN", "Infinity Economics"));
         result.add(new CryptoCurrency("IOP", "Internet Of People"));
@@ -194,7 +193,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("QWARK", "Qwark", true));
         result.add(new CryptoCurrency("GEO", "GeoCoin", true));
         result.add(new CryptoCurrency("GRANS", "10grans", true));
-        result.add(new CryptoCurrency("ICH", "ICH"));
         result.add(new CryptoCurrency("PHR", "Phore"));
 
         result.sort(TradeCurrency::compareTo);
@@ -406,5 +404,13 @@ public class CurrencyUtil {
 
     public static TradeCurrency getDefaultTradeCurrency() {
         return GlobalSettings.getDefaultTradeCurrency();
+    }
+
+    private static boolean assetIsNotBaseCurrency(Asset asset) {
+        return !asset.getTickerSymbol().equals(baseCurrencyCode);
+    }
+
+    private static CryptoCurrency assetToCryptoCurrency(Asset asset) {
+        return new CryptoCurrency(asset.getTickerSymbol(), asset.getName(), asset instanceof Token);
     }
 }

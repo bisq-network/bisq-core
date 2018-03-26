@@ -15,22 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.payment;
+package bisq.asset;
 
-import bisq.core.payment.validation.AssetProviderRegistry;
+public interface AddressValidator {
 
-import bisq.common.app.AppModule;
-
-import org.springframework.core.env.Environment;
-
-public class PaymentModule extends AppModule {
-
-    public PaymentModule(Environment environment) {
-        super(environment);
-    }
-
-    @Override
-    protected final void configure() {
-        bind(AssetProviderRegistry.class).toInstance(AssetProviderRegistry.getInstance());
-    }
+    AddressValidationResult validate(String address);
 }

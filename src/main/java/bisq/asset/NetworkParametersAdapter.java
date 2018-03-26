@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.payment.validation.params;
+package bisq.asset;
 
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -27,26 +27,8 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.MonetaryFormat;
 
-public class ICHParams extends NetworkParameters {
+public abstract class NetworkParametersAdapter extends NetworkParameters {
 
-    private static ICHParams instance;
-
-    public static synchronized ICHParams get() {
-        if (instance == null) {
-            instance = new ICHParams();
-        }
-        return instance;
-    }
-
-    // We only use the properties needed for address validation
-    public ICHParams() {
-        super();
-        addressHeader = 23;
-        p2shHeader = 13;
-        acceptableAddressCodes = new int[]{addressHeader, p2shHeader};
-    }
-
-    // default dummy implementations, not used...
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_MAINNET;
