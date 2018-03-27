@@ -54,10 +54,6 @@ import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
 
-import org.libdohj.params.DashMainNetParams;
-import org.libdohj.params.DashRegTestParams;
-import org.libdohj.params.DashTestNet3Params;
-
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
@@ -118,29 +114,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "DASH":
-                    try {
-                        switch (BisqEnvironment.getBaseCurrencyNetwork()) {
-                            case BTC_MAINNET:
-                            case BTC_TESTNET:
-                            case BTC_REGTEST:
-                            case LTC_MAINNET:
-                            case LTC_TESTNET:
-                            case LTC_REGTEST:
-                            case DASH_MAINNET:
-                                Address.fromBase58(DashMainNetParams.get(), input);
-                                break;
-                            case DASH_TESTNET:
-                                Address.fromBase58(DashTestNet3Params.get(), input);
-                                break;
-                            case DASH_REGTEST:
-                                Address.fromBase58(DashRegTestParams.get(), input);
-                                break;
-                        }
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "PIVX":
                     if (input.matches("^[D][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
