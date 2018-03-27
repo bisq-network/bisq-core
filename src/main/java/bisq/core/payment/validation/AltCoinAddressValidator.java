@@ -57,7 +57,6 @@ import bisq.core.util.validation.InputValidator;
 import org.libdohj.params.DashMainNetParams;
 import org.libdohj.params.DashRegTestParams;
 import org.libdohj.params.DashTestNet3Params;
-import org.libdohj.params.DogecoinMainNetParams;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -119,13 +118,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "DOGE":
-                    try {
-                        Address.fromBase58(DogecoinMainNetParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "DASH":
                     try {
                         switch (BisqEnvironment.getBaseCurrencyNetwork()) {

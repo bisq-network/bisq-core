@@ -5,6 +5,7 @@ bisq.asset.coins.Bitcoin$Mainnet
 bisq.asset.coins.Bitcoin$Regtest
 bisq.asset.coins.Bitcoin$Testnet
 bisq.asset.coins.BitcoinCash
+bisq.asset.coins.Dogecoin
 bisq.asset.coins.Ether
 bisq.asset.coins.Instacash
 bisq.asset.coins.Litecoin$Mainnet
