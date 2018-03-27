@@ -39,7 +39,7 @@ public class DaoPeriodServiceTest {
         /*      UNDEFINED(0),
               phase1  COMPENSATION_REQUESTS(144 * 23), // 3312
               phase2  BREAK1(10), 3322
-              phase3  OPEN_FOR_VOTING(144 * 4), // 3322 + 576 = 3898
+              phase3  BLIND_VOTE(144 * 4), // 3322 + 576 = 3898
               phase4  BREAK2(10), 3908
               phase5  VOTE_REVEAL(144 * 3), // 3908 + 432 = 4340
               phase6  BREAK3(10); 4350

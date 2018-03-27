@@ -56,6 +56,14 @@ import javax.annotation.Nullable;
 public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload {
 
+    public static BlindVote clone(BlindVote blindVote) {
+        return new BlindVote(blindVote.encryptedProposalList,
+                blindVote.getTxId(),
+                blindVote.getStake(),
+                blindVote.getOwnerPubKeyAsHex(),
+                blindVote.extraDataMap);
+    }
+
     private final byte[] encryptedProposalList;
     private final String txId;
     private long stake;
@@ -97,10 +105,16 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         this.extraDataMap = extraDataMap;
     }
 
+    // Used for sending over the network
     @Override
     public PB.StoragePayload toProtoMessage() {
         final PB.BlindVote.Builder builder = getBuilder();
         return PB.StoragePayload.newBuilder().setBlindVote(builder).build();
+    }
+
+    // Used for local persistence
+    public PB.BlindVote toBlindVote() {
+        return getBuilder().build();
     }
 
     @NotNull

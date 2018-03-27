@@ -96,6 +96,7 @@ public class FullNodeParser extends BsqParser {
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock);
         final BsqBlock bsqBlock = new BsqBlock(btcdBlock.getHeight(),
+                btcdBlock.getTime(),
                 btcdBlock.getHash(),
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));

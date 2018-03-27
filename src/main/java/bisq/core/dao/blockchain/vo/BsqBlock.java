@@ -30,12 +30,14 @@ import lombok.Data;
 @Data
 public class BsqBlock implements PersistablePayload {
     private final int height;
+    private final long time;
     private final String hash;
     private final String previousBlockHash;
     private final List<Tx> txs;
 
-    public BsqBlock(int height, String hash, String previousBlockHash, List<Tx> txs) {
+    public BsqBlock(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
         this.height = height;
+        this.time = time;
         this.hash = hash;
         this.previousBlockHash = previousBlockHash;
         this.txs = txs;
@@ -49,6 +51,7 @@ public class BsqBlock implements PersistablePayload {
     public PB.BsqBlock toProtoMessage() {
         return PB.BsqBlock.newBuilder()
                 .setHeight(height)
+                .setTime(time)
                 .setHash(hash)
                 .setPreviousBlockHash(previousBlockHash)
                 .addAllTxs(txs.stream()
@@ -59,6 +62,7 @@ public class BsqBlock implements PersistablePayload {
 
     public static BsqBlock fromProto(PB.BsqBlock proto) {
         return new BsqBlock(proto.getHeight(),
+                proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
                 proto.getTxsList().isEmpty() ?
@@ -74,13 +78,14 @@ public class BsqBlock implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void reset() {
-        txs.stream().forEach(Tx::reset);
+        txs.forEach(Tx::reset);
     }
 
     @Override
     public String toString() {
         return "BsqBlock{" +
                 "\n     height=" + getHeight() +
+                ",\n     time='" + getTime() + '\'' +
                 ",\n     hash='" + getHash() + '\'' +
                 ",\n     previousBlockHash='" + getPreviousBlockHash() + '\'' +
                 ",\n     txs='" + txs + '\'' +

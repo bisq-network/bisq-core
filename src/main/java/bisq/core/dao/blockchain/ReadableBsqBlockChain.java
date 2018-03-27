@@ -42,7 +42,7 @@ public interface ReadableBsqBlockChain {
 
     Tx getGenesisTx();
 
-    Optional<Tx> getOptionalTx(String txId);
+    Optional<Tx> getTx(String txId);
 
     Set<Tx> getTransactions();
 
@@ -62,9 +62,9 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getCompReqIssuanceTxOutputs();
 
-    Optional<TxOutput> getUnspentAnMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
+    Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
 
-    Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index);
+    Optional<TxOutput> getUnspentAndMatureTxOutput(String txId, int index);
 
     boolean isTxOutputSpendable(String txId, int index);
 
@@ -77,6 +77,8 @@ public interface ReadableBsqBlockChain {
     Set<TxOutput> getSpentTxOutputs();
 
     Optional<TxType> getTxType(String txId);
+
+    long getBlockTime(int height);
 
     boolean isCompensationRequestPeriodValid(int blockHeight);
 

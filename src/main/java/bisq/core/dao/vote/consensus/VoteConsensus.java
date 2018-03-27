@@ -24,10 +24,12 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.BlindVote;
+import bisq.core.dao.vote.BlindVoteList;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Encryption;
 import bisq.common.crypto.Hash;
+import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 
@@ -65,10 +67,13 @@ public class VoteConsensus {
     }
 
     public static byte[] getOpReturnDataForBlindVote(byte[] encryptedProposalList) {
+        log.info("encryptedProposalList " + Utilities.bytesAsHexString(encryptedProposalList));
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnTypes.BLIND_VOTE);
             outputStream.write(Version.BLIND_VOTE_VERSION);
-            outputStream.write(Hash.getSha256Ripemd160hash(encryptedProposalList));
+            final byte[] hash = Hash.getSha256Ripemd160hash(encryptedProposalList);
+            log.info("Sha256Ripemd160 hash of encryptedProposalList " + Utilities.bytesAsHexString(hash));
+            outputStream.write(hash);
             return outputStream.toByteArray();
         } catch (IOException e) {
             // Not expected to happen ever
@@ -82,16 +87,16 @@ public class VoteConsensus {
         return Encryption.generateSecretKey();
     }
 
-    public static byte[] getHashOfProposalList(ProposalList proposalList) {
-        // proposalList is already sorted nby TxId
-        return Hash.getSha256Ripemd160hash(proposalList.toProtoMessage().toByteArray());
+    public static byte[] getHashOfBlindVoteList(List<BlindVote> blindVoteSortedList) {
+        BlindVoteList blindVoteList = new BlindVoteList(blindVoteSortedList);
+        return Hash.getSha256Ripemd160hash(blindVoteList.toProtoMessage().toByteArray());
     }
 
-    public static byte[] getOpReturnDataForVoteReveal(byte[] hashOfProposalList, SecretKey secretKey) {
+    public static byte[] getOpReturnDataForVoteReveal(byte[] hashOfBlindVoteList, SecretKey secretKey) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnTypes.VOTE_REVEAL);
             outputStream.write(Version.VOTE_REVEAL_VERSION);
-            outputStream.write(hashOfProposalList);     // hash is 20 bytes
+            outputStream.write(hashOfBlindVoteList);     // hash is 20 bytes
             outputStream.write(secretKey.getEncoded()); // SecretKey as bytes has 32 bytes
             return outputStream.toByteArray();
         } catch (IOException e) {
