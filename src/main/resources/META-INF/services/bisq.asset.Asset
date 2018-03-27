@@ -1,3 +1,6 @@
+bisq.asset.coins.BSQ$Mainnet
+bisq.asset.coins.BSQ$Regtest
+bisq.asset.coins.BSQ$Testnet
 bisq.asset.coins.Bitcoin$Mainnet
 bisq.asset.coins.Bitcoin$Regtest
 bisq.asset.coins.Bitcoin$Testnet

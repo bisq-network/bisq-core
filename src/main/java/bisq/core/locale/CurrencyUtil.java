@@ -17,9 +17,12 @@
 
 package bisq.core.locale;
 
+import bisq.core.app.BisqEnvironment;
+
 import bisq.asset.Asset;
 import bisq.asset.AssetRegistry;
 import bisq.asset.Token;
+import bisq.asset.coins.BSQ;
 
 import bisq.common.app.DevEnv;
 
@@ -100,13 +103,11 @@ public class CurrencyUtil {
     private static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
         List<CryptoCurrency> result = assetRegistry.stream()
                 .filter(CurrencyUtil::assetIsNotBaseCurrency)
+                .filter(CurrencyUtil::excludeBsqUnlessDaoTradingIsActive)
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
         result.add(new CryptoCurrency("BETR", "Better Betting", true));
-        if (DevEnv.DAO_TRADING_ACTIVATED)
-            result.add(new CryptoCurrency("BSQ", "Bisq Token"));
-
         result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
         result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
         result.add(new CryptoCurrency("BURST", "Burstcoin"));
@@ -213,7 +214,7 @@ public class CurrencyUtil {
     public static List<CryptoCurrency> getMainCryptoCurrencies() {
         final List<CryptoCurrency> result = new ArrayList<>();
         if (DevEnv.DAO_TRADING_ACTIVATED)
-            result.add(new CryptoCurrency("BSQ", "Bisq Token"));
+            result.add(new CryptoCurrency("BSQ", "BSQ"));
         if (!baseCurrencyCode.equals("BTC"))
             result.add(new CryptoCurrency("BTC", "Bitcoin"));
         if (!baseCurrencyCode.equals("DASH"))
@@ -412,5 +413,10 @@ public class CurrencyUtil {
 
     private static CryptoCurrency assetToCryptoCurrency(Asset asset) {
         return new CryptoCurrency(asset.getTickerSymbol(), asset.getName(), asset instanceof Token);
+    }
+
+    private static boolean excludeBsqUnlessDaoTradingIsActive(Asset asset) {
+        return (!(asset instanceof BSQ) || (DevEnv.DAO_TRADING_ACTIVATED
+                && ((BSQ) asset).getNetwork().name().equals(BisqEnvironment.getBaseCurrencyNetwork().getNetwork())));
     }
 }

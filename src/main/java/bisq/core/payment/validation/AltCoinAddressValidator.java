@@ -122,28 +122,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "BSQ":
-                    if (!input.startsWith("B"))
-                        return new ValidationResult(false, Res.get("validation.altcoin.invalidAddress",
-                                currencyCode, "BSQ address must start with \"B\""));
-
-                    String addressAsBtc = input.substring(1, input.length());
-                    try {
-                        switch (BisqEnvironment.getBaseCurrencyNetwork()) {
-                            case BTC_MAINNET:
-                                Address.fromBase58(MainNetParams.get(), addressAsBtc);
-                                break;
-                            case BTC_TESTNET:
-                                Address.fromBase58(TestNet3Params.get(), addressAsBtc);
-                                break;
-                            case BTC_REGTEST:
-                                Address.fromBase58(RegTestParams.get(), addressAsBtc);
-                                break;
-                        }
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "LTC":
                     try {
                         switch (BisqEnvironment.getBaseCurrencyNetwork()) {

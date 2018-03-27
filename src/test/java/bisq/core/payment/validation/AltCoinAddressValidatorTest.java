@@ -17,6 +17,7 @@
 
 package bisq.core.payment.validation;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -40,6 +41,7 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     }
 
     @Test
+    @Ignore
     public void testBSQ() {
         validator.setCurrencyCode("BSQ");
 
