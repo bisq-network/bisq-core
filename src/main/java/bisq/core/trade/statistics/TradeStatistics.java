@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
  */
 @Deprecated
 @Slf4j
-@EqualsAndHashCode(exclude = {"signaturePubKeyBytes", "signaturePubKey"})
+@EqualsAndHashCode(exclude = {"signaturePubKeyBytes"})
 @Value
 public final class TradeStatistics implements LazyProcessedPayload, ProtectedStoragePayload, ExpirablePayload, PersistablePayload {
     private final OfferPayload.Direction direction;

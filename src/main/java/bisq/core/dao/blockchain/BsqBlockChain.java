@@ -25,6 +25,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
+import bisq.common.UserThread;
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.util.FunctionalReadWriteLock;
 import bisq.common.util.Tuple2;
@@ -222,22 +223,30 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public void addListener(Listener listener) {
-        listeners.add(listener);
+        lock.write(() -> {
+            listeners.add(listener);
+        });
     }
 
     @Override
     public void removeListener(Listener listener) {
-        listeners.remove(listener);
+        lock.write(() -> {
+            listeners.remove(listener);
+        });
     }
 
     @Override
     public void addIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.add(listener);
+        lock.write(() -> {
+            issuanceListeners.add(listener);
+        });
     }
 
     @Override
     public void removeIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.remove(listener);
+        lock.write(() -> {
+            issuanceListeners.remove(listener);
+        });
     }
 
 
@@ -273,7 +282,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             bsqBlocks.add(bsqBlock);
             chainHeadHeight = bsqBlock.getHeight();
             printDetails();
-            listeners.forEach(l -> l.onBlockAdded(bsqBlock));
+            listeners.forEach(l -> UserThread.execute(() -> l.onBlockAdded(bsqBlock)));
         });
     }
 
@@ -316,7 +325,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             // The magic happens, we print money! ;-)
             //TODO maybe we should use a new type and maturity?
             txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
-            issuanceListeners.forEach(listener -> listener.onIssuance());
+            // We should track spent status and output has to be unspent anyway
+            txOutput.setUnspent(true);
+            txOutput.setVerified(true);
+            issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
     }
 
@@ -384,7 +396,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             BsqBlockChain clone = getClone();
             return clone.bsqBlocks.stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
-                    .peek(bsqBlock -> bsqBlock.reset())
+                    .peek(BsqBlock::reset)
                     .collect(Collectors.toList());
         });
     }
@@ -395,7 +407,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public Optional<Tx> getOptionalTx(String txId) {
+    public Optional<Tx> getTx(String txId) {
         return lock.read(() -> Optional.ofNullable(txMap.get(txId)));
     }
 
@@ -421,7 +433,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public boolean hasTxBurntFee(String txId) {
-        return lock.read(() -> getOptionalTx(txId)
+        return lock.read(() -> getTx(txId)
                 .map(Tx::getBurntFee)
                 .filter(fee -> fee > 0)
                 .isPresent());
@@ -429,7 +441,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public boolean containsTx(String txId) {
-        return lock.read(() -> getOptionalTx(txId).isPresent());
+        return lock.read(() -> getTx(txId).isPresent());
     }
 
     @Nullable
@@ -442,6 +454,16 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return genesisTxId;
     }
 
+    @Override
+    public long getBlockTime(int height) {
+        return lock.read(() -> {
+            return bsqBlocks.stream()
+                    .filter(block -> block.getHeight() == height)
+                    .mapToLong(block -> block.getTime())
+                    .sum();
+        });
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Read access: TxOutput
@@ -450,7 +472,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // TODO handle BOND_LOCK, BOND_UNLOCK
     @Override
     public boolean isTxOutputSpendable(String txId, int index) {
-        return lock.read(() -> getUnspentAnMatureTxOutput(txId, index)
+        return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
                 .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.VOTE_STAKE_OUTPUT)
                 .isPresent());
     }
@@ -461,6 +483,13 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 filter(e -> e.isVerified() && e.isUnspent())
                 .collect(Collectors.toSet()));
     }
+
+    public Set<TxOutput> getVerifiedTxOutputs() {
+        return lock.read(() -> getAllTxOutputs().stream().
+                filter(TxOutput::isVerified)
+                .collect(Collectors.toSet()));
+    }
+
 
     @Override
     public Set<TxOutput> getLockedForVoteTxOutputs() {
@@ -483,32 +512,36 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
 
     @Override
-    public Optional<TxOutput> getUnspentAnMatureTxOutput(TxIdIndexTuple txIdIndexTuple) {
+    public Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> getUnspentTxOutput(txIdIndexTuple)
                 .filter(this::isTxOutputMature));
     }
 
     @Override
-    public Optional<TxOutput> getUnspentAnMatureTxOutput(String txId, int index) {
-        return lock.read(() -> getUnspentAnMatureTxOutput(new TxIdIndexTuple(txId, index)));
+    public Optional<TxOutput> getUnspentAndMatureTxOutput(String txId, int index) {
+        return lock.read(() -> getUnspentAndMatureTxOutput(new TxIdIndexTuple(txId, index)));
     }
 
+    @Override
     public Set<TxOutput> getVoteRevealTxOutputs() {
-        return lock.read(() -> getUnspentTxOutputs().stream()
+        return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
     @Override
     public Set<TxOutput> getBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getUnspentTxOutputs().stream()
+        return lock.read(() -> getVerifiedTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
+    // We don't use getVerifiedTxOutputs as out output is not a valid BSQ output before the issuance.
+    // We marked it only as candidate for issuance and after voting result is applied it might change it's state.
+    //TODO we should add unspent check (need to be set in parser)
     @Override
     public Set<TxOutput> getCompReqIssuanceTxOutputs() {
-        return lock.read(() -> getUnspentTxOutputs().stream()
+        return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
@@ -520,10 +553,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .map(Map.Entry::getValue).findAny());
     }
 
-    private Set<TxOutput> getAllTxOutputs() {
-        return txMap.values().stream()
+    public Set<TxOutput> getAllTxOutputs() {
+        return lock.read(() -> txMap.values().stream()
                 .flatMap(tx -> tx.getOutputs().stream())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     //TODO
@@ -539,7 +572,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public Optional<TxType> getTxType(String txId) {
-        return lock.read(() -> getOptionalTx(txId).map(Tx::getTxType));
+        return lock.read(() -> getTx(txId).map(Tx::getTxType));
     }
 
 

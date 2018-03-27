@@ -22,6 +22,7 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.proposal.ProposalList;
+import bisq.core.dao.vote.BlindVoteList;
 import bisq.core.dao.vote.MyVoteList;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
@@ -108,6 +109,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return ProposalList.fromProto(proto.getProposalList());
                 case MY_VOTE_LIST:
                     return MyVoteList.fromProto(proto.getMyVoteList());
+                case BLIND_VOTE_LIST:
+                    return BlindVoteList.fromProto(proto.getBlindVoteList());
 
                 default:
                     throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());

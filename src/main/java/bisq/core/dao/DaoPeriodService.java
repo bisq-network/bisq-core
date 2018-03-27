@@ -18,7 +18,7 @@
 package bisq.core.dao;
 
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.blockchain.BsqBlockChain;
+import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 
 import bisq.common.app.DevEnv;
@@ -54,7 +54,7 @@ public class DaoPeriodService {
         UNDEFINED(0),
         PROPOSAL(2),
         BREAK1(1),
-        OPEN_FOR_VOTING(2),
+        BLIND_VOTE(2),
         BREAK2(1),
         VOTE_REVEAL(2),
         BREAK3(1),
@@ -64,7 +64,7 @@ public class DaoPeriodService {
       /* UNDEFINED(0),
         COMPENSATION_REQUESTS(144 * 23),
         BREAK1(10),
-        OPEN_FOR_VOTING(144 * 4),
+        BLIND_VOTE(144 * 4),
         BREAK2(10),
         VOTE_REVEAL(144 * 3),
         BREAK3(10);*/
@@ -86,7 +86,7 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final BtcWalletService btcWalletService;
-    private BsqBlockChain bsqBlockChain;
+    private final ReadableBsqBlockChain readableBsqBlockChain;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
@@ -99,10 +99,10 @@ public class DaoPeriodService {
 
     @Inject
     public DaoPeriodService(BtcWalletService btcWalletService,
-                            BsqBlockChain bsqBlockChain,
+                            ReadableBsqBlockChain readableBsqBlockChain,
                             @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.btcWalletService = btcWalletService;
-        this.bsqBlockChain = bsqBlockChain;
+        this.readableBsqBlockChain = readableBsqBlockChain;
         this.genesisBlockHeight = genesisBlockHeight;
     }
 
@@ -122,7 +122,7 @@ public class DaoPeriodService {
     }
 
     public boolean isTxInPhase(String txId, Phase phase) {
-        Tx tx = bsqBlockChain.getTxMap().get(txId);
+        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInPhase(tx.getBlockHeight(),
                 chainHeight,
                 genesisBlockHeight,
@@ -131,7 +131,7 @@ public class DaoPeriodService {
     }
 
     public boolean isTxInCurrentCycle(String txId) {
-        Tx tx = bsqBlockChain.getTxMap().get(txId);
+        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInCurrentCycle(tx.getBlockHeight(),
                 chainHeight,
                 genesisBlockHeight,
@@ -139,7 +139,7 @@ public class DaoPeriodService {
     }
 
     public boolean isTxInPastCycle(String txId) {
-        Tx tx = bsqBlockChain.getTxMap().get(txId);
+        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInPastCycle(tx.getBlockHeight(),
                 chainHeight,
                 genesisBlockHeight,
@@ -199,29 +199,29 @@ public class DaoPeriodService {
             return Phase.BREAK1;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks())
-            return Phase.OPEN_FOR_VOTING;
+                Phase.BLIND_VOTE.getDurationInBlocks())
+            return Phase.BLIND_VOTE;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks())
             return Phase.BREAK2;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks())
             return Phase.VOTE_REVEAL;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks())
             return Phase.BREAK3;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks() +
@@ -229,7 +229,7 @@ public class DaoPeriodService {
             return Phase.ISSUANCE;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
                 Phase.BREAK1.getDurationInBlocks() +
-                Phase.OPEN_FOR_VOTING.getDurationInBlocks() +
+                Phase.BLIND_VOTE.getDurationInBlocks() +
                 Phase.BREAK2.getDurationInBlocks() +
                 Phase.VOTE_REVEAL.getDurationInBlocks() +
                 Phase.BREAK3.getDurationInBlocks() +

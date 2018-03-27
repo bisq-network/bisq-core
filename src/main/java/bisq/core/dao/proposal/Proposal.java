@@ -36,6 +36,7 @@ import java.util.Optional;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,7 @@ import javax.annotation.Nullable;
  * Base class for all proposals like compensation request, general purpose request, remove altcoin request, change fee request, etc.
  */
 @Getter
+@ToString
 public abstract class Proposal implements PersistablePayload {
     protected final ProposalPayload proposalPayload;
     @Nullable

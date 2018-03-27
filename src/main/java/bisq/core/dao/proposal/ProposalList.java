@@ -21,7 +21,7 @@ import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.Message;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class ProposalList extends PersistableList<Proposal> {
     }
 
     @Override
-    public Message toProtoMessage() {
+    public PB.PersistableEnvelope toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder().setProposalList(getBuilder()).build();
     }
 
@@ -48,6 +48,12 @@ public class ProposalList extends PersistableList<Proposal> {
         return new ProposalList(new ArrayList<>(proto.getProposalList().stream()
                 .map(Proposal::fromProto)
                 .collect(Collectors.toList())));
+    }
+
+    public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
+        final PB.PersistableEnvelope proto = proposalList.toProtoMessage();
+        PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(proto.toByteArray());
+        return ProposalList.fromProto(envelope.getProposalList());
     }
 }
 

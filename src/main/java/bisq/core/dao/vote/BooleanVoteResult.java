@@ -22,7 +22,9 @@ import io.bisq.generated.protobuffer.PB;
 import com.google.protobuf.Message;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 @Getter
 public class BooleanVoteResult extends VoteResult {
 

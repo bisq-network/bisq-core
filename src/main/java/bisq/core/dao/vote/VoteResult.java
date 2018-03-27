@@ -23,6 +23,9 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import lombok.ToString;
+
+@ToString
 public abstract class VoteResult implements PersistablePayload, NetworkPayload {
 
     ///////////////////////////////////////////////////////////////////////////////////////////

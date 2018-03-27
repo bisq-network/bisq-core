@@ -30,6 +30,7 @@ import javax.crypto.SecretKey;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +45,8 @@ public class IssuanceConsensus {
         return Encryption.getSecretKeyFromBytes(secretKeyAsBytes);
     }
 
-    public static byte[] getVoteListHash(byte[] opReturnData) {
+    // Hash of the list of Blind votes is 20 bytes after version and type bytes
+    public static byte[] getBlindVoteListHash(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
@@ -57,22 +59,25 @@ public class IssuanceConsensus {
                                        ReadableBsqBlockChain readableBsqBlockChain,
                                        WritableBsqBlockChain writableBsqBlockChain) {
         Map<String, TxOutput> txOutputsByTxIdMap = new HashMap<>();
-        readableBsqBlockChain.getCompReqIssuanceTxOutputs()
+        final Set<TxOutput> compReqIssuanceTxOutputs = readableBsqBlockChain.getCompReqIssuanceTxOutputs();
+        compReqIssuanceTxOutputs.stream()
+                .filter(txOutput -> !txOutput.isVerified()) // our candidate is not yet verified and not set
+                /*.filter(txOutput -> txOutput.isUnspent())*/ // TODO set unspent and keep track of it in parser
                 .forEach(txOutput -> txOutputsByTxIdMap.put(txOutput.getTxId(), txOutput));
 
-        stakeByProposalMap.entrySet().stream()
-                .forEach(entry -> {
-                    Proposal proposal = entry.getKey();
-                    int stakeResult = entry.getValue();
-                    if (stakeResult >= QUORUM) {
-                        TxOutput txOutput = txOutputsByTxIdMap.get(proposal.getTxId());
-                        writableBsqBlockChain.issueBsq(txOutput);
-                    } else {
-                        log.warn("We got a successful vote result but did not reach the quorum. stake={}, quorum={}",
-                                stakeResult, QUORUM);
-                    }
-                });
-
-
+        stakeByProposalMap.forEach((proposal, value) -> {
+            int stakeResult = value;
+            if (stakeResult >= QUORUM) {
+                final String txId = proposal.getTxId();
+                if (txOutputsByTxIdMap.containsKey(txId)) {
+                    final TxOutput txOutput = txOutputsByTxIdMap.get(txId);
+                    writableBsqBlockChain.issueBsq(txOutput);
+                    log.info("We issued new BSQ to txOutput {} for proposal {}", txOutput, proposal);
+                }
+            } else {
+                log.warn("We got a successful vote result but did not reach the quorum. stake={}, quorum={}",
+                        stakeResult, QUORUM);
+            }
+        });
     }
 }

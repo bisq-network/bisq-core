@@ -19,6 +19,7 @@ package bisq.core.app;
 
 import bisq.core.dao.DaoManager;
 import bisq.core.dao.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.VoteService;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
@@ -44,7 +45,8 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  AccountAgeWitnessService accountAgeWitnessService,
                                  FilterManager filterManager,
                                  DaoManager daoManager,
-                                 ProposalCollectionsService proposalCollectionsService) {
+                                 ProposalCollectionsService proposalCollectionsService,
+                                 VoteService voteService) {
         super(encryptionService,
                 keyRing,
                 p2PService,
@@ -53,6 +55,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                 filterManager);
         this.daoManager = daoManager;
         this.persistedDataHosts.add(proposalCollectionsService);
+        persistedDataHosts.add(voteService);
     }
 
     @Override

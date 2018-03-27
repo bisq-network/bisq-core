@@ -21,7 +21,10 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.dao.DaoPeriodService;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.issuance.consensus.IssuanceConsensus;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
@@ -32,10 +35,12 @@ import bisq.core.dao.vote.BlindVote;
 import bisq.core.dao.vote.BooleanVoteResult;
 import bisq.core.dao.vote.RevealedVote;
 import bisq.core.dao.vote.VoteService;
+import bisq.core.dao.vote.consensus.VoteConsensus;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
 import bisq.common.util.Tuple2;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -52,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,14 +65,21 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class IssuanceService implements BsqNode.BsqBlockChainListener {
+public class IssuanceService {
 
-    private ProposalCollectionsService proposalCollectionsService;
-    private VoteService voteService;
-    private ReadableBsqBlockChain readableBsqBlockChain;
-    private WritableBsqBlockChain writableBsqBlockChain;
-    private DaoPeriodService daoPeriodService;
-    private BsqWalletService bsqWalletService;
+    private final BsqNode bsqNode;
+    private final ProposalCollectionsService proposalCollectionsService;
+    private final VoteService voteService;
+    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final DaoPeriodService daoPeriodService;
+    private final BsqWalletService bsqWalletService;
+    private BsqNode.BsqBlockChainListener bsqBlockChainListener;
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Constructor
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
     public IssuanceService(ProposalCollectionsService proposalCollectionsService,
@@ -83,36 +96,177 @@ public class IssuanceService implements BsqNode.BsqBlockChainListener {
         this.daoPeriodService = daoPeriodService;
         this.bsqWalletService = bsqWalletService;
 
-        bsqNodeProvider.getBsqNode().addBsqBlockChainListener(this);
+        bsqNode = bsqNodeProvider.getBsqNode();
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
+        bsqBlockChainListener = () -> {
+            final int height = readableBsqBlockChain.getChainHeadHeight();
+            final int absoluteStartBlockOfPhase = daoPeriodService.getAbsoluteStartBlockOfPhase(height, DaoPeriodService.Phase.ISSUANCE);
+            if (height == absoluteStartBlockOfPhase) {
+                applyVoteResult();
+            }
+        };
+        bsqNode.addBsqBlockChainListener(bsqBlockChainListener);
     }
-
 
     public void shutDown() {
     }
 
 
-    private void applyVoteResult() {
-        // proposalCollectionsService.getAllProposals().stream().filter(proposal -> daoPeriodService.)
-        //voteService.getBlindVoteList();
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
-        Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
-        readableBsqBlockChain.getVoteRevealTxOutputs().stream()
-                .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getId()))
-                .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
-        Map<byte[], List<String>> txIdListByVoteListHashMap = getTxIdListByVoteListHashMap(opReturnHashesByTxIdMap);
-        if (!txIdListByVoteListHashMap.isEmpty()) {
-            Map<String, SecretKey> secretKeysByTxIdMap = getSecretsKeyByTxIdMap(opReturnHashesByTxIdMap);
+    private void applyVoteResult() {
+        // We make a map with txId of VoteReveal TxOutput as key and the opReturn data as value (containing secret key
+        // and hash of proposal list)
+        Map<String, byte[]> opReturnHashesByVoteRevealTxIdMap = getOpReturnHashesByTxIdMap();
+
+        // From the opReturnHashesByVoteRevealTxIdMap we create a map with the hash of blind vote list as key and a list
+        // of Tx Ids as value. That map is used for calculating the majority of the blind vote lists if there are
+        // conflicting versions due the eventually consistency of the P2P network (it might be that some blind votes do
+        // not arrive at all voters).
+        Map<byte[], List<String>> txIdListMap = getTxIdListByVoteListHashMap(opReturnHashesByVoteRevealTxIdMap);
+        if (!txIdListMap.isEmpty()) {
+            // We make a map of the VoteReveal TxId as key and the secret key decoded from the opReturn data where the
+            // voter has revealed the secret key.
+            Map<String, SecretKey> secretKeysByTxIdMap = getSecretsKeyByTxIdMap(opReturnHashesByVoteRevealTxIdMap);
+
+            // We make a set of BlindVoteWithRevealTxId objects. BlindVoteWithRevealTxId holds the blind vote with
+            // the txId of the reveal Tx. The stake output of the blind vote tx is used as the input for the reveal tx,
+            // this is used to connect those transactions.
             Set<BlindVoteWithRevealTxId> blindVoteWithRevealTxIdSet = getBlindVoteWithRevealTxIdSet();
+            // We have now all data required to get the decrypted vote data so we can calculate the result
             Set<RevealedVote> revealedVotes = getRevealedVotes(secretKeysByTxIdMap, blindVoteWithRevealTxIdSet);
-            byte[] majorityVoteListHashByTxIdMap = getMajorityVoteListHashByTxIdMap(txIdListByVoteListHashMap);
-            Set<RevealedVote> revealedVotesMatchingMajority = getRevealedVotesMatchingMajority
-                    (majorityVoteListHashByTxIdMap, revealedVotes);
-            Map<Proposal, Integer> stakeByProposalMap = getResultStakeByProposalMap(revealedVotesMatchingMajority);
-            IssuanceConsensus.applyVoteResult(stakeByProposalMap, readableBsqBlockChain, writableBsqBlockChain);
+            byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(txIdListMap);
+            if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
+                Map<Proposal, Integer> stakeByProposalMap = getResultStakeByProposalMap(revealedVotes);
+
+                IssuanceConsensus.applyVoteResult(stakeByProposalMap, readableBsqBlockChain, writableBsqBlockChain);
+            } else {
+                log.warn("Our list of received blind votes do not match the list from the majority of voters.");
+                // TODO request missing blind votes
+            }
         }
+    }
+
+    private Map<String, byte[]> getOpReturnHashesByTxIdMap() {
+        Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
+        //TODO check not in current cycle but in the cycle of the tx
+        readableBsqBlockChain.getVoteRevealTxOutputs().stream()
+                .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getTxId()))
+                .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
+        return opReturnHashesByTxIdMap;
+    }
+
+    private Map<byte[], List<String>> getTxIdListByVoteListHashMap(Map<String, byte[]> opReturnMap) {
+        Map<byte[], List<String>> map = new HashMap<>();
+        opReturnMap.forEach((txId, data) -> {
+            final byte[] hash = IssuanceConsensus.getBlindVoteListHash(data);
+            map.computeIfAbsent(hash, v -> new ArrayList<>());
+            map.get(hash).add(txId);
+        });
+        return map;
+    }
+
+    private Map<String, SecretKey> getSecretsKeyByTxIdMap(Map<String, byte[]> opReturnMap) {
+        Map<String, SecretKey> map = new HashMap<>();
+        opReturnMap.forEach((key, value) -> map.put(key, IssuanceConsensus.getSecretKey(value)));
+        return map;
+    }
+
+    private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
+        //TODO check not in current cycle but in the cycle of the tx
+        return voteService.getBlindVoteList().stream()
+                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
+                .map(blindVote -> {
+                    return readableBsqBlockChain.getTx(blindVote.getTxId())
+                            .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.VOTE) // double check if type is matching
+                            .map(blindVoteTx -> blindVoteTx.getTxOutput(0)) // stake need to be output 0
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .filter(stakeTxOutput -> stakeTxOutput.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT) // double check if type is matching
+                            .map(TxOutput::getTxId)
+                            .map(this::getRevealTxIdForBlindVoteTx)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .map(revealTxId -> new BlindVoteWithRevealTxId(blindVote, revealTxId))
+                            .orElse(null);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    // Finds txId of voteReveal tx which has its first input connected to the blind vote tx's first output for
+    // transferring the stake.
+    private Optional<String> getRevealTxIdForBlindVoteTx(String blindVoteTxId) {
+        Optional<String> optionalBlindVoteStakeTxOutputId = readableBsqBlockChain.getTx(blindVoteTxId)
+                .map(Tx::getOutputs)
+                .filter(outputs -> !outputs.isEmpty())
+                .map(outputs -> outputs.get(0))
+                .map(TxOutput::getId);
+
+        if (optionalBlindVoteStakeTxOutputId.isPresent()) {
+            String blindVoteStakeTxOutputId = optionalBlindVoteStakeTxOutputId.get();
+            return readableBsqBlockChain.getTxMap().values().stream()
+                    .filter(tx -> tx.getTxType() == TxType.VOTE_REVEAL)
+                    .map(tx -> {
+                        if (!tx.getInputs().isEmpty()) {
+                            TxOutput connectedTxOutput = tx.getInputs().get(0).getConnectedTxOutput();
+                            if (connectedTxOutput != null) {
+                                if (connectedTxOutput.getId().equals(blindVoteStakeTxOutputId))
+                                    return tx.getId();
+                            }
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .findAny();
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private Set<RevealedVote> getRevealedVotes(Map<String, SecretKey> secretKeysByTxIdMap,
+                                               Set<BlindVoteWithRevealTxId> blindVoteWithRevealTxIdSet) {
+        return blindVoteWithRevealTxIdSet.stream()
+                .map(blindVoteWithRevealTxId -> {
+                    try {
+                        // TODO check if cloning here is needed (we might want to keep the blindVote separated from the
+                        // blindVoteList to the RevealedVote...)
+                        final BlindVote blindVote = BlindVote.clone(blindVoteWithRevealTxId.getBlindVote());
+                        final byte[] encryptedProposalList = blindVote.getEncryptedProposalList();
+                        final SecretKey secretKey = secretKeysByTxIdMap.get(blindVoteWithRevealTxId.getTxId());
+                        final byte[] decrypted = Encryption.decrypt(encryptedProposalList, secretKey);
+
+                        //TODO move to ProposalList
+                        final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(decrypted);
+                        ProposalList proposalList = ProposalList.fromProto(envelope.getProposalList());
+                        return new RevealedVote(proposalList, blindVote);
+                    } catch (CryptoException e) {
+                        e.printStackTrace();
+                        return null;
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    //TODO test
+    private byte[] getMajorityVoteListHashByTxIdMap(Map<byte[], List<String>> txIdListMap) {
+        List<Tuple2<byte[], List<String>>> list = new ArrayList<>();
+        txIdListMap.forEach((key, value) -> list.add(new Tuple2<>(key, value)));
+        list.sort(Comparator.comparingInt(o -> o.second.size()));
+        return list.get(0).first;
     }
 
     private Map<Proposal, Integer> getResultStakeByProposalMap(Set<RevealedVote> revealedVotes) {
@@ -148,94 +302,17 @@ public class IssuanceService implements BsqNode.BsqBlockChainListener {
         return stakeByProposalMap;
     }
 
-    private Set<RevealedVote> getRevealedVotesMatchingMajority(byte[] majorityVoteListHash, Set<RevealedVote> revealedVotes) {
-        return revealedVotes.stream()
-                .filter(revealedVote -> {
-                    final byte[] hash = IssuanceConsensus.getHashOfEncryptedProposalList(
-                            revealedVote.getBlindVote().getEncryptedProposalList());
-                    return Arrays.equals(majorityVoteListHash, hash);
-                })
-                .collect(Collectors.toSet());
-    }
-
-    private Set<RevealedVote> getRevealedVotes(Map<String, SecretKey> secretKeysByTxIdMap,
-                                               Set<BlindVoteWithRevealTxId> blindVotesWithStakeOutputTxIdTuples) {
-        return blindVotesWithStakeOutputTxIdTuples.stream()
-                .map(blindVoteWithRevealTxId -> {
-                    try {
-                        //TODO clone blindVote from blindVoteWithRevealTxId.getBlindVote()
-                        final BlindVote blindVote = blindVoteWithRevealTxId.getBlindVote();
-                        final byte[] encryptedProposalList = blindVote.getEncryptedProposalList();
-                        final SecretKey secretKey = secretKeysByTxIdMap.get(blindVoteWithRevealTxId.getTxId());
-                        final byte[] decrypted = Encryption.decrypt(encryptedProposalList, secretKey);
-
-                        //TODO
-                        ProposalList proposalList1 = ProposalList.fromProto(PB.ProposalList.parseFrom(decrypted));
-                        final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(decrypted);
-                        ProposalList proposalList = ProposalList.fromProto(envelope.getProposalList());
-                        log.error("proposalList1 " + proposalList1);
-                        log.error("envelope " + envelope);
-                        log.error("proposalList " + proposalList);
-                        return new RevealedVote(proposalList, blindVote);
-                    } catch (CryptoException e) {
-                        e.printStackTrace();
-                        return null;
-                    } catch (InvalidProtocolBufferException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-    }
-
-    private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
-        return voteService.getBlindVoteList().stream()
-                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
-                .map(blindVote -> readableBsqBlockChain.getOptionalTx(blindVote.getTxId())
-                        .flatMap(tx -> tx.getTxOutput(0))
-                        .map(TxOutput::getTxId)
-                        .map(txId -> new BlindVoteWithRevealTxId(blindVote, txId))
-                        .orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+    private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
+        byte[] hashOfBlindVoteList = VoteConsensus.getHashOfBlindVoteList(voteService.getBlindVoteSortedList());
+        log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
+        log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
+        return Arrays.equals(majorityVoteListHash, hashOfBlindVoteList);
     }
 
 
-    private Map<String, SecretKey> getSecretsKeyByTxIdMap(Map<String, byte[]> opReturnMap) {
-        Map<String, SecretKey> map = new HashMap<>();
-        opReturnMap.forEach((key, value) -> map.put(key, IssuanceConsensus.getSecretKey(value)));
-        return map;
-    }
-
-    private Map<byte[], List<String>> getTxIdListByVoteListHashMap(Map<String, byte[]> opReturnMap) {
-        Map<byte[], List<String>> map = new HashMap<>();
-        opReturnMap.forEach((txId, data) -> {
-            final byte[] hash = IssuanceConsensus.getVoteListHash(data);
-            map.computeIfAbsent(hash, v -> new ArrayList<>());
-            map.get(hash).add(txId);
-        });
-
-        return map;
-    }
-
-    //TODO test
-    private byte[] getMajorityVoteListHashByTxIdMap(Map<byte[], List<String>> txIdListByVoteListHashMap) {
-        List<Tuple2<byte[], List<String>>> list = new ArrayList<>();
-        txIdListByVoteListHashMap.forEach((key, value) -> list.add(new Tuple2<>(key, value)));
-        list.sort(Comparator.comparingInt(o -> o.second.size()));
-        return list.get(0).first;
-    }
-
-
-    @Override
-    public void onBsqBlockChainChanged() {
-        final int height = readableBsqBlockChain.getChainHeadHeight();
-        final int absoluteStartBlockOfPhase = daoPeriodService.getAbsoluteStartBlockOfPhase(height, DaoPeriodService.Phase.PROPOSAL);
-        if (height == absoluteStartBlockOfPhase) {
-            applyVoteResult();
-        }
-    }
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Inner class
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Value
     private class BlindVoteWithRevealTxId {

@@ -102,4 +102,9 @@ public class CompensationRequest extends Proposal {
     public ProposalType getType() {
         return ProposalType.COMPENSATION_REQUEST;
     }
+
+    @Override
+    public String toString() {
+        return "CompensationRequest{} " + super.toString();
+    }
 }
