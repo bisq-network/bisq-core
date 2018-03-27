@@ -27,7 +27,6 @@ import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.ByteballAddressValidator;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.NxtReedSolomonValidator;
-import bisq.core.payment.validation.altcoins.OctocoinAddressValidator;
 import bisq.core.payment.validation.altcoins.PNCAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.XCNAddressValidator;
@@ -37,7 +36,6 @@ import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
 import bisq.core.payment.validation.params.ODNParams;
-import bisq.core.payment.validation.params.OctocoinParams;
 import bisq.core.payment.validation.params.OnionParams;
 import bisq.core.payment.validation.params.PARTParams;
 import bisq.core.payment.validation.params.PNCParams;
@@ -109,21 +107,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "888":
-                    if (input.matches("^[83][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        if (OctocoinAddressValidator.ValidateAddress(input)) {
-                            try {
-                                Address.fromBase58(OctocoinParams.get(), input);
-                                return new ValidationResult(true);
-                            } catch (AddressFormatException e) {
-                                return new ValidationResult(false, getErrorMessage(e));
-                            }
-                        } else {
-                            return wrongChecksum;
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "ZEC":
                     // We only support t addresses (transparent transactions)
                     if (input.startsWith("t"))
