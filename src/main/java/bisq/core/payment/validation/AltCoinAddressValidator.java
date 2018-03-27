@@ -36,7 +36,6 @@ import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
-import bisq.core.payment.validation.params.IOPParams;
 import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.OctocoinParams;
 import bisq.core.payment.validation.params.OnionParams;
@@ -110,18 +109,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "IOP":
-                    if (input.matches("^[p][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(IOPParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "888":
                     if (input.matches("^[83][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         if (OctocoinAddressValidator.ValidateAddress(input)) {

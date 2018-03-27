@@ -10,6 +10,7 @@ bisq.asset.coins.Dash$Regtest
 bisq.asset.coins.Dash$Testnet
 bisq.asset.coins.Dogecoin
 bisq.asset.coins.Ether
+bisq.asset.coins.InternetOfPeople
 bisq.asset.coins.Instacash
 bisq.asset.coins.Litecoin$Mainnet
 bisq.asset.coins.Litecoin$Regtest
