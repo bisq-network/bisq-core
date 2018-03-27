@@ -7,4 +7,7 @@ bisq.asset.coins.Bitcoin$Testnet
 bisq.asset.coins.BitcoinCash
 bisq.asset.coins.Ether
 bisq.asset.coins.Instacash
+bisq.asset.coins.Litecoin$Mainnet
+bisq.asset.coins.Litecoin$Regtest
+bisq.asset.coins.Litecoin$Testnet
 bisq.asset.tokens.Ellaism

@@ -58,9 +58,6 @@ import org.libdohj.params.DashMainNetParams;
 import org.libdohj.params.DashRegTestParams;
 import org.libdohj.params.DashTestNet3Params;
 import org.libdohj.params.DogecoinMainNetParams;
-import org.libdohj.params.LitecoinMainNetParams;
-import org.libdohj.params.LitecoinRegTestParams;
-import org.libdohj.params.LitecoinTestNet3Params;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -122,29 +119,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "LTC":
-                    try {
-                        switch (BisqEnvironment.getBaseCurrencyNetwork()) {
-                            case BTC_MAINNET:
-                            case BTC_TESTNET:
-                            case BTC_REGTEST:
-                            case DASH_MAINNET:
-                            case DASH_TESTNET:
-                            case DASH_REGTEST:
-                            case LTC_MAINNET:
-                                Address.fromBase58(LitecoinMainNetParams.get(), input);
-                                break;
-                            case LTC_TESTNET:
-                                Address.fromBase58(LitecoinTestNet3Params.get(), input);
-                                break;
-                            case LTC_REGTEST:
-                                Address.fromBase58(LitecoinRegTestParams.get(), input);
-                                break;
-                        }
-                        return new InputValidator.ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "DOGE":
                     try {
                         Address.fromBase58(DogecoinMainNetParams.get(), input);
