@@ -43,7 +43,6 @@ import bisq.core.payment.validation.params.OnionParams;
 import bisq.core.payment.validation.params.PARTParams;
 import bisq.core.payment.validation.params.PNCParams;
 import bisq.core.payment.validation.params.PhoreParams;
-import bisq.core.payment.validation.params.PivxParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.TerracoinParams;
@@ -111,18 +110,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "PIVX":
-                    if (input.matches("^[D][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(PivxParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "IOP":
                     if (input.matches("^[p][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
