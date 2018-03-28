@@ -9,6 +9,7 @@ bisq.asset.coins.Byteball
 bisq.asset.coins.Dash$Mainnet
 bisq.asset.coins.Dash$Regtest
 bisq.asset.coins.Dash$Testnet
+bisq.asset.coins.Decent
 bisq.asset.coins.Dogecoin
 bisq.asset.coins.Ether
 bisq.asset.coins.InternetOfPeople

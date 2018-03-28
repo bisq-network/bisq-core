@@ -106,11 +106,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "DCT":
-                    if (input.matches("^(?=.{5,63}$)([a-z][a-z0-9-]+[a-z0-9])(\\.[a-z][a-z0-9-]+[a-z0-9])*$"))
-                        return new ValidationResult(true);
-                    else
-                        return regexTestFailed;
                 case "PNC":
                     if (input.matches("^[P3][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         if (PNCAddressValidator.ValidateAddress(input)) {

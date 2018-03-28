@@ -116,7 +116,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("CREA", "Creativecoin"));
         result.add(new CryptoCurrency("XCN", "Cryptonite"));
         result.add(new CryptoCurrency("DNET", "DarkNet"));
-        result.add(new CryptoCurrency("DCT", "DECENT"));
         result.add(new CryptoCurrency("DCR", "Decred"));
         result.add(new CryptoCurrency("ONION", "DeepOnion"));
         result.add(new CryptoCurrency("DMC", "DynamicCoin"));
