@@ -586,7 +586,7 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     }
                 case "MFC":
-                    if (!input.matches("^[M][a-km-zA-HJ-NP-Z1-9]{26,33}$"))
+                    if (!input.matches("^[M][a-km-zA-HJ-NP-Z1-9]{33}$"))
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
