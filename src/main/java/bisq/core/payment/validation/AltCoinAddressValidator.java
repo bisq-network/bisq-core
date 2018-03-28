@@ -91,11 +91,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "CDT":
-                    if (input.startsWith("D"))
-                        return new ValidationResult(true);
-                    else
-                        return new ValidationResult(false);
                 case "DGM":
                     if (input.matches("^[D-E][a-zA-Z0-9]{33}$"))
                         return new ValidationResult(true);

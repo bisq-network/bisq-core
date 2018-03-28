@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.6.6
-        result.add(new CryptoCurrency("CDT", "Cassubian Detk"));
         result.add(new CryptoCurrency("DGM", "DigiMoney"));
         result.add(new CryptoCurrency("SCS", "SpeedCash"));
         result.add(new CryptoCurrency("SOS", "SOS Coin", true));
