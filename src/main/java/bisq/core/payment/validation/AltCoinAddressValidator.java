@@ -25,7 +25,6 @@ import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.PhoreParams;
-import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.util.validation.InputValidator;
@@ -91,13 +90,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "SCS":
-                    try {
-                        Address.fromBase58(SpeedCashParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "SOS":
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
                         return regexTestFailed;
