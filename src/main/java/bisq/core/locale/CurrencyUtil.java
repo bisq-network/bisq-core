@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.6.6
-        result.add(new CryptoCurrency("STL", "Stellite"));
         result.add(new CryptoCurrency("DAI", "Dai Stablecoin", true));
         result.add(new CryptoCurrency("YTN", "Yenten"));
         result.add(new CryptoCurrency("DARX", "BitDaric"));
