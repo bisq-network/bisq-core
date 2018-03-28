@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.6.6
-        result.add(new CryptoCurrency("YTN", "Yenten"));
         result.add(new CryptoCurrency("DARX", "BitDaric"));
         result.add(new CryptoCurrency("ODN", "Obsidian"));
         result.add(new CryptoCurrency("CDT", "Cassubian Detk"));

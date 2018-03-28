@@ -22,7 +22,6 @@ import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
-import bisq.core.payment.validation.altcoins.YTNAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.ODNParams;
@@ -93,8 +92,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "YTN":
-                    return YTNAddressValidator.ValidateAddress(input);
                 case "DARX":
                     if (!input.matches("^[R][a-km-zA-HJ-NP-Z1-9]{25,34}$"))
                         return regexTestFailed;
