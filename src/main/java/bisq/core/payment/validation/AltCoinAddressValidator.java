@@ -24,7 +24,6 @@ import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
-import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
@@ -92,13 +91,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "ODN":
-                    try {
-                        Address.fromBase58(ODNParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "CDT":
                     if (input.startsWith("D"))
                         return new ValidationResult(true);
