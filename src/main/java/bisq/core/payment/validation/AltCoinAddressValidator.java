@@ -34,7 +34,6 @@ import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.payment.validation.params.XspecParams;
-import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.util.validation.InputValidator;
 
 import bisq.asset.AddressValidationResult;
@@ -98,13 +97,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "BTG":
-                    try {
-                        Address.fromBase58(BTGParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "CAGE":
                     if (input.matches("^[D][a-zA-Z0-9]{26,34}$")) {
                         //noinspection ConstantConditions
