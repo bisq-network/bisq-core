@@ -92,11 +92,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "DARX":
-                    if (!input.matches("^[R][a-km-zA-HJ-NP-Z1-9]{25,34}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "ODN":
                     try {
                         Address.fromBase58(ODNParams.get(), input);
