@@ -128,7 +128,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("PEPECASH", "Pepe Cash"));
         result.add(new CryptoCurrency("POST", "PostCoin"));
         result.add(new CryptoCurrency("RDD", "ReddCoin"));
-        result.add(new CryptoCurrency("REF", "RefToken", true));
         result.add(new CryptoCurrency("SFSC", "Safe FileSystem Coin"));
         result.add(new CryptoCurrency("SC", "Siacoin"));
         result.add(new CryptoCurrency("SF", "Siafund"));
