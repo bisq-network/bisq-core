@@ -29,7 +29,6 @@ import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
 import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.OnionParams;
-import bisq.core.payment.validation.params.PARTParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
@@ -100,18 +99,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "PART":
-                    if (input.matches("^[RP][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(PARTParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "MDC":
                     if (input.matches("^m[a-zA-Z0-9]{26,33}$"))
                         return new ValidationResult(true);
