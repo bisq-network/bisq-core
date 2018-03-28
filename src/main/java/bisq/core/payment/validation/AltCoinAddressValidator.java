@@ -22,7 +22,6 @@ import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
-import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.StrayaParams;
@@ -90,13 +89,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "ACH":
-                    try {
-                        Address.fromBase58(ACHParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "VDN":
                     if (!input.matches("^[D][0-9a-zA-Z]{33}$"))
                         return regexTestFailed;
