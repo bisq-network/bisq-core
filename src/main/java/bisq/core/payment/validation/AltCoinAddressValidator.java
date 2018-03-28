@@ -21,7 +21,6 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
-import bisq.core.payment.validation.altcoins.NxtReedSolomonValidator;
 import bisq.core.payment.validation.altcoins.PNCAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.XCNAddressValidator;
@@ -107,16 +106,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "NXT":
-                    if (!input.startsWith("NXT-") || !input.equals(input.toUpperCase())) {
-                        return regexTestFailed;
-                    }
-                    try {
-                        long accountId = NxtReedSolomonValidator.decode(input.substring(4));
-                        return new ValidationResult(accountId != 0);
-                    } catch (NxtReedSolomonValidator.DecodeException e) {
-                        return wrongChecksum;
-                    }
                 case "DCT":
                     if (input.matches("^(?=.{5,63}$)([a-z][a-z0-9-]+[a-z0-9])(\\.[a-z][a-z0-9-]+[a-z0-9])*$"))
                         return new ValidationResult(true);

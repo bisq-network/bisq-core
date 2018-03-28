@@ -134,7 +134,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("NAV", "Nav Coin"));
         result.add(new CryptoCurrency("NMC", "Namecoin"));
         result.add(new CryptoCurrency("NBT", "NuBits"));
-        result.add(new CryptoCurrency("NXT", "Nxt"));
         result.add(new CryptoCurrency("888", "OctoCoin"));
         result.add(new CryptoCurrency("PART", "Particl"));
         result.add(new CryptoCurrency("PASC", "Pascal Coin", true));
