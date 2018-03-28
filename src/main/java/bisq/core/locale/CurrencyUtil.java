@@ -154,7 +154,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("CRED", "Verify", true));
         result.add(new CryptoCurrency("WILD", "WILD Token", true));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
-        result.add(new CryptoCurrency("ZEN", "ZenCash"));
 
         // Added 0.6.6
         result.add(new CryptoCurrency("STL", "Stellite"));
