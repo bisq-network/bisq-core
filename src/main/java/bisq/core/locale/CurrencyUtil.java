@@ -125,7 +125,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("LBC", "LBRY Credits"));
         result.add(new CryptoCurrency("LSK", "Lisk"));
         result.add(new CryptoCurrency("MAID", "MaidSafeCoin"));
-        result.add(new CryptoCurrency("MDC", "Madcoin"));
         result.add(new CryptoCurrency("XMR", "Monero"));
         result.add(new CryptoCurrency("MT", "Mycelium Token", true));
         result.add(new CryptoCurrency("NAV", "Nav Coin"));

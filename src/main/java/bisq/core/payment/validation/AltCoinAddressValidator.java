@@ -99,11 +99,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "MDC":
-                    if (input.matches("^m[a-zA-Z0-9]{26,33}$"))
-                        return new ValidationResult(true);
-                    else
-                        return regexTestFailed;
                 case "BCHC":
                     try {
                         Address.fromBase58(BtcMainNetParamsForValidation.get(), input);
