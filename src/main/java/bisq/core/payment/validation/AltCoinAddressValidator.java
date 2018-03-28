@@ -93,11 +93,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "XIN":
-                    if (!input.matches("^XIN-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{5}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "BETR":
                     // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
