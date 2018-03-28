@@ -142,7 +142,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("MVT", "The Movement", true));
 
         result.add(new CryptoCurrency("UNO", "Unobtanium"));
-        result.add(new CryptoCurrency("WILD", "WILD Token", true));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.6.6

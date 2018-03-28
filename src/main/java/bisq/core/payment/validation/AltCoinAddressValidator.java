@@ -95,12 +95,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "WILD":
-                    // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
-                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "ONION":
                     try {
                         Address.fromBase58(OnionParams.get(), input);
