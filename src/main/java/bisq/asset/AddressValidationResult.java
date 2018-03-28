@@ -52,11 +52,15 @@ public class AddressValidationResult {
     }
 
     public static AddressValidationResult invalidStructure() {
-        return new AddressValidationResult(false, "", "validation.altcoin.wrongStructure");
+        return invalidAddress("", "validation.altcoin.wrongStructure");
     }
 
     public static AddressValidationResult invalidAddress(String cause) {
-        return new AddressValidationResult(false, cause, "validation.altcoin.invalidAddress");
+        return invalidAddress(cause, "validation.altcoin.invalidAddress");
+    }
+
+    public static AddressValidationResult invalidAddress(String cause, String i18nKey) {
+        return new AddressValidationResult(false, cause, i18nKey);
     }
 
     public static AddressValidationResult invalidAddress(Throwable cause) {

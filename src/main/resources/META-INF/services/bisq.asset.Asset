@@ -17,4 +17,5 @@ bisq.asset.coins.Litecoin$Regtest
 bisq.asset.coins.Litecoin$Testnet
 bisq.asset.coins.Octocoin
 bisq.asset.coins.PIVX
+bisq.asset.coins.Zcash
 bisq.asset.tokens.Ellaism

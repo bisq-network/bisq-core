@@ -18,10 +18,6 @@
 package bisq.core.payment.validation;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.asset.AddressValidationResult;
-import bisq.asset.Coin;
-import bisq.asset.Asset;
-import bisq.asset.AssetRegistry;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.ByteballAddressValidator;
@@ -49,6 +45,11 @@ import bisq.core.payment.validation.params.XspecParams;
 import bisq.core.payment.validation.params.btc.BTGParams;
 import bisq.core.payment.validation.params.btc.BtcMainNetParamsForValidation;
 import bisq.core.util.validation.InputValidator;
+
+import bisq.asset.AddressValidationResult;
+import bisq.asset.Asset;
+import bisq.asset.AssetRegistry;
+import bisq.asset.Coin;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -107,12 +108,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "ZEC":
-                    // We only support t addresses (transparent transactions)
-                    if (input.startsWith("t"))
-                        return validationResult;
-                    else
-                        return new ValidationResult(false, Res.get("validation.altcoin.zAddressesNotSupported"));
                 case "GBYTE":
                     return ByteballAddressValidator.validate(input);
                 case "NXT":
