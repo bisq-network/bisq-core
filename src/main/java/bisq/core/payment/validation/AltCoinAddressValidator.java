@@ -32,7 +32,6 @@ import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.WMCCParams;
-import bisq.core.payment.validation.params.XspecParams;
 import bisq.core.util.validation.InputValidator;
 
 import bisq.asset.AddressValidationResult;
@@ -96,13 +95,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "XSPEC":
-                    try {
-                        Address.fromBase58(XspecParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "WILD":
                     // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))

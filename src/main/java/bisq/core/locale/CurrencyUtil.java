@@ -137,7 +137,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("SC", "Siacoin"));
         result.add(new CryptoCurrency("SF", "Siafund"));
         result.add(new CryptoCurrency("SIB", "Sibcoin"));
-        result.add(new CryptoCurrency("XSPEC", "Spectrecoin"));
         result.add(new CryptoCurrency("STEEM", "STEEM"));
 
         result.add(new CryptoCurrency("MVT", "The Movement", true));
