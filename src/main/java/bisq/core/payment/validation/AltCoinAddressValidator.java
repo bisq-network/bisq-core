@@ -22,7 +22,6 @@ import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
-import bisq.core.payment.validation.altcoins.XCNAddressValidator;
 import bisq.core.payment.validation.altcoins.YTNAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
@@ -102,9 +101,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "XCN":
-                    // https://bitcointalk.org/index.php?topic=1801595
-                    return XCNAddressValidator.ValidateAddress(input);
                 case "TRC":
                     try {
                         Address.fromBase58(TerracoinParams.get(), input);

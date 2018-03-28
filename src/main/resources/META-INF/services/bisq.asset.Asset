@@ -6,6 +6,7 @@ bisq.asset.coins.Bitcoin$Regtest
 bisq.asset.coins.Bitcoin$Testnet
 bisq.asset.coins.BitcoinCash
 bisq.asset.coins.Byteball
+bisq.asset.coins.Cryptonite
 bisq.asset.coins.Dash$Mainnet
 bisq.asset.coins.Dash$Regtest
 bisq.asset.coins.Dash$Testnet
