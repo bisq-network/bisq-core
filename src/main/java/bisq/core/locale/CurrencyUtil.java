@@ -108,7 +108,6 @@ public class CurrencyUtil {
                 .collect(Collectors.toList());
 
         result.add(new CryptoCurrency("BETR", "Better Betting", true));
-        result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
         result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
         result.add(new CryptoCurrency("BURST", "Burstcoin"));
         result.add(new CryptoCurrency("CAGE", "Cagecoin"));
