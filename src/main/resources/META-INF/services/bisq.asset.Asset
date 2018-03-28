@@ -38,5 +38,6 @@ bisq.asset.coins.ZenCash
 bisq.asset.tokens.BetterBetting
 bisq.asset.tokens.Ellaism
 bisq.asset.tokens.Internext
+bisq.asset.tokens.Movement
 bisq.asset.tokens.Verify
 bisq.asset.tokens.WildToken
