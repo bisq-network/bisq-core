@@ -91,11 +91,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "DGM":
-                    if (input.matches("^[D-E][a-zA-Z0-9]{33}$"))
-                        return new ValidationResult(true);
-                    else
-                        return regexTestFailed;
                 case "SCS":
                     try {
                         Address.fromBase58(SpeedCashParams.get(), input);
