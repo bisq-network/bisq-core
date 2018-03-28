@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("PASC", "Pascal Coin", true));
         result.add(new CryptoCurrency("PEPECASH", "Pepe Cash"));
         result.add(new CryptoCurrency("POST", "PostCoin"));
-        result.add(new CryptoCurrency("PNC", "Pranacoin"));
         result.add(new CryptoCurrency("RDD", "ReddCoin"));
         result.add(new CryptoCurrency("REF", "RefToken", true));
         result.add(new CryptoCurrency("SFSC", "Safe FileSystem Coin"));
