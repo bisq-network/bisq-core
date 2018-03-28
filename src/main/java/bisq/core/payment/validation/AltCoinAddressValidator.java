@@ -25,7 +25,6 @@ import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.YTNAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
-import bisq.core.payment.validation.params.CreaParams;
 import bisq.core.payment.validation.params.ODNParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
@@ -94,13 +93,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "CREA":
-                    try {
-                        Address.fromBase58(CreaParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "XIN":
                     if (!input.matches("^XIN-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{5}$"))
                         return regexTestFailed;
