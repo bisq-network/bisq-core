@@ -33,7 +33,6 @@ import bisq.core.payment.validation.params.PARTParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
-import bisq.core.payment.validation.params.TerracoinParams;
 import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.payment.validation.params.XspecParams;
 import bisq.core.payment.validation.params.btc.BTGParams;
@@ -101,13 +100,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "TRC":
-                    try {
-                        Address.fromBase58(TerracoinParams.get(), input);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
-                    return new ValidationResult(true);
                 case "INXT":
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
                         return regexTestFailed;
