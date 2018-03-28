@@ -948,4 +948,23 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("P0r3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
         assertFalse(validator.validate("").isValid);
     }
+
+    @Test
+    public void testRIN() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("RIN");
+
+        assertTrue(validator.validate("RDSLfRn23XQQRDGaPVYCph9zjcHeBPQsXA").isValid);
+        assertTrue(validator.validate("RJurKSCajiZB7toizJGQitD7MXeLexcpaw").isValid);
+        assertTrue(validator.validate("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1G").isValid);
+        assertTrue(validator.validate("bZGjSctuWBMCLJkPkGNsxWyq3F5JfiHpqN").isValid);
+
+        assertFalse(validator.validate("RGZQep8XoEXe6KqZt7rD2YFLxgGTp3nhBTT").isValid);
+        assertFalse(validator.validate("RGZQep8XoEXe6KqZt7rD2YFLxgGTp3nhB").isValid);
+        assertFalse(validator.validate("RGZQep8XoEXe6KqZt7rD2YFLxgGTp3nhBT#").isValid);
+        assertFalse(validator.validate("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1GG").isValid);
+        assertFalse(validator.validate("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1").isValid);
+        assertFalse(validator.validate("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1G#").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
 }
