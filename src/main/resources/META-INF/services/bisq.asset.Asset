@@ -37,6 +37,7 @@ bisq.asset.coins.Wacoin
 bisq.asset.coins.Zcash
 bisq.asset.coins.ZenCash
 bisq.asset.tokens.BetterBetting
+bisq.asset.tokens.DaiStablecoin
 bisq.asset.tokens.Ellaism
 bisq.asset.tokens.Internext
 bisq.asset.tokens.Movement
