@@ -113,7 +113,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("CREA", "Creativecoin"));
         result.add(new CryptoCurrency("DNET", "DarkNet"));
         result.add(new CryptoCurrency("DCR", "Decred"));
-        result.add(new CryptoCurrency("ONION", "DeepOnion"));
         result.add(new CryptoCurrency("DMC", "DynamicCoin"));
         result.add(new CryptoCurrency("ESP", "Espers"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));
@@ -195,7 +194,6 @@ public class CurrencyUtil {
         if (!baseCurrencyCode.equals("DASH"))
             result.add(new CryptoCurrency("DASH", "Dash"));
         result.add(new CryptoCurrency("DCR", "Decred"));
-        result.add(new CryptoCurrency("ONION", "DeepOnion"));
         result.add(new CryptoCurrency("ETH", "Ether"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));
         result.add(new CryptoCurrency("GRC", "Gridcoin"));

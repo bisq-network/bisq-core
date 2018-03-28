@@ -27,7 +27,6 @@ import bisq.core.payment.validation.params.ACHParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CreaParams;
 import bisq.core.payment.validation.params.ODNParams;
-import bisq.core.payment.validation.params.OnionParams;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
@@ -95,13 +94,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "ONION":
-                    try {
-                        Address.fromBase58(OnionParams.get(), input);
-                        return new ValidationResult(true);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
                 case "CREA":
                     try {
                         Address.fromBase58(CreaParams.get(), input);
