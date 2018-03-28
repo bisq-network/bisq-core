@@ -35,7 +35,6 @@ import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.payment.validation.params.SpeedCashParams;
 import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.TerracoinParams;
-import bisq.core.payment.validation.params.WACoinsParams;
 import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.payment.validation.params.XspecParams;
 import bisq.core.payment.validation.params.btc.BTGParams;
@@ -104,13 +103,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "WAC":
-                    try {
-                        Address.fromBase58(WACoinsParams.get(), input);
-                    } catch (AddressFormatException e) {
-                        return new ValidationResult(false, getErrorMessage(e));
-                    }
-                    return new ValidationResult(true);
                 case "ZEN":
                     try {
                         // Get the non Base58 form of the address and the bytecode of the first two bytes

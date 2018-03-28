@@ -152,7 +152,6 @@ public class CurrencyUtil {
 
         result.add(new CryptoCurrency("UNO", "Unobtanium"));
         result.add(new CryptoCurrency("CRED", "Verify", true));
-        result.add(new CryptoCurrency("WAC", "WACoins"));
         result.add(new CryptoCurrency("WILD", "WILD Token", true));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
         result.add(new CryptoCurrency("ZEN", "ZenCash"));
