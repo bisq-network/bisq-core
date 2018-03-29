@@ -112,6 +112,12 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         testDefaultValidator("NAV");
     }
 
+
+    @Test
+    public void testNMC() {
+        testDefaultValidator("NMC");
+    }
+
     @Test
     @Ignore
     public void testBSQ() {
