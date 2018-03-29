@@ -41,11 +41,10 @@ public class OpReturnVoteRevealController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+    public boolean verify(byte[] opReturnData, int blockHeight, Model model) {
         return model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 54 &&
                 Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
-                bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
                 readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
     }
 

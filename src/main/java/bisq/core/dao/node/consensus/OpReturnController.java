@@ -59,10 +59,9 @@ public class OpReturnController {
         }
     }
 
-    //TODO relax requirement for bsqFee as we might not use a fee for VOTE_REVEAL tx
     public void processTxOutput(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
                                 int blockHeight, Model model) {
-        getOptionalOpReturnType(opReturnData, txOutput, tx, index, bsqFee)
+        getOptionalOpReturnType(opReturnData, txOutput, tx, index)
                 .ifPresent(opReturnType -> {
                     switch (opReturnType) {
                         case COMPENSATION_REQUEST:
@@ -85,7 +84,7 @@ public class OpReturnController {
                             }
                             break;
                         case VOTE_REVEAL:
-                            if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                            if (opReturnVoteRevealController.verify(opReturnData, blockHeight, model)) {
                                 opReturnVoteRevealController.applyStateChange(txOutput, model);
                             } else {
                                 log.warn("We expected a vote reveal op_return data but it did not " +
@@ -111,11 +110,9 @@ public class OpReturnController {
                 });
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(byte[] opReturnData, TxOutput txOutput, Tx tx, int index,
-                                                           long bsqFee) {
+    private Optional<OpReturnType> getOptionalOpReturnType(byte[] opReturnData, TxOutput txOutput, Tx tx, int index) {
         if (txOutput.getValue() == 0 &&
                 index == tx.getOutputs().size() - 1 &&
-                bsqFee > 0 &&
                 opReturnData.length >= 1) {
             return OpReturnType.getOpReturnType(opReturnData[0]);
         } else {

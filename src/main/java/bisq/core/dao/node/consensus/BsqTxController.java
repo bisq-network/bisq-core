@@ -87,32 +87,23 @@ public class BsqTxController {
 
         Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, model);
         final boolean bsqFeesBurnt = model.isInputValuePositive();
-        if (bsqFeesBurnt) {
-            //noinspection OptionalIsPresent
-            if (optionalOpReturnType.isPresent()) {
-                txType = getTxTypeForOpReturnWithFee(tx, optionalOpReturnType.get());
-            } else {
+        //noinspection OptionalIsPresent
+        if (optionalOpReturnType.isPresent()) {
+            txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
+        } else {
+            if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
-            }
-        } else {
-            //  No burned fee
-            if (optionalOpReturnType.isPresent()) {
-                // No burned fee and opReturn.
-                //TODO REVEAL VOTE might move here if we remove the fee there
-                log.warn("We got a BSQ tx without fee and unknown OP_RETURN. tx={}", tx);
-                txType = TxType.INVALID;
             } else {
                 // No burned fee and no opReturn.
                 txType = TxType.TRANSFER_BSQ;
             }
         }
-
         return txType;
     }
 
     @NotNull
-    private TxType getTxTypeForOpReturnWithFee(Tx tx, OpReturnType opReturnType) {
+    private TxType getTxTypeForOpReturn(Tx tx, OpReturnType opReturnType) {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:

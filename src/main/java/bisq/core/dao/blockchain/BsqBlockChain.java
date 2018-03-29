@@ -115,7 +115,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // not impl in PB yet
     private final Set<Tuple2<Long, Integer>> proposalFees;
     private final Set<Tuple2<Long, Integer>> blindVoteFees;
-    private final Set<Tuple2<Long, Integer>> voteRevealFees;
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
@@ -144,7 +143,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         unspentTxOutputsMap = new HashMap<>();
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
-        voteRevealFees = new HashSet<>();
 
         lock = new FunctionalReadWriteLock(true);
     }
@@ -174,7 +172,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         // TODO not impl yet in PB
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
-        voteRevealFees = new HashSet<>();
     }
 
     @Override
@@ -346,10 +343,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> blindVoteFees.add(new Tuple2<>(fee, blockHeight)));
     }
 
-    @Override
-    public void setVoteRevealFee(long fee, int blockHeight) {
-        lock.write(() -> voteRevealFees.add(new Tuple2<>(fee, blockHeight)));
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Read access: BsqBlockChain
@@ -616,19 +609,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> {
             long fee = -1;
             for (Tuple2<Long, Integer> feeAtHeight : blindVoteFees) {
-                if (feeAtHeight.second <= blockHeight)
-                    fee = feeAtHeight.first;
-            }
-            checkArgument(fee > -1, "votingFee must be set");
-            return fee;
-        });
-    }
-
-    @Override
-    public long getVoteRevealFee(int blockHeight) {
-        return lock.read(() -> {
-            long fee = -1;
-            for (Tuple2<Long, Integer> feeAtHeight : voteRevealFees) {
                 if (feeAtHeight.second <= blockHeight)
                     fee = feeAtHeight.first;
             }

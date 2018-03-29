@@ -87,7 +87,6 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
         writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
         writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
-        writableBsqBlockChain.setVoteRevealFee(feeService.getVoteRevealTxFee().value, genesisBlockHeight);
         readableBsqBlockChain.addIssuanceListener(this);
     }
 
