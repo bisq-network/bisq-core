@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.7.0
-        result.add(new CryptoCurrency("UBQ", "Ubiq"));
         result.add(new CryptoCurrency("QWARK", "Qwark", true));
         result.add(new CryptoCurrency("GEO", "GeoCoin", true));
         result.add(new CryptoCurrency("GRANS", "10grans", true));
