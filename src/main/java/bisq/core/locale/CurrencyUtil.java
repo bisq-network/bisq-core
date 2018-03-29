@@ -107,7 +107,6 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
-        result.add(new CryptoCurrency("POST", "PostCoin"));
         result.add(new CryptoCurrency("RDD", "ReddCoin"));
         result.add(new CryptoCurrency("SFSC", "Safe FileSystem Coin"));
         result.add(new CryptoCurrency("SC", "Siacoin"));
