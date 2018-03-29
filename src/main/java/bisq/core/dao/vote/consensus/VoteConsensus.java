@@ -17,10 +17,10 @@
 
 package bisq.core.dao.vote.consensus;
 
-import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.BlindVote;
@@ -69,7 +69,7 @@ public class VoteConsensus {
     public static byte[] getOpReturnDataForBlindVote(byte[] encryptedProposalList) {
         log.info("encryptedProposalList " + Utilities.bytesAsHexString(encryptedProposalList));
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnTypes.BLIND_VOTE);
+            outputStream.write(OpReturnType.BLIND_VOTE.getType());
             outputStream.write(Version.BLIND_VOTE_VERSION);
             final byte[] hash = Hash.getSha256Ripemd160hash(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList " + Utilities.bytesAsHexString(hash));
@@ -94,7 +94,7 @@ public class VoteConsensus {
 
     public static byte[] getOpReturnDataForVoteReveal(byte[] hashOfBlindVoteList, SecretKey secretKey) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnTypes.VOTE_REVEAL);
+            outputStream.write(OpReturnType.VOTE_REVEAL.getType());
             outputStream.write(Version.VOTE_REVEAL_VERSION);
             outputStream.write(hashOfBlindVoteList);     // hash is 20 bytes
             outputStream.write(secretKey.getEncoded()); // SecretKey as bytes has 32 bytes
@@ -105,10 +105,6 @@ public class VoteConsensus {
             log.error(e.toString());
             return new byte[0];
         }
-    }
-
-    public static Coin getVoteRevealFee(ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain.getChainHeadHeight()));
     }
 
     public static void unlockStakeTxOutputType(TxOutput stakeTxOutput) {

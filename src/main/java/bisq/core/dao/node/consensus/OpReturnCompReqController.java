@@ -18,20 +18,22 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 
 import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
+@Slf4j
 public class OpReturnCompReqController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
@@ -40,19 +42,20 @@ public class OpReturnCompReqController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
-        return mutableState.getCompRequestIssuanceOutputCandidate() != null &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+        return model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
                 Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getCreateCompensationRequestFee(blockHeight) &&
                 readableBsqBlockChain.isCompensationRequestPeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.COMPENSATION_REQUEST_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null,
-                "mutableState.getCompRequestIssuanceOutputCandidate() must not be null");
-        mutableState.getCompRequestIssuanceOutputCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
-        tx.setTxType(TxType.COMPENSATION_REQUEST);
+    public void applyStateChange(TxOutput txOutput, Model model) {
+        txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+        model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+
+        checkArgument(model.getIssuanceCandidate() != null,
+                "model.getCompRequestIssuanceOutputCandidate() must not be null");
+        model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
     }
 }

@@ -217,10 +217,6 @@ public class FeeService {
         return Coin.valueOf(200);
     }
 
-    public Coin getVoteRevealTxFee() {
-        return Coin.valueOf(200);
-    }
-
     public ReadOnlyIntegerProperty feeUpdateCounterProperty() {
         return feeUpdateCounter;
     }

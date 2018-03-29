@@ -18,10 +18,9 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 
@@ -29,6 +28,9 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Verifies if OP_RETURN data matches rules for a vote reveal tx and applies state change.
+ */
 @Slf4j
 public class OpReturnVoteRevealController {
 
@@ -39,20 +41,15 @@ public class OpReturnVoteRevealController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    //TODO check that stake input matches with stake output?
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
-        return /*mutableState.getBlindVoteStakeOutput() != null &&*/
+    public boolean verify(byte[] opReturnData, int blockHeight, Model model) {
+        return model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 54 &&
-                        Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
-                        bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
-                        readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
+                Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
+                readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-       /* checkArgument(mutableState.getBlindVoteStakeOutput() != null,
-                "mutableState.getVoteStakeOutput() must not be null");
-        mutableState.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);*/
-        tx.setTxType(TxType.VOTE_REVEAL);
+    public void applyStateChange(TxOutput txOutput, Model model) {
+        txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
+        model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
     }
 }

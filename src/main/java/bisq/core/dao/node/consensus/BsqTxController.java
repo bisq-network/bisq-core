@@ -17,14 +17,26 @@
 
 package bisq.core.dao.node.consensus;
 
+import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.consensus.OpReturnType;
+
+import bisq.common.app.DevEnv;
 
 import javax.inject.Inject;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.google.common.annotations.VisibleForTesting;
+
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Verifies if a given transaction is a BSQ transaction.
@@ -32,70 +44,126 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BsqTxController {
 
+    private final WritableBsqBlockChain writableBsqBlockChain;
     private final TxInputsController txInputsController;
     private final TxOutputsController txOutputsController;
 
     @Inject
-    public BsqTxController(TxInputsController txInputsController,
+    public BsqTxController(WritableBsqBlockChain writableBsqBlockChain,
+                           TxInputsController txInputsController,
                            TxOutputsController txOutputsController) {
+        this.writableBsqBlockChain = writableBsqBlockChain;
         this.txInputsController = txInputsController;
         this.txOutputsController = txOutputsController;
     }
 
     // Apply state changes to tx, inputs and outputs
     // return true if any input contained BSQ
+    // Any tx with BSQ input is a BSQ tx (except genesis tx but that is not handled in
+    // that class).
+    // There might be txs without any valid BSQ txOutput but we still keep track of it,
+    // for instance to calculate the total burned BSQ.
     public boolean isBsqTx(int blockHeight, Tx tx) {
-        BsqInputBalance bsqInputBalance = txInputsController.getBsqInputBalance(tx, blockHeight);
-
-        final boolean bsqInputBalancePositive = bsqInputBalance.isPositive();
+        Model model = new Model();
+        txInputsController.iterateInputs(tx, blockHeight, model);
+        final boolean bsqInputBalancePositive = model.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txInputsController.applyStateChange(tx);
-            txOutputsController.iterate(tx, blockHeight, bsqInputBalance);
+            txOutputsController.processOpReturnCandidate(tx, model);
+            txOutputsController.iterateOutputs(tx, blockHeight, model);
+            tx.setTxType(getTxType(tx, model));
+            writableBsqBlockChain.addTxToMap(tx);
         }
 
-        // Lets check if we have left over BSQ (burned fees)
-        if (bsqInputBalance.isPositive()) {
-            log.debug("BSQ have been left which was not spent. Burned BSQ amount={}, tx={}", bsqInputBalance.getValue(), tx.toString());
-            tx.setBurntFee(bsqInputBalance.getValue());
-
-            // Fees are used for all OP_RETURN transactions and for PAY_TRADE_FEE.
-            // The TxType for a TRANSFER_BSQ will get overwritten if the tx has an OP_RETURN.
-            // If it was not overwritten (still is TRANSFER_BSQ) we change the TxType to PAY_TRADE_FEE.
-            if (tx.getTxType().equals(TxType.TRANSFER_BSQ))
-                tx.setTxType(TxType.PAY_TRADE_FEE);
-        }
-
-        // Any tx with BSQ input is a BSQ tx (except genesis tx but that not handled in that class).
         return bsqInputBalancePositive;
     }
 
-    @Getter
-    @Setter
-    static class BsqInputBalance {
-        // Remaining BSQ from inputs
-        private long value = 0;
 
-        BsqInputBalance() {
-        }
+    // TODO add tests
+    @SuppressWarnings("WeakerAccess")
+    @VisibleForTesting
+    TxType getTxType(Tx tx, Model model) {
+        TxType txType;
+        // We need to have at least one BSQ output
 
-        BsqInputBalance(long value) {
-            this.value = value;
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, model);
+        final boolean bsqFeesBurnt = model.isInputValuePositive();
+        //noinspection OptionalIsPresent
+        if (optionalOpReturnType.isPresent()) {
+            txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
+        } else {
+            if (bsqFeesBurnt) {
+                // Burned fee but no opReturn
+                txType = TxType.PAY_TRADE_FEE;
+            } else {
+                // No burned fee and no opReturn.
+                txType = TxType.TRANSFER_BSQ;
+            }
         }
+        return txType;
+    }
 
-        public void add(long value) {
-            this.value += value;
+    @NotNull
+    private TxType getTxTypeForOpReturn(Tx tx, OpReturnType opReturnType) {
+        TxType txType;
+        switch (opReturnType) {
+            case COMPENSATION_REQUEST:
+                checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
+                final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
+                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                        "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
+                // second output is issuance candidate
+                if (issuanceTxOutput.isVerified()) {
+                    // TODO can that even happen as the voting will be applied later then the parsing of the tx
+                    // If he have the issuance candidate already accepted by voting it gets the verified flag set
+                    txType = TxType.ISSUANCE;
+                } else {
+                    // Otherwise we have an open or rejected compensation request
+                    txType = TxType.COMPENSATION_REQUEST;
+                }
+                break;
+            case PROPOSAL:
+                txType = TxType.PROPOSAL;
+                break;
+            case BLIND_VOTE:
+                txType = TxType.BLIND_VOTE;
+                break;
+            case VOTE_REVEAL:
+                txType = TxType.VOTE_REVEAL;
+                break;
+            case LOCK_UP:
+                // TODO
+                txType = TxType.LOCK_UP;
+                break;
+            case UNLOCK:
+                // TODO
+                txType = TxType.UN_LOCK;
+                break;
+            default:
+                log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
+                txType = TxType.INVALID;
         }
+        return txType;
+    }
 
-        public void subtract(long value) {
-            this.value -= value;
+    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, Model model) {
+        if (model.isBsqOutputFound()) {
+            // We want to be sure that the initial assumption of the opReturn type was matching the result after full
+            // validation.
+            if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
+                final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
+                return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
+            } else {
+                final String msg = "We got a different opReturn type after validation as we expected initially. tx=" + tx;
+                log.warn(msg);
+                if (DevEnv.isDevMode())
+                    throw new RuntimeException(msg);
+            }
+        } else {
+            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx={}" + tx;
+            log.warn(msg);
+            if (DevEnv.isDevMode())
+                throw new RuntimeException(msg);
         }
-
-        public boolean isPositive() {
-            return value > 0;
-        }
-
-        public boolean isZero() {
-            return value == 0;
-        }
+        return Optional.empty();
     }
 }

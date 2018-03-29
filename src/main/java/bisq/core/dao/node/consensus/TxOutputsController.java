@@ -24,16 +24,13 @@ import javax.inject.Inject;
 
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Iterates all outputs and applies the verification for BSQ outputs.
+ * Iterates all outputs for verification for BSQ outputs and sets the txType.
  */
-
 @Slf4j
 public class TxOutputsController {
 
@@ -44,26 +41,26 @@ public class TxOutputsController {
         this.txOutputController = txOutputController;
     }
 
-    void iterate(Tx tx, int blockHeight, BsqTxController.BsqInputBalance bsqInputBalance) {
+    void processOpReturnCandidate(Tx tx, Model model) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
-        MutableState mutableState = new MutableState();
-        for (int index = 0; index < outputs.size(); index++) {
-            txOutputController.verify(tx, outputs.get(index), index, blockHeight, bsqInputBalance, mutableState);
-        }
+
+        // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
+        // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
+        // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
+        // BSQ inputs are not verified yet.
+        // We keep the temporary opReturn type in the model object.
+        checkArgument(!outputs.isEmpty(), "outputs must not be empty");
+        int lastIndex = outputs.size() - 1;
+        txOutputController.processOpReturnCandidate(outputs.get(lastIndex), model);
     }
 
-    @Getter
-    @Setter
-    static class MutableState {
-        @Nullable
-        private TxOutput compRequestIssuanceOutputCandidate;
-        @Nullable
-        private TxOutput blindVoteStakeOutput;
-        @Nullable
-        private TxOutput bsqOutput;
-
-        MutableState() {
+    void iterateOutputs(Tx tx, int blockHeight, Model model) {
+        // We use order of output index. An output is a BSQ utxo as long there is enough input value
+        final List<TxOutput> outputs = tx.getOutputs();
+        // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
+        for (int index = 0; index < outputs.size(); index++) {
+            txOutputController.processTxOutput(tx, outputs.get(index), index, blockHeight, model);
         }
     }
 }

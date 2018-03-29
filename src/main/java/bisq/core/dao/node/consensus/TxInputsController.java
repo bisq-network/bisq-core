@@ -20,20 +20,16 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
-import bisq.core.dao.blockchain.vo.TxOutput;
 
 import javax.inject.Inject;
-
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Calculate the available BSQ balance from all inputs and apply state change.
+ * Iterates all inputs to calculate the available BSQ balance from all inputs and apply state change.
  */
 @Slf4j
 public class TxInputsController {
-
     private final WritableBsqBlockChain writableBsqBlockChain;
     private final TxInputController txInputController;
 
@@ -43,20 +39,10 @@ public class TxInputsController {
         this.txInputController = txInputController;
     }
 
-    BsqTxController.BsqInputBalance getBsqInputBalance(Tx tx, int blockHeight) {
-        BsqTxController.BsqInputBalance bsqInputBalance = new BsqTxController.BsqInputBalance();
+    void iterateInputs(Tx tx, int blockHeight, Model model) {
         for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
             TxInput input = tx.getInputs().get(inputIndex);
-            final Optional<TxOutput> optionalSpendableTxOutput = txInputController.getOptionalSpendableTxOutput(input);
-            if (optionalSpendableTxOutput.isPresent()) {
-                bsqInputBalance.add(optionalSpendableTxOutput.get().getValue());
-                txInputController.applyStateChange(input, optionalSpendableTxOutput.get(), blockHeight, tx, inputIndex);
-            }
+            txInputController.processInput(input, blockHeight, tx.getId(), inputIndex, model, writableBsqBlockChain);
         }
-        return bsqInputBalance;
-    }
-
-    void applyStateChange(Tx tx) {
-        writableBsqBlockChain.addTxToMap(tx);
     }
 }

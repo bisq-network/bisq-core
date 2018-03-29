@@ -18,10 +18,9 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 
@@ -31,6 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ * Verifies if OP_RETURN data matches rules for a blind vote tx and applies state change.
+ */
 @Slf4j
 public class OpReturnBlindVoteController {
 
@@ -41,19 +43,20 @@ public class OpReturnBlindVoteController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
-        return mutableState.getBlindVoteStakeOutput() != null &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+        return model.getBlindVoteStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 Version.BLIND_VOTE_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getBlindVoteFee(blockHeight) &&
                 readableBsqBlockChain.isBlindVotePeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getBlindVoteStakeOutput() != null, "mutableState." +
-                "getVoteStakeOutput() must not be null");
-        mutableState.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
-        tx.setTxType(TxType.VOTE);
+    public void applyStateChange(TxOutput txOutput, Model model) {
+        txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
+        model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+
+        checkArgument(model.getBlindVoteStakeOutput() != null,
+                "model.getVoteStakeOutput() must not be null");
+        model.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.BLIND_VOTE_STAKE_OUTPUT);
     }
 }

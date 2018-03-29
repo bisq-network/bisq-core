@@ -90,11 +90,9 @@ public interface ReadableBsqBlockChain {
 
     long getBlindVoteFee(int blockHeight);
 
-    long getVoteRevealFee(int blockHeight);
-
     Coin getTotalBurntFee();
 
-    Coin getIssuedAmount();
+    Coin getIssuedAmountAtGenesis();
 
     LinkedList<BsqBlock> getBsqBlocks();
 

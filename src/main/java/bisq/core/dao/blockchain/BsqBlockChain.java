@@ -115,7 +115,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // not impl in PB yet
     private final Set<Tuple2<Long, Integer>> proposalFees;
     private final Set<Tuple2<Long, Integer>> blindVoteFees;
-    private final Set<Tuple2<Long, Integer>> voteRevealFees;
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
@@ -144,7 +143,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         unspentTxOutputsMap = new HashMap<>();
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
-        voteRevealFees = new HashSet<>();
 
         lock = new FunctionalReadWriteLock(true);
     }
@@ -174,7 +172,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         // TODO not impl yet in PB
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
-        voteRevealFees = new HashSet<>();
     }
 
     @Override
@@ -346,10 +343,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> blindVoteFees.add(new Tuple2<>(fee, blockHeight)));
     }
 
-    @Override
-    public void setVoteRevealFee(long fee, int blockHeight) {
-        lock.write(() -> voteRevealFees.add(new Tuple2<>(fee, blockHeight)));
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Read access: BsqBlockChain
@@ -473,7 +466,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
-                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .isPresent());
     }
 
@@ -494,7 +487,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getLockedForVoteTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -532,7 +525,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getBlindVoteStakeTxOutputs() {
         return lock.read(() -> getVerifiedTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -542,15 +535,17 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getCompReqIssuanceTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
-
 
     private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> unspentTxOutputsMap.entrySet().stream()
                 .filter(e -> e.getKey().equals(txIdIndexTuple))
-                .map(Map.Entry::getValue).findAny());
+                .map(Map.Entry::getValue)
+                .filter(TxOutput::isVerified) //TODO is it needed?
+                .findAny()
+        );
     }
 
     public Set<TxOutput> getAllTxOutputs() {
@@ -586,7 +581,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     @Override
-    public Coin getIssuedAmount() {
+    public Coin getIssuedAmountAtGenesis() {
         return lock.read(() -> BsqBlockChain.GENESIS_TOTAL_SUPPLY);
     }
 
@@ -614,19 +609,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> {
             long fee = -1;
             for (Tuple2<Long, Integer> feeAtHeight : blindVoteFees) {
-                if (feeAtHeight.second <= blockHeight)
-                    fee = feeAtHeight.first;
-            }
-            checkArgument(fee > -1, "votingFee must be set");
-            return fee;
-        });
-    }
-
-    @Override
-    public long getVoteRevealFee(int blockHeight) {
-        return lock.read(() -> {
-            long fee = -1;
-            for (Tuple2<Long, Integer> feeAtHeight : voteRevealFees) {
                 if (feeAtHeight.second <= blockHeight)
                     fee = feeAtHeight.first;
             }

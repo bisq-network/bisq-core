@@ -28,6 +28,9 @@ import java.util.LinkedList;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Checks if a block is valid and if so adds it to the BsqBlockChain.
+ */
 @Slf4j
 public class BsqBlockController {
 

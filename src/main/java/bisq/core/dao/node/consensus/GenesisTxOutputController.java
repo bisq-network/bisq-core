@@ -19,6 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 
 import javax.inject.Inject;
 
@@ -34,14 +35,19 @@ public class GenesisTxOutputController extends TxOutputController {
         super(writableBsqBlockChain, opReturnController);
     }
 
-    // Use bsqInputBalance for counting remaining BSQ not yet allocated to a txout
-    void verify(TxOutput txOutput, BsqTxController.BsqInputBalance remainingAmount) {
-        if (txOutput.getValue() <= remainingAmount.getValue()) {
-            remainingAmount.subtract(txOutput.getValue());
-            applyStateChangeForBsqOutput(txOutput);
+    void verify(TxOutput txOutput, Model model) {
+        if (txOutput.getValue() <= model.getAvailableInputValue()) {
+            model.subtractFromInputValue(txOutput.getValue());
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         } else {
-            // No more outputs are considered BSQ after the first non BSQ output
-            remainingAmount.setValue(0);
+            // If we get one output which is not funded sufficiently by the available
+            // input value, we consider all remaining outputs as BTC outputs.
+            // To achieve that we set the value to 0, so we avoid that following smaller
+            // outputs might get interpreted as BSQ outputs.
+            // In fact that cannot happen as the genesis tx is constructed carefully, so
+            // it matches exactly the outputs.
+            model.setAvailableInputValue(0);
+
             applyStateChangeForBtcOutput(txOutput);
         }
     }

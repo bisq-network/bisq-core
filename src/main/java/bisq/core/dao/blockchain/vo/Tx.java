@@ -23,7 +23,6 @@ import bisq.common.proto.persistable.PersistablePayload;
 import io.bisq.generated.protobuffer.PB;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,6 +41,7 @@ public class Tx implements PersistablePayload {
     private final List<TxInput> inputs;
     private final List<TxOutput> outputs;
     private long burntFee;
+    @Nullable
     private TxType txType;
 
     public Tx(String id, int blockHeight,
@@ -139,20 +139,5 @@ public class Tx implements PersistablePayload {
         txType = TxType.UNDEFINED_TX_TYPE;
         inputs.forEach(TxInput::reset);
         outputs.forEach(TxOutput::reset);
-    }
-
-    @Override
-    public String toString() {
-        return "Tx{" +
-                "\ntxVersion='" + txVersion + '\'' +
-                ",\nid='" + id + '\'' +
-                ",\nblockHeight=" + blockHeight +
-                ",\nblockHash=" + blockHash +
-                ",\ntime=" + new Date(time) +
-                ",\ninputs=" + inputs +
-                ",\noutputs=" + outputs +
-                ",\nburntFee=" + burntFee +
-                ",\ntxType=" + txType +
-                "}\n";
     }
 }

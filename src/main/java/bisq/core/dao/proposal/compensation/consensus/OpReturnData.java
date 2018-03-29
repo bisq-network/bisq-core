@@ -17,7 +17,7 @@
 
 package bisq.core.dao.proposal.compensation.consensus;
 
-import bisq.core.dao.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
@@ -33,7 +33,7 @@ public class OpReturnData {
     public static byte[] getBytes(String input) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             byte[] dataAndSigAsBytes = input.getBytes();
-            outputStream.write(OpReturnTypes.COMPENSATION_REQUEST);
+            outputStream.write(OpReturnType.COMPENSATION_REQUEST.getType());
             outputStream.write(Version.COMPENSATION_REQUEST_VERSION);
             outputStream.write(Hash.getSha256Ripemd160hash(dataAndSigAsBytes));
             return outputStream.toByteArray();
