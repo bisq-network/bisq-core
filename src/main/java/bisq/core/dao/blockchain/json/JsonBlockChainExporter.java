@@ -144,8 +144,8 @@ public class JsonBlockChainExporter {
                     List<JsonTxInput> inputs = tx.getInputs().stream()
                             .map(txInput -> {
                                 final TxOutput connectedTxOutput = txInput.getConnectedTxOutput();
-                                return new JsonTxInput(txInput.getTxOutputIndex(),
-                                        txInput.getTxId(),
+                                return new JsonTxInput(txInput.getConnectedTxOutputIndex(),
+                                        txInput.getConnectedTxOutputTxId(),
                                         connectedTxOutput != null ? connectedTxOutput.getValue() : 0,
                                         connectedTxOutput != null && connectedTxOutput.isVerified(),
                                         connectedTxOutput != null ? connectedTxOutput.getAddress() : null,

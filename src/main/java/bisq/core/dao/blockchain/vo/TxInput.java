@@ -35,16 +35,13 @@ import javax.annotation.Nullable;
  */
 @Data
 public class TxInput implements PersistablePayload {
-    //TODO rename to make it more clear
-    // TxId of the spending tx (tx from the connected tx output)
-    private final String txId;
-    // Index of the connected tx output
-    private final int txOutputIndex;
+    private final String connectedTxOutputTxId;
+    private final int connectedTxOutputIndex;
     @Nullable
     private TxOutput connectedTxOutput;
 
-    public TxInput(String txId, int txOutputIndex) {
-        this(txId, txOutputIndex, null);
+    public TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex) {
+        this(connectedTxOutputTxId, connectedTxOutputIndex, null);
     }
 
 
@@ -52,16 +49,16 @@ public class TxInput implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private TxInput(String txId, int txOutputIndex, @Nullable TxOutput connectedTxOutput) {
-        this.txId = txId;
-        this.txOutputIndex = txOutputIndex;
+    private TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex, @Nullable TxOutput connectedTxOutput) {
+        this.connectedTxOutputTxId = connectedTxOutputTxId;
+        this.connectedTxOutputIndex = connectedTxOutputIndex;
         this.connectedTxOutput = connectedTxOutput;
     }
 
     public PB.TxInput toProtoMessage() {
         final PB.TxInput.Builder builder = PB.TxInput.newBuilder()
-                .setTxId(txId)
-                .setTxOutputIndex(txOutputIndex);
+                .setConnectedTxOutputTxId(connectedTxOutputTxId)
+                .setConnectedTxOutputIndex(connectedTxOutputIndex);
 
         Optional.ofNullable(connectedTxOutput).ifPresent(e -> builder.setConnectedTxOutput(e.toProtoMessage()));
 
@@ -69,8 +66,8 @@ public class TxInput implements PersistablePayload {
     }
 
     public static TxInput fromProto(PB.TxInput proto) {
-        return new TxInput(proto.getTxId(),
-                proto.getTxOutputIndex(),
+        return new TxInput(proto.getConnectedTxOutputTxId(),
+                proto.getConnectedTxOutputIndex(),
                 proto.hasConnectedTxOutput() ? TxOutput.fromProto(proto.getConnectedTxOutput()) : null);
     }
 
@@ -84,14 +81,14 @@ public class TxInput implements PersistablePayload {
     }
 
     public TxIdIndexTuple getTxIdIndexTuple() {
-        return new TxIdIndexTuple(txId, txOutputIndex);
+        return new TxIdIndexTuple(connectedTxOutputTxId, connectedTxOutputIndex);
     }
 
     @Override
     public String toString() {
         return "TxInput{" +
-                "\n     txId=" + txId +
-                ",\n     txOutputIndex=" + txOutputIndex +
+                "\n     txId=" + connectedTxOutputTxId +
+                ",\n     txOutputIndex=" + connectedTxOutputIndex +
                 ",\n     connectedTxOutput='" + connectedTxOutput + '\'' +
                 "\n}";
     }

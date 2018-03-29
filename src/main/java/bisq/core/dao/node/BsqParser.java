@@ -96,7 +96,7 @@ public abstract class BsqParser {
         outerLoop:
         for (Tx tx : transactions) {
             for (TxInput input : tx.getInputs()) {
-                if (intraBlockSpendingTxIdSet.contains(input.getTxId())) {
+                if (intraBlockSpendingTxIdSet.contains(input.getConnectedTxOutputTxId())) {
                     // We have an input from one of the intra-block-transactions, so we cannot process that tx now.
                     // We add the tx for later parsing to the txsWithInputsFromSameBlock and move to the next tx.
                     txsWithInputsFromSameBlock.add(tx);
@@ -154,8 +154,8 @@ public abstract class BsqParser {
         Set<String> txIdSet = txs.stream().map(Tx::getId).collect(Collectors.toSet());
         Set<String> intraBlockSpendingTxIdSet = new HashSet<>();
         txs.forEach(tx -> tx.getInputs().stream()
-                .filter(input -> txIdSet.contains(input.getTxId()))
-                .forEach(input -> intraBlockSpendingTxIdSet.add(input.getTxId())));
+                .filter(input -> txIdSet.contains(input.getConnectedTxOutputTxId()))
+                .forEach(input -> intraBlockSpendingTxIdSet.add(input.getConnectedTxOutputTxId())));
         return intraBlockSpendingTxIdSet;
     }
 }
