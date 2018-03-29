@@ -84,11 +84,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "GRANS":
-                    if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "PHR":
                     if (input.matches("^[P][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
                         //noinspection ConstantConditions
