@@ -156,6 +156,11 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     }
 
     @Test
+    public void testSF() {
+        testDefaultValidator("SF");
+    }
+
+    @Test
     @Ignore
     public void testBSQ() {
         validator.setCurrencyCode("BSQ");

@@ -107,7 +107,6 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
-        result.add(new CryptoCurrency("SF", "Siafund"));
         result.add(new CryptoCurrency("SIB", "Sibcoin"));
         result.add(new CryptoCurrency("STEEM", "STEEM"));
 
