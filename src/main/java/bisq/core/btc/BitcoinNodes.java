@@ -50,7 +50,6 @@ public class BitcoinNodes {
                         // ManfredKarrer
                         new BtcNode("btc1.0-2-1.net", "r3dsojfhwcm7x7p6.onion", "159.89.16.222", BtcNode.DEFAULT_PORT, "@manfredkarrer"),
                         new BtcNode("btc2.0-2-1.net", "vlf5i3grro3wux24.onion", "165.227.34.56", BtcNode.DEFAULT_PORT, "@manfredkarrer"),
-                        new BtcNode("btc3.0-2-1.net", "i3a5xtzfm4xwtybd.onion", "165.227.44.202", BtcNode.DEFAULT_PORT, "@manfredkarrer"),
 
                         // emzy
                         new BtcNode("kirsche.emzy.de", "fz6nsij6jiyuwlsc.onion", "78.47.61.83", BtcNode.DEFAULT_PORT, "@emzy"),
@@ -66,7 +65,8 @@ public class BitcoinNodes {
                         new BtcNode("btc2.vante.me", "mxdtrjhe2yfsx3pg.onion", "67.207.75.7", BtcNode.DEFAULT_PORT, "@miker"),
 
                         // sqrrm
-                        new BtcNode("btc4.0-2-1.net", "3r44ddzjitznyahw.onion", "185.25.48.184", BtcNode.DEFAULT_PORT, "@sqrrm"),
+                        new BtcNode("btc1.sqrrm.net", "3r44ddzjitznyahw.onion", "185.25.48.184", BtcNode.DEFAULT_PORT, "@sqrrm"),
+                        new BtcNode("btc2.sqrrm.net", "i3a5xtzfm4xwtybd.onion", "217.23.13.63", BtcNode.DEFAULT_PORT, "@sqrrm"),
 
                         // sgeisler
                         new BtcNode("bcwat.ch", "z33nukt7ngik3cpe.onion", "5.189.166.193", BtcNode.DEFAULT_PORT, "@sgeisler"),
