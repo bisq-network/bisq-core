@@ -29,9 +29,6 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Verifies if a given transaction is a BSQ OP_RETURN transaction.
  */
@@ -52,18 +49,14 @@ public class OpReturnController {
 
     // We only check partially the rules here as we do not know the BSQ fee at that moment which is always used when
     // we have OP_RETURN data.
-    public boolean verifyOpReturnCandidate(TxOutput txOutput) {
+    public void processOpReturnCandidate(TxOutput txOutput, Model model) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
-        //TODO check if it one of our supported types
-        return txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1;
-    }
-
-    public void setOpReturnTypeCandidate(TxOutput txOutput, Model model) {
-        final byte[] opReturnData = txOutput.getOpReturnData();
-        checkNotNull(opReturnData, "opReturnData must nto be null");
-        checkArgument(opReturnData.length >= 1, "We need to have at least 1 byte");
-        model.setOpReturnTypeCandidate(OpReturnType.getOpReturnType(opReturnData[0]));
+        if (txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1) {
+            final OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
+            if (opReturnType != null)
+                model.setOpReturnTypeCandidate(opReturnType);
+        }
     }
 
     public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, Model model) {

@@ -62,7 +62,7 @@ public class BsqTxController {
         txInputsController.iterateInputs(tx, blockHeight, model);
         final boolean bsqInputBalancePositive = model.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txOutputsController.verifyOpReturnCandidate(tx, model);
+            txOutputsController.processOpReturnCandidate(tx, model);
             txOutputsController.iterateOutputs(tx, blockHeight, model);
             tx.setTxType(getTxType(tx, model));
             writableBsqBlockChain.addTxToMap(tx);

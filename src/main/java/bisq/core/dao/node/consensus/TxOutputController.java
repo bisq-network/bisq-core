@@ -23,8 +23,6 @@ import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 
-import bisq.common.util.Utilities;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,13 +44,8 @@ public class TxOutputController {
         this.opReturnController = opReturnController;
     }
 
-    void verifyOpReturnCandidate(TxOutput txOutput, Model model) {
-        if (opReturnController.verifyOpReturnCandidate(txOutput)) {
-            opReturnController.setOpReturnTypeCandidate(txOutput, model);
-        } else {
-            log.warn("OP_RETURN data did not match our rules. txOutput={}",
-                    Utilities.bytesAsHexString(txOutput.getOpReturnData()));
-        }
+    void processOpReturnCandidate(TxOutput txOutput, Model model) {
+        opReturnController.processOpReturnCandidate(txOutput, model);
     }
 
     void verify(Tx tx, TxOutput txOutput, int index, int blockHeight, Model model) {

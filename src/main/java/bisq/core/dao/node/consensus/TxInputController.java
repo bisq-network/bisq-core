@@ -46,8 +46,8 @@ public class TxInputController {
         readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
             model.addToInputValue(connectedTxOutput.getValue());
 
-            // If we are spending an output marked as VOTE_STAKE_OUTPUT we save it in our model for later
-            // verification if that tx is a valid reveal tx.
+            // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
+            // for later verification at the outputs of a reveal tx.
             if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT) {
                 if (!model.isVoteStakeSpentAtInputs()) {
                     model.setVoteStakeSpentAtInputs(true);

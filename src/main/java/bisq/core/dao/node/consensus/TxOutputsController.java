@@ -42,7 +42,7 @@ public class TxOutputsController {
         this.txOutputController = txOutputController;
     }
 
-    void verifyOpReturnCandidate(Tx tx, Model model) {
+    void processOpReturnCandidate(Tx tx, Model model) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
 
@@ -53,7 +53,7 @@ public class TxOutputsController {
         // We keep the temporary opReturn type in the model object.
         checkArgument(!outputs.isEmpty(), "outputs must not be empty");
         int lastIndex = outputs.size() - 1;
-        txOutputController.verifyOpReturnCandidate(outputs.get(lastIndex), model);
+        txOutputController.processOpReturnCandidate(outputs.get(lastIndex), model);
     }
 
     void iterateOutputs(Tx tx, int blockHeight, Model model) {
