@@ -118,6 +118,12 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         testDefaultValidator("NMC");
     }
 
+
+    @Test
+    public void testNBT() {
+        testDefaultValidator("NBT");
+    }
+
     @Test
     @Ignore
     public void testBSQ() {
