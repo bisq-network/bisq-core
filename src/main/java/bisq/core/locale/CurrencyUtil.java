@@ -138,7 +138,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         // Added 0.6.6
-        result.add(new CryptoCurrency("VDN", "vDinar"));
         result.add(new CryptoCurrency("WMCC", "WorldMobileCoin"));
 
         // Added 0.7.0
