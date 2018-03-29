@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao;
+package bisq.core.dao.consensus;
 
 /**
  * Provides byte constants for distinguishing the type of a DAO transaction used in the OP_RETURN data.

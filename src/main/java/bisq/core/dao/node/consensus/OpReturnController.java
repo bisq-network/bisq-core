@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.consensus.OpReturnTypes;
 
 import org.bitcoinj.core.Utils;
 

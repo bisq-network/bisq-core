@@ -17,7 +17,7 @@
 
 package bisq.core.dao.proposal.compensation.consensus;
 
-import bisq.core.dao.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnTypes;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;

@@ -17,10 +17,10 @@
 
 package bisq.core.dao.vote.consensus;
 
-import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.consensus.OpReturnTypes;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.BlindVote;

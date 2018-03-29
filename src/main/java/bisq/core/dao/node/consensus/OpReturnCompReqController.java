@@ -17,10 +17,10 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.consensus.OpReturnTypes;
 
 import bisq.common.app.Version;
 
