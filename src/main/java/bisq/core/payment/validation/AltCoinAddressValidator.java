@@ -20,7 +20,6 @@ package bisq.core.payment.validation;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
-import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.util.validation.InputValidator;
 
 import bisq.asset.AddressValidationResult;
@@ -28,7 +27,6 @@ import bisq.asset.Asset;
 import bisq.asset.AssetRegistry;
 import bisq.asset.Coin;
 
-import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 
 import com.google.inject.Inject;
@@ -83,25 +81,8 @@ public final class AltCoinAddressValidator extends InputValidator {
                 return new ValidationResult(false, Res.get(addressValidationResult.getI18nKey(), asset.get().getTickerSymbol(), addressValidationResult.getMessage()));
             }
 
-            switch (currencyCode) {
-                case "PHR":
-                    if (input.matches("^[P][a-km-zA-HJ-NP-Z1-9]{25,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(PhoreParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
-
-                    // Add new coins at the end...
-                default:
-                    log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
-                    return validationResult;
-            }
+            log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
+            return validationResult;
         }
     }
 

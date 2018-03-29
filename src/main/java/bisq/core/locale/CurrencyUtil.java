@@ -137,9 +137,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("UNO", "Unobtanium"));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
-        // Added 0.7.0
-        result.add(new CryptoCurrency("PHR", "Phore"));
-
         result.sort(TradeCurrency::compareTo);
 
         // Util for printing all altcoins for adding to FAQ page
