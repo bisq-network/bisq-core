@@ -20,7 +20,6 @@ package bisq.core.payment.validation;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
-import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.params.PhoreParams;
 import bisq.core.util.validation.InputValidator;
 
@@ -85,8 +84,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "KOTO":
-                    return KOTOAddressValidator.ValidateAddress(input);
                 case "UBQ":
                     if (!input.matches("^(0x)?[0-9a-fA-F]{40}$"))
                         return regexTestFailed;
