@@ -31,7 +31,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Iterates all outputs for verification for BSQ outputs and sets the txType.
  */
-
 @Slf4j
 public class TxOutputsController {
 

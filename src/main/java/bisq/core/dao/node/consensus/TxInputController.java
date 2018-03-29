@@ -28,9 +28,8 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provide spendable TxOutput.
+ * Processes TxInput and add input value to available balance if the input is a valid BSQ input.
  */
-
 @Slf4j
 public class TxInputController {
 

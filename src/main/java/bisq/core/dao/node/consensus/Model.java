@@ -26,8 +26,9 @@ import lombok.Setter;
 import javax.annotation.Nullable;
 
 /**
- * This model holds shared data during parsing a tx. It is used by the various
+ * This model holds shared data during parsing of a tx. It is used by the various
  * controllers to store and retrieve particular state required for validation.
+ * Access to the model happens only from one thread.
  */
 @Getter
 @Setter

@@ -32,7 +32,6 @@ import javax.annotation.Nullable;
 /**
  * Checks if an output is a BSQ output and apply state change.
  */
-
 @Slf4j
 public class TxOutputController {
     private final WritableBsqBlockChain writableBsqBlockChain;
