@@ -24,11 +24,17 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.consensus.OpReturnType;
 
+import bisq.common.app.DevEnv;
+
 import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -73,86 +79,100 @@ public class BsqTxController {
 
 
     // TODO add tests
+    @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
     TxType getTxType(Tx tx, Model model) {
         TxType txType;
         // We need to have at least one BSQ output
-        if (model.isBsqOutputFound()) {
-            // We want to be sure that the initial assumption of the opReturn type was matching the result after full
-            // validation.
-            if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
-                final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
-                if (model.isInputValuePositive()) {
-                    // We have some BSQ burnt
 
-                    log.debug("BSQ have been left which was not spent. Burned BSQ amount={}, tx={}",
-                            model.getAvailableInputValue(), tx.toString());
-                    tx.setBurntFee(model.getAvailableInputValue());
-
-                    if (verifiedOpReturnType != null) {
-                        switch (verifiedOpReturnType) {
-                            case COMPENSATION_REQUEST:
-                                checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
-                                final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
-                                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
-                                        "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
-                                // second output is issuance candidate
-                                if (issuanceTxOutput.isVerified()) {
-                                    // TODO can that even happen as the voting will be applied later then the parsing of the tx
-                                    // If he have the issuance candidate already accepted by voting it gets the verified flag set
-                                    txType = TxType.ISSUANCE;
-                                } else {
-                                    // Otherwise we have an open or rejected compensation request
-                                    txType = TxType.COMPENSATION_REQUEST;
-                                }
-                                break;
-                            case PROPOSAL:
-                                txType = TxType.PROPOSAL;
-                                break;
-                            case BLIND_VOTE:
-                                txType = TxType.BLIND_VOTE;
-                                break;
-                            case VOTE_REVEAL:
-                                txType = TxType.VOTE_REVEAL;
-                                break;
-                            case LOCK_UP:
-                                // TODO
-                                txType = TxType.INVALID;
-                                break;
-                            case UNLOCK:
-                                // TODO
-                                txType = TxType.INVALID;
-                                break;
-                            default:
-                                log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
-                                txType = TxType.INVALID;
-                        }
-                    } else {
-                        // Burned fee but no opReturn
-                        txType = TxType.PAY_TRADE_FEE;
-                    }
-
-                } else {
-                    if (verifiedOpReturnType == null) {
-                        // No burned fee and no opReturn.
-                        txType = TxType.TRANSFER_BSQ;
-                    } else {
-                        //TODO REVEAL VOTE might move here if we remove the fee there
-                        log.warn("We got a BSQ tx without fee and unknown OP_RETURN. tx={}", tx);
-                        txType = TxType.INVALID;
-                    }
-                }
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, model);
+        final boolean bsqFeesBurnt = model.isInputValuePositive();
+        if (bsqFeesBurnt) {
+            //noinspection OptionalIsPresent
+            if (optionalOpReturnType.isPresent()) {
+                txType = getTxTypeForOpReturnWithFee(tx, optionalOpReturnType.get());
             } else {
-                // TODO check if that can happen legally or if it would make the tx inv
-                log.warn("We got a different opReturn type after validation as we expected initially. tx={}", tx);
-                txType = TxType.INVALID;
+                // Burned fee but no opReturn
+                txType = TxType.PAY_TRADE_FEE;
             }
         } else {
-            log.warn("We got a tx without any valid BSQ output but with burned BSQ. tx={}", tx);
-            txType = TxType.INVALID;
+            //  No burned fee
+            if (optionalOpReturnType.isPresent()) {
+                // No burned fee and opReturn.
+                //TODO REVEAL VOTE might move here if we remove the fee there
+                log.warn("We got a BSQ tx without fee and unknown OP_RETURN. tx={}", tx);
+                txType = TxType.INVALID;
+            } else {
+                // No burned fee and no opReturn.
+                txType = TxType.TRANSFER_BSQ;
+            }
         }
 
         return txType;
     }
 
+    @NotNull
+    private TxType getTxTypeForOpReturnWithFee(Tx tx, OpReturnType opReturnType) {
+        TxType txType;
+        switch (opReturnType) {
+            case COMPENSATION_REQUEST:
+                checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
+                final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
+                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                        "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
+                // second output is issuance candidate
+                if (issuanceTxOutput.isVerified()) {
+                    // TODO can that even happen as the voting will be applied later then the parsing of the tx
+                    // If he have the issuance candidate already accepted by voting it gets the verified flag set
+                    txType = TxType.ISSUANCE;
+                } else {
+                    // Otherwise we have an open or rejected compensation request
+                    txType = TxType.COMPENSATION_REQUEST;
+                }
+                break;
+            case PROPOSAL:
+                txType = TxType.PROPOSAL;
+                break;
+            case BLIND_VOTE:
+                txType = TxType.BLIND_VOTE;
+                break;
+            case VOTE_REVEAL:
+                txType = TxType.VOTE_REVEAL;
+                break;
+            case LOCK_UP:
+                // TODO
+                txType = TxType.LOCK_UP;
+                break;
+            case UNLOCK:
+                // TODO
+                txType = TxType.UN_LOCK;
+                break;
+            default:
+                log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
+                txType = TxType.INVALID;
+        }
+        return txType;
+    }
+
+    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, Model model) {
+        if (model.isBsqOutputFound()) {
+            // We want to be sure that the initial assumption of the opReturn type was matching the result after full
+            // validation.
+            if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
+                final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
+                return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
+            } else {
+                final String msg = "We got a different opReturn type after validation as we expected initially. tx=" + tx;
+                log.warn(msg);
+                if (DevEnv.isDevMode())
+                    throw new RuntimeException(msg);
+            }
+        } else {
+            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx={}" + tx;
+            log.warn(msg);
+            if (DevEnv.isDevMode())
+                throw new RuntimeException(msg);
+        }
+        return Optional.empty();
+    }
 }
