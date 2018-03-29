@@ -131,6 +131,11 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     }
 
     @Test
+    public void testPEPECASH() {
+        testDefaultValidator("PEPECASH");
+    }
+
+    @Test
     @Ignore
     public void testBSQ() {
         validator.setCurrencyCode("BSQ");
