@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.consensus;
 
+import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
@@ -39,20 +40,17 @@ public class OpReturnVoteRevealController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    //TODO check that stake input matches with stake output?
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, TxOutputsController.MutableState mutableState) {
-        return /*mutableState.getBlindVoteStakeOutput() != null &&*/
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, BsqTxController.MutableState mutableState) {
+        return mutableState.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 54 &&
-                        Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
-                        bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
-                        readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
+                Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
+                bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
+                readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput opReturnTxOutput, TxOutputsController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-       /* checkArgument(mutableState.getBlindVoteStakeOutput() != null,
-                "mutableState.getVoteStakeOutput() must not be null");
-        mutableState.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);*/
+    public void applyStateChange(Tx tx, TxOutput txOutput, BsqTxController.MutableState mutableState) {
+        txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
         tx.setTxType(TxType.VOTE_REVEAL);
+        mutableState.setVerifiedOpReturnType(OpReturnTypes.VOTE_REVEAL);
     }
 }

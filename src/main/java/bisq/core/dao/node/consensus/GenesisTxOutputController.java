@@ -39,18 +39,12 @@ public class GenesisTxOutputController extends TxOutputController {
     void verify(TxOutput txOutput, BsqTxController.BsqInputBalance remainingAmount) {
         if (txOutput.getValue() <= remainingAmount.getValue()) {
             remainingAmount.subtract(txOutput.getValue());
-            applyStateChangeForBsqOutput(txOutput);
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         } else {
             // No more outputs are considered BSQ after the first non BSQ output
             // Theoretically some BSQ might be left, it would be considered as burned fee,
             // but the genesis is constructed so that inputs matches exactly all outputs.
             applyStateChangeForBtcOutput(txOutput);
         }
-    }
-
-    @Override
-    protected void applyStateChangeForBsqOutput(TxOutput txOutput) {
-        super.applyStateChangeForBsqOutput(txOutput);
-        txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
     }
 }

@@ -490,6 +490,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     // MyVote reveal tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    //TODO remove fee?
     public Transaction getPreparedVoteRevealTx(Coin fee, TxOutput stakeTxOutput)
             throws InsufficientBsqException, ChangeBelowDustException {
         Transaction tx = new Transaction(params);

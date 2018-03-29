@@ -18,9 +18,6 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.SpentInfo;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 
@@ -37,12 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TxInputController {
 
-    private final WritableBsqBlockChain writableBsqBlockChain;
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
     @Inject
-    public TxInputController(WritableBsqBlockChain writableBsqBlockChain, ReadableBsqBlockChain readableBsqBlockChain) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
+    public TxInputController(ReadableBsqBlockChain readableBsqBlockChain) {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
@@ -50,13 +45,5 @@ public class TxInputController {
         // TODO check if Tuple indexes of inputs outputs are not messed up...
         // Get spendable BSQ output for txIdIndexTuple... (get output used as input in tx if it's spendable BSQ)
         return readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple());
-    }
-
-    void applyStateChange(TxInput input, TxOutput spendableTxOutput, int blockHeight, Tx tx, int inputIndex) {
-        // The output is BSQ, set it as spent, update bsqBlockChain and add to available BSQ for this tx
-        spendableTxOutput.setUnspent(false);
-        writableBsqBlockChain.removeUnspentTxOutput(spendableTxOutput);
-        spendableTxOutput.setSpentInfo(new SpentInfo(blockHeight, tx.getId(), inputIndex));
-        input.setConnectedTxOutput(spendableTxOutput);
     }
 }
