@@ -29,9 +29,16 @@ import lombok.Data;
 
 import javax.annotation.Nullable;
 
+/**
+ * An input is really just a reference to the spending output. It gets identified by the
+ * txId and the index of the output. We use TxIdIndexTuple to encapsulate that.
+ */
 @Data
 public class TxInput implements PersistablePayload {
+    //TODO rename to make it more clear
+    // TxId of the spending tx (tx from the connected tx output)
     private final String txId;
+    // Index of the connected tx output
     private final int txOutputIndex;
     @Nullable
     private TxOutput connectedTxOutput;
