@@ -30,6 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+/**
+ * Verifies if OP_RETURN data matches rules for a blind vote tx and applies state change.
+ */
 @Slf4j
 public class OpReturnBlindVoteController {
 

@@ -94,7 +94,7 @@ public interface ReadableBsqBlockChain {
 
     Coin getTotalBurntFee();
 
-    Coin getIssuedAmount();
+    Coin getIssuedAmountAtGenesis();
 
     LinkedList<BsqBlock> getBsqBlocks();
 

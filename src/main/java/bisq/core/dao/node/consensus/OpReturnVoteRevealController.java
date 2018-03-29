@@ -28,6 +28,9 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Verifies if OP_RETURN data matches rules for a vote reveal tx and applies state change.
+ */
 @Slf4j
 public class OpReturnVoteRevealController {
 

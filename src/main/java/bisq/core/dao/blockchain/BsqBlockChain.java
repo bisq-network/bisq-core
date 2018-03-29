@@ -588,7 +588,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     @Override
-    public Coin getIssuedAmount() {
+    public Coin getIssuedAmountAtGenesis() {
         return lock.read(() -> BsqBlockChain.GENESIS_TOTAL_SUPPLY);
     }
 

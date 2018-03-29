@@ -55,12 +55,12 @@ public class GenesisTxController {
     }
 
     public void applyStateChange(Tx tx) {
-        Model remainingAmount = new Model(readableBsqBlockChain.getIssuedAmount().getValue());
+        Model model = new Model(readableBsqBlockChain.getIssuedAmountAtGenesis().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
-            genesisTxOutputController.verify(tx.getOutputs().get(i), remainingAmount);
+            genesisTxOutputController.verify(tx.getOutputs().get(i), model);
         }
-        tx.setTxType(TxType.GENESIS);
 
+        tx.setTxType(TxType.GENESIS);
         writableBsqBlockChain.setGenesisTx(tx);
         writableBsqBlockChain.addTxToMap(tx);
     }

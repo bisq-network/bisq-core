@@ -26,7 +26,7 @@ import lombok.Setter;
 import javax.annotation.Nullable;
 
 /**
- * This model holds mutable data during parsing a tx. It is used be the various
+ * This model holds shared data during parsing a tx. It is used by the various
  * controllers to store and retrieve particular state required for validation.
  */
 @Getter
