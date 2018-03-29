@@ -41,6 +41,11 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     }
 
     @Test
+    public void testBURST() {
+        testDefaultValidator("BURST");
+    }
+
+    @Test
     @Ignore
     public void testBSQ() {
         validator.setCurrencyCode("BSQ");
@@ -848,6 +853,19 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         assertFalse(validator.validate("PKr3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
         assertFalse(validator.validate("PKr3vQ7S").isValid);
         assertFalse(validator.validate("P0r3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
+
+    private void testDefaultValidator(String currencyCode) {
+        validator.setCurrencyCode(currencyCode);
+
+        assertTrue(validator.validate("AQJTNtWcP7opxuR52Lf5vmoQTC8EHQ6GxV").isValid);
+        assertTrue(validator.validate("ALEK7jttmqtx2ZhXHg69Zr426qKBnzYA9E").isValid);
+        assertTrue(validator.validate("AP1egWUthPoYvZL57aBk4RPqUgjG1fJGn6").isValid);
+        assertTrue(validator.validate("AST3zfvPdZ35npxAVC8ABgVCxxDLwTmAHU").isValid);
+        assertTrue(validator.validate("1").isValid);
+        assertTrue(validator.validate(" ").isValid);
+
         assertFalse(validator.validate("").isValid);
     }
 }
