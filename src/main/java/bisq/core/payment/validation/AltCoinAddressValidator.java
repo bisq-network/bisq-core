@@ -87,11 +87,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "ROI":
-                    if (!input.matches("^[R][0-9a-zA-Z]{33}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "WMCC":
                     return WMCCAddressValidator.ValidateAddress(WMCCParams.get(), input);
                 case "RTO":
