@@ -23,7 +23,6 @@ import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
 import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.params.PhoreParams;
-import bisq.core.payment.validation.params.StrayaParams;
 import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.util.validation.InputValidator;
 
@@ -88,18 +87,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "NAH":
-                    if (input.matches("^[S][a-zA-Z0-9]{26,34}$")) {
-                        //noinspection ConstantConditions
-                        try {
-                            Address.fromBase58(StrayaParams.get(), input);
-                            return new ValidationResult(true);
-                        } catch (AddressFormatException e) {
-                            return new ValidationResult(false, getErrorMessage(e));
-                        }
-                    } else {
-                        return regexTestFailed;
-                    }
                 case "ROI":
                     if (!input.matches("^[R][0-9a-zA-Z]{33}$"))
                         return regexTestFailed;
