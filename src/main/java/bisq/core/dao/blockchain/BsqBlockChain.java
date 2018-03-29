@@ -550,7 +550,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> unspentTxOutputsMap.entrySet().stream()
                 .filter(e -> e.getKey().equals(txIdIndexTuple))
                 .map(Map.Entry::getValue)
-                .filter(TxOutput::isVerified)
+                .filter(TxOutput::isVerified) //TODO is it needed?
                 .findAny()
         );
     }

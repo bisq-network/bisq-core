@@ -18,17 +18,17 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.WritableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.TxInput;
-import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 
 import javax.inject.Inject;
-
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provide spendable TxOutput and apply state change.
+ * Provide spendable TxOutput.
  */
 
 @Slf4j
@@ -41,9 +41,26 @@ public class TxInputController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    Optional<TxOutput> getOptionalSpendableTxOutput(TxInput input) {
-        // TODO check if Tuple indexes of inputs outputs are not messed up...
-        // Get spendable BSQ output for txIdIndexTuple... (get output used as input in tx if it's spendable BSQ)
-        return readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple());
+    void processInput(TxInput input, int blockHeight, String txId, int inputIndex, Model model,
+                      WritableBsqBlockChain writableBsqBlockChain) {
+        readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
+            model.addToInputValue(connectedTxOutput.getValue());
+
+            // If we are spending an output marked as VOTE_STAKE_OUTPUT we save it in our model for later
+            // verification if that tx is a valid reveal tx.
+            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT) {
+                if (!model.isVoteStakeSpentAtInputs()) {
+                    model.setVoteStakeSpentAtInputs(true);
+                } else {
+                    log.warn("We have a tx which has 2 connected txOutputs marked as VOTE_STAKE_OUTPUT. " +
+                            "This is not a valid BSQ tx.");
+                }
+            }
+
+            input.setConnectedTxOutput(connectedTxOutput);
+            connectedTxOutput.setUnspent(false);
+            connectedTxOutput.setSpentInfo(new SpentInfo(blockHeight, txId, inputIndex));
+            writableBsqBlockChain.removeUnspentTxOutput(connectedTxOutput);
+        });
     }
 }
