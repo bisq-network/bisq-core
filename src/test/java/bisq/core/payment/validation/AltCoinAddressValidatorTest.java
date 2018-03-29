@@ -106,6 +106,12 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         testErc20Address("MT");
     }
 
+
+    @Test
+    public void testNAV() {
+        testDefaultValidator("NAV");
+    }
+
     @Test
     @Ignore
     public void testBSQ() {
