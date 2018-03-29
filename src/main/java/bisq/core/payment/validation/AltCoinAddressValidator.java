@@ -85,11 +85,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "RTO":
-                    if (!input.matches("^[A][0-9A-Za-z]{94}$"))
-                        return regexTestFailed;
-                    else
-                        return new ValidationResult(true);
                 case "KOTO":
                     return KOTOAddressValidator.ValidateAddress(input);
                 case "UBQ":
