@@ -27,6 +27,8 @@ import org.bitcoinj.core.Utils;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -59,74 +61,75 @@ public class OpReturnController {
         }
     }
 
-    public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, Model model) {
-        final long txOutputValue = txOutput.getValue();
-        // A BSQ OP_RETURN has to be the last output, the txOutputValue has to be 0 as well as there have to be a BSQ fee.
-        if (txOutputValue == 0 && index == tx.getOutputs().size() - 1 && bsqFee > 0) {
-            byte[] opReturnData = txOutput.getOpReturnData();
-            if (opReturnData != null) {
-                // All BSQ OP_RETURN txs have at least a type byte
-                if (opReturnData.length >= 1) {
-                    // Check with the type byte which kind of OP_RETURN we have.
-                    OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
-                    if (opReturnType != null) {
-                        switch (opReturnType) {
-                            case COMPENSATION_REQUEST:
-                                if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
-                                    opReturnCompReqController.applyStateChange(txOutput, model);
-                                } else {
-                                    log.warn("We expected a compensation request op_return data but it did not " +
-                                            "match our rules. tx={}", tx);
-                                }
-                                break;
-                            case PROPOSAL:
-                                // TODO
-                                break;
-                            case BLIND_VOTE:
-                                if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
-                                    opReturnBlindVoteController.applyStateChange(txOutput, model);
-                                } else {
-                                    log.warn("We expected a blind vote op_return data but it did not " +
-                                            "match our rules. tx={}", tx);
-                                }
-                                break;
-                            case VOTE_REVEAL:
-                                if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, model)) {
-                                    opReturnVoteRevealController.applyStateChange(txOutput, model);
-                                } else {
-                                    log.warn("We expected a vote reveal op_return data but it did not " +
-                                            "match our rules. tx={}", tx);
-                                }
-                                break;
-                            case LOCK_UP:
-                                // TODO
-                                break;
-                            case UNLOCK:
-                                // TODO
-                                break;
-                            default:
-                                // Should never happen as getOpReturnType() would return null
-                                final String msg = "OP_RETURN does not match expected version bytes. tx=" + tx.getId();
-                                log.error(msg);
-                                if (DevEnv.isDevMode())
-                                    throw new RuntimeException(msg);
+    //TODO relax requirement for bsqFee as we might not use a fee for VOTE_REVEAL tx
+    public void processTxOutput(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
+                                int blockHeight, Model model) {
+        getOptionalOpReturnType(opReturnData, txOutput, tx, index, bsqFee)
+                .ifPresent(opReturnType -> {
+                    switch (opReturnType) {
+                        case COMPENSATION_REQUEST:
+                            if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnCompReqController.applyStateChange(txOutput, model);
+                            } else {
+                                log.warn("We expected a compensation request op_return data but it did not " +
+                                        "match our rules. tx={}", tx);
+                            }
+                            break;
+                        case PROPOSAL:
+                            // TODO
+                            break;
+                        case BLIND_VOTE:
+                            if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnBlindVoteController.applyStateChange(txOutput, model);
+                            } else {
+                                log.warn("We expected a blind vote op_return data but it did not " +
+                                        "match our rules. tx={}", tx);
+                            }
+                            break;
+                        case VOTE_REVEAL:
+                            if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnVoteRevealController.applyStateChange(txOutput, model);
+                            } else {
+                                log.warn("We expected a vote reveal op_return data but it did not " +
+                                        "match our rules. tx={}", tx);
+                            }
+                            break;
+                        case LOCK_UP:
+                            // TODO
+                            break;
+                        case UNLOCK:
+                            // TODO
+                            break;
+                        default:
+                            // Should never happen as long we keep OpReturnType entries in sync with out switch case.
+                            final String msg = "Unsupported OpReturnType. tx=" + tx +
+                                    "; opReturnData=" + Utils.HEX.encode(opReturnData);
+                            log.error(msg);
+                            if (DevEnv.isDevMode())
+                                throw new RuntimeException(msg);
 
-                                break;
-                        }
-                    } else {
-                        log.warn("OP_RETURN version of the BSQ tx ={} does not match expected version bytes. opReturnData={}",
-                                tx.getId(), Utils.HEX.encode(opReturnData));
+                            break;
                     }
-                } else {
-                    log.warn("opReturnData is null or has no content. opReturnData={}", Utils.HEX.encode(opReturnData));
-                }
+                });
+    }
+
+    private Optional<OpReturnType> getOptionalOpReturnType(byte[] opReturnData, TxOutput txOutput, Tx tx, int index,
+                                                           long bsqFee) {
+        if (txOutput.getValue() == 0 &&
+                index == tx.getOutputs().size() - 1 &&
+                bsqFee > 0 &&
+                opReturnData.length >= 1) {
+            OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
+            if (opReturnType != null) {
+                return Optional.of(opReturnType);
             } else {
-                // TODO check if that can be a valid state or if we should thrown an exception
-                log.warn("opReturnData is null");
+                log.warn("OP_RETURN version of the BSQ tx ={} does not match expected version bytes. opReturnData={}",
+                        tx, Utils.HEX.encode(opReturnData));
             }
         } else {
-            log.warn("opReturnData is not matching DAO rules txId={} outValue={} index={} #outputs={} bsqFee={}",
-                    tx.getId(), txOutputValue, index, tx.getOutputs().size(), bsqFee);
+            log.warn("opReturnData is not matching our rules tx={}", tx);
+
         }
+        return Optional.empty();
     }
 }

@@ -61,7 +61,7 @@ public class TxOutputsController {
         final List<TxOutput> outputs = tx.getOutputs();
         // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
         for (int index = 0; index < outputs.size(); index++) {
-            txOutputController.verify(tx, outputs.get(index), index, blockHeight, model);
+            txOutputController.processTxOutput(tx, outputs.get(index), index, blockHeight, model);
         }
     }
 }

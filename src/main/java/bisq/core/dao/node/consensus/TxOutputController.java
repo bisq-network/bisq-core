@@ -48,10 +48,11 @@ public class TxOutputController {
         opReturnController.processOpReturnCandidate(txOutput, model);
     }
 
-    void verify(Tx tx, TxOutput txOutput, int index, int blockHeight, Model model) {
+    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, Model model) {
         final long bsqInputBalanceValue = model.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
-        if (txOutput.getOpReturnData() == null) {
+        final byte[] opReturnData = txOutput.getOpReturnData();
+        if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
             if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
                 handleBsqOutput(txOutput, index, model, txOutputValue);
@@ -60,7 +61,7 @@ public class TxOutputController {
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnController.process(txOutput, tx, index, bsqInputBalanceValue, blockHeight, model);
+            opReturnController.processTxOutput(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, model);
         }
     }
 
@@ -80,7 +81,7 @@ public class TxOutputController {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }
 
-        model.setAnyBsqOutputFound(true);
+        model.setBsqOutputFound(true);
     }
 
     private void handleBtcOutput(TxOutput txOutput, int index, Model model) {
@@ -88,8 +89,8 @@ public class TxOutputController {
         if (model.isInputValuePositive()) {
             // At the second output we might have a compensation request output if the opReturn type matches.
             if (index == 1 && model.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
-                // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-                // in the model.
+                // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
+                // into our model.
                 model.setIssuanceCandidate(txOutput);
             }
         }

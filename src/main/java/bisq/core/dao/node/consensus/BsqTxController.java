@@ -77,7 +77,7 @@ public class BsqTxController {
     TxType getTxType(Tx tx, Model model) {
         TxType txType;
         // We need to have at least one BSQ output
-        if (model.isAnyBsqOutputFound()) {
+        if (model.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
             if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {

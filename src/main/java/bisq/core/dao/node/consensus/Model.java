@@ -38,7 +38,7 @@ class Model {
     @Nullable
     private TxOutput blindVoteStakeOutput;
     private boolean voteStakeSpentAtInputs;
-    private boolean anyBsqOutputFound;
+    private boolean bsqOutputFound;
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
     // that it is a valid BSQ tx at that moment.
