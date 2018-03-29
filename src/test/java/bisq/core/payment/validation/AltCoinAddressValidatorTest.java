@@ -124,6 +124,12 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         testDefaultValidator("NBT");
     }
 
+
+    @Test
+    public void testPASC() {
+        testErc20Address("PASC");
+    }
+
     @Test
     @Ignore
     public void testBSQ() {
