@@ -100,6 +100,12 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         testDefaultValidator("XMR");
     }
 
+
+    @Test
+    public void testMT() {
+        testErc20Address("MT");
+    }
+
     @Test
     @Ignore
     public void testBSQ() {
@@ -160,15 +166,7 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
 
     @Test
     public void testETH() {
-        validator.setCurrencyCode("ETH");
-
-        assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
-        assertTrue(validator.validate("2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
-
-        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d1641353982266").isValid);
-        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
-        assertFalse(validator.validate("2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
-        assertFalse(validator.validate("").isValid);
+        testErc20Address("ETH");
     }
 
     @Test
@@ -921,6 +919,18 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         assertTrue(validator.validate("1").isValid);
         assertTrue(validator.validate(" ").isValid);
 
+        assertFalse(validator.validate("").isValid);
+    }
+
+    private void testErc20Address(String currencyCode) {
+        validator.setCurrencyCode(currencyCode);
+
+        assertTrue(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
+        assertTrue(validator.validate("2a65Aca4D5fC5B5C859090a6c34d164135398226").isValid);
+
+        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d1641353982266").isValid);
+        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
+        assertFalse(validator.validate("2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
         assertFalse(validator.validate("").isValid);
     }
 }
