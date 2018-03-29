@@ -17,9 +17,9 @@
 
 package bisq.core.dao.consensus;
 
-import lombok.Getter;
+import java.util.Optional;
 
-import javax.annotation.Nullable;
+import lombok.Getter;
 
 /**
  * Provides byte constants for distinguishing the type of a DAO transaction used in the OP_RETURN data.
@@ -40,21 +40,20 @@ public enum OpReturnType {
         this.type = type;
     }
 
-    @Nullable
-    public static OpReturnType getOpReturnType(byte type) {
+    public static Optional<OpReturnType> getOpReturnType(byte type) {
         if (type == COMPENSATION_REQUEST.getType())
-            return COMPENSATION_REQUEST;
+            return Optional.of(COMPENSATION_REQUEST);
         else if (type == PROPOSAL.getType())
-            return PROPOSAL;
+            return Optional.of(PROPOSAL);
         else if (type == BLIND_VOTE.getType())
-            return BLIND_VOTE;
+            return Optional.of(BLIND_VOTE);
         else if (type == VOTE_REVEAL.getType())
-            return VOTE_REVEAL;
+            return Optional.of(VOTE_REVEAL);
         else if (type == LOCK_UP.getType())
-            return LOCK_UP;
+            return Optional.of(LOCK_UP);
         else if (type == UNLOCK.getType())
-            return UNLOCK;
+            return Optional.of(UNLOCK);
         else
-            return null;
+            return Optional.empty();
     }
 }

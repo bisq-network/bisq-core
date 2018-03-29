@@ -55,9 +55,7 @@ public class OpReturnController {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1) {
-            final OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
-            if (opReturnType != null)
-                model.setOpReturnTypeCandidate(opReturnType);
+            OpReturnType.getOpReturnType(opReturnData[0]).ifPresent(model::setOpReturnTypeCandidate);
         }
     }
 
@@ -119,17 +117,11 @@ public class OpReturnController {
                 index == tx.getOutputs().size() - 1 &&
                 bsqFee > 0 &&
                 opReturnData.length >= 1) {
-            OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
-            if (opReturnType != null) {
-                return Optional.of(opReturnType);
-            } else {
-                log.warn("OP_RETURN version of the BSQ tx ={} does not match expected version bytes. opReturnData={}",
-                        tx, Utils.HEX.encode(opReturnData));
-            }
+            return OpReturnType.getOpReturnType(opReturnData[0]);
         } else {
-            log.warn("opReturnData is not matching our rules tx={}", tx);
-
+            log.warn("OP_RETURN version of the BSQ tx ={} does not match expected version bytes. opReturnData={}",
+                    tx, Utils.HEX.encode(opReturnData));
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 }
