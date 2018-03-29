@@ -33,7 +33,7 @@ public class OpReturnData {
     public static byte[] getBytes(String input) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             byte[] dataAndSigAsBytes = input.getBytes();
-            outputStream.write(OpReturnTypes.COMPENSATION_REQUEST);
+            outputStream.write(OpReturnTypes.COMPENSATION_REQUEST.getType());
             outputStream.write(Version.COMPENSATION_REQUEST_VERSION);
             outputStream.write(Hash.getSha256Ripemd160hash(dataAndSigAsBytes));
             return outputStream.toByteArray();

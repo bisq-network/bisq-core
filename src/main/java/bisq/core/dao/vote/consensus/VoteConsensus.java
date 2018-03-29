@@ -69,7 +69,7 @@ public class VoteConsensus {
     public static byte[] getOpReturnDataForBlindVote(byte[] encryptedProposalList) {
         log.info("encryptedProposalList " + Utilities.bytesAsHexString(encryptedProposalList));
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnTypes.BLIND_VOTE);
+            outputStream.write(OpReturnTypes.BLIND_VOTE.getType());
             outputStream.write(Version.BLIND_VOTE_VERSION);
             final byte[] hash = Hash.getSha256Ripemd160hash(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList " + Utilities.bytesAsHexString(hash));
@@ -94,7 +94,7 @@ public class VoteConsensus {
 
     public static byte[] getOpReturnDataForVoteReveal(byte[] hashOfBlindVoteList, SecretKey secretKey) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnTypes.VOTE_REVEAL);
+            outputStream.write(OpReturnTypes.VOTE_REVEAL.getType());
             outputStream.write(Version.VOTE_REVEAL_VERSION);
             outputStream.write(hashOfBlindVoteList);     // hash is 20 bytes
             outputStream.write(secretKey.getEncoded()); // SecretKey as bytes has 32 bytes

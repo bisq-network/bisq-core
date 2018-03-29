@@ -18,6 +18,7 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.consensus.OpReturnTypes;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -41,10 +42,13 @@ class Model {
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
     // that it is a valid BSQ tx at that moment.
-    private byte opReturnTypeCandidate = 0x00;
+
+    @Nullable
+    private OpReturnTypes opReturnTypeCandidate;
 
     // At end of parsing when we do the full validation we set the type here
-    private byte verifiedOpReturnType = 0x00;
+    @Nullable
+    private OpReturnTypes verifiedOpReturnType;
 
     Model() {
     }
