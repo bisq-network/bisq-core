@@ -22,7 +22,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.consensus.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import javax.inject.Inject;
 
@@ -81,7 +81,7 @@ public class BsqTxController {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
             if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
-                final OpReturnTypes verifiedOpReturnType = model.getVerifiedOpReturnType();
+                final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
                 if (model.isInputValuePositive()) {
                     // We have some BSQ burnt
 

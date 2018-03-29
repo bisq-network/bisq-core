@@ -19,7 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.consensus.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.DevEnv;
 
@@ -63,7 +63,7 @@ public class OpReturnController {
         final byte[] opReturnData = txOutput.getOpReturnData();
         checkNotNull(opReturnData, "opReturnData must nto be null");
         checkArgument(opReturnData.length >= 1, "We need to have at least 1 byte");
-        model.setOpReturnTypeCandidate(OpReturnTypes.getOpReturnType(opReturnData[0]));
+        model.setOpReturnTypeCandidate(OpReturnType.getOpReturnType(opReturnData[0]));
     }
 
     public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, Model model) {
@@ -75,7 +75,7 @@ public class OpReturnController {
                 // All BSQ OP_RETURN txs have at least a type byte
                 if (opReturnData.length >= 1) {
                     // Check with the type byte which kind of OP_RETURN we have.
-                    OpReturnTypes opReturnType = OpReturnTypes.getOpReturnType(opReturnData[0]);
+                    OpReturnType opReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
                     if (opReturnType != null) {
                         switch (opReturnType) {
                             case COMPENSATION_REQUEST:

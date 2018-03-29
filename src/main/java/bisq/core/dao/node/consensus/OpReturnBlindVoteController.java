@@ -20,7 +20,7 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.consensus.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 
@@ -50,7 +50,7 @@ public class OpReturnBlindVoteController {
 
     public void applyStateChange(TxOutput txOutput, Model model) {
         txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnTypes.BLIND_VOTE);
+        model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
         checkArgument(model.getBlindVoteStakeOutput() != null,
                 "model.getVoteStakeOutput() must not be null");

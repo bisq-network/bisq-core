@@ -20,7 +20,7 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.consensus.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.Version;
 
@@ -52,7 +52,7 @@ public class OpReturnCompReqController {
 
     public void applyStateChange(TxOutput txOutput, Model model) {
         txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnTypes.COMPENSATION_REQUEST);
+        model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
 
         checkArgument(model.getIssuanceCandidate() != null,
                 "model.getCompRequestIssuanceOutputCandidate() must not be null");

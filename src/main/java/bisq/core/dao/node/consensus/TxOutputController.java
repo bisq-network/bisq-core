@@ -21,7 +21,7 @@ import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.consensus.OpReturnTypes;
+import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.util.Utilities;
 
@@ -76,7 +76,7 @@ public class TxOutputController {
         model.subtractFromInputValue(txOutputValue);
 
         // At a blind vote tx we get the stake at output 0.
-        if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnTypes.BLIND_VOTE) {
+        if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
             // First output might be vote stake output.
             model.setBlindVoteStakeOutput(txOutput);
 
@@ -94,7 +94,7 @@ public class TxOutputController {
         // We have BSQ left for burning
         if (model.isInputValuePositive()) {
             // At the second output we might have a compensation request output if the opReturn type matches.
-            if (index == 1 && model.getOpReturnTypeCandidate() == OpReturnTypes.COMPENSATION_REQUEST) {
+            if (index == 1 && model.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
                 // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
                 // in the model.
                 model.setIssuanceCandidate(txOutput);

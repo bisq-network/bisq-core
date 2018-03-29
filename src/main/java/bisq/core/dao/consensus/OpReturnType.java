@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * Provides byte constants for distinguishing the type of a DAO transaction used in the OP_RETURN data.
  */
 
-public enum OpReturnTypes {
+public enum OpReturnType {
     COMPENSATION_REQUEST((byte) 0x01),
     PROPOSAL((byte) 0x02),
     BLIND_VOTE((byte) 0x03),
@@ -36,12 +36,12 @@ public enum OpReturnTypes {
     @Getter
     private byte type;
 
-    OpReturnTypes(byte type) {
+    OpReturnType(byte type) {
         this.type = type;
     }
 
     @Nullable
-    public static OpReturnTypes getOpReturnType(byte type) {
+    public static OpReturnType getOpReturnType(byte type) {
         if (type == COMPENSATION_REQUEST.getType())
             return COMPENSATION_REQUEST;
         else if (type == PROPOSAL.getType())
