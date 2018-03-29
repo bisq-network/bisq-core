@@ -107,7 +107,6 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
-        result.add(new CryptoCurrency("ESP", "Espers"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));
         result.add(new CryptoCurrency("GRC", "Gridcoin"));
         result.add(new CryptoCurrency("LBC", "LBRY Credits"));
