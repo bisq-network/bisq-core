@@ -42,19 +42,20 @@ public class OpReturnCompReqController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, BsqTxController.MutableState mutableState) {
-        return mutableState.getCompRequestIssuanceOutputCandidate() != null &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+        return model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
                 Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getCreateCompensationRequestFee(blockHeight) &&
                 readableBsqBlockChain.isCompensationRequestPeriodValid(blockHeight);
     }
 
-    public void applyStateChange(TxOutput txOutput, BsqTxController.MutableState mutableState) {
+    public void applyStateChange(TxOutput txOutput, Model model) {
         txOutput.setTxOutputType(TxOutputType.COMPENSATION_REQUEST_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getCompRequestIssuanceOutputCandidate() != null,
-                "mutableState.getCompRequestIssuanceOutputCandidate() must not be null");
-        mutableState.getCompRequestIssuanceOutputCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
-        mutableState.setVerifiedOpReturnType(OpReturnTypes.COMPENSATION_REQUEST);
+        model.setVerifiedOpReturnType(OpReturnTypes.COMPENSATION_REQUEST);
+
+        checkArgument(model.getIssuanceCandidate() != null,
+                "model.getCompRequestIssuanceOutputCandidate() must not be null");
+        model.getIssuanceCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
     }
 }

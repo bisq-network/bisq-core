@@ -29,6 +29,8 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
+
 /**
  * Checks if an output is a BSQ output and apply state change.
  */
@@ -44,84 +46,69 @@ public class TxOutputController {
         this.opReturnController = opReturnController;
     }
 
-    void verifyOpReturnCandidate(TxOutput txOutput,
-                                 BsqTxController.BsqInputBalance bsqInputBalance,
-                                 BsqTxController.MutableState mutableState) {
-        if (bsqInputBalance.isPositive()) {
-            if (opReturnController.verifyOpReturnCandidate(txOutput)) {
-                opReturnController.setOpReturnTypeCandidate(txOutput, mutableState);
-            } else {
-                log.warn("OP_RETURN data do not match our rules. txOutput={}",
-                        Utilities.bytesAsHexString(txOutput.getOpReturnData()));
-            }
+    void verifyOpReturnCandidate(TxOutput txOutput, Model model) {
+        if (opReturnController.verifyOpReturnCandidate(txOutput)) {
+            opReturnController.setOpReturnTypeCandidate(txOutput, model);
         } else {
-            log.debug("We don't have any BSQ in the inputs so it is not a BSQ tx.");
+            log.warn("OP_RETURN data did not match our rules. txOutput={}",
+                    Utilities.bytesAsHexString(txOutput.getOpReturnData()));
         }
     }
 
-    void verify(Tx tx,
-                TxOutput txOutput,
-                int index,
-                int blockHeight,
-                BsqTxController.BsqInputBalance bsqInputBalance,
-                BsqTxController.MutableState mutableState) {
-
-        final long bsqInputBalanceValue = bsqInputBalance.getValue();
-        final long txOutputValue = txOutput.getValue();
+    void verify(Tx tx, TxOutput txOutput, int index, int blockHeight, Model model) {
+        final long bsqInputBalanceValue = model.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         if (txOutput.getOpReturnData() == null) {
-            if (bsqInputBalance.isPositive() && bsqInputBalanceValue >= txOutputValue) {
-                handleBsqOutput(txOutput, index, bsqInputBalance, mutableState, txOutputValue);
+            final long txOutputValue = txOutput.getValue();
+            if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
+                handleBsqOutput(txOutput, index, model, txOutputValue);
             } else {
-                handleBtcOutput(txOutput, index, bsqInputBalance, mutableState);
+                handleBtcOutput(txOutput, index, model);
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnController.process(txOutput, tx, index, bsqInputBalanceValue, blockHeight, mutableState);
+            opReturnController.process(txOutput, tx, index, bsqInputBalanceValue, blockHeight, model);
         }
     }
 
-    private void handleBsqOutput(TxOutput txOutput, int index, BsqTxController.BsqInputBalance bsqInputBalance,
-                                 BsqTxController.MutableState mutableState, long txOutputValue) {
-        // We have enough BSQ in the inputs to fund that output.
-
+    private void handleBsqOutput(TxOutput txOutput, int index, Model model, long txOutputValue) {
         // Update the input balance.
-        bsqInputBalance.subtract(txOutputValue);
+        model.subtractFromInputValue(txOutputValue);
 
         // At a blind vote tx we get the stake at output 0.
-        if (index == 0 && mutableState.getOpReturnTypeCandidate() == OpReturnTypes.BLIND_VOTE) {
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.VOTE_STAKE_OUTPUT);
-
+        if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnTypes.BLIND_VOTE) {
             // First output might be vote stake output.
-            mutableState.setBlindVoteStakeOutput(txOutput);
+            model.setBlindVoteStakeOutput(txOutput);
+
+            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
+            // in the model.
+            applyStateChangeForBsqOutput(txOutput, null);
         } else {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }
 
-        mutableState.increaseNumBsqOutputs();
+        model.setAnyBsqOutputFound(true);
     }
 
-    private void handleBtcOutput(TxOutput txOutput, int index, BsqTxController.BsqInputBalance bsqInputBalance,
-                                 BsqTxController.MutableState mutableState) {
-        // We have a BTC output
-
+    private void handleBtcOutput(TxOutput txOutput, int index, Model model) {
         // We have BSQ left for burning
-        if (bsqInputBalance.isPositive()) {
+        if (model.isInputValuePositive()) {
             // At the second output we might have a compensation request output if the opReturn type matches.
-            if (index == 1 && mutableState.getOpReturnTypeCandidate() == OpReturnTypes.COMPENSATION_REQUEST) {
+            if (index == 1 && model.getOpReturnTypeCandidate() == OpReturnTypes.COMPENSATION_REQUEST) {
                 // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
                 // in the model.
-                mutableState.setCompRequestIssuanceOutputCandidate(txOutput);
+                model.setIssuanceCandidate(txOutput);
             }
         }
 
         applyStateChangeForBtcOutput(txOutput);
     }
 
-    protected void applyStateChangeForBsqOutput(TxOutput txOutput, TxOutputType txOutputType) {
+    protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
         txOutput.setVerified(true);
         txOutput.setUnspent(true);
-        txOutput.setTxOutputType(txOutputType);
+        if (txOutputType != null)
+            txOutput.setTxOutputType(txOutputType);
         writableBsqBlockChain.addUnspentTxOutput(txOutput);
     }
 

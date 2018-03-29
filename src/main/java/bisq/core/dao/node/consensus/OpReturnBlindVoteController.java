@@ -40,19 +40,20 @@ public class OpReturnBlindVoteController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, BsqTxController.MutableState mutableState) {
-        return mutableState.getBlindVoteStakeOutput() != null &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+        return model.getBlindVoteStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 Version.BLIND_VOTE_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getBlindVoteFee(blockHeight) &&
                 readableBsqBlockChain.isBlindVotePeriodValid(blockHeight);
     }
 
-    public void applyStateChange(TxOutput opReturnTxOutput, BsqTxController.MutableState mutableState) {
-        opReturnTxOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
-        checkArgument(mutableState.getBlindVoteStakeOutput() != null, "mutableState." +
-                "getVoteStakeOutput() must not be null");
-        mutableState.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
-        mutableState.setVerifiedOpReturnType(OpReturnTypes.BLIND_VOTE);
+    public void applyStateChange(TxOutput txOutput, Model model) {
+        txOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
+        model.setVerifiedOpReturnType(OpReturnTypes.BLIND_VOTE);
+
+        checkArgument(model.getBlindVoteStakeOutput() != null,
+                "model.getVoteStakeOutput() must not be null");
+        model.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
     }
 }

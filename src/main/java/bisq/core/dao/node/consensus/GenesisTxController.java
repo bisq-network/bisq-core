@@ -55,8 +55,7 @@ public class GenesisTxController {
     }
 
     public void applyStateChange(Tx tx) {
-        BsqTxController.BsqInputBalance remainingAmount =
-                new BsqTxController.BsqInputBalance(readableBsqBlockChain.getIssuedAmount().getValue());
+        Model remainingAmount = new Model(readableBsqBlockChain.getIssuedAmount().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
             genesisTxOutputController.verify(tx.getOutputs().get(i), remainingAmount);
         }

@@ -28,11 +28,7 @@ import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -57,14 +53,18 @@ public class BsqTxController {
 
     // Apply state changes to tx, inputs and outputs
     // return true if any input contained BSQ
-    // Any tx with BSQ input is a BSQ tx (except genesis tx but that not handled in that class).
+    // Any tx with BSQ input is a BSQ tx (except genesis tx but that is not handled in
+    // that class).
+    // There might be txs without any valid BSQ txOutput but we still keep track of it,
+    // for instance to calculate the total burned BSQ.
     public boolean isBsqTx(int blockHeight, Tx tx) {
-        MutableState mutableState = new MutableState();
-        BsqInputBalance bsqInputBalance = txInputsController.getBsqInputBalance(tx, blockHeight, mutableState);
-        final boolean bsqInputBalancePositive = bsqInputBalance.isPositive();
+        Model model = new Model();
+        txInputsController.iterateInputs(tx, blockHeight, model);
+        final boolean bsqInputBalancePositive = model.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txOutputsController.iterate(tx, blockHeight, bsqInputBalance, mutableState);
-            tx.setTxType(getTxType(tx, bsqInputBalance, mutableState));
+            txOutputsController.verifyOpReturnCandidate(tx, model);
+            txOutputsController.iterateOutputs(tx, blockHeight, model);
+            tx.setTxType(getTxType(tx, model));
             writableBsqBlockChain.addTxToMap(tx);
         }
 
@@ -74,23 +74,23 @@ public class BsqTxController {
 
     // TODO add tests
     @VisibleForTesting
-    TxType getTxType(Tx tx, BsqTxController.BsqInputBalance bsqInputBalance, MutableState mutableState) {
+    TxType getTxType(Tx tx, Model model) {
         TxType txType;
         // We need to have at least one BSQ output
-        if (mutableState.getNumBsqOutputs() > 0) {
+        if (model.isAnyBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
-            if (mutableState.getOpReturnTypeCandidate() == mutableState.getVerifiedOpReturnType()) {
-                if (bsqInputBalance.isPositive()) {
+            if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
+                if (model.isInputValuePositive()) {
                     // We have some BSQ burnt
 
                     log.debug("BSQ have been left which was not spent. Burned BSQ amount={}, tx={}",
-                            bsqInputBalance.getValue(), tx.toString());
-                    tx.setBurntFee(bsqInputBalance.getValue());
+                            model.getAvailableInputValue(), tx.toString());
+                    tx.setBurntFee(model.getAvailableInputValue());
 
                     //TODO add  LOCK_UP, UN_LOCK
                     final TxOutput txOutput = tx.getOutputs().get(1);
-                    if (mutableState.getVerifiedOpReturnType() == OpReturnTypes.COMPENSATION_REQUEST) {
+                    if (model.getVerifiedOpReturnType() == OpReturnTypes.COMPENSATION_REQUEST) {
                         checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
                         checkArgument(txOutput.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT,
                                 "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
@@ -102,13 +102,13 @@ public class BsqTxController {
                             // Otherwise we have an open or rejected compensation request
                             txType = TxType.COMPENSATION_REQUEST;
                         }
-                    } else if (mutableState.getVerifiedOpReturnType() == OpReturnTypes.PROPOSAL) {
+                    } else if (model.getVerifiedOpReturnType() == OpReturnTypes.PROPOSAL) {
                         txType = TxType.PROPOSAL;
-                    } else if (mutableState.getVerifiedOpReturnType() == OpReturnTypes.BLIND_VOTE) {
+                    } else if (model.getVerifiedOpReturnType() == OpReturnTypes.BLIND_VOTE) {
                         txType = TxType.VOTE;
-                    } else if (mutableState.getVerifiedOpReturnType() == OpReturnTypes.VOTE_REVEAL) {
+                    } else if (model.getVerifiedOpReturnType() == OpReturnTypes.VOTE_REVEAL) {
                         txType = TxType.VOTE_REVEAL;
-                    } else if (mutableState.getOpReturnTypeCandidate() == 0x00) {
+                    } else if (model.getOpReturnTypeCandidate() == 0x00) {
                         // verifiedOpReturnType is not set in that case, so we use opReturnTypeCandidate.
                         txType = TxType.PAY_TRADE_FEE;
                     } else {
@@ -116,7 +116,7 @@ public class BsqTxController {
                         txType = TxType.INVALID;
                     }
                 } else {
-                    if (mutableState.getOpReturnTypeCandidate() == 0x00) {
+                    if (model.getOpReturnTypeCandidate() == 0x00) {
                         // Tx has no burned fee and no opReturn.
                         // If opReturnTypeCandidate is 0 then verifiedOpReturnType as to be well.
                         txType = TxType.TRANSFER_BSQ;
@@ -138,58 +138,4 @@ public class BsqTxController {
         return txType;
     }
 
-    @Getter
-    @Setter
-    static class BsqInputBalance {
-        // Remaining BSQ from inputs
-        private long value = 0;
-
-        BsqInputBalance() {
-        }
-
-        BsqInputBalance(long value) {
-            this.value = value;
-        }
-
-        public void add(long value) {
-            this.value += value;
-        }
-
-        public void subtract(long value) {
-            this.value -= value;
-        }
-
-        public boolean isPositive() {
-            return value > 0;
-        }
-
-        public boolean isZero() {
-            return value == 0;
-        }
-    }
-
-    @Getter
-    @Setter
-    static class MutableState {
-        @Nullable
-        private TxOutput compRequestIssuanceOutputCandidate;
-        @Nullable
-        private TxOutput blindVoteStakeOutput;
-        private int numBsqOutputs;
-        private boolean voteStakeSpentAtInputs;
-
-        // That will be set preliminary at first parsing the last output. Not guaranteed
-        // that it is a valid BSQ tx at that moment.
-        private byte opReturnTypeCandidate = 0x00;
-
-        // At end of parsing when we do the full validation we set the type here
-        private byte verifiedOpReturnType = 0x00;
-
-        MutableState() {
-        }
-
-        public void increaseNumBsqOutputs() {
-            numBsqOutputs++;
-        }
-    }
 }

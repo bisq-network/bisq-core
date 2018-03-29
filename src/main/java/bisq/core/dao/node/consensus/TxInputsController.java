@@ -45,20 +45,19 @@ public class TxInputsController {
         this.txInputController = txInputController;
     }
 
-    BsqTxController.BsqInputBalance getBsqInputBalance(Tx tx, int blockHeight, BsqTxController.MutableState mutableState) {
-        BsqTxController.BsqInputBalance bsqInputBalance = new BsqTxController.BsqInputBalance();
+    void iterateInputs(Tx tx, int blockHeight, Model model) {
         for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
             TxInput input = tx.getInputs().get(inputIndex);
             final Optional<TxOutput> optionalSpendableTxOutput = txInputController.getOptionalSpendableTxOutput(input);
             if (optionalSpendableTxOutput.isPresent()) {
                 final TxOutput spendableTxOutput = optionalSpendableTxOutput.get();
-                bsqInputBalance.add(spendableTxOutput.getValue());
+                model.addToInputValue(spendableTxOutput.getValue());
 
                 // If we are spending an output marked as VOTE_STAKE_OUTPUT we save it in our model for later
                 // verification if that tx is a valid reveal tx.
                 if (spendableTxOutput.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT) {
-                    if (!mutableState.isVoteStakeSpentAtInputs()) {
-                        mutableState.setVoteStakeSpentAtInputs(true);
+                    if (!model.isVoteStakeSpentAtInputs()) {
+                        model.setVoteStakeSpentAtInputs(true);
                     } else {
                         log.warn("We have a tx which has 2 connected txOutputs marked as VOTE_STAKE_OUTPUT. " +
                                 "This is not a valid BSQ tx.");
@@ -68,7 +67,6 @@ public class TxInputsController {
                 applyStateChange(input, spendableTxOutput, blockHeight, tx, inputIndex);
             }
         }
-        return bsqInputBalance;
     }
 
     private void applyStateChange(TxInput input, TxOutput spendableTxOutput, int blockHeight, Tx tx, int inputIndex) {

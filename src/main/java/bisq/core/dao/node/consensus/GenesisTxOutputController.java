@@ -36,9 +36,9 @@ public class GenesisTxOutputController extends TxOutputController {
     }
 
     // Use bsqInputBalance for counting remaining BSQ not yet allocated to a txOutput
-    void verify(TxOutput txOutput, BsqTxController.BsqInputBalance remainingAmount) {
-        if (txOutput.getValue() <= remainingAmount.getValue()) {
-            remainingAmount.subtract(txOutput.getValue());
+    void verify(TxOutput txOutput, Model remainingAmount) {
+        if (txOutput.getValue() <= remainingAmount.getAvailableInputValue()) {
+            remainingAmount.subtractFromInputValue(txOutput.getValue());
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         } else {
             // No more outputs are considered BSQ after the first non BSQ output

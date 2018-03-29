@@ -53,17 +53,18 @@ public class OpReturnController {
     public boolean verifyOpReturnCandidate(TxOutput txOutput) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
+        //TODO check if it one of our supported types
         return txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1;
     }
 
-    public void setOpReturnTypeCandidate(TxOutput txOutput, BsqTxController.MutableState mutableState) {
+    public void setOpReturnTypeCandidate(TxOutput txOutput, Model model) {
         final byte[] opReturnData = txOutput.getOpReturnData();
         checkNotNull(opReturnData, "opReturnData must nto be null");
         checkArgument(opReturnData.length >= 1, "We need to have at least 1 byte");
-        mutableState.setOpReturnTypeCandidate(opReturnData[0]);
+        model.setOpReturnTypeCandidate(opReturnData[0]);
     }
 
-    public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, BsqTxController.MutableState mutableState) {
+    public void process(TxOutput txOutput, Tx tx, int index, long bsqFee, int blockHeight, Model model) {
         final long txOutputValue = txOutput.getValue();
         // A BSQ OP_RETURN has to be the last output, the txOutputValue has to be 0 as well as there have to be a BSQ fee.
         if (txOutputValue == 0 && index == tx.getOutputs().size() - 1 && bsqFee > 0) {
@@ -74,8 +75,8 @@ public class OpReturnController {
                     // Check with the type byte which kind of OP_RETURN we have.
                     switch (opReturnData[0]) {
                         case OpReturnTypes.COMPENSATION_REQUEST:
-                            if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
-                                opReturnCompReqController.applyStateChange(txOutput, mutableState);
+                            if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnCompReqController.applyStateChange(txOutput, model);
                             } else {
                                 log.warn("We expected a compensation request op_return data but it did not " +
                                         "match our rules. tx={}", tx);
@@ -85,16 +86,16 @@ public class OpReturnController {
                             // TODO
                             break;
                         case OpReturnTypes.BLIND_VOTE:
-                            if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
-                                opReturnBlindVoteController.applyStateChange(txOutput, mutableState);
+                            if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnBlindVoteController.applyStateChange(txOutput, model);
                             } else {
                                 log.warn("We expected a blind vote op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;
                         case OpReturnTypes.VOTE_REVEAL:
-                            if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, mutableState)) {
-                                opReturnVoteRevealController.applyStateChange(tx, txOutput, mutableState);
+                            if (opReturnVoteRevealController.verify(opReturnData, bsqFee, blockHeight, model)) {
+                                opReturnVoteRevealController.applyStateChange(txOutput, model);
                             } else {
                                 log.warn("We expected a vote reveal op_return data but it did not " +
                                         "match our rules. tx={}", tx);

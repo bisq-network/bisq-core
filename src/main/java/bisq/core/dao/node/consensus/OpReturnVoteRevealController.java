@@ -19,10 +19,8 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.OpReturnTypes;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.blockchain.vo.TxType;
 
 import bisq.common.app.Version;
 
@@ -40,17 +38,16 @@ public class OpReturnVoteRevealController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, BsqTxController.MutableState mutableState) {
-        return mutableState.isVoteStakeSpentAtInputs() &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
+        return model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 54 &&
                 Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getVoteRevealFee(blockHeight) &&
                 readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
     }
 
-    public void applyStateChange(Tx tx, TxOutput txOutput, BsqTxController.MutableState mutableState) {
+    public void applyStateChange(TxOutput txOutput, Model model) {
         txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-        tx.setTxType(TxType.VOTE_REVEAL);
-        mutableState.setVerifiedOpReturnType(OpReturnTypes.VOTE_REVEAL);
+        model.setVerifiedOpReturnType(OpReturnTypes.VOTE_REVEAL);
     }
 }

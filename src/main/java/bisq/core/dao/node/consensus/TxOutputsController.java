@@ -42,7 +42,7 @@ public class TxOutputsController {
         this.txOutputController = txOutputController;
     }
 
-    void iterate(Tx tx, int blockHeight, BsqTxController.BsqInputBalance bsqInputBalance, BsqTxController.MutableState mutableState) {
+    void verifyOpReturnCandidate(Tx tx, Model model) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
 
@@ -50,14 +50,18 @@ public class TxOutputsController {
         // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
         // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
         // BSQ inputs are not verified yet.
-        // We keep the temporary opReturn type in the mutableState object.
+        // We keep the temporary opReturn type in the model object.
         checkArgument(!outputs.isEmpty(), "outputs must not be empty");
         int lastIndex = outputs.size() - 1;
-        txOutputController.verifyOpReturnCandidate(outputs.get(lastIndex), bsqInputBalance, mutableState);
+        txOutputController.verifyOpReturnCandidate(outputs.get(lastIndex), model);
+    }
 
-        // Now we iterate all outputs including the opReturn to do a full validation including the BSQ fee
+    void iterateOutputs(Tx tx, int blockHeight, Model model) {
+        // We use order of output index. An output is a BSQ utxo as long there is enough input value
+        final List<TxOutput> outputs = tx.getOutputs();
+        // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
         for (int index = 0; index < outputs.size(); index++) {
-            txOutputController.verify(tx, outputs.get(index), index, blockHeight, bsqInputBalance, mutableState);
+            txOutputController.verify(tx, outputs.get(index), index, blockHeight, model);
         }
     }
 }
