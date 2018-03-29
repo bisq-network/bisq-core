@@ -542,7 +542,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getCompReqIssuanceTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 

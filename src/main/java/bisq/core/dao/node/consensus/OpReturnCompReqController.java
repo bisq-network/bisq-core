@@ -51,11 +51,11 @@ public class OpReturnCompReqController {
     }
 
     public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.COMPENSATION_REQUEST_OP_RETURN_OUTPUT);
+        txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
         model.setVerifiedOpReturnType(OpReturnTypes.COMPENSATION_REQUEST);
 
         checkArgument(model.getIssuanceCandidate() != null,
                 "model.getCompRequestIssuanceOutputCandidate() must not be null");
-        model.getIssuanceCandidate().setTxOutputType(TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT);
+        model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
     }
 }

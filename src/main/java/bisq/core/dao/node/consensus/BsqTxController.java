@@ -92,7 +92,7 @@ public class BsqTxController {
                     final TxOutput txOutput = tx.getOutputs().get(1);
                     if (model.getVerifiedOpReturnType() == OpReturnTypes.COMPENSATION_REQUEST) {
                         checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
-                        checkArgument(txOutput.getTxOutputType() == TxOutputType.COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT,
+                        checkArgument(txOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                                 "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
                         // second output is issuance candidate
                         if (txOutput.isVerified()) {
