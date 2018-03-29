@@ -107,7 +107,6 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
-        result.add(new CryptoCurrency("DNET", "DarkNet"));
         result.add(new CryptoCurrency("DCR", "Decred"));
         result.add(new CryptoCurrency("DMC", "DynamicCoin"));
         result.add(new CryptoCurrency("ESP", "Espers"));
