@@ -181,6 +181,11 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
     }
 
     @Test
+    public void testELLA() {
+        testErc20Address("ELLA");
+    }
+
+    @Test
     @Ignore
     public void testBSQ() {
         validator.setCurrencyCode("BSQ");
