@@ -948,4 +948,23 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("P0r3vQ7SkqLELsYGM6qeRumyfPx3366uyU9").isValid);
         assertFalse(validator.validate("").isValid);
     }
+
+    @Test
+    public void testNEET() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("NEET");
+
+        assertTrue(validator.validate("NW69jcXy7T4cBsjVZ1GVtjNv4XrNa6ZA4o").isValid);
+        assertTrue(validator.validate("Nac1o79vQVkVk1BGmusDN8JrckPcDAvXVS").isValid);
+        assertTrue(validator.validate("nDjqdvK7X7MgPCtyzEukcRm1LxEy7LEZVh").isValid);
+        assertTrue(validator.validate("nJA1pCA2HaYrYwg3zcNs2FJSGtaYFriPca").isValid);
+
+        assertFalse(validator.validate("NW69jcXy7T4cBsjVZ1GVtjNv4XrNa6ZA4oo").isValid);
+        assertFalse(validator.validate("NW69jcXy7T4cBsjVZ1GVtjNv4XrNa6ZA4").isValid);
+        assertFalse(validator.validate("NW69jcXy7T4cBsjVZ1GVtjNv4XrNa6ZA4o#").isValid);
+        assertFalse(validator.validate("nDjqdvK7X7MgPCtyzEukcRm1LxEy7LEZVhh").isValid);
+        assertFalse(validator.validate("nDjqdvK7X7MgPCtyzEukcRm1LxEy7LEZV").isValid);
+        assertFalse(validator.validate("nDjqdvK7X7MgPCtyzEukcRm1LxEy7LEZVh#").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
 }
