@@ -21,9 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 import bisq.core.payment.validation.altcoins.KOTOAddressValidator;
-import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.params.PhoreParams;
-import bisq.core.payment.validation.params.WMCCParams;
 import bisq.core.util.validation.InputValidator;
 
 import bisq.asset.AddressValidationResult;
@@ -87,8 +85,6 @@ public final class AltCoinAddressValidator extends InputValidator {
             }
 
             switch (currencyCode) {
-                case "WMCC":
-                    return WMCCAddressValidator.ValidateAddress(WMCCParams.get(), input);
                 case "RTO":
                     if (!input.matches("^[A][0-9A-Za-z]{94}$"))
                         return regexTestFailed;

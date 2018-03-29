@@ -137,9 +137,6 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("UNO", "Unobtanium"));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
-        // Added 0.6.6
-        result.add(new CryptoCurrency("WMCC", "WorldMobileCoin"));
-
         // Added 0.7.0
         result.add(new CryptoCurrency("RTO", "Arto"));
         result.add(new CryptoCurrency("KOTO", "Koto"));
