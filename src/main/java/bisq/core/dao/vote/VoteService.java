@@ -372,8 +372,6 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
                 });
             } catch (InsufficientMoneyException e) {
                 e.printStackTrace();
-            } catch (ChangeBelowDustException e) {
-                e.printStackTrace();
             } catch (WalletException e) {
                 e.printStackTrace();
             } catch (TransactionVerificationException e) {
@@ -385,12 +383,11 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     }
 
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)
-            throws InsufficientMoneyException, ChangeBelowDustException, WalletException,
+            throws InsufficientMoneyException, WalletException,
             TransactionVerificationException {
-        final Coin voteFee = VoteConsensus.getVoteRevealFee(readableBsqBlockChain);
-        Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(voteFee, stakeTxOutput);
-        checkArgument(preparedTx.getInputs().size() >= 2, "preparedTx num inputs must be min. 2");
-        checkArgument(preparedTx.getOutputs().size() >= 1, "preparedTx num outputs must be min. 1");
+        Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(stakeTxOutput);
+        checkArgument(preparedTx.getInputs().size() == 1, "preparedTx num inputs must be 1");
+        checkArgument(preparedTx.getOutputs().size() == 1, "preparedTx num outputs must be 1");
         Transaction txWithBtcFee = btcWalletService.completePreparedVoteRevealTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
     }

@@ -107,10 +107,6 @@ public class VoteConsensus {
         }
     }
 
-    public static Coin getVoteRevealFee(ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain.getChainHeadHeight()));
-    }
-
     public static void unlockStakeTxOutputType(TxOutput stakeTxOutput) {
         // We unlock from the unspendable VOTE_STAKE_OUTPUT type
         stakeTxOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
