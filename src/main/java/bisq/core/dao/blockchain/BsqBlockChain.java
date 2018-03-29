@@ -546,11 +546,13 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-
     private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> unspentTxOutputsMap.entrySet().stream()
                 .filter(e -> e.getKey().equals(txIdIndexTuple))
-                .map(Map.Entry::getValue).findAny());
+                .map(Map.Entry::getValue)
+                .filter(TxOutput::isVerified)
+                .findAny()
+        );
     }
 
     public Set<TxOutput> getAllTxOutputs() {
