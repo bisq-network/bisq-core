@@ -473,7 +473,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
-                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .isPresent());
     }
 
@@ -494,7 +494,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getLockedForVoteTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -532,7 +532,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public Set<TxOutput> getBlindVoteStakeTxOutputs() {
         return lock.read(() -> getVerifiedTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_STAKE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 

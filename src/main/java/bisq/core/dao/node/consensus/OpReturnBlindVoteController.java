@@ -49,11 +49,11 @@ public class OpReturnBlindVoteController {
     }
 
     public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.VOTE_OP_RETURN_OUTPUT);
+        txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
         model.setVerifiedOpReturnType(OpReturnTypes.BLIND_VOTE);
 
         checkArgument(model.getBlindVoteStakeOutput() != null,
                 "model.getVoteStakeOutput() must not be null");
-        model.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.VOTE_STAKE_OUTPUT);
+        model.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.BLIND_VOTE_STAKE_OUTPUT);
     }
 }
