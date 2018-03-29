@@ -105,9 +105,8 @@ public class CurrencyUtil {
                 .filter(CurrencyUtil::assetIsNotBaseCurrency)
                 .filter(CurrencyUtil::excludeBsqUnlessDaoTradingIsActive)
                 .map(CurrencyUtil::assetToCryptoCurrency)
+                .sorted(TradeCurrency::compareTo)
                 .collect(Collectors.toList());
-
-        result.sort(TradeCurrency::compareTo);
 
         // Util for printing all altcoins for adding to FAQ page
 
