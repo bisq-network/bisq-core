@@ -110,7 +110,7 @@ public class BsqTxController {
                                 txType = TxType.PROPOSAL;
                                 break;
                             case BLIND_VOTE:
-                                txType = TxType.VOTE;
+                                txType = TxType.BLIND_VOTE;
                                 break;
                             case VOTE_REVEAL:
                                 txType = TxType.VOTE_REVEAL;

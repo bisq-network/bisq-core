@@ -30,7 +30,7 @@ public enum TxType {
     PAY_TRADE_FEE,
     COMPENSATION_REQUEST,
     PROPOSAL,
-    VOTE, //TODO rename to BLIND_VOTE
+    BLIND_VOTE,
     VOTE_REVEAL,
     ISSUANCE,
     LOCK_UP,

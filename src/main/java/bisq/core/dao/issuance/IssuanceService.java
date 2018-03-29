@@ -187,7 +187,7 @@ public class IssuanceService {
                 .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
-                            .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.VOTE) // double check if type is matching
+                            .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.BLIND_VOTE) // double check if type is matching
                             .map(blindVoteTx -> blindVoteTx.getTxOutput(0)) // stake need to be output 0
                             .filter(Optional::isPresent)
                             .map(Optional::get)
