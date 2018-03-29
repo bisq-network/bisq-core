@@ -35,15 +35,19 @@ public class GenesisTxOutputController extends TxOutputController {
         super(writableBsqBlockChain, opReturnController);
     }
 
-    // Use bsqInputBalance for counting remaining BSQ not yet allocated to a txOutput
-    void verify(TxOutput txOutput, Model remainingAmount) {
-        if (txOutput.getValue() <= remainingAmount.getAvailableInputValue()) {
-            remainingAmount.subtractFromInputValue(txOutput.getValue());
+    void verify(TxOutput txOutput, Model model) {
+        if (txOutput.getValue() <= model.getAvailableInputValue()) {
+            model.subtractFromInputValue(txOutput.getValue());
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         } else {
-            // No more outputs are considered BSQ after the first non BSQ output
-            // Theoretically some BSQ might be left, it would be considered as burned fee,
-            // but the genesis is constructed so that inputs matches exactly all outputs.
+            // If we get one output which is not funded sufficiently by the available
+            // input value, we consider all remaining outputs as BTC outputs.
+            // To achieve that we set the value to 0, so we avoid that following smaller
+            // outputs might get interpreted as BSQ outputs.
+            // In fact that cannot happen as the genesis tx is constructed carefully, so
+            // it matches exactly the outputs.
+            model.setAvailableInputValue(0);
+
             applyStateChangeForBtcOutput(txOutput);
         }
     }
