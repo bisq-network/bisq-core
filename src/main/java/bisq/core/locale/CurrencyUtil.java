@@ -107,7 +107,6 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .collect(Collectors.toList());
 
-        result.add(new CryptoCurrency("UNO", "Unobtanium"));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
 
         result.sort(TradeCurrency::compareTo);
