@@ -17,6 +17,8 @@
 
 package bisq.core.dao.proposal;
 
+import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+
 import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
@@ -27,9 +29,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ProposalList extends PersistableList<Proposal> {
+/**
+ * PersistableEnvelope wrapper for list of proposals. Used in vote consensus, so changes can break consensus!
+ */
+public class ProposalList extends PersistableList<Proposal> implements VoteConsensusCritical {
     public ProposalList(List<Proposal> list) {
         super(list);
+    }
+
+    public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
+        final PB.PersistableEnvelope proto = proposalList.toProtoMessage();
+        PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(proto.toByteArray());
+        return ProposalList.fromProto(envelope.getProposalList());
     }
 
     @Override
@@ -48,12 +59,6 @@ public class ProposalList extends PersistableList<Proposal> {
         return new ProposalList(new ArrayList<>(proto.getProposalList().stream()
                 .map(Proposal::fromProto)
                 .collect(Collectors.toList())));
-    }
-
-    public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
-        final PB.PersistableEnvelope proto = proposalList.toProtoMessage();
-        PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(proto.toByteArray());
-        return ProposalList.fromProto(envelope.getProposalList());
     }
 }
 
