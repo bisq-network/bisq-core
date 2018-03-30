@@ -49,7 +49,8 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
 import bisq.core.dao.proposal.ProposalCollectionsService;
 import bisq.core.dao.proposal.compensation.CompensationRequestService;
 import bisq.core.dao.proposal.generic.GenericProposalService;
-import bisq.core.dao.vote.VoteService;
+import bisq.core.dao.vote.BlindVoteService;
+import bisq.core.dao.vote.VoteRevealService;
 
 import bisq.common.app.AppModule;
 
@@ -106,7 +107,8 @@ public class DaoModule extends AppModule {
         bind(ProposalCollectionsService.class).in(Singleton.class);
         bind(CompensationRequestService.class).in(Singleton.class);
         bind(GenericProposalService.class).in(Singleton.class);
-        bind(VoteService.class).in(Singleton.class);
+        bind(BlindVoteService.class).in(Singleton.class);
+        bind(VoteRevealService.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);
 
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));

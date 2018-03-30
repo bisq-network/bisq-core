@@ -22,7 +22,8 @@ import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.proposal.ProposalCollectionsService;
-import bisq.core.dao.vote.VoteService;
+import bisq.core.dao.vote.BlindVoteService;
+import bisq.core.dao.vote.VoteRevealService;
 
 import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
@@ -36,8 +37,9 @@ public class DaoManager {
     private final DaoPeriodService daoPeriodService;
     private final ProposalCollectionsService proposalCollectionsService;
     private final BsqNode bsqNode;
+    private final VoteRevealService voteRevealService;
     private final IssuanceService issuanceService;
-    private final VoteService voteService;
+    private final BlindVoteService blindVoteService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -48,11 +50,13 @@ public class DaoManager {
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
                       ProposalCollectionsService proposalCollectionsService,
-                      VoteService voteService,
+                      BlindVoteService blindVoteService,
+                      VoteRevealService voteRevealService,
                       IssuanceService issuanceService) {
         this.daoPeriodService = daoPeriodService;
         this.proposalCollectionsService = proposalCollectionsService;
-        this.voteService = voteService;
+        this.blindVoteService = blindVoteService;
+        this.voteRevealService = voteRevealService;
         this.issuanceService = issuanceService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
@@ -63,7 +67,8 @@ public class DaoManager {
             daoPeriodService.onAllServicesInitialized();
             proposalCollectionsService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
-            voteService.onAllServicesInitialized();
+            blindVoteService.onAllServicesInitialized();
+            voteRevealService.onAllServicesInitialized();
             issuanceService.onAllServicesInitialized();
         }
     }
@@ -73,7 +78,8 @@ public class DaoManager {
             daoPeriodService.shutDown();
             proposalCollectionsService.shutDown();
             bsqNode.shutDown();
-            voteService.shutDown();
+            blindVoteService.shutDown();
+            voteRevealService.shutDown();
             issuanceService.shutDown();
         }
     }

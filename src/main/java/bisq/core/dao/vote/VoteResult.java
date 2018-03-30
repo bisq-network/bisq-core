@@ -43,6 +43,7 @@ public abstract class VoteResult implements PersistablePayload, NetworkPayload {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected PB.VoteResult.Builder getVoteResultBuilder() {
         return PB.VoteResult.newBuilder();
     }

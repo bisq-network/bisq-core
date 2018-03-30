@@ -485,9 +485,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-
-    @Override
-    public Set<TxOutput> getLockedForVoteTxOutputs() {
+    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
@@ -521,13 +519,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     public Set<TxOutput> getVoteRevealTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
-                .collect(Collectors.toSet()));
-    }
-
-    @Override
-    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getVerifiedTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 

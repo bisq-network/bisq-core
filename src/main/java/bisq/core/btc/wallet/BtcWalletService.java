@@ -283,6 +283,11 @@ public class BtcWalletService extends WalletService {
     public Transaction completePreparedBlindVoteTx(Transaction preparedTx, byte[] opReturnData)
             throws TransactionVerificationException, WalletException, InsufficientMoneyException {
         // First input index for btc inputs (they get added after bsq inputs)
+        return completePreparedBsqTxWithBtcFee(preparedTx, opReturnData);
+    }
+
+    private Transaction completePreparedBsqTxWithBtcFee(Transaction preparedTx, byte[] opReturnData) throws InsufficientMoneyException, TransactionVerificationException, WalletException {
+        // Remember index for first BTC input
         int indexOfBtcFirstInput = preparedTx.getInputs().size();
 
         Transaction tx = addInputsForMinerFee(preparedTx, opReturnData);
@@ -293,16 +298,6 @@ public class BtcWalletService extends WalletService {
 
         printTx("BTC wallet: Signed tx", tx);
         return tx;
-    }
-
-    private void signAllBtcInputs(int indexOfBtcFirstInput, Transaction tx) throws TransactionVerificationException {
-        for (int i = indexOfBtcFirstInput; i < tx.getInputs().size(); i++) {
-            TransactionInput input = tx.getInputs().get(i);
-            checkArgument(input.getConnectedOutput() != null && input.getConnectedOutput().isMine(wallet),
-                    "input.getConnectedOutput() is not in our wallet. That must not happen.");
-            signTransactionInput(wallet, aesKey, tx, input, i);
-            checkScriptSig(tx, input, i);
-        }
     }
 
     private Transaction addInputsForMinerFee(Transaction preparedTx, byte[] opReturnData) throws InsufficientMoneyException {
@@ -364,105 +359,36 @@ public class BtcWalletService extends WalletService {
         return resultTx;
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // MyVote reveal tx
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    //TODO is same as blind vote tx
-    public Transaction completePreparedVoteRevealTx(Transaction feeTx,
-                                                    byte[] opReturnData)
-            throws TransactionVerificationException, WalletException, InsufficientMoneyException {
-
-        // (BsqFee)tx has following structure:
-        // inputs [1] BSQ inputs (stake)
-        // inputs [1-n] BSQ inputs (fee)
-        // outputs [1] BSQ unlocked stake
-        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
-
-        // preparedVoteTx has following structure:
-        // inputs [1] BSQ inputs (stake)
-        // inputs [1-n] BSQ inputs (fee)
-        // inputs [1-n] BTC inputs for miner fee
-        // outputs [1] BSQ unlocked stake
-        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
-        // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
-        // outputs [0-1] OP_RETURN with opReturnData and amount 0
-        // mining fee: BTC mining fee + burned BSQ fee
-
-        Transaction preparedTx = new Transaction(params);
-        // Copy inputs from BSQ fee tx
-        feeTx.getInputs().forEach(preparedTx::addInput);
-        int indexOfBtcFirstInput = feeTx.getInputs().size();
-
-        // BSQ change outputs from BSQ fee inputs.
-        feeTx.getOutputs().forEach(preparedTx::addOutput);
-
-
-        // safety check counter to avoid endless loops
-        int counter = 0;
-        // estimated size of input sig
-        final int sigSizePerInput = 106;
-        // typical size for a tx with 3 inputs
-        int txSizeWithUnsignedInputs = 300;
-        final Coin txFeePerByte = feeService.getTxFeePerByte();
-
-        Address changeAddress = getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
-        checkNotNull(changeAddress, "changeAddress must not be null");
-
-        final BtcCoinSelector coinSelector = new BtcCoinSelector(walletsSetup.getAddressesByContext(AddressEntry.Context.AVAILABLE));
-        final List<TransactionInput> preparedBsqTxInputs = preparedTx.getInputs();
-        final List<TransactionOutput> preparedBsqTxOutputs = preparedTx.getOutputs();
-        int numInputs = preparedBsqTxInputs.size();
-        Transaction resultTx = null;
-        boolean isFeeOutsideTolerance;
-        do {
-            counter++;
-            if (counter >= 10) {
-                checkNotNull(resultTx, "resultTx must not be null");
-                log.error("Could not calculate the fee. Tx=" + resultTx);
-                break;
-            }
-
-            Transaction tx = new Transaction(params);
-            preparedBsqTxInputs.forEach(tx::addInput);
-            preparedBsqTxOutputs.forEach(tx::addOutput);
-
-            SendRequest sendRequest = SendRequest.forTx(tx);
-            sendRequest.shuffleOutputs = false;
-            sendRequest.aesKey = aesKey;
-            // signInputs needs to be false as it would try to sign all inputs (BSQ inputs are not in this wallet)
-            sendRequest.signInputs = false;
-
-            sendRequest.fee = txFeePerByte.multiply(txSizeWithUnsignedInputs + sigSizePerInput * numInputs);
-            sendRequest.feePerKb = Coin.ZERO;
-            sendRequest.ensureMinRequiredFee = false;
-
-            sendRequest.coinSelector = coinSelector;
-            sendRequest.changeAddress = changeAddress;
-            wallet.completeTx(sendRequest);
-
-            resultTx = sendRequest.tx;
-
-            // add OP_RETURN output
-            resultTx.addOutput(new TransactionOutput(params, resultTx, Coin.ZERO, ScriptBuilder.createOpReturnScript(opReturnData).getProgram()));
-
-            numInputs = resultTx.getInputs().size();
-            txSizeWithUnsignedInputs = resultTx.bitcoinSerialize().length;
-            final long estimatedFeeAsLong = txFeePerByte.multiply(txSizeWithUnsignedInputs + sigSizePerInput * numInputs).value;
-            // calculated fee must be inside of a tolerance range with tx fee
-            isFeeOutsideTolerance = Math.abs(resultTx.getFee().value - estimatedFeeAsLong) > 1000;
+    private void signAllBtcInputs(int indexOfBtcFirstInput, Transaction tx) throws TransactionVerificationException {
+        for (int i = indexOfBtcFirstInput; i < tx.getInputs().size(); i++) {
+            TransactionInput input = tx.getInputs().get(i);
+            checkArgument(input.getConnectedOutput() != null && input.getConnectedOutput().isMine(wallet),
+                    "input.getConnectedOutput() is not in our wallet. That must not happen.");
+            signTransactionInput(wallet, aesKey, tx, input, i);
+            checkScriptSig(tx, input, i);
         }
-        while (isFeeOutsideTolerance);
+    }
 
-        // Sign all BTC inputs
-        signAllBtcInputs(indexOfBtcFirstInput, resultTx);
 
-        checkWalletConsistency(wallet);
-        verifyTransaction(resultTx);
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Vote reveal tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
-        printTx("BTC wallet: Signed tx", resultTx);
-        return resultTx;
+    // We add BTC fees to the prepared reveal tx
+    // (BsqFee)tx has following structure:
+    // inputs [1] BSQ input (stake)
+    // output [1] BSQ unlocked stake
+
+    // preparedVoteTx has following structure:
+    // inputs [1] BSQ inputs (stake)
+    // inputs [1-n] BTC inputs for miner fee
+    // outputs [1] BSQ unlocked stake
+    // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
+    // outputs [0-1] OP_RETURN with opReturnData and amount 0
+    // mining fee: BTC mining fee + burned BSQ fee
+    public Transaction completePreparedVoteRevealTx(Transaction preparedTx, byte[] opReturnData)
+            throws TransactionVerificationException, WalletException, InsufficientMoneyException {
+        return completePreparedBsqTxWithBtcFee(preparedTx, opReturnData);
     }
 
 
@@ -604,10 +530,6 @@ public class BtcWalletService extends WalletService {
     public void commitTx(Transaction tx) {
         wallet.commitTx(tx);
         // printTx("BTC commit Tx", tx);
-    }
-
-    public Transaction getClonedTransaction(Transaction tx) {
-        return new Transaction(params, tx.bitcoinSerialize());
     }
 
 

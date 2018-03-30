@@ -28,6 +28,7 @@ public class IntegerVoteResult extends VoteResult {
 
     private int value;
 
+    @SuppressWarnings("WeakerAccess")
     public IntegerVoteResult(int value) {
         this.value = value;
     }

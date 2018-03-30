@@ -58,8 +58,6 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getVoteRevealTxOutputs();
 
-    Set<TxOutput> getBlindVoteStakeTxOutputs();
-
     Set<TxOutput> getCompReqIssuanceTxOutputs();
 
     Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
@@ -70,7 +68,7 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getUnspentTxOutputs();
 
-    Set<TxOutput> getLockedForVoteTxOutputs();
+    Set<TxOutput> getBlindVoteStakeTxOutputs();
 
     Set<TxOutput> getLockedInBondsOutputs();
 

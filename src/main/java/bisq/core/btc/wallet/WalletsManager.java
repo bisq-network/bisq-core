@@ -25,6 +25,7 @@ import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.wallet.DeterministicSeed;
@@ -32,12 +33,18 @@ import org.bitcoinj.wallet.Wallet;
 
 import com.google.inject.Inject;
 
+import com.google.common.util.concurrent.FutureCallback;
+
 import org.spongycastle.crypto.params.KeyParameter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 // Convenience class to handle methods applied to several wallets
 public class WalletsManager {
@@ -149,5 +156,28 @@ public class WalletsManager {
             log.warn("keyCrypter is null");
             return null;
         }
+    }
+
+    // A bsq tx has miner fees in btc included. Thus we need to handle it at both wallets.
+    public void publishAndCommitBsqTx(Transaction tx, FutureCallback<Transaction> callback) {
+        // We need to create another instance, otherwise the tx would trigger an invalid state exception
+        // if it gets committed 2 times
+        // We clone before commit to avoid unwanted side effects
+        final Transaction clonedTx = btcWalletService.getClonedTransaction(tx);
+        btcWalletService.commitTx(clonedTx);
+        bsqWalletService.commitTx(tx);
+        bsqWalletService.broadcastTx(tx, new FutureCallback<Transaction>() {
+            @Override
+            public void onSuccess(@Nullable Transaction transaction) {
+                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
+
+                callback.onSuccess(transaction);
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable t) {
+                callback.onFailure(t);
+            }
+        });
     }
 }

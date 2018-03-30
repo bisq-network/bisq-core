@@ -66,6 +66,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
@@ -204,7 +205,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
                 .map(Transaction::getHashAsString)
                 .collect(Collectors.toSet());
 
-        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getLockedForVoteTxOutputs().stream()
+        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -493,13 +494,12 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     public Transaction getPreparedVoteRevealTx(TxOutput stakeTxOutput) {
         Transaction tx = new Transaction(params);
         final Coin stake = Coin.valueOf(stakeTxOutput.getValue());
-        Transaction connectedOutputParentTransaction = getTransaction(stakeTxOutput.getTxId());
-        TransactionOutPoint transactionOutPoint = new TransactionOutPoint(params,
-                stakeTxOutput.getIndex(),
-                connectedOutputParentTransaction);
-        tx.addInput(new TransactionInput(params, tx, new byte[]{}, transactionOutPoint, stake));
+        Transaction blindVoteTx = getTransaction(stakeTxOutput.getTxId());
+        checkNotNull(blindVoteTx, "blindVoteTx must not be null");
+        TransactionOutPoint outPoint = new TransactionOutPoint(params, stakeTxOutput.getIndex(), blindVoteTx);
+        // Input is not signed yet so we use new byte[]{}
+        tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, stake));
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-
         printTx("getPreparedVoteRevealTx", tx);
         return tx;
     }

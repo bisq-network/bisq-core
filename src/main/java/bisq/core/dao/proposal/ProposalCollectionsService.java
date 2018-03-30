@@ -20,6 +20,7 @@ package bisq.core.dao.proposal;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.DaoPeriodService;
 import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -61,17 +62,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Manages proposal collections.
  */
 @Slf4j
 public class ProposalCollectionsService implements PersistedDataHost, BsqNode.BsqBlockChainListener, HashMapChangedListener {
     private final P2PService p2PService;
-    private final DaoPeriodService daoPeriodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
+    private final WalletsManager walletsManager;
+    private final DaoPeriodService daoPeriodService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final Storage<ProposalList> proposalListStorage;
     private final PublicKey signaturePubKey;
@@ -92,6 +92,7 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqNode.Bs
     public ProposalCollectionsService(P2PService p2PService,
                                       BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
+                                      WalletsManager walletsManager,
                                       DaoPeriodService daoPeriodService,
                                       ReadableBsqBlockChain readableBsqBlockChain,
                                       BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
@@ -100,6 +101,7 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqNode.Bs
         this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
+        this.walletsManager = walletsManager;
         this.daoPeriodService = daoPeriodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.proposalListStorage = proposalListStorage;
@@ -204,19 +206,9 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqNode.Bs
     }
 
     public void publishProposal(Proposal proposal, FutureCallback<Transaction> callback) {
-        // We need to create another instance, otherwise the tx would trigger an invalid state exception
-        // if it gets committed 2 times
-        // We clone before commit to avoid unwanted side effects
-        final Transaction tx = proposal.getTx();
-        final Transaction clonedTx = btcWalletService.getClonedTransaction(tx);
-        btcWalletService.commitTx(clonedTx);
-
-        bsqWalletService.commitTx(tx);
-
-        bsqWalletService.broadcastTx(tx, new FutureCallback<Transaction>() {
+        walletsManager.publishAndCommitBsqTx(proposal.getTx(), new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction transaction) {
-                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
                 proposal.getProposalPayload().setTxId(transaction.getHashAsString());
                 addToP2PNetwork(proposal.getProposalPayload());
 

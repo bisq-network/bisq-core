@@ -22,15 +22,13 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.DaoPeriodService;
-import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalCollectionsService;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.consensus.BlindVoteConsensus;
-import bisq.core.dao.vote.consensus.VoteRevealConsensus;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -43,7 +41,6 @@ import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
-import bisq.common.util.Utilities;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -71,8 +68,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -81,19 +77,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Creates and published blind votes and manages the vote list.
  */
 @Slf4j
-public class VoteService implements PersistedDataHost, HashMapChangedListener {
+public class BlindVoteService implements PersistedDataHost, HashMapChangedListener {
     private final ProposalCollectionsService proposalCollectionsService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final DaoPeriodService daoPeriodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
+    private final WalletsManager walletsManager;
     private final P2PService p2PService;
     private final PublicKey signaturePubKey;
     private final Storage<MyVoteList> myVoteListStorage;
@@ -106,8 +100,6 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     @Getter
     private final List<BlindVote> blindVoteSortedList = new SortedList<>(blindVoteList);
     private ChangeListener<Number> numConnectedPeersListener;
-    private BsqBlockChain.Listener bsqBlockChainListener;
-    private ObservableList<Throwable> errors = FXCollections.observableArrayList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -115,20 +107,22 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public VoteService(ProposalCollectionsService proposalCollectionsService,
-                       ReadableBsqBlockChain readableBsqBlockChain,
-                       DaoPeriodService daoPeriodService,
-                       BsqWalletService bsqWalletService,
-                       BtcWalletService btcWalletService,
-                       P2PService p2PService,
-                       KeyRing keyRing,
-                       Storage<MyVoteList> myVoteListStorage,
-                       Storage<BlindVoteList> blindVoteListStorage) {
+    public BlindVoteService(ProposalCollectionsService proposalCollectionsService,
+                            ReadableBsqBlockChain readableBsqBlockChain,
+                            DaoPeriodService daoPeriodService,
+                            BsqWalletService bsqWalletService,
+                            BtcWalletService btcWalletService,
+                            WalletsManager walletsManager,
+                            P2PService p2PService,
+                            KeyRing keyRing,
+                            Storage<MyVoteList> myVoteListStorage,
+                            Storage<BlindVoteList> blindVoteListStorage) {
         this.proposalCollectionsService = proposalCollectionsService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.daoPeriodService = daoPeriodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
+        this.walletsManager = walletsManager;
         this.p2PService = p2PService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
@@ -166,15 +160,8 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        // Listen to BlindVote data from the network
         p2PService.addHashSetChangedListener(this);
         p2PService.getDataMap().values().forEach(this::onAdded);
-
-        // Listen to phase changes
-        daoPeriodService.getPhaseProperty().addListener((observable, oldValue, newValue) -> {
-            onPhaseChanged(newValue);
-        });
-        onPhaseChanged(daoPeriodService.getPhaseProperty().get());
 
         // Republish own active blindVotes once we are well connected
         numConnectedPeersListener = (observable, oldValue, newValue) -> {
@@ -184,6 +171,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
         publishMyBlindVotesIfWellConnected();
     }
 
+    @SuppressWarnings("EmptyMethod")
     public void shutDown() {
         // TODO keep for later, maybe we get resources to clean up later
     }
@@ -193,31 +181,55 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
             IOException {
         ProposalList proposalList = getClonedProposalList(proposalCollectionsService.getActiveProposals());
         SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-        byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
-        byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposalList);
+        byte[] encryptedProposals = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
+        byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
-        publishBlindVoteTx(blindVoteTx, new FutureCallback<Transaction>() {
+        walletsManager.publishAndCommitBsqTx(blindVoteTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction result) {
+                //TODO set a flag once the tx was successfully broadcasted
+                // Also verify that the txId is as expected and not got changed (malleability)
                 callback.onSuccess(result);
             }
 
             @Override
             public void onFailure(@NotNull Throwable t) {
+                //TODO handle error
                 callback.onFailure(t);
             }
         });
 
-        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
-        addBlindVoteToP2PNetwork(blindVote);
+        // We cannot apply the state change only if we get the tx successfully broadcasted.
+        // In case the broadcast fails or timed out we might get the tx broadcasted at another startup
+        // but we would not get the blind vote recognized as we did not applied the state changes.
+        // That is particularly problematic as the stake is locked up when the OP_RETURN data are processed in
+        // the parsing. We prefer to keep track of the state and notify the user in case the tx broadcast failed or
+        // timed out. Any time the tx succeeds broadcast later the blind vote becomes valid.
+        BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
         if (!blindVoteList.contains(blindVote)) {
             blindVoteList.add(blindVote);
             blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
+        } else {
+            log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
+        }
+        if (!addBlindVoteToP2PNetwork(blindVote)) {
+            //TODO handle error
+            log.warn("We could not publish the blind vote to the P2P network. blindVote={}", blindVote);
         }
 
         MyVote myVote = new MyVote(proposalList, Utils.HEX.encode(secretKey.getEncoded()), blindVote);
         myVotesList.add(myVote);
         myVoteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
+    }
+
+    public List<BlindVote> getBlindVoteListForCurrentCycle() {
+        return blindVoteSortedList.stream()
+                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
+                .collect(Collectors.toList());
+    }
+
+    public void persistMyVoteListStorage() {
+        myVoteListStorage.queueUpForSave();
     }
 
 
@@ -235,7 +247,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
 
     @Override
     public void onRemoved(ProtectedStorageEntry data) {
-        // Removal is not supported
+        throw new UnsupportedOperationException("Removal of blind vote data is not supported");
     }
 
 
@@ -283,132 +295,7 @@ public class VoteService implements PersistedDataHost, HashMapChangedListener {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void publishBlindVoteTx(Transaction blindVoteTx, FutureCallback<Transaction> callback) {
-        // We need to create another instance, otherwise the tx would trigger an invalid state exception
-        // if it gets committed 2 times
-        // We clone before commit to avoid unwanted side effects
-        final Transaction clonedTx = btcWalletService.getClonedTransaction(blindVoteTx);
-        btcWalletService.commitTx(clonedTx);
-        bsqWalletService.commitTx(blindVoteTx);
-        bsqWalletService.broadcastTx(blindVoteTx, new FutureCallback<Transaction>() {
-            @Override
-            public void onSuccess(@Nullable Transaction transaction) {
-                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
-                callback.onSuccess(transaction);
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable t) {
-                callback.onFailure(t);
-            }
-        });
-    }
-
-    private void addBlindVoteToP2PNetwork(BlindVote blindVote) {
-        p2PService.addProtectedStorageEntry(blindVote, true);
-    }
-
-    private void onPhaseChanged(DaoPeriodService.Phase phase) {
-        if (phase == DaoPeriodService.Phase.VOTE_REVEAL) {
-            // A phase change is triggered by a new block but we need to wait for the parser to complete
-            //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            bsqBlockChainListener = bsqBlock -> revealVotes();
-            readableBsqBlockChain.addListener(bsqBlockChainListener);
-            revealVotes();
-        } else {
-            // If we are not in the reveal phase we are not interested in the events.
-            if (bsqBlockChainListener != null)
-                readableBsqBlockChain.removeListener(bsqBlockChainListener);
-            bsqBlockChainListener = null;
-        }
-    }
-
-    private void revealVotes() {
-        myVotesList.stream()
-                .filter(myVote -> myVote.getRevealTxId() == null)
-                .forEach(myVote -> {
-                    // We prefer to handle the exception here inside the stream iteration
-                    try {
-                        revealVote(myVote);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        log.error(e.toString());
-                        //TODO wrap to specific exception
-                        errors.add(e);
-                    }
-                });
-    }
-
-    private void revealVote(MyVote myVote) throws IOException {
-        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteSortedList);
-        log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
-        byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
-
-        final Set<TxOutput> lockedForVoteTxOutputs = readableBsqBlockChain.getLockedForVoteTxOutputs();
-        Optional<TxOutput> optionalStakeTxOutput = lockedForVoteTxOutputs.stream()
-                .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId()))
-                .findAny();
-        if (optionalStakeTxOutput.isPresent()) {
-            try {
-                final TxOutput stakeTxOutput = optionalStakeTxOutput.get();
-                VoteRevealConsensus.unlockStakeTxOutputType(stakeTxOutput);
-                Transaction voteRevealTx = getVoteRevealTx(stakeTxOutput, opReturnData);
-                myVote.setRevealTxId(voteRevealTx.getHashAsString());
-                myVoteListStorage.queueUpForSave();
-
-                publishRevealTx(voteRevealTx, new FutureCallback<Transaction>() {
-                    @Override
-                    public void onSuccess(@Nullable Transaction result) {
-                    }
-
-                    @Override
-                    public void onFailure(@NotNull Throwable t) {
-                    }
-                });
-            } catch (InsufficientMoneyException e) {
-                e.printStackTrace();
-            } catch (WalletException e) {
-                e.printStackTrace();
-            } catch (TransactionVerificationException e) {
-                e.printStackTrace();
-            }
-        } else {
-            //log.warn("optionalStakeTxOutput is not present. myVote={}", myVote);
-        }
-    }
-
-    private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)
-            throws InsufficientMoneyException, WalletException,
-            TransactionVerificationException {
-        Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(stakeTxOutput);
-        checkArgument(preparedTx.getInputs().size() == 1, "preparedTx num inputs must be 1");
-        checkArgument(preparedTx.getOutputs().size() == 1, "preparedTx num outputs must be 1");
-        Transaction txWithBtcFee = btcWalletService.completePreparedVoteRevealTx(preparedTx, opReturnData);
-        return bsqWalletService.signTx(txWithBtcFee);
-    }
-
-    //TODO is same as for blind vote tx
-    private void publishRevealTx(Transaction voteRevealTx, FutureCallback<Transaction> callback) {
-        // We need to create another instance, otherwise the tx would trigger an invalid state exception
-        // if it gets committed 2 times
-        // We clone before commit to avoid unwanted side effects
-        final Transaction clonedTx = btcWalletService.getClonedTransaction(voteRevealTx);
-        btcWalletService.commitTx(clonedTx);
-
-        bsqWalletService.commitTx(voteRevealTx);
-
-        bsqWalletService.broadcastTx(voteRevealTx, new FutureCallback<Transaction>() {
-            @Override
-            public void onSuccess(@Nullable Transaction transaction) {
-                checkNotNull(transaction, "Transaction must not be null at broadcastTx callback.");
-
-                callback.onSuccess(transaction);
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable t) {
-                callback.onFailure(t);
-            }
-        });
+    private boolean addBlindVoteToP2PNetwork(BlindVote blindVote) {
+        return p2PService.addProtectedStorageEntry(blindVote, true);
     }
 }

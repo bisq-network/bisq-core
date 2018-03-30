@@ -32,9 +32,11 @@ import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalCollectionsService;
 import bisq.core.dao.proposal.ProposalList;
 import bisq.core.dao.vote.BlindVote;
+import bisq.core.dao.vote.BlindVoteList;
+import bisq.core.dao.vote.BlindVoteService;
 import bisq.core.dao.vote.BooleanVoteResult;
 import bisq.core.dao.vote.RevealedVote;
-import bisq.core.dao.vote.VoteService;
+import bisq.core.dao.vote.VoteRevealService;
 import bisq.core.dao.vote.consensus.VoteRevealConsensus;
 
 import bisq.common.crypto.CryptoException;
@@ -69,7 +71,8 @@ public class IssuanceService {
 
     private final BsqNode bsqNode;
     private final ProposalCollectionsService proposalCollectionsService;
-    private final VoteService voteService;
+    private final BlindVoteService blindVoteService;
+    private final VoteRevealService voteRevealService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final WritableBsqBlockChain writableBsqBlockChain;
     private final DaoPeriodService daoPeriodService;
@@ -84,13 +87,15 @@ public class IssuanceService {
     @Inject
     public IssuanceService(ProposalCollectionsService proposalCollectionsService,
                            BsqNodeProvider bsqNodeProvider,
-                           VoteService voteService,
+                           BlindVoteService blindVoteService,
+                           VoteRevealService voteRevealService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            WritableBsqBlockChain writableBsqBlockChain,
                            DaoPeriodService daoPeriodService,
                            BsqWalletService bsqWalletService) {
         this.proposalCollectionsService = proposalCollectionsService;
-        this.voteService = voteService;
+        this.blindVoteService = blindVoteService;
+        this.voteRevealService = voteRevealService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.writableBsqBlockChain = writableBsqBlockChain;
         this.daoPeriodService = daoPeriodService;
@@ -182,7 +187,7 @@ public class IssuanceService {
 
     private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
         //TODO check not in current cycle but in the cycle of the tx
-        return voteService.getBlindVoteList().stream()
+        return blindVoteService.getBlindVoteList().stream()
                 .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
@@ -302,7 +307,8 @@ public class IssuanceService {
     }
 
     private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
-        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(voteService.getBlindVoteSortedList());
+        final BlindVoteList blindVoteList = new BlindVoteList(blindVoteService.getBlindVoteListForCurrentCycle());
+        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         return Arrays.equals(majorityVoteListHash, hashOfBlindVoteList);
