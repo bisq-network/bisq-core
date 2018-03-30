@@ -68,7 +68,6 @@ import java.security.PublicKey;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,7 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 /**
- * Creates and published blind votes and manages the vote list.
+ * Creates and published blind votes and manages the vote lists.
  */
 @Slf4j
 public class BlindVoteService implements PersistedDataHost, HashMapChangedListener {
@@ -96,7 +95,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final Storage<BlindVoteList> blindVoteListStorage;
 
     @Getter
-    private final List<MyVote> myVotesList = new ArrayList<>();
+    private final ObservableList<MyVote> myVotesList = FXCollections.observableArrayList();
     @Getter
     private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
     @Getter

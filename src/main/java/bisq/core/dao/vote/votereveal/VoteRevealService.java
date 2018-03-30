@@ -209,5 +209,4 @@ public class VoteRevealService {
         blindVoteService.persistMyVoteListStorage();
         VoteRevealConsensus.unlockStakeTxOutputType(stakeTxOutput);
     }
-
 }

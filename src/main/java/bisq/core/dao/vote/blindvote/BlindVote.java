@@ -17,6 +17,8 @@
 
 package bisq.core.dao.vote.blindvote;
 
+import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
@@ -54,7 +56,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @Data
 public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+        CapabilityRequiringPayload, VoteConsensusCritical {
 
     public static BlindVote clone(BlindVote blindVote) {
         return new BlindVote(blindVote.encryptedProposalList,

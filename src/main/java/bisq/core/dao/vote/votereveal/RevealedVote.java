@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.votereveal;
 
 import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.consensus.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.ProposalList;
 
 import bisq.common.proto.persistable.PersistablePayload;
@@ -35,7 +36,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode
 @Slf4j
 @Data
-public class RevealedVote implements PersistablePayload {
+public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
 
     private final ProposalList proposalList;
     private final BlindVote blindVote;
