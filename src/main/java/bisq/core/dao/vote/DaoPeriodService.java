@@ -59,7 +59,7 @@ public class DaoPeriodService {
         BREAK2(1),
         VOTE_REVEAL(2),
         BREAK3(1),
-        ISSUANCE(1),
+        ISSUANCE(1), // Must have only 1 block!
         BREAK4(1);
 
       /* UNDEFINED(0),

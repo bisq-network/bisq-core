@@ -125,4 +125,8 @@ public abstract class Proposal implements PersistablePayload {
     public String getTxId() {
         return proposalPayload.getTxId();
     }
+
+    public String getUid() {
+        return proposalPayload.getUid();
+    }
 }

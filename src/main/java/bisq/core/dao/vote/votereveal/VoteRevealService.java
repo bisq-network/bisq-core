@@ -69,7 +69,7 @@ public class VoteRevealService {
     @Getter
     private final List<MyVote> myVotesList = new ArrayList<>();
     @Getter
-    private ObservableList<VoteRevealException> voteRevealExceptions = FXCollections.observableArrayList();
+    private final ObservableList<VoteRevealException> voteRevealExceptions = FXCollections.observableArrayList();
     private BsqBlockChain.Listener bsqBlockChainListener;
 
 

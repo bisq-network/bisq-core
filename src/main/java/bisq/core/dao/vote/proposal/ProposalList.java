@@ -39,7 +39,11 @@ public class ProposalList extends PersistableList<Proposal> implements VoteConse
 
     public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope proto = proposalList.toProtoMessage();
-        PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(proto.toByteArray());
+        return ProposalList.getProposalListFromBytes(proto.toByteArray());
+    }
+
+    public static ProposalList getProposalListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
+        final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(bytes);
         return ProposalList.fromProto(envelope.getProposalList());
     }
 

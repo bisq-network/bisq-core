@@ -86,4 +86,8 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     public String getTxId() {
         return blindVote.getTxId();
     }
+
+    public long getStake() {
+        return blindVote.getStake();
+    }
 }
