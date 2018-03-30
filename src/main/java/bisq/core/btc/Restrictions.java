@@ -38,12 +38,12 @@ public class Restrictions {
 
     private static Coin minNonDustOutput;
 
-    public static boolean isAboveDust(Coin amount, Coin txFee) {
-        return amount != null && amount.compareTo(txFee.add(getMinNonDustOutput())) >= 0;
-    }
-
     public static boolean isAboveDust(Coin amount) {
         return amount != null && amount.compareTo(getMinNonDustOutput()) >= 0;
+    }
+
+    public static boolean isDust(Coin amount) {
+        return !isAboveDust(amount);
     }
 
     public static Coin getMinTradeAmount() {
