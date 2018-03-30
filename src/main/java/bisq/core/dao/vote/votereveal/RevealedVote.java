@@ -15,22 +15,15 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.votereveal;
 
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalList;
 
-import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.bitcoinj.core.Utils;
-
-import javax.crypto.SecretKey;
-
-import java.util.Date;
 import java.util.Optional;
 
 import lombok.Data;
@@ -42,28 +35,17 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode
 @Slf4j
 @Data
-public class MyVote implements PersistablePayload {
-    // TODO do we need to store proposalList - it could be created by decrypting blindVote.encryptedProposalList
-    // with secretKey
+public class RevealedVote implements PersistablePayload {
+
     private final ProposalList proposalList;
-    private final String secretKeyAsHex;
     private final BlindVote blindVote;
-    private final long date;
     @Nullable
     private String revealTxId;
 
-    // Used just for caching
-    @JsonExclude
-    @Nullable
-    private transient SecretKey secretKey;
-
-    public MyVote(ProposalList proposalList,
-                  String secretKeyAsHex,
-                  BlindVote blindVote) {
+    public RevealedVote(ProposalList proposalList,
+                        BlindVote blindVote) {
         this(proposalList,
-                secretKeyAsHex,
                 blindVote,
-                new Date().getTime(),
                 null);
     }
 
@@ -72,34 +54,26 @@ public class MyVote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private MyVote(ProposalList proposalList,
-                   String secretKeyAsHex,
-                   BlindVote blindVote,
-                   long date,
-                   @Nullable String revealTxId) {
+    private RevealedVote(ProposalList proposalList,
+                         BlindVote blindVote,
+                         @Nullable String revealTxId) {
         this.proposalList = proposalList;
-        this.secretKeyAsHex = secretKeyAsHex;
         this.blindVote = blindVote;
-        this.date = date;
         this.revealTxId = revealTxId;
     }
 
     @Override
-    public PB.MyVote toProtoMessage() {
-        final PB.MyVote.Builder builder = PB.MyVote.newBuilder()
+    public PB.RevealedVote toProtoMessage() {
+        final PB.RevealedVote.Builder builder = PB.RevealedVote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
-                .setProposalList(proposalList.getBuilder())
-                .setSecretKeyAsHex(secretKeyAsHex)
-                .setDate(date);
+                .setProposalList(proposalList.getBuilder());
         Optional.ofNullable(revealTxId).ifPresent(builder::setRevealTxId);
         return builder.build();
     }
 
-    public static MyVote fromProto(PB.MyVote proto) {
-        return new MyVote(ProposalList.fromProto(proto.getProposalList()),
-                proto.getSecretKeyAsHex(),
+    public static RevealedVote fromProto(PB.RevealedVote proto) {
+        return new RevealedVote(ProposalList.fromProto(proto.getProposalList()),
                 BlindVote.fromProto(proto.getBlindVote()),
-                proto.getDate(),
                 proto.getRevealTxId().isEmpty() ? null : proto.getRevealTxId());
     }
 
@@ -107,12 +81,6 @@ public class MyVote implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public SecretKey getSecretKey() {
-        if (secretKey == null)
-            secretKey = Encryption.getSecretKeyFromBytes(Utils.HEX.decode(secretKeyAsHex));
-        return secretKey;
-    }
 
     public String getTxId() {
         return blindVote.getTxId();

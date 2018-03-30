@@ -15,7 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.blindvote;
+
+import bisq.core.dao.vote.consensus.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
@@ -28,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MyVoteList extends PersistableList<MyVote> {
+public class BlindVoteList extends PersistableList<BlindVote> implements VoteConsensusCritical {
 
-    public MyVoteList(List<MyVote> list) {
+    public BlindVoteList(List<BlindVote> list) {
         super(list);
     }
 
@@ -41,17 +43,16 @@ public class MyVoteList extends PersistableList<MyVote> {
     @Override
     public Message toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder()
-                .setMyVoteList(PB.MyVoteList.newBuilder()
-                        .addAllMyVote(getList().stream()
-                                .map(MyVote::toProtoMessage)
+                .setBlindVoteList(PB.BlindVoteList.newBuilder()
+                        .addAllBlindVote(getList().stream()
+                                .map(BlindVote::toBlindVote)
                                 .collect(Collectors.toList())))
                 .build();
     }
 
-    public static PersistableEnvelope fromProto(PB.MyVoteList proto) {
-        return new MyVoteList(new ArrayList<>(proto.getMyVoteList().stream()
-                .map(MyVote::fromProto)
+    public static PersistableEnvelope fromProto(PB.BlindVoteList proto) {
+        return new BlindVoteList(new ArrayList<>(proto.getBlindVoteList().stream()
+                .map(BlindVote::fromProto)
                 .collect(Collectors.toList())));
     }
 }
-

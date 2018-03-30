@@ -18,12 +18,13 @@
 package bisq.core.dao;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.proposal.ProposalCollectionsService;
-import bisq.core.dao.vote.BlindVoteService;
-import bisq.core.dao.vote.VoteRevealService;
+import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.blindvote.BlindVoteService;
+import bisq.core.dao.vote.issuance.IssuanceService;
+import bisq.core.dao.vote.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;

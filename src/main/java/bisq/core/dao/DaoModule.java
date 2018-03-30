@@ -23,7 +23,6 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
-import bisq.core.dao.issuance.IssuanceService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
@@ -46,11 +45,13 @@ import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
-import bisq.core.dao.proposal.ProposalCollectionsService;
-import bisq.core.dao.proposal.compensation.CompensationRequestService;
-import bisq.core.dao.proposal.generic.GenericProposalService;
-import bisq.core.dao.vote.BlindVoteService;
-import bisq.core.dao.vote.VoteRevealService;
+import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.blindvote.BlindVoteService;
+import bisq.core.dao.vote.issuance.IssuanceService;
+import bisq.core.dao.vote.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
+import bisq.core.dao.vote.proposal.generic.GenericProposalService;
+import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.AppModule;
 

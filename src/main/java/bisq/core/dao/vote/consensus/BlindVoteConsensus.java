@@ -19,9 +19,9 @@ package bisq.core.dao.vote.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.proposal.Proposal;
-import bisq.core.dao.proposal.ProposalList;
-import bisq.core.dao.vote.BlindVote;
+import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.proposal.Proposal;
+import bisq.core.dao.vote.proposal.ProposalList;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.CryptoException;
