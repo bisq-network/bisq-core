@@ -1089,7 +1089,7 @@ public class BtcWalletService extends WalletService {
                                        AddressEntry.Context context) throws AddressFormatException,
             AddressEntryException {
         Transaction tx = new Transaction(params);
-        Preconditions.checkArgument(Restrictions.isAboveDust(amount, fee),
+        Preconditions.checkArgument(Restrictions.isAboveDust(amount.add(fee)),
                 "The amount is too low (dust limit).");
         tx.addOutput(amount.subtract(fee), Address.fromBase58(params, toAddress));
 

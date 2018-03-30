@@ -445,7 +445,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
         CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
+            Coin change = bsqCoinSelector.getChange(fee, coinSelection);
             if (!Restrictions.isAboveDust(change))
                 throw new ChangeBelowDustException(change);
 
@@ -467,12 +467,11 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
             throws InsufficientBsqException, ChangeBelowDustException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        final Coin sum = fee.add(stake);
-        CoinSelection coinSelection = bsqCoinSelector.select(sum, wallet.calculateAllSpendCandidates());
+        final Coin amountNeeded = fee.add(stake);
+        CoinSelection coinSelection = bsqCoinSelector.select(amountNeeded, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            // We add here stake as we have that output already added
-            Coin change = bsqCoinSelector.getChangeExcludingFee(sum, coinSelection);
+            Coin change = bsqCoinSelector.getChange(amountNeeded, coinSelection);
             if (!Restrictions.isAboveDust(change))
                 throw new ChangeBelowDustException(change);
 
