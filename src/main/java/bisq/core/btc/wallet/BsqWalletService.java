@@ -406,10 +406,8 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     // Send BSQ with BTC fee
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedSendTx(String receiverAddress,
-                                         Coin receiverAmount) throws AddressFormatException,
-            InsufficientBsqException, WalletException, TransactionVerificationException {
-
+    public Transaction getPreparedSendTx(String receiverAddress, Coin receiverAmount)
+            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
         Transaction tx = new Transaction(params);
         checkArgument(Restrictions.isAboveDust(receiverAmount),
                 "The amount is too low (dust limit).");
@@ -446,7 +444,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
         coinSelection.gathered.forEach(tx::addInput);
         try {
             Coin change = bsqCoinSelector.getChange(fee, coinSelection);
-            if (!Restrictions.isAboveDust(change))
+            if (Restrictions.isDust(change))
                 throw new ChangeBelowDustException(change);
 
             if (change.isPositive())
@@ -472,7 +470,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
         coinSelection.gathered.forEach(tx::addInput);
         try {
             Coin change = bsqCoinSelector.getChange(amountNeeded, coinSelection);
-            if (!Restrictions.isAboveDust(change))
+            if (Restrictions.isDust(change))
                 throw new ChangeBelowDustException(change);
 
             if (change.isPositive())

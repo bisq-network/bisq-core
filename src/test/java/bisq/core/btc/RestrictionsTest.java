@@ -30,7 +30,6 @@ public class RestrictionsTest {
     public void testIsMinSpendableAmount() {
         Coin amount = null;
         Coin txFee = Coin.valueOf(20000);
-        assertFalse(Restrictions.isAboveDust(amount.add(txFee)));
 
         amount = Coin.ZERO;
         assertFalse(Restrictions.isAboveDust(amount.add(txFee)));

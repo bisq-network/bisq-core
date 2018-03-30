@@ -39,7 +39,7 @@ public class Restrictions {
     private static Coin minNonDustOutput;
 
     public static boolean isAboveDust(Coin amount) {
-        return amount != null && amount.compareTo(getMinNonDustOutput()) >= 0;
+        return amount.compareTo(getMinNonDustOutput()) >= 0;
     }
 
     public static boolean isDust(Coin amount) {
