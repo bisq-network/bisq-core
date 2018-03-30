@@ -147,7 +147,6 @@ public class IssuanceService {
             byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(txIdListMap);
             if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
                 Map<Proposal, Integer> stakeByProposalMap = getResultStakeByProposalMap(revealedVotes);
-
                 IssuanceConsensus.applyVoteResult(stakeByProposalMap, readableBsqBlockChain, writableBsqBlockChain);
             } else {
                 log.warn("Our list of received blind votes do not match the list from the majority of voters.");
