@@ -325,6 +325,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             // We should track spent status and output has to be unspent anyway
             txOutput.setUnspent(true);
             txOutput.setVerified(true);
+            addUnspentTxOutput(txOutput);
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
     }
@@ -463,6 +464,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO handle BOND_LOCK, BOND_UNLOCK
+    // TODO handle BLIND_VOTE_STAKE_OUTPUT more specifically
     @Override
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
