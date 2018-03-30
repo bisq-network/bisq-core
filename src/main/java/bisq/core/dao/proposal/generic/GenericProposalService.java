@@ -21,7 +21,6 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.btc.wallet.ChangeBelowDustException;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.proposal.compensation.consensus.OpReturnData;
 import bisq.core.dao.proposal.consensus.ProposalConsensus;
@@ -93,8 +92,7 @@ public class GenericProposalService {
 
     // TODO move code to consensus package
     public GenericProposal prepareGenericProposal(GenericProposalPayload genericProposalPayload)
-            throws InsufficientMoneyException, ChangeBelowDustException, TransactionVerificationException,
-            WalletException {
+            throws InsufficientMoneyException, TransactionVerificationException, WalletException {
 
         GenericProposal compensationRequest = new GenericProposal(genericProposalPayload);
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx

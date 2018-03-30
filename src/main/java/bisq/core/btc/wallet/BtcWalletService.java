@@ -236,13 +236,7 @@ public class BtcWalletService extends WalletService {
         while (isFeeOutsideTolerance);
 
         // Sign all BTC inputs
-        for (int i = indexOfBtcFirstInput; i < resultTx.getInputs().size(); i++) {
-            TransactionInput txIn = resultTx.getInputs().get(i);
-            checkArgument(txIn.getConnectedOutput() != null && txIn.getConnectedOutput().isMine(wallet),
-                    "txIn.getConnectedOutput() is not in our wallet. That must not happen.");
-            signTransactionInput(wallet, aesKey, resultTx, txIn, i);
-            checkScriptSig(resultTx, txIn, i);
-        }
+        signAllBtcInputs(indexOfBtcFirstInput, resultTx);
 
         checkWalletConsistency(wallet);
         verifyTransaction(resultTx);
@@ -271,31 +265,47 @@ public class BtcWalletService extends WalletService {
     // Blind vote tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction completePreparedBlindVoteTx(Transaction feeTx, byte[] opReturnData)
+    // We add BTC inputs to pay miner fees and sign the BTC tx inputs
+
+    // (BsqFee)tx has following structure:
+    // inputs [1-n] BSQ inputs (fee + stake)
+    // outputs [1] BSQ stake
+    // outputs [0-1] BSQ change output (>= 2730 Satoshi)
+
+    // preparedVoteTx has following structure:
+    // inputs [1-n] BSQ inputs (fee + stake)
+    // inputs [1-n] BTC inputs for miner fee
+    // outputs [1] BSQ stake
+    // outputs [0-1] BSQ change output (>= 2730 Satoshi)
+    // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
+    // outputs [0-1] OP_RETURN with opReturnData and amount 0
+    // mining fee: BTC mining fee + burned BSQ fee
+    public Transaction completePreparedBlindVoteTx(Transaction preparedTx, byte[] opReturnData)
             throws TransactionVerificationException, WalletException, InsufficientMoneyException {
+        // First input index for btc inputs (they get added after bsq inputs)
+        int indexOfBtcFirstInput = preparedTx.getInputs().size();
 
-        // (BsqFee)tx has following structure:
-        // inputs [1-n] BSQ inputs (fee + stake)
-        // outputs [1] BSQ stake
-        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
+        Transaction tx = addInputsForMinerFee(preparedTx, opReturnData);
+        signAllBtcInputs(indexOfBtcFirstInput, tx);
 
-        // preparedVoteTx has following structure:
-        // inputs [1-n] BSQ inputs for vote fee
-        // inputs [1-n] BTC inputs for miner fee
-        // outputs [1] BSQ stake
-        // outputs [0-1] BSQ change output (>= 2730 Satoshi)
-        // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
-        // outputs [0-1] OP_RETURN with opReturnData and amount 0
-        // mining fee: BTC mining fee + burned BSQ fee
+        checkWalletConsistency(wallet);
+        verifyTransaction(tx);
 
-        Transaction preparedTx = new Transaction(params);
-        // Copy inputs from BSQ fee tx
-        feeTx.getInputs().forEach(preparedTx::addInput);
-        int indexOfBtcFirstInput = feeTx.getInputs().size();
+        printTx("BTC wallet: Signed tx", tx);
+        return tx;
+    }
 
-        // BSQ change outputs from BSQ fee inputs.
-        feeTx.getOutputs().forEach(preparedTx::addOutput);
+    private void signAllBtcInputs(int indexOfBtcFirstInput, Transaction tx) throws TransactionVerificationException {
+        for (int i = indexOfBtcFirstInput; i < tx.getInputs().size(); i++) {
+            TransactionInput input = tx.getInputs().get(i);
+            checkArgument(input.getConnectedOutput() != null && input.getConnectedOutput().isMine(wallet),
+                    "input.getConnectedOutput() is not in our wallet. That must not happen.");
+            signTransactionInput(wallet, aesKey, tx, input, i);
+            checkScriptSig(tx, input, i);
+        }
+    }
 
+    private Transaction addInputsForMinerFee(Transaction preparedTx, byte[] opReturnData) throws InsufficientMoneyException {
         // safety check counter to avoid endless loops
         int counter = 0;
         // estimated size of input sig
@@ -351,20 +361,6 @@ public class BtcWalletService extends WalletService {
             isFeeOutsideTolerance = Math.abs(resultTx.getFee().value - estimatedFeeAsLong) > 1000;
         }
         while (isFeeOutsideTolerance);
-
-        // Sign all BTC inputs
-        for (int i = indexOfBtcFirstInput; i < resultTx.getInputs().size(); i++) {
-            TransactionInput txIn = resultTx.getInputs().get(i);
-            checkArgument(txIn.getConnectedOutput() != null && txIn.getConnectedOutput().isMine(wallet),
-                    "txIn.getConnectedOutput() is not in our wallet. That must not happen.");
-            signTransactionInput(wallet, aesKey, resultTx, txIn, i);
-            checkScriptSig(resultTx, txIn, i);
-        }
-
-        checkWalletConsistency(wallet);
-        verifyTransaction(resultTx);
-
-        printTx("BTC wallet: Signed tx", resultTx);
         return resultTx;
     }
 
@@ -460,13 +456,7 @@ public class BtcWalletService extends WalletService {
         while (isFeeOutsideTolerance);
 
         // Sign all BTC inputs
-        for (int i = indexOfBtcFirstInput; i < resultTx.getInputs().size(); i++) {
-            TransactionInput txIn = resultTx.getInputs().get(i);
-            checkArgument(txIn.getConnectedOutput() != null && txIn.getConnectedOutput().isMine(wallet),
-                    "txIn.getConnectedOutput() is not in our wallet. That must not happen.");
-            signTransactionInput(wallet, aesKey, resultTx, txIn, i);
-            checkScriptSig(resultTx, txIn, i);
-        }
+        signAllBtcInputs(indexOfBtcFirstInput, resultTx);
 
         checkWalletConsistency(wallet);
         verifyTransaction(resultTx);
@@ -597,13 +587,7 @@ public class BtcWalletService extends WalletService {
                 resultTx.getFee().value < txFeePerByte.multiply(resultTx.bitcoinSerialize().length).value);
 
         // Sign all BTC inputs
-        for (int i = preparedBsqTxInputs.size(); i < resultTx.getInputs().size(); i++) {
-            TransactionInput txIn = resultTx.getInputs().get(i);
-            checkArgument(txIn.getConnectedOutput() != null && txIn.getConnectedOutput().isMine(wallet),
-                    "txIn.getConnectedOutput() is not in our wallet. That must not happen.");
-            signTransactionInput(wallet, aesKey, resultTx, txIn, i);
-            checkScriptSig(resultTx, txIn, i);
-        }
+        signAllBtcInputs(preparedBsqTxInputs.size(), resultTx);
 
         checkWalletConsistency(wallet);
         verifyTransaction(resultTx);

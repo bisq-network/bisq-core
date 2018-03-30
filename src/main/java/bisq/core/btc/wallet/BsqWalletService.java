@@ -438,50 +438,53 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     // Burn fee tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException, ChangeBelowDustException {
+    // We create a tx with Bsq inputs for the fee and optional BSQ change output.
+    // As the fee amount will be missing in the output those BSQ fees are burned.
+    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
-        CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
-        coinSelection.gathered.forEach(tx::addInput);
-        try {
-            Coin change = bsqCoinSelector.getChange(fee, coinSelection);
-            if (Restrictions.isDust(change))
-                throw new ChangeBelowDustException(change);
-
-            if (change.isPositive())
-                tx.addOutput(change, getUnusedAddress());
-        } catch (InsufficientMoneyException e) {
-            throw new InsufficientBsqException(e.missing);
-        }
-
+        addInputsForTx(tx, fee, bsqCoinSelector);
         printTx("getPreparedFeeTx", tx);
         return tx;
     }
+
+    // TODO add tests
+    private void addInputsForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
+            throws InsufficientBsqException {
+        Coin requiredInput;
+        // If our target is less then dust limit we increase it so we are sure to not get any dust output.
+        if (Restrictions.isDust(target))
+            requiredInput = Restrictions.getMinNonDustOutput().add(target);
+        else
+            requiredInput = target;
+
+        CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            Coin change = this.bsqCoinSelector.getChange(target, coinSelection);
+            if (change.isPositive()) {
+                checkArgument(Restrictions.isAboveDust(change), "We must not get dust output here.");
+                tx.addOutput(change, getUnusedAddress());
+            }
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Blind vote tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake)
-            throws InsufficientBsqException, ChangeBelowDustException {
+    // We create a tx with Bsq inputs for the fee, one output for the stake and optional one BSQ change output.
+    // As the fee amount will be missing in the output those BSQ fees are burned.
+    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake) throws InsufficientBsqException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        final Coin amountNeeded = fee.add(stake);
-        CoinSelection coinSelection = bsqCoinSelector.select(amountNeeded, wallet.calculateAllSpendCandidates());
-        coinSelection.gathered.forEach(tx::addInput);
-        try {
-            Coin change = bsqCoinSelector.getChange(amountNeeded, coinSelection);
-            if (Restrictions.isDust(change))
-                throw new ChangeBelowDustException(change);
-
-            if (change.isPositive())
-                tx.addOutput(change, getUnusedAddress());
-        } catch (InsufficientMoneyException e) {
-            throw new InsufficientBsqException(e.missing);
-        }
-
+        addInputsForTx(tx, fee.add(stake), bsqCoinSelector);
         printTx("getPreparedBlindVoteTx", tx);
         return tx;
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // MyVote reveal tx

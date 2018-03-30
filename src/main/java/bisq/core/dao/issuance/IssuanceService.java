@@ -35,7 +35,7 @@ import bisq.core.dao.vote.BlindVote;
 import bisq.core.dao.vote.BooleanVoteResult;
 import bisq.core.dao.vote.RevealedVote;
 import bisq.core.dao.vote.VoteService;
-import bisq.core.dao.vote.consensus.VoteConsensus;
+import bisq.core.dao.vote.consensus.VoteRevealConsensus;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
@@ -302,7 +302,7 @@ public class IssuanceService {
     }
 
     private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
-        byte[] hashOfBlindVoteList = VoteConsensus.getHashOfBlindVoteList(voteService.getBlindVoteSortedList());
+        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(voteService.getBlindVoteSortedList());
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         return Arrays.equals(majorityVoteListHash, hashOfBlindVoteList);

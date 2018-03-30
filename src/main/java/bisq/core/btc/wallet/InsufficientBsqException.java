@@ -21,7 +21,7 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 
 public class InsufficientBsqException extends InsufficientMoneyException {
-    public InsufficientBsqException(Coin missing) {
+    InsufficientBsqException(Coin missing) {
         super(missing);
     }
 }

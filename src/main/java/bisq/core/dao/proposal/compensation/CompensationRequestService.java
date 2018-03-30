@@ -21,7 +21,6 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.btc.wallet.ChangeBelowDustException;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.proposal.compensation.consensus.OpReturnData;
 import bisq.core.dao.proposal.compensation.consensus.Restrictions;
@@ -100,7 +99,7 @@ public class CompensationRequestService {
     // TODO move code to consensus package
     public CompensationRequest prepareCompensationRequest(CompensationRequestPayload compensationRequestPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException,
-            CompensationAmountException, ChangeBelowDustException {
+            CompensationAmountException {
 
         final Coin minRequestAmount = Restrictions.getMinCompensationRequestAmount();
         if (compensationRequestPayload.getRequestedBsq().compareTo(minRequestAmount) < 0) {

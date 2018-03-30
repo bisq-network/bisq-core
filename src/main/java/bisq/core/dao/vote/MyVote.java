@@ -42,6 +42,8 @@ import javax.annotation.Nullable;
 @Slf4j
 @Data
 public class MyVote implements PersistablePayload {
+    // TODO do we need to store proposalList - it could be created by decrypting blindVote.encryptedProposalList
+    // with secretKey
     private final ProposalList proposalList;
     private final String secretKeyAsHex;
     private final BlindVote blindVote;
