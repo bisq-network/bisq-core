@@ -71,6 +71,7 @@ public class BsqTxController {
             txOutputsController.processOpReturnCandidate(tx, model);
             txOutputsController.iterateOutputs(tx, blockHeight, model);
             tx.setTxType(getTxType(tx, model));
+            tx.setBurntFee(model.getAvailableInputValue());
             writableBsqBlockChain.addTxToMap(tx);
         }
 
