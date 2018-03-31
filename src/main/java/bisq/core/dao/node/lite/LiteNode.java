@@ -144,8 +144,8 @@ public class LiteNode extends BsqNode {
         // We reset all mutable data in case the provider would not have done it.
         bsqBlockList.forEach(BsqBlock::reset);
         bsqLiteNodeExecutor.parseBlocks(bsqBlockList,
-                block -> notifyListenersOnNewBlock(),
-                this::onParseBlockchainComplete,
+                this::onNewBsqBlock,
+                this::onParseBlockChainComplete,
                 getErrorHandler());
     }
 
@@ -156,14 +156,13 @@ public class LiteNode extends BsqNode {
         log.info("onNewBlockReceived: bsqBlock={}", bsqBlock.getHeight());
         if (!readableBsqBlockChain.containsBsqBlock(bsqBlock)) {
             bsqLiteNodeExecutor.parseBlock(bsqBlock,
-                    this::notifyListenersOnNewBlock,
+                    this::onNewBsqBlock,
                     getErrorHandler());
         }
     }
 
-    private void onParseBlockchainComplete() {
-        parseBlockchainComplete = true;
-        bsqBlockChainListeners.forEach(BsqBlockChainListener::onBsqBlockChainChanged);
+    private void onNewBsqBlock(BsqBlock bsqBlock) {
+        log.debug("new bsqBlock parsed: " + bsqBlock);
     }
 
     @NotNull

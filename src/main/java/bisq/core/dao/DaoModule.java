@@ -18,7 +18,6 @@
 package bisq.core.dao;
 
 import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
@@ -87,7 +86,6 @@ public class DaoModule extends AppModule {
         bind(ReadableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(WritableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
-        bind(BsqBlockChainChangeDispatcher.class).in(Singleton.class);
 
         bind(GenesisTxController.class).in(Singleton.class);
         bind(GenesisTxOutputController.class).in(Singleton.class);

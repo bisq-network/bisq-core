@@ -19,11 +19,10 @@ package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.node.BsqNode;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
@@ -66,10 +65,9 @@ import javax.annotation.Nullable;
  * Manages proposal collections.
  */
 @Slf4j
-public class ProposalCollectionsService implements PersistedDataHost, BsqNode.BsqBlockChainListener, HashMapChangedListener {
+public class ProposalCollectionsService implements PersistedDataHost, BsqBlockChain.Listener, HashMapChangedListener {
     private final P2PService p2PService;
     private final BsqWalletService bsqWalletService;
-    private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
     private final DaoPeriodService daoPeriodService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
@@ -91,23 +89,20 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqNode.Bs
     @Inject
     public ProposalCollectionsService(P2PService p2PService,
                                       BsqWalletService bsqWalletService,
-                                      BtcWalletService btcWalletService,
                                       WalletsManager walletsManager,
                                       DaoPeriodService daoPeriodService,
                                       ReadableBsqBlockChain readableBsqBlockChain,
-                                      BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
                                       KeyRing keyRing,
                                       Storage<ProposalList> proposalListStorage) {
         this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
-        this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
         this.daoPeriodService = daoPeriodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.proposalListStorage = proposalListStorage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-        bsqBlockChainChangeDispatcher.addBsqBlockChainListener(this);
+        readableBsqBlockChain.addListener(this);
     }
 
 
@@ -157,11 +152,11 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqNode.Bs
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BsqBlockChainListener
+    // BsqBlockChain.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onBsqBlockChainChanged() {
+    public void onBlockAdded(BsqBlock bsqBlock) {
         // TODO
         // not needed with current impl. but leave it as updatePredicates might change
         // updatePredicates();

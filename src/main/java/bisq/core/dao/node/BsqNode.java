@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
@@ -30,9 +29,6 @@ import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,21 +38,12 @@ import lombok.extern.slf4j.Slf4j;
  * We are in UserThread context. We get callbacks from threaded classes which are already mapped to the UserThread.
  */
 @Slf4j
-public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Interface
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public interface BsqBlockChainListener {
-        void onBsqBlockChainChanged();
-    }
+public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected final P2PService p2PService;
     protected final ReadableBsqBlockChain readableBsqBlockChain;
     @SuppressWarnings("WeakerAccess")
-    protected final List<BsqBlockChainListener> bsqBlockChainListeners = new ArrayList<>();
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
@@ -64,6 +51,7 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
     protected boolean parseBlockchainComplete;
     @SuppressWarnings("WeakerAccess")
     protected boolean p2pNetworkReady;
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -87,7 +75,6 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
         writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
         writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
-        readableBsqBlockChain.addIssuanceListener(this);
     }
 
 
@@ -97,20 +84,7 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
 
     public abstract void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler);
 
-    public void addBsqBlockChainListener(BsqBlockChainListener bsqBlockChainListener) {
-        bsqBlockChainListeners.add(bsqBlockChainListener);
-    }
-
-    public void removeBsqBlockChainListener(BsqBlockChainListener bsqBlockChainListener) {
-        bsqBlockChainListeners.remove(bsqBlockChainListener);
-    }
-
     public abstract void shutDown();
-
-    @Override
-    public void onIssuance() {
-        // TODO resync from block when period started
-    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -188,8 +162,8 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
 
     abstract protected void startParseBlocks();
 
-    protected void notifyListenersOnNewBlock() {
-        bsqBlockChainListeners.forEach(BsqBlockChainListener::onBsqBlockChainChanged);
+    protected void onParseBlockChainComplete() {
+        parseBlockchainComplete = true;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -205,6 +179,5 @@ public abstract class BsqNode implements BsqBlockChain.IssuanceListener {
 
     private void applySnapshot() {
         snapshotManager.applySnapshot();
-        bsqBlockChainListeners.forEach(BsqBlockChainListener::onBsqBlockChainChanged);
     }
 }

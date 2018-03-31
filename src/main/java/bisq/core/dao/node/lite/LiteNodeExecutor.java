@@ -90,19 +90,19 @@ public class LiteNodeExecutor {
     }
 
     void parseBlock(BsqBlock bsqBlock,
-                    ResultHandler resultHandler,
+                    Consumer<BsqBlock> newBlockHandler,
                     Consumer<Throwable> errorHandler) {
-        ListenableFuture<Void> future = executor.submit(() -> {
+        ListenableFuture<BsqBlock> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
             liteNodeParser.parseBsqBlock(bsqBlock);
             log.info("parseBlocks took {} ms", System.currentTimeMillis() - startTs);
-            return null;
+            return bsqBlock;
         });
 
-        Futures.addCallback(future, new FutureCallback<Void>() {
+        Futures.addCallback(future, new FutureCallback<BsqBlock>() {
             @Override
-            public void onSuccess(Void ignore) {
-                UserThread.execute(() -> UserThread.execute(resultHandler::handleResult));
+            public void onSuccess(BsqBlock bsqBlock) {
+                UserThread.execute(() -> UserThread.execute(() -> newBlockHandler.accept(bsqBlock)));
             }
 
             @Override

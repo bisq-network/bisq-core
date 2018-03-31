@@ -113,7 +113,6 @@ public class FullNode extends BsqNode {
     }
 
     private void onNewBsqBlock(BsqBlock bsqBlock) {
-        notifyListenersOnNewBlock();
         jsonBlockChainExporter.maybeExport();
         if (parseBlockchainComplete && p2pNetworkReady)
             fullNodeNetworkManager.publishNewBlock(bsqBlock);
@@ -175,17 +174,15 @@ public class FullNode extends BsqNode {
             }
         } else {
             // We don't have received new blocks in the meantime so we are completed and we register our handler
-            onParseBlockchainComplete();
+            onParseBlockChainComplete();
         }
     }
 
-    private void onParseBlockchainComplete() {
-        log.info("onParseBlockchainComplete");
-        parseBlockchainComplete = true;
+    @Override
+    protected void onParseBlockChainComplete() {
+        super.onParseBlockChainComplete();
 
         if (p2pNetworkReady)
             addBlockHandler();
-
-        bsqBlockChainListeners.forEach(BsqBlockChainListener::onBsqBlockChainChanged);
     }
 }
