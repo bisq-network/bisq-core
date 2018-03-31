@@ -102,8 +102,6 @@ public interface ReadableBsqBlockChain {
 
     BsqBlockChain getClone(BsqBlockChain bsqBlockChain);
 
-    void printDetails();
-
     void addListener(BsqBlockChain.Listener listener);
 
     void removeListener(BsqBlockChain.Listener listener);

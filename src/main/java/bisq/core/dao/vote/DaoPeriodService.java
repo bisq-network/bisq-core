@@ -160,6 +160,12 @@ public class DaoPeriodService {
                 getNumBlocksOfCycle());
     }
 
+    public Phase getPhaseForHeight(int chainHeight) {
+        int startOfCurrentCycle = getAbsoluteStartBlockOfCycle(chainHeight, genesisBlockHeight, getNumBlocksOfCycle());
+        int offset = chainHeight - startOfCurrentCycle;
+        return calculatePhase(offset);
+    }
+
     public int getAbsoluteStartBlockOfPhase(int chainHeight, Phase phase) {
         return getAbsoluteStartBlockOfPhase(chainHeight,
                 genesisBlockHeight,
@@ -282,6 +288,11 @@ public class DaoPeriodService {
     @VisibleForTesting
     int getAbsoluteStartBlockOfPhase(int chainHeight, int genesisHeight, Phase phase, int numBlocksOfCycle) {
         return genesisHeight + getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle) * getNumBlocksOfCycle() + getNumBlocksOfPhaseStart(phase);
+    }
+
+    @VisibleForTesting
+    int getAbsoluteStartBlockOfCycle(int chainHeight, int genesisHeight, int numBlocksOfCycle) {
+        return genesisHeight + getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle) * getNumBlocksOfCycle() + getNumBlocksOfPhaseStart(Phase.PROPOSAL);
     }
 
     @VisibleForTesting

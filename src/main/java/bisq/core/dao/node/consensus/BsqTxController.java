@@ -78,7 +78,6 @@ public class BsqTxController {
         return bsqInputBalancePositive;
     }
 
-
     // TODO add tests
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
@@ -154,13 +153,15 @@ public class BsqTxController {
                 final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
                 return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
             } else {
-                final String msg = "We got a different opReturn type after validation as we expected initially. tx=" + tx;
+                final String msg = "We got a different opReturn type after validation as we expected initially. " +
+                        "opReturnTypeCandidate=" + model.getOpReturnTypeCandidate() +
+                        " / verifiedOpReturnType=" + model.getVerifiedOpReturnType();
                 log.warn(msg);
                 if (DevEnv.isDevMode())
                     throw new RuntimeException(msg);
             }
         } else {
-            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx={}" + tx;
+            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
             log.warn(msg);
             if (DevEnv.isDevMode())
                 throw new RuntimeException(msg);

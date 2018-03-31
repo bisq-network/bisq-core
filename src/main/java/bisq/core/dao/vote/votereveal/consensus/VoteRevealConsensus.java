@@ -17,8 +17,6 @@
 
 package bisq.core.dao.vote.votereveal.consensus;
 
-import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 
@@ -57,8 +55,9 @@ public class VoteRevealConsensus {
         }
     }
 
-    public static void unlockStakeTxOutputType(TxOutput stakeTxOutput) {
+    //TODO
+   /* public static void unlockStakeTxOutputType(TxOutput stakeTxOutput) {
         // We unlock from the unspendable VOTE_STAKE_OUTPUT type
         stakeTxOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
-    }
+    }*/
 }

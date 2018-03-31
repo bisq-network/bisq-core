@@ -38,7 +38,7 @@ public class GenesisTxOutputController extends TxOutputController {
     void verify(TxOutput txOutput, Model model) {
         if (txOutput.getValue() <= model.getAvailableInputValue()) {
             model.subtractFromInputValue(txOutput.getValue());
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.GENESIS_OUTPUT);
         } else {
             // If we get one output which is not funded sufficiently by the available
             // input value, we consider all remaining outputs as BTC outputs.

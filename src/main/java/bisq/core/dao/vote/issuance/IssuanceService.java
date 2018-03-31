@@ -20,6 +20,7 @@ package bisq.core.dao.vote.issuance;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
@@ -63,9 +64,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@Slf4j
-public class IssuanceService {
+//TODO case that user misses reveal phase not impl. yet
 
+@Slf4j
+public class IssuanceService implements BsqBlockChain.Listener {
     private final BlindVoteService blindVoteService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final WritableBsqBlockChain writableBsqBlockChain;
@@ -96,34 +98,25 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        daoPeriodService.getPhaseProperty().addListener((observable, oldValue, newValue) -> {
-            onPhaseChanged(newValue);
-        });
-        onPhaseChanged(daoPeriodService.getPhaseProperty().get());
+        readableBsqBlockChain.addListener(this);
     }
 
     public void shutDown() {
+    }
+
+    @Override
+    public void onBlockAdded(BsqBlock bsqBlock) {
+        if (daoPeriodService.getPhaseForHeight(bsqBlock.getHeight()) == DaoPeriodService.Phase.ISSUANCE) {
+            // A phase change is triggered by a new block but we need to wait for the parser to complete
+            //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
+            applyVoteResult();
+        }
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void onPhaseChanged(DaoPeriodService.Phase phase) {
-        if (phase == DaoPeriodService.Phase.ISSUANCE) {
-            // A phase change is triggered by a new block but we need to wait for the parser to complete
-            //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            bsqBlockChainListener = bsqBlock -> applyVoteResult();
-            readableBsqBlockChain.addListener(bsqBlockChainListener);
-            applyVoteResult();
-        } else {
-            // If we are not in the issuance phase we are not interested in the events.
-            if (bsqBlockChainListener != null)
-                readableBsqBlockChain.removeListener(bsqBlockChainListener);
-            bsqBlockChainListener = null;
-        }
-    }
 
     private void applyVoteResult() {
         // We make a map with txIds of VoteReveal TxOutputs as key and the opReturn data as value (containing secret key
@@ -171,7 +164,7 @@ public class IssuanceService {
         Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
         readableBsqBlockChain.getVoteRevealTxOutputs().stream()
-                .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getTxId()))
+                /* .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getTxId()))*/ //TODO
                 .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
         return opReturnHashesByTxIdMap;
     }
@@ -195,14 +188,14 @@ public class IssuanceService {
     private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
         //TODO check not in current cycle but in the cycle of the tx
         return blindVoteService.getBlindVoteList().stream()
-                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
+                /* .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))*/  //TODO
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
                             .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.BLIND_VOTE) // double check if type is matching
                             .map(blindVoteTx -> blindVoteTx.getTxOutput(0)) // stake need to be output 0
                             .filter(Optional::isPresent)
                             .map(Optional::get)
-                            .filter(stakeTxOutput -> stakeTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT) // double check if type is matching
+                            .filter(stakeTxOutput -> stakeTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) // double check if type is matching
                             .map(TxOutput::getTxId)
                             .map(this::getRevealTxIdForBlindVoteTx)
                             .filter(Optional::isPresent)

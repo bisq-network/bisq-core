@@ -47,7 +47,7 @@ public class TxInputController {
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
             // for later verification at the outputs of a reveal tx.
-            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT) {
+            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                 if (!model.isVoteStakeSpentAtInputs()) {
                     model.setVoteStakeSpentAtInputs(true);
                 } else {

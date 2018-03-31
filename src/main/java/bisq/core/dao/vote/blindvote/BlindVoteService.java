@@ -225,7 +225,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     public List<BlindVote> getBlindVoteListForCurrentCycle() {
         return blindVoteSortedList.stream()
-                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
+                /* .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))*/ //TODO
                 .collect(Collectors.toList());
     }
 
@@ -247,8 +247,9 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     }
 
     @Override
-    public void onRemoved(ProtectedStorageEntry data) {
-        throw new UnsupportedOperationException("Removal of blind vote data is not supported");
+    public void onRemoved(ProtectedStorageEntry protectedStorageEntry) {
+        if (protectedStorageEntry.getProtectedStoragePayload() instanceof BlindVote)
+            throw new UnsupportedOperationException("Removal of blind vote data is not supported");
     }
 
 
@@ -261,7 +262,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             blindVoteList.add(blindVote);
             blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
         } else {
-            log.warn("We have that item in our list already");
+            log.debug("We have that item in our list already");
         }
     }
 

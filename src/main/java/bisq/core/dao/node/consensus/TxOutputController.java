@@ -71,7 +71,15 @@ public class TxOutputController {
         // At a blind vote tx we get the stake at output 0.
         if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
             // First output might be vote stake output.
-            model.setBlindVoteStakeOutput(txOutput);
+            model.setBlindVoteLockStakeOutput(txOutput);
+
+            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
+            // in the model.
+            applyStateChangeForBsqOutput(txOutput, null);
+        } else if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
+            // At a vote reveal tx we get the released stake at output 0.
+            // First output might be stake release output.
+            model.setVoteRevealUnlockStakeOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
             // in the model.
