@@ -92,17 +92,17 @@ public class TxOutputController {
     }
 
     private void handleBtcOutput(TxOutput txOutput, int index, Model model) {
-        // We have BSQ left for burning
-        if (model.isInputValuePositive()) {
-            // At the second output we might have a compensation request output if the opReturn type matches.
-            if (index == 1 && model.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
-                // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
-                // into our model.
-                model.setIssuanceCandidate(txOutput);
-            }
+        // If we have BSQ left for burning and at the second output a compensation request output we set the
+        // candidate to the model and we don't apply the TxOutputType as we do that later as the OpReturn check.
+        if (model.isInputValuePositive() &&
+                index == 1 &&
+                model.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
+            // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
+            // into our model.
+            model.setIssuanceCandidate(txOutput);
+        } else {
+            applyStateChangeForBtcOutput(txOutput);
         }
-
-        applyStateChangeForBtcOutput(txOutput);
     }
 
     protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {

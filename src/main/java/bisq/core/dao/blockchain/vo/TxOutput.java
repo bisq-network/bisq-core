@@ -77,9 +77,9 @@ public class TxOutput implements PersistablePayload {
     private boolean isUnspent;
     @Setter
     private boolean isVerified;
-    @Setter
+    // We use a manual setter as we want to prevent that already set values get changed
     private TxOutputType txOutputType;
-    @Setter
+    // We use a manual setter as we want to prevent that already set values get changed
     @Nullable
     private SpentInfo spentInfo;
 
@@ -179,5 +179,19 @@ public class TxOutput implements PersistablePayload {
 
     public TxIdIndexTuple getTxIdIndexTuple() {
         return new TxIdIndexTuple(txId, index);
+    }
+
+    public void setTxOutputType(TxOutputType txOutputType) {
+        if (this.txOutputType == TxOutputType.UNDEFINED)
+            this.txOutputType = txOutputType;
+        else
+            throw new IllegalStateException("Already set txOutputType must not be changed.");
+    }
+
+    public void setSpentInfo(SpentInfo spentInfo) {
+        if (this.spentInfo == null)
+            this.spentInfo = spentInfo;
+        else
+            throw new IllegalStateException("Already set spentInfo must not be changed.");
     }
 }

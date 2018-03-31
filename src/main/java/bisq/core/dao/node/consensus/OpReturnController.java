@@ -68,7 +68,7 @@ public class OpReturnController {
                             if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
                                 opReturnCompReqController.applyStateChange(txOutput, model);
                             } else {
-                                log.warn("We expected a compensation request op_return data but it did not " +
+                                log.info("We expected a compensation request op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;
@@ -79,7 +79,7 @@ public class OpReturnController {
                             if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
                                 opReturnBlindVoteController.applyStateChange(txOutput, model);
                             } else {
-                                log.warn("We expected a blind vote op_return data but it did not " +
+                                log.info("We expected a blind vote op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;
@@ -87,7 +87,7 @@ public class OpReturnController {
                             if (opReturnVoteRevealController.verify(opReturnData, blockHeight, model)) {
                                 opReturnVoteRevealController.applyStateChange(txOutput, model);
                             } else {
-                                log.warn("We expected a vote reveal op_return data but it did not " +
+                                log.info("We expected a vote reveal op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;

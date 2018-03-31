@@ -70,9 +70,16 @@ public class BsqTxController {
         if (bsqInputBalancePositive) {
             txOutputsController.processOpReturnCandidate(tx, model);
             txOutputsController.iterateOutputs(tx, blockHeight, model);
-            tx.setTxType(getTxType(tx, model));
-            tx.setBurntFee(model.getAvailableInputValue());
-            writableBsqBlockChain.addTxToMap(tx);
+            if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
+                tx.setTxType(getTxType(tx, model));
+                tx.setBurntFee(model.getAvailableInputValue());
+                writableBsqBlockChain.addTxToMap(tx);
+            } else {
+                String msg = "We have undefined txOutput types which must not happen. outputs=" + tx.getOutputs();
+                log.error(msg);
+                if (DevEnv.isDevMode())
+                    throw new RuntimeException(msg);
+            }
         }
 
         return bsqInputBalancePositive;

@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
@@ -52,7 +51,7 @@ public class TxInput implements PersistablePayload {
     private final int connectedTxOutputIndex;
 
     // Mutable data
-    @Setter
+    // We use a manual setter as we want to prevent that already set values get changed
     @Nullable
     private TxOutput connectedTxOutput;
 
@@ -92,8 +91,14 @@ public class TxInput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-
     public TxIdIndexTuple getTxIdIndexTuple() {
         return new TxIdIndexTuple(connectedTxOutputTxId, connectedTxOutputIndex);
+    }
+
+    public void setConnectedTxOutput(@Nullable TxOutput connectedTxOutput) {
+        if (this.connectedTxOutput == null)
+            this.connectedTxOutput = connectedTxOutput;
+        else
+            throw new IllegalStateException("Already set connectedTxOutput must not be changed.");
     }
 }

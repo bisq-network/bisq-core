@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -70,9 +69,9 @@ public class Tx implements PersistablePayload {
     private final ImmutableList<TxOutput> outputs;
 
     // Mutable data
-    @Setter
+    // We use a manual setter as we want to prevent that already set values get changed
     private long burntFee;
-    @Setter
+    // We use a manual setter as we want to prevent that already set values get changed
     @Nullable
     private TxType txType;
 
@@ -164,5 +163,19 @@ public class Tx implements PersistablePayload {
 
     public Optional<TxOutput> getTxOutput(int index) {
         return outputs.size() > index ? Optional.of(outputs.get(index)) : Optional.empty();
+    }
+
+    public void setBurntFee(long burntFee) {
+        if (this.burntFee == 0)
+            this.burntFee = burntFee;
+        else
+            throw new IllegalStateException("Already set burntFee must not be changed.");
+    }
+
+    public void setTxType(TxType txType) {
+        if (this.txType == TxType.UNDEFINED_TX_TYPE)
+            this.txType = txType;
+        else
+            throw new IllegalStateException("Already set txType must not be changed.");
     }
 }
