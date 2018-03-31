@@ -439,7 +439,7 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     else
                         return new ValidationResult(true);
-                case "STL":
+                case "XTL":
                     if (!input.matches("^(Se)\\d[0-9A-Za-z]{94}$"))
                         return regexTestFailed;
                     else
