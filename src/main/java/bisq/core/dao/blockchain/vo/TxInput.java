@@ -25,7 +25,10 @@ import io.bisq.generated.protobuffer.PB;
 
 import java.util.Optional;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.annotation.Nullable;
 
@@ -33,10 +36,23 @@ import javax.annotation.Nullable;
  * An input is really just a reference to the spending output. It gets identified by the
  * txId and the index of the output. We use TxIdIndexTuple to encapsulate that.
  */
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
 public class TxInput implements PersistablePayload {
+
+    public static TxInput clone(TxInput txInput, boolean reset) {
+        return new TxInput(txInput.getConnectedTxOutputTxId(),
+                txInput.getConnectedTxOutputIndex(),
+                reset ? null : txInput.getConnectedTxOutput());
+    }
+
+
     private final String connectedTxOutputTxId;
     private final int connectedTxOutputIndex;
+
+    // Mutable data
+    @Setter
     @Nullable
     private TxOutput connectedTxOutput;
 
@@ -76,20 +92,8 @@ public class TxInput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void reset() {
-        connectedTxOutput = null;
-    }
 
     public TxIdIndexTuple getTxIdIndexTuple() {
         return new TxIdIndexTuple(connectedTxOutputTxId, connectedTxOutputIndex);
-    }
-
-    @Override
-    public String toString() {
-        return "TxInput{" +
-                "\n     txId=" + connectedTxOutputTxId +
-                ",\n     txOutputIndex=" + connectedTxOutputIndex +
-                ",\n     connectedTxOutput='" + connectedTxOutput + '\'' +
-                "\n}";
     }
 }

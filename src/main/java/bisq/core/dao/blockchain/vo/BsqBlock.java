@@ -21,21 +21,34 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class BsqBlock implements PersistablePayload {
+
+    public static BsqBlock clone(BsqBlock bsqBlock, boolean reset) {
+        final ImmutableList<Tx> txs = ImmutableList.copyOf(bsqBlock.getTxs().stream()
+                .map(tx -> Tx.clone(tx, reset))
+                .collect(Collectors.toList()));
+        return new BsqBlock(bsqBlock.getHeight(),
+                bsqBlock.getTime(),
+                bsqBlock.getHash(),
+                bsqBlock.getPreviousBlockHash(),
+                txs);
+    }
+
     private final int height;
     private final long time;
     private final String hash;
     private final String previousBlockHash;
-    private final List<Tx> txs;
+    private final ImmutableList<Tx> txs;
 
-    public BsqBlock(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
+    public BsqBlock(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
         this.height = height;
         this.time = time;
         this.hash = hash;
@@ -66,20 +79,16 @@ public class BsqBlock implements PersistablePayload {
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
                 proto.getTxsList().isEmpty() ?
-                        new ArrayList<>() :
-                        proto.getTxsList().stream()
+                        ImmutableList.copyOf(new ArrayList<>()) :
+                        ImmutableList.copyOf(proto.getTxsList().stream()
                                 .map(Tx::fromProto)
-                                .collect(Collectors.toList()));
+                                .collect(Collectors.toList())));
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void reset() {
-        txs.forEach(Tx::reset);
-    }
 
     @Override
     public String toString() {

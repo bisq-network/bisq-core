@@ -40,9 +40,9 @@ public class TxInputController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    void processInput(TxInput input, int blockHeight, String txId, int inputIndex, Model model,
+    void processInput(TxInput txInput, int blockHeight, String txId, int inputIndex, Model model,
                       WritableBsqBlockChain writableBsqBlockChain) {
-        readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
+        readableBsqBlockChain.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
             model.addToInputValue(connectedTxOutput.getValue());
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
@@ -56,9 +56,10 @@ public class TxInputController {
                 }
             }
 
-            input.setConnectedTxOutput(connectedTxOutput);
+            txInput.setConnectedTxOutput(connectedTxOutput);
             connectedTxOutput.setUnspent(false);
             connectedTxOutput.setSpentInfo(new SpentInfo(blockHeight, txId, inputIndex));
+
             writableBsqBlockChain.removeUnspentTxOutput(connectedTxOutput);
         });
     }

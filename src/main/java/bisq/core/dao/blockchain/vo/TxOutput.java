@@ -27,18 +27,37 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
 
-import org.bitcoinj.core.Utils;
-
 import java.util.Optional;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
 @Slf4j
 public class TxOutput implements PersistablePayload {
+
+    public static TxOutput clone(TxOutput txOutput, boolean reset) {
+        //noinspection SimplifiableConditionalExpression
+        return new TxOutput(txOutput.getIndex(),
+                txOutput.getValue(),
+                txOutput.getTxId(),
+                txOutput.getPubKeyScript(),
+                txOutput.getAddress(),
+                txOutput.getOpReturnData(),
+                txOutput.getBlockHeight(),
+                reset ? false : txOutput.isUnspent(),
+                reset ? false : txOutput.isVerified(),
+                reset ? TxOutputType.UNDEFINED : txOutput.getTxOutputType(),
+                reset ? null : txOutput.getSpentInfo());
+    }
+
     private final int index;
     private final long value;
     private final String txId;
@@ -52,9 +71,15 @@ public class TxOutput implements PersistablePayload {
     @JsonExclude
     private final byte[] opReturnData;
     private final int blockHeight;
+
+    // Mutable data
+    @Setter
     private boolean isUnspent;
+    @Setter
     private boolean isVerified;
-    private TxOutputType txOutputType = TxOutputType.UNDEFINED;
+    @Setter
+    private TxOutputType txOutputType;
+    @Setter
     @Nullable
     private SpentInfo spentInfo;
 
@@ -144,13 +169,6 @@ public class TxOutput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void reset() {
-        isUnspent = false;
-        isVerified = false;
-        txOutputType = TxOutputType.UNDEFINED;
-        spentInfo = null;
-    }
-
     public boolean isCompensationRequestBtcOutput() {
         return txOutputType == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT;
     }
@@ -161,22 +179,5 @@ public class TxOutput implements PersistablePayload {
 
     public TxIdIndexTuple getTxIdIndexTuple() {
         return new TxIdIndexTuple(txId, index);
-    }
-
-    @Override
-    public String toString() {
-        return "TxOutput{" +
-                "\n     index=" + index +
-                ",\n     value=" + value +
-                ",\n     txId='" + getId() + '\'' +
-                ",\n     pubKeyScript=" + pubKeyScript +
-                ",\n     address='" + address + '\'' +
-                ",\n     opReturnData=" + (opReturnData != null ? Utils.HEX.encode(opReturnData) : "null") +
-                ",\n     blockHeight=" + blockHeight +
-                ",\n     isUnspent=" + isUnspent +
-                ",\n     isVerified=" + isVerified +
-                ",\n     txOutputType=" + txOutputType +
-                ",\n     spentInfo=" + (spentInfo != null ? spentInfo.toString() : "null") +
-                "\n}";
     }
 }

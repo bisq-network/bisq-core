@@ -323,7 +323,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             // The magic happens, we print money! ;-)
             //TODO maybe we should use a new type and maturity?
 
-            //TODO dont change types
+            //TODO don't change types
             //txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
 
             // We should track spent status and output has to be unspent anyway
@@ -391,10 +391,9 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public List<BsqBlock> getClonedBlocksFrom(int fromBlockHeight) {
         return lock.read(() -> {
-            BsqBlockChain clone = getClone();
-            return clone.bsqBlocks.stream()
+            return getClone().bsqBlocks.stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
-                    .peek(BsqBlock::reset)
+                    .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
                     .collect(Collectors.toList());
         });
     }
@@ -457,7 +456,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> {
             return bsqBlocks.stream()
                     .filter(block -> block.getHeight() == height)
-                    .mapToLong(block -> block.getTime())
+                    .mapToLong(BsqBlock::getTime)
                     .sum();
         });
     }
@@ -632,7 +631,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                         btcAddress.equals(txOutput.getAddress())));
     }
 
-    public void printNewBlock(BsqBlock bsqBlock) {
+    private void printNewBlock(BsqBlock bsqBlock) {
         log.debug("\nchainHeadHeight={}\n" +
                         "    blocks.size={}\n" +
                         "    txMap.size={}\n" +

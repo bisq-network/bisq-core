@@ -22,33 +22,65 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
+@Slf4j
 public class Tx implements PersistablePayload {
+
+    public static Tx clone(Tx tx, boolean reset) {
+        final ImmutableList<TxInput> inputs = ImmutableList.copyOf(tx.getInputs().stream()
+                .map(txInput -> TxInput.clone(txInput, reset))
+                .collect(Collectors.toList()));
+        final ImmutableList<TxOutput> outputs = ImmutableList.copyOf(tx.getOutputs().stream()
+                .map(txOutput -> TxOutput.clone(txOutput, reset))
+                .collect(Collectors.toList()));
+        return new Tx(tx.getTxVersion(),
+                tx.getId(),
+                tx.getBlockHeight(),
+                tx.getBlockHash(),
+                tx.getTime(),
+                inputs,
+                outputs,
+                reset ? 0 : tx.getBurntFee(),
+                reset ? TxType.UNDEFINED_TX_TYPE : tx.getTxType());
+    }
+
+
     private final String txVersion;
     private final String id;
     private final int blockHeight;
     private final String blockHash;
     private final long time;
-    private final List<TxInput> inputs;
-    private final List<TxOutput> outputs;
+    private final ImmutableList<TxInput> inputs;
+    private final ImmutableList<TxOutput> outputs;
+
+    // Mutable data
+    @Setter
     private long burntFee;
+    @Setter
     @Nullable
     private TxType txType;
 
     public Tx(String id, int blockHeight,
               String blockHash,
               long time,
-              List<TxInput> inputs,
-              List<TxOutput> outputs) {
+              ImmutableList<TxInput> inputs,
+              ImmutableList<TxOutput> outputs) {
         this(Version.BSQ_TX_VERSION,
                 id,
                 blockHeight,
@@ -70,8 +102,8 @@ public class Tx implements PersistablePayload {
                int blockHeight,
                String blockHash,
                long time,
-               List<TxInput> inputs,
-               List<TxOutput> outputs,
+               ImmutableList<TxInput> inputs,
+               ImmutableList<TxOutput> outputs,
                long burntFee,
                @Nullable TxType txType) {
         this.txVersion = txVersion;
@@ -112,15 +144,15 @@ public class Tx implements PersistablePayload {
                 proto.getBlockHash(),
                 proto.getTime(),
                 proto.getInputsList().isEmpty() ?
-                        new ArrayList<>() :
-                        proto.getInputsList().stream()
+                        ImmutableList.copyOf(new ArrayList<>()) :
+                        ImmutableList.copyOf(proto.getInputsList().stream()
                                 .map(TxInput::fromProto)
-                                .collect(Collectors.toList()),
+                                .collect(Collectors.toList())),
                 proto.getOutputsList().isEmpty() ?
-                        new ArrayList<>() :
-                        proto.getOutputsList().stream()
+                        ImmutableList.copyOf(new ArrayList<>()) :
+                        ImmutableList.copyOf(proto.getOutputsList().stream()
                                 .map(TxOutput::fromProto)
-                                .collect(Collectors.toList()),
+                                .collect(Collectors.toList())),
                 proto.getBurntFee(),
                 TxType.fromProto(proto.getTxType()));
     }
@@ -132,12 +164,5 @@ public class Tx implements PersistablePayload {
 
     public Optional<TxOutput> getTxOutput(int index) {
         return outputs.size() > index ? Optional.of(outputs.get(index)) : Optional.empty();
-    }
-
-    public void reset() {
-        burntFee = 0;
-        txType = TxType.UNDEFINED_TX_TYPE;
-        inputs.forEach(TxInput::reset);
-        outputs.forEach(TxOutput::reset);
     }
 }
