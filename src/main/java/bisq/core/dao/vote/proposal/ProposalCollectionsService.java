@@ -61,6 +61,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Manages proposal collections.
  */
@@ -128,9 +130,7 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
 
     @Override
     public void onAdded(ProtectedStorageEntry data) {
-        final ProtectedStoragePayload protectedStoragePayload = data.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload)
-            addProposal((ProposalPayload) protectedStoragePayload, true);
+        onProtectedStorageEntry(data, true);
     }
 
     @Override
@@ -169,31 +169,20 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
 
     public void onAllServicesInitialized() {
         p2PService.addHashSetChangedListener(this);
-
-        // At startup the P2PDataStorage initializes earlier, otherwise we get the listener called.
-        p2PService.getP2PDataStorage().getMap().values().forEach(e -> {
-            final ProtectedStoragePayload protectedStoragePayload = e.getProtectedStoragePayload();
-            if (protectedStoragePayload instanceof ProposalPayload)
-                addProposal((ProposalPayload) protectedStoragePayload, false);
-        });
+        p2PService.getP2PDataStorage().getMap().values().forEach(e -> onProtectedStorageEntry(e, false));
 
         // Republish own active proposals once we are well connected
         numConnectedPeersListener = (observable, oldValue, newValue) -> {
-            // Delay a bit for localhost testing to not fail as isBootstrapped is false
-            UserThread.runAfter(() -> {
-                if (((int) newValue > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-                    p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                    activeProposals.stream()
-                            .filter(this::isMine)
-                            .forEach(e -> addToP2PNetwork(e.getProposalPayload()));
-                }
-            }, 2);
+            final int numConnectedPeers = (int) newValue;
+            if (isReadyForRepublish(numConnectedPeers))
+                republishProposal();
         };
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
+        final int numConnectedPeers = p2PService.getNumConnectedPeers().get();
+        if (isReadyForRepublish(numConnectedPeers))
+            republishProposal();
 
-        bsqWalletService.getChainHeightProperty().addListener((observable, oldValue, newValue) -> {
-            onChainHeightChanged();
-        });
+        bsqWalletService.getChainHeightProperty().addListener((observable, oldValue, newValue) -> onChainHeightChanged());
         onChainHeightChanged();
     }
 
@@ -201,15 +190,28 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
     }
 
     public void publishProposal(Proposal proposal, FutureCallback<Transaction> callback) {
-        walletsManager.publishAndCommitBsqTx(proposal.getTx(), new FutureCallback<Transaction>() {
+        final Transaction proposalTx = proposal.getTx();
+        checkNotNull(proposalTx, "proposal.getTx() at publishProposal callback must not be null");
+        walletsManager.publishAndCommitBsqTx(proposalTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction transaction) {
-                proposal.getProposalPayload().setTxId(transaction.getHashAsString());
-                addToP2PNetwork(proposal.getProposalPayload());
+                try {
+                    checkNotNull(transaction, "transaction at publishProposal callback must not be null");
+                    final String txId = transaction.getHashAsString();
+                    if (!txId.equals(proposalTx.getHashAsString())) {
+                        log.warn("We received a different tx ID as we had in our proposal. " +
+                                        "That might be a caused due tx malleability. " +
+                                        "proposal.getTx().getHashAsString()={}, transaction.getHashAsString()={}",
+                                proposalTx.getHashAsString(),
+                                txId);
+                    }
+                    proposal.getProposalPayload().setTxId(txId);
 
-                persist();
-
-                callback.onSuccess(transaction);
+                    addToP2PNetwork(proposal.getProposalPayload());
+                    callback.onSuccess(transaction);
+                } catch (Throwable t) {
+                    callback.onFailure(t);
+                }
             }
 
             @Override
@@ -260,6 +262,12 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private void onProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
+        final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof ProposalPayload)
+            addProposal((ProposalPayload) protectedStoragePayload, storeLocally);
+    }
+
     private void addToP2PNetwork(ProposalPayload proposalPayload) {
         p2PService.addProtectedStorageEntry(proposalPayload, true);
     }
@@ -272,6 +280,21 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
     private boolean isMine(ProposalPayload proposalPayload) {
         return signaturePubKey.equals(proposalPayload.getOwnerPubKey());
     }
+
+    private boolean isReadyForRepublish(int numConnectedPeers) {
+        return (numConnectedPeers > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode();
+    }
+
+    private void republishProposal() {
+        // Delay a bit for localhost testing to not fail as isBootstrapped is false
+        UserThread.runAfter(() -> {
+            p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+            activeProposals.stream()
+                    .filter(this::isMine)
+                    .forEach(e -> addToP2PNetwork(e.getProposalPayload()));
+        }, 2);
+    }
+
 
     private void onChainHeightChanged() {
         updatePredicates();

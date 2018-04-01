@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal;
+package bisq.core.dao.vote.proposal.param;
 
 /**
  * Request for changing certain parameters used in Bisq like trading fee, default security deposit, trade limits,...

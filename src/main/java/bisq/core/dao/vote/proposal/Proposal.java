@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 /**
- * Base class for all proposals like compensation request, general purpose request, remove altcoin request, change fee request, etc.
+ * Base class for all proposals like compensation request, generic request, remove altcoin request, change param request, etc.
  */
 @Getter
 @ToString
@@ -115,7 +115,7 @@ public abstract class Proposal implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setVoteResult(@Nullable VoteResult voteResult) {
+    public void setVoteResult(VoteResult voteResult) {
         this.voteResult = voteResult;
         voteResultProperty.set(voteResult);
     }

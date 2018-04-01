@@ -321,7 +321,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     public void issueBsq(TxOutput txOutput) {
         lock.write(() -> {
             // The magic happens, we print money! ;-)
-            //TODO maybe we should use a new type and maturity?
+            //TODO handle maturity
 
             // We should track spent status and output has to be unspent anyway
             txOutput.setUnspent(true);
@@ -337,6 +337,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: Fees
@@ -586,7 +587,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     @Override
-    public long getCreateCompensationRequestFee(int blockHeight) {
+    public long getProposalFee(int blockHeight) {
         return lock.read(() -> {
             long fee = -1;
             for (Tuple2<Long, Integer> feeAtHeight : proposalFees) {

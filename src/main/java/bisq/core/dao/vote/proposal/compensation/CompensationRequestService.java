@@ -22,31 +22,26 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.vote.proposal.compensation.consensus.OpReturnData;
-import bisq.core.dao.vote.proposal.compensation.consensus.Restrictions;
-import bisq.core.dao.vote.proposal.consensus.ProposalConsensus;
+import bisq.core.dao.vote.proposal.ProposalConsensus;
+import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.network.p2p.P2PService;
 
 import bisq.common.crypto.KeyRing;
-import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.crypto.DeterministicKey;
 
 import javax.inject.Inject;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.security.PublicKey;
+
+import java.io.IOException;
 
 import java.util.Date;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CompensationRequestService {
@@ -75,14 +70,13 @@ public class CompensationRequestService {
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public CompensationRequestPayload getNewCompensationRequestPayload(String name,
-                                                                       String title,
-                                                                       String description,
-                                                                       String link,
-                                                                       Coin requestedBsq,
-                                                                       String bsqAddress) {
-        checkArgument(p2PService.getAddress() != null, "p2PService.getAddress() must not be null");
-        return new CompensationRequestPayload(
+    public CompensationRequestPayload getCompensationRequestPayload(String name,
+                                                                    String title,
+                                                                    String description,
+                                                                    String link,
+                                                                    Coin requestedBsq,
+                                                                    String bsqAddress) throws ValidationException {
+        final CompensationRequestPayload payload = new CompensationRequestPayload(
                 UUID.randomUUID().toString(),
                 name,
                 title,
@@ -90,51 +84,39 @@ public class CompensationRequestService {
                 link,
                 requestedBsq,
                 bsqAddress,
-                p2PService.getAddress(),
+                checkNotNull(p2PService.getAddress()),
                 signaturePubKey,
                 new Date()
         );
+
+        payload.validate();
+
+        return payload;
     }
 
-    // TODO move code to consensus package
-    public CompensationRequest prepareCompensationRequest(CompensationRequestPayload compensationRequestPayload)
-            throws InsufficientMoneyException, TransactionVerificationException, WalletException,
-            CompensationAmountException {
 
-        final Coin minRequestAmount = Restrictions.getMinCompensationRequestAmount();
-        if (compensationRequestPayload.getRequestedBsq().compareTo(minRequestAmount) < 0) {
-            throw new CompensationAmountException(minRequestAmount, compensationRequestPayload.getRequestedBsq());
-        }
+    public CompensationRequest getCompensationRequest(CompensationRequestPayload payload)
+            throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
+        CompensationRequest compensationRequest = new CompensationRequest(payload);
 
-        CompensationRequest compensationRequest = new CompensationRequest(compensationRequestPayload);
-        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx
-                (ProposalConsensus.getCreateCompensationRequestFee(readableBsqBlockChain));
-        checkArgument(!preparedBurnFeeTx.getInputs().isEmpty(), "preparedTx inputs must not be empty");
+        final Coin fee = ProposalConsensus.getFee(readableBsqBlockChain);
+        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
-        // We use the key of the first BSQ input for signing the data
-        TransactionOutput connectedOutput = preparedBurnFeeTx.getInputs().get(0).getConnectedOutput();
-        checkNotNull(connectedOutput, "connectedOutput must not be null");
-        DeterministicKey bsqKeyPair = bsqWalletService.findKeyFromPubKeyHash(connectedOutput.getScriptPubKey().getPubKeyHash());
-        checkNotNull(bsqKeyPair, "bsqKeyPair must not be null");
+        // payload does not have tx ID at that moment
+        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(payload);
+        byte[] opReturnData = CompensationRequestConsensus.getOpReturnData(hashOfPayload);
 
-        // We get the JSON of the object excluding signature and feeTxId
-        String payloadAsJson = StringUtils.deleteWhitespace(Utilities.objectToJson(compensationRequestPayload));
-        // Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
-        // encoded string.
-        String signature = bsqKeyPair.signMessage(payloadAsJson);
-        compensationRequestPayload.setSignature(signature);
-
-        //TODO should we store the hash in the compensationRequestPayload object?
-        String dataAndSig = payloadAsJson + signature;
-        byte[] opReturnData = OpReturnData.getBytes(dataAndSig);
-
-        //TODO 1 Btc output (small payment to own vote receiving address)
         final Transaction txWithBtcFee = btcWalletService.completePreparedCompensationRequestTx(
                 compensationRequest.getRequestedBsq(),
-                compensationRequest.getBsqAddress(bsqWalletService),
+                compensationRequest.getAddress(),
                 preparedBurnFeeTx,
                 opReturnData);
-        compensationRequest.setTx(bsqWalletService.signTx(txWithBtcFee));
+
+        final Transaction completedTx = bsqWalletService.signTx(txWithBtcFee);
+
+        // We need the tx for showing the user tx details before publishing (fee, size).
+        compensationRequest.setTx(completedTx);
+
         return compensationRequest;
     }
 }

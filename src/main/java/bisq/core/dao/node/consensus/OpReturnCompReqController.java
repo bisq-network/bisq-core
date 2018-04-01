@@ -46,7 +46,7 @@ public class OpReturnCompReqController {
         return model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
                 Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
-                bsqFee == readableBsqBlockChain.getCreateCompensationRequestFee(blockHeight) &&
+                bsqFee == readableBsqBlockChain.getProposalFee(blockHeight) &&
                 readableBsqBlockChain.isCompensationRequestPeriodValid(blockHeight);
     }
 

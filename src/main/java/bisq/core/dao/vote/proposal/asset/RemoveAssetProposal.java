@@ -15,12 +15,13 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal.compensation.consensus;
+package bisq.core.dao.vote.proposal.asset;
 
 /**
- * Validation for compensation requests
+ * Request for removing an altcoin. Altcoins are added if they fulfill the formal requirements but can be requested by
+ * stakeholders to get removed for any reasons (e.g. majority of stakeholder consider it a scam coin).
  */
-// TODO move all validation code here...
-public class Validation {
 
+// TODO implement
+public class RemoveAssetProposal/* extends Proposal*/ {
 }

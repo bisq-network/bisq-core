@@ -17,8 +17,10 @@
 
 package bisq.core.dao.vote.proposal.compensation;
 
+import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.network.p2p.NodeAddress;
 
@@ -26,6 +28,8 @@ import bisq.common.app.Version;
 
 import io.bisq.generated.protobuffer.PB;
 
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Utils;
 
@@ -42,6 +46,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.lang3.Validate.notEmpty;
+
 /**
  * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request
  */
@@ -52,16 +59,16 @@ public final class CompensationRequestPayload extends ProposalPayload {
     private final long requestedBsq;
     private final String bsqAddress;
 
-    public CompensationRequestPayload(String uid,
-                                      String name,
-                                      String title,
-                                      String description,
-                                      String link,
-                                      Coin requestedBsq,
-                                      String bsqAddress,
-                                      NodeAddress nodeAddress,
-                                      PublicKey ownerPubKey,
-                                      Date creationDate) {
+    CompensationRequestPayload(String uid,
+                               String name,
+                               String title,
+                               String description,
+                               String link,
+                               Coin requestedBsq,
+                               String bsqAddress,
+                               NodeAddress nodeAddress,
+                               PublicKey ownerPubKey,
+                               Date creationDate) {
         super(uid,
                 name,
                 title,
@@ -71,7 +78,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 Utils.HEX.encode(ownerPubKey.getEncoded()),
                 Version.COMPENSATION_REQUEST_VERSION,
                 creationDate.getTime(),
-                null,
                 null,
                 null);
         this.requestedBsq = requestedBsq.value;
@@ -94,7 +100,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                                        String ownerPubPubKeyAsHex,
                                        byte version,
                                        long creationDate,
-                                       String signature,
                                        String txId,
                                        @Nullable Map<String, String> extraDataMap) {
         super(uid,
@@ -106,7 +111,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 ownerPubPubKeyAsHex,
                 version,
                 creationDate,
-                signature,
                 txId,
                 extraDataMap);
 
@@ -135,14 +139,30 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 proto.getOwnerPubKeyAsHex(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
-                proto.getSignature(),
                 proto.getTxId(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
-    public ProposalType getType() {
-        return ProposalType.COMPENSATION_REQUEST;
+    public void validate() throws ValidationException {
+        super.validate();
+        try {
+            notEmpty(bsqAddress, "bsqAddress must not be empty");
+            checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
+            getAddress(); // throws AddressFormatException if wring address
+            //TODO add more checks
+        } catch (Throwable throwable) {
+            throw new ValidationException(throwable);
+        }
+
+        final Coin minRequestAmount = CompensationRequestConsensus.getMinCompensationRequestAmount();
+        if (getRequestedBsq().compareTo(minRequestAmount) < 0)
+            throw new ValidationException("requestedBsq is smaller than minRequestAmount", getRequestedBsq(), minRequestAmount);
     }
 
 
@@ -150,7 +170,19 @@ public final class CompensationRequestPayload extends ProposalPayload {
     // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    @Override
+    public ProposalType getType() {
+        return ProposalType.COMPENSATION_REQUEST;
+    }
+
     public Coin getRequestedBsq() {
         return Coin.valueOf(requestedBsq);
     }
+
+    public Address getAddress() throws AddressFormatException {
+        // Remove leading 'B'
+        String underlyingBtcAddress = bsqAddress.substring(1, bsqAddress.length());
+        return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
+    }
+
 }

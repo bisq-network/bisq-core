@@ -27,7 +27,6 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.MyVoteList;
-import bisq.core.dao.vote.consensus.BlindVoteConsensus;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalCollectionsService;
 import bisq.core.dao.vote.proposal.ProposalList;

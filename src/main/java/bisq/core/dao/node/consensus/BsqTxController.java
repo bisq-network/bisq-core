@@ -75,7 +75,7 @@ public class BsqTxController {
                 tx.setBurntFee(model.getAvailableInputValue());
                 writableBsqBlockChain.addTxToMap(tx);
             } else {
-                String msg = "We have undefined txOutput types which must not happen. outputs=" + tx.getOutputs();
+                String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                 log.error(msg);
                 if (DevEnv.isDevMode())
                     throw new RuntimeException(msg);

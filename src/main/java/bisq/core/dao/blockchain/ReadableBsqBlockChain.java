@@ -84,7 +84,7 @@ public interface ReadableBsqBlockChain {
 
     boolean isVoteRevealPeriodValid(int blockHeight);
 
-    long getCreateCompensationRequestFee(int blockHeight);
+    long getProposalFee(int blockHeight);
 
     long getBlindVoteFee(int blockHeight);
 

@@ -67,7 +67,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 Version.COMPENSATION_REQUEST_VERSION,
                 creationDate.getTime(),
                 null,
-                null,
                 null);
     }
 
@@ -85,7 +84,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                                    String ownerPubPubKeyAsHex,
                                    byte version,
                                    long creationDate,
-                                   String signature,
                                    String txId,
                                    @Nullable Map<String, String> extraDataMap) {
         super(uid,
@@ -97,7 +95,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 ownerPubPubKeyAsHex,
                 version,
                 creationDate,
-                signature,
                 txId,
                 extraDataMap);
     }
@@ -117,7 +114,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 proto.getOwnerPubKeyAsHex(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
-                proto.getSignature(),
                 proto.getTxId(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
@@ -126,5 +122,4 @@ public final class GenericProposalPayload extends ProposalPayload {
     public ProposalType getType() {
         return ProposalType.GENERIC;
     }
-
 }

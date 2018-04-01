@@ -17,7 +17,6 @@
 
 package bisq.core.dao.vote.proposal.compensation;
 
-import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
@@ -26,6 +25,7 @@ import bisq.core.dao.vote.proposal.ProposalType;
 import io.bisq.generated.protobuffer.PB;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 
 import org.springframework.util.CollectionUtils;
@@ -87,11 +87,8 @@ public class CompensationRequest extends Proposal {
         return getCompensationRequestPayload().getRequestedBsq();
     }
 
-    public Address getBsqAddress(BsqWalletService bsqWalletService) {
-        checkNotNull(getCompensationRequestPayload());
-        // Remove leading 'B'
-        String underlyingBtcAddress = getCompensationRequestPayload().getBsqAddress().substring(1, getCompensationRequestPayload().getBsqAddress().length());
-        return Address.fromBase58(bsqWalletService.getParams(), underlyingBtcAddress);
+    public Address getAddress() throws AddressFormatException {
+        return getCompensationRequestPayload().getAddress();
     }
 
     private CompensationRequestPayload getCompensationRequestPayload() {

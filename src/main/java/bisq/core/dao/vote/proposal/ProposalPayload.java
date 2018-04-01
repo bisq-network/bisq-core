@@ -49,11 +49,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static org.apache.commons.lang3.Validate.notEmpty;
+
 /**
- * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request.
+ * Payload is sent over wire as well as it gets persisted.
  * <p>
- * We persist all ProposalPayload data in PersistableNetworkPayloadMap. Data size on disk for once item is: 1263 bytes
- * As there are not 1000s of request we consider that acceptable.
+ * We persist all ProposalPayload data in PersistableNetworkPayloadMap.
+ * Data size on disk for one item is: 1184 bytes (884 bytes is ownerPubPubKeyAsHex, 442 bytes is in byte array form ->
+ * TODO change data type)
+ * As there are not 1000s of proposals we consider that acceptable.
  */
 @Slf4j
 @Data
@@ -66,13 +70,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String description;
     protected final String link;
     protected final String nodeAddress;
-    // used for json
     protected String ownerPubPubKeyAsHex;
-    // Signature of the JSON data of this object excluding the signature and feeTxId fields using the standard Bitcoin
-    // messaging signing format as a base64 encoded string.
-    @JsonExclude
-    protected String signature;
-    // Set after we signed and set the hash. The hash is used in the OP_RETURN of the fee tx
+    @Nullable
     @JsonExclude
     protected String txId;
 
@@ -88,7 +87,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     // Used just for caching
     @JsonExclude
     @Nullable
-    protected transient PublicKey ownerPubKey;
+    private transient PublicKey ownerPubKey;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,8 +103,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                               String ownerPubPubKeyAsHex,
                               byte version,
                               long creationDate,
-                              String signature,
-                              String txId,
+                              @Nullable String txId,
                               @Nullable Map<String, String> extraDataMap) {
         this.uid = uid;
         this.name = name;
@@ -116,7 +114,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         this.ownerPubPubKeyAsHex = ownerPubPubKeyAsHex;
         this.version = version;
         this.creationDate = creationDate;
-        this.signature = signature;
         this.txId = txId;
         this.extraDataMap = extraDataMap;
     }
@@ -131,9 +128,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 .setNodeAddress(nodeAddress)
                 .setOwnerPubKeyAsHex(ownerPubPubKeyAsHex)
                 .setVersion(version)
-                .setCreationDate(creationDate)
-                .setSignature(signature)
-                .setTxId(txId);
+                .setCreationDate(creationDate);
+        Optional.ofNullable(txId).ifPresent(builder::setTxId);
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
         return builder;
     }
@@ -164,6 +160,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     public PublicKey getOwnerPubKey() {
         if (ownerPubKey == null)
             ownerPubKey = Sig.getPublicKeyFromBytes(Utils.HEX.decode(ownerPubPubKeyAsHex));
+
         return ownerPubKey;
     }
 
@@ -175,6 +172,20 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
+    public void validate() throws ValidationException {
+        try {
+            notEmpty(name, "name must not be empty");
+            notEmpty(title, "title must not be empty");
+            notEmpty(description, "description must not be empty");
+            notEmpty(link, "link must not be empty");
+            notEmpty(nodeAddress, "nodeAddress must not be empty");
+            notEmpty(ownerPubPubKeyAsHex, "nodeAddress must not be empty");
+
+            //TODO add more checks
+        } catch (Throwable throwable) {
+            throw new ValidationException(throwable);
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
