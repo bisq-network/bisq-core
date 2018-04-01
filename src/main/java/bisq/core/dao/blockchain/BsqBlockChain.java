@@ -601,7 +601,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     //TODO not impl yet
     @Override
-    public boolean isCompensationRequestPeriodValid(int blockHeight) {
+    public boolean isProposalPeriodValid(int blockHeight) {
         return lock.read(() -> true);
     }
 

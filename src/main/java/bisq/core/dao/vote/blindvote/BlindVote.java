@@ -32,8 +32,6 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
 
-import org.bitcoinj.core.Utils;
-
 import org.springframework.util.CollectionUtils;
 
 import java.security.PublicKey;
@@ -62,14 +60,14 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         return new BlindVote(blindVote.encryptedProposalList,
                 blindVote.getTxId(),
                 blindVote.getStake(),
-                blindVote.getOwnerPubKeyAsHex(),
+                blindVote.getOwnerPubKeyEncoded(),
                 blindVote.extraDataMap);
     }
 
     private final byte[] encryptedProposalList;
     private final String txId;
     private long stake;
-    private final String ownerPubKeyAsHex;
+    private final byte[] ownerPubKeyEncoded;
 
     // Used just for caching
     @JsonExclude
@@ -87,7 +85,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
               String txId,
               long stake,
               PublicKey ownerPubKey) {
-        this(encryptedProposalList, txId, stake, Utils.HEX.encode(ownerPubKey.getEncoded()), null);
+        this(encryptedProposalList, txId, stake, Sig.getPublicKeyBytes(ownerPubKey), null);
     }
 
 
@@ -98,12 +96,12 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     private BlindVote(byte[] encryptedProposalList,
                       String txId,
                       long stake,
-                      String ownerPubKeyAsHex,
+                      byte[] ownerPubKeyEncoded,
                       @Nullable Map<String, String> extraDataMap) {
         this.encryptedProposalList = encryptedProposalList;
         this.txId = txId;
         this.stake = stake;
-        this.ownerPubKeyAsHex = ownerPubKeyAsHex;
+        this.ownerPubKeyEncoded = ownerPubKeyEncoded;
         this.extraDataMap = extraDataMap;
     }
 
@@ -125,7 +123,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
                 .setEncryptedProposalList(ByteString.copyFrom(encryptedProposalList))
                 .setTxId(txId)
                 .setStake(stake)
-                .setOwnerPubKeyAsHex(ownerPubKeyAsHex);
+                .setOwnerPubKeyAsEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
         Optional.ofNullable(getExtraDataMap()).ifPresent(builder::putAllExtraData);
         return builder;
     }
@@ -134,7 +132,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         return new BlindVote(proto.getEncryptedProposalList().toByteArray(),
                 proto.getTxId(),
                 proto.getStake(),
-                proto.getOwnerPubKeyAsHex(),
+                proto.getOwnerPubKeyAsEncoded().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
@@ -145,8 +143,8 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     @Override
     public PublicKey getOwnerPubKey() {
-        if (ownerPubKey == null && ownerPubKeyAsHex != null && !ownerPubKeyAsHex.isEmpty())
-            ownerPubKey = Sig.getPublicKeyFromBytes(Utils.HEX.decode(ownerPubKeyAsHex));
+        if (ownerPubKey == null)
+            ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
         return ownerPubKey;
     }
 

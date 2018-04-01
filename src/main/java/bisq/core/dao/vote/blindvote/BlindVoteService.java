@@ -39,6 +39,7 @@ import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
+import bisq.common.crypto.Encryption;
 import bisq.common.crypto.KeyRing;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
@@ -48,7 +49,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 
 import javax.inject.Inject;
 
@@ -217,7 +217,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             log.warn("We could not publish the blind vote to the P2P network. blindVote={}", blindVote);
         }
 
-        MyVote myVote = new MyVote(proposalList, Utils.HEX.encode(secretKey.getEncoded()), blindVote);
+        MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         myVotesList.add(myVote);
         myVoteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
     }

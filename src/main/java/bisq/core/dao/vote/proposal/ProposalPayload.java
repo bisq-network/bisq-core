@@ -55,8 +55,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
  * Payload is sent over wire as well as it gets persisted.
  * <p>
  * We persist all ProposalPayload data in PersistableNetworkPayloadMap.
- * Data size on disk for one item is: 1184 bytes (884 bytes is ownerPubPubKeyAsHex, 442 bytes is in byte array form ->
- * TODO change data type)
+ * Data size on disk for one item is: about 700 bytes (442 bytes is ownerPubKeyEncoded)
  * As there are not 1000s of proposals we consider that acceptable.
  */
 @Slf4j

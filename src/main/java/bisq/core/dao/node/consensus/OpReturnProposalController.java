@@ -28,34 +28,27 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 /**
  * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
 @Slf4j
-public class OpReturnCompReqController {
+public class OpReturnProposalController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
     @Inject
-    public OpReturnCompReqController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnProposalController(ReadableBsqBlockChain readableBsqBlockChain) {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
-        return model.getIssuanceCandidate() != null &&
-                opReturnData.length == 22 &&
-                Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
+    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight) {
+        return opReturnData.length == 22 &&
+                Version.PROPOSAL == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getProposalFee(blockHeight) &&
                 readableBsqBlockChain.isProposalPeriodValid(blockHeight);
     }
 
     public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
-
-        checkArgument(model.getIssuanceCandidate() != null,
-                "model.getCompRequestIssuanceOutputCandidate() must not be null");
-        model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+        txOutput.setTxOutputType(TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
+        model.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
     }
 }

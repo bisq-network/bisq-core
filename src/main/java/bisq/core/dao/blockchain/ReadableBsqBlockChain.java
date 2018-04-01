@@ -78,7 +78,7 @@ public interface ReadableBsqBlockChain {
 
     long getBlockTime(int height);
 
-    boolean isCompensationRequestPeriodValid(int blockHeight);
+    boolean isProposalPeriodValid(int blockHeight);
 
     boolean isBlindVotePeriodValid(int blockHeight);
 

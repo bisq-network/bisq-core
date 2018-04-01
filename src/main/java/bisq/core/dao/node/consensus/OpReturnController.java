@@ -19,6 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 
 import bisq.common.app.DevEnv;
@@ -36,14 +37,17 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class OpReturnController {
+    private final OpReturnProposalController opReturnProposalController;
     private final OpReturnCompReqController opReturnCompReqController;
     private final OpReturnBlindVoteController opReturnBlindVoteController;
     private final OpReturnVoteRevealController opReturnVoteRevealController;
 
     @Inject
-    public OpReturnController(OpReturnCompReqController opReturnCompReqController,
+    public OpReturnController(OpReturnProposalController opReturnProposalController,
+                              OpReturnCompReqController opReturnCompReqController,
                               OpReturnBlindVoteController opReturnBlindVoteController,
                               OpReturnVoteRevealController opReturnVoteRevealController) {
+        this.opReturnProposalController = opReturnProposalController;
         this.opReturnCompReqController = opReturnCompReqController;
         this.opReturnBlindVoteController = opReturnBlindVoteController;
         this.opReturnVoteRevealController = opReturnVoteRevealController;
@@ -68,17 +72,26 @@ public class OpReturnController {
                             if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
                                 opReturnCompReqController.applyStateChange(txOutput, model);
                             } else {
+                                txOutput.setTxOutputType(TxOutputType.INVALID);
                                 log.info("We expected a compensation request op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;
                         case PROPOSAL:
-                            // TODO
+                            if (opReturnProposalController.verify(opReturnData, bsqFee, blockHeight)) {
+                                opReturnProposalController.applyStateChange(txOutput, model);
+                            } else {
+                                txOutput.setTxOutputType(TxOutputType.INVALID);
+                                txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+                                log.info("We expected a proposal op_return data but it did not " +
+                                        "match our rules. tx={}", tx);
+                            }
                             break;
                         case BLIND_VOTE:
                             if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
                                 opReturnBlindVoteController.applyStateChange(txOutput, model);
                             } else {
+                                txOutput.setTxOutputType(TxOutputType.INVALID);
                                 log.info("We expected a blind vote op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
@@ -87,15 +100,18 @@ public class OpReturnController {
                             if (opReturnVoteRevealController.verify(opReturnData, blockHeight, model)) {
                                 opReturnVoteRevealController.applyStateChange(txOutput, model);
                             } else {
+                                txOutput.setTxOutputType(TxOutputType.INVALID);
                                 log.info("We expected a vote reveal op_return data but it did not " +
                                         "match our rules. tx={}", tx);
                             }
                             break;
                         case LOCK_UP:
                             // TODO
+                            txOutput.setTxOutputType(TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
                             break;
                         case UNLOCK:
                             // TODO
+                            txOutput.setTxOutputType(TxOutputType.BOND_UNLOCK_OP_RETURN_OUTPUT);
                             break;
                         default:
                             // Should never happen as long we keep OpReturnType entries in sync with out switch case.
