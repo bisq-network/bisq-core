@@ -28,8 +28,8 @@ import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.MyVoteList;
 import bisq.core.dao.vote.proposal.Proposal;
-import bisq.core.dao.vote.proposal.ProposalCollectionsService;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.dao.vote.proposal.ProposalService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -82,7 +82,7 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 public class BlindVoteService implements PersistedDataHost, HashMapChangedListener {
-    private final ProposalCollectionsService proposalCollectionsService;
+    private final ProposalService proposalService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final DaoPeriodService daoPeriodService;
     private final BsqWalletService bsqWalletService;
@@ -107,7 +107,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteService(ProposalCollectionsService proposalCollectionsService,
+    public BlindVoteService(ProposalService proposalService,
                             ReadableBsqBlockChain readableBsqBlockChain,
                             DaoPeriodService daoPeriodService,
                             BsqWalletService bsqWalletService,
@@ -117,7 +117,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                             KeyRing keyRing,
                             Storage<MyVoteList> myVoteListStorage,
                             Storage<BlindVoteList> blindVoteListStorage) {
-        this.proposalCollectionsService = proposalCollectionsService;
+        this.proposalService = proposalService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.daoPeriodService = daoPeriodService;
         this.bsqWalletService = bsqWalletService;
@@ -179,7 +179,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     public void publishBlindVote(Coin stake, FutureCallback<Transaction> callback)
             throws CryptoException, InsufficientMoneyException, WalletException, TransactionVerificationException,
             IOException {
-        ProposalList proposalList = getClonedProposalList(proposalCollectionsService.getActiveProposals());
+        ProposalList proposalList = getClonedProposalList(proposalService.getActiveProposals());
         SecretKey secretKey = BlindVoteConsensus.getSecretKey();
         byte[] encryptedProposals = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
         byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);

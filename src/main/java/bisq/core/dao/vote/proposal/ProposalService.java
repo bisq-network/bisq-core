@@ -67,7 +67,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Manages proposal collections.
  */
 @Slf4j
-public class ProposalCollectionsService implements PersistedDataHost, BsqBlockChain.Listener, HashMapChangedListener {
+public class ProposalService implements PersistedDataHost, BsqBlockChain.Listener, HashMapChangedListener {
     private final P2PService p2PService;
     private final BsqWalletService bsqWalletService;
     private final WalletsManager walletsManager;
@@ -89,13 +89,13 @@ public class ProposalCollectionsService implements PersistedDataHost, BsqBlockCh
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalCollectionsService(P2PService p2PService,
-                                      BsqWalletService bsqWalletService,
-                                      WalletsManager walletsManager,
-                                      DaoPeriodService daoPeriodService,
-                                      ReadableBsqBlockChain readableBsqBlockChain,
-                                      KeyRing keyRing,
-                                      Storage<ProposalList> proposalListStorage) {
+    public ProposalService(P2PService p2PService,
+                           BsqWalletService bsqWalletService,
+                           WalletsManager walletsManager,
+                           DaoPeriodService daoPeriodService,
+                           ReadableBsqBlockChain readableBsqBlockChain,
+                           KeyRing keyRing,
+                           Storage<ProposalList> proposalListStorage) {
         this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.walletsManager = walletsManager;

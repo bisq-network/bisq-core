@@ -23,7 +23,7 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.issuance.IssuanceService;
-import bisq.core.dao.vote.proposal.ProposalCollectionsService;
+import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.DevEnv;
@@ -36,7 +36,7 @@ import com.google.inject.Inject;
  */
 public class DaoManager {
     private final DaoPeriodService daoPeriodService;
-    private final ProposalCollectionsService proposalCollectionsService;
+    private final ProposalService proposalService;
     private final BsqNode bsqNode;
     private final VoteRevealService voteRevealService;
     private final IssuanceService issuanceService;
@@ -50,12 +50,12 @@ public class DaoManager {
     @Inject
     public DaoManager(BsqNodeProvider bsqNodeProvider,
                       DaoPeriodService daoPeriodService,
-                      ProposalCollectionsService proposalCollectionsService,
+                      ProposalService proposalService,
                       BlindVoteService blindVoteService,
                       VoteRevealService voteRevealService,
                       IssuanceService issuanceService) {
         this.daoPeriodService = daoPeriodService;
-        this.proposalCollectionsService = proposalCollectionsService;
+        this.proposalService = proposalService;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.issuanceService = issuanceService;
@@ -66,7 +66,7 @@ public class DaoManager {
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             daoPeriodService.onAllServicesInitialized();
-            proposalCollectionsService.onAllServicesInitialized();
+            proposalService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
             blindVoteService.onAllServicesInitialized();
             voteRevealService.onAllServicesInitialized();
@@ -77,7 +77,7 @@ public class DaoManager {
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             daoPeriodService.shutDown();
-            proposalCollectionsService.shutDown();
+            proposalService.shutDown();
             bsqNode.shutDown();
             blindVoteService.shutDown();
             voteRevealService.shutDown();
