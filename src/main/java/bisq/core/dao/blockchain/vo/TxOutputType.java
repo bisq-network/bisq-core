@@ -37,7 +37,7 @@ public enum TxOutputType {
     BOND_LOCK_OP_RETURN_OUTPUT,
     BOND_UNLOCK,
     BOND_UNLOCK_OP_RETURN_OUTPUT,
-    INVALID;
+    INVALID_OUTPUT;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
