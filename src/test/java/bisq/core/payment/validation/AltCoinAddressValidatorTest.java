@@ -949,3 +949,19 @@ public class AltCoinAddressValidatorTest {
         assertFalse(validator.validate("").isValid);
     }
 }
+
+    @Test
+    public void testAGC() {
+        AltCoinAddressValidator validator = new AltCoinAddressValidator();
+        validator.setCurrencyCode("AGC");
+
+        assertTrue(validator.validate("AKYBSmmZJ9jKjrt4ReVvUEHLv7re8V2YTt").isValid);
+        assertTrue(validator.validate("AMWZDnpGo2hWRF3oJ56aWtDY5znT9vbhUw").isValid);
+        assertTrue(validator.validate("AQjB1wVc4Hk3CQNvZVZ6nfgjVfyTa7awVV").isValid);
+        assertTrue(validator.validate("AJNU3G3akGdCy77kAoWd1b28TAE1yWvrFL").isValid);
+
+        assertFalse(validator.validate("1YzyJYqhnxF738QjqMqTku5Wft7x4GhVCr").isValid);
+        assertFalse(validator.validate("0x2a65Aca4D5fC5B5C859090a6c34d1641353982266").isValid);
+        assertFalse(validator.validate("SSnwqFBiyqK1n4BV7kPX86iesev2NobhEo").isValid);
+        assertFalse(validator.validate("").isValid);
+    }

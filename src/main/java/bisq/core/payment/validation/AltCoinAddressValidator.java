@@ -28,6 +28,7 @@ import bisq.core.payment.validation.altcoins.WMCCAddressValidator;
 import bisq.core.payment.validation.altcoins.XCNAddressValidator;
 import bisq.core.payment.validation.altcoins.YTNAddressValidator;
 import bisq.core.payment.validation.params.ACHParams;
+import bisq.core.payment.validation.params.AGCParams;
 import bisq.core.payment.validation.params.AlcParams;
 import bisq.core.payment.validation.params.CageParams;
 import bisq.core.payment.validation.params.CreaParams;
@@ -584,6 +585,13 @@ public final class AltCoinAddressValidator extends InputValidator {
                         }
                     } else {
                         return regexTestFailed;
+                    }
+                case "AGC":
+                    try {
+                        Address.fromBase58(AGCParams.get(), input);
+                        return new ValidationResult(true);
+                    } catch (AddressFormatException e) {
+                        return new ValidationResult(false, getErrorMessage(e));
                     }
 
                     // Add new coins at the end...
