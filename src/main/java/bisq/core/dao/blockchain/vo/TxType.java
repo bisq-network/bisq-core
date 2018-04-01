@@ -34,7 +34,6 @@ public enum TxType {
     PROPOSAL(true, true),
     BLIND_VOTE(true, true),
     VOTE_REVEAL(true, false),
-    ISSUANCE(false, false), // TODO remove
     LOCK_UP(true, false),
     UN_LOCK(true, false);
 

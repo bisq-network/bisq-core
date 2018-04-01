@@ -323,13 +323,17 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             // The magic happens, we print money! ;-)
             //TODO maybe we should use a new type and maturity?
 
-            //TODO don't change types
-            //txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
-
             // We should track spent status and output has to be unspent anyway
             txOutput.setUnspent(true);
             txOutput.setVerified(true);
             addUnspentTxOutput(txOutput);
+
+            final Optional<Tx> optionalTx = getTx(txOutput.getTxId());
+            checkArgument(optionalTx.isPresent(), "optionalTx must be present");
+            final Tx tx = optionalTx.get();
+            tx.setIssuanceBlockHeight(chainHeadHeight);
+            tx.setIssuanceTx(true);
+
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
     }
@@ -650,7 +654,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             sb.append("\n##############################################################################");
             printBlock(bsqBlock, sb);
             sb.append("\n\n##############################################################################\n");
-            log.error(sb.toString());
+            log.debug(sb.toString());
         }
     }
 

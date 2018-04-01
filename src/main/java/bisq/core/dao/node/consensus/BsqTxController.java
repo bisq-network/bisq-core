@@ -118,15 +118,7 @@ public class BsqTxController {
                 final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
                 checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
-                // second output is issuance candidate
-                if (issuanceTxOutput.isVerified()) {
-                    // TODO can that even happen as the voting will be applied later then the parsing of the tx
-                    // If he have the issuance candidate already accepted by voting it gets the verified flag set
-                    txType = TxType.ISSUANCE;
-                } else {
-                    // Otherwise we have an open or rejected compensation request
-                    txType = TxType.COMPENSATION_REQUEST;
-                }
+                txType = TxType.COMPENSATION_REQUEST;
                 break;
             case PROPOSAL:
                 txType = TxType.PROPOSAL;
