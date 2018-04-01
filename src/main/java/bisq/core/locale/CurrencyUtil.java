@@ -132,6 +132,7 @@ public class CurrencyUtil {
             result.add(new CryptoCurrency("LTC", "Litecoin"));
         result.add(new CryptoCurrency("MAID", "MaidSafeCoin"));
         result.add(new CryptoCurrency("MDC", "Madcoin"));
+        result.add(new CryptoCurrency("MSR", "Masari"));
         result.add(new CryptoCurrency("XMR", "Monero"));
         result.add(new CryptoCurrency("MT", "Mycelium Token", true));
         result.add(new CryptoCurrency("NAV", "Nav Coin"));
