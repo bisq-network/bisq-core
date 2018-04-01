@@ -21,6 +21,7 @@ import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
 
+//TODO sync up with data model
 @Value
 @Immutable
 public class JsonTxInput {
