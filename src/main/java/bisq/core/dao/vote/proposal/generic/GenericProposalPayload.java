@@ -23,10 +23,9 @@ import bisq.core.dao.vote.proposal.ProposalType;
 import bisq.network.p2p.NodeAddress;
 
 import bisq.common.app.Version;
+import bisq.common.crypto.Sig;
 
 import io.bisq.generated.protobuffer.PB;
-
-import org.bitcoinj.core.Utils;
 
 import org.springframework.util.CollectionUtils;
 
@@ -63,7 +62,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                 description,
                 link,
                 nodeAddress.getFullAddress(),
-                Utils.HEX.encode(ownerPubKey.getEncoded()),
+                Sig.getPublicKeyBytes(ownerPubKey),
                 Version.COMPENSATION_REQUEST_VERSION,
                 creationDate.getTime(),
                 null,
@@ -81,7 +80,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                                    String description,
                                    String link,
                                    String nodeAddress,
-                                   String ownerPubPubKeyAsHex,
+                                   byte[] ownerPubKeyEncoded,
                                    byte version,
                                    long creationDate,
                                    String txId,
@@ -92,7 +91,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                 description,
                 link,
                 nodeAddress,
-                ownerPubPubKeyAsHex,
+                ownerPubKeyEncoded,
                 version,
                 creationDate,
                 txId,
@@ -111,7 +110,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                 proto.getDescription(),
                 proto.getLink(),
                 proto.getNodeAddress(),
-                proto.getOwnerPubKeyAsHex(),
+                proto.getOwnerPubKeyEncoded().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId(),

@@ -33,7 +33,7 @@ import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.bitcoinj.core.Utils;
+import com.google.protobuf.ByteString;
 
 import java.security.PublicKey;
 
@@ -70,7 +70,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String description;
     protected final String link;
     protected final String nodeAddress;
-    protected String ownerPubPubKeyAsHex;
+    protected byte[] ownerPubKeyEncoded;
     @Nullable
     @JsonExclude
     protected String txId;
@@ -100,7 +100,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                               String description,
                               String link,
                               String nodeAddress,
-                              String ownerPubPubKeyAsHex,
+                              byte[] ownerPubPubKeyEncoded,
                               byte version,
                               long creationDate,
                               @Nullable String txId,
@@ -111,7 +111,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         this.description = description;
         this.link = link;
         this.nodeAddress = nodeAddress;
-        this.ownerPubPubKeyAsHex = ownerPubPubKeyAsHex;
+        this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.version = version;
         this.creationDate = creationDate;
         this.txId = txId;
@@ -126,7 +126,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 .setDescription(description)
                 .setLink(link)
                 .setNodeAddress(nodeAddress)
-                .setOwnerPubKeyAsHex(ownerPubPubKeyAsHex)
+                .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded))
                 .setVersion(version)
                 .setCreationDate(creationDate);
         Optional.ofNullable(txId).ifPresent(builder::setTxId);
@@ -159,7 +159,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     @Override
     public PublicKey getOwnerPubKey() {
         if (ownerPubKey == null)
-            ownerPubKey = Sig.getPublicKeyFromBytes(Utils.HEX.decode(ownerPubPubKeyAsHex));
+            ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
 
         return ownerPubKey;
     }
@@ -179,7 +179,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             notEmpty(description, "description must not be empty");
             notEmpty(link, "link must not be empty");
             notEmpty(nodeAddress, "nodeAddress must not be empty");
-            notEmpty(ownerPubPubKeyAsHex, "nodeAddress must not be empty");
 
             //TODO add more checks
         } catch (Throwable throwable) {
