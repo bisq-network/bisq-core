@@ -32,18 +32,18 @@ public class RestrictionsTest {
         Coin txFee = Coin.valueOf(20000);
 
         amount = Coin.ZERO;
-        assertFalse(Restrictions.isAboveDust(amount.add(txFee)));
+        assertFalse(Restrictions.isAboveDust(amount.subtract(txFee)));
 
         amount = txFee;
-        assertFalse(Restrictions.isAboveDust(amount.add(txFee)));
+        assertFalse(Restrictions.isAboveDust(amount.subtract(txFee)));
 
         amount = Restrictions.getMinNonDustOutput();
-        assertFalse(Restrictions.isAboveDust(amount.add(txFee)));
+        assertFalse(Restrictions.isAboveDust(amount.subtract(txFee)));
 
         amount = txFee.add(Restrictions.getMinNonDustOutput());
-        assertTrue(Restrictions.isAboveDust(amount.add(txFee)));
+        assertTrue(Restrictions.isAboveDust(amount.subtract(txFee)));
 
         amount = txFee.add(Restrictions.getMinNonDustOutput()).add(Coin.valueOf(1));
-        assertTrue(Restrictions.isAboveDust(amount.add(txFee)));
+        assertTrue(Restrictions.isAboveDust(amount.subtract(txFee)));
     }
 }

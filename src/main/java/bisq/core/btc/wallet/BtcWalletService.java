@@ -258,7 +258,7 @@ public class BtcWalletService extends WalletService {
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
         }
-        throw new RuntimeException("Not implemented yet.");
+        throw new RuntimeException("completePreparedGenericProposalTx not implemented yet.");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -995,9 +995,10 @@ public class BtcWalletService extends WalletService {
                                        AddressEntry.Context context) throws AddressFormatException,
             AddressEntryException {
         Transaction tx = new Transaction(params);
-        Preconditions.checkArgument(Restrictions.isAboveDust(amount.add(fee)),
+        final Coin receiverAmount = amount.subtract(fee);
+        Preconditions.checkArgument(Restrictions.isAboveDust(receiverAmount),
                 "The amount is too low (dust limit).");
-        tx.addOutput(amount.subtract(fee), Address.fromBase58(params, toAddress));
+        tx.addOutput(receiverAmount, Address.fromBase58(params, toAddress));
 
         SendRequest sendRequest = SendRequest.forTx(tx);
         sendRequest.fee = fee;
