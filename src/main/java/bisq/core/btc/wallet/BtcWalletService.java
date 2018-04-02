@@ -160,10 +160,10 @@ public class BtcWalletService extends WalletService {
         // preparedCompensationRequestTx has following structure:
         // inputs [1-n] BSQ inputs for request fee
         // inputs [1-n] BTC inputs for BSQ issuance and miner fee
-        // outputs [0-1] BSQ request fee change output (>= 2730 Satoshi)
+        // outputs [1] Mandatory BSQ request fee change output (>= 2730 Satoshi)
         // outputs [1] Potentially BSQ issuance output (>= 2730 Satoshi)
         // outputs [0-1] BTC change output from issuance and miner fee inputs (>= 2730 Satoshi)
-        // outputs [0-1] OP_RETURN with opReturnData and amount 0
+        // outputs [1] OP_RETURN with opReturnData and amount 0
         // mining fee: BTC mining fee + burned BSQ fee
 
         Transaction preparedTx = new Transaction(params);
@@ -278,7 +278,7 @@ public class BtcWalletService extends WalletService {
     // outputs [1] BSQ stake
     // outputs [0-1] BSQ change output (>= 2730 Satoshi)
     // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
-    // outputs [0-1] OP_RETURN with opReturnData and amount 0
+    // outputs [1] OP_RETURN with opReturnData and amount 0
     // mining fee: BTC mining fee + burned BSQ fee
     public Transaction completePreparedBlindVoteTx(Transaction preparedTx, byte[] opReturnData)
             throws TransactionVerificationException, WalletException, InsufficientMoneyException {
@@ -384,7 +384,7 @@ public class BtcWalletService extends WalletService {
     // inputs [1-n] BTC inputs for miner fee
     // outputs [1] BSQ unlocked stake
     // outputs [0-1] BTC change output from miner fee inputs (>= 2730 Satoshi)
-    // outputs [0-1] OP_RETURN with opReturnData and amount 0
+    // outputs [1] OP_RETURN with opReturnData and amount 0
     // mining fee: BTC mining fee + burned BSQ fee
     public Transaction completePreparedVoteRevealTx(Transaction preparedTx, byte[] opReturnData)
             throws TransactionVerificationException, WalletException, InsufficientMoneyException {
