@@ -573,9 +573,9 @@ public class AltCoinAddressValidatorTest {
 
     // Added 0.6.6
     @Test
-    public void testSTL() {
+    public void testXTL() {
         AltCoinAddressValidator validator = new AltCoinAddressValidator();
-        validator.setCurrencyCode("STL");
+        validator.setCurrencyCode("XTL");
 
         assertTrue(validator.validate("Se3x7sVdvUnMMn2KoYLyYVHMJGRoB2R3V8K3LYuHAiEXgVac7vsmFiXUC8dSpJnjXDfwytKsQJV6HFH8MjwPagTJ2Aha46RZM").isValid);
         assertTrue(validator.validate("Se3F51UzpbVVnQRx2VNbcjfBoQJfeuyFF353i1jLnCZda9yVN3vy8csbYCESBvf38TFkchH1C1tMY6XHkC8L678K2vLsVZVMU").isValid);
