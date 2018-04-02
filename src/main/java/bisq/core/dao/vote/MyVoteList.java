@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class MyVoteList extends PersistableList<MyVote> {
 
-    MyVoteList(List<MyVote> list) {
+    public MyVoteList(List<MyVote> list) {
         super(list);
     }
 

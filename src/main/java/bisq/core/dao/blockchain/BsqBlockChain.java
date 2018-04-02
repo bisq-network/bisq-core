@@ -40,6 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -278,7 +279,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> {
             bsqBlocks.add(bsqBlock);
             chainHeadHeight = bsqBlock.getHeight();
-            printDetails();
+            printNewBlock(bsqBlock);
             listeners.forEach(l -> UserThread.execute(() -> l.onBlockAdded(bsqBlock)));
         });
     }
@@ -320,15 +321,23 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     public void issueBsq(TxOutput txOutput) {
         lock.write(() -> {
             // The magic happens, we print money! ;-)
-            //TODO maybe we should use a new type and maturity?
-            txOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
+            //TODO handle maturity
+
             // We should track spent status and output has to be unspent anyway
             txOutput.setUnspent(true);
             txOutput.setVerified(true);
             addUnspentTxOutput(txOutput);
+
+            final Optional<Tx> optionalTx = getTx(txOutput.getTxId());
+            checkArgument(optionalTx.isPresent(), "optionalTx must be present");
+            final Tx tx = optionalTx.get();
+            tx.setIssuanceBlockHeight(chainHeadHeight);
+            tx.setIssuanceTx(true);
+
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: Fees
@@ -387,10 +396,9 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public List<BsqBlock> getClonedBlocksFrom(int fromBlockHeight) {
         return lock.read(() -> {
-            BsqBlockChain clone = getClone();
-            return clone.bsqBlocks.stream()
+            return getClone().bsqBlocks.stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
-                    .peek(BsqBlock::reset)
+                    .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
                     .collect(Collectors.toList());
         });
     }
@@ -453,7 +461,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> {
             return bsqBlocks.stream()
                     .filter(block -> block.getHeight() == height)
-                    .mapToLong(block -> block.getTime())
+                    .mapToLong(BsqBlock::getTime)
                     .sum();
         });
     }
@@ -468,7 +476,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Override
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
-                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
+                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .isPresent());
     }
 
@@ -485,11 +493,9 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-
-    @Override
-    public Set<TxOutput> getLockedForVoteTxOutputs() {
+    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -521,13 +527,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     public Set<TxOutput> getVoteRevealTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
-                .collect(Collectors.toSet()));
-    }
-
-    @Override
-    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getVerifiedTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -588,7 +587,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     @Override
-    public long getCreateCompensationRequestFee(int blockHeight) {
+    public long getProposalFee(int blockHeight) {
         return lock.read(() -> {
             long fee = -1;
             for (Tuple2<Long, Integer> feeAtHeight : proposalFees) {
@@ -602,7 +601,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     //TODO not impl yet
     @Override
-    public boolean isCompensationRequestPeriodValid(int blockHeight) {
+    public boolean isProposalPeriodValid(int blockHeight) {
         return lock.read(() -> true);
     }
 
@@ -637,8 +636,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                         btcAddress.equals(txOutput.getAddress())));
     }
 
-    @Override
-    public void printDetails() {
+    private void printNewBlock(BsqBlock bsqBlock) {
         log.debug("\nchainHeadHeight={}\n" +
                         "    blocks.size={}\n" +
                         "    txMap.size={}\n" +
@@ -651,8 +649,41 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 unspentTxOutputsMap.size(),
                 proposalFees.size(),
                 blindVoteFees.size());
+
+        if (!bsqBlocks.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n##############################################################################");
+            printBlock(bsqBlock, sb);
+            sb.append("\n\n##############################################################################\n");
+            log.debug(sb.toString());
+        }
     }
 
+    private void printBlock(BsqBlock bsqBlock, StringBuilder sb) {
+        sb.append("\n\nBsqBlock prev -> current hash: ").append(bsqBlock.getPreviousBlockHash()).append(" -> ").append(bsqBlock.getHash());
+        sb.append("\nblockHeight: ").append(bsqBlock.getHeight());
+        sb.append("\nNew BSQ txs in block: ");
+        sb.append(bsqBlock.getTxs().stream().map(Tx::getId).collect(Collectors.toList()).toString());
+        sb.append("\nAll BSQ tx new state: ");
+        txMap.values().stream()
+                .sorted(Comparator.comparing(Tx::getBlockHeight))
+                .forEach(tx -> printTx(tx, sb));
+    }
+
+    private void printTx(Tx tx, StringBuilder sb) {
+        sb.append("\n\nTx with ID: ").append(tx.getId());
+        sb.append("\n    added at blockHeight: ").append(tx.getBlockHeight());
+        sb.append("\n    txType: ").append(tx.getTxType());
+        sb.append("\n    burntFee: ").append(tx.getBurntFee());
+        for (int i = 0; i < tx.getOutputs().size(); i++) {
+            final TxOutput txOutput = tx.getOutputs().get(i);
+            sb.append("\n        txOutput ").append(i)
+                    .append(": txOutputType: ").append(txOutput.getTxOutputType())
+                    .append(", isVerified: ").append(txOutput.isVerified())
+                    .append(", isUnspent: ").append(txOutput.isUnspent())
+                    .append(", getSpentInfo: ").append(txOutput.getSpentInfo());
+        }
+    }
 
     // Probably not needed anymore
     public <T> T callFunctionWithWriteLock(Supplier<T> supplier) {

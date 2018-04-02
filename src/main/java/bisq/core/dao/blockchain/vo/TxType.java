@@ -21,25 +21,36 @@ import bisq.common.proto.ProtoUtil;
 
 import io.bisq.generated.protobuffer.PB;
 
+import lombok.Getter;
+
 public enum TxType {
-    UNDEFINED_TX_TYPE,
-    UNVERIFIED,
-    INVALID,
-    GENESIS,
-    TRANSFER_BSQ,
-    PAY_TRADE_FEE,
-    COMPENSATION_REQUEST,
-    PROPOSAL,
-    BLIND_VOTE,
-    VOTE_REVEAL,
-    ISSUANCE,
-    LOCK_UP,
-    UN_LOCK;
+    UNDEFINED_TX_TYPE(false, false),
+    UNVERIFIED(false, false),
+    INVALID(false, false),
+    GENESIS(false, false),
+    TRANSFER_BSQ(false, false),
+    PAY_TRADE_FEE(false, true),
+    PROPOSAL(true, true),
+    COMPENSATION_REQUEST(true, true),
+    BLIND_VOTE(true, true),
+    VOTE_REVEAL(true, false),
+    LOCK_UP(true, false),
+    UN_LOCK(true, false);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Getter
+    private final boolean hasOpReturn;
+    @Getter
+    private final boolean requiresFee;
+
+    TxType(boolean hasOpReturn, boolean requiresFee) {
+        this.hasOpReturn = hasOpReturn;
+        this.requiresFee = requiresFee;
+    }
 
     public static TxType fromProto(PB.TxType txType) {
         return ProtoUtil.enumFromProto(TxType.class, txType.name());

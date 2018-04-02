@@ -18,7 +18,6 @@
 package bisq.core.dao.node;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.lite.LiteNode;
 
@@ -40,9 +39,7 @@ public class BsqNodeProvider {
     @Inject
     public BsqNodeProvider(LiteNode bsqLiteNode,
                            FullNode bsqFullNode,
-                           BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
                            @Named(DaoOptionKeys.FULL_DAO_NODE) boolean fullDaoNode) {
         bsqNode = fullDaoNode ? bsqFullNode : bsqLiteNode;
-        bsqNode.addBsqBlockChainListener(bsqBlockChainChangeDispatcher);
     }
 }

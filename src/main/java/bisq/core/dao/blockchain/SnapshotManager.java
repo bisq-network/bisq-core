@@ -68,8 +68,6 @@ public class SnapshotManager implements BsqBlockChain.Listener {
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
         }
-
-        readableBsqBlockChain.printDetails();
     }
 
     @VisibleForTesting

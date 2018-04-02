@@ -70,14 +70,20 @@ public class BsqTxController {
         if (bsqInputBalancePositive) {
             txOutputsController.processOpReturnCandidate(tx, model);
             txOutputsController.iterateOutputs(tx, blockHeight, model);
-            tx.setTxType(getTxType(tx, model));
-            tx.setBurntFee(model.getAvailableInputValue());
-            writableBsqBlockChain.addTxToMap(tx);
+            if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
+                tx.setTxType(getTxType(tx, model));
+                tx.setBurntFee(model.getAvailableInputValue());
+                writableBsqBlockChain.addTxToMap(tx);
+            } else {
+                String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
+                log.error(msg);
+                if (DevEnv.isDevMode())
+                    throw new RuntimeException(msg);
+            }
         }
 
         return bsqInputBalancePositive;
     }
-
 
     // TODO add tests
     @SuppressWarnings("WeakerAccess")
@@ -112,15 +118,7 @@ public class BsqTxController {
                 final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
                 checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
-                // second output is issuance candidate
-                if (issuanceTxOutput.isVerified()) {
-                    // TODO can that even happen as the voting will be applied later then the parsing of the tx
-                    // If he have the issuance candidate already accepted by voting it gets the verified flag set
-                    txType = TxType.ISSUANCE;
-                } else {
-                    // Otherwise we have an open or rejected compensation request
-                    txType = TxType.COMPENSATION_REQUEST;
-                }
+                txType = TxType.COMPENSATION_REQUEST;
                 break;
             case PROPOSAL:
                 txType = TxType.PROPOSAL;
@@ -154,13 +152,15 @@ public class BsqTxController {
                 final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
                 return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
             } else {
-                final String msg = "We got a different opReturn type after validation as we expected initially. tx=" + tx;
+                final String msg = "We got a different opReturn type after validation as we expected initially. " +
+                        "opReturnTypeCandidate=" + model.getOpReturnTypeCandidate() +
+                        " / verifiedOpReturnType=" + model.getVerifiedOpReturnType();
                 log.warn(msg);
                 if (DevEnv.isDevMode())
                     throw new RuntimeException(msg);
             }
         } else {
-            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx={}" + tx;
+            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
             log.warn(msg);
             if (DevEnv.isDevMode())
                 throw new RuntimeException(msg);

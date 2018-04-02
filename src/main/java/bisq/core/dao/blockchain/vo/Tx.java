@@ -22,33 +22,74 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
+@Slf4j
 public class Tx implements PersistablePayload {
+
+    public static Tx clone(Tx tx, boolean reset) {
+        final ImmutableList<TxInput> inputs = ImmutableList.copyOf(tx.getInputs().stream()
+                .map(txInput -> TxInput.clone(txInput, reset))
+                .collect(Collectors.toList()));
+        final ImmutableList<TxOutput> outputs = ImmutableList.copyOf(tx.getOutputs().stream()
+                .map(txOutput -> TxOutput.clone(txOutput, reset))
+                .collect(Collectors.toList()));
+        //noinspection SimplifiableConditionalExpression
+        return new Tx(tx.getTxVersion(),
+                tx.getId(),
+                tx.getBlockHeight(),
+                tx.getBlockHash(),
+                tx.getTime(),
+                inputs,
+                outputs,
+                reset ? 0 : tx.getBurntFee(),
+                reset ? TxType.UNDEFINED_TX_TYPE : tx.getTxType(),
+                reset ? false : tx.isIssuanceTx(),
+                reset ? 0 : tx.getIssuanceBlockHeight());
+    }
+
+
     private final String txVersion;
     private final String id;
     private final int blockHeight;
     private final String blockHash;
     private final long time;
-    private final List<TxInput> inputs;
-    private final List<TxOutput> outputs;
+    private final ImmutableList<TxInput> inputs;
+    private final ImmutableList<TxOutput> outputs;
+
+    // Mutable data
+    // We use a manual setter as we want to prevent that already set values get changed
     private long burntFee;
+    // We use a manual setter as we want to prevent that already set values get changed
     @Nullable
     private TxType txType;
+
+    @Setter
+    private boolean isIssuanceTx;
+    // We use a manual setter as we want to prevent that already set values get changed
+    private int issuanceBlockHeight;
+
 
     public Tx(String id, int blockHeight,
               String blockHash,
               long time,
-              List<TxInput> inputs,
-              List<TxOutput> outputs) {
+              ImmutableList<TxInput> inputs,
+              ImmutableList<TxOutput> outputs) {
         this(Version.BSQ_TX_VERSION,
                 id,
                 blockHeight,
@@ -57,7 +98,9 @@ public class Tx implements PersistablePayload {
                 inputs,
                 outputs,
                 0,
-                TxType.UNDEFINED_TX_TYPE);
+                TxType.UNDEFINED_TX_TYPE,
+                false,
+                0);
     }
 
 
@@ -70,10 +113,12 @@ public class Tx implements PersistablePayload {
                int blockHeight,
                String blockHash,
                long time,
-               List<TxInput> inputs,
-               List<TxOutput> outputs,
+               ImmutableList<TxInput> inputs,
+               ImmutableList<TxOutput> outputs,
                long burntFee,
-               @Nullable TxType txType) {
+               @Nullable TxType txType,
+               boolean isIssuanceTx,
+               int issuanceBlockHeight) {
         this.txVersion = txVersion;
         this.id = id;
         this.blockHeight = blockHeight;
@@ -83,6 +128,8 @@ public class Tx implements PersistablePayload {
         this.outputs = outputs;
         this.burntFee = burntFee;
         this.txType = txType;
+        this.isIssuanceTx = isIssuanceTx;
+        this.issuanceBlockHeight = issuanceBlockHeight;
     }
 
     public PB.Tx toProtoMessage() {
@@ -98,7 +145,9 @@ public class Tx implements PersistablePayload {
                 .addAllOutputs(outputs.stream()
                         .map(TxOutput::toProtoMessage)
                         .collect(Collectors.toList()))
-                .setBurntFee(burntFee);
+                .setBurntFee(burntFee)
+                .setIsSsuanceTx(isIssuanceTx)
+                .setIssuanceBlockHeight(issuanceBlockHeight);
 
         Optional.ofNullable(txType).ifPresent(e -> builder.setTxType(e.toProtoMessage()));
 
@@ -112,17 +161,19 @@ public class Tx implements PersistablePayload {
                 proto.getBlockHash(),
                 proto.getTime(),
                 proto.getInputsList().isEmpty() ?
-                        new ArrayList<>() :
-                        proto.getInputsList().stream()
+                        ImmutableList.copyOf(new ArrayList<>()) :
+                        ImmutableList.copyOf(proto.getInputsList().stream()
                                 .map(TxInput::fromProto)
-                                .collect(Collectors.toList()),
+                                .collect(Collectors.toList())),
                 proto.getOutputsList().isEmpty() ?
-                        new ArrayList<>() :
-                        proto.getOutputsList().stream()
+                        ImmutableList.copyOf(new ArrayList<>()) :
+                        ImmutableList.copyOf(proto.getOutputsList().stream()
                                 .map(TxOutput::fromProto)
-                                .collect(Collectors.toList()),
+                                .collect(Collectors.toList())),
                 proto.getBurntFee(),
-                TxType.fromProto(proto.getTxType()));
+                TxType.fromProto(proto.getTxType()),
+                proto.getIsSsuanceTx(),
+                proto.getIssuanceBlockHeight());
     }
 
 
@@ -134,10 +185,33 @@ public class Tx implements PersistablePayload {
         return outputs.size() > index ? Optional.of(outputs.get(index)) : Optional.empty();
     }
 
-    public void reset() {
-        burntFee = 0;
-        txType = TxType.UNDEFINED_TX_TYPE;
-        inputs.forEach(TxInput::reset);
-        outputs.forEach(TxOutput::reset);
+    public void setBurntFee(long burntFee) {
+        if (this.burntFee == 0)
+            this.burntFee = burntFee;
+        else
+            throw new IllegalStateException("Already set burntFee must not be changed.");
+    }
+
+    public void setTxType(TxType txType) {
+        if (this.txType == TxType.UNDEFINED_TX_TYPE)
+            this.txType = txType;
+        else
+            throw new IllegalStateException("Already set txType must not be changed.");
+    }
+
+    public void setIssuanceBlockHeight(int issuanceBlockHeight) {
+        if (this.issuanceBlockHeight == 0)
+            this.issuanceBlockHeight = issuanceBlockHeight;
+        else
+            throw new IllegalStateException("Already set txType must not be changed.");
+    }
+
+    public long getIssuanceAmount() {
+        // Compensation request tx has at least 3 outputs
+        // Second output is issuance candidate
+        if (txType == TxType.COMPENSATION_REQUEST && isIssuanceTx && outputs.size() >= 3)
+            return outputs.get(1).getValue();
+        else
+            return 0;
     }
 }

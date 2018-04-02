@@ -19,6 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 
 import javax.inject.Inject;
 
@@ -62,5 +63,15 @@ public class TxOutputsController {
         for (int index = 0; index < outputs.size(); index++) {
             txOutputController.processTxOutput(tx, outputs.get(index), index, blockHeight, model);
         }
+
+        // If we have an issuanceCandidate and the type was not applied in the opReturnController we set
+        // it now to an BTC_OUTPUT.
+        if (model.getIssuanceCandidate() != null &&
+                model.getIssuanceCandidate().getTxOutputType() == TxOutputType.UNDEFINED)
+            model.getIssuanceCandidate().setTxOutputType(TxOutputType.BTC_OUTPUT);
+    }
+
+    boolean isAnyTxOutputTypeUndefined(Tx tx) {
+        return tx.getOutputs().stream().anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
     }
 }

@@ -21,6 +21,7 @@ import bisq.common.app.Version;
 
 import lombok.Value;
 
+//TODO sync up with data model
 @Value
 public class JsonTxOutput {
     private final String txVersion = Version.BSQ_TX_VERSION;

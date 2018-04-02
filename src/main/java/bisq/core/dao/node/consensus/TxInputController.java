@@ -40,14 +40,14 @@ public class TxInputController {
         this.readableBsqBlockChain = readableBsqBlockChain;
     }
 
-    void processInput(TxInput input, int blockHeight, String txId, int inputIndex, Model model,
+    void processInput(TxInput txInput, int blockHeight, String txId, int inputIndex, Model model,
                       WritableBsqBlockChain writableBsqBlockChain) {
-        readableBsqBlockChain.getUnspentAndMatureTxOutput(input.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
+        readableBsqBlockChain.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
             model.addToInputValue(connectedTxOutput.getValue());
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
             // for later verification at the outputs of a reveal tx.
-            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_STAKE_OUTPUT) {
+            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                 if (!model.isVoteStakeSpentAtInputs()) {
                     model.setVoteStakeSpentAtInputs(true);
                 } else {
@@ -56,9 +56,10 @@ public class TxInputController {
                 }
             }
 
-            input.setConnectedTxOutput(connectedTxOutput);
+            txInput.setConnectedTxOutput(connectedTxOutput);
             connectedTxOutput.setUnspent(false);
             connectedTxOutput.setSpentInfo(new SpentInfo(blockHeight, txId, inputIndex));
+
             writableBsqBlockChain.removeUnspentTxOutput(connectedTxOutput);
         });
     }

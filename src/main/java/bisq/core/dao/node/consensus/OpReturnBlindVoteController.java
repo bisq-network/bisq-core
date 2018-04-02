@@ -44,7 +44,7 @@ public class OpReturnBlindVoteController {
     }
 
     public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
-        return model.getBlindVoteStakeOutput() != null &&
+        return model.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 Version.BLIND_VOTE_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getBlindVoteFee(blockHeight) &&
@@ -55,8 +55,8 @@ public class OpReturnBlindVoteController {
         txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
         model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
-        checkArgument(model.getBlindVoteStakeOutput() != null,
-                "model.getVoteStakeOutput() must not be null");
-        model.getBlindVoteStakeOutput().setTxOutputType(TxOutputType.BLIND_VOTE_STAKE_OUTPUT);
+        checkArgument(model.getBlindVoteLockStakeOutput() != null,
+                "model.getBlindVoteLockStakeOutput() must not be null");
+        model.getBlindVoteLockStakeOutput().setTxOutputType(TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
     }
 }

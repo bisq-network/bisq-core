@@ -37,7 +37,9 @@ class Model {
     @Nullable
     private TxOutput issuanceCandidate;
     @Nullable
-    private TxOutput blindVoteStakeOutput;
+    private TxOutput blindVoteLockStakeOutput;
+    @Nullable
+    private TxOutput voteRevealUnlockStakeOutput;
     private boolean voteStakeSpentAtInputs;
     private boolean bsqOutputFound;
 

@@ -39,6 +39,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -141,29 +142,30 @@ public class LiteNode extends BsqNode {
         log.info("onRequestedBlocksReceived: blocks with {} items", bsqBlockList.size());
         if (bsqBlockList.size() > 0)
             log.info("block height of last item: {}", bsqBlockList.get(bsqBlockList.size() - 1).getHeight());
-        // We reset all mutable data in case the provider would not have done it.
-        bsqBlockList.forEach(BsqBlock::reset);
-        bsqLiteNodeExecutor.parseBlocks(bsqBlockList,
-                block -> notifyListenersOnNewBlock(),
-                this::onParseBlockchainComplete,
+        // We clone with a reset of all mutable data in case the provider would not have done it.
+        List<BsqBlock> clonedBsqBlockList = bsqBlockList.stream()
+                .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
+                .collect(Collectors.toList());
+        bsqLiteNodeExecutor.parseBlocks(clonedBsqBlockList,
+                this::onNewBsqBlock,
+                this::onParseBlockChainComplete,
                 getErrorHandler());
     }
 
     // We received a new block
     private void onNewBlockReceived(BsqBlock bsqBlock) {
-        // We reset all mutable data in case the provider would not have done it.
-        bsqBlock.reset();
         log.info("onNewBlockReceived: bsqBlock={}", bsqBlock.getHeight());
-        if (!readableBsqBlockChain.containsBsqBlock(bsqBlock)) {
-            bsqLiteNodeExecutor.parseBlock(bsqBlock,
-                    this::notifyListenersOnNewBlock,
-                    getErrorHandler());
+
+        // We clone with a reset of all mutable data in case the provider would not have done it.
+        BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock, true);
+        if (!readableBsqBlockChain.containsBsqBlock(clonedBsqBlock)) {
+            //TODO check block height and prev block it it connects to existing blocks
+            bsqLiteNodeExecutor.parseBlock(clonedBsqBlock, this::onNewBsqBlock, getErrorHandler());
         }
     }
 
-    private void onParseBlockchainComplete() {
-        parseBlockchainComplete = true;
-        bsqBlockChainListeners.forEach(BsqBlockChainListener::onBsqBlockChainChanged);
+    private void onNewBsqBlock(BsqBlock bsqBlock) {
+        log.debug("new bsqBlock parsed: " + bsqBlock);
     }
 
     @NotNull

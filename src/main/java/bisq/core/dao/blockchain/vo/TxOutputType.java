@@ -23,15 +23,21 @@ import io.bisq.generated.protobuffer.PB;
 
 public enum TxOutputType {
     UNDEFINED,
+    GENESIS_OUTPUT,
     BSQ_OUTPUT,
     BTC_OUTPUT,
+    PROPOSAL_OP_RETURN_OUTPUT,
     COMP_REQ_OP_RETURN_OUTPUT,
     ISSUANCE_CANDIDATE_OUTPUT,
-    BLIND_VOTE_STAKE_OUTPUT,
+    BLIND_VOTE_LOCK_STAKE_OUTPUT,
     BLIND_VOTE_OP_RETURN_OUTPUT,
+    VOTE_REVEAL_UNLOCK_STAKE_OUTPUT,
     VOTE_REVEAL_OP_RETURN_OUTPUT,
     BOND_LOCK,
-    BOND_UNLOCK;
+    BOND_LOCK_OP_RETURN_OUTPUT,
+    BOND_UNLOCK,
+    BOND_UNLOCK_OP_RETURN_OUTPUT,
+    INVALID_OUTPUT;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

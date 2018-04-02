@@ -58,8 +58,6 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getVoteRevealTxOutputs();
 
-    Set<TxOutput> getBlindVoteStakeTxOutputs();
-
     Set<TxOutput> getCompReqIssuanceTxOutputs();
 
     Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple);
@@ -70,7 +68,7 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getUnspentTxOutputs();
 
-    Set<TxOutput> getLockedForVoteTxOutputs();
+    Set<TxOutput> getBlindVoteStakeTxOutputs();
 
     Set<TxOutput> getLockedInBondsOutputs();
 
@@ -80,13 +78,13 @@ public interface ReadableBsqBlockChain {
 
     long getBlockTime(int height);
 
-    boolean isCompensationRequestPeriodValid(int blockHeight);
+    boolean isProposalPeriodValid(int blockHeight);
 
     boolean isBlindVotePeriodValid(int blockHeight);
 
     boolean isVoteRevealPeriodValid(int blockHeight);
 
-    long getCreateCompensationRequestFee(int blockHeight);
+    long getProposalFee(int blockHeight);
 
     long getBlindVoteFee(int blockHeight);
 
@@ -103,8 +101,6 @@ public interface ReadableBsqBlockChain {
     BsqBlockChain getClone();
 
     BsqBlockChain getClone(BsqBlockChain bsqBlockChain);
-
-    void printDetails();
 
     void addListener(BsqBlockChain.Listener listener);
 

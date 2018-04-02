@@ -28,6 +28,8 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * Verifies if OP_RETURN data matches rules for a vote reveal tx and applies state change.
  */
@@ -51,5 +53,8 @@ public class OpReturnVoteRevealController {
     public void applyStateChange(TxOutput txOutput, Model model) {
         txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
         model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+        checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
+                "model.getVoteRevealUnlockStakeOutput() must not be null");
+        model.getVoteRevealUnlockStakeOutput().setTxOutputType(TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
     }
 }

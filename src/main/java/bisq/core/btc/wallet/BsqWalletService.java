@@ -21,11 +21,11 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.blockchain.BsqBlockChainChangeDispatcher;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.node.BsqNode;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -66,11 +66,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements BsqNode.BsqBlockChainListener {
+public class BsqWalletService extends WalletService implements BsqBlockChain.Listener {
     private final BsqCoinSelector bsqCoinSelector;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
@@ -93,7 +94,6 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
                             ReadableBsqBlockChain readableBsqBlockChain,
-                            BsqBlockChainChangeDispatcher bsqBlockChainChangeDispatcher,
                             Preferences preferences,
                             FeeService feeService) {
         super(walletsSetup,
@@ -160,12 +160,16 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
             });
         }
 
-        bsqBlockChainChangeDispatcher.addBsqBlockChainListener(this);
+        readableBsqBlockChain.addListener(this);
     }
 
 
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqBlockChain.Listener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
-    public void onBsqBlockChainChanged() {
+    public void onBlockAdded(BsqBlock bsqBlock) {
         if (isWalletReady())
             updateBsqWalletTransactions();
     }
@@ -204,7 +208,7 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
                 .map(Transaction::getHashAsString)
                 .collect(Collectors.toSet());
 
-        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getLockedForVoteTxOutputs().stream()
+        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -406,10 +410,8 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     // Send BSQ with BTC fee
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedSendTx(String receiverAddress,
-                                         Coin receiverAmount) throws AddressFormatException,
-            InsufficientBsqException, WalletException, TransactionVerificationException {
-
+    public Transaction getPreparedSendTx(String receiverAddress, Coin receiverAmount)
+            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
         Transaction tx = new Transaction(params);
         checkArgument(Restrictions.isAboveDust(receiverAmount),
                 "The amount is too low (dust limit).");
@@ -440,51 +442,53 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     // Burn fee tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException, ChangeBelowDustException {
+    // We create a tx with Bsq inputs for the fee and optional BSQ change output.
+    // As the fee amount will be missing in the output those BSQ fees are burned.
+    public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
-        CoinSelection coinSelection = bsqCoinSelector.select(fee, wallet.calculateAllSpendCandidates());
-        coinSelection.gathered.forEach(tx::addInput);
-        try {
-            Coin change = bsqCoinSelector.getChangeExcludingFee(fee, coinSelection);
-            if (!Restrictions.isAboveDust(change))
-                throw new ChangeBelowDustException(change);
-
-            if (change.isPositive())
-                tx.addOutput(change, getUnusedAddress());
-        } catch (InsufficientMoneyException e) {
-            throw new InsufficientBsqException(e.missing);
-        }
-
+        addInputsForTx(tx, fee, bsqCoinSelector);
         printTx("getPreparedFeeTx", tx);
         return tx;
     }
+
+    // TODO add tests
+    private void addInputsForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
+            throws InsufficientBsqException {
+        Coin requiredInput;
+        // If our target is less then dust limit we increase it so we are sure to not get any dust output.
+        if (Restrictions.isDust(target))
+            requiredInput = Restrictions.getMinNonDustOutput().add(target);
+        else
+            requiredInput = target;
+
+        CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
+        coinSelection.gathered.forEach(tx::addInput);
+        try {
+            Coin change = this.bsqCoinSelector.getChange(target, coinSelection);
+            if (change.isPositive()) {
+                checkArgument(Restrictions.isAboveDust(change), "We must not get dust output here.");
+                tx.addOutput(change, getUnusedAddress());
+            }
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Blind vote tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake)
-            throws InsufficientBsqException, ChangeBelowDustException {
+    // We create a tx with Bsq inputs for the fee, one output for the stake and optional one BSQ change output.
+    // As the fee amount will be missing in the output those BSQ fees are burned.
+    public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake) throws InsufficientBsqException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        final Coin sum = fee.add(stake);
-        CoinSelection coinSelection = bsqCoinSelector.select(sum, wallet.calculateAllSpendCandidates());
-        coinSelection.gathered.forEach(tx::addInput);
-        try {
-            // We add here stake as we have that output already added
-            Coin change = bsqCoinSelector.getChangeExcludingFee(sum, coinSelection);
-            if (!Restrictions.isAboveDust(change))
-                throw new ChangeBelowDustException(change);
-
-            if (change.isPositive())
-                tx.addOutput(change, getUnusedAddress());
-        } catch (InsufficientMoneyException e) {
-            throw new InsufficientBsqException(e.missing);
-        }
-
+        addInputsForTx(tx, fee.add(stake), bsqCoinSelector);
         printTx("getPreparedBlindVoteTx", tx);
         return tx;
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // MyVote reveal tx
@@ -493,13 +497,12 @@ public class BsqWalletService extends WalletService implements BsqNode.BsqBlockC
     public Transaction getPreparedVoteRevealTx(TxOutput stakeTxOutput) {
         Transaction tx = new Transaction(params);
         final Coin stake = Coin.valueOf(stakeTxOutput.getValue());
-        Transaction connectedOutputParentTransaction = getTransaction(stakeTxOutput.getTxId());
-        TransactionOutPoint transactionOutPoint = new TransactionOutPoint(params,
-                stakeTxOutput.getIndex(),
-                connectedOutputParentTransaction);
-        tx.addInput(new TransactionInput(params, tx, new byte[]{}, transactionOutPoint, stake));
+        Transaction blindVoteTx = getTransaction(stakeTxOutput.getTxId());
+        checkNotNull(blindVoteTx, "blindVoteTx must not be null");
+        TransactionOutPoint outPoint = new TransactionOutPoint(params, stakeTxOutput.getIndex(), blindVoteTx);
+        // Input is not signed yet so we use new byte[]{}
+        tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, stake));
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-
         printTx("getPreparedVoteRevealTx", tx);
         return tx;
     }

@@ -41,12 +41,15 @@ import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.domain.Block;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.File;
 
 import java.math.BigDecimal;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import mockit.Expectations;
@@ -114,10 +117,12 @@ public class FullNodeParserTest {
         int height = 200;
         String hash = "abc123";
         long time = new Date().getTime();
+        final List<TxInput> inputs = asList(new TxInput("tx1", 0),
+                new TxInput("tx1", 1));
+        final List<TxOutput> outputs = asList(new TxOutput(0, 101, "tx1", null, null, null, height));
         Tx tx = new Tx("vo", height, hash, time,
-                asList(new TxInput("tx1", 0),
-                        new TxInput("tx1", 1)),
-                asList(new TxOutput(0, 101, "tx1", null, null, null, height)));
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(outputs));
 
         // Return one spendable txoutputs with value, for three test cases
         // 1) - null, 0     -> not BSQ transaction
@@ -167,18 +172,18 @@ public class FullNodeParserTest {
         // Block 199
         String cbId199 = "cbid199";
         Tx cbTx199 = new Tx(cbId199, 199, bh199, time,
-                new ArrayList<TxInput>(),
-                asList(new TxOutput(0, 25, cbId199, null, null, null, 199)));
+                ImmutableList.copyOf(new ArrayList<TxInput>()),
+                ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId199, null, null, null, 199))));
         Block block199 = new Block(bh199, 10, 10, 199, 2, "root", asList(cbId199), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", "previousBlockHash", bh200);
 
         // Genesis Block
         String cbId200 = "cbid200";
         Tx cbTx200 = new Tx(cbId200, 200, bh200, time,
-                new ArrayList<TxInput>(),
-                asList(new TxOutput(0, 25, cbId200, null, null, null, 200)));
+                ImmutableList.copyOf(new ArrayList<TxInput>()),
+                ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId200, null, null, null, 200))));
         Tx genesisTx = new Tx(genesisTxId, 200, bh200, time,
-                asList(new TxInput("someoldtx", 0)),
-                asList(new TxOutput(0, issuance.getValue(), genesisTxId, null, null, null, 200)));
+                ImmutableList.copyOf(asList(new TxInput("someoldtx", 0))),
+                ImmutableList.copyOf(asList(new TxOutput(0, issuance.getValue(), genesisTxId, null, null, null, 200))));
         Block block200 = new Block(bh200, 10, 10, 200, 2, "root", asList(cbId200, genesisTxId), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh199, bh201);
 
         // Block 201
@@ -188,12 +193,12 @@ public class FullNodeParserTest {
         long bsqTx1Value1 = Coin.parseCoin("2.4").getValue();
         long bsqTx1Value2 = Coin.parseCoin("0.04").getValue();
         Tx cbTx201 = new Tx(cbId201, 201, bh201, time,
-                new ArrayList<TxInput>(),
-                asList(new TxOutput(0, 25, cbId201, null, null, null, 201)));
+                ImmutableList.copyOf(new ArrayList<TxInput>()),
+                ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId201, null, null, null, 201))));
         Tx bsqTx1 = new Tx(bsqTx1Id, 201, bh201, time,
-                asList(new TxInput(genesisTxId, 0)),
-                asList(new TxOutput(0, bsqTx1Value1, bsqTx1Id, null, null, null, 201),
-                        new TxOutput(1, bsqTx1Value2, bsqTx1Id, null, null, null, 201)));
+                ImmutableList.copyOf(asList(new TxInput(genesisTxId, 0))),
+                ImmutableList.copyOf(asList(new TxOutput(0, bsqTx1Value1, bsqTx1Id, null, null, null, 201),
+                        new TxOutput(1, bsqTx1Value2, bsqTx1Id, null, null, null, 201))));
         Block block201 = new Block(bh201, 10, 10, 201, 2, "root", asList(cbId201, bsqTx1Id), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh200, "nextBlockHash");
 
         new Expectations(rpcService) {{
