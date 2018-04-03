@@ -112,7 +112,9 @@ public class Byteball extends Coin {
             return arrOffsets.toArray(new Integer[0]);
         }
 
-        private static ByteballAddressValidator.SeparatedData separateIntoCleanDataAndChecksum(String bin) throws Exception {
+        private static ByteballAddressValidator.SeparatedData separateIntoCleanDataAndChecksum(String bin)
+                throws Exception {
+
             int len = bin.length();
             Integer[] arrOffsets;
             if (len == 160)

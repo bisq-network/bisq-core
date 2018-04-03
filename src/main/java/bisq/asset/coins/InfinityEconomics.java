@@ -23,6 +23,7 @@ import bisq.asset.RegexAddressValidator;
 public class InfinityEconomics extends Coin {
 
     public InfinityEconomics() {
-        super("Infinity Economics", "XIN", new RegexAddressValidator("^XIN-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{5}$"));
+        super("Infinity Economics", "XIN",
+                new RegexAddressValidator("^XIN-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{5}$"));
     }
 }

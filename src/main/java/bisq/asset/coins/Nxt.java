@@ -32,26 +32,30 @@ public class Nxt extends Coin {
 
         @Override
         public AddressValidationResult validate(String address) {
-            if (!address.startsWith("NXT-") || !address.equals(address.toUpperCase())) {
+            if (!address.startsWith("NXT-") || !address.equals(address.toUpperCase()))
                 return AddressValidationResult.invalidStructure();
-            }
+
             try {
                 long accountId = NxtReedSolomonValidator.decode(address.substring(4));
-                if (accountId == 0) {
+                if (accountId == 0)
                     return AddressValidationResult.invalidStructure();
-                }
-                return AddressValidationResult.validAddress();
             } catch (NxtReedSolomonValidator.DecodeException e) {
                 return AddressValidationResult.invalidAddress(e);
             }
+
+            return AddressValidationResult.validAddress();
         }
     }
 
     public static final class NxtReedSolomonValidator {
 
         private static final int[] initial_codeword = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        private static final int[] gexp = {1, 2, 4, 8, 16, 5, 10, 20, 13, 26, 17, 7, 14, 28, 29, 31, 27, 19, 3, 6, 12, 24, 21, 15, 30, 25, 23, 11, 22, 9, 18, 1};
-        private static final int[] glog = {0, 0, 1, 18, 2, 5, 19, 11, 3, 29, 6, 27, 20, 8, 12, 23, 4, 10, 30, 17, 7, 22, 28, 26, 21, 25, 9, 16, 13, 14, 24, 15};
+        private static final int[] gexp = {
+                1, 2, 4, 8, 16, 5, 10, 20, 13, 26, 17, 7, 14, 28, 29, 31,
+                27, 19, 3, 6, 12, 24, 21, 15, 30, 25, 23, 11, 22, 9, 18, 1};
+        private static final int[] glog = {
+                0, 0, 1, 18, 2, 5, 19, 11, 3, 29, 6, 27, 20, 8, 12, 23, 4,
+                10, 30, 17, 7, 22, 28, 26, 21, 25, 9, 16, 13, 14, 24, 15};
         private static final int[] codeword_map = {3, 2, 1, 0, 7, 6, 5, 4, 13, 14, 15, 16, 12, 8, 9, 10, 11};
         private static final String alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
@@ -98,7 +102,9 @@ public class Nxt extends Coin {
                 p[0] = NxtReedSolomonValidator.gmult(17, fb);
             }
 
-            System.arraycopy(p, 0, codeword, NxtReedSolomonValidator.base_32_length, NxtReedSolomonValidator.initial_codeword.length - NxtReedSolomonValidator.base_32_length);
+            System.arraycopy(
+                    p, 0, codeword, NxtReedSolomonValidator.base_32_length,
+                    NxtReedSolomonValidator.initial_codeword.length - NxtReedSolomonValidator.base_32_length);
 
             StringBuilder cypher_string_builder = new StringBuilder();
             for (int i = 0; i < 17; i++) {
@@ -116,7 +122,9 @@ public class Nxt extends Coin {
         public static long decode(String cypher_string) throws DecodeException {
 
             int[] codeword = new int[NxtReedSolomonValidator.initial_codeword.length];
-            System.arraycopy(NxtReedSolomonValidator.initial_codeword, 0, codeword, 0, NxtReedSolomonValidator.initial_codeword.length);
+            System.arraycopy(
+                    NxtReedSolomonValidator.initial_codeword, 0, codeword, 0,
+                    NxtReedSolomonValidator.initial_codeword.length);
 
             int codeword_length = 0;
             for (int i = 0; i < cypher_string.length(); i++) {

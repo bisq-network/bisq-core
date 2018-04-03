@@ -40,6 +40,7 @@ public class KotoTest extends AbstractAssetTest {
         assertInvalidAddress("k2De32yyMZ8xdDFBJXjVseiN99S9eJpvty5");
         assertInvalidAddress("jyzCuxaXN38djCzdkb8nQs7v1joHWtkC4v8");
         assertInvalidAddress("JzyNxmc9iDaGokmMrkmMCncfMQvw5vbHBKv");
-        assertInvalidAddress("zkPRkLZKf4BuzBsC6r9Ls5suw1ZV9tCwiBTF5vcz2NZLUDsoXGp5rAFUjKnb7DdkFbLp7aSpejCcC4FTxsVvDxq9YKSprzf");
+        assertInvalidAddress(
+                "zkPRkLZKf4BuzBsC6r9Ls5suw1ZV9tCwiBTF5vcz2NZLUDsoXGp5rAFUjKnb7DdkFbLp7aSpejCcC4FTxsVvDxq9YKSprzf");
     }
 }
