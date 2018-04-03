@@ -46,4 +46,9 @@ public abstract class AbstractAsset implements Asset {
     public final AddressValidationResult validateAddress(String address) {
         return addressValidator.validate(address);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getName();
+    }
 }

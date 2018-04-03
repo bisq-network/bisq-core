@@ -20,16 +20,15 @@ package bisq.asset;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.locale.Res;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractAssetTest {
+
+    private final AssetRegistry assetRegistry = new AssetRegistry();
 
     protected final Asset asset;
 
@@ -46,8 +45,8 @@ public abstract class AbstractAssetTest {
 
     @Test
     public void testPresenceInAssetRegistry() {
-        final Optional<Asset> optional = new AssetRegistry().stream().filter(this::hasSameTickerSymbol).findFirst();
-        assertTrue(optional.isPresent());
+        assertThat(asset + " is not registered in META-INF/services/" + Asset.class.getName(),
+                assetRegistry.stream().anyMatch(this::hasSameTickerSymbol), is(true));
     }
 
     @Test
