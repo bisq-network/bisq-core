@@ -30,7 +30,7 @@ public class DaoPeriodServiceTest {
 
     @Before
     public void startup() {
-        service = new DaoPeriodService(null, null, 0);
+        service = new DaoPeriodService(null, 0);
     }
 
     //TODO update with added periods
