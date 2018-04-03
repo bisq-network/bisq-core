@@ -24,5 +24,4 @@ public class Verify extends Erc20Token {
     public Verify() {
         super("Verify", "CRED");
     }
-
 }

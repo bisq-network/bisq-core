@@ -25,5 +25,4 @@ public class Namecoin extends Coin {
     public Namecoin() {
         super("Namecoin", "NMC", new DefaultAddressValidator());
     }
-
 }

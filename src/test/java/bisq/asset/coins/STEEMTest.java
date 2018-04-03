@@ -24,5 +24,4 @@ public class STEEMTest extends AbstractAssetWithDefaultValidatorTest {
     public STEEMTest() {
         super(new STEEM());
     }
-
 }

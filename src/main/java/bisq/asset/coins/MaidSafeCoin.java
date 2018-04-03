@@ -25,5 +25,4 @@ public class MaidSafeCoin extends Coin {
     public MaidSafeCoin() {
         super("MaidSafeCoin", "MAID", new DefaultAddressValidator());
     }
-
 }

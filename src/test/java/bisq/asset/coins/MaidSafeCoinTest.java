@@ -24,5 +24,4 @@ public class MaidSafeCoinTest extends AbstractAssetWithDefaultValidatorTest {
     public MaidSafeCoinTest() {
         super(new MaidSafeCoin());
     }
-
 }

@@ -25,5 +25,4 @@ public class DynamicCoin extends Coin {
     public DynamicCoin() {
         super("DynamicCoin", "DMC", new DefaultAddressValidator());
     }
-
 }

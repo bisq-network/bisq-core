@@ -24,5 +24,4 @@ public class SibcoinTest extends AbstractAssetWithDefaultValidatorTest {
     public SibcoinTest() {
         super(new Sibcoin());
     }
-
 }

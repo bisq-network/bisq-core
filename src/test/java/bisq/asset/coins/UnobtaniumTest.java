@@ -24,5 +24,4 @@ public class UnobtaniumTest extends AbstractAssetWithDefaultValidatorTest {
     public UnobtaniumTest() {
         super(new Unobtanium());
     }
-
 }

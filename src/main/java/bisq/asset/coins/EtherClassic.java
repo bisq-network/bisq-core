@@ -25,5 +25,4 @@ public class EtherClassic extends Coin {
     public EtherClassic() {
         super("Ether Classic", "ETC", new DefaultAddressValidator());
     }
-
 }

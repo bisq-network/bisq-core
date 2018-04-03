@@ -25,5 +25,4 @@ public class Espers extends Coin {
     public Espers() {
         super("Espers", "ESP", new DefaultAddressValidator());
     }
-
 }

@@ -25,5 +25,4 @@ public class Sibcoin extends Coin {
     public Sibcoin() {
         super("Sibcoin", "SIB", new DefaultAddressValidator());
     }
-
 }

@@ -24,5 +24,4 @@ public class Qwark extends Erc20Token {
     public Qwark() {
         super("Qwark", "QWARK");
     }
-
 }

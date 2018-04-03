@@ -25,5 +25,4 @@ public class NuBits extends Coin {
     public NuBits() {
         super("NuBits", "NBT", new DefaultAddressValidator());
     }
-
 }

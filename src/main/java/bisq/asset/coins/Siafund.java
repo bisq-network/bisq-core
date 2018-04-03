@@ -25,5 +25,4 @@ public class Siafund extends Coin {
     public Siafund() {
         super("Siafund", "SF", new DefaultAddressValidator());
     }
-
 }

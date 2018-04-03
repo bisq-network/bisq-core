@@ -24,5 +24,4 @@ public class PostCoinTest extends AbstractAssetWithDefaultValidatorTest {
     public PostCoinTest() {
         super(new PostCoin());
     }
-
 }

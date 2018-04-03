@@ -261,6 +261,5 @@ public class WorldMobileCoin extends Coin {
         private static String invalidChar(char c, int i) {
             return "Invalid character '" + Character.toString(c) + "' at position " + i;
         }
-
     }
 }

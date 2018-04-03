@@ -24,5 +24,4 @@ public class LiskTest extends AbstractAssetWithDefaultValidatorTest {
     public LiskTest() {
         super(new Lisk());
     }
-
 }

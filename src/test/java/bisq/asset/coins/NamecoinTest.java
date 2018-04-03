@@ -24,5 +24,4 @@ public class NamecoinTest extends AbstractAssetWithDefaultValidatorTest {
     public NamecoinTest() {
         super(new Namecoin());
     }
-
 }

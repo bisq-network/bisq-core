@@ -25,5 +25,4 @@ public class VDinar extends Coin {
     public VDinar() {
         super("vDinar", "VDN", new RegexAddressValidator("^[D][0-9a-zA-Z]{33}$"));
     }
-
 }

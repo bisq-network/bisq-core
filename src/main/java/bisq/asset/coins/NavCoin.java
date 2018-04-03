@@ -25,5 +25,4 @@ public class NavCoin extends Coin {
     public NavCoin() {
         super("Nav Coin", "NAV", new DefaultAddressValidator());
     }
-
 }

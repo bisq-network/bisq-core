@@ -24,5 +24,4 @@ public class DynamicCoinTest extends AbstractAssetWithDefaultValidatorTest {
     public DynamicCoinTest() {
         super(new DynamicCoin());
     }
-
 }

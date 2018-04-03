@@ -25,5 +25,4 @@ public class Zcoin extends Coin {
     public Zcoin() {
         super("Zcoin", "XZC", new DefaultAddressValidator());
     }
-
 }

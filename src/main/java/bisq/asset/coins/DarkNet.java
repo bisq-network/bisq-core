@@ -25,5 +25,4 @@ public class DarkNet extends Coin {
     public DarkNet() {
         super("DarkNet", "DNET", new DefaultAddressValidator());
     }
-
 }

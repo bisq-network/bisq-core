@@ -25,5 +25,4 @@ public class Siacoin extends Coin {
     public Siacoin() {
         super("Siacoin", "SC", new DefaultAddressValidator());
     }
-
 }

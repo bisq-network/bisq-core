@@ -24,5 +24,4 @@ public class Internext extends Erc20Token {
     public Internext() {
         super("Internext", "INXT");
     }
-
 }

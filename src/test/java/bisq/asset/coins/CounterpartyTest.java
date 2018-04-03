@@ -24,5 +24,4 @@ public class CounterpartyTest extends AbstractAssetWithDefaultValidatorTest {
     public CounterpartyTest() {
         super(new Counterparty());
     }
-
 }

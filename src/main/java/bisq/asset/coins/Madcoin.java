@@ -25,5 +25,4 @@ public class Madcoin extends Coin {
     public Madcoin() {
         super("Madcoin", "MDC", new RegexAddressValidator("^m[a-zA-Z0-9]{26,33}$"));
     }
-
 }

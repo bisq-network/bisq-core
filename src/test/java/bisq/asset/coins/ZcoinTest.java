@@ -24,5 +24,4 @@ public class ZcoinTest extends AbstractAssetWithDefaultValidatorTest {
     public ZcoinTest() {
         super(new Zcoin());
     }
-
 }

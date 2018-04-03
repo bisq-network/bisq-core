@@ -43,4 +43,5 @@ public class TerracoinTest extends AbstractAssetTest {
         assertInvalidAddress("18s142HdWDfDQXYBuyMvsU3KHwryLxnCr");
         assertInvalidAddress("1asdasd");
         assertInvalidAddress("asdasd");
-    }}
+    }
+}

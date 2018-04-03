@@ -24,5 +24,4 @@ public class DarkNetTest extends AbstractAssetWithDefaultValidatorTest {
     public DarkNetTest() {
         super(new DarkNet());
     }
-
 }

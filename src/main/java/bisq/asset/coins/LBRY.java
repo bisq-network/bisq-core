@@ -25,5 +25,4 @@ public class LBRY extends Coin {
     public LBRY() {
         super("LBRY Credits", "LBC", new DefaultAddressValidator());
     }
-
 }

@@ -24,5 +24,4 @@ public class EtherClassicTest extends AbstractAssetWithDefaultValidatorTest {
     public EtherClassicTest() {
         super(new EtherClassic());
     }
-
 }

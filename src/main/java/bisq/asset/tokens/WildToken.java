@@ -24,5 +24,4 @@ public class WildToken extends Erc20Token {
     public WildToken() {
         super("WILD Token", "WILD");
     }
-
 }

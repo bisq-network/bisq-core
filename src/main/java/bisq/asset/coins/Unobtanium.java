@@ -25,5 +25,4 @@ public class Unobtanium extends Coin {
     public Unobtanium() {
         super("Unobtanium", "UNO", new DefaultAddressValidator());
     }
-
 }

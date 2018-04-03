@@ -25,5 +25,4 @@ public class Gridcoin extends Coin {
     public Gridcoin() {
         super("Gridcoin", "GRC", new DefaultAddressValidator());
     }
-
 }

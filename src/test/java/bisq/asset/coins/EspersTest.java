@@ -24,5 +24,4 @@ public class EspersTest extends AbstractAssetWithDefaultValidatorTest {
     public EspersTest() {
         super(new Espers());
     }
-
 }

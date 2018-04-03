@@ -24,5 +24,4 @@ public class BurstcoinTest extends AbstractAssetWithDefaultValidatorTest {
     public BurstcoinTest() {
         super(new Burstcoin());
     }
-
 }

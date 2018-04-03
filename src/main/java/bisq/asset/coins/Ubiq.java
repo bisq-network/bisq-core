@@ -25,5 +25,4 @@ public class Ubiq extends Coin {
     public Ubiq() {
         super("Ubiq", "UBQ", new RegexAddressValidator("^(0x)?[0-9a-fA-F]{40}$"));
     }
-
 }

@@ -25,5 +25,4 @@ public class SafeFileSystemCoin extends Coin {
     public SafeFileSystemCoin() {
         super("Safe FileSystem Coin", "SFSC", new DefaultAddressValidator());
     }
-
 }

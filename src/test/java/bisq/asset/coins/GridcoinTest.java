@@ -24,5 +24,4 @@ public class GridcoinTest extends AbstractAssetWithDefaultValidatorTest {
     public GridcoinTest() {
         super(new Gridcoin());
     }
-
 }

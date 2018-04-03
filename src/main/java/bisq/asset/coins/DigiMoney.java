@@ -25,5 +25,4 @@ public class DigiMoney extends Coin {
     public DigiMoney() {
         super("DigiMoney", "DGM", new RegexAddressValidator("^[D-E][a-zA-Z0-9]{33}$"));
     }
-
 }

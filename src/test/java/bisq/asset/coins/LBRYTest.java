@@ -24,5 +24,4 @@ public class LBRYTest extends AbstractAssetWithDefaultValidatorTest {
     public LBRYTest() {
         super(new LBRY());
     }
-
 }

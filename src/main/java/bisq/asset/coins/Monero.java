@@ -25,5 +25,4 @@ public class Monero extends Coin {
     public Monero() {
         super("Monero", "XMR", new DefaultAddressValidator());
     }
-
 }

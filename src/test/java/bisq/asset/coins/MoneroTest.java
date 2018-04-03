@@ -24,5 +24,4 @@ public class MoneroTest extends AbstractAssetWithDefaultValidatorTest {
     public MoneroTest() {
         super(new Monero());
     }
-
 }

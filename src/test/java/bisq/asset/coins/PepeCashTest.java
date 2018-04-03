@@ -24,5 +24,4 @@ public class PepeCashTest extends AbstractAssetWithDefaultValidatorTest {
     public PepeCashTest() {
         super(new PepeCash());
     }
-
 }

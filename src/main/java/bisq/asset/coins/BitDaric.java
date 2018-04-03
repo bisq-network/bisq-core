@@ -25,5 +25,4 @@ public class BitDaric extends Coin {
     public BitDaric() {
         super("BitDaric", "DARX", new RegexAddressValidator("^[R][a-km-zA-HJ-NP-Z1-9]{25,34}$"));
     }
-
 }

@@ -24,5 +24,4 @@ public class DecredTest extends AbstractAssetWithDefaultValidatorTest {
     public DecredTest() {
         super(new Decred());
     }
-
 }

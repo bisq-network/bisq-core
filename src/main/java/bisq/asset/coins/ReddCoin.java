@@ -25,5 +25,4 @@ public class ReddCoin extends Coin {
     public ReddCoin() {
         super("ReddCoin", "RDD", new DefaultAddressValidator());
     }
-
 }

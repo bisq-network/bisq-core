@@ -40,4 +40,5 @@ public class WacoinTest extends AbstractAssetTest {
         assertInvalidAddress("abcde");
         assertInvalidAddress("mWvZ7nZAUzpRMFp2Bfjxz27Va47nUfB79E");
         assertInvalidAddress("WemK3MgwREsE23fgsadtYLxmMqAX9C2LYQ");
-    }}
+    }
+}

@@ -39,5 +39,4 @@ public abstract class AbstractAssetWithDefaultValidatorTest extends AbstractAsse
     public void testInvalidAddresses() {
         testBlank();
     }
-
 }

@@ -25,5 +25,4 @@ public class Stellite extends Coin {
     public Stellite() {
         super("Stellite", "STL", new RegexAddressValidator("^(Se)\\d[0-9A-Za-z]{94}$"));
     }
-
 }

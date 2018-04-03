@@ -25,5 +25,4 @@ public class Counterparty extends Coin {
     public Counterparty() {
         super("Counterparty", "XCP", new DefaultAddressValidator());
     }
-
 }

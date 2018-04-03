@@ -25,5 +25,4 @@ public class PepeCash extends Coin {
     public PepeCash() {
         super("Pepe Cash", "PEPECASH", new DefaultAddressValidator());
     }
-
 }

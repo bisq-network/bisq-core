@@ -25,5 +25,4 @@ public class STEEM extends Coin {
     public STEEM() {
         super("STEEM", "STEEM", new DefaultAddressValidator());
     }
-
 }

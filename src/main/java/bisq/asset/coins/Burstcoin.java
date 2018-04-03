@@ -25,5 +25,4 @@ public class Burstcoin extends Coin {
     public Burstcoin() {
         super("Burstcoin", "BURST", new DefaultAddressValidator());
     }
-
 }

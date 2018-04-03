@@ -24,5 +24,4 @@ public class SiafundTest extends AbstractAssetWithDefaultValidatorTest {
     public SiafundTest() {
         super(new Siafund());
     }
-
 }

@@ -25,5 +25,4 @@ public class Roicoin extends Coin {
     public Roicoin() {
         super("ROIcoin", "ROI", new RegexAddressValidator("^[R][0-9a-zA-Z]{33}$"));
     }
-
 }

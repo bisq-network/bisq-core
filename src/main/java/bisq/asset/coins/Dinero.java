@@ -25,5 +25,4 @@ public class Dinero extends Coin {
     public Dinero() {
         super("Dinero", "DIN", new RegexAddressValidator("^[D][0-9a-zA-Z]{33}$"));
     }
-
 }

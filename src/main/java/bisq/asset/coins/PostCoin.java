@@ -25,5 +25,4 @@ public class PostCoin extends Coin {
     public PostCoin() {
         super("PostCoin", "POST", new DefaultAddressValidator());
     }
-
 }

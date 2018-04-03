@@ -25,5 +25,4 @@ public class Decred extends Coin {
     public Decred() {
         super("Decred", "DCR", new DefaultAddressValidator());
     }
-
 }

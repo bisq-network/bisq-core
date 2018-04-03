@@ -24,5 +24,4 @@ public class NuBitsTest extends AbstractAssetWithDefaultValidatorTest {
     public NuBitsTest() {
         super(new NuBits());
     }
-
 }

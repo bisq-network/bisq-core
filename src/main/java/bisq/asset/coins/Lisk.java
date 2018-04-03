@@ -25,5 +25,4 @@ public class Lisk extends Coin {
     public Lisk() {
         super("Lisk", "LSK", new DefaultAddressValidator());
     }
-
 }

@@ -25,5 +25,4 @@ public class CassubianDetk extends Coin {
     public CassubianDetk() {
         super("Cassubian Detk", "CDT", new RegexAddressValidator("^D.*"));
     }
-
 }

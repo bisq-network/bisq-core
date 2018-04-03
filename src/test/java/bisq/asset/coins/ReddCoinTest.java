@@ -24,5 +24,4 @@ public class ReddCoinTest extends AbstractAssetWithDefaultValidatorTest {
     public ReddCoinTest() {
         super(new ReddCoin());
     }
-
 }

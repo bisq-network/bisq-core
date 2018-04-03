@@ -25,5 +25,4 @@ public class Arto extends Coin {
     public Arto() {
         super("Arto", "RTO", new RegexAddressValidator("^[A][0-9A-Za-z]{94}$"));
     }
-
 }
