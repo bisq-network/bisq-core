@@ -17,9 +17,10 @@
 
 package bisq.core.dao.vote;
 
-import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 
 import bisq.common.app.DevEnv;
@@ -43,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class DaoPeriodService {
+public class DaoPeriodService implements BsqBlockChain.Listener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -86,7 +87,6 @@ public class DaoPeriodService {
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final BtcWalletService btcWalletService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final int genesisBlockHeight;
     @Getter
@@ -99,10 +99,8 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public DaoPeriodService(BtcWalletService btcWalletService,
-                            ReadableBsqBlockChain readableBsqBlockChain,
+    public DaoPeriodService(ReadableBsqBlockChain readableBsqBlockChain,
                             @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.btcWalletService = btcWalletService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.genesisBlockHeight = genesisBlockHeight;
     }
@@ -116,12 +114,14 @@ public class DaoPeriodService {
     }
 
     public void onAllServicesInitialized() {
-        btcWalletService.getChainHeightProperty().addListener((observable, oldValue, newValue) -> {
-            onChainHeightChanged((int) newValue);
-        });
-        onChainHeightChanged(btcWalletService.getChainHeightProperty().get());
+        readableBsqBlockChain.addListener(this);
+        onChainHeightChanged(readableBsqBlockChain.getChainHeadHeight());
     }
 
+    @Override
+    public void onBlockAdded(BsqBlock bsqBlock) {
+        onChainHeightChanged(bsqBlock.getHeight());
+    }
     public boolean isTxInPhase(String txId, Phase phase) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInPhase(tx.getBlockHeight(),

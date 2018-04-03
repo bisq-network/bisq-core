@@ -115,6 +115,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
         if (daoPeriodService.getPhaseForHeight(bsqBlock.getHeight()) == DaoPeriodService.Phase.ISSUANCE) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
+            log.info("blockHeight " + bsqBlock.getHeight());
             applyVoteResult();
         }
     }
@@ -171,7 +172,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
         Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
         readableBsqBlockChain.getVoteRevealTxOutputs().stream()
-                /* .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getTxId()))*/ //TODO
+                .filter(txOutput -> daoPeriodService.isTxInCurrentCycle(txOutput.getTxId()))
                 .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
         return opReturnHashesByTxIdMap;
     }
@@ -195,7 +196,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
     private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
         //TODO check not in current cycle but in the cycle of the tx
         return blindVoteService.getBlindVoteList().stream()
-                /* .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))*/  //TODO
+                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
                             .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.BLIND_VOTE) // double check if type is matching

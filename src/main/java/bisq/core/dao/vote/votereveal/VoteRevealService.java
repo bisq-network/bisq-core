@@ -129,7 +129,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     private void maybeRevealVotes() {
         blindVoteService.getMyVotesList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
-                /*.filter(myVote -> daoPeriodService.isTxInCurrentCycle(myVote.getTxId()))*/  //TODO
+                .filter(myVote -> daoPeriodService.isTxInCurrentCycle(myVote.getTxId()))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to

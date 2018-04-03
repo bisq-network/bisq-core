@@ -224,7 +224,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     public List<BlindVote> getBlindVoteListForCurrentCycle() {
         return blindVoteSortedList.stream()
-                /* .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))*/ //TODO
+                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
                 .collect(Collectors.toList());
     }
 
