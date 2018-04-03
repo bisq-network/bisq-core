@@ -45,12 +45,19 @@ public class CurrencyUtil {
     private static final AssetRegistry assetRegistry = new AssetRegistry();
 
     private static String baseCurrencyCode = "BTC";
+    private static List<FiatCurrency> allSortedFiatCurrencies;
+    private static List<CryptoCurrency> allSortedCryptoCurrencies;
 
     public static void setBaseCurrencyCode(String baseCurrencyCode) {
         CurrencyUtil.baseCurrencyCode = baseCurrencyCode;
     }
 
-    private static List<FiatCurrency> allSortedFiatCurrencies;
+    public static List<FiatCurrency> getAllSortedFiatCurrencies() {
+        if (Objects.isNull(allSortedFiatCurrencies))
+            allSortedFiatCurrencies = createAllSortedFiatCurrenciesList();
+
+        return allSortedFiatCurrencies;
+    }
 
     private static List<FiatCurrency> createAllSortedFiatCurrenciesList() {
         Set<FiatCurrency> set = CountryUtil.getAllCountries().stream()
@@ -60,14 +67,6 @@ public class CurrencyUtil {
         list.sort(TradeCurrency::compareTo);
         return list;
     }
-
-    public static List<FiatCurrency> getAllSortedFiatCurrencies() {
-        if (Objects.isNull(allSortedFiatCurrencies)) {
-            allSortedFiatCurrencies = createAllSortedFiatCurrenciesList();
-        }
-        return allSortedFiatCurrencies;
-    }
-
 
     public static List<FiatCurrency> getMainFiatCurrencies() {
         TradeCurrency defaultTradeCurrency = getDefaultTradeCurrency();
@@ -83,7 +82,8 @@ public class CurrencyUtil {
 
         list.sort(TradeCurrency::compareTo);
 
-        FiatCurrency defaultFiatCurrency = defaultTradeCurrency instanceof FiatCurrency ? (FiatCurrency) defaultTradeCurrency : null;
+        FiatCurrency defaultFiatCurrency =
+                defaultTradeCurrency instanceof FiatCurrency ? (FiatCurrency) defaultTradeCurrency : null;
         if (defaultFiatCurrency != null && list.contains(defaultFiatCurrency)) {
             //noinspection SuspiciousMethodCalls
             list.remove(defaultTradeCurrency);
@@ -91,8 +91,6 @@ public class CurrencyUtil {
         }
         return list;
     }
-
-    private static List<CryptoCurrency> allSortedCryptoCurrencies;
 
     public static List<CryptoCurrency> getAllSortedCryptoCurrencies() {
         if (allSortedCryptoCurrencies == null)
@@ -145,16 +143,6 @@ public class CurrencyUtil {
         result.sort(TradeCurrency::compareTo);
 
         return result;
-    }
-
-
-    /**
-     * @return Sorted list of SEPA currencies with EUR as first item
-     */
-    private static Set<TradeCurrency> getSortedSEPACurrencyCodes() {
-        return CountryUtil.getAllSepaCountries().stream()
-                .map(country -> getCurrencyByCountryCode(country.code))
-                .collect(Collectors.toSet());
     }
 
     // At OKPay you can exchange internally those currencies
@@ -253,7 +241,10 @@ public class CurrencyUtil {
 
     public static boolean isFiatCurrency(String currencyCode) {
         try {
-            return currencyCode != null && !currencyCode.isEmpty() && !isCryptoCurrency(currencyCode) && Currency.getInstance(currencyCode) != null;
+            return currencyCode != null
+                    && !currencyCode.isEmpty()
+                    && !isCryptoCurrency(currencyCode)
+                    && Currency.getInstance(currencyCode) != null;
         } catch (Throwable t) {
             return false;
         }
@@ -274,39 +265,36 @@ public class CurrencyUtil {
 
     public static Optional<TradeCurrency> getTradeCurrency(String currencyCode) {
         Optional<FiatCurrency> fiatCurrencyOptional = getFiatCurrency(currencyCode);
-        if (isFiatCurrency(currencyCode) && fiatCurrencyOptional.isPresent()) {
+        if (isFiatCurrency(currencyCode) && fiatCurrencyOptional.isPresent())
             return Optional.of(fiatCurrencyOptional.get());
-        } else {
-            Optional<CryptoCurrency> cryptoCurrencyOptional = getCryptoCurrency(currencyCode);
-            if (isCryptoCurrency(currencyCode) && cryptoCurrencyOptional.isPresent()) {
-                return Optional.of(cryptoCurrencyOptional.get());
-            } else {
-                return Optional.<TradeCurrency>empty();
-            }
-        }
-    }
 
+        Optional<CryptoCurrency> cryptoCurrencyOptional = getCryptoCurrency(currencyCode);
+        if (isCryptoCurrency(currencyCode) && cryptoCurrencyOptional.isPresent())
+            return Optional.of(cryptoCurrencyOptional.get());
+
+        return Optional.empty();
+    }
 
     public static FiatCurrency getCurrencyByCountryCode(String countryCode) {
         if (countryCode.equals("XK"))
             return new FiatCurrency("EUR");
-        else
-            return new FiatCurrency(Currency.getInstance(new Locale(LanguageUtil.getDefaultLanguage(), countryCode)).getCurrencyCode());
+
+        Currency currency = Currency.getInstance(new Locale(LanguageUtil.getDefaultLanguage(), countryCode));
+        return new FiatCurrency(currency.getCurrencyCode());
     }
 
 
     public static String getNameByCode(String currencyCode) {
         if (isCryptoCurrency(currencyCode))
             return getCryptoCurrency(currencyCode).get().getName();
-        else
-            try {
-                return Currency.getInstance(currencyCode).getDisplayName();
-            } catch (Throwable t) {
-                log.debug("No currency name available " + t.getMessage());
-                return currencyCode;
-            }
-    }
 
+        try {
+            return Currency.getInstance(currencyCode).getDisplayName();
+        } catch (Throwable t) {
+            log.debug("No currency name available " + t.getMessage());
+            return currencyCode;
+        }
+    }
 
     public static String getNameAndCode(String currencyCode) {
         return getNameByCode(currencyCode) + " (" + currencyCode + ")";
