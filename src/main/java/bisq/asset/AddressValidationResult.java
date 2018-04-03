@@ -19,18 +19,14 @@ package bisq.asset;
 
 public class AddressValidationResult {
 
-    public static AddressValidationResult VALID = new AddressValidationResult(true);
+    private static AddressValidationResult VALID_ADDRESS = new AddressValidationResult(true, "", "");
 
     private final boolean isValid;
-    private String message;
-    private String i18nKey;
-
-    private AddressValidationResult(boolean isValid) {
-        this.isValid = isValid;
-    }
+    private final String message;
+    private final String i18nKey;
 
     private AddressValidationResult(boolean isValid, String message, String i18nKey) {
-        this(isValid);
+        this.isValid = isValid;
         this.message = message;
         this.i18nKey = i18nKey;
     }
@@ -48,11 +44,11 @@ public class AddressValidationResult {
     }
 
     public static AddressValidationResult validAddress() {
-        return VALID;
+        return VALID_ADDRESS;
     }
 
-    public static AddressValidationResult invalidStructure() {
-        return invalidAddress("", "validation.altcoin.wrongStructure");
+    public static AddressValidationResult invalidAddress(Throwable cause) {
+        return invalidAddress(cause.getMessage());
     }
 
     public static AddressValidationResult invalidAddress(String cause) {
@@ -63,7 +59,7 @@ public class AddressValidationResult {
         return new AddressValidationResult(false, cause, i18nKey);
     }
 
-    public static AddressValidationResult invalidAddress(Throwable cause) {
-        return invalidAddress(cause.getMessage());
+    public static AddressValidationResult invalidStructure() {
+        return invalidAddress("", "validation.altcoin.wrongStructure");
     }
 }
