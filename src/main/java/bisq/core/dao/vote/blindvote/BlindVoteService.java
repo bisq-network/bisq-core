@@ -55,7 +55,6 @@ import java.security.PublicKey;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -79,8 +78,8 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final PublicKey signaturePubKey;
     private final Storage<BlindVoteList> blindVoteListStorage;
 
-    // BlindVoteList is wrapper for persistence. From outside we access only list inside if wrapper.
-    private final BlindVoteList blindVoteList = new BlindVoteList(new ArrayList<>());
+    // BlindVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
+    private final BlindVoteList blindVoteList = new BlindVoteList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

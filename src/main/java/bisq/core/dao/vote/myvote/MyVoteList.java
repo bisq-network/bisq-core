@@ -30,13 +30,17 @@ import java.util.stream.Collectors;
 
 public class MyVoteList extends PersistableList<MyVote> {
 
-    public MyVoteList(List<MyVote> list) {
-        super(list);
+    MyVoteList() {
+        super();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private MyVoteList(List<MyVote> list) {
+        super(list);
+    }
 
     @Override
     public Message toProtoMessage() {

@@ -36,7 +36,6 @@ import javafx.beans.value.ChangeListener;
 
 import javax.crypto.SecretKey;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +50,8 @@ public class MyVoteService implements PersistedDataHost {
     private final P2PService p2PService;
     private final Storage<MyVoteList> myVoteListStorage;
 
-    // MyVoteList is wrapper for persistence. From outside we access only list inside if wrapper.
-    private final MyVoteList myVoteList = new MyVoteList(new ArrayList<>());
+    // MyVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
+    private final MyVoteList myVoteList = new MyVoteList();
 
     private ChangeListener<Number> numConnectedPeersListener;
 
