@@ -222,7 +222,7 @@ public class BankUtil {
             case "CL":
                 return "Rol Único Tributario (RUT):";  // do not translate as it is used in spanish only
             case "AR":
-                return "CUIL/CUIT del propietario de la cuenta:"; // do not translate as it is used in spanish only
+                return "CUIL/CUIT:"; // do not translate as it is used in spanish only
             default:
                 return Res.get("payment.personalId");
         }

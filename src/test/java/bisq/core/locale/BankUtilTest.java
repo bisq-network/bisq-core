@@ -24,7 +24,7 @@ public class BankUtilTest {
         final String argentina = "AR";
 
         assertTrue(BankUtil.isHolderIdRequired(argentina));
-        assertEquals("CUIL/CUIT del propietario de la cuenta:", BankUtil.getHolderIdLabel(argentina));
+        assertEquals("CUIL/CUIT:", BankUtil.getHolderIdLabel(argentina));
         assertEquals("CUIT", BankUtil.getHolderIdLabelShort(argentina));
 
         assertTrue(BankUtil.isNationalAccountIdRequired(argentina));
