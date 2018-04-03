@@ -139,8 +139,13 @@ public class MyVoteService implements PersistedDataHost {
 
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
-                .filter(vote -> periodService.isTxInPhase(vote.getTxId(), PeriodService.Phase.BLIND_VOTE))
-                .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .forEach(myVote -> {
+                    if (myVote.getRevealTxId() == null)
+                        addBlindVoteToP2PNetwork(myVote.getBlindVote());
+                    else
+                        log.error("revealTxId must be null at publishMyBlindVotes.\nmyVote={}", myVote);
+                });
     }
 
     private boolean addBlindVoteToP2PNetwork(BlindVote blindVote) {
