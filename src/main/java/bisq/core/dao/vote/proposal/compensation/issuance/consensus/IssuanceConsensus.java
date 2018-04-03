@@ -15,9 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.issuance.consensus;
+package bisq.core.dao.vote.proposal.compensation.issuance.consensus;
 
-import bisq.core.dao.vote.issuance.IssuanceService;
+import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;

@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.issuance;
+package bisq.core.dao.vote.proposal.compensation.issuance;
 
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -32,11 +32,11 @@ import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.issuance.consensus.IssuanceConsensus;
 import bisq.core.dao.vote.proposal.ProposalList;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
+import bisq.core.dao.vote.proposal.compensation.issuance.consensus.IssuanceConsensus;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
 import bisq.core.dao.vote.votereveal.RevealedVote;

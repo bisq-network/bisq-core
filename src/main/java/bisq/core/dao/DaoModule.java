@@ -47,9 +47,9 @@ import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
 import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.issuance.IssuanceService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
+import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
 import bisq.core.dao.vote.proposal.generic.GenericProposalService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 

@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.issuance;
+package bisq.core.dao.vote.proposal.compensation.issuance;
 
 import bisq.core.dao.vote.blindvote.BlindVote;
 
