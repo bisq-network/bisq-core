@@ -1,9 +1,7 @@
+# sorted by `sort --ignore-case`
 bisq.asset.coins.Achievecoin
 bisq.asset.coins.Angelcoin
 bisq.asset.coins.Arto
-bisq.asset.coins.BSQ$Mainnet
-bisq.asset.coins.BSQ$Regtest
-bisq.asset.coins.BSQ$Testnet
 bisq.asset.coins.Bitcoin$Mainnet
 bisq.asset.coins.Bitcoin$Regtest
 bisq.asset.coins.Bitcoin$Testnet
@@ -11,6 +9,9 @@ bisq.asset.coins.BitcoinCash
 bisq.asset.coins.BitcoinClashic
 bisq.asset.coins.BitcoinGold
 bisq.asset.coins.BitDaric
+bisq.asset.coins.BSQ$Mainnet
+bisq.asset.coins.BSQ$Regtest
+bisq.asset.coins.BSQ$Testnet
 bisq.asset.coins.Burstcoin
 bisq.asset.coins.Byteball
 bisq.asset.coins.Cagecoin
@@ -54,9 +55,9 @@ bisq.asset.coins.Octocoin
 bisq.asset.coins.Particl
 bisq.asset.coins.PepeCash
 bisq.asset.coins.Phore
+bisq.asset.coins.PIVX
 bisq.asset.coins.PostCoin
 bisq.asset.coins.Pranacoin
-bisq.asset.coins.PIVX
 bisq.asset.coins.ReddCoin
 bisq.asset.coins.Roicoin
 bisq.asset.coins.SafeFileSystemCoin
