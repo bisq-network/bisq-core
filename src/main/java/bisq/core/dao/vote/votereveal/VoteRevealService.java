@@ -131,7 +131,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes() {
-        myVoteService.getMyVotesList().stream()
+        myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
                 .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
                 .forEach(myVote -> {

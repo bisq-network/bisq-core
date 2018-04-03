@@ -34,16 +34,16 @@ import javax.inject.Inject;
 
 import javafx.beans.value.ChangeListener;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 import javax.crypto.SecretKey;
 
-import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Manages my votes.
+ * Manages list of my votes, creates new MyVote, republished all my active myVotes at startup and applies
+ * revealTx ID to MyVote once the reveal tx is published.
  */
 @Slf4j
 public class MyVoteService implements PersistedDataHost {
@@ -51,8 +51,9 @@ public class MyVoteService implements PersistedDataHost {
     private final P2PService p2PService;
     private final Storage<MyVoteList> myVoteListStorage;
 
-    @Getter
-    private final ObservableList<MyVote> myVotesList = FXCollections.observableArrayList();
+    // MyVoteList is wrapper for persistence. From outside we access only list inside if wrapper.
+    private final MyVoteList myVoteList = new MyVoteList(new ArrayList<>());
+
     private ChangeListener<Number> numConnectedPeersListener;
 
 
@@ -77,10 +78,10 @@ public class MyVoteService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            MyVoteList persisted = myVoteListStorage.initAndGetPersistedWithFileName("MyVoteList", 100);
+            MyVoteList persisted = myVoteListStorage.initAndGetPersisted(myVoteList, 20);
             if (persisted != null) {
-                this.myVotesList.clear();
-                this.myVotesList.addAll(persisted.getList());
+                this.myVoteList.clear();
+                this.myVoteList.addAll(persisted.getList());
             }
         }
     }
@@ -106,16 +107,20 @@ public class MyVoteService implements PersistedDataHost {
 
     public void addNewMyVote(ProposalList proposalList, SecretKey secretKey, BlindVote blindVote) {
         MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
-        myVotesList.add(myVote);
+        log.info("Add new MyVote to myVotesList list.\nMyVote={}" + myVote);
+        myVoteList.add(myVote);
         persistMyVoteList();
     }
 
     public void applyRevealTxId(MyVote myVote, String voteRevealTxId) {
-        log.info("applyStateChange myVote={}, voteRevealTxId={}", myVote, voteRevealTxId);
+        log.info("apply revealTxId to myVote.\nmyVote={}\nvoteRevealTxId={}", myVote, voteRevealTxId);
         myVote.setRevealTxId(voteRevealTxId);
         persistMyVoteList();
     }
 
+    public List<MyVote> getMyVoteList() {
+        return myVoteList.getList();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -133,16 +138,17 @@ public class MyVoteService implements PersistedDataHost {
     }
 
     private void publishMyBlindVotes() {
-        myVotesList.stream()
+        getMyVoteList().stream()
                 .filter(vote -> periodService.isTxInPhase(vote.getTxId(), PeriodService.Phase.BLIND_VOTE))
                 .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
     }
 
     private boolean addBlindVoteToP2PNetwork(BlindVote blindVote) {
+        log.info("Add BlindVote to P2P network.\nBlindVote={}" + blindVote);
         return p2PService.addProtectedStorageEntry(blindVote, true);
     }
 
     private void persistMyVoteList() {
-        myVoteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
+        myVoteListStorage.queueUpForSave();
     }
 }
