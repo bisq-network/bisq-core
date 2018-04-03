@@ -36,7 +36,6 @@ import bisq.core.dao.vote.proposal.ProposalList;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
-import bisq.core.dao.vote.proposal.compensation.issuance.consensus.IssuanceConsensus;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
 import bisq.core.dao.vote.votereveal.RevealedVote;

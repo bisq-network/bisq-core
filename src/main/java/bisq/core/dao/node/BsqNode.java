@@ -20,7 +20,7 @@ package bisq.core.dao.node;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
-import bisq.core.dao.vote.proposal.compensation.issuance.consensus.IssuanceConsensus;
+import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceConsensus;
 import bisq.core.provider.fee.FeeService;
 
 import bisq.network.p2p.P2PService;
