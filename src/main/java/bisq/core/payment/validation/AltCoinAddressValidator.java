@@ -27,15 +27,11 @@ import bisq.asset.Asset;
 import bisq.asset.AssetRegistry;
 import bisq.asset.Coin;
 
-import org.bitcoinj.core.AddressFormatException;
-
 import com.google.inject.Inject;
-
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
+import static java.lang.String.format;
 
 @Slf4j
 public final class AltCoinAddressValidator extends InputValidator {
@@ -48,10 +44,6 @@ public final class AltCoinAddressValidator extends InputValidator {
         this.assetRegistry = assetRegistry;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Public methods
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
     public void setCurrencyCode(String currencyCode) {
         this.currencyCode = currencyCode;
     }
@@ -59,36 +51,22 @@ public final class AltCoinAddressValidator extends InputValidator {
     @Override
     public ValidationResult validate(String input) {
         ValidationResult validationResult = super.validate(input);
-        if (!validationResult.isValid || currencyCode == null) {
+        if (!validationResult.isValid || currencyCode == null)
             return validationResult;
-        } else {
-            ValidationResult wrongChecksum = new ValidationResult(false,
-                    Res.get("validation.altcoin.wrongChecksum"));
-            ValidationResult regexTestFailed = new ValidationResult(false,
-                    Res.get("validation.altcoin.wrongStructure", currencyCode));
 
-            Optional<Asset> asset = assetRegistry.stream()
-                    .filter(this::assetMatchesSelectedCurrencyCode)
-                    .filter(this::assetIsNotBaseCurrencyForDifferentNetwork)
-                    .findFirst();
+        Asset asset = assetRegistry.stream()
+                .filter(this::assetMatchesSelectedCurrencyCode)
+                .filter(this::assetIsNotBaseCurrencyForDifferentNetwork)
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(format("'%s' is not a registered asset", currencyCode)));
 
-            if (asset.isPresent()) {
-                AddressValidationResult addressValidationResult = asset.get().validateAddress(input);
+        AddressValidationResult result = asset.validateAddress(input);
+        if (!result.isValid())
+            return new ValidationResult(false,
+                    Res.get(result.getI18nKey(), asset.getTickerSymbol(), result.getMessage()));
 
-                if (addressValidationResult.isValid())
-                    return new ValidationResult(true);
-
-                return new ValidationResult(false, Res.get(addressValidationResult.getI18nKey(), asset.get().getTickerSymbol(), addressValidationResult.getMessage()));
-            }
-
-            log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
-            return validationResult;
-        }
-    }
-
-    @NotNull
-    private String getErrorMessage(AddressFormatException e) {
-        return Res.get("validation.altcoin.invalidAddress", currencyCode, e.getMessage());
+        return new ValidationResult(true);
     }
 
     private boolean assetMatchesSelectedCurrencyCode(Asset a) {
@@ -102,5 +80,4 @@ public final class AltCoinAddressValidator extends InputValidator {
                 || !asset.getTickerSymbol().equals(baseCurrencyNetwork.getCurrencyCode())
                 || (((Coin) asset).getNetwork().name().equals(baseCurrencyNetwork.getNetwork()));
     }
-
 }
