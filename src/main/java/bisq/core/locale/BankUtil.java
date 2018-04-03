@@ -45,6 +45,7 @@ public class BankUtil {
             // return false;
             case "MX":
             case "BR":
+            case "AR":
                 return true;
             default:
                 return true;
@@ -71,6 +72,7 @@ public class BankUtil {
             case "SE":
             case "CL":
             case "NO":
+            case "AR":
                 return false;
             case "CA":
             case "MX":
@@ -159,6 +161,8 @@ public class BankUtil {
                 return "CLABE:"; // do not translate as it is used in spanish only
             case "CL":
                 return "Cuenta:"; // do not translate as it is used in spanish only
+            case "AR":
+                return "Número de cuenta:"; // do not translate as it is used in spanish only
             default:
                 return Res.get("payment.accountNrLabel");
         }
@@ -204,6 +208,7 @@ public class BankUtil {
         switch (countryCode) {
             case "BR":
             case "CL":
+            case "AR":
                 return true;
             default:
                 return false;
@@ -216,6 +221,8 @@ public class BankUtil {
                 return "Cadastro de Pessoas Físicas (CPF):"; // do not translate as it is used in portuguese only
             case "CL":
                 return "Rol Único Tributario (RUT):";  // do not translate as it is used in spanish only
+            case "AR":
+                return "CUIL/CUIT del propietario de la cuenta:"; // do not translate as it is used in spanish only
             default:
                 return Res.get("payment.personalId");
         }
@@ -227,6 +234,8 @@ public class BankUtil {
                 return "CPF:"; // do not translate as it is used in portuguese only
             case "CL":
                 return "RUT:";  // do not translate as it is used in spanish only
+            case "AR":
+                return "CUIT";
             default:
                 return "ID";
         }
@@ -262,6 +271,24 @@ public class BankUtil {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public static boolean isNationalAccountIdRequired(String countryCode) {
+        switch (countryCode) {
+            case "AR":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static String getNationalAccountIdLabel(String countryCode) {
+        switch (countryCode) {
+            case "AR":
+                return "Número de CBU:"; // do not translate as it is used in spanish only
+            default:
+                return "";
         }
     }
 }

@@ -76,6 +76,7 @@ public final class SpecificBanksAccountPayload extends BankAccountPayload {
                 accountType,
                 holderTaxId,
                 bankId,
+                null,
                 maxTradePeriod,
                 excludeFromJsonDataMap);
 
