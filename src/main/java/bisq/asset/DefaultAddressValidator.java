@@ -24,6 +24,7 @@ public class DefaultAddressValidator implements AddressValidator {
     public AddressValidationResult validate(String address) {
         if (address == null || address.length() == 0)
             return AddressValidationResult.invalidAddress("Address may not be empty");
+
         return AddressValidationResult.validAddress();
     }
 }

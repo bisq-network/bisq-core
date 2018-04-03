@@ -35,6 +35,7 @@ public class Zcash extends Coin {
             // We only support t addresses (transparent transactions)
             if (!address.startsWith("t"))
                 return AddressValidationResult.invalidAddress("", "validation.altcoin.zAddressesNotSupported");
+
             return AddressValidationResult.validAddress();
         }
     }

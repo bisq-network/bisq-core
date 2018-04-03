@@ -34,6 +34,7 @@ public class Koto extends Coin {
 
 
     public static class KotoAddressValidator implements AddressValidator {
+
         private final static String ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
         @Override

@@ -42,8 +42,10 @@ public class Cryptonite extends Coin {
             // https://bitcointalk.org/index.php?topic=1801595
             if (address.length() != 34)
                 return AddressValidationResult.invalidAddress("XCN_Addr_Invalid: Length must be 34!");
+
             if (!address.startsWith("C"))
                 return AddressValidationResult.invalidAddress("XCN_Addr_Invalid: must start with 'C'!");
+
             byte[] decoded = decodeBase58(address);
             if (decoded == null)
                 return AddressValidationResult.invalidAddress("XCN_Addr_Invalid: Base58 decoder error!");
@@ -51,8 +53,8 @@ public class Cryptonite extends Coin {
             byte[] hash = getSha256(decoded, 21, 2);
             if (hash == null || !Arrays.equals(Arrays.copyOfRange(hash, 0, 4), Arrays.copyOfRange(decoded, 21, 25)))
                 return AddressValidationResult.invalidAddress("XCN_Addr_Invalid: Checksum error!");
-            return AddressValidationResult.validAddress();
 
+            return AddressValidationResult.validAddress();
         }
 
         private static byte[] decodeBase58(String input) {

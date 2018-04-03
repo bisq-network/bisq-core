@@ -29,6 +29,7 @@ public class BitcoinGold extends Coin {
         super("Bitcoin Gold", "BTG", new Base58BitcoinAddressValidator(new BitcoinGoldParams()));
     }
 
+
     private static class BitcoinGoldParams extends NetworkParametersAdapter {
 
         public BitcoinGoldParams() {

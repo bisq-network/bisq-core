@@ -34,6 +34,7 @@ public class Yenten extends Coin {
 
 
     public static class YentenAddressValidator implements AddressValidator {
+
         private final static String ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
         public AddressValidationResult validate(String addr) {

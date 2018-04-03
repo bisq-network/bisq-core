@@ -39,6 +39,7 @@ public class Particl extends Coin {
         public AddressValidationResult validate(String address) {
             if (!address.matches("^[RP][a-km-zA-HJ-NP-Z1-9]{25,34}$"))
                 return AddressValidationResult.invalidStructure();
+
             return super.validate(address);
         }
     }
