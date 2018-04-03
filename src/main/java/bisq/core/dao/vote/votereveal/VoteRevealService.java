@@ -30,6 +30,7 @@ import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVote;
+import bisq.core.dao.vote.myvote.MyVoteService;
 
 import bisq.common.util.Utilities;
 
@@ -60,6 +61,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteRevealService implements BsqBlockChain.Listener {
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final MyVoteService myVoteService;
     private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -77,12 +79,14 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Inject
     public VoteRevealService(ReadableBsqBlockChain readableBsqBlockChain,
+                             MyVoteService myVoteService,
                              PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager,
                              BlindVoteService blindVoteService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.myVoteService = myVoteService;
         this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
@@ -127,7 +131,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes() {
-        blindVoteService.getMyVotesList().stream()
+        myVoteService.getMyVotesList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
                 .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
                 .forEach(myVote -> {
@@ -171,7 +175,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         // We get logged a waring in the Broadcaster.broadcastTx method if we don't get the tx broadcasted in
         // 8 seconds.
         //TODO add timeout error to broadcaster API
-        applyStateChange(myVote, stakeTxOutput, voteRevealTx);
+        myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
         walletsManager.publishAndCommitBsqTx(voteRevealTx, new FutureCallback<Transaction>() {
             @Override
@@ -191,11 +195,5 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(stakeTxOutput);
         Transaction txWithBtcFee = btcWalletService.completePreparedVoteRevealTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
-    }
-
-    private void applyStateChange(MyVote myVote, TxOutput stakeTxOutput, Transaction voteRevealTx) {
-        log.info("applyStateChange myVote={}, voteRevealTxId={}", myVote, voteRevealTx.getHashAsString());
-        myVote.setRevealTxId(voteRevealTx.getHashAsString());
-        blindVoteService.persistMyVoteList();
     }
 }
