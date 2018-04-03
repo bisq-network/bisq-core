@@ -66,6 +66,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     private final byte[] encryptedProposalList;
     private final String txId;
+    // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.
     private long stake;
     private final byte[] ownerPubKeyEncoded;
 

@@ -27,9 +27,9 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
+import bisq.core.dao.vote.myvote.MyVote;
 
 import bisq.common.util.Utilities;
 
