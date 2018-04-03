@@ -54,6 +54,8 @@ public class BlindVoteConsensus {
         return proposals;
     }
 
+    // Standard 256 bit AES key
+    //TODO prob. 128 bit is good enough for that use case
     public static SecretKey getSecretKey() {
         return Encryption.generateSecretKey();
     }
