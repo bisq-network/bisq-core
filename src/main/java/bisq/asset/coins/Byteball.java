@@ -65,7 +65,7 @@ public class Byteball extends Coin {
             if (!isValidAddress(input)) {
                 return AddressValidationResult.invalidStructure();
             }
-            return  AddressValidationResult.validAddress();
+            return AddressValidationResult.validAddress();
         }
 
         private static boolean isValidAddress(String address) {
