@@ -39,7 +39,7 @@ import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
 import bisq.core.dao.vote.votereveal.RevealedVote;
-import bisq.core.dao.vote.votereveal.consensus.VoteRevealConsensus;
+import bisq.core.dao.vote.votereveal.VoteRevealConsensus;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.util.Utilities;

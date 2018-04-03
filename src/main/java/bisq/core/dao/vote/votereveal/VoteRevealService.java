@@ -30,7 +30,6 @@ import bisq.core.dao.vote.DaoPeriodService;
 import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.votereveal.consensus.VoteRevealConsensus;
 
 import bisq.common.util.Utilities;
 

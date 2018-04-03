@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.votereveal.consensus;
+package bisq.core.dao.vote.votereveal;
 
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
