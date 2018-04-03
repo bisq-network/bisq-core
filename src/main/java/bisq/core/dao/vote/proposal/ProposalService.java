@@ -235,9 +235,7 @@ public class ProposalService implements PersistedDataHost, BsqBlockChain.Listene
                 return success;
             } else {
                 final String msg = "removeProposal called with a Proposal which is outside of the Proposal phase.";
-                log.warn(msg);
-                if (DevEnv.isDevMode())
-                    throw new RuntimeException(msg);
+                DevEnv.logErrorAndThrowIfDevMode(msg);
                 return false;
             }
         } else {
