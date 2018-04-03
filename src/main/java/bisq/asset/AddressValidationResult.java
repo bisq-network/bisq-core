@@ -17,6 +17,14 @@
 
 package bisq.asset;
 
+/**
+ * Value object representing the result of validating an {@link Asset} address. Various
+ * factory methods are provided for typical use cases.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ * @see Asset#validateAddress(String)
+ */
 public class AddressValidationResult {
 
     private static AddressValidationResult VALID_ADDRESS = new AddressValidationResult(true, "", "");

@@ -17,10 +17,20 @@
 
 package bisq.asset;
 
+/**
+ * Validates an Ethereum address using the regular expression on record in the
+ * <a href="https://github.com/ethereum/web3.js/blob/bd6a890/lib/utils/utils.js#L405">
+ * ethereum/web3.js</a> project. Note that this implementation is widely used, not just
+ * for actual {@link bisq.asset.coins.Ether} address validation, but also for
+ * {@link Erc20Token} implementations and other Ethereum-based {@link Asset}
+ * implementations.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public class EtherAddressValidator extends RegexAddressValidator {
 
     public EtherAddressValidator() {
-        // https://github.com/ethereum/web3.js/blob/master/lib/utils/utils.js#L403
         super("^(0x)?[0-9a-fA-F]{40}$");
     }
 }

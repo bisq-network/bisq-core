@@ -17,6 +17,25 @@
 
 package bisq.asset;
 
+/**
+ * Interface representing a given ("crypto") asset in its most abstract form, having a
+ * {@link #getName() name}, e.g. "Bitcoin", a {@link #getTickerSymbol() ticker symbol},
+ * e.g. "BTC", and an address validation function. Together, these properties represent
+ * the minimum information and functionality required to register and trade an asset on
+ * the Bisq network.
+ * <p>
+ * Implementations typically extend either the {@link Coin} or {@link Token} base
+ * classes, and must be registered in the {@code META-INF/services/bisq.asset.Asset} file
+ * in order to be available in the {@link AssetRegistry} at runtime.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ * @see AbstractAsset
+ * @see Coin
+ * @see Token
+ * @see Erc20Token
+ * @see AssetRegistry
+ */
 public interface Asset {
 
     String getName();

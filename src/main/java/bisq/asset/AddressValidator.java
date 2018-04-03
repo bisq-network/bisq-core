@@ -17,6 +17,12 @@
 
 package bisq.asset;
 
+/**
+ * An {@link Asset} address validation function.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public interface AddressValidator {
 
     AddressValidationResult validate(String address);

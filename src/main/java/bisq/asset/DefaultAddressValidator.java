@@ -17,6 +17,17 @@
 
 package bisq.asset;
 
+/**
+ * {@link AddressValidator} for use when no more specific address validation function is
+ * available. This implementation only checks that a given address is non-null and
+ * non-empty; it exists for legacy purposes and is deprecated to indicate that new
+ * {@link Asset} implementations should NOT use it, but should rather provide their own
+ * {@link AddressValidator} implementation.
+ *
+ * @author Chris Beams
+ * @author Bernard Labno
+ * @since 0.7.0
+ */
 @Deprecated
 public class DefaultAddressValidator implements AddressValidator {
 

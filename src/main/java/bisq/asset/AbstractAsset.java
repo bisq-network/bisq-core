@@ -20,6 +20,14 @@ package bisq.asset;
 import static org.apache.commons.lang3.Validate.notBlank;
 import static org.apache.commons.lang3.Validate.notNull;
 
+/**
+ * Abstract base class for {@link Asset} implementations. Most implementations should not
+ * extend this class directly, but should rather extend {@link Coin}, {@link Token} or one
+ * of their subtypes.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public abstract class AbstractAsset implements Asset {
 
     private final String name;

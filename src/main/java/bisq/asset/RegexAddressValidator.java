@@ -17,6 +17,12 @@
 
 package bisq.asset;
 
+/**
+ * Validates an {@link Asset} address against a given regular expression.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public class RegexAddressValidator implements AddressValidator {
 
     private final String regex;

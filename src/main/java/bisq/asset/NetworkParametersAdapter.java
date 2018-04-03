@@ -24,9 +24,16 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.MonetaryFormat;
 
+/**
+ * Convenient abstract {@link NetworkParameters} base class providing no-op
+ * implementations of all methods that are not required for address validation
+ * purposes.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public abstract class NetworkParametersAdapter extends NetworkParameters {
 
     @Override
@@ -36,7 +43,7 @@ public abstract class NetworkParametersAdapter extends NetworkParameters {
 
     @Override
     public void checkDifficultyTransitions(StoredBlock storedPrev, Block next, BlockStore blockStore)
-            throws VerificationException, BlockStoreException {
+            throws VerificationException {
     }
 
     @Override

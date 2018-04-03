@@ -17,6 +17,14 @@
 
 package bisq.asset;
 
+/**
+ * Abstract base class for Ethereum-based {@link Token}s that implement the
+ * <a href="https://theethereum.wiki/w/index.php/ERC20_Token_Standard">ERC-20 Token
+ * Standard</a>.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ */
 public abstract class Erc20Token extends Token {
 
     public Erc20Token(String name, String tickerSymbol) {

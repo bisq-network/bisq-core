@@ -26,6 +26,23 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+/**
+ * Abstract base class for all {@link Asset} unit tests. Subclasses must implement the
+ * {@link #testValidAddresses()} and {@link #testInvalidAddresses()} methods, and are
+ * expected to use the convenient {@link #assertValidAddress(String)} and
+ * {@link #assertInvalidAddress(String)} assertions when doing so.
+ * <p>
+ * Blank / empty addresses are tested automatically by this base class and are always
+ * considered invalid.
+ * <p>
+ * This base class also serves as a kind of integration test for {@link AssetRegistry}, in
+ * that all assets tested through subclasses are tested to make sure they are also
+ * properly registered and available there.
+ *
+ * @author Chris Beams
+ * @author Bernard Labno
+ * @since 0.7.0
+ */
 public abstract class AbstractAssetTest {
 
     private final AssetRegistry assetRegistry = new AssetRegistry();

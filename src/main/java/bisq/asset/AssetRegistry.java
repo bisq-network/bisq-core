@@ -22,6 +22,14 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
+/**
+ * Provides {@link Stream}-based access to {@link Asset} implementations registered in
+ * the {@code META-INF/services/bisq.asset.Asset} provider-configuration file.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ * @see ServiceLoader
+ */
 public class AssetRegistry {
 
     private static final List<Asset> registeredAssets = new ArrayList<>();

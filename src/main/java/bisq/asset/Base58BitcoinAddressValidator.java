@@ -22,6 +22,13 @@ import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 
+/**
+ * {@link AddressValidator} for Base58-encoded Bitcoin addresses.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ * @see org.bitcoinj.core.Address#fromBase58(NetworkParameters, String)
+ */
 public class Base58BitcoinAddressValidator implements AddressValidator {
 
     private final NetworkParameters networkParameters;

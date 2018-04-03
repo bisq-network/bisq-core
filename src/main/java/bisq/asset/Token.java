@@ -17,6 +17,18 @@
 
 package bisq.asset;
 
+/**
+ * Abstract base class for {@link Asset}s that do not have their own dedicated blockchain,
+ * but are rather based on or derived from another blockchain. Contrast with {@link Coin}.
+ * Note that this is essentially a "marker" base class in the sense that it (currently)
+ * exposes no additional information or functionality beyond that found in
+ * {@link AbstractAsset}, but it is nevertheless useful in distinguishing between major
+ * different {@code Asset} types.
+ *
+ * @author Chris Beams
+ * @since 0.7.0
+ * @see Erc20Token
+ */
 public abstract class Token extends AbstractAsset {
 
     public Token(String name, String tickerSymbol, AddressValidator addressValidator) {

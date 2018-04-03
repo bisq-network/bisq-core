@@ -19,6 +19,15 @@ package bisq.asset;
 
 import org.junit.Test;
 
+/**
+ * Convenient abstract base class for {@link Asset} implementations still using the
+ * deprecated {@link DefaultAddressValidator}.
+ *
+ * @author Bernard Labno
+ * @since 0.7.0
+ * @see DefaultAddressValidator
+ */
+@Deprecated
 public abstract class AbstractAssetWithDefaultValidatorTest extends AbstractAssetTest {
 
     public AbstractAssetWithDefaultValidatorTest(Asset asset) {
