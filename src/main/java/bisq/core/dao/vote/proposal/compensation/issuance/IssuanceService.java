@@ -40,6 +40,7 @@ import bisq.core.dao.vote.result.LongVoteResult;
 import bisq.core.dao.vote.result.VoteResult;
 import bisq.core.dao.vote.votereveal.RevealedVote;
 import bisq.core.dao.vote.votereveal.VoteRevealConsensus;
+import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.util.Utilities;
@@ -74,12 +75,12 @@ import javax.annotation.Nullable;
 @Slf4j
 public class IssuanceService implements BsqBlockChain.Listener {
     private final BlindVoteService blindVoteService;
+    private final VoteRevealService voteRevealService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final WritableBsqBlockChain writableBsqBlockChain;
     private final PeriodService periodService;
     @Getter
     private final ObservableList<IssuanceException> issuanceExceptions = FXCollections.observableArrayList();
-    private BsqBlockChain.Listener bsqBlockChainListener;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -88,10 +89,12 @@ public class IssuanceService implements BsqBlockChain.Listener {
 
     @Inject
     public IssuanceService(BlindVoteService blindVoteService,
+                           VoteRevealService voteRevealService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            WritableBsqBlockChain writableBsqBlockChain,
                            PeriodService periodService) {
         this.blindVoteService = blindVoteService;
+        this.voteRevealService = voteRevealService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.writableBsqBlockChain = writableBsqBlockChain;
         this.periodService = periodService;
@@ -281,7 +284,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
     }
 
     private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
-        final BlindVoteList blindVoteList = new BlindVoteList(blindVoteService.getBlindVoteListForCurrentCycle());
+        final BlindVoteList blindVoteList = voteRevealService.getSortedBlindVoteListForCurrentCycle();
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("Sha256Ripemd160 hash of my blindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));

@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class VoteRevealConsensus {
+
     public static byte[] getHashOfBlindVoteList(BlindVoteList blindVoteList) {
         final byte[] bytes = blindVoteList.toProtoMessage().toByteArray();
         return Hash.getSha256Ripemd160hash(bytes);

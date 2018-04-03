@@ -45,13 +45,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-    public static Comparator<BlindVote> getBlindVoteListComparator() {
-        return Comparator.comparing(BlindVote::getTxId);
-    }
-
-    public static List<Proposal> getSortedProposalList(List<Proposal> proposals) {
+    public static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
-        return proposals;
     }
 
     // Standard 256 bit AES key
@@ -94,5 +89,9 @@ public class BlindVoteConsensus {
 
     public static Coin getFee(ReadableBsqBlockChain readableBsqBlockChain) {
         return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain.getChainHeadHeight()));
+    }
+
+    public static void sortedBlindVoteList(List<BlindVote> list) {
+        list.sort(Comparator.comparing(BlindVote::getTxId));
     }
 }

@@ -24,7 +24,6 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
@@ -40,8 +39,6 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
@@ -50,10 +47,7 @@ import javax.inject.Inject;
 
 import com.google.common.util.concurrent.FutureCallback;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 
 import javax.crypto.SecretKey;
 
@@ -61,10 +55,9 @@ import java.security.PublicKey;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +72,6 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final ProposalService proposalService;
     private final MyVoteService myVoteService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
@@ -87,10 +79,8 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final PublicKey signaturePubKey;
     private final Storage<BlindVoteList> blindVoteListStorage;
 
-    @Getter
-    private final ObservableList<BlindVote> blindVoteList = FXCollections.observableArrayList();
-    @Getter
-    private final List<BlindVote> blindVoteSortedList = new SortedList<>(blindVoteList);
+    // BlindVoteList is wrapper for persistence. From outside we access only list inside if wrapper.
+    private final BlindVoteList blindVoteList = new BlindVoteList(new ArrayList<>());
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +91,6 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     public BlindVoteService(ProposalService proposalService,
                             MyVoteService myVoteService,
                             ReadableBsqBlockChain readableBsqBlockChain,
-                            PeriodService periodService,
                             BsqWalletService bsqWalletService,
                             BtcWalletService btcWalletService,
                             WalletsManager walletsManager,
@@ -111,7 +100,6 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         this.proposalService = proposalService;
         this.myVoteService = myVoteService;
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
@@ -119,8 +107,6 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
         this.blindVoteListStorage = blindVoteListStorage;
-
-        blindVoteSortedList.sort(BlindVoteConsensus.getBlindVoteListComparator());
     }
 
 
@@ -131,7 +117,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BlindVoteList persisted = blindVoteListStorage.initAndGetPersistedWithFileName("BlindVoteList", 100);
+            BlindVoteList persisted = blindVoteListStorage.initAndGetPersisted(blindVoteList, 20);
             if (persisted != null) {
                 this.blindVoteList.clear();
                 this.blindVoteList.addAll(persisted.getList());
@@ -157,7 +143,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     public void publishBlindVote(Coin stake, FutureCallback<Transaction> callback)
             throws CryptoException, InsufficientMoneyException, WalletException, TransactionVerificationException,
             IOException {
-        ProposalList proposalList = getClonedProposalList(proposalService.getActiveProposals());
+        ProposalList proposalList = getSortedProposalList();
         SecretKey secretKey = BlindVoteConsensus.getSecretKey();
         byte[] encryptedProposals = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
         byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);
@@ -184,23 +170,13 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         // the parsing. We prefer to keep track of the state and notify the user in case the tx broadcast failed or
         // timed out. Any time the tx succeeds broadcast later the blind vote becomes valid.
         BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
-        if (!blindVoteList.contains(blindVote)) {
-            blindVoteList.add(blindVote);
-            persistBlindVoteList();
-        } else {
-            log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
-        }
-        if (!addBlindVoteToP2PNetwork(blindVote)) {
-            //TODO handle error
-            log.warn("We could not publish the blind vote to the P2P network. blindVote={}", blindVote);
-        }
-        myVoteService.addNewMyVote(proposalList, secretKey, blindVote);
+        addBlindVote(blindVote);
+        addBlindVoteToP2PNetwork(blindVote);
+        myVoteService.applyNewBlindVote(proposalList, secretKey, blindVote);
     }
 
-    public List<BlindVote> getBlindVoteListForCurrentCycle() {
-        return blindVoteSortedList.stream()
-                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
-                .collect(Collectors.toList());
+    public List<BlindVote> getBlindVoteList() {
+        return blindVoteList.getList();
     }
 
 
@@ -231,15 +207,16 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         if (!blindVoteList.contains(blindVote)) {
             blindVoteList.add(blindVote);
             persistBlindVoteList();
+            log.info("Added blindVote to blindVoteList.\nblindVote={}", blindVote);
         } else {
-            log.debug("We have that item in our list already");
+            log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
         }
     }
 
-    private ProposalList getClonedProposalList(FilteredList<Proposal> proposals) throws InvalidProtocolBufferException {
-        ProposalList cloned = ProposalList.clone(new ProposalList(proposals));
-        final List<Proposal> sortedProposals = BlindVoteConsensus.getSortedProposalList(cloned.getList());
-        return new ProposalList(sortedProposals);
+    private ProposalList getSortedProposalList() {
+        FilteredList<Proposal> proposals = proposalService.getActiveProposals();
+        BlindVoteConsensus.sortProposalList(proposals);
+        return new ProposalList(proposals);
     }
 
     private Transaction getBlindVoteTx(Coin stake, byte[] opReturnData)
@@ -251,10 +228,16 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     }
 
     private boolean addBlindVoteToP2PNetwork(BlindVote blindVote) {
-        return p2PService.addProtectedStorageEntry(blindVote, true);
+        final boolean success = p2PService.addProtectedStorageEntry(blindVote, true);
+        if (success) {
+            log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
+        } else { //TODO handle error
+            log.warn("We could not publish the blind vote to the P2P network. blindVote={}", blindVote);
+        }
+        return success;
     }
 
     private void persistBlindVoteList() {
-        blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
+        blindVoteListStorage.queueUpForSave();
     }
 }

@@ -27,6 +27,8 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVote;
@@ -47,7 +49,9 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +74,6 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Getter
     private final ObservableList<VoteRevealException> voteRevealExceptions = FXCollections.observableArrayList();
-    private BsqBlockChain.Listener bsqBlockChainListener;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -125,6 +128,17 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         }
     }
 
+    public BlindVoteList getSortedBlindVoteListForCurrentCycle() {
+        final List<BlindVote> list = getBlindVoteListForCurrentCycle();
+        BlindVoteConsensus.sortedBlindVoteList(list);
+        return new BlindVoteList(list);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     // Creation of vote reveal tx is done without user activity!
     // We create automatically the vote reveal tx when we enter the reveal phase of the current cycle when
     // the blind vote was created in case we have not done it already.
@@ -152,7 +166,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     private void revealVote(MyVote myVote) throws IOException, WalletException, InsufficientMoneyException,
             TransactionVerificationException, VoteRevealException {
-        final BlindVoteList blindVoteList = new BlindVoteList(blindVoteService.getBlindVoteListForCurrentCycle());
+        final BlindVoteList blindVoteList = getSortedBlindVoteListForCurrentCycle();
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
@@ -188,6 +202,12 @@ public class VoteRevealService implements BsqBlockChain.Listener {
                 voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.", t, voteRevealTx));
             }
         });
+    }
+
+    private List<BlindVote> getBlindVoteListForCurrentCycle() {
+        return blindVoteService.getBlindVoteList().stream()
+                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
+                .collect(Collectors.toList());
     }
 
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)

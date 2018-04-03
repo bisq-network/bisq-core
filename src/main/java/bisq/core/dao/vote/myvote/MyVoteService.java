@@ -105,7 +105,7 @@ public class MyVoteService implements PersistedDataHost {
         // TODO keep for later, maybe we get resources to clean up later
     }
 
-    public void addNewMyVote(ProposalList proposalList, SecretKey secretKey, BlindVote blindVote) {
+    public void applyNewBlindVote(ProposalList proposalList, SecretKey secretKey, BlindVote blindVote) {
         MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote={}" + myVote);
         myVoteList.add(myVote);
