@@ -39,6 +39,10 @@ public interface WritableBsqBlockChain {
 
     void setBlindVoteFee(long value, int genesisBlockHeight);
 
+    void setQuorum(long quorum, int blockHeight);
+
+    void setVoteThreshold(long voteThreshold, int blockHeight);
+
     void addListener(BsqBlockChain.Listener listener);
 
     void removeListener(BsqBlockChain.Listener listener);

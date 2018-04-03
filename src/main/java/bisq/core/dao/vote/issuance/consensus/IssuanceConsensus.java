@@ -17,11 +17,7 @@
 
 package bisq.core.dao.vote.issuance.consensus;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.vote.issuance.IssuanceService;
-import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
@@ -30,10 +26,7 @@ import javax.crypto.SecretKey;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,9 +34,13 @@ import javax.annotation.Nullable;
 
 @Slf4j
 public class IssuanceConsensus {
+    // Value in satoshi
+    public static final long DEFAULT_QUORUM = 100L; // 1 BSQ
 
-    //TODO set higher value
-    private static final int QUORUM = 100; // 1 BSQ
+    // We want to avoid type double and use a long instead as that is used for all the param fields.
+    // 50 % is 5000 to provide precision of 2 (e.g. 50.00 %).
+    public static final long DEFAULT_VOTE_THRESHOLD = 50L * 100;
+
 
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
     public static byte[] getBlindVoteListHash(byte[] opReturnData) {
@@ -64,41 +61,5 @@ public class IssuanceConsensus {
     public static SecretKey getSecretKey(byte[] opReturnData) {
         byte[] secretKeyAsBytes = Arrays.copyOfRange(opReturnData, 22, 54);
         return Encryption.getSecretKeyFromBytes(secretKeyAsBytes);
-    }
-
-    public static void applyVoteResult(Map<ProposalPayload, Long> stakeByProposalMap,
-                                       ReadableBsqBlockChain readableBsqBlockChain,
-                                       WritableBsqBlockChain writableBsqBlockChain) {
-        Map<String, TxOutput> txOutputsByTxIdMap = new HashMap<>();
-
-        final Set<TxOutput> compReqIssuanceTxOutputs = readableBsqBlockChain.getCompReqIssuanceTxOutputs();
-        compReqIssuanceTxOutputs.stream()
-                .filter(txOutput -> !txOutput.isVerified()) // our candidate is not yet verified
-                /*.filter(txOutput -> txOutput.isUnspent())*/ // TODO set unspent and keep track of it in parser
-                .forEach(txOutput -> txOutputsByTxIdMap.put(txOutput.getTxId(), txOutput));
-
-        stakeByProposalMap.forEach((proposalPayload, value) -> {
-            long stakeResult = value;
-            if (stakeResult >= QUORUM) {
-                final String txId = proposalPayload.getTxId();
-                if (txOutputsByTxIdMap.containsKey(txId)) {
-                    final TxOutput txOutput = txOutputsByTxIdMap.get(txId);
-                    writableBsqBlockChain.issueBsq(txOutput);
-                    log.info("################################################################################");
-                    log.info("## We issued new BSQ to txId {} for proposalPayload with UID {}", txId, proposalPayload.getUid());
-                    log.info("## txOutput {}, proposalPayload {}", txOutput, proposalPayload);
-                    log.info("################################################################################");
-                } else {
-                    //TODO throw exception?
-                    log.error("txOutput not found in txOutputsByTxIdMap. That should never happen.");
-                }
-            } else if (stakeResult > 0) {
-                log.warn("We did not reach the quorum. stake={}, quorum={}", stakeResult, QUORUM);
-            } else if (stakeResult == 0) {
-                log.warn("StakeResult was 0. stake={}, quorum={}", stakeResult, QUORUM);
-            } else {
-                log.warn("We got a negative vote result. stake={}, quorum={}", stakeResult, QUORUM);
-            }
-        });
     }
 }

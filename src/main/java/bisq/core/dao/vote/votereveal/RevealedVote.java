@@ -43,11 +43,8 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     @Nullable
     private String revealTxId;
 
-    public RevealedVote(ProposalList proposalList,
-                        BlindVote blindVote) {
-        this(proposalList,
-                blindVote,
-                null);
+    public RevealedVote(ProposalList proposalList, BlindVote blindVote) {
+        this(proposalList, blindVote, null);
     }
 
 
@@ -55,9 +52,7 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private RevealedVote(ProposalList proposalList,
-                         BlindVote blindVote,
-                         @Nullable String revealTxId) {
+    private RevealedVote(ProposalList proposalList, BlindVote blindVote, @Nullable String revealTxId) {
         this.proposalList = proposalList;
         this.blindVote = blindVote;
         this.revealTxId = revealTxId;

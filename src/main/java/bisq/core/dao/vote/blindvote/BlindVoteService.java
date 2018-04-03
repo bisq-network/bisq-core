@@ -208,7 +208,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
         if (!blindVoteList.contains(blindVote)) {
             blindVoteList.add(blindVote);
-            blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
+            persistBlindVoteList();
         } else {
             log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
         }
@@ -219,7 +219,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
         MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         myVotesList.add(myVote);
-        myVoteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
+        persistMyVoteList();
     }
 
     public List<BlindVote> getBlindVoteListForCurrentCycle() {
@@ -228,8 +228,12 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 .collect(Collectors.toList());
     }
 
-    public void persistMyVoteListStorage() {
-        myVoteListStorage.queueUpForSave();
+    public void persistMyVoteList() {
+        myVoteListStorage.queueUpForSave(new MyVoteList(myVotesList), 100);
+    }
+
+    public void persistBlindVoteList() {
+        blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
     }
 
 
@@ -259,7 +263,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private void addBlindVote(BlindVote blindVote) {
         if (!blindVoteList.contains(blindVote)) {
             blindVoteList.add(blindVote);
-            blindVoteListStorage.queueUpForSave(new BlindVoteList(blindVoteList), 100);
+            persistBlindVoteList();
         } else {
             log.debug("We have that item in our list already");
         }

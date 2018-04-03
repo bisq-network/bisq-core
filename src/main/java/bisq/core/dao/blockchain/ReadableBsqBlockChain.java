@@ -88,6 +88,14 @@ public interface ReadableBsqBlockChain {
 
     long getBlindVoteFee(int blockHeight);
 
+    long getVoteThreshold(int blockHeight);
+
+    long getQuorum(int blockHeight);
+
+    long getVoteThreshold();
+
+    long getQuorum();
+
     Coin getTotalBurntFee();
 
     Coin getIssuedAmountAtGenesis();

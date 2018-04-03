@@ -116,6 +116,8 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // not impl in PB yet
     private final Set<Tuple2<Long, Integer>> proposalFees;
     private final Set<Tuple2<Long, Integer>> blindVoteFees;
+    private final Set<Tuple2<Long, Integer>> quorumByHeight;
+    private final Set<Tuple2<Long, Integer>> voteThresholdByHeight;
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
@@ -144,6 +146,8 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         unspentTxOutputsMap = new HashMap<>();
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
+        quorumByHeight = new HashSet<>();
+        voteThresholdByHeight = new HashSet<>();
 
         lock = new FunctionalReadWriteLock(true);
     }
@@ -173,6 +177,8 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         // TODO not impl yet in PB
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
+        quorumByHeight = new HashSet<>();
+        voteThresholdByHeight = new HashSet<>();
     }
 
     @Override
@@ -345,12 +351,26 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public void setCreateCompensationRequestFee(long fee, int blockHeight) {
-        lock.write(() -> proposalFees.add(new Tuple2<>(fee, blockHeight)));
+        lock.write(() -> setParam(proposalFees, fee, blockHeight));
     }
 
     @Override
     public void setBlindVoteFee(long fee, int blockHeight) {
-        lock.write(() -> blindVoteFees.add(new Tuple2<>(fee, blockHeight)));
+        lock.write(() -> setParam(blindVoteFees, fee, blockHeight));
+    }
+
+    @Override
+    public void setQuorum(long quorum, int blockHeight) {
+        lock.write(() -> setParam(quorumByHeight, quorum, blockHeight));
+    }
+
+    @Override
+    public void setVoteThreshold(long voteThreshold, int blockHeight) {
+        lock.write(() -> setParam(voteThresholdByHeight, voteThreshold, blockHeight));
+    }
+
+    private void setParam(Set<Tuple2<Long, Integer>> set, long value, int blockHeight) {
+        lock.write(() -> set.add(new Tuple2<>(value, blockHeight)));
     }
 
 
@@ -493,8 +513,9 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
+    // We don't use getUnspentTxOutputs as after the reveal tx the output is spent
     public Set<TxOutput> getBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getUnspentTxOutputs().stream()
+        return lock.read(() -> getVerifiedTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
@@ -599,24 +620,49 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         });
     }
 
+    @Override
+    public long getBlindVoteFee(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(blindVoteFees, blockHeight));
+    }
+
+    @Override
+    public long getQuorum(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(quorumByHeight, blockHeight));
+    }
+
+    @Override
+    public long getVoteThreshold(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(voteThresholdByHeight, blockHeight));
+    }
+
+    @Override
+    public long getVoteThreshold() {
+        return lock.read(() -> getVoteThreshold(chainHeadHeight));
+    }
+
+    @Override
+    public long getQuorum() {
+        return lock.read(() -> getQuorum(chainHeadHeight));
+    }
+
+    private long getValueAtHeight(Set<Tuple2<Long, Integer>> set, int blockHeight) {
+        return lock.read(() -> {
+            long value = -1;
+            for (Tuple2<Long, Integer> currentValue : set) {
+                if (currentValue.second <= blockHeight)
+                    value = currentValue.first;
+            }
+            checkArgument(value > -1, "value must be set");
+            return value;
+        });
+    }
+
     //TODO not impl yet
     @Override
     public boolean isProposalPeriodValid(int blockHeight) {
         return lock.read(() -> true);
     }
 
-    @Override
-    public long getBlindVoteFee(int blockHeight) {
-        return lock.read(() -> {
-            long fee = -1;
-            for (Tuple2<Long, Integer> feeAtHeight : blindVoteFees) {
-                if (feeAtHeight.second <= blockHeight)
-                    fee = feeAtHeight.first;
-            }
-            checkArgument(fee > -1, "votingFee must be set");
-            return fee;
-        });
-    }
 
     //TODO not impl yet
     @Override

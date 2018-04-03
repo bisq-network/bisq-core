@@ -196,7 +196,6 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     private void applyStateChange(MyVote myVote, TxOutput stakeTxOutput, Transaction voteRevealTx) {
         log.info("applyStateChange myVote={}, voteRevealTxId={}", myVote, voteRevealTx.getHashAsString());
         myVote.setRevealTxId(voteRevealTx.getHashAsString());
-        blindVoteService.persistMyVoteListStorage();
-        //VoteRevealConsensus.unlockStakeTxOutputType(stakeTxOutput);
+        blindVoteService.persistMyVoteList();
     }
 }

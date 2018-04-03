@@ -198,7 +198,6 @@ public class DaoPeriodService {
 
     @VisibleForTesting
     Phase calculatePhase(int blocksInNewPhase) {
-        log.info("blocksInNewPhase={}", blocksInNewPhase);
         if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks())
             return Phase.PROPOSAL;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +

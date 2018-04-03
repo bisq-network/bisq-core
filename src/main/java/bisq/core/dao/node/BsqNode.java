@@ -20,6 +20,7 @@ package bisq.core.dao.node;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
+import bisq.core.dao.vote.issuance.consensus.IssuanceConsensus;
 import bisq.core.provider.fee.FeeService;
 
 import bisq.network.p2p.P2PService;
@@ -75,6 +76,8 @@ public abstract class BsqNode {
         writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
                 genesisBlockHeight);
         writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
+        writableBsqBlockChain.setQuorum(IssuanceConsensus.DEFAULT_QUORUM, genesisBlockHeight);
+        writableBsqBlockChain.setVoteThreshold(IssuanceConsensus.DEFAULT_VOTE_THRESHOLD, genesisBlockHeight);
     }
 
 

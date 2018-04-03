@@ -27,12 +27,18 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.BooleanVoteResult;
 import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.IntegerVoteResult;
+import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.issuance.consensus.IssuanceConsensus;
 import bisq.core.dao.vote.proposal.ProposalList;
 import bisq.core.dao.vote.proposal.ProposalPayload;
+import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
+import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
+import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
+import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
 import bisq.core.dao.vote.votereveal.RevealedVote;
 import bisq.core.dao.vote.votereveal.consensus.VoteRevealConsensus;
 
@@ -142,10 +148,11 @@ public class IssuanceService implements BsqBlockChain.Listener {
             Set<RevealedVote> revealedVotes = getRevealedVotes(blindVoteWithRevealTxIdSet, secretKeysByTxIdMap);
 
             byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(txIdListMap);
+
             if (majorityVoteListHash != null) {
                 if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
-                    Map<ProposalPayload, Long> stakeByProposalPayloadMap = getResultStakeByProposalPayloadMap(revealedVotes);
-                    IssuanceConsensus.applyVoteResult(stakeByProposalPayloadMap, readableBsqBlockChain, writableBsqBlockChain);
+                    Map<ProposalPayload, List<VoteResultWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(revealedVotes);
+                    processAllVoteResults(resultListByProposalPayloadMap, writableBsqBlockChain, readableBsqBlockChain);
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
                     // TODO request missing blind votes
@@ -243,15 +250,21 @@ public class IssuanceService implements BsqBlockChain.Listener {
                 .map(blindVoteWithRevealTxId -> {
                     final BlindVote blindVote = blindVoteWithRevealTxId.getBlindVote();
                     final byte[] encryptedProposalList = blindVote.getEncryptedProposalList();
-                    final SecretKey secretKey = secretKeysByTxIdMap.get(blindVoteWithRevealTxId.getRevealTxId());
-                    try {
-                        final byte[] decrypted = IssuanceConsensus.decryptProposalList(encryptedProposalList, secretKey);
-                        ProposalList proposalList = ProposalList.getProposalListFromBytes(decrypted);
-                        return new RevealedVote(proposalList, blindVote);
-                    } catch (CryptoException | InvalidProtocolBufferException e) {
-                        log.error(e.toString());
-                        e.printStackTrace();
-                        issuanceExceptions.add(new IssuanceException("Error at getRevealedVotes", e, blindVote));
+                    final String revealTxId = blindVoteWithRevealTxId.getRevealTxId();
+                    if (secretKeysByTxIdMap.containsKey(revealTxId)) {
+                        final SecretKey secretKey = secretKeysByTxIdMap.get(revealTxId);
+                        try {
+                            final byte[] decrypted = IssuanceConsensus.decryptProposalList(encryptedProposalList, secretKey);
+                            ProposalList proposalList = ProposalList.getProposalListFromBytes(decrypted);
+                            return new RevealedVote(proposalList, blindVote);
+                        } catch (CryptoException | InvalidProtocolBufferException e) {
+                            log.error(e.toString());
+                            e.printStackTrace();
+                            issuanceExceptions.add(new IssuanceException("Error at getRevealedVotes", e, blindVote));
+                            return null;
+                        }
+                    } else {
+                        log.warn("We don't have the secret key in our secretKeysByTxIdMap");
                         return null;
                     }
                 })
@@ -274,37 +287,105 @@ public class IssuanceService implements BsqBlockChain.Listener {
         return Arrays.equals(majorityVoteListHash, hashOfBlindVoteList);
     }
 
-    private Map<ProposalPayload, Long> getResultStakeByProposalPayloadMap(Set<RevealedVote> revealedVotes) {
-        Map<ProposalPayload, Long> stakeByProposalMap = new HashMap<>();
+    private Map<ProposalPayload, List<VoteResultWithStake>> getResultListByProposalPayloadMap(Set<RevealedVote> revealedVotes) {
+        Map<ProposalPayload, List<VoteResultWithStake>> stakeByProposalMap = new HashMap<>();
         revealedVotes.forEach(revealedVote -> revealedVote.getProposalList().getList()
                 .forEach(proposal -> {
-                    if (proposal.getVoteResult() instanceof BooleanVoteResult) {
-                        BooleanVoteResult result = (BooleanVoteResult) proposal.getVoteResult();
-                        final ProposalPayload proposalPayload = proposal.getProposalPayload();
-                        stakeByProposalMap.putIfAbsent(proposalPayload, 0L);
-                        long aggregatedStake = stakeByProposalMap.get(proposalPayload);
-
-                        // If result is null voter ignored proposal and we don't change
-                        // the aggregatedStake
-                        if (result != null) {
-                            final long stake = revealedVote.getStake();
-                            if (result.isAccepted()) {
-                                aggregatedStake += stake;
-                                log.debug("Voter accepted that proposal with stake {}. proposal={}", stake, proposal);
-                            } else {
-                                aggregatedStake -= stake;
-                                log.debug("Voter rejected that proposal with stake {}. proposal={}", stake, proposal);
-                            }
-                        } else {
-                            log.debug("Voter ignored that proposal. proposal={}", proposal);
-                        }
-
-                        stakeByProposalMap.put(proposalPayload, aggregatedStake);
-                    } else {
-                        //TODO IntegerVoteResult not impl yet
-                    }
+                    final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                    stakeByProposalMap.putIfAbsent(proposalPayload, new ArrayList<>());
+                    final List<VoteResultWithStake> voteResultWithStakes = stakeByProposalMap.get(proposalPayload);
+                    voteResultWithStakes.add(new VoteResultWithStake(proposal.getVoteResult(), revealedVote.getStake()));
                 }));
         return stakeByProposalMap;
+    }
+
+    private void processAllVoteResults(Map<ProposalPayload, List<VoteResultWithStake>> map,
+                                       WritableBsqBlockChain writableBsqBlockChain,
+                                       ReadableBsqBlockChain readableBsqBlockChain) {
+        map.forEach((proposalPayload, voteResultsWithStake) -> {
+            VoteResultPerProposal voteResultPerProposal = getDetailResult(voteResultsWithStake);
+            long totalStake = voteResultPerProposal.getStakeOfAcceptedVotes() + voteResultPerProposal.getStakeOfRejectedVotes();
+            final long quorum = readableBsqBlockChain.getQuorum();
+            if (totalStake >= quorum) {
+                // we use multiplied of 1000 as we use a long for requiredVoteThreshold and that got added precision, so
+                // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
+                long reachedThreshold = voteResultPerProposal.getStakeOfAcceptedVotes() * 10_000 / totalStake;
+                // E.g. returns 5000 for 50% or 0.5 from the division of acceptedVotes/totalStake
+                final long requiredVoteThreshold = readableBsqBlockChain.getVoteThreshold();
+                log.info("reachedThreshold " + reachedThreshold);
+                log.info("requiredVoteThreshold " + requiredVoteThreshold);
+                if (reachedThreshold >= requiredVoteThreshold) {
+                    processAcceptedCompletedVoteResult(proposalPayload, writableBsqBlockChain, readableBsqBlockChain);
+                } else {
+                    log.warn("We did not reach the quorum. reachedThreshold={}, requiredVoteThreshold={}", reachedThreshold, requiredVoteThreshold);
+                }
+            } else {
+                log.warn("We did not reach the quorum. totalStake={}, quorum={}", totalStake, quorum);
+            }
+        });
+    }
+
+    private VoteResultPerProposal getDetailResult(List<VoteResultWithStake> voteResultsWithStake) {
+        long stakeOfAcceptedVotes = 0;
+        long stakeOfRejectedVotes = 0;
+        for (VoteResultWithStake voteResultWithStake : voteResultsWithStake) {
+            long stake = voteResultWithStake.getStake();
+            VoteResult voteResult = voteResultWithStake.getVoteResult();
+            if (voteResult != null) {
+                if (voteResult instanceof BooleanVoteResult) {
+                    BooleanVoteResult result = (BooleanVoteResult) voteResult;
+                    if (result.isAccepted()) {
+                        stakeOfAcceptedVotes += stake;
+                    } else {
+                        stakeOfRejectedVotes += stake;
+                    }
+                } else if (voteResult instanceof IntegerVoteResult) {
+                    //TODO impl
+                }
+            } else {
+                log.debug("Voter ignored proposal");
+            }
+        }
+        return new VoteResultPerProposal(stakeOfAcceptedVotes, stakeOfRejectedVotes);
+    }
+
+
+    private void processAcceptedCompletedVoteResult(ProposalPayload proposalPayload,
+                                                    WritableBsqBlockChain writableBsqBlockChain,
+                                                    ReadableBsqBlockChain readableBsqBlockChain) {
+        if (proposalPayload instanceof CompensationRequestPayload) {
+            handleCompensationRequestPayloadResult(proposalPayload, writableBsqBlockChain, readableBsqBlockChain);
+        } else if (proposalPayload instanceof GenericProposalPayload) {
+            //TODO impl
+        } else if (proposalPayload instanceof ChangeParamProposalPayload) {
+            //TODO impl
+        } else if (proposalPayload instanceof RemoveAssetProposalPayload) {
+            //TODO impl
+        }
+    }
+
+    private void handleCompensationRequestPayloadResult(ProposalPayload proposalPayload,
+                                                        WritableBsqBlockChain writableBsqBlockChain,
+                                                        ReadableBsqBlockChain readableBsqBlockChain) {
+        Map<String, TxOutput> txOutputsByTxIdMap = new HashMap<>();
+        final Set<TxOutput> compReqIssuanceTxOutputs = readableBsqBlockChain.getCompReqIssuanceTxOutputs();
+        compReqIssuanceTxOutputs.stream()
+                .filter(txOutput -> !txOutput.isVerified()) // our candidate is not yet verified
+                /*.filter(txOutput -> txOutput.isUnspent())*/ // TODO set unspent and keep track of it in parser
+                .forEach(txOutput -> txOutputsByTxIdMap.put(txOutput.getTxId(), txOutput));
+
+        final String txId = proposalPayload.getTxId();
+        if (txOutputsByTxIdMap.containsKey(txId)) {
+            final TxOutput txOutput = txOutputsByTxIdMap.get(txId);
+            writableBsqBlockChain.issueBsq(txOutput);
+            log.info("################################################################################");
+            log.info("## We issued new BSQ to txId {} for proposalPayload with UID {}", txId, proposalPayload.getUid());
+            log.info("## txOutput {}, proposalPayload {}", txOutput, proposalPayload);
+            log.info("################################################################################");
+        } else {
+            //TODO throw exception?
+            log.error("txOutput not found in txOutputsByTxIdMap. That should never happen.");
+        }
     }
 
 
@@ -331,6 +412,29 @@ public class IssuanceService implements BsqBlockChain.Listener {
         HashWithTxIdList(byte[] hashOfProposalList, List<String> txIds) {
             this.hashOfProposalList = hashOfProposalList;
             this.txIds = txIds;
+        }
+    }
+
+    @Value
+    private static class VoteResultPerProposal {
+        private final long stakeOfAcceptedVotes;
+        private final long stakeOfRejectedVotes;
+
+        VoteResultPerProposal(long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
+            this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
+            this.stakeOfRejectedVotes = stakeOfRejectedVotes;
+        }
+    }
+
+    @Value
+    private static class VoteResultWithStake {
+        @Nullable
+        private final VoteResult voteResult;
+        private final long stake;
+
+        VoteResultWithStake(@Nullable VoteResult voteResult, long stake) {
+            this.voteResult = voteResult;
+            this.stake = stake;
         }
     }
 }
