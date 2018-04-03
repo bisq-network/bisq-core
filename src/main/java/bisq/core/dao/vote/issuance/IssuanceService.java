@@ -154,6 +154,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
                 if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
                     Map<ProposalPayload, List<VoteResultWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(revealedVotes);
                     processAllVoteResults(resultListByProposalPayloadMap, writableBsqBlockChain, readableBsqBlockChain);
+                    log.info("processAllVoteResults completed");
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
                     // TODO request missing blind votes
@@ -164,7 +165,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
             }
 
         } else {
-            log.debug("There have not been any votes in that cycle.");
+            log.info("There have not been any votes in that cycle.");
         }
     }
 
