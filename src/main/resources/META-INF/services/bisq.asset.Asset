@@ -1,4 +1,9 @@
-# sorted by `sort --ignore-case`
+#
+# This file lists all assets available for trading on the Bisq network.
+# Contents are sorted according to the output of `sort --ignore-case`.
+# See bisq.asset.Asset and bisq.asset.AssetRegistry for further details.
+# See https://bisq.network/list-asset for complete instructions.
+#
 bisq.asset.coins.Achievecoin
 bisq.asset.coins.Angelcoin
 bisq.asset.coins.Arto
