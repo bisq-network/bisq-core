@@ -50,16 +50,18 @@ public class ZenCash extends Coin {
             // and multisig ("zs" (0x20,0x96), "t3" (0x1C,0xBD)) addresses
 
             // Fail for private addresses
-            if (version0 == 0x16 && version1 == 0x9A) {
+            if (version0 == 0x16 && version1 == 0x9A)
                 // Address starts with "zc"
                 return AddressValidationResult.invalidAddress("", "validation.altcoin.zAddressesNotSupported");
-            } else if (version0 == 0x1C && (version1 == 0xB8 || version1 == 0xBD)) {
+
+            if (version0 == 0x1C && (version1 == 0xB8 || version1 == 0xBD))
                 // "t1" or "t3" address
                 return AddressValidationResult.validAddress();
-            } else if (version0 == 0x20 && (version1 == 0x89 || version1 == 0x96)) {
+
+            if (version0 == 0x20 && (version1 == 0x89 || version1 == 0x96))
                 // "zn" or "zs" address
                 return AddressValidationResult.validAddress();
-            }
+
             // Unknown Type
             return AddressValidationResult.invalidStructure();
         }
