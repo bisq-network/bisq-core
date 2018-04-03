@@ -23,7 +23,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
 
@@ -71,7 +71,7 @@ public class ProposalService implements PersistedDataHost, BsqBlockChain.Listene
     private final P2PService p2PService;
     private final BsqWalletService bsqWalletService;
     private final WalletsManager walletsManager;
-    private final DaoPeriodService daoPeriodService;
+    private final PeriodService periodService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final Storage<ProposalList> proposalListStorage;
     private final PublicKey signaturePubKey;
@@ -92,14 +92,14 @@ public class ProposalService implements PersistedDataHost, BsqBlockChain.Listene
     public ProposalService(P2PService p2PService,
                            BsqWalletService bsqWalletService,
                            WalletsManager walletsManager,
-                           DaoPeriodService daoPeriodService,
+                           PeriodService periodService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            KeyRing keyRing,
                            Storage<ProposalList> proposalListStorage) {
         this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.walletsManager = walletsManager;
-        this.daoPeriodService = daoPeriodService;
+        this.periodService = periodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.proposalListStorage = proposalListStorage;
 
@@ -274,7 +274,7 @@ public class ProposalService implements PersistedDataHost, BsqBlockChain.Listene
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {
         return readableBsqBlockChain.getTxMap().get(payload.getTxId()) == null ||
-                daoPeriodService.isTxInPhase(payload.getTxId(), DaoPeriodService.Phase.PROPOSAL);
+                periodService.isTxInPhase(payload.getTxId(), PeriodService.Phase.PROPOSAL);
     }
 
     private boolean isMine(ProposalPayload proposalPayload) {
@@ -333,8 +333,8 @@ public class ProposalService implements PersistedDataHost, BsqBlockChain.Listene
     }
 
     private void updatePredicates() {
-        activeProposals.setPredicate(proposal -> !daoPeriodService.isTxInPastCycle(proposal.getTxId()));
-        closedProposals.setPredicate(proposal -> daoPeriodService.isTxInPastCycle(proposal.getTxId()));
+        activeProposals.setPredicate(proposal -> !periodService.isTxInPastCycle(proposal.getTxId()));
+        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId()));
     }
 
     private boolean contains(ProposalPayload proposalPayload) {

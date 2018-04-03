@@ -24,7 +24,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.MyVoteList;
 import bisq.core.dao.vote.proposal.Proposal;
@@ -84,7 +84,7 @@ import javax.annotation.Nullable;
 public class BlindVoteService implements PersistedDataHost, HashMapChangedListener {
     private final ProposalService proposalService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final DaoPeriodService daoPeriodService;
+    private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
@@ -109,7 +109,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     @Inject
     public BlindVoteService(ProposalService proposalService,
                             ReadableBsqBlockChain readableBsqBlockChain,
-                            DaoPeriodService daoPeriodService,
+                            PeriodService periodService,
                             BsqWalletService bsqWalletService,
                             BtcWalletService btcWalletService,
                             WalletsManager walletsManager,
@@ -119,7 +119,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                             Storage<BlindVoteList> blindVoteListStorage) {
         this.proposalService = proposalService;
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.daoPeriodService = daoPeriodService;
+        this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
@@ -224,7 +224,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     public List<BlindVote> getBlindVoteListForCurrentCycle() {
         return blindVoteSortedList.stream()
-                .filter(blindVote -> daoPeriodService.isTxInCurrentCycle(blindVote.getTxId()))
+                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
                 .collect(Collectors.toList());
     }
 
@@ -282,7 +282,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     private void publishMyBlindVotes() {
         myVotesList.stream()
-                .filter(vote -> daoPeriodService.isTxInPhase(vote.getTxId(), DaoPeriodService.Phase.BLIND_VOTE))
+                .filter(vote -> periodService.isTxInPhase(vote.getTxId(), PeriodService.Phase.BLIND_VOTE))
                 .forEach(vote -> addBlindVoteToP2PNetwork(vote.getBlindVote()));
     }
 

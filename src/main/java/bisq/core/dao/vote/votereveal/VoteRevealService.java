@@ -26,7 +26,7 @@ import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.MyVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteRevealService implements BsqBlockChain.Listener {
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final DaoPeriodService daoPeriodService;
+    private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
@@ -77,13 +77,13 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Inject
     public VoteRevealService(ReadableBsqBlockChain readableBsqBlockChain,
-                             DaoPeriodService daoPeriodService,
+                             PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager,
                              BlindVoteService blindVoteService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.daoPeriodService = daoPeriodService;
+        this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
@@ -113,7 +113,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        if (daoPeriodService.getPhaseForHeight(bsqBlock.getHeight()) == DaoPeriodService.Phase.VOTE_REVEAL) {
+        if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
             log.info("blockHeight " + bsqBlock.getHeight());
@@ -129,7 +129,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     private void maybeRevealVotes() {
         blindVoteService.getMyVotesList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
-                .filter(myVote -> daoPeriodService.isTxInCurrentCycle(myVote.getTxId()))
+                .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to
