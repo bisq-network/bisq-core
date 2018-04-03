@@ -17,6 +17,13 @@
 
 package bisq.core.locale;
 
+import bisq.core.app.BisqEnvironment;
+
+import bisq.asset.Asset;
+import bisq.asset.AssetRegistry;
+import bisq.asset.Token;
+import bisq.asset.coins.BSQ;
+
 import bisq.common.app.DevEnv;
 
 import java.util.ArrayList;
@@ -34,13 +41,23 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CurrencyUtil {
+
+    private static final AssetRegistry assetRegistry = new AssetRegistry();
+
     private static String baseCurrencyCode = "BTC";
+    private static List<FiatCurrency> allSortedFiatCurrencies;
+    private static List<CryptoCurrency> allSortedCryptoCurrencies;
 
     public static void setBaseCurrencyCode(String baseCurrencyCode) {
         CurrencyUtil.baseCurrencyCode = baseCurrencyCode;
     }
 
-    private static List<FiatCurrency> allSortedFiatCurrencies;
+    public static List<FiatCurrency> getAllSortedFiatCurrencies() {
+        if (Objects.isNull(allSortedFiatCurrencies))
+            allSortedFiatCurrencies = createAllSortedFiatCurrenciesList();
+
+        return allSortedFiatCurrencies;
+    }
 
     private static List<FiatCurrency> createAllSortedFiatCurrenciesList() {
         Set<FiatCurrency> set = CountryUtil.getAllCountries().stream()
@@ -50,14 +67,6 @@ public class CurrencyUtil {
         list.sort(TradeCurrency::compareTo);
         return list;
     }
-
-    public static List<FiatCurrency> getAllSortedFiatCurrencies() {
-        if (Objects.isNull(allSortedFiatCurrencies)) {
-            allSortedFiatCurrencies = createAllSortedFiatCurrenciesList();
-        }
-        return allSortedFiatCurrencies;
-    }
-
 
     public static List<FiatCurrency> getMainFiatCurrencies() {
         TradeCurrency defaultTradeCurrency = getDefaultTradeCurrency();
@@ -73,7 +82,8 @@ public class CurrencyUtil {
 
         list.sort(TradeCurrency::compareTo);
 
-        FiatCurrency defaultFiatCurrency = defaultTradeCurrency instanceof FiatCurrency ? (FiatCurrency) defaultTradeCurrency : null;
+        FiatCurrency defaultFiatCurrency =
+                defaultTradeCurrency instanceof FiatCurrency ? (FiatCurrency) defaultTradeCurrency : null;
         if (defaultFiatCurrency != null && list.contains(defaultFiatCurrency)) {
             //noinspection SuspiciousMethodCalls
             list.remove(defaultTradeCurrency);
@@ -82,118 +92,19 @@ public class CurrencyUtil {
         return list;
     }
 
-    private static List<CryptoCurrency> allSortedCryptoCurrencies;
-
     public static List<CryptoCurrency> getAllSortedCryptoCurrencies() {
         if (allSortedCryptoCurrencies == null)
             allSortedCryptoCurrencies = createAllSortedCryptoCurrenciesList();
         return allSortedCryptoCurrencies;
     }
 
-    // Don't make a PR for adding a coin but follow the steps described here:
-    // https://forum.bisq.network/t/how-to-add-your-favorite-altcoin/
-    public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
-        final List<CryptoCurrency> result = new ArrayList<>();
-
-        result.add(new CryptoCurrency("BETR", "Better Betting", true));
-        if (DevEnv.DAO_TRADING_ACTIVATED)
-            result.add(new CryptoCurrency("BSQ", "Bisq Token"));
-
-        if (!baseCurrencyCode.equals("BTC"))
-            result.add(new CryptoCurrency("BTC", "Bitcoin"));
-        result.add(new CryptoCurrency("BCH", "Bitcoin Cash"));
-        result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
-        result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
-        result.add(new CryptoCurrency("BURST", "Burstcoin"));
-        result.add(new CryptoCurrency("GBYTE", "Byte"));
-        result.add(new CryptoCurrency("CAGE", "Cagecoin"));
-        result.add(new CryptoCurrency("XCP", "Counterparty"));
-        result.add(new CryptoCurrency("CREA", "Creativecoin"));
-        result.add(new CryptoCurrency("XCN", "Cryptonite"));
-        result.add(new CryptoCurrency("DNET", "DarkNet"));
-        if (!baseCurrencyCode.equals("DASH"))
-            result.add(new CryptoCurrency("DASH", "Dash"));
-        result.add(new CryptoCurrency("DCT", "DECENT"));
-        result.add(new CryptoCurrency("DCR", "Decred"));
-        result.add(new CryptoCurrency("ONION", "DeepOnion"));
-        result.add(new CryptoCurrency("DOGE", "Dogecoin"));
-        result.add(new CryptoCurrency("DMC", "DynamicCoin"));
-        result.add(new CryptoCurrency("ELLA", "Ellaism"));
-        result.add(new CryptoCurrency("ESP", "Espers"));
-        result.add(new CryptoCurrency("ETH", "Ether"));
-        result.add(new CryptoCurrency("ETC", "Ether Classic"));
-        result.add(new CryptoCurrency("XIN", "Infinity Economics"));
-        result.add(new CryptoCurrency("IOP", "Internet Of People"));
-        result.add(new CryptoCurrency("INXT", "Internext", true));
-        result.add(new CryptoCurrency("GRC", "Gridcoin"));
-        result.add(new CryptoCurrency("LBC", "LBRY Credits"));
-        result.add(new CryptoCurrency("LSK", "Lisk"));
-        if (!baseCurrencyCode.equals("LTC"))
-            result.add(new CryptoCurrency("LTC", "Litecoin"));
-        result.add(new CryptoCurrency("MAID", "MaidSafeCoin"));
-        result.add(new CryptoCurrency("MDC", "Madcoin"));
-        result.add(new CryptoCurrency("XMR", "Monero"));
-        result.add(new CryptoCurrency("MT", "Mycelium Token", true));
-        result.add(new CryptoCurrency("NAV", "Nav Coin"));
-        result.add(new CryptoCurrency("NMC", "Namecoin"));
-        result.add(new CryptoCurrency("NBT", "NuBits"));
-        result.add(new CryptoCurrency("NXT", "Nxt"));
-        result.add(new CryptoCurrency("888", "OctoCoin"));
-        result.add(new CryptoCurrency("PART", "Particl"));
-        result.add(new CryptoCurrency("PASC", "Pascal Coin", true));
-        result.add(new CryptoCurrency("PEPECASH", "Pepe Cash"));
-        result.add(new CryptoCurrency("PIVX", "PIVX"));
-        result.add(new CryptoCurrency("POST", "PostCoin"));
-        result.add(new CryptoCurrency("PNC", "Pranacoin"));
-        result.add(new CryptoCurrency("RDD", "ReddCoin"));
-        result.add(new CryptoCurrency("REF", "RefToken", true));
-        result.add(new CryptoCurrency("SFSC", "Safe FileSystem Coin"));
-        result.add(new CryptoCurrency("SC", "Siacoin"));
-        result.add(new CryptoCurrency("SF", "Siafund"));
-        result.add(new CryptoCurrency("SIB", "Sibcoin"));
-        result.add(new CryptoCurrency("XSPEC", "Spectrecoin"));
-        result.add(new CryptoCurrency("STEEM", "STEEM"));
-
-        result.add(new CryptoCurrency("TRC", "Terracoin"));
-        result.add(new CryptoCurrency("MVT", "The Movement", true));
-
-        result.add(new CryptoCurrency("UNO", "Unobtanium"));
-        result.add(new CryptoCurrency("CRED", "Verify", true));
-        result.add(new CryptoCurrency("WAC", "WACoins"));
-        result.add(new CryptoCurrency("WILD", "WILD Token", true));
-        result.add(new CryptoCurrency("XZC", "Zcoin"));
-        result.add(new CryptoCurrency("ZEC", "Zcash"));
-        result.add(new CryptoCurrency("ZEN", "ZenCash"));
-
-        // Added 0.6.6
-        result.add(new CryptoCurrency("STL", "Stellite"));
-        result.add(new CryptoCurrency("DAI", "Dai Stablecoin", true));
-        result.add(new CryptoCurrency("YTN", "Yenten"));
-        result.add(new CryptoCurrency("DARX", "BitDaric"));
-        result.add(new CryptoCurrency("ODN", "Obsidian"));
-        result.add(new CryptoCurrency("CDT", "Cassubian Detk"));
-        result.add(new CryptoCurrency("DGM", "DigiMoney"));
-        result.add(new CryptoCurrency("SCS", "SpeedCash"));
-        result.add(new CryptoCurrency("SOS", "SOS Coin", true));
-        result.add(new CryptoCurrency("ACH", "AchieveCoin"));
-        result.add(new CryptoCurrency("VDN", "vDinar"));
-        result.add(new CryptoCurrency("WMCC", "WorldMobileCoin"));
-
-        // Added 0.7.0
-        result.add(new CryptoCurrency("ALC", "Angelcoin"));
-        result.add(new CryptoCurrency("DIN", "Dinero"));
-        result.add(new CryptoCurrency("NAH", "Strayacoin"));
-        result.add(new CryptoCurrency("ROI", "ROIcoin"));
-        result.add(new CryptoCurrency("RTO", "Arto"));
-        result.add(new CryptoCurrency("KOTO", "Koto"));
-        result.add(new CryptoCurrency("UBQ", "Ubiq"));
-        result.add(new CryptoCurrency("QWARK", "Qwark", true));
-        result.add(new CryptoCurrency("GEO", "GeoCoin", true));
-        result.add(new CryptoCurrency("GRANS", "10grans", true));
-        result.add(new CryptoCurrency("ICH", "ICH"));
-        result.add(new CryptoCurrency("PHR", "Phore"));
-
-        result.sort(TradeCurrency::compareTo);
+    private static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
+        List<CryptoCurrency> result = assetRegistry.stream()
+                .filter(CurrencyUtil::assetIsNotBaseCurrency)
+                .filter(CurrencyUtil::excludeBsqUnlessDaoTradingIsActive)
+                .map(CurrencyUtil::assetToCryptoCurrency)
+                .sorted(TradeCurrency::compareTo)
+                .collect(Collectors.toList());
 
         // Util for printing all altcoins for adding to FAQ page
 
@@ -211,13 +122,12 @@ public class CurrencyUtil {
     public static List<CryptoCurrency> getMainCryptoCurrencies() {
         final List<CryptoCurrency> result = new ArrayList<>();
         if (DevEnv.DAO_TRADING_ACTIVATED)
-            result.add(new CryptoCurrency("BSQ", "Bisq Token"));
+            result.add(new CryptoCurrency("BSQ", "BSQ"));
         if (!baseCurrencyCode.equals("BTC"))
             result.add(new CryptoCurrency("BTC", "Bitcoin"));
         if (!baseCurrencyCode.equals("DASH"))
             result.add(new CryptoCurrency("DASH", "Dash"));
         result.add(new CryptoCurrency("DCR", "Decred"));
-        result.add(new CryptoCurrency("ONION", "DeepOnion"));
         result.add(new CryptoCurrency("ETH", "Ether"));
         result.add(new CryptoCurrency("ETC", "Ether Classic"));
         result.add(new CryptoCurrency("GRC", "Gridcoin"));
@@ -233,16 +143,6 @@ public class CurrencyUtil {
         result.sort(TradeCurrency::compareTo);
 
         return result;
-    }
-
-
-    /**
-     * @return Sorted list of SEPA currencies with EUR as first item
-     */
-    private static Set<TradeCurrency> getSortedSEPACurrencyCodes() {
-        return CountryUtil.getAllSepaCountries().stream()
-                .map(country -> getCurrencyByCountryCode(country.code))
-                .collect(Collectors.toSet());
     }
 
     // At OKPay you can exchange internally those currencies
@@ -341,7 +241,10 @@ public class CurrencyUtil {
 
     public static boolean isFiatCurrency(String currencyCode) {
         try {
-            return currencyCode != null && !currencyCode.isEmpty() && !isCryptoCurrency(currencyCode) && Currency.getInstance(currencyCode) != null;
+            return currencyCode != null
+                    && !currencyCode.isEmpty()
+                    && !isCryptoCurrency(currencyCode)
+                    && Currency.getInstance(currencyCode) != null;
         } catch (Throwable t) {
             return false;
         }
@@ -362,39 +265,36 @@ public class CurrencyUtil {
 
     public static Optional<TradeCurrency> getTradeCurrency(String currencyCode) {
         Optional<FiatCurrency> fiatCurrencyOptional = getFiatCurrency(currencyCode);
-        if (isFiatCurrency(currencyCode) && fiatCurrencyOptional.isPresent()) {
+        if (isFiatCurrency(currencyCode) && fiatCurrencyOptional.isPresent())
             return Optional.of(fiatCurrencyOptional.get());
-        } else {
-            Optional<CryptoCurrency> cryptoCurrencyOptional = getCryptoCurrency(currencyCode);
-            if (isCryptoCurrency(currencyCode) && cryptoCurrencyOptional.isPresent()) {
-                return Optional.of(cryptoCurrencyOptional.get());
-            } else {
-                return Optional.<TradeCurrency>empty();
-            }
-        }
-    }
 
+        Optional<CryptoCurrency> cryptoCurrencyOptional = getCryptoCurrency(currencyCode);
+        if (isCryptoCurrency(currencyCode) && cryptoCurrencyOptional.isPresent())
+            return Optional.of(cryptoCurrencyOptional.get());
+
+        return Optional.empty();
+    }
 
     public static FiatCurrency getCurrencyByCountryCode(String countryCode) {
         if (countryCode.equals("XK"))
             return new FiatCurrency("EUR");
-        else
-            return new FiatCurrency(Currency.getInstance(new Locale(LanguageUtil.getDefaultLanguage(), countryCode)).getCurrencyCode());
+
+        Currency currency = Currency.getInstance(new Locale(LanguageUtil.getDefaultLanguage(), countryCode));
+        return new FiatCurrency(currency.getCurrencyCode());
     }
 
 
     public static String getNameByCode(String currencyCode) {
         if (isCryptoCurrency(currencyCode))
             return getCryptoCurrency(currencyCode).get().getName();
-        else
-            try {
-                return Currency.getInstance(currencyCode).getDisplayName();
-            } catch (Throwable t) {
-                log.debug("No currency name available " + t.getMessage());
-                return currencyCode;
-            }
-    }
 
+        try {
+            return Currency.getInstance(currencyCode).getDisplayName();
+        } catch (Throwable t) {
+            log.debug("No currency name available " + t.getMessage());
+            return currencyCode;
+        }
+    }
 
     public static String getNameAndCode(String currencyCode) {
         return getNameByCode(currencyCode) + " (" + currencyCode + ")";
@@ -402,5 +302,18 @@ public class CurrencyUtil {
 
     public static TradeCurrency getDefaultTradeCurrency() {
         return GlobalSettings.getDefaultTradeCurrency();
+    }
+
+    private static boolean assetIsNotBaseCurrency(Asset asset) {
+        return !asset.getTickerSymbol().equals(baseCurrencyCode);
+    }
+
+    private static CryptoCurrency assetToCryptoCurrency(Asset asset) {
+        return new CryptoCurrency(asset.getTickerSymbol(), asset.getName(), asset instanceof Token);
+    }
+
+    private static boolean excludeBsqUnlessDaoTradingIsActive(Asset asset) {
+        return (!(asset instanceof BSQ) || (DevEnv.DAO_TRADING_ACTIVATED
+                && ((BSQ) asset).getNetwork().name().equals(BisqEnvironment.getBaseCurrencyNetwork().getNetwork())));
     }
 }
