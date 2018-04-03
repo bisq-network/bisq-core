@@ -20,11 +20,9 @@ package bisq.asset.coins;
 import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
 
-import org.bitcoinj.params.MainNetParams;
-
 public class BitcoinClashic extends Coin {
 
     public BitcoinClashic() {
-        super("Bitcoin Clashic", "BCHC", new Base58BitcoinAddressValidator(new MainNetParams()));
+        super("Bitcoin Clashic", "BCHC", new Base58BitcoinAddressValidator());
     }
 }
