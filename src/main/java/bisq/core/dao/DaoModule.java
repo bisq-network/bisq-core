@@ -70,7 +70,7 @@ public class DaoModule extends AppModule {
 
     @Override
     protected void configure() {
-        bind(DaoManager.class).in(Singleton.class);
+        bind(DaoSetup.class).in(Singleton.class);
 
         bind(LiteNodeNetworkManager.class).in(Singleton.class);
         bind(FullNodeNetworkManager.class).in(Singleton.class);

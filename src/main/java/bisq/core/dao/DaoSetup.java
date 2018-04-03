@@ -34,7 +34,7 @@ import com.google.inject.Inject;
 /**
  * High level entry point for Dao domain
  */
-public class DaoManager {
+public class DaoSetup {
     private final PeriodService periodService;
     private final ProposalService proposalService;
     private final BsqNode bsqNode;
@@ -48,12 +48,12 @@ public class DaoManager {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public DaoManager(BsqNodeProvider bsqNodeProvider,
-                      PeriodService periodService,
-                      ProposalService proposalService,
-                      BlindVoteService blindVoteService,
-                      VoteRevealService voteRevealService,
-                      IssuanceService issuanceService) {
+    public DaoSetup(BsqNodeProvider bsqNodeProvider,
+                    PeriodService periodService,
+                    ProposalService proposalService,
+                    BlindVoteService blindVoteService,
+                    VoteRevealService voteRevealService,
+                    IssuanceService issuanceService) {
         this.periodService = periodService;
         this.proposalService = proposalService;
         this.blindVoteService = blindVoteService;

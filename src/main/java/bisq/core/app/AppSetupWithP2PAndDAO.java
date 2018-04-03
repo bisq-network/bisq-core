@@ -17,7 +17,7 @@
 
 package bisq.core.app;
 
-import bisq.core.dao.DaoManager;
+import bisq.core.dao.DaoSetup;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.filter.FilterManager;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
-    private final DaoManager daoManager;
+    private final DaoSetup daoSetup;
 
     @Inject
     public AppSetupWithP2PAndDAO(EncryptionService encryptionService,
@@ -44,7 +44,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  TradeStatisticsManager tradeStatisticsManager,
                                  AccountAgeWitnessService accountAgeWitnessService,
                                  FilterManager filterManager,
-                                 DaoManager daoManager,
+                                 DaoSetup daoSetup,
                                  ProposalService proposalService,
                                  BlindVoteService blindVoteService) {
         super(encryptionService,
@@ -53,7 +53,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                 tradeStatisticsManager,
                 accountAgeWitnessService,
                 filterManager);
-        this.daoManager = daoManager;
+        this.daoSetup = daoSetup;
         this.persistedDataHosts.add(proposalService);
         persistedDataHosts.add(blindVoteService);
     }
@@ -62,6 +62,6 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
     protected void onBasicServicesInitialized() {
         super.onBasicServicesInitialized();
 
-        daoManager.onAllServicesInitialized(log::error);
+        daoSetup.onAllServicesInitialized(log::error);
     }
 }
