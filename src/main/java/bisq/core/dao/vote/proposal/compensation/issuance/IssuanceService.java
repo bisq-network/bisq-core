@@ -27,7 +27,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.BooleanVoteResult;
 import bisq.core.dao.vote.DaoPeriodService;
-import bisq.core.dao.vote.IntegerVoteResult;
+import bisq.core.dao.vote.LongVoteResult;
 import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
@@ -340,7 +340,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
                     } else {
                         stakeOfRejectedVotes += stake;
                     }
-                } else if (voteResult instanceof IntegerVoteResult) {
+                } else if (voteResult instanceof LongVoteResult) {
                     //TODO impl
                 }
             } else {

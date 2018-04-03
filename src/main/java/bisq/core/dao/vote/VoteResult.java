@@ -37,7 +37,7 @@ public abstract class VoteResult implements PersistablePayload, NetworkPayload {
             case BOOLEAN_VOTE_RESULT:
                 return BooleanVoteResult.fromProto(proto);
             case INTEGER_VOTE_RESULT:
-                return IntegerVoteResult.fromProto(proto);
+                return LongVoteResult.fromProto(proto);
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }

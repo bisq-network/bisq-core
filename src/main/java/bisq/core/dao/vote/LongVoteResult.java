@@ -24,12 +24,12 @@ import com.google.protobuf.Message;
 import lombok.Getter;
 
 @Getter
-public class IntegerVoteResult extends VoteResult {
+public class LongVoteResult extends VoteResult {
 
-    private int value;
+    private long value;
 
     @SuppressWarnings("WeakerAccess")
-    public IntegerVoteResult(int value) {
+    public LongVoteResult(long value) {
         this.value = value;
     }
 
@@ -40,13 +40,13 @@ public class IntegerVoteResult extends VoteResult {
     @Override
     public Message toProtoMessage() {
         return getVoteResultBuilder()
-                .setIntegerVoteResult(PB.IntegerVoteResult.newBuilder()
+                .setLongVoteResult(PB.LongVoteResult.newBuilder()
                         .setValue(value))
                 .build();
     }
 
-    public static IntegerVoteResult fromProto(PB.VoteResult proto) {
-        return new IntegerVoteResult(proto.getIntegerVoteResult().getValue());
+    public static LongVoteResult fromProto(PB.VoteResult proto) {
+        return new LongVoteResult(proto.getLongVoteResult().getValue());
     }
 
 }
