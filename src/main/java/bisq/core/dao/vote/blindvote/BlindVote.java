@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.blindvote;
 
-import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+import bisq.core.dao.vote.VoteConsensusCritical;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;

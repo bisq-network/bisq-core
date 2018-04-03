@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.consensus;
+package bisq.core.dao.vote;
 
 /**
  * Marker interface for classes which are critical in the vote consensus process. Any changes in that class might cause

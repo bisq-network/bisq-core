@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+import bisq.core.dao.vote.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
