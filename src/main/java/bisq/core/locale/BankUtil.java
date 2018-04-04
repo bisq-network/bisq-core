@@ -235,9 +235,9 @@ public class BankUtil {
             case "CL":
                 return "RUT:";  // do not translate as it is used in spanish only
             case "AR":
-                return "CUIT";
+                return "CUIT:";
             default:
-                return "ID";
+                return "ID:";
         }
     }
 
