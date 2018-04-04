@@ -56,7 +56,7 @@ import org.jetbrains.annotations.Nullable;
  * Responsible for requesting BSQ blocks from a full node and for listening to new blocks broadcasted by full nodes.
  */
 @Slf4j
-public class LiteNodeNetworkManager implements MessageListener, ConnectionListener, PeerManager.Listener {
+public class LiteNodeNetworkService implements MessageListener, ConnectionListener, PeerManager.Listener {
 
     private static final long RETRY_DELAY_SEC = 10;
     private static final long CLEANUP_TIMER = 120;
@@ -103,7 +103,7 @@ public class LiteNodeNetworkManager implements MessageListener, ConnectionListen
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public LiteNodeNetworkManager(NetworkNode networkNode,
+    public LiteNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   SeedNodeRepository seedNodesRepository) {
         this.networkNode = networkNode;
