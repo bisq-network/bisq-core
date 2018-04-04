@@ -25,6 +25,8 @@
           <emptyLine />
           <package name="bisq.core" withSubpackages="true" static="false" />
           <emptyLine />
+          <package name="bisq.asset" withSubpackages="true" static="false" />
+          <emptyLine />
           <package name="bisq.network" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="bisq.common" withSubpackages="true" static="false" />
