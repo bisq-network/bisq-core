@@ -34,6 +34,8 @@ import com.google.common.annotations.VisibleForTesting;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.Arrays;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,7 +93,6 @@ public class PeriodService implements BsqBlockChain.Listener {
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
-    private int chainHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -123,19 +124,24 @@ public class PeriodService implements BsqBlockChain.Listener {
         onChainHeightChanged(bsqBlock.getHeight());
     }
 
+    public boolean isInPhase(int blockHeight, Phase phase) {
+        int start = getBlockUntilPhaseStart(phase);
+        int end = getBlockUntilPhaseEnd(phase);
+        int numBlocksOfTxHeightSinceGenesis = blockHeight - genesisBlockHeight;
+        int heightInCycle = numBlocksOfTxHeightSinceGenesis % getNumBlocksOfCycle();
+        return heightInCycle >= start && heightInCycle < end;
+    }
+
+    // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
     public boolean isTxInPhase(String txId, Phase phase) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInPhase(tx.getBlockHeight(),
-                chainHeight,
-                genesisBlockHeight,
-                phase.getDurationInBlocks(),
-                getNumBlocksOfCycle());
+        return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
     public boolean isTxInCurrentCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInCurrentCycle(tx.getBlockHeight(),
-                chainHeight,
+                readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
@@ -143,7 +149,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     public boolean isTxInPastCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInPastCycle(tx.getBlockHeight(),
-                chainHeight,
+                readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
@@ -187,14 +193,34 @@ public class PeriodService implements BsqBlockChain.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void onChainHeightChanged(int chainHeight) {
-        this.chainHeight = chainHeight;
-        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, this.chainHeight, getNumBlocksOfCycle());
+        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
         phaseProperty.set(calculatePhase(relativeBlocksInCycle));
     }
 
     @VisibleForTesting
     int getRelativeBlocksInCycle(int genesisHeight, int bestChainHeight, int numBlocksOfCycle) {
         return (bestChainHeight - genesisHeight) % numBlocksOfCycle;
+    }
+
+    int getBlockUntilPhaseStart(Phase target) {
+        int totalDuration = 0;
+        for (Phase phase : Arrays.asList(Phase.values())) {
+            if (phase == target)
+                break;
+            else
+                totalDuration += phase.getDurationInBlocks();
+        }
+        return totalDuration;
+    }
+
+    int getBlockUntilPhaseEnd(Phase target) {
+        int totalDuration = 0;
+        for (Phase phase : Arrays.asList(Phase.values())) {
+            totalDuration += phase.getDurationInBlocks();
+            if (phase == target)
+                break;
+        }
+        return totalDuration;
     }
 
     @VisibleForTesting
@@ -249,19 +275,6 @@ public class PeriodService implements BsqBlockChain.Listener {
                 throw new RuntimeException("blocksInNewPhase is not covered by phase checks. blocksInNewPhase=" + blocksInNewPhase);
             else
                 return Phase.UNDEFINED;
-        }
-    }
-
-    @VisibleForTesting
-    boolean isTxInPhase(int txHeight, int chainHeight, int genesisHeight, int requestPhaseInBlocks, int numBlocksOfCycle) {
-        if (txHeight >= genesisHeight && chainHeight >= genesisHeight && chainHeight >= txHeight) {
-            int numBlocksOfTxHeightSinceGenesis = txHeight - genesisHeight;
-            int numBlocksOfChainHeightSinceGenesis = chainHeight - genesisHeight;
-            int numBlocksOfTxHeightInCycle = numBlocksOfTxHeightSinceGenesis % numBlocksOfCycle;
-            int numBlocksOfChainHeightInCycle = numBlocksOfChainHeightSinceGenesis % numBlocksOfCycle;
-            return numBlocksOfTxHeightInCycle <= requestPhaseInBlocks && numBlocksOfChainHeightInCycle <= requestPhaseInBlocks;
-        } else {
-            return false;
         }
     }
 
