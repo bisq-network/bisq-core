@@ -43,9 +43,10 @@ public class OpReturnVoteRevealController {
         this.periodService = periodService;
     }
 
+    // opReturnData: 2 bytes version and type, 20 bytes hash, 16 bytes key
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, int blockHeight, Model model) {
         if (model.isVoteStakeSpentAtInputs() &&
-                opReturnData.length == 54 &&
+                opReturnData.length == 38 &&
                 Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL)) {
             txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);

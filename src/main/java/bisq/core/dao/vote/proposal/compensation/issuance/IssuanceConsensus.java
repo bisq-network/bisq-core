@@ -55,9 +55,9 @@ public class IssuanceConsensus {
         return !list.isEmpty() ? list.get(0).getHashOfProposalList() : null;
     }
 
-    // Key is stored after version and type bytes and list of Blind votes. It has 32 bytes
+    // Key is stored after version and type bytes and list of Blind votes. It has 16 bytes
     public static SecretKey getSecretKey(byte[] opReturnData) {
-        byte[] secretKeyAsBytes = Arrays.copyOfRange(opReturnData, 22, 54);
+        byte[] secretKeyAsBytes = Arrays.copyOfRange(opReturnData, 22, 38);
         return Encryption.getSecretKeyFromBytes(secretKeyAsBytes);
     }
 }

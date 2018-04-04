@@ -52,10 +52,9 @@ public class BlindVoteConsensus {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
     }
 
-    // Standard 256 bit AES key
-    //TODO prob. 128 bit is good enough for that use case
+    // 128 bit AES key is good enough for our use case
     public static SecretKey getSecretKey() {
-        return Encryption.generateSecretKey();
+        return Encryption.generateSecretKey(128);
     }
 
     // TODO add test
