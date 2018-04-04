@@ -25,7 +25,7 @@ public class BankUtilTest {
 
         assertTrue(BankUtil.isHolderIdRequired(argentina));
         assertEquals("CUIL/CUIT:", BankUtil.getHolderIdLabel(argentina));
-        assertEquals("CUIT", BankUtil.getHolderIdLabelShort(argentina));
+        assertEquals("CUIT:", BankUtil.getHolderIdLabelShort(argentina));
 
         assertTrue(BankUtil.isNationalAccountIdRequired(argentina));
         assertEquals("Número de CBU:", BankUtil.getNationalAccountIdLabel(argentina));
@@ -35,6 +35,8 @@ public class BankUtilTest {
         assertTrue(BankUtil.isBranchIdRequired(argentina));
         assertTrue(BankUtil.isAccountNrRequired(argentina));
         assertEquals("Número de cuenta:", BankUtil.getAccountNrLabel(argentina));
+
+        assertTrue(BankUtil.useValidation(argentina));
 
         assertFalse(BankUtil.isBankIdRequired(argentina));
         assertFalse(BankUtil.isStateRequired(argentina));

@@ -254,6 +254,7 @@ public class BankUtil {
             case "HK":
             case "SE":
             case "NO":
+            case "AR":
                 return true;
             default:
                 return false;
