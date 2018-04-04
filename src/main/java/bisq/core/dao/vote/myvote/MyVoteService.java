@@ -92,9 +92,7 @@ public class MyVoteService implements PersistedDataHost {
 
     public void onAllServicesInitialized() {
         // Republish own active blindVotes once we are well connected
-        numConnectedPeersListener = (observable, oldValue, newValue) -> {
-            publishMyBlindVotesIfWellConnected();
-        };
+        numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyBlindVotesIfWellConnected();
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         publishMyBlindVotesIfWellConnected();
     }
@@ -143,9 +141,9 @@ public class MyVoteService implements PersistedDataHost {
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {
-                            log.info("Added BlindVote to P2P network.\nBlindVote={}" + myVote.getBlindVote());
+                            log.info("Added BlindVote to P2P network.\nBlindVote={}", myVote.getBlindVote());
                         } else {
-                            log.warn("Adding of BlindVote to P2P network failed.\nBlindVote={}" + myVote.getBlindVote());
+                            log.warn("Adding of BlindVote to P2P network failed.\nBlindVote={}", myVote.getBlindVote());
                         }
                     } else {
                         final String msg = "revealTxId must be null at publishMyBlindVotes.\nmyVote=" + myVote;

@@ -29,7 +29,6 @@ import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.JsonExclude;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -71,7 +70,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String nodeAddress;
     protected byte[] ownerPubKeyEncoded;
     @Nullable
-    @JsonExclude
     protected String txId;
 
     protected final byte version;
@@ -84,7 +82,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected Map<String, String> extraDataMap;
 
     // Used just for caching
-    @JsonExclude
     @Nullable
     private transient PublicKey ownerPubKey;
 
