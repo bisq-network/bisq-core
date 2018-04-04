@@ -98,6 +98,7 @@ public class CurrencyUtil {
         return allSortedCryptoCurrencies;
     }
 
+
     private static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
         List<CryptoCurrency> result = assetRegistry.stream()
                 .filter(CurrencyUtil::assetIsNotBaseCurrency)
@@ -105,6 +106,111 @@ public class CurrencyUtil {
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .sorted(TradeCurrency::compareTo)
                 .collect(Collectors.toList());
+
+    // Don't make a PR for adding a coin but follow the steps described here:
+    // https://forum.bisq.network/t/how-to-add-your-favorite-altcoin/
+    public static List<CryptoCurrency> createAllSortedCryptoCurrenciesList() {
+        final List<CryptoCurrency> result = new ArrayList<>();
+
+        result.add(new CryptoCurrency("BETR", "Better Betting", true));
+        if (DevEnv.DAO_TRADING_ACTIVATED)
+            result.add(new CryptoCurrency("BSQ", "Bisq Token"));
+
+        if (!baseCurrencyCode.equals("BTC"))
+            result.add(new CryptoCurrency("BTC", "Bitcoin"));
+        result.add(new CryptoCurrency("BCH", "Bitcoin Cash"));
+        result.add(new CryptoCurrency("BCHC", "Bitcoin Clashic"));
+        result.add(new CryptoCurrency("BTG", "Bitcoin Gold"));
+        result.add(new CryptoCurrency("BURST", "Burstcoin"));
+        result.add(new CryptoCurrency("GBYTE", "Byte"));
+        result.add(new CryptoCurrency("CAGE", "Cagecoin"));
+        result.add(new CryptoCurrency("XCP", "Counterparty"));
+        result.add(new CryptoCurrency("CREA", "Creativecoin"));
+        result.add(new CryptoCurrency("XCN", "Cryptonite"));
+        result.add(new CryptoCurrency("DNET", "DarkNet"));
+        if (!baseCurrencyCode.equals("DASH"))
+            result.add(new CryptoCurrency("DASH", "Dash"));
+        result.add(new CryptoCurrency("DCT", "DECENT"));
+        result.add(new CryptoCurrency("DCR", "Decred"));
+        result.add(new CryptoCurrency("ONION", "DeepOnion"));
+        result.add(new CryptoCurrency("DOGE", "Dogecoin"));
+        result.add(new CryptoCurrency("DMC", "DynamicCoin"));
+        result.add(new CryptoCurrency("ELLA", "Ellaism"));
+        result.add(new CryptoCurrency("ESP", "Espers"));
+        result.add(new CryptoCurrency("ETH", "Ether"));
+        result.add(new CryptoCurrency("ETC", "Ether Classic"));
+        result.add(new CryptoCurrency("XIN", "Infinity Economics"));
+        result.add(new CryptoCurrency("IOP", "Internet Of People"));
+        result.add(new CryptoCurrency("INXT", "Internext", true));
+        result.add(new CryptoCurrency("GRC", "Gridcoin"));
+        result.add(new CryptoCurrency("LBC", "LBRY Credits"));
+        result.add(new CryptoCurrency("LSK", "Lisk"));
+        if (!baseCurrencyCode.equals("LTC"))
+            result.add(new CryptoCurrency("LTC", "Litecoin"));
+        result.add(new CryptoCurrency("MAID", "MaidSafeCoin"));
+        result.add(new CryptoCurrency("MDC", "Madcoin"));
+        result.add(new CryptoCurrency("XMR", "Monero"));
+        result.add(new CryptoCurrency("MT", "Mycelium Token", true));
+        result.add(new CryptoCurrency("NAV", "Nav Coin"));
+        result.add(new CryptoCurrency("NMC", "Namecoin"));
+        result.add(new CryptoCurrency("NBT", "NuBits"));
+        result.add(new CryptoCurrency("NXT", "Nxt"));
+        result.add(new CryptoCurrency("888", "OctoCoin"));
+        result.add(new CryptoCurrency("PART", "Particl"));
+        result.add(new CryptoCurrency("PASC", "Pascal Coin", true));
+        result.add(new CryptoCurrency("PEPECASH", "Pepe Cash"));
+        result.add(new CryptoCurrency("PIVX", "PIVX"));
+        result.add(new CryptoCurrency("POST", "PostCoin"));
+        result.add(new CryptoCurrency("PNC", "Pranacoin"));
+        result.add(new CryptoCurrency("RDD", "ReddCoin"));
+        result.add(new CryptoCurrency("REF", "RefToken", true));
+        result.add(new CryptoCurrency("SFSC", "Safe FileSystem Coin"));
+        result.add(new CryptoCurrency("SC", "Siacoin"));
+        result.add(new CryptoCurrency("SF", "Siafund"));
+        result.add(new CryptoCurrency("SIB", "Sibcoin"));
+        result.add(new CryptoCurrency("XSPEC", "Spectrecoin"));
+        result.add(new CryptoCurrency("STEEM", "STEEM"));
+        result.add(new CryptoCurrency("TRC", "Terracoin"));
+        result.add(new CryptoCurrency("MVT", "The Movement", true));
+
+        result.add(new CryptoCurrency("UNO", "Unobtanium"));
+        result.add(new CryptoCurrency("CRED", "Verify", true));
+        result.add(new CryptoCurrency("WAC", "WACoins"));
+        result.add(new CryptoCurrency("WILD", "WILD Token", true));
+        result.add(new CryptoCurrency("XZC", "Zcoin"));
+        result.add(new CryptoCurrency("ZEC", "Zcash"));
+        result.add(new CryptoCurrency("ZEN", "ZenCash"));
+
+        // Added 0.6.6
+        result.add(new CryptoCurrency("STL", "Stellite"));
+        result.add(new CryptoCurrency("DAI", "Dai Stablecoin", true));
+        result.add(new CryptoCurrency("YTN", "Yenten"));
+        result.add(new CryptoCurrency("DARX", "BitDaric"));
+        result.add(new CryptoCurrency("ODN", "Obsidian"));
+        result.add(new CryptoCurrency("CDT", "Cassubian Detk"));
+        result.add(new CryptoCurrency("DGM", "DigiMoney"));
+        result.add(new CryptoCurrency("SCS", "SpeedCash"));
+        result.add(new CryptoCurrency("SOS", "SOS Coin", true));
+        result.add(new CryptoCurrency("ACH", "AchieveCoin"));
+        result.add(new CryptoCurrency("VDN", "vDinar"));
+        result.add(new CryptoCurrency("WMCC", "WorldMobileCoin"));
+
+        // Added 0.7.0
+        result.add(new CryptoCurrency("ALC", "Angelcoin"));
+        result.add(new CryptoCurrency("DIN", "Dinero"));
+        result.add(new CryptoCurrency("NAH", "Strayacoin"));
+        result.add(new CryptoCurrency("ROI", "ROIcoin"));
+        result.add(new CryptoCurrency("RTO", "Arto"));
+        result.add(new CryptoCurrency("KOTO", "Koto"));
+        result.add(new CryptoCurrency("UBQ", "Ubiq"));
+        result.add(new CryptoCurrency("QWARK", "Qwark", true));
+        result.add(new CryptoCurrency("GEO", "GeoCoin", true));
+        result.add(new CryptoCurrency("GRANS", "10grans", true));
+        result.add(new CryptoCurrency("ICH", "ICH"));
+        result.add(new CryptoCurrency("PHR", "Phore"));
+
+        result.sort(TradeCurrency::compareTo);
+
 
         // Util for printing all altcoins for adding to FAQ page
 
