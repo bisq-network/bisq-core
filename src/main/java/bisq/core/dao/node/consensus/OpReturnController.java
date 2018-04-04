@@ -69,41 +69,16 @@ public class OpReturnController {
                 .ifPresent(opReturnType -> {
                     switch (opReturnType) {
                         case COMPENSATION_REQUEST:
-                            if (opReturnCompReqController.verify(opReturnData, bsqFee, blockHeight, model)) {
-                                opReturnCompReqController.applyStateChange(txOutput, model);
-                            } else {
-                                txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-                                log.info("We expected a compensation request op_return data but it did not " +
-                                        "match our rules. tx={}", tx);
-                            }
+                            opReturnCompReqController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
                             break;
                         case PROPOSAL:
-                            if (opReturnProposalController.verify(opReturnData, bsqFee, blockHeight)) {
-                                opReturnProposalController.applyStateChange(txOutput, model);
-                            } else {
-                                txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-                                txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
-                                log.info("We expected a proposal op_return data but it did not " +
-                                        "match our rules. tx={}", tx);
-                            }
+                            opReturnProposalController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
                             break;
                         case BLIND_VOTE:
-                            if (opReturnBlindVoteController.verify(opReturnData, bsqFee, blockHeight, model)) {
-                                opReturnBlindVoteController.applyStateChange(txOutput, model);
-                            } else {
-                                txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-                                log.info("We expected a blind vote op_return data but it did not " +
-                                        "match our rules. tx={}", tx);
-                            }
+                            opReturnBlindVoteController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
                             break;
                         case VOTE_REVEAL:
-                            if (opReturnVoteRevealController.verify(opReturnData, blockHeight, model)) {
-                                opReturnVoteRevealController.applyStateChange(txOutput, model);
-                            } else {
-                                txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-                                log.info("We expected a vote reveal op_return data but it did not " +
-                                        "match our rules. tx={}", tx);
-                            }
+                            opReturnVoteRevealController.process(opReturnData, txOutput, tx, blockHeight, model);
                             break;
                         case LOCK_UP:
                             // TODO
