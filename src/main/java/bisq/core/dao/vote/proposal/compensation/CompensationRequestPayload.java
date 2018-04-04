@@ -40,12 +40,14 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.Map;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static bisq.core.dao.vote.proposal.compensation.CompensationRequestConsensus.getMaxCompensationRequestAmount;
+import static bisq.core.dao.vote.proposal.compensation.CompensationRequestConsensus.getMinCompensationRequestAmount;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
@@ -54,7 +56,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
  */
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-@Data
+@Value
 public final class CompensationRequestPayload extends ProposalPayload {
     private final long requestedBsq;
     private final String bsqAddress;
@@ -154,15 +156,14 @@ public final class CompensationRequestPayload extends ProposalPayload {
         try {
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
-            getAddress(); // throws AddressFormatException if wring address
-            //TODO add more checks
+            getAddress(); // throws AddressFormatException if wrong address
+            checkArgument(getRequestedBsq().compareTo(getMaxCompensationRequestAmount()) <= 0,
+                    "Requested BSQ must not exceed MaxCompensationRequestAmount");
+            checkArgument(getRequestedBsq().compareTo(getMinCompensationRequestAmount()) >= 0,
+                    "Requested BSQ must not be less than MinCompensationRequestAmount");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }
-
-        final Coin minRequestAmount = CompensationRequestConsensus.getMinCompensationRequestAmount();
-        if (getRequestedBsq().compareTo(minRequestAmount) < 0)
-            throw new ValidationException("requestedBsq is smaller than minRequestAmount", getRequestedBsq(), minRequestAmount);
     }
 
 

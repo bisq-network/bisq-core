@@ -34,8 +34,8 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.Map;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  */
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-@Data
+@Value
 public final class GenericProposalPayload extends ProposalPayload {
 
     public GenericProposalPayload(String uid,

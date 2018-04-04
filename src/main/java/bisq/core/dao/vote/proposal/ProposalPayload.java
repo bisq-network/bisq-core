@@ -43,11 +43,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 /**
@@ -58,7 +62,9 @@ import static org.apache.commons.lang3.Validate.notEmpty;
  * As there are not 1000s of proposals we consider that acceptable.
  */
 @Slf4j
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
 public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload {
 
@@ -69,6 +75,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String link;
     protected final String nodeAddress;
     protected byte[] ownerPubKeyEncoded;
+    @Setter
     @Nullable
     protected String txId;
 
@@ -176,7 +183,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             notEmpty(link, "link must not be empty");
             notEmpty(nodeAddress, "nodeAddress must not be empty");
 
-            //TODO add more checks
+            checkArgument(ProposalConsensus.isDescriptionSizeValid(description), "description is too long");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }

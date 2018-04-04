@@ -67,10 +67,10 @@ public class GenericProposalService {
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public GenericProposalPayload getGenericProposalPayload(String name,
-                                                            String title,
-                                                            String description,
-                                                            String link) {
+    public GenericProposalPayload createGenericProposalPayload(String name,
+                                                               String title,
+                                                               String description,
+                                                               String link) {
         checkArgument(p2PService.getAddress() != null, "p2PService.getAddress() must not be null");
         return new GenericProposalPayload(
                 UUID.randomUUID().toString(),
@@ -84,7 +84,7 @@ public class GenericProposalService {
         );
     }
 
-    public GenericProposal getGenericProposal(GenericProposalPayload payload)
+    public GenericProposal createGenericProposal(GenericProposalPayload payload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException {
         GenericProposal proposal = new GenericProposal(payload);
 

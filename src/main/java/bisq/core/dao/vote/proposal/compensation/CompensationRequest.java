@@ -36,8 +36,6 @@ import lombok.Getter;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Locally persisted CompensationRequest data.
  */
@@ -83,7 +81,6 @@ public class CompensationRequest extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Coin getRequestedBsq() {
-        checkNotNull(getCompensationRequestPayload());
         return getCompensationRequestPayload().getRequestedBsq();
     }
 
