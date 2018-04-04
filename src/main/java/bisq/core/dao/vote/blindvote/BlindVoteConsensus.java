@@ -45,6 +45,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
+    // In satoshi
+    public static final long DEFAULT_FEE = 200;
+
     public static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
     }

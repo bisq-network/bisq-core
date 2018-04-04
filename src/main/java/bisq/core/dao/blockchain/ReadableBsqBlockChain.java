@@ -32,6 +32,13 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface ReadableBsqBlockChain {
+    // listeners
+
+    void addListener(BsqBlockChain.Listener listener);
+
+    void removeListener(BsqBlockChain.Listener listener);
+
+
     int getChainHeadHeight();
 
     boolean containsBsqBlock(BsqBlock bsqBlock);
@@ -110,7 +117,5 @@ public interface ReadableBsqBlockChain {
 
     BsqBlockChain getClone(BsqBlockChain bsqBlockChain);
 
-    void addListener(BsqBlockChain.Listener listener);
 
-    void removeListener(BsqBlockChain.Listener listener);
 }
