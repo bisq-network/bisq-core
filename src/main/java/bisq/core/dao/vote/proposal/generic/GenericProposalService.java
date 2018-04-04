@@ -24,8 +24,6 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 
-import bisq.network.p2p.P2PService;
-
 import bisq.common.crypto.KeyRing;
 
 import org.bitcoinj.core.Coin;
@@ -39,10 +37,7 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class GenericProposalService {
-    private final P2PService p2PService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final PublicKey signaturePubKey;
@@ -54,12 +49,10 @@ public class GenericProposalService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public GenericProposalService(P2PService p2PService,
-                                  BsqWalletService bsqWalletService,
+    public GenericProposalService(BsqWalletService bsqWalletService,
                                   BtcWalletService btcWalletService,
                                   ReadableBsqBlockChain readableBsqBlockChain,
                                   KeyRing keyRing) {
-        this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.readableBsqBlockChain = readableBsqBlockChain;
@@ -71,14 +64,12 @@ public class GenericProposalService {
                                                                String title,
                                                                String description,
                                                                String link) {
-        checkArgument(p2PService.getAddress() != null, "p2PService.getAddress() must not be null");
         return new GenericProposalPayload(
                 UUID.randomUUID().toString(),
                 name,
                 title,
                 description,
                 link,
-                p2PService.getAddress(),
                 signaturePubKey,
                 new Date()
         );

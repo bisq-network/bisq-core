@@ -20,7 +20,6 @@ package bisq.core.dao.vote.proposal;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 
-import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
@@ -73,7 +72,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String title;
     protected final String description;
     protected final String link;
-    protected final String nodeAddress;
     protected byte[] ownerPubKeyEncoded;
     @Setter
     @Nullable
@@ -102,7 +100,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                               String title,
                               String description,
                               String link,
-                              String nodeAddress,
                               byte[] ownerPubPubKeyEncoded,
                               byte version,
                               long creationDate,
@@ -113,7 +110,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         this.title = title;
         this.description = description;
         this.link = link;
-        this.nodeAddress = nodeAddress;
         this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.version = version;
         this.creationDate = creationDate;
@@ -128,7 +124,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 .setTitle(title)
                 .setDescription(description)
                 .setLink(link)
-                .setNodeAddress(nodeAddress)
                 .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded))
                 .setVersion(version)
                 .setCreationDate(creationDate);
@@ -181,7 +176,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             notEmpty(title, "title must not be empty");
             notEmpty(description, "description must not be empty");
             notEmpty(link, "link must not be empty");
-            notEmpty(nodeAddress, "nodeAddress must not be empty");
 
             checkArgument(ProposalConsensus.isDescriptionSizeValid(description), "description is too long");
         } catch (Throwable throwable) {
@@ -195,10 +189,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     public Date getCreationDate() {
         return new Date(creationDate);
-    }
-
-    public NodeAddress getNodeAddress() {
-        return new NodeAddress(nodeAddress);
     }
 
     public String getShortId() {

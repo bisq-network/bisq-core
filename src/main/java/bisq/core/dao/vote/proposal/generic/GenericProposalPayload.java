@@ -20,8 +20,6 @@ package bisq.core.dao.vote.proposal.generic;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
-import bisq.network.p2p.NodeAddress;
-
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
 
@@ -53,7 +51,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                                   String title,
                                   String description,
                                   String link,
-                                  NodeAddress nodeAddress,
                                   PublicKey ownerPubKey,
                                   Date creationDate) {
         super(uid,
@@ -61,7 +58,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 title,
                 description,
                 link,
-                nodeAddress.getFullAddress(),
                 Sig.getPublicKeyBytes(ownerPubKey),
                 Version.COMPENSATION_REQUEST_VERSION,
                 creationDate.getTime(),
@@ -79,7 +75,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                                    String title,
                                    String description,
                                    String link,
-                                   String nodeAddress,
                                    byte[] ownerPubKeyEncoded,
                                    byte version,
                                    long creationDate,
@@ -90,7 +85,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 title,
                 description,
                 link,
-                nodeAddress,
                 ownerPubKeyEncoded,
                 version,
                 creationDate,
@@ -109,7 +103,6 @@ public final class GenericProposalPayload extends ProposalPayload {
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                proto.getNodeAddress(),
                 proto.getOwnerPubKeyEncoded().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),

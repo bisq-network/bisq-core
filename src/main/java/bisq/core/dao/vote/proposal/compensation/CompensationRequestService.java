@@ -25,8 +25,6 @@ import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ValidationException;
 
-import bisq.network.p2p.P2PService;
-
 import bisq.common.crypto.KeyRing;
 
 import org.bitcoinj.core.Coin;
@@ -42,10 +40,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class CompensationRequestService {
-    private final P2PService p2PService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final PublicKey signaturePubKey;
@@ -57,12 +52,10 @@ public class CompensationRequestService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CompensationRequestService(P2PService p2PService,
-                                      BsqWalletService bsqWalletService,
+    public CompensationRequestService(BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
                                       ReadableBsqBlockChain readableBsqBlockChain,
                                       KeyRing keyRing) {
-        this.p2PService = p2PService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.readableBsqBlockChain = readableBsqBlockChain;
@@ -85,7 +78,6 @@ public class CompensationRequestService {
                 link,
                 requestedBsq,
                 bsqAddress,
-                checkNotNull(p2PService.getAddress()),
                 signaturePubKey,
                 new Date()
         );

@@ -22,8 +22,6 @@ import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 import bisq.core.dao.vote.proposal.ValidationException;
 
-import bisq.network.p2p.NodeAddress;
-
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
 
@@ -68,7 +66,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                                String link,
                                Coin requestedBsq,
                                String bsqAddress,
-                               NodeAddress nodeAddress,
                                PublicKey ownerPubKey,
                                Date creationDate) {
         super(uid,
@@ -76,7 +73,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 title,
                 description,
                 link,
-                nodeAddress.getFullAddress(),
                 Sig.getPublicKeyBytes(ownerPubKey),
                 Version.COMPENSATION_REQUEST_VERSION,
                 creationDate.getTime(),
@@ -98,7 +94,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                                        String link,
                                        String bsqAddress,
                                        long requestedBsq,
-                                       String nodeAddress,
                                        byte[] ownerPubKeyEncoded,
                                        byte version,
                                        long creationDate,
@@ -109,7 +104,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 title,
                 description,
                 link,
-                nodeAddress,
                 ownerPubKeyEncoded,
                 version,
                 creationDate,
@@ -137,7 +131,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 proto.getLink(),
                 compensationRequestPayload.getBsqAddress(),
                 compensationRequestPayload.getRequestedBsq(),
-                proto.getNodeAddress(),
                 proto.getOwnerPubKeyEncoded().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
