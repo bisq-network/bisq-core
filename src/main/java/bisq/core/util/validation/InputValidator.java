@@ -19,6 +19,8 @@ package bisq.core.util.validation;
 
 import bisq.core.locale.Res;
 
+import java.math.BigInteger;
+
 public class InputValidator {
 
     public ValidationResult validate(String input) {
@@ -63,7 +65,7 @@ public class InputValidator {
 
     protected boolean isPositiveNumber(String input) {
         try {
-            return input != null && Long.parseLong(input) >= 0;
+            return input != null && new BigInteger(input).compareTo(BigInteger.ZERO) >= 0;
         } catch (Throwable t) {
             return false;
         }

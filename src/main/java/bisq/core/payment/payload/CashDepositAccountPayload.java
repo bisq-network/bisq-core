@@ -24,6 +24,7 @@ import bisq.core.locale.Res;
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
+import com.google.protobuf.Option;
 
 import org.springframework.util.CollectionUtils;
 
@@ -64,6 +65,8 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
     private String holderTaxId;
     @Nullable
     private String bankId;
+    @Nullable
+    protected String nationalAccountId;
 
     public CashDepositAccountPayload(String paymentMethod, String id) {
         super(paymentMethod, id);
@@ -86,6 +89,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
                                       @Nullable String requirements,
                                       @Nullable String holderTaxId,
                                       @Nullable String bankId,
+                                      @Nullable String nationalAccountId,
                                       long maxTradePeriod,
                                       @Nullable Map<String, String> excludeFromJsonDataMap) {
         super(paymentMethodName,
@@ -102,6 +106,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
         this.requirements = requirements;
         this.holderTaxId = holderTaxId;
         this.bankId = bankId;
+        this.nationalAccountId = nationalAccountId;
     }
 
     @Override
@@ -117,6 +122,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
         Optional.ofNullable(requirements).ifPresent(builder::setRequirements);
         Optional.ofNullable(holderTaxId).ifPresent(builder::setHolderTaxId);
         Optional.ofNullable(bankId).ifPresent(builder::setBankId);
+        Optional.ofNullable(nationalAccountId).ifPresent(builder::setNationalAccountId);
 
         final PB.CountryBasedPaymentAccountPayload.Builder countryBasedPaymentAccountPayload = getPaymentAccountPayloadBuilder()
                 .getCountryBasedPaymentAccountPayloadBuilder()
@@ -141,6 +147,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
                 cashDepositAccountPayload.getRequirements().isEmpty() ? null : cashDepositAccountPayload.getRequirements(),
                 cashDepositAccountPayload.getHolderTaxId().isEmpty() ? null : cashDepositAccountPayload.getHolderTaxId(),
                 cashDepositAccountPayload.getBankId().isEmpty() ? null : cashDepositAccountPayload.getBankId(),
+                cashDepositAccountPayload.getNationalAccountId().isEmpty() ? null : cashDepositAccountPayload.getNationalAccountId(),
                 proto.getMaxTradePeriod(),
                 CollectionUtils.isEmpty(proto.getExcludeFromJsonDataMap()) ? null : new HashMap<>(proto.getExcludeFromJsonDataMap()));
     }
@@ -163,6 +170,8 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
                 BankUtil.getBankIdLabel(countryCode) + " " + this.bankId + "\n" : "";
         String branchId = BankUtil.isBranchIdRequired(countryCode) ?
                 BankUtil.getBranchIdLabel(countryCode) + " " + this.branchId + "\n" : "";
+        String nationalAccountId = BankUtil.isNationalAccountIdRequired(countryCode) ?
+                BankUtil.getNationalAccountIdLabel(countryCode) + " " + this.nationalAccountId + "\n" : "";
         String accountNr = BankUtil.isAccountNrRequired(countryCode) ?
                 BankUtil.getAccountNrLabel(countryCode) + " " + this.accountNr + "\n" : "";
         String accountType = BankUtil.isAccountTypeRequired(countryCode) ?
@@ -179,6 +188,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
                 bankName +
                 bankId +
                 branchId +
+                nationalAccountId +
                 accountNr +
                 accountType +
                 holderTaxIdString +
@@ -204,6 +214,7 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
         String accountType = BankUtil.isAccountTypeRequired(countryCode) ? this.accountType : "";
         String holderTaxIdString = BankUtil.isHolderIdRequired(countryCode) ?
                 (BankUtil.getHolderIdLabel(countryCode) + " " + holderTaxId + "\n") : "";
+        String nationalAccountId = BankUtil.isNationalAccountIdRequired(countryCode) ? this.nationalAccountId : "";
 
         // We don't add holderName and holderEmail because we don't want to break age validation if the user recreates an account with
         // slight changes in holder name (e.g. add or remove middle name)
@@ -213,7 +224,8 @@ public class CashDepositAccountPayload extends CountryBasedPaymentAccountPayload
                 branchId +
                 accountNr +
                 accountType +
-                holderTaxIdString;
+                holderTaxIdString +
+                nationalAccountId;
 
         return super.getAgeWitnessInputData(all.getBytes(Charset.forName("UTF-8")));
     }

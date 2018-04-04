@@ -56,6 +56,7 @@ public final class NationalBankAccountPayload extends BankAccountPayload {
                                        String accountType,
                                        String holderTaxId,
                                        String bankId,
+                                       String nationalAccountId,
                                        long maxTradePeriod,
                                        @Nullable Map<String, String> excludeFromJsonDataMap) {
         super(paymentMethodName,
@@ -68,6 +69,7 @@ public final class NationalBankAccountPayload extends BankAccountPayload {
                 accountType,
                 holderTaxId,
                 bankId,
+                nationalAccountId,
                 maxTradePeriod,
                 excludeFromJsonDataMap);
     }
@@ -101,6 +103,7 @@ public final class NationalBankAccountPayload extends BankAccountPayload {
                 bankAccountPayloadPB.getAccountType().isEmpty() ? null : bankAccountPayloadPB.getAccountType(),
                 bankAccountPayloadPB.getHolderTaxId().isEmpty() ? null : bankAccountPayloadPB.getHolderTaxId(),
                 bankAccountPayloadPB.getBankId().isEmpty() ? null : bankAccountPayloadPB.getBankId(),
+                bankAccountPayloadPB.getNationalAccountId().isEmpty() ? null : bankAccountPayloadPB.getNationalAccountId(),
                 proto.getMaxTradePeriod(),
                 CollectionUtils.isEmpty(proto.getExcludeFromJsonDataMap()) ? null : new HashMap<>(proto.getExcludeFromJsonDataMap()));
     }
