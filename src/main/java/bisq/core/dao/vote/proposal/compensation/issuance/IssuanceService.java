@@ -316,12 +316,12 @@ public class IssuanceService implements BsqBlockChain.Listener {
                 long reachedThreshold = voteResultPerProposal.getStakeOfAcceptedVotes() * 10_000 / totalStake;
                 // E.g. returns 5000 for 50% or 0.5 from the division of acceptedVotes/totalStake
                 final long requiredVoteThreshold = readableBsqBlockChain.getVoteThreshold();
-                log.info("reachedThreshold " + reachedThreshold);
-                log.info("requiredVoteThreshold " + requiredVoteThreshold);
+                log.info("reachedThreshold {} %", reachedThreshold / 100D);
+                log.info("requiredVoteThreshold {} %", requiredVoteThreshold / 100D);
                 if (reachedThreshold >= requiredVoteThreshold) {
                     processAcceptedCompletedVoteResult(proposalPayload, writableBsqBlockChain, readableBsqBlockChain);
                 } else {
-                    log.warn("We did not reach the quorum. reachedThreshold={}, requiredVoteThreshold={}", reachedThreshold, requiredVoteThreshold);
+                    log.warn("We did not reach the quorum. reachedThreshold={} %, requiredVoteThreshold={} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 }
             } else {
                 log.warn("We did not reach the quorum. totalStake={}, quorum={}", totalStake, quorum);

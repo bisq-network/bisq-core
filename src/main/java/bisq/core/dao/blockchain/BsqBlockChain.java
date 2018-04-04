@@ -511,9 +511,8 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-    // We don't use getUnspentTxOutputs as after the reveal tx the output is spent
     public Set<TxOutput> getBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getVerifiedTxOutputs().stream()
+        return lock.read(() -> getUnspentTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }

@@ -153,7 +153,7 @@ public class BsqTxController {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + model.getOpReturnTypeCandidate() +
                         " / verifiedOpReturnType=" + model.getVerifiedOpReturnType();
-                DevEnv.logErrorAndThrowIfDevMode(msg);
+                log.error(msg);
             }
         } else {
             final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
