@@ -655,31 +655,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         });
     }
 
-    //TODO not impl yet
-    @Override
-    public boolean isProposalPeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
-
-    //TODO not impl yet
-    @Override
-    public boolean isBlindVotePeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
-    //TODO not impl yet
-    @Override
-    public boolean isVoteRevealPeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
-    boolean existsCompensationRequestBtcAddress(String btcAddress) {
-        return lock.read(() -> getAllTxOutputs().stream()
-                .anyMatch(txOutput -> txOutput.isCompensationRequestBtcOutput() &&
-                        btcAddress.equals(txOutput.getAddress())));
-    }
-
     private void printNewBlock(BsqBlock bsqBlock) {
         log.debug("\nchainHeadHeight={}\n" +
                         "    blocks.size={}\n" +

@@ -38,6 +38,10 @@ public interface ReadableBsqBlockChain {
 
     void removeListener(BsqBlockChain.Listener listener);
 
+    void addIssuanceListener(BsqBlockChain.IssuanceListener listener);
+
+    void removeIssuanceListener(BsqBlockChain.IssuanceListener listener);
+
 
     int getChainHeadHeight();
 
@@ -85,12 +89,6 @@ public interface ReadableBsqBlockChain {
 
     long getBlockTime(int height);
 
-    boolean isProposalPeriodValid(int blockHeight);
-
-    boolean isBlindVotePeriodValid(int blockHeight);
-
-    boolean isVoteRevealPeriodValid(int blockHeight);
-
     long getProposalFee(int blockHeight);
 
     long getBlindVoteFee(int blockHeight);
@@ -109,13 +107,7 @@ public interface ReadableBsqBlockChain {
 
     LinkedList<BsqBlock> getBsqBlocks();
 
-    void addIssuanceListener(BsqBlockChain.IssuanceListener listener);
-
-    void removeIssuanceListener(BsqBlockChain.IssuanceListener listener);
-
     BsqBlockChain getClone();
 
     BsqBlockChain getClone(BsqBlockChain bsqBlockChain);
-
-
 }

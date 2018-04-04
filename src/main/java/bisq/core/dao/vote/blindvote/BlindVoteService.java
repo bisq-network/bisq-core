@@ -47,14 +47,13 @@ import javax.inject.Inject;
 
 import com.google.common.util.concurrent.FutureCallback;
 
-import javafx.collections.transformation.FilteredList;
-
 import javax.crypto.SecretKey;
 
 import java.security.PublicKey;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -213,7 +212,8 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     }
 
     private ProposalList getSortedProposalList() {
-        FilteredList<Proposal> proposals = proposalService.getActiveProposals();
+        // Need to clone as we cannot sort a filteredList
+        List<Proposal> proposals = new ArrayList<>(proposalService.getActiveProposals());
         BlindVoteConsensus.sortProposalList(proposals);
         return new ProposalList(proposals);
     }

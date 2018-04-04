@@ -19,13 +19,11 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
-import bisq.core.provider.fee.FeeService;
 
 import bisq.network.p2p.P2PService;
 
@@ -54,19 +52,15 @@ public class FullNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public FullNode(WritableBsqBlockChain writableBsqBlockChain,
-                    ReadableBsqBlockChain readableBsqBlockChain,
+    public FullNode(ReadableBsqBlockChain readableBsqBlockChain,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     FullNodeExecutor bsqFullNodeExecutor,
                     JsonBlockChainExporter jsonBlockChainExporter,
-                    FeeService feeService,
                     FullNodeNetworkService fullNodeNetworkService) {
-        super(writableBsqBlockChain,
-                readableBsqBlockChain,
+        super(readableBsqBlockChain,
                 snapshotManager,
-                p2PService,
-                feeService);
+                p2PService);
         this.bsqFullNodeExecutor = bsqFullNodeExecutor;
         this.jsonBlockChainExporter = jsonBlockChainExporter;
         this.fullNodeNetworkService = fullNodeNetworkService;

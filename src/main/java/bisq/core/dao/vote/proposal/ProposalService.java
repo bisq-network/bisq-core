@@ -19,7 +19,9 @@ package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
@@ -66,7 +68,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Manages proposal collections.
  */
 @Slf4j
-public class ProposalService implements PersistedDataHost, HashMapChangedListener {
+public class ProposalService implements PersistedDataHost, HashMapChangedListener, BsqBlockChain.Listener {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final PeriodService periodService;
@@ -103,9 +105,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
         this.proposalListStorage = proposalListStorage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-
-        activeProposals.setPredicate(proposal -> periodService.isTxInCurrentCycle(proposal.getTxId()));
-        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId()));
+        readableBsqBlockChain.addListener(this);
     }
 
 
@@ -122,6 +122,21 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                 this.observableList.addAll(persisted.getList());
             }
         }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqBlockChain.Listener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onBlockAdded(BsqBlock bsqBlock) {
+        upDatePredicate();
+    }
+
+    private void upDatePredicate() {
+        activeProposals.setPredicate(proposal -> periodService.isTxInCurrentCycle(proposal.getTxId()));
+        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId()));
     }
 
 
@@ -255,10 +270,13 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
 
     private void addProposal(ProposalPayload proposalPayload, boolean storeLocally) {
         if (!listContains(proposalPayload)) {
+            log.info("We got added a ProposalPayload from P2P network.\nProposalPayload={}" + proposalPayload);
             observableList.add(createSpecificProposal(proposalPayload));
 
             if (storeLocally)
                 persist();
+
+            upDatePredicate();
         } else {
             if (!isMine(proposalPayload))
                 log.warn("We already have an item with the same Proposal.");

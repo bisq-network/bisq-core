@@ -69,66 +69,6 @@ public class PeriodServiceTest {
     }
 
     @Test
-    public void isTxHeightInPhaseTest() {
-        // int height, int chainHeight, int genesisHeight, int numBlocksOfCycle, int totalPeriodInBlocks
-        assertFalse(service.isTxInPhase(1, 0, 0, 100, 300));
-        assertTrue(service.isTxInPhase(0, 0, 0, 100, 300));
-        assertTrue(service.isTxInPhase(0, 1, 0, 100, 300));
-        assertTrue(service.isTxInPhase(1, 1, 0, 100, 300));
-        assertTrue(service.isTxInPhase(1, 99, 0, 100, 300));
-        assertTrue(service.isTxInPhase(1, 100, 0, 100, 300));
-        assertTrue(service.isTxInPhase(99, 100, 0, 100, 300));
-        assertTrue(service.isTxInPhase(100, 100, 0, 100, 300));
-        assertFalse(service.isTxInPhase(1, 101, 0, 100, 300));
-        assertFalse(service.isTxInPhase(101, 100, 0, 100, 300));
-        assertFalse(service.isTxInPhase(101, 101, 0, 100, 300));
-
-        assertFalse(service.isTxInPhase(0, 0, 10, 100, 300));
-        assertFalse(service.isTxInPhase(1, 0, 10, 100, 300));
-        assertFalse(service.isTxInPhase(0, 1, 10, 100, 300));
-        assertFalse(service.isTxInPhase(9, 10, 10, 100, 300));
-        assertFalse(service.isTxInPhase(10, 9, 10, 100, 300));
-        assertTrue(service.isTxInPhase(10, 10, 10, 100, 300));
-        assertTrue(service.isTxInPhase(10, 109, 10, 100, 300));
-        assertTrue(service.isTxInPhase(10, 110, 10, 100, 300));
-        assertTrue(service.isTxInPhase(109, 110, 10, 100, 300));
-        assertTrue(service.isTxInPhase(110, 110, 10, 100, 300));
-        assertFalse(service.isTxInPhase(10, 111, 10, 100, 300));
-        assertFalse(service.isTxInPhase(111, 110, 10, 100, 300));
-        assertFalse(service.isTxInPhase(111, 111, 10, 100, 300));
-
-        assertFalse(service.isTxInPhase(0, 0, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1000, 0, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(0, 1000, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(999, 10, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1000, 999, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1000, 1000, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1000, 1099, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1000, 1100, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1099, 1100, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1100, 1100, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1000, 1101, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1101, 1100, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1100, 1101, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1101, 1101, 1000, 100, 300));
-
-        assertFalse(service.isTxInPhase(0, 0, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1300, 0, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(0, 1300, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1299, 10, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1300, 1299, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1300, 1300, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1300, 1399, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1300, 1400, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1399, 1400, 1000, 100, 300));
-        assertTrue(service.isTxInPhase(1400, 1400, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1300, 1401, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1401, 1400, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1400, 1401, 1000, 100, 300));
-        assertFalse(service.isTxInPhase(1401, 1401, 1000, 100, 300));
-    }
-
-    @Test
     public void getNumOfStartedCyclesTest() {
         // int chainHeight, int genesisHeight, int numBlocksOfCycle
         int numBlocksOfCycle = service.getNumBlocksOfCycle();
