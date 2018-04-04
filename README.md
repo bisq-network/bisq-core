@@ -1,1 +1,1 @@
-# bisq-core (by tamadcoin)
+# bisq-core

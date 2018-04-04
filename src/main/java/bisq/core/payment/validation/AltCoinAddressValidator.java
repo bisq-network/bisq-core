@@ -586,6 +586,11 @@ public final class AltCoinAddressValidator extends InputValidator {
                         return regexTestFailed;
                     }
 
+                case "TMC":
+                    if (!input.matches("^ax[A-Z][0-9ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{1,97}$"))
+                        return regexTestFailed;
+                    else
+                        return new ValidationResult(true);
                     // Add new coins at the end...
                 default:
                     log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
