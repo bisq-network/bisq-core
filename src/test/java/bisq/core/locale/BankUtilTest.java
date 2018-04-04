@@ -28,7 +28,7 @@ public class BankUtilTest {
         assertEquals("CUIT:", BankUtil.getHolderIdLabelShort(argentina));
 
         assertTrue(BankUtil.isNationalAccountIdRequired(argentina));
-        assertEquals("Número de CBU:", BankUtil.getNationalAccountIdLabel(argentina));
+        assertEquals("CBU number:", BankUtil.getNationalAccountIdLabel(argentina));
 
         assertTrue(BankUtil.isBankNameRequired(argentina));
 

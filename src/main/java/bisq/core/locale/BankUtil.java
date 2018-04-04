@@ -287,7 +287,7 @@ public class BankUtil {
     public static String getNationalAccountIdLabel(String countryCode) {
         switch (countryCode) {
             case "AR":
-                return "Número de CBU:"; // do not translate as it is used in spanish only
+                return Res.get("payment.national.account.id.AR");
             default:
                 return "";
         }
