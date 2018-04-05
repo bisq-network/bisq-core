@@ -24,8 +24,6 @@ import bisq.core.dao.blockchain.vo.TxOutput;
 public interface WritableBsqBlockChain {
 
     // state change
-    void applySnapshot(BsqBlockChain snapshot);
-
     void addBlock(BsqBlock bsqBlock);
 
     void setGenesisTx(Tx tx);
@@ -37,14 +35,4 @@ public interface WritableBsqBlockChain {
     void removeUnspentTxOutput(TxOutput spendableTxOutput);
 
     void issueBsq(TxOutput txOutput);
-
-
-    // not used yet outside of BsqBlockChain but leave it for later use
-    void setCreateCompensationRequestFee(long value, int genesisBlockHeight);
-
-    void setBlindVoteFee(long value, int genesisBlockHeight);
-
-    void setQuorum(long quorum, int blockHeight);
-
-    void setVoteThreshold(long voteThreshold, int blockHeight);
 }

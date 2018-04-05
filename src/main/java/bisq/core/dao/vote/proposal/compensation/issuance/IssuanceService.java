@@ -25,6 +25,8 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
@@ -78,6 +80,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
     private final VoteRevealService voteRevealService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final WritableBsqBlockChain writableBsqBlockChain;
+    private final DaoParamService daoParamService;
     private final PeriodService periodService;
     @Getter
     private final ObservableList<IssuanceException> issuanceExceptions = FXCollections.observableArrayList();
@@ -92,11 +95,13 @@ public class IssuanceService implements BsqBlockChain.Listener {
                            VoteRevealService voteRevealService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            WritableBsqBlockChain writableBsqBlockChain,
+                           DaoParamService daoParamService,
                            PeriodService periodService) {
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.writableBsqBlockChain = writableBsqBlockChain;
+        this.daoParamService = daoParamService;
         this.periodService = periodService;
     }
 
@@ -155,7 +160,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
             if (majorityVoteListHash != null) {
                 if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
                     Map<ProposalPayload, List<VoteResultWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(revealedVotes);
-                    processAllVoteResults(resultListByProposalPayloadMap, writableBsqBlockChain, readableBsqBlockChain);
+                    processAllVoteResults(resultListByProposalPayloadMap, daoParamService, writableBsqBlockChain, readableBsqBlockChain);
                     log.info("processAllVoteResults completed");
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
@@ -304,18 +309,19 @@ public class IssuanceService implements BsqBlockChain.Listener {
     }
 
     private void processAllVoteResults(Map<ProposalPayload, List<VoteResultWithStake>> map,
+                                       DaoParamService daoParamService,
                                        WritableBsqBlockChain writableBsqBlockChain,
                                        ReadableBsqBlockChain readableBsqBlockChain) {
         map.forEach((proposalPayload, voteResultsWithStake) -> {
             VoteResultPerProposal voteResultPerProposal = getDetailResult(voteResultsWithStake);
             long totalStake = voteResultPerProposal.getStakeOfAcceptedVotes() + voteResultPerProposal.getStakeOfRejectedVotes();
-            final long quorum = readableBsqBlockChain.getQuorum();
+            long quorum = getQuorum(daoParamService, proposalPayload);
             if (totalStake >= quorum) {
                 // we use multiplied of 1000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 long reachedThreshold = voteResultPerProposal.getStakeOfAcceptedVotes() * 10_000 / totalStake;
                 // E.g. returns 5000 for 50% or 0.5 from the division of acceptedVotes/totalStake
-                final long requiredVoteThreshold = readableBsqBlockChain.getVoteThreshold();
+                long requiredVoteThreshold = getThreshold(daoParamService, proposalPayload);
                 log.info("reachedThreshold {} %", reachedThreshold / 100D);
                 log.info("requiredVoteThreshold {} %", requiredVoteThreshold / 100D);
                 if (reachedThreshold >= requiredVoteThreshold) {
@@ -327,6 +333,38 @@ public class IssuanceService implements BsqBlockChain.Listener {
                 log.warn("We did not reach the quorum. totalStake={}, quorum={}", totalStake, quorum);
             }
         });
+    }
+
+    private long getQuorum(DaoParamService daoParamService, ProposalPayload proposalPayload) {
+        DaoParam daoParam;
+        if (proposalPayload instanceof CompensationRequestPayload)
+            daoParam = DaoParam.QUORUM_COMP_REQUEST;
+        else if (proposalPayload instanceof GenericProposalPayload)
+            daoParam = DaoParam.QUORUM_PROPOSAL;
+        else if (proposalPayload instanceof ChangeParamProposalPayload)
+            daoParam = DaoParam.QUORUM_CHANGE_PARAM;
+        else if (proposalPayload instanceof RemoveAssetProposalPayload)
+            daoParam = DaoParam.QUORUM_REMOVE_ASSET;
+        else
+            throw new RuntimeException("proposalPayload type is not reflected in DaoParam");
+
+        return daoParamService.getDaoParamValue(daoParam, readableBsqBlockChain.getChainHeadHeight());
+    }
+
+    private long getThreshold(DaoParamService daoParamService, ProposalPayload proposalPayload) {
+        DaoParam daoParam;
+        if (proposalPayload instanceof CompensationRequestPayload)
+            daoParam = DaoParam.THRESHOLD_COMP_REQUEST;
+        else if (proposalPayload instanceof GenericProposalPayload)
+            daoParam = DaoParam.THRESHOLD_PROPOSAL;
+        else if (proposalPayload instanceof ChangeParamProposalPayload)
+            daoParam = DaoParam.THRESHOLD_CHANGE_PARAM;
+        else if (proposalPayload instanceof RemoveAssetProposalPayload)
+            daoParam = DaoParam.THRESHOLD_REMOVE_ASSET;
+        else
+            throw new RuntimeException("proposalPayload type is not reflected in DaoParam");
+
+        return daoParamService.getDaoParamValue(daoParam, readableBsqBlockChain.getChainHeadHeight());
     }
 
     private VoteResultPerProposal getDetailResult(List<VoteResultWithStake> voteResultsWithStake) {

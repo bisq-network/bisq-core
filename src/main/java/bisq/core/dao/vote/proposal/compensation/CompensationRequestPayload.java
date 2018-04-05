@@ -179,4 +179,12 @@ public final class CompensationRequestPayload extends ProposalPayload {
         return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
     }
 
+
+    @Override
+    public String toString() {
+        return "CompensationRequestPayload{" +
+                "\n     requestedBsq=" + requestedBsq +
+                ",\n     bsqAddress='" + bsqAddress + '\'' +
+                "\n} " + super.toString();
+    }
 }

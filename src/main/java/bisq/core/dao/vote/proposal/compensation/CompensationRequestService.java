@@ -22,6 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ValidationException;
 
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class CompensationRequestService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
+    private final DaoParamService daoParamService;
     private final PublicKey signaturePubKey;
     private final ReadableBsqBlockChain readableBsqBlockChain;
 
@@ -55,10 +57,12 @@ public class CompensationRequestService {
     public CompensationRequestService(BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
                                       ReadableBsqBlockChain readableBsqBlockChain,
+                                      DaoParamService daoParamService,
                                       KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.daoParamService = daoParamService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -92,7 +96,7 @@ public class CompensationRequestService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
         CompensationRequest compensationRequest = new CompensationRequest(payload);
 
-        final Coin fee = ProposalConsensus.getFee(readableBsqBlockChain);
+        final Coin fee = ProposalConsensus.getFee(daoParamService, readableBsqBlockChain);
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

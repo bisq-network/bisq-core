@@ -17,11 +17,12 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
@@ -37,12 +38,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class OpReturnBlindVoteController {
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final DaoParamService daoParamService;
     private final PeriodService periodService;
 
     @Inject
-    public OpReturnBlindVoteController(ReadableBsqBlockChain readableBsqBlockChain, PeriodService periodService) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
+    public OpReturnBlindVoteController(DaoParamService daoParamService, PeriodService periodService) {
+        this.daoParamService = daoParamService;
         this.periodService = periodService;
     }
 
@@ -50,7 +51,7 @@ public class OpReturnBlindVoteController {
         if (model.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 Version.BLIND_VOTE_VERSION == opReturnData[1] &&
-                bsqFee == readableBsqBlockChain.getBlindVoteFee(blockHeight) &&
+                bsqFee == daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE)) {
             txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);

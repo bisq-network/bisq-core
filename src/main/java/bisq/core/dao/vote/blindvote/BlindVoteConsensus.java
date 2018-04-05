@@ -19,6 +19,8 @@ package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
 
@@ -45,9 +47,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-    // In satoshi
-    public static final long DEFAULT_FEE = 200;
-
     public static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
     }
@@ -89,8 +88,9 @@ public class BlindVoteConsensus {
         }
     }
 
-    public static Coin getFee(ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(readableBsqBlockChain.getBlindVoteFee(readableBsqBlockChain.getChainHeadHeight()));
+    public static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
+        return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE,
+                readableBsqBlockChain.getChainHeadHeight()));
     }
 
     public static void sortedBlindVoteList(List<BlindVote> list) {

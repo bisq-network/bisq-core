@@ -27,6 +27,7 @@ import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -159,5 +160,18 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     @Override
     public List<Integer> getRequiredCapabilities() {
         return new ArrayList<>(Collections.singletonList(Capabilities.Capability.VOTE.ordinal()));
+    }
+
+
+    @Override
+    public String toString() {
+        return "BlindVote{" +
+                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedProposalList) +
+                ",\n     txId='" + txId + '\'' +
+                ",\n     stake=" + stake +
+                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
+                ",\n     ownerPubKey=" + ownerPubKey +
+                ",\n     extraDataMap=" + extraDataMap +
+                "\n}";
     }
 }

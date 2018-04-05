@@ -32,14 +32,6 @@ import javax.annotation.Nullable;
 
 @Slf4j
 public class IssuanceConsensus {
-    // Value in satoshi
-    public static final long DEFAULT_QUORUM = 100L; // 1 BSQ
-
-    // We want to avoid type double and use a long instead as that is used for all the param fields.
-    // 50 % is 5000 to provide precision of 2 (e.g. 50.00 %).
-    public static final long DEFAULT_VOTE_THRESHOLD = 50L * 100;
-
-
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
     public static byte[] getBlindVoteListHash(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);

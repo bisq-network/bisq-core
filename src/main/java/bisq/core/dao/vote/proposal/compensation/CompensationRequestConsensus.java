@@ -30,9 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CompensationRequestConsensus {
-    // In satoshi
-    public static final long DEFAULT_FEE = 100;
-
     public static Coin getMinCompensationRequestAmount() {
         return Coin.valueOf(5_000); // 50 BSQ
     }

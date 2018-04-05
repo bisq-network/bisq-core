@@ -45,6 +45,7 @@ import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVoteService;
@@ -90,6 +91,7 @@ public class DaoModule extends AppModule {
         bind(ReadableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(WritableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
+        bind(DaoParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 
         bind(GenesisTxController.class).in(Singleton.class);
