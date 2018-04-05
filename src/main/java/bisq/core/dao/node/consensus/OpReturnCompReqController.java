@@ -23,6 +23,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.vote.Cycles;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
@@ -52,7 +53,7 @@ public class OpReturnCompReqController {
                 opReturnData.length == 22 &&
                 Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
+                periodService.isInPhase(blockHeight, Cycles.Phase.PROPOSAL)) {
             txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
 

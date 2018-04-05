@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.myvote;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.vote.Cycles;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalList;
@@ -137,7 +138,7 @@ public class MyVoteService implements PersistedDataHost {
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
                 .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
-                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Cycles.Phase.BLIND_VOTE))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {
