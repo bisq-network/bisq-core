@@ -988,6 +988,7 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         assertFalse(validator.validate("").isValid);
     }
 
+
     private void testDefaultValidator(String currencyCode) {
         validator.setCurrencyCode(currencyCode);
 
@@ -1012,4 +1013,7 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         assertFalse(validator.validate("2a65Aca4D5fC5B5C859090a6c34d16413539822g").isValid);
         assertFalse(validator.validate("").isValid);
     }
+
+    
+
 }
