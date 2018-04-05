@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.myvote;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
@@ -30,13 +30,17 @@ import java.util.stream.Collectors;
 
 public class MyVoteList extends PersistableList<MyVote> {
 
-    public MyVoteList(List<MyVote> list) {
-        super(list);
+    MyVoteList() {
+        super();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private MyVoteList(List<MyVote> list) {
+        super(list);
+    }
 
     @Override
     public Message toProtoMessage() {

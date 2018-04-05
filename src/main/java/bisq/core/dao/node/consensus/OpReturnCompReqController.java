@@ -18,9 +18,11 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
 
@@ -36,26 +38,34 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class OpReturnCompReqController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final PeriodService periodService;
 
     @Inject
-    public OpReturnCompReqController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnCompReqController(ReadableBsqBlockChain readableBsqBlockChain, PeriodService periodService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.periodService = periodService;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight, Model model) {
-        return model.getIssuanceCandidate() != null &&
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
+        if (model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
                 Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getProposalFee(blockHeight) &&
-                readableBsqBlockChain.isProposalPeriodValid(blockHeight);
-    }
+                periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
+            txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+            model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
 
-    public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+            checkArgument(model.getIssuanceCandidate() != null,
+                    "model.getCompRequestIssuanceOutputCandidate() must not be null");
+            model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+        } else {
+            log.info("We expected a compensation request op_return data but it did not " +
+                    "match our rules. tx={}", tx);
+            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
-        checkArgument(model.getIssuanceCandidate() != null,
-                "model.getCompRequestIssuanceOutputCandidate() must not be null");
-        model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+            // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
+            if (model.getIssuanceCandidate() != null)
+                model.getIssuanceCandidate().setTxOutputType(TxOutputType.BTC_OUTPUT);
+        }
     }
 }

@@ -17,9 +17,9 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
+import bisq.core.dao.vote.result.VoteResult;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;

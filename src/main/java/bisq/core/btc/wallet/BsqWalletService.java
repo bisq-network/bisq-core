@@ -446,13 +446,13 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
     // As the fee amount will be missing in the output those BSQ fees are burned.
     public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
-        addInputsForTx(tx, fee, bsqCoinSelector);
+        addInputsAndChangeOutputForTx(tx, fee, bsqCoinSelector);
         printTx("getPreparedFeeTx", tx);
         return tx;
     }
 
     // TODO add tests
-    private void addInputsForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
+    private void addInputsAndChangeOutputForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
             throws InsufficientBsqException {
         Coin requiredInput;
         // If our target is less then dust limit we increase it so we are sure to not get any dust output.
@@ -484,7 +484,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
     public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake) throws InsufficientBsqException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        addInputsForTx(tx, fee.add(stake), bsqCoinSelector);
+        addInputsAndChangeOutputForTx(tx, fee.add(stake), bsqCoinSelector);
         printTx("getPreparedBlindVoteTx", tx);
         return tx;
     }

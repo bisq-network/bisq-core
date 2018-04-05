@@ -19,13 +19,11 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.BsqNode;
-import bisq.core.dao.node.full.network.FullNodeNetworkManager;
-import bisq.core.provider.fee.FeeService;
+import bisq.core.dao.node.full.network.FullNodeNetworkService;
 
 import bisq.network.p2p.P2PService;
 
@@ -44,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FullNode extends BsqNode {
 
     private final FullNodeExecutor bsqFullNodeExecutor;
-    private final FullNodeNetworkManager fullNodeNetworkManager;
+    private final FullNodeNetworkService fullNodeNetworkService;
     private final JsonBlockChainExporter jsonBlockChainExporter;
 
 
@@ -54,22 +52,18 @@ public class FullNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public FullNode(WritableBsqBlockChain writableBsqBlockChain,
-                    ReadableBsqBlockChain readableBsqBlockChain,
+    public FullNode(ReadableBsqBlockChain readableBsqBlockChain,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     FullNodeExecutor bsqFullNodeExecutor,
                     JsonBlockChainExporter jsonBlockChainExporter,
-                    FeeService feeService,
-                    FullNodeNetworkManager fullNodeNetworkManager) {
-        super(writableBsqBlockChain,
-                readableBsqBlockChain,
+                    FullNodeNetworkService fullNodeNetworkService) {
+        super(readableBsqBlockChain,
                 snapshotManager,
-                p2PService,
-                feeService);
+                p2PService);
         this.bsqFullNodeExecutor = bsqFullNodeExecutor;
         this.jsonBlockChainExporter = jsonBlockChainExporter;
-        this.fullNodeNetworkManager = fullNodeNetworkManager;
+        this.fullNodeNetworkService = fullNodeNetworkService;
     }
 
 
@@ -92,7 +86,7 @@ public class FullNode extends BsqNode {
 
     public void shutDown() {
         jsonBlockChainExporter.shutDown();
-        fullNodeNetworkManager.shutDown();
+        fullNodeNetworkService.shutDown();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +109,7 @@ public class FullNode extends BsqNode {
     private void onNewBsqBlock(BsqBlock bsqBlock) {
         jsonBlockChainExporter.maybeExport();
         if (parseBlockchainComplete && p2pNetworkReady)
-            fullNodeNetworkManager.publishNewBlock(bsqBlock);
+            fullNodeNetworkService.publishNewBlock(bsqBlock);
     }
 
 

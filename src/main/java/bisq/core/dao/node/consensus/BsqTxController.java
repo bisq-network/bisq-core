@@ -76,9 +76,7 @@ public class BsqTxController {
                 writableBsqBlockChain.addTxToMap(tx);
             } else {
                 String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
-                log.error(msg);
-                if (DevEnv.isDevMode())
-                    throw new RuntimeException(msg);
+                DevEnv.logErrorAndThrowIfDevMode(msg);
             }
         }
 
@@ -155,9 +153,7 @@ public class BsqTxController {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + model.getOpReturnTypeCandidate() +
                         " / verifiedOpReturnType=" + model.getVerifiedOpReturnType();
-                log.warn(msg);
-                if (DevEnv.isDevMode())
-                    throw new RuntimeException(msg);
+                log.error(msg);
             }
         } else {
             final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;

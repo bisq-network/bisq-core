@@ -17,10 +17,11 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
 
@@ -35,26 +36,32 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class OpReturnVoteRevealController {
-
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final PeriodService periodService;
 
     @Inject
-    public OpReturnVoteRevealController(ReadableBsqBlockChain readableBsqBlockChain) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
+    public OpReturnVoteRevealController(PeriodService periodService) {
+        this.periodService = periodService;
     }
 
-    public boolean verify(byte[] opReturnData, int blockHeight, Model model) {
-        return model.isVoteStakeSpentAtInputs() &&
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, int blockHeight, Model model) {
+        if (model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 54 &&
                 Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
-                readableBsqBlockChain.isVoteRevealPeriodValid(blockHeight);
-    }
+                periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL)) {
+            txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
+            model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+            checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
+                    "model.getVoteRevealUnlockStakeOutput() must not be null");
+            model.getVoteRevealUnlockStakeOutput().setTxOutputType(TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
+        } else {
+            log.info("We expected a vote reveal op_return data but it did not " +
+                    "match our rules. tx={}", tx);
+            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
-    public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
-        checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
-                "model.getVoteRevealUnlockStakeOutput() must not be null");
-        model.getVoteRevealUnlockStakeOutput().setTxOutputType(TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
+            // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration
+            // that it is valid BSQ.
+            if (model.getVoteRevealUnlockStakeOutput() != null)
+                model.getVoteRevealUnlockStakeOutput().setTxOutputType(TxOutputType.BSQ_OUTPUT);
+        }
     }
 }

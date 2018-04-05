@@ -209,14 +209,6 @@ public class FeeService {
         return currencyForTakerFeeBtc ? Coin.valueOf(MIN_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_TAKER_FEE_IN_CENTI_BSQ);
     }
 
-    public Coin getMakeProposalFee() {
-        return Coin.valueOf(100);
-    }
-
-    public Coin getBlindVoteTxFee() {
-        return Coin.valueOf(200);
-    }
-
     public ReadOnlyIntegerProperty feeUpdateCounterProperty() {
         return feeUpdateCounter;
     }

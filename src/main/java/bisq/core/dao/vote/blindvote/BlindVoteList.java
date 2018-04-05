@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.blindvote;
 
-import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+import bisq.core.dao.vote.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
@@ -34,6 +34,10 @@ public class BlindVoteList extends PersistableList<BlindVote> implements VoteCon
 
     public BlindVoteList(List<BlindVote> list) {
         super(list);
+    }
+
+    BlindVoteList() {
+        super();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

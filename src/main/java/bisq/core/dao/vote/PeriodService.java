@@ -17,9 +17,10 @@
 
 package bisq.core.dao.vote;
 
-import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 
 import bisq.common.app.DevEnv;
@@ -33,6 +34,8 @@ import com.google.common.annotations.VisibleForTesting;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.Arrays;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class DaoPeriodService {
+public class PeriodService implements BsqBlockChain.Listener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -86,12 +89,10 @@ public class DaoPeriodService {
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final BtcWalletService btcWalletService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
-    private int chainHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -99,10 +100,8 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public DaoPeriodService(BtcWalletService btcWalletService,
-                            ReadableBsqBlockChain readableBsqBlockChain,
-                            @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.btcWalletService = btcWalletService;
+    public PeriodService(ReadableBsqBlockChain readableBsqBlockChain,
+                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.genesisBlockHeight = genesisBlockHeight;
     }
@@ -116,25 +115,33 @@ public class DaoPeriodService {
     }
 
     public void onAllServicesInitialized() {
-        btcWalletService.getChainHeightProperty().addListener((observable, oldValue, newValue) -> {
-            onChainHeightChanged((int) newValue);
-        });
-        onChainHeightChanged(btcWalletService.getChainHeightProperty().get());
+        readableBsqBlockChain.addListener(this);
+        onChainHeightChanged(readableBsqBlockChain.getChainHeadHeight());
     }
 
+    @Override
+    public void onBlockAdded(BsqBlock bsqBlock) {
+        onChainHeightChanged(bsqBlock.getHeight());
+    }
+
+    public boolean isInPhase(int blockHeight, Phase phase) {
+        int start = getBlockUntilPhaseStart(phase);
+        int end = getBlockUntilPhaseEnd(phase);
+        int numBlocksOfTxHeightSinceGenesis = blockHeight - genesisBlockHeight;
+        int heightInCycle = numBlocksOfTxHeightSinceGenesis % getNumBlocksOfCycle();
+        return heightInCycle >= start && heightInCycle < end;
+    }
+
+    // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
     public boolean isTxInPhase(String txId, Phase phase) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInPhase(tx.getBlockHeight(),
-                chainHeight,
-                genesisBlockHeight,
-                phase.getDurationInBlocks(),
-                getNumBlocksOfCycle());
+        return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
     public boolean isTxInCurrentCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInCurrentCycle(tx.getBlockHeight(),
-                chainHeight,
+                readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
@@ -142,7 +149,7 @@ public class DaoPeriodService {
     public boolean isTxInPastCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
         return tx != null && isTxInPastCycle(tx.getBlockHeight(),
-                chainHeight,
+                readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
@@ -186,8 +193,7 @@ public class DaoPeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void onChainHeightChanged(int chainHeight) {
-        this.chainHeight = chainHeight;
-        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, this.chainHeight, getNumBlocksOfCycle());
+        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
         phaseProperty.set(calculatePhase(relativeBlocksInCycle));
     }
 
@@ -196,9 +202,29 @@ public class DaoPeriodService {
         return (bestChainHeight - genesisHeight) % numBlocksOfCycle;
     }
 
+    int getBlockUntilPhaseStart(Phase target) {
+        int totalDuration = 0;
+        for (Phase phase : Arrays.asList(Phase.values())) {
+            if (phase == target)
+                break;
+            else
+                totalDuration += phase.getDurationInBlocks();
+        }
+        return totalDuration;
+    }
+
+    int getBlockUntilPhaseEnd(Phase target) {
+        int totalDuration = 0;
+        for (Phase phase : Arrays.asList(Phase.values())) {
+            totalDuration += phase.getDurationInBlocks();
+            if (phase == target)
+                break;
+        }
+        return totalDuration;
+    }
+
     @VisibleForTesting
     Phase calculatePhase(int blocksInNewPhase) {
-        log.info("blocksInNewPhase={}", blocksInNewPhase);
         if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks())
             return Phase.PROPOSAL;
         else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
@@ -249,19 +275,6 @@ public class DaoPeriodService {
                 throw new RuntimeException("blocksInNewPhase is not covered by phase checks. blocksInNewPhase=" + blocksInNewPhase);
             else
                 return Phase.UNDEFINED;
-        }
-    }
-
-    @VisibleForTesting
-    boolean isTxInPhase(int txHeight, int chainHeight, int genesisHeight, int requestPhaseInBlocks, int numBlocksOfCycle) {
-        if (txHeight >= genesisHeight && chainHeight >= genesisHeight && chainHeight >= txHeight) {
-            int numBlocksOfTxHeightSinceGenesis = txHeight - genesisHeight;
-            int numBlocksOfChainHeightSinceGenesis = chainHeight - genesisHeight;
-            int numBlocksOfTxHeightInCycle = numBlocksOfTxHeightSinceGenesis % numBlocksOfCycle;
-            int numBlocksOfChainHeightInCycle = numBlocksOfChainHeightSinceGenesis % numBlocksOfCycle;
-            return numBlocksOfTxHeightInCycle <= requestPhaseInBlocks && numBlocksOfChainHeightInCycle <= requestPhaseInBlocks;
-        } else {
-            return false;
         }
     }
 

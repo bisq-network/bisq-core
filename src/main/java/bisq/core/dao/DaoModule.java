@@ -39,17 +39,18 @@ import bisq.core.dao.node.consensus.TxOutputsController;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.full.FullNodeExecutor;
 import bisq.core.dao.node.full.FullNodeParser;
-import bisq.core.dao.node.full.network.FullNodeNetworkManager;
+import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.full.rpc.RpcService;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
-import bisq.core.dao.node.lite.network.LiteNodeNetworkManager;
-import bisq.core.dao.vote.DaoPeriodService;
+import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.issuance.IssuanceService;
+import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
+import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
 import bisq.core.dao.vote.proposal.generic.GenericProposalService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
@@ -70,23 +71,26 @@ public class DaoModule extends AppModule {
 
     @Override
     protected void configure() {
-        bind(DaoManager.class).in(Singleton.class);
+        bind(DaoSetup.class).in(Singleton.class);
 
-        bind(LiteNodeNetworkManager.class).in(Singleton.class);
-        bind(FullNodeNetworkManager.class).in(Singleton.class);
+        bind(BsqNodeProvider.class).in(Singleton.class);
 
-        bind(RpcService.class).in(Singleton.class);
+        bind(FullNode.class).in(Singleton.class);
         bind(FullNodeExecutor.class).in(Singleton.class);
+        bind(FullNodeNetworkService.class).in(Singleton.class);
+        bind(FullNodeParser.class).in(Singleton.class);
+        bind(RpcService.class).in(Singleton.class);
+
+        bind(LiteNode.class).in(Singleton.class);
+        bind(LiteNodeNetworkService.class).in(Singleton.class);
         bind(LiteNodeExecutor.class).in(Singleton.class);
         bind(LiteNodeParser.class).in(Singleton.class);
-        bind(FullNodeParser.class).in(Singleton.class);
-        bind(LiteNode.class).in(Singleton.class);
-        bind(FullNode.class).in(Singleton.class);
-        bind(BsqNodeProvider.class).in(Singleton.class);
+
         bind(BsqBlockChain.class).in(Singleton.class);
         bind(ReadableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(WritableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
+        bind(JsonBlockChainExporter.class).in(Singleton.class);
 
         bind(GenesisTxController.class).in(Singleton.class);
         bind(GenesisTxOutputController.class).in(Singleton.class);
@@ -102,12 +106,11 @@ public class DaoModule extends AppModule {
         bind(OpReturnVoteRevealController.class).in(Singleton.class);
         bind(IssuanceController.class).in(Singleton.class);
 
-        bind(JsonBlockChainExporter.class).in(Singleton.class);
-        bind(DaoPeriodService.class).in(Singleton.class);
-
+        bind(PeriodService.class).in(Singleton.class);
         bind(ProposalService.class).in(Singleton.class);
         bind(CompensationRequestService.class).in(Singleton.class);
         bind(GenericProposalService.class).in(Singleton.class);
+        bind(MyVoteService.class).in(Singleton.class);
         bind(BlindVoteService.class).in(Singleton.class);
         bind(VoteRevealService.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);

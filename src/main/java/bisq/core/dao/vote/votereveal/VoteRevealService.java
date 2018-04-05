@@ -26,11 +26,13 @@ import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.vote.DaoPeriodService;
-import bisq.core.dao.vote.MyVote;
+import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.votereveal.consensus.VoteRevealConsensus;
+import bisq.core.dao.vote.myvote.MyVote;
+import bisq.core.dao.vote.myvote.MyVoteService;
 
 import bisq.common.util.Utilities;
 
@@ -47,7 +49,9 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +65,8 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteRevealService implements BsqBlockChain.Listener {
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final DaoPeriodService daoPeriodService;
+    private final MyVoteService myVoteService;
+    private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
@@ -69,7 +74,6 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Getter
     private final ObservableList<VoteRevealException> voteRevealExceptions = FXCollections.observableArrayList();
-    private BsqBlockChain.Listener bsqBlockChainListener;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -78,13 +82,15 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Inject
     public VoteRevealService(ReadableBsqBlockChain readableBsqBlockChain,
-                             DaoPeriodService daoPeriodService,
+                             MyVoteService myVoteService,
+                             PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager,
                              BlindVoteService blindVoteService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.daoPeriodService = daoPeriodService;
+        this.myVoteService = myVoteService;
+        this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
@@ -114,12 +120,24 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        if (daoPeriodService.getPhaseForHeight(bsqBlock.getHeight()) == DaoPeriodService.Phase.VOTE_REVEAL) {
+        if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
+            log.info("blockHeight " + bsqBlock.getHeight());
             maybeRevealVotes();
         }
     }
+
+    public BlindVoteList getSortedBlindVoteListForCurrentCycle() {
+        final List<BlindVote> list = getBlindVoteListForCurrentCycle();
+        BlindVoteConsensus.sortedBlindVoteList(list);
+        return new BlindVoteList(list);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Creation of vote reveal tx is done without user activity!
     // We create automatically the vote reveal tx when we enter the reveal phase of the current cycle when
@@ -127,9 +145,9 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes() {
-        blindVoteService.getMyVotesList().stream()
+        myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
-                /*.filter(myVote -> daoPeriodService.isTxInCurrentCycle(myVote.getTxId()))*/  //TODO
+                .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to
@@ -148,7 +166,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     private void revealVote(MyVote myVote) throws IOException, WalletException, InsufficientMoneyException,
             TransactionVerificationException, VoteRevealException {
-        final BlindVoteList blindVoteList = new BlindVoteList(blindVoteService.getBlindVoteListForCurrentCycle());
+        final BlindVoteList blindVoteList = getSortedBlindVoteListForCurrentCycle();
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
@@ -171,7 +189,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         // We get logged a waring in the Broadcaster.broadcastTx method if we don't get the tx broadcasted in
         // 8 seconds.
         //TODO add timeout error to broadcaster API
-        applyStateChange(myVote, stakeTxOutput, voteRevealTx);
+        myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
         walletsManager.publishAndCommitBsqTx(voteRevealTx, new FutureCallback<Transaction>() {
             @Override
@@ -186,17 +204,16 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         });
     }
 
+    private List<BlindVote> getBlindVoteListForCurrentCycle() {
+        return blindVoteService.getBlindVoteList().stream()
+                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
+                .collect(Collectors.toList());
+    }
+
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
         Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(stakeTxOutput);
         Transaction txWithBtcFee = btcWalletService.completePreparedVoteRevealTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
-    }
-
-    private void applyStateChange(MyVote myVote, TxOutput stakeTxOutput, Transaction voteRevealTx) {
-        log.info("applyStateChange myVote={}, voteRevealTxId={}", myVote, voteRevealTx.getHashAsString());
-        myVote.setRevealTxId(voteRevealTx.getHashAsString());
-        blindVoteService.persistMyVoteListStorage();
-        //VoteRevealConsensus.unlockStakeTxOutputType(stakeTxOutput);
     }
 }

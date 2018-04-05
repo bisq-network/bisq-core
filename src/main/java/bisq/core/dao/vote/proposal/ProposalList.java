@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.vote.consensus.VoteConsensusCritical;
+import bisq.core.dao.vote.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
@@ -33,9 +33,19 @@ import java.util.stream.Collectors;
  * PersistableEnvelope wrapper for list of proposals. Used in vote consensus, so changes can break consensus!
  */
 public class ProposalList extends PersistableList<Proposal> implements VoteConsensusCritical {
+
     public ProposalList(List<Proposal> list) {
         super(list);
     }
+
+    public ProposalList() {
+        super();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope proto = proposalList.toProtoMessage();

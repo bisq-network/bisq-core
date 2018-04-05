@@ -141,9 +141,7 @@ public abstract class BsqParser {
                 final String msg = "We exceeded our max. recursions for resolveConnectedTxs.\n" +
                         "txsWithInputsFromSameBlock=" + txsWithInputsFromSameBlock.toString() + "\n" +
                         "txsWithoutInputsFromSameBlock=" + txsWithoutInputsFromSameBlock;
-                log.warn(msg);
-                if (DevEnv.isDevMode())
-                    throw new RuntimeException(msg);
+                DevEnv.logErrorAndThrowIfDevMode(msg);
             }
         } else {
             log.debug("We have no more txsWithInputsFromSameBlock.");

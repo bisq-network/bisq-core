@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.result;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.network.NetworkPayload;
@@ -36,8 +36,8 @@ public abstract class VoteResult implements PersistablePayload, NetworkPayload {
         switch (proto.getMessageCase()) {
             case BOOLEAN_VOTE_RESULT:
                 return BooleanVoteResult.fromProto(proto);
-            case INTEGER_VOTE_RESULT:
-                return IntegerVoteResult.fromProto(proto);
+            case LONG_VOTE_RESULT:
+                return LongVoteResult.fromProto(proto);
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }
