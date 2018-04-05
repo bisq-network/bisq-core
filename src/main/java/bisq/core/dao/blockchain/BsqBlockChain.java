@@ -24,6 +24,9 @@ import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
+import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
+import bisq.core.dao.vote.proposal.compensation.CompensationRequestConsensus;
+import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceConsensus;
 
 import bisq.common.UserThread;
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -61,11 +64,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Mutual state of the BSQ blockchain data.
  * <p>
- * We only have one thread which is writing data from the lite node or full node executors).
+ * We only have one thread which is writing data from the lite node or full node executors.
  * We use ReentrantReadWriteLock in a functional style.
  * <p>
  * We limit the access to BsqBlockChain over interfaces for read (ReadableBsqBlockChain) and
  * write (WritableBsqBlockChain) to have better overview and control about access.
+ * <p>
+ * TODO consider refactoring to move data access to a ChainStateService class.
  */
 @Slf4j
 public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain, ReadableBsqBlockChain {
@@ -114,8 +119,11 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     private final Map<TxIdIndexTuple, TxOutput> unspentTxOutputsMap;
 
     // not impl in PB yet
+    //TODO create better data structure
     private final Set<Tuple2<Long, Integer>> proposalFees;
     private final Set<Tuple2<Long, Integer>> blindVoteFees;
+    private final Set<Tuple2<Long, Integer>> quorumByHeight;
+    private final Set<Tuple2<Long, Integer>> voteThresholdByHeight;
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
@@ -135,17 +143,13 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     @Inject
     public BsqBlockChain(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                          @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.genesisTxId = genesisTxId;
-        this.genesisBlockHeight = genesisBlockHeight;
-
-
-        bsqBlocks = new LinkedList<>();
-        txMap = new HashMap<>();
-        unspentTxOutputsMap = new HashMap<>();
-        proposalFees = new HashSet<>();
-        blindVoteFees = new HashSet<>();
-
-        lock = new FunctionalReadWriteLock(true);
+        this(new LinkedList<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                genesisTxId,
+                genesisBlockHeight,
+                0,
+                null);
     }
 
 
@@ -170,9 +174,17 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
         lock = new FunctionalReadWriteLock(true);
 
-        // TODO not impl yet in PB
+        // TODO Apply from PB once implemented
         proposalFees = new HashSet<>();
         blindVoteFees = new HashSet<>();
+        quorumByHeight = new HashSet<>();
+        voteThresholdByHeight = new HashSet<>();
+
+        // move to base constructor once PB implemented
+        setCreateCompensationRequestFee(CompensationRequestConsensus.DEFAULT_FEE, genesisBlockHeight);
+        setBlindVoteFee(BlindVoteConsensus.DEFAULT_FEE, genesisBlockHeight);
+        setQuorum(IssuanceConsensus.DEFAULT_QUORUM, genesisBlockHeight);
+        setVoteThreshold(IssuanceConsensus.DEFAULT_VOTE_THRESHOLD, genesisBlockHeight);
     }
 
     @Override
@@ -220,31 +232,23 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void addListener(Listener listener) {
-        lock.write(() -> {
-            listeners.add(listener);
-        });
+    public synchronized void addListener(Listener listener) {
+        listeners.add(listener);
     }
 
     @Override
-    public void removeListener(Listener listener) {
-        lock.write(() -> {
-            listeners.remove(listener);
-        });
+    public synchronized void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
     @Override
-    public void addIssuanceListener(IssuanceListener listener) {
-        lock.write(() -> {
-            issuanceListeners.add(listener);
-        });
+    public synchronized void addIssuanceListener(IssuanceListener listener) {
+        issuanceListeners.add(listener);
     }
 
     @Override
-    public void removeIssuanceListener(IssuanceListener listener) {
-        lock.write(() -> {
-            issuanceListeners.remove(listener);
-        });
+    public synchronized void removeIssuanceListener(IssuanceListener listener) {
+        issuanceListeners.remove(listener);
     }
 
 
@@ -345,12 +349,26 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @Override
     public void setCreateCompensationRequestFee(long fee, int blockHeight) {
-        lock.write(() -> proposalFees.add(new Tuple2<>(fee, blockHeight)));
+        lock.write(() -> setParam(proposalFees, fee, blockHeight));
     }
 
     @Override
     public void setBlindVoteFee(long fee, int blockHeight) {
-        lock.write(() -> blindVoteFees.add(new Tuple2<>(fee, blockHeight)));
+        lock.write(() -> setParam(blindVoteFees, fee, blockHeight));
+    }
+
+    @Override
+    public void setQuorum(long quorum, int blockHeight) {
+        lock.write(() -> setParam(quorumByHeight, quorum, blockHeight));
+    }
+
+    @Override
+    public void setVoteThreshold(long voteThreshold, int blockHeight) {
+        lock.write(() -> setParam(voteThresholdByHeight, voteThreshold, blockHeight));
+    }
+
+    private void setParam(Set<Tuple2<Long, Integer>> set, long value, int blockHeight) {
+        lock.write(() -> set.add(new Tuple2<>(value, blockHeight)));
     }
 
 
@@ -599,41 +617,41 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         });
     }
 
-    //TODO not impl yet
-    @Override
-    public boolean isProposalPeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
     @Override
     public long getBlindVoteFee(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(blindVoteFees, blockHeight));
+    }
+
+    @Override
+    public long getQuorum(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(quorumByHeight, blockHeight));
+    }
+
+    @Override
+    public long getVoteThreshold(int blockHeight) {
+        return lock.read(() -> getValueAtHeight(voteThresholdByHeight, blockHeight));
+    }
+
+    @Override
+    public long getVoteThreshold() {
+        return lock.read(() -> getVoteThreshold(chainHeadHeight));
+    }
+
+    @Override
+    public long getQuorum() {
+        return lock.read(() -> getQuorum(chainHeadHeight));
+    }
+
+    private long getValueAtHeight(Set<Tuple2<Long, Integer>> set, int blockHeight) {
         return lock.read(() -> {
-            long fee = -1;
-            for (Tuple2<Long, Integer> feeAtHeight : blindVoteFees) {
-                if (feeAtHeight.second <= blockHeight)
-                    fee = feeAtHeight.first;
+            long value = -1;
+            for (Tuple2<Long, Integer> currentValue : set) {
+                if (currentValue.second <= blockHeight)
+                    value = currentValue.first;
             }
-            checkArgument(fee > -1, "votingFee must be set");
-            return fee;
+            checkArgument(value > -1, "value must be set");
+            return value;
         });
-    }
-
-    //TODO not impl yet
-    @Override
-    public boolean isBlindVotePeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
-    //TODO not impl yet
-    @Override
-    public boolean isVoteRevealPeriodValid(int blockHeight) {
-        return lock.read(() -> true);
-    }
-
-    boolean existsCompensationRequestBtcAddress(String btcAddress) {
-        return lock.read(() -> getAllTxOutputs().stream()
-                .anyMatch(txOutput -> txOutput.isCompensationRequestBtcOutput() &&
-                        btcAddress.equals(txOutput.getAddress())));
     }
 
     private void printNewBlock(BsqBlock bsqBlock) {

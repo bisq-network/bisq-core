@@ -17,8 +17,8 @@
 
 package bisq.core.dao.vote.votereveal;
 
+import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.blindvote.BlindVote;
-import bisq.core.dao.vote.consensus.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.ProposalList;
 
 import bisq.common.proto.persistable.PersistablePayload;
@@ -43,11 +43,8 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     @Nullable
     private String revealTxId;
 
-    public RevealedVote(ProposalList proposalList,
-                        BlindVote blindVote) {
-        this(proposalList,
-                blindVote,
-                null);
+    public RevealedVote(ProposalList proposalList, BlindVote blindVote) {
+        this(proposalList, blindVote, null);
     }
 
 
@@ -55,9 +52,7 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private RevealedVote(ProposalList proposalList,
-                         BlindVote blindVote,
-                         @Nullable String revealTxId) {
+    private RevealedVote(ProposalList proposalList, BlindVote blindVote, @Nullable String revealTxId) {
         this.proposalList = proposalList;
         this.blindVote = blindVote;
         this.revealTxId = revealTxId;

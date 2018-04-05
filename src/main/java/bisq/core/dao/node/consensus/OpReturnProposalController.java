@@ -18,9 +18,11 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
 
@@ -34,21 +36,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OpReturnProposalController {
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final PeriodService periodService;
 
     @Inject
-    public OpReturnProposalController(ReadableBsqBlockChain readableBsqBlockChain) {
+    public OpReturnProposalController(ReadableBsqBlockChain readableBsqBlockChain, PeriodService periodService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.periodService = periodService;
     }
 
-    public boolean verify(byte[] opReturnData, long bsqFee, int blockHeight) {
-        return opReturnData.length == 22 &&
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
+        if (opReturnData.length == 22 &&
                 Version.PROPOSAL == opReturnData[1] &&
                 bsqFee == readableBsqBlockChain.getProposalFee(blockHeight) &&
-                readableBsqBlockChain.isProposalPeriodValid(blockHeight);
-    }
-
-    public void applyStateChange(TxOutput txOutput, Model model) {
-        txOutput.setTxOutputType(TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
-        model.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+                periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
+            txOutput.setTxOutputType(TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
+            model.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+        } else {
+            log.info("We expected a proposal op_return data but it did not " +
+                    "match our rules. tx={}", tx);
+            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
+        }
     }
 }

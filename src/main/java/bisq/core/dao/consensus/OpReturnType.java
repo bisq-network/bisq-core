@@ -26,8 +26,8 @@ import lombok.Getter;
  */
 
 public enum OpReturnType {
-    COMPENSATION_REQUEST((byte) 0x01),
     PROPOSAL((byte) 0x02),
+    COMPENSATION_REQUEST((byte) 0x01),
     BLIND_VOTE((byte) 0x03),
     VOTE_REVEAL((byte) 0x04),
     LOCK_UP((byte) 0x05),
@@ -41,10 +41,10 @@ public enum OpReturnType {
     }
 
     public static Optional<OpReturnType> getOpReturnType(byte type) {
-        if (type == COMPENSATION_REQUEST.getType())
-            return Optional.of(COMPENSATION_REQUEST);
-        else if (type == PROPOSAL.getType())
+        if (type == PROPOSAL.getType())
             return Optional.of(PROPOSAL);
+        else if (type == COMPENSATION_REQUEST.getType())
+            return Optional.of(COMPENSATION_REQUEST);
         else if (type == BLIND_VOTE.getType())
             return Optional.of(BLIND_VOTE);
         else if (type == VOTE_REVEAL.getType())

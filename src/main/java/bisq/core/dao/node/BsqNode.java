@@ -19,8 +19,6 @@ package bisq.core.dao.node;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.SnapshotManager;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
-import bisq.core.provider.fee.FeeService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
@@ -59,11 +57,9 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqNode(WritableBsqBlockChain writableBsqBlockChain,
-                   ReadableBsqBlockChain readableBsqBlockChain,
+    public BsqNode(ReadableBsqBlockChain readableBsqBlockChain,
                    SnapshotManager snapshotManager,
-                   P2PService p2PService,
-                   FeeService feeService) {
+                   P2PService p2PService) {
 
         this.p2PService = p2PService;
         this.readableBsqBlockChain = readableBsqBlockChain;
@@ -71,10 +67,6 @@ public abstract class BsqNode {
         genesisTxId = readableBsqBlockChain.getGenesisTxId();
         genesisBlockHeight = readableBsqBlockChain.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
-
-        writableBsqBlockChain.setCreateCompensationRequestFee(feeService.getMakeProposalFee().value,
-                genesisBlockHeight);
-        writableBsqBlockChain.setBlindVoteFee(feeService.getBlindVoteTxFee().value, genesisBlockHeight);
     }
 
 

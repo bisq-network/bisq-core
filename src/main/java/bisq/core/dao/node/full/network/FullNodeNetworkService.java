@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * Responsible for handling requests for BSQ blocks from lite nodes and for broadcasting new blocks to the P2P network.
  */
 @Slf4j
-public class FullNodeNetworkManager implements MessageListener, PeerManager.Listener {
+public class FullNodeNetworkService implements MessageListener, PeerManager.Listener {
 
     private static final long CLEANUP_TIMER = 120;
 
@@ -69,7 +69,7 @@ public class FullNodeNetworkManager implements MessageListener, PeerManager.List
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FullNodeNetworkManager(NetworkNode networkNode,
+    public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
                                   ReadableBsqBlockChain readableBsqBlockChain) {
@@ -77,7 +77,6 @@ public class FullNodeNetworkManager implements MessageListener, PeerManager.List
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;
         this.readableBsqBlockChain = readableBsqBlockChain;
-        // seedNodeAddresses can be empty (in case there is only 1 seed node, the seed node starting up has no other seed nodes)
 
         networkNode.addMessageListener(this);
         peerManager.addListener(this);

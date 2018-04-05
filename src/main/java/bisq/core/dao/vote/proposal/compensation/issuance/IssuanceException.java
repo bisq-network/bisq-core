@@ -15,11 +15,27 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.consensus;
+package bisq.core.dao.vote.proposal.compensation.issuance;
 
-/**
- * Marker interface for classes which are critical in the vote consensus process. Any changes in that class might cause
- * consensus failures with older versions.
- */
-public interface VoteConsensusCritical {
+import bisq.core.dao.vote.blindvote.BlindVote;
+
+import lombok.Getter;
+import lombok.ToString;
+
+import javax.annotation.Nullable;
+
+@ToString
+public class IssuanceException extends Exception {
+    @Getter
+    @Nullable
+    private BlindVote blindVote;
+
+    public IssuanceException(String message, Exception cause, BlindVote blindVote) {
+        super(message, cause);
+        this.blindVote = blindVote;
+    }
+
+    public IssuanceException(String message) {
+        super(message);
+    }
 }

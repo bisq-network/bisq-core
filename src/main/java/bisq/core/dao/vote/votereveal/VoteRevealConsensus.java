@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.votereveal.consensus;
+package bisq.core.dao.vote.votereveal;
 
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class VoteRevealConsensus {
+
     public static byte[] getHashOfBlindVoteList(BlindVoteList blindVoteList) {
         final byte[] bytes = blindVoteList.toProtoMessage().toByteArray();
         return Hash.getSha256Ripemd160hash(bytes);

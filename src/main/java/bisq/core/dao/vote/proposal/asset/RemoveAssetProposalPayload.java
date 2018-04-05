@@ -15,25 +15,25 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal.generic;
+package bisq.core.dao.vote.proposal.asset;
 
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+
+import bisq.network.p2p.NodeAddress;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.springframework.util.CollectionUtils;
-
 import java.security.PublicKey;
 
 import java.util.Date;
 import java.util.Map;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -43,23 +43,24 @@ import javax.annotation.Nullable;
  */
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-@Value
-public final class GenericProposalPayload extends ProposalPayload {
+@Data
+public final class RemoveAssetProposalPayload extends ProposalPayload {
 
-    public GenericProposalPayload(String uid,
-                                  String name,
-                                  String title,
-                                  String description,
-                                  String link,
-                                  PublicKey ownerPubKey,
-                                  Date creationDate) {
+    public RemoveAssetProposalPayload(String uid,
+                                      String name,
+                                      String title,
+                                      String description,
+                                      String link,
+                                      NodeAddress nodeAddress,
+                                      PublicKey ownerPubKey,
+                                      Date creationDate) {
         super(uid,
                 name,
                 title,
                 description,
                 link,
                 Sig.getPublicKeyBytes(ownerPubKey),
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.PROPOSAL,
                 creationDate.getTime(),
                 null,
                 null);
@@ -70,16 +71,17 @@ public final class GenericProposalPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GenericProposalPayload(String uid,
-                                   String name,
-                                   String title,
-                                   String description,
-                                   String link,
-                                   byte[] ownerPubKeyEncoded,
-                                   byte version,
-                                   long creationDate,
-                                   String txId,
-                                   @Nullable Map<String, String> extraDataMap) {
+    private RemoveAssetProposalPayload(String uid,
+                                       String name,
+                                       String title,
+                                       String description,
+                                       String link,
+                                       String nodeAddress,
+                                       byte[] ownerPubKeyEncoded,
+                                       byte version,
+                                       long creationDate,
+                                       String txId,
+                                       @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -94,24 +96,17 @@ public final class GenericProposalPayload extends ProposalPayload {
 
     @Override
     public PB.ProposalPayload.Builder getPayloadBuilder() {
-        return super.getPayloadBuilder().setGenericProposalPayload(PB.GenericProposalPayload.newBuilder());
+        //TODO impl
+        return null;
     }
 
-    public static GenericProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new GenericProposalPayload(proto.getUid(),
-                proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
-                proto.getLink(),
-                proto.getOwnerPubKeyEncoded().toByteArray(),
-                (byte) proto.getVersion(),
-                proto.getCreationDate(),
-                proto.getTxId(),
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+    public static RemoveAssetProposalPayload fromProto(PB.ProposalPayload proto) {
+        //TODO impl
+        return null;
     }
 
     @Override
     public ProposalType getType() {
-        return ProposalType.GENERIC;
+        return ProposalType.REMOVE_ALTCOIN;
     }
 }

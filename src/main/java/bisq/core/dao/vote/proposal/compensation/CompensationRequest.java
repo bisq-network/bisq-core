@@ -17,10 +17,10 @@
 
 package bisq.core.dao.vote.proposal.compensation;
 
-import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.result.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -35,8 +35,6 @@ import java.util.Map;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Locally persisted CompensationRequest data.
@@ -83,7 +81,6 @@ public class CompensationRequest extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Coin getRequestedBsq() {
-        checkNotNull(getCompensationRequestPayload());
         return getCompensationRequestPayload().getRequestedBsq();
     }
 

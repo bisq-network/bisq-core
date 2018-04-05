@@ -17,10 +17,10 @@
 
 package bisq.core.dao.vote.proposal.generic;
 
-import bisq.core.dao.vote.VoteResult;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.result.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
 

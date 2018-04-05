@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal.generic;
+package bisq.core.dao.vote.proposal.param;
 
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
@@ -24,8 +24,6 @@ import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
 
 import io.bisq.generated.protobuffer.PB;
-
-import org.springframework.util.CollectionUtils;
 
 import java.security.PublicKey;
 
@@ -44,22 +42,22 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Value
-public final class GenericProposalPayload extends ProposalPayload {
+public final class ChangeParamProposalPayload extends ProposalPayload {
 
-    public GenericProposalPayload(String uid,
-                                  String name,
-                                  String title,
-                                  String description,
-                                  String link,
-                                  PublicKey ownerPubKey,
-                                  Date creationDate) {
+    public ChangeParamProposalPayload(String uid,
+                                      String name,
+                                      String title,
+                                      String description,
+                                      String link,
+                                      PublicKey ownerPubKey,
+                                      Date creationDate) {
         super(uid,
                 name,
                 title,
                 description,
                 link,
                 Sig.getPublicKeyBytes(ownerPubKey),
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.PROPOSAL,
                 creationDate.getTime(),
                 null,
                 null);
@@ -70,16 +68,16 @@ public final class GenericProposalPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GenericProposalPayload(String uid,
-                                   String name,
-                                   String title,
-                                   String description,
-                                   String link,
-                                   byte[] ownerPubKeyEncoded,
-                                   byte version,
-                                   long creationDate,
-                                   String txId,
-                                   @Nullable Map<String, String> extraDataMap) {
+    private ChangeParamProposalPayload(String uid,
+                                       String name,
+                                       String title,
+                                       String description,
+                                       String link,
+                                       byte[] ownerPubKeyEncoded,
+                                       byte version,
+                                       long creationDate,
+                                       String txId,
+                                       @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -94,24 +92,17 @@ public final class GenericProposalPayload extends ProposalPayload {
 
     @Override
     public PB.ProposalPayload.Builder getPayloadBuilder() {
-        return super.getPayloadBuilder().setGenericProposalPayload(PB.GenericProposalPayload.newBuilder());
+        //TODO impl
+        return null;
     }
 
-    public static GenericProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new GenericProposalPayload(proto.getUid(),
-                proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
-                proto.getLink(),
-                proto.getOwnerPubKeyEncoded().toByteArray(),
-                (byte) proto.getVersion(),
-                proto.getCreationDate(),
-                proto.getTxId(),
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+    public static ChangeParamProposalPayload fromProto(PB.ProposalPayload proto) {
+        //TODO impl
+        return null;
     }
 
     @Override
     public ProposalType getType() {
-        return ProposalType.GENERIC;
+        return ProposalType.CHANGE_PARAM;
     }
 }

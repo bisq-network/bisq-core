@@ -54,6 +54,8 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
     protected String holderTaxId;
     @Nullable
     protected String bankId;
+    @Nullable
+    protected String nationalAccountId;
 
     public BankAccountPayload(String paymentMethod, String id) {
         super(paymentMethod, id);
@@ -74,6 +76,7 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
                                  String accountType,
                                  String holderTaxId,
                                  String bankId,
+                                 String nationalAccountId,
                                  long maxTradePeriod,
                                  @Nullable Map<String, String> excludeFromJsonDataMap) {
         super(paymentMethodName,
@@ -89,6 +92,7 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
         this.accountType = accountType;
         this.holderTaxId = holderTaxId;
         this.bankId = bankId;
+        this.nationalAccountId = nationalAccountId;
     }
 
     @Override
@@ -102,6 +106,7 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
         Optional.ofNullable(accountNr).ifPresent(builder::setAccountNr);
         Optional.ofNullable(accountType).ifPresent(builder::setAccountType);
         Optional.ofNullable(bankId).ifPresent(builder::setBankId);
+        Optional.ofNullable(nationalAccountId).ifPresent(builder::setNationalAccountId);
         final PB.CountryBasedPaymentAccountPayload.Builder countryBasedPaymentAccountPayloadBuilder = super.getPaymentAccountPayloadBuilder()
                 .getCountryBasedPaymentAccountPayloadBuilder()
                 .setBankAccountPayload(builder);
@@ -123,6 +128,8 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
                 BankUtil.getBankIdLabel(countryCode) + " " + this.bankId + "\n" : "";
         String branchId = BankUtil.isBranchIdRequired(countryCode) ?
                 BankUtil.getBranchIdLabel(countryCode) + " " + this.branchId + "\n" : "";
+        String nationalAccountId = BankUtil.isNationalAccountIdRequired(countryCode) ?
+                BankUtil.getNationalAccountIdLabel(countryCode) + " " + this.nationalAccountId + "\n" : "";
         String accountNr = BankUtil.isAccountNrRequired(countryCode) ?
                 BankUtil.getAccountNrLabel(countryCode) + " " + this.accountNr + "\n" : "";
         String accountType = BankUtil.isAccountTypeRequired(countryCode) ?
@@ -134,6 +141,7 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
                 bankName +
                 bankId +
                 branchId +
+                nationalAccountId +
                 accountNr +
                 accountType +
                 holderTaxIdString +
@@ -158,6 +166,7 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
         String accountType = BankUtil.isAccountTypeRequired(countryCode) ? this.accountType : "";
         String holderTaxIdString = BankUtil.isHolderIdRequired(countryCode) ?
                 (BankUtil.getHolderIdLabel(countryCode) + " " + holderTaxId + "\n") : "";
+        String nationalAccountId = BankUtil.isNationalAccountIdRequired(countryCode) ? this.nationalAccountId : "";
 
         // We don't add holderName because we don't want to break age validation if the user recreates an account with
         // slight changes in holder name (e.g. add or remove middle name)
@@ -167,7 +176,8 @@ public abstract class BankAccountPayload extends CountryBasedPaymentAccountPaylo
                 branchId +
                 accountNr +
                 accountType +
-                holderTaxIdString;
+                holderTaxIdString +
+                nationalAccountId;
 
         return super.getAgeWitnessInputData(all.getBytes(Charset.forName("UTF-8")));
     }
