@@ -69,8 +69,18 @@ public final class AltCoinAddressValidator extends InputValidator {
         return new ValidationResult(true);
     }
 
+
     private boolean assetMatchesSelectedCurrencyCode(Asset a) {
         return currencyCode.equals(a.getTickerSymbol());
+=======
+                
+                    // Add new coins at the end...
+                default:
+                    log.debug("Validation for AltCoinAddress not implemented yet. currencyCode: " + currencyCode);
+                    return validationResult;
+            }
+        }
+
     }
 
     private boolean assetIsNotBaseCurrencyForDifferentNetwork(Asset asset) {
