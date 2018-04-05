@@ -23,6 +23,7 @@ import bisq.core.dao.vote.proposal.ProposalList;
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -116,5 +117,18 @@ public class MyVote implements PersistablePayload {
 
     public String getTxId() {
         return blindVote.getTxId();
+    }
+
+
+    @Override
+    public String toString() {
+        return "MyVote{" +
+                "\n     proposalList=" + proposalList +
+                ",\n     secretKeyEncoded=" + Utilities.bytesAsHexString(secretKeyEncoded) +
+                ",\n     blindVote=" + blindVote +
+                ",\n     date=" + date +
+                ",\n     revealTxId='" + revealTxId + '\'' +
+                ",\n     secretKey=" + secretKey +
+                "\n}";
     }
 }

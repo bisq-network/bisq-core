@@ -41,7 +41,7 @@ public class BsqBlockChainTest {
 
     @Before
     public void setup() {
-        snapshotManager = new SnapshotManager(mock(ReadableBsqBlockChain.class), mock(WritableBsqBlockChain.class), mock(PersistenceProtoResolver.class), mock(File.class));
+        snapshotManager = new SnapshotManager(mock(BsqBlockChain.class), mock(PersistenceProtoResolver.class), mock(File.class));
     }
 
     @Test

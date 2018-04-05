@@ -41,32 +41,49 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SnapshotManager implements BsqBlockChain.Listener {
     private static final int SNAPSHOT_GRID = 10000;
 
-    private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final BsqBlockChain bsqBlockChain;
     private final Storage<BsqBlockChain> storage;
 
     private BsqBlockChain snapshotCandidate;
 
     @Inject
-    public SnapshotManager(ReadableBsqBlockChain readableBsqBlockChain,
-                           WritableBsqBlockChain writableBsqBlockChain,
+    public SnapshotManager(BsqBlockChain bsqBlockChain,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
-        this.writableBsqBlockChain = writableBsqBlockChain;
+        this.bsqBlockChain = bsqBlockChain;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        readableBsqBlockChain.addListener(this);
+        bsqBlockChain.addListener(this);
     }
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
-        BsqBlockChain snapshot = storage.initAndGetPersistedWithFileName("BsqBlockChain", 100);
-        if (snapshot != null) {
-            log.info("applySnapshot snapshot.chainHeadHeight=" + snapshot.getChainHeadHeight());
-            writableBsqBlockChain.applySnapshot(snapshot);
+        BsqBlockChain persisted = storage.initAndGetPersisted(bsqBlockChain, 100);
+        if (persisted != null) {
+            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getChainHeadHeight());
+            bsqBlockChain.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
+        }
+    }
+
+    @Override
+    public void onBlockAdded(BsqBlock bsqBlock) {
+        final int chainHeadHeight = bsqBlockChain.getChainHeadHeight();
+        if (isSnapshotHeight(chainHeadHeight) &&
+                (snapshotCandidate == null ||
+                        snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
+            // At trigger event we store the latest snapshotCandidate to disc
+            if (snapshotCandidate != null) {
+                // We clone because storage is in a threaded context
+                final BsqBlockChain cloned = bsqBlockChain.getClone(snapshotCandidate);
+                storage.queueUpForSave(cloned);
+                log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
+            }
+            // Now we clone and keep it in memory for the next trigger
+            snapshotCandidate = bsqBlockChain.getClone((BsqBlockChain) bsqBlockChain);
+            // don't access cloned anymore with methods as locks are transient!
+            log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
         }
     }
 
@@ -81,27 +98,7 @@ public class SnapshotManager implements BsqBlockChain.Listener {
     }
 
     private boolean isSnapshotHeight(int height) {
-        return isSnapshotHeight(readableBsqBlockChain.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
+        return isSnapshotHeight(bsqBlockChain.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
     }
 
-
-    @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
-        final int chainHeadHeight = readableBsqBlockChain.getChainHeadHeight();
-        if (isSnapshotHeight(chainHeadHeight) &&
-                (snapshotCandidate == null ||
-                        snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
-            // At trigger event we store the latest snapshotCandidate to disc
-            if (snapshotCandidate != null) {
-                // We clone because storage is in a threaded context
-                final BsqBlockChain cloned = readableBsqBlockChain.getClone(snapshotCandidate);
-                storage.queueUpForSave(cloned);
-                log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
-            }
-            // Now we clone and keep it in memory for the next trigger
-            snapshotCandidate = readableBsqBlockChain.getClone((BsqBlockChain) readableBsqBlockChain);
-            // don't access cloned anymore with methods as locks are transient!
-            log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
-        }
-    }
 }

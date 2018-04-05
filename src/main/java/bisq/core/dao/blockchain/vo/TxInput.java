@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
 import javax.annotation.Nullable;
 
@@ -36,7 +35,6 @@ import javax.annotation.Nullable;
  * txId and the index of the output. We use TxIdIndexTuple to encapsulate that.
  */
 @Getter
-@ToString
 @EqualsAndHashCode
 public class TxInput implements PersistablePayload {
 
@@ -100,5 +98,14 @@ public class TxInput implements PersistablePayload {
             this.connectedTxOutput = connectedTxOutput;
         else
             throw new IllegalStateException("Already set connectedTxOutput must not be changed.");
+    }
+
+    @Override
+    public String toString() {
+        return "TxInput{" +
+                "\n     connectedTxOutputTxId='" + connectedTxOutputTxId + '\'' +
+                ",\n     connectedTxOutputIndex=" + connectedTxOutputIndex +
+                ",\n     connectedTxOutput=" + connectedTxOutput +
+                "\n}";
     }
 }

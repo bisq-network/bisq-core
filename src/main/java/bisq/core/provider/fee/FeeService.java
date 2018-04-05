@@ -72,10 +72,10 @@ public class FeeService {
     private static long DEFAULT_MAKER_FEE_IN_BASE_CUR;
     private static long DEFAULT_TAKER_FEE_IN_BASE_CUR;
 
-    private static final long MIN_MAKER_FEE_IN_CENTI_BSQ = 5;
-    private static final long MIN_TAKER_FEE_IN_CENTI_BSQ = 5;
-    private static final long DEFAULT_MAKER_FEE_IN_CENTI_BSQ = 200; // about 2 USD at 1 BSQ = 1 USD for a 1 BTC trade
-    private static final long DEFAULT_TAKER_FEE_IN_CENTI_BSQ = 200;
+    private static final long MIN_MAKER_FEE_IN_BSQ = 5;
+    private static final long MIN_TAKER_FEE_IN_BSQ = 5;
+    private static final long DEFAULT_MAKER_FEE_IN_BSQ = 200; // about 2 USD at 1 BSQ = 1 USD for a 1 BTC trade
+    private static final long DEFAULT_TAKER_FEE_IN_BSQ = 200;
 
     public static final long MIN_PAUSE_BETWEEN_REQUESTS_IN_MIN = 2;
 
@@ -194,19 +194,19 @@ public class FeeService {
     }
 
     public static Coin getMakerFeePerBtc(boolean currencyForMakerFeeBtc) {
-        return currencyForMakerFeeBtc ? Coin.valueOf(DEFAULT_MAKER_FEE_IN_BASE_CUR) : Coin.valueOf(DEFAULT_MAKER_FEE_IN_CENTI_BSQ);
+        return currencyForMakerFeeBtc ? Coin.valueOf(DEFAULT_MAKER_FEE_IN_BASE_CUR) : Coin.valueOf(DEFAULT_MAKER_FEE_IN_BSQ);
     }
 
     public static Coin getMinMakerFee(boolean currencyForMakerFeeBtc) {
-        return currencyForMakerFeeBtc ? Coin.valueOf(MIN_MAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_MAKER_FEE_IN_CENTI_BSQ);
+        return currencyForMakerFeeBtc ? Coin.valueOf(MIN_MAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_MAKER_FEE_IN_BSQ);
     }
 
     public static Coin getTakerFeePerBtc(boolean currencyForTakerFeeBtc) {
-        return currencyForTakerFeeBtc ? Coin.valueOf(DEFAULT_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(DEFAULT_TAKER_FEE_IN_CENTI_BSQ);
+        return currencyForTakerFeeBtc ? Coin.valueOf(DEFAULT_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(DEFAULT_TAKER_FEE_IN_BSQ);
     }
 
     public static Coin getMinTakerFee(boolean currencyForTakerFeeBtc) {
-        return currencyForTakerFeeBtc ? Coin.valueOf(MIN_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_TAKER_FEE_IN_CENTI_BSQ);
+        return currencyForTakerFeeBtc ? Coin.valueOf(MIN_TAKER_FEE_IN_BASE_CUR) : Coin.valueOf(MIN_TAKER_FEE_IN_BSQ);
     }
 
     public ReadOnlyIntegerProperty feeUpdateCounterProperty() {

@@ -34,8 +34,6 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
-
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -95,7 +93,7 @@ public class BsqTxController {
         //noinspection OptionalIsPresent
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
-        } else {
+        } else if (model.getOpReturnTypeCandidate() == null) {
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -103,11 +101,13 @@ public class BsqTxController {
                 // No burned fee and no opReturn.
                 txType = TxType.TRANSFER_BSQ;
             }
+        } else {
+            // We got some OP_RETURN type but it failed at validation
+            txType = TxType.INVALID;
         }
         return txType;
     }
 
-    @NotNull
     private TxType getTxTypeForOpReturn(Tx tx, OpReturnType opReturnType) {
         TxType txType;
         switch (opReturnType) {

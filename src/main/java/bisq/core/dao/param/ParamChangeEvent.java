@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.vo;
+package bisq.core.dao.param;
 
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -24,36 +24,44 @@ import io.bisq.generated.protobuffer.PB;
 import lombok.Value;
 
 @Value
-public class SpentInfo implements PersistablePayload {
-    private final long blockHeight;
-    private final String txId;
-    private final int inputIndex;
+public class ParamChangeEvent implements PersistablePayload {
+    private final DaoParam daoParam;
+    private final long value;
+    private final int blockHeight;
+
+    public ParamChangeEvent(DaoParam daoParam, long value, int blockHeight) {
+        this.daoParam = daoParam;
+        this.value = value;
+        this.blockHeight = blockHeight;
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static SpentInfo fromProto(PB.SpentInfo proto) {
-        return new SpentInfo(proto.getBlockHeight(),
-                proto.getTxId(),
-                proto.getInputIndex());
+    @Override
+    public PB.ParamChangeEvent toProtoMessage() {
+        final PB.ParamChangeEvent.Builder builder = PB.ParamChangeEvent.newBuilder()
+                .setDaoParamOrdinal(daoParam.ordinal())
+                .setValue(value)
+                .setBlockHeight(blockHeight);
+        return builder.build();
     }
 
-    public PB.SpentInfo toProtoMessage() {
-        return PB.SpentInfo.newBuilder()
-                .setBlockHeight(blockHeight)
-                .setTxId(txId)
-                .setInputIndex(inputIndex)
-                .build();
+    public static ParamChangeEvent fromProto(PB.ParamChangeEvent proto) {
+        return new ParamChangeEvent(DaoParam.values()[proto.getDaoParamOrdinal()],
+                proto.getValue(),
+                proto.getBlockHeight());
     }
+
 
     @Override
     public String toString() {
-        return "SpentInfo{" +
-                "\n     blockHeight=" + blockHeight +
-                ",\n     txId='" + txId + '\'' +
-                ",\n     inputIndex=" + inputIndex +
+        return "ParamChangeEvent{" +
+                "\n     daoParam=" + daoParam +
+                ",\n     value=" + value +
+                ",\n     blockHeight=" + blockHeight +
                 "\n}";
     }
 }

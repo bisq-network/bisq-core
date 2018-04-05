@@ -28,6 +28,7 @@ import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -45,7 +46,6 @@ import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -62,7 +62,6 @@ import static org.apache.commons.lang3.Validate.notEmpty;
  */
 @Slf4j
 @Getter
-@ToString
 @EqualsAndHashCode
 public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload {
@@ -196,4 +195,22 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     }
 
     public abstract ProposalType getType();
+
+
+    @Override
+    public String toString() {
+        return "ProposalPayload{" +
+                "\n     uid='" + uid + '\'' +
+                ",\n     name='" + name + '\'' +
+                ",\n     title='" + title + '\'' +
+                ",\n     description='" + description + '\'' +
+                ",\n     link='" + link + '\'' +
+                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
+                ",\n     txId='" + txId + '\'' +
+                ",\n     version=" + version +
+                ",\n     creationDate=" + creationDate +
+                ",\n     extraDataMap=" + extraDataMap +
+                ",\n     ownerPubKey=" + ownerPubKey +
+                "\n}";
+    }
 }

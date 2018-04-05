@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.ProposalService;
@@ -38,6 +39,7 @@ public class DaoSetup {
     private final PeriodService periodService;
     private final ProposalService proposalService;
     private final BsqNode bsqNode;
+    private final DaoParamService daoParamService;
     private final VoteRevealService voteRevealService;
     private final IssuanceService issuanceService;
     private final BlindVoteService blindVoteService;
@@ -53,12 +55,14 @@ public class DaoSetup {
                     ProposalService proposalService,
                     BlindVoteService blindVoteService,
                     VoteRevealService voteRevealService,
-                    IssuanceService issuanceService) {
+                    IssuanceService issuanceService,
+                    DaoParamService daoParamService) {
         this.periodService = periodService;
         this.proposalService = proposalService;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.issuanceService = issuanceService;
+        this.daoParamService = daoParamService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
@@ -71,6 +75,7 @@ public class DaoSetup {
             blindVoteService.onAllServicesInitialized();
             voteRevealService.onAllServicesInitialized();
             issuanceService.onAllServicesInitialized();
+            daoParamService.onAllServicesInitialized();
         }
     }
 
@@ -82,6 +87,7 @@ public class DaoSetup {
             blindVoteService.shutDown();
             voteRevealService.shutDown();
             issuanceService.shutDown();
+            daoParamService.shutDown();
         }
     }
 }

@@ -93,11 +93,11 @@ public class BsqBlock implements PersistablePayload {
     @Override
     public String toString() {
         return "BsqBlock{" +
-                "\n     height=" + getHeight() +
-                ",\n     time='" + getTime() + '\'' +
-                ",\n     hash='" + getHash() + '\'' +
-                ",\n     previousBlockHash='" + getPreviousBlockHash() + '\'' +
-                ",\n     txs='" + txs + '\'' +
+                "\n     height=" + height +
+                ",\n     time=" + time +
+                ",\n     hash='" + hash + '\'' +
+                ",\n     previousBlockHash='" + previousBlockHash + '\'' +
+                ",\n     txs=" + txs +
                 "\n}";
     }
 }

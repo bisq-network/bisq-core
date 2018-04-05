@@ -24,6 +24,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
@@ -70,12 +71,13 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final ProposalService proposalService;
     private final MyVoteService myVoteService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final DaoParamService daoParamService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
     private final P2PService p2PService;
     private final PublicKey signaturePubKey;
-    private final Storage<BlindVoteList> blindVoteListStorage;
+    private final Storage<BlindVoteList> storage;
 
     // BlindVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
     private final BlindVoteList blindVoteList = new BlindVoteList();
@@ -89,22 +91,24 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     public BlindVoteService(ProposalService proposalService,
                             MyVoteService myVoteService,
                             ReadableBsqBlockChain readableBsqBlockChain,
+                            DaoParamService daoParamService,
                             BsqWalletService bsqWalletService,
                             BtcWalletService btcWalletService,
                             WalletsManager walletsManager,
                             P2PService p2PService,
                             KeyRing keyRing,
-                            Storage<BlindVoteList> blindVoteListStorage) {
+                            Storage<BlindVoteList> storage) {
         this.proposalService = proposalService;
         this.myVoteService = myVoteService;
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.daoParamService = daoParamService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
         this.p2PService = p2PService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-        this.blindVoteListStorage = blindVoteListStorage;
+        this.storage = storage;
     }
 
 
@@ -115,7 +119,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BlindVoteList persisted = blindVoteListStorage.initAndGetPersisted(blindVoteList, 20);
+            BlindVoteList persisted = storage.initAndGetPersisted(blindVoteList, 20);
             if (persisted != null) {
                 this.blindVoteList.clear();
                 this.blindVoteList.addAll(persisted.getList());
@@ -204,7 +208,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private void addBlindVote(BlindVote blindVote) {
         if (!blindVoteList.contains(blindVote)) {
             blindVoteList.add(blindVote);
-            persistBlindVoteList();
+            persist();
             log.info("Added blindVote to blindVoteList.\nblindVote={}", blindVote);
         } else {
             log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
@@ -220,7 +224,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     private Transaction getBlindVoteTx(Coin stake, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
-        final Coin voteFee = BlindVoteConsensus.getFee(readableBsqBlockChain);
+        final Coin voteFee = BlindVoteConsensus.getFee(daoParamService, readableBsqBlockChain);
         Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(voteFee, stake);
         Transaction txWithBtcFee = btcWalletService.completePreparedBlindVoteTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
@@ -236,7 +240,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         return success;
     }
 
-    private void persistBlindVoteList() {
-        blindVoteListStorage.queueUpForSave();
+    private void persist() {
+        storage.queueUpForSave();
     }
 }
