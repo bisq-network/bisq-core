@@ -37,6 +37,8 @@ import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
+import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
@@ -63,8 +65,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Creates and published blind vote objects and maintains list.
+ * Creates and published blind vote objects and tx and maintains blindVoteList.
  */
 @Slf4j
 public class BlindVoteService implements PersistedDataHost, HashMapChangedListener {
@@ -142,7 +146,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         // TODO keep for later, maybe we get resources to clean up later
     }
 
-    public void publishBlindVote(Coin stake, FutureCallback<Transaction> callback)
+    public void publishBlindVote(Coin stake, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler)
             throws CryptoException, InsufficientMoneyException, WalletException, TransactionVerificationException,
             IOException {
         ProposalList proposalList = getSortedProposalList();
@@ -150,31 +154,50 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         byte[] encryptedProposals = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
         byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
+        //TODO add support for timeout
         walletsManager.publishAndCommitBsqTx(blindVoteTx, new FutureCallback<Transaction>() {
             @Override
-            public void onSuccess(@Nullable Transaction result) {
-                //TODO set a flag once the tx was successfully broadcasted
-                // Also verify that the txId is as expected and not got changed (malleability)
-                callback.onSuccess(result);
+            public void onSuccess(@Nullable Transaction transaction) {
+                try {
+                    checkNotNull(transaction, "transaction at publishProposal callback must not be null");
+                    final String txId = transaction.getHashAsString();
+                    if (txId.equals(blindVoteTx.getHashAsString())) {
+                        // Only after successful broadcast we go on. We need to handle cases where a timeout happens and
+                        // the tx might get broadcasted at a later restart!
+                        BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
+                        addBlindVote(blindVote);
+
+                        if (addBlindVoteToP2PNetwork(blindVote)) {
+                            log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
+                            resultHandler.handleResult();
+                        } else {
+                            final String msg = "Adding of blindVote to P2P network failed.\n" +
+                                    "blindVote=" + blindVote;
+                            log.error(msg);
+                            errorMessageHandler.handleErrorMessage(msg);
+                        }
+
+                        myVoteService.applyNewBlindVote(proposalList, secretKey, blindVote);
+                    } else {
+                        final String msg = "We received a different tx ID as we had in our blindVote. " +
+                                "That might be a caused due tx malleability. " +
+                                "blindVote.getTx().getHashAsString()=" + blindVoteTx.getHashAsString() +
+                                ", transaction.getHashAsString()=" + txId;
+                        log.error(msg);
+                        errorMessageHandler.handleErrorMessage(msg);
+                    }
+                } catch (Throwable t) {
+                    log.error(t.toString());
+                    errorMessageHandler.handleErrorMessage(t.toString());
+                }
             }
 
             @Override
             public void onFailure(@NotNull Throwable t) {
-                //TODO handle error
-                callback.onFailure(t);
+                log.error(t.toString());
+                errorMessageHandler.handleErrorMessage(t.toString());
             }
         });
-
-        // We cannot apply the state change only if we get the tx successfully broadcasted.
-        // In case the broadcast fails or timed out we might get the tx broadcasted at another startup
-        // but we would not get the blind vote recognized as we did not applied the state changes.
-        // That is particularly problematic as the stake is locked up when the OP_RETURN data are processed in
-        // the parsing. We prefer to keep track of the state and notify the user in case the tx broadcast failed or
-        // timed out. Any time the tx succeeds broadcast later the blind vote becomes valid.
-        BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
-        addBlindVote(blindVote);
-        addBlindVoteToP2PNetwork(blindVote);
-        myVoteService.applyNewBlindVote(proposalList, secretKey, blindVote);
     }
 
     public List<BlindVote> getBlindVoteList() {
@@ -225,6 +248,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private Transaction getBlindVoteTx(Coin stake, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
         final Coin voteFee = BlindVoteConsensus.getFee(daoParamService, readableBsqBlockChain);
+        log.info("Fee for voteFee={}", voteFee);
         Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(voteFee, stake);
         Transaction txWithBtcFee = btcWalletService.completePreparedBlindVoteTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);

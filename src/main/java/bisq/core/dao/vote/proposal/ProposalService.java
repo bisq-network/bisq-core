@@ -214,12 +214,14 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                         errorMessageHandler.handleErrorMessage(msg);
                     }
                 } catch (Throwable t) {
+                    log.error(t.toString());
                     errorMessageHandler.handleErrorMessage(t.toString());
                 }
             }
 
             @Override
             public void onFailure(@NotNull Throwable t) {
+                log.error(t.toString());
                 errorMessageHandler.handleErrorMessage(t.toString());
             }
         });

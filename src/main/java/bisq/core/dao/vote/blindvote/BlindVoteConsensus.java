@@ -47,17 +47,18 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-    public static void sortProposalList(List<Proposal> proposals) {
+    // Sorted by TxId
+    static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
+        log.info("sortProposalList for blind vote: " + proposals);
     }
 
     // 128 bit AES key is good enough for our use case
-    public static SecretKey getSecretKey() {
+    static SecretKey getSecretKey() {
         return Encryption.generateSecretKey(128);
     }
 
-    // TODO add test
-    public static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
+    static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
         final byte[] payload = proposalList.toProtoMessage().toByteArray();
         return Encryption.encrypt(payload, secretKey);
 
@@ -71,7 +72,7 @@ public class BlindVoteConsensus {
         }*/
     }
 
-    public static byte[] getOpReturnData(byte[] encryptedProposalList) throws IOException {
+    static byte[] getOpReturnData(byte[] encryptedProposalList) throws IOException {
         log.info("encryptedProposalList " + Utilities.bytesAsHexString(encryptedProposalList));
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.BLIND_VOTE.getType());
@@ -88,12 +89,8 @@ public class BlindVoteConsensus {
         }
     }
 
-    public static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
+    static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
         return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE,
                 readableBsqBlockChain.getChainHeadHeight()));
-    }
-
-    public static void sortedBlindVoteList(List<BlindVote> list) {
-        list.sort(Comparator.comparing(BlindVote::getTxId));
     }
 }
