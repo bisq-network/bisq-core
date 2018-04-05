@@ -39,13 +39,19 @@ import javax.annotation.Nullable;
 @Slf4j
 public class TxBroadcaster {
     public interface Callback {
-        void onSuccess();
+        void onSuccess(Transaction transaction);
 
-        void onTimeout(BroadcastTimeoutException exception);
+        default void onTimeout(TxBroadcastTimeoutException exception) {
+            log.error("TxBroadcaster.onTimeout " + exception.toString());
+            onFailure(exception);
+        }
 
-        void onTxMalleability(MalleabilityException exception);
+        default void onTxMalleability(TxMalleabilityException exception) {
+            log.error("onTxMalleability.onTimeout " + exception.toString());
+            onFailure(exception);
+        }
 
-        void onFailure(BroadcastException exception);
+        void onFailure(TxBroadcastException exception);
     }
 
     private static final int DEFAULT_BROADCAST_TIMEOUT = 8;
@@ -64,13 +70,13 @@ public class TxBroadcaster {
                         "broadcast succeeded and call onSuccess on the callback handler.", txId, delayInSec);
                 broadcastTimerMap.remove(txId);
                 stopAndRemoveTimer(txId);
-                UserThread.execute(() -> callback.onTimeout(new BroadcastTimeoutException(tx, delayInSec)));
+                UserThread.execute(() -> callback.onTimeout(new TxBroadcastTimeoutException(tx, delayInSec)));
             }, delayInSec);
 
             broadcastTimerMap.put(txId, timeoutTimer);
         } else {
             stopAndRemoveTimer(txId);
-            UserThread.execute(() -> callback.onFailure(new BroadcastException("We got broadcastTx called with a tx " +
+            UserThread.execute(() -> callback.onFailure(new TxBroadcastException("We got broadcastTx called with a tx " +
                     "which has an open timeoutTimer. txId=" + txId, txId)));
         }
 
@@ -85,19 +91,19 @@ public class TxBroadcaster {
                             stopAndRemoveTimer(txId);
                             // At regtest we get called immediately back but we want to make sure that the handler is not called
                             // before the caller is finished.
-                            UserThread.execute(callback::onSuccess);
+                            UserThread.execute(() -> callback.onSuccess(tx));
                         } else {
                             stopAndRemoveTimer(txId);
-                            UserThread.execute(() -> callback.onFailure(new BroadcastException("We got an onSuccess callback for " +
+                            UserThread.execute(() -> callback.onFailure(new TxBroadcastException("We got an onSuccess callback for " +
                                     "a broadcast which got already triggered the timeout.", txId)));
                         }
                     } else {
                         stopAndRemoveTimer(txId);
-                        UserThread.execute(() -> callback.onTxMalleability(new MalleabilityException(tx, result)));
+                        UserThread.execute(() -> callback.onTxMalleability(new TxMalleabilityException(tx, result)));
                     }
                 } else {
                     stopAndRemoveTimer(txId);
-                    UserThread.execute(() -> callback.onFailure(new BroadcastException("Transaction returned from the " +
+                    UserThread.execute(() -> callback.onFailure(new TxBroadcastException("Transaction returned from the " +
                             "broadcastTransaction call back is null.", txId)));
                 }
             }
@@ -105,7 +111,7 @@ public class TxBroadcaster {
             @Override
             public void onFailure(@NotNull Throwable throwable) {
                 stopAndRemoveTimer(txId);
-                UserThread.execute(() -> callback.onFailure(new BroadcastException("We got an onFailure from " +
+                UserThread.execute(() -> callback.onFailure(new TxBroadcastException("We got an onFailure from " +
                         "the peerGroup.broadcastTransaction callback.", throwable)));
             }
         });

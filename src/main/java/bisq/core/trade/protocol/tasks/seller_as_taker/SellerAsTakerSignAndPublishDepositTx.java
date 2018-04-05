@@ -20,6 +20,8 @@ package bisq.core.trade.protocol.tasks.seller_as_taker;
 import bisq.core.btc.AddressEntry;
 import bisq.core.btc.data.RawTransactionInput;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.trade.Contract;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.TradingPeer;
@@ -31,15 +33,11 @@ import bisq.common.taskrunner.TaskRunner;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -91,11 +89,11 @@ public class SellerAsTakerSignAndPublishDepositTx extends TradeTask {
                     tradingPeer.getMultiSigPubKey(),
                     sellerMultiSigPubKey,
                     trade.getArbitratorBtcPubKey(),
-                    new FutureCallback<Transaction>() {
+                    new TxBroadcaster.Callback() {
                         @Override
                         public void onSuccess(Transaction transaction) {
                             if (!completed) {
-                                log.trace("takerSignAndPublishTx succeeded " + transaction);
+                                log.trace("takerSignsAndPublishesDepositTx succeeded " + transaction);
                                 trade.setState(Trade.State.TAKER_PUBLISHED_DEPOSIT_TX);
                                 walletService.swapTradeEntryToAvailableEntry(id, AddressEntry.Context.RESERVED_FOR_TRADE);
 
@@ -106,9 +104,9 @@ public class SellerAsTakerSignAndPublishDepositTx extends TradeTask {
                         }
 
                         @Override
-                        public void onFailure(@NotNull Throwable t) {
+                        public void onFailure(TxBroadcastException exception) {
                             if (!completed) {
-                                failed(t);
+                                failed(exception);
                             } else {
                                 log.warn("We got the onFailure callback called after the timeout has been triggered a complete().");
                             }

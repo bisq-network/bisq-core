@@ -18,10 +18,10 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.btc.wallet.BroadcastException;
-import bisq.core.btc.wallet.BroadcastTimeoutException;
-import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
+import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -187,7 +187,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
         checkNotNull(proposalTx, "proposal.getTx() at publishProposal must not be null");
         walletsManager.publishAndCommitBsqTx(proposalTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Transaction transaction) {
                 final String txId = proposalTx.getHashAsString();
                 final ProposalPayload proposalPayload = proposal.getProposalPayload();
                 proposalPayload.setTxId(txId);
@@ -203,19 +203,19 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
             }
 
             @Override
-            public void onTimeout(BroadcastTimeoutException exception) {
+            public void onTimeout(TxBroadcastTimeoutException exception) {
                 // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
 
             @Override
-            public void onTxMalleability(MalleabilityException exception) {
+            public void onTxMalleability(TxMalleabilityException exception) {
                 // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
 
             @Override
-            public void onFailure(BroadcastException exception) {
+            public void onFailure(TxBroadcastException exception) {
                 // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }

@@ -20,12 +20,12 @@ package bisq.core.dao.vote.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.btc.wallet.BroadcastException;
-import bisq.core.btc.wallet.BroadcastTimeoutException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
+import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.param.DaoParamService;
@@ -153,7 +153,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         //TODO add support for timeout
         walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Transaction transaction) {
                 BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
                 addBlindVote(blindVote);
 
@@ -171,7 +171,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             }
 
             @Override
-            public void onTimeout(BroadcastTimeoutException exception) {
+            public void onTimeout(TxBroadcastTimeoutException exception) {
                 // TODO handle
                 // We need to handle cases where a timeout happens and
                 // the tx might get broadcasted at a later restart!
@@ -179,13 +179,13 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             }
 
             @Override
-            public void onTxMalleability(MalleabilityException exception) {
+            public void onTxMalleability(TxMalleabilityException exception) {
                 // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
 
             @Override
-            public void onFailure(BroadcastException exception) {
+            public void onFailure(TxBroadcastException exception) {
                 // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }

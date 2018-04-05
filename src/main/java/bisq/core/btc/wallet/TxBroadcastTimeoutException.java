@@ -24,27 +24,25 @@ import lombok.Getter;
 import javax.annotation.Nullable;
 
 
-public class MalleabilityException extends BroadcastException {
+public class TxBroadcastTimeoutException extends TxBroadcastException {
     @Getter
     @Nullable
     private final Transaction localTx;
     @Getter
-    @Nullable
-    private final Transaction networkTx;
+    private int delay;
 
-    public MalleabilityException(Transaction localTx, Transaction networkTx) {
-        super("The transaction we received from the Bitcoin network has a different txId as the one we broadcasted.\n" +
-                "txId of local tx=" + localTx.getHashAsString() +
-                ", txId of received tx=" + localTx.getHashAsString());
+    public TxBroadcastTimeoutException(Transaction localTx, int delay) {
+        super("The transaction was not broadcasted in " + delay +
+                "seconds. txId=" + localTx.getHashAsString());
         this.localTx = localTx;
-        this.networkTx = networkTx;
+        this.delay = delay;
     }
 
     @Override
     public String toString() {
-        return "MalleabilityException{" +
+        return "TxBroadcastTimeoutException{" +
                 "\n     localTx=" + localTx +
-                ",\n     networkTx=" + networkTx +
+                ",\n     delay=" + delay +
                 "\n} " + super.toString();
     }
 }

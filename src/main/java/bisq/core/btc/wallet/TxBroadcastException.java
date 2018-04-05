@@ -21,27 +21,27 @@ import lombok.Getter;
 
 import javax.annotation.Nullable;
 
-public class BroadcastException extends Exception {
+public class TxBroadcastException extends Exception {
     @Getter
     @Nullable
     private String txId;
 
-    public BroadcastException(String message) {
+    public TxBroadcastException(String message) {
         super(message);
     }
 
-    public BroadcastException(String message, Throwable cause) {
+    public TxBroadcastException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public BroadcastException(String message, String txId) {
+    public TxBroadcastException(String message, String txId) {
         super(message);
         this.txId = txId;
     }
 
     @Override
     public String toString() {
-        return "BroadcastException{" +
+        return "TxBroadcastException{" +
                 "\n     txId='" + txId + '\'' +
                 "\n} " + super.toString();
     }

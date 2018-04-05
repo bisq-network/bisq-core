@@ -19,12 +19,12 @@ package bisq.core.dao.vote.votereveal;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.btc.wallet.BroadcastException;
-import bisq.core.btc.wallet.BroadcastTimeoutException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
+import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -178,39 +178,29 @@ public class VoteRevealService implements BsqBlockChain.Listener {
                 .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId())).findFirst()
                 .orElseThrow(() -> new VoteRevealException("stakeTxOutput is not found for myVote.", myVote));
         Transaction voteRevealTx = getVoteRevealTx(stakeTxOutput, opReturnData);
-
-        //TODO not sure if it is better to apply the state changes only in the success handler at publishing the
-        // tx or if we do it before we know if publishing was successful.
-        // Tx broadcast can be unreliable as it was when Tor was Dos'ed.
-        // The tx will get republished automatically at restart but we would not get called our handler in such
-        // a case which would lead to an inconsistent state.
-        // We get logged a waring in the Broadcaster.broadcastTx method if we don't get the tx broadcasted in
-        // 8 seconds.
-        //TODO add timeout error to broadcaster API
-        myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
-
         walletsManager.publishAndCommitBsqTx(voteRevealTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Transaction transaction) {
                 log.info("voteRevealTx successfully broadcasted");
+                myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
             }
 
             @Override
-            public void onTimeout(BroadcastTimeoutException exception) {
+            public void onTimeout(TxBroadcastTimeoutException exception) {
                 // TODO handle
                 voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
                         exception, voteRevealTx));
             }
 
             @Override
-            public void onTxMalleability(MalleabilityException exception) {
+            public void onTxMalleability(TxMalleabilityException exception) {
                 // TODO handle
                 voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
                         exception, voteRevealTx));
             }
 
             @Override
-            public void onFailure(BroadcastException exception) {
+            public void onFailure(TxBroadcastException exception) {
                 // TODO handle
                 voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
                         exception, voteRevealTx));
