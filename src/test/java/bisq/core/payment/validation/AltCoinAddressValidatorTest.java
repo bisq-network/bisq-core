@@ -988,6 +988,21 @@ public class AltCoinAddressValidatorTest extends AbstractAltcoinAddressValidator
         assertFalse(validator.validate("").isValid);
     }
 
+    @Test
+    public void testMBYT() {
+        validator.setCurrencyCode("MBYT");
+
+        assertTrue(validator.validate("MEvQJ25RDsENWhPHkApDZPXjrFxKUR9mGR").isValid);
+        assertTrue(validator.validate("MMqP3zkuZvHiupEe5DHXjr2NNwhc9EhB2J").isValid);
+        assertTrue(validator.validate("MBegzGWVKWxFk8Eq5NP6veEQAaEnfj3udf").isValid);
+
+        assertFalse(validator.validate("mEvQJ25RDsENWhPHkApDZPXjrFxKUR9mGR").isValid);
+        assertFalse(validator.validate("MMqP3zkuZvHiupEe5DHXjr2NNwhc9EhB2Js").isValid);
+        assertFalse(validator.validate("MMqP3zkuZvHiupEe5DHXjr2NNwhc9EhB2").isValid);
+        assertFalse(validator.validate("MBegzGWVKWxFk8Eq5NP6veEQAaEnfj3ud#").isValid);
+        assertFalse(validator.validate("").isValid);
+    }
+
     private void testDefaultValidator(String currencyCode) {
         validator.setCurrencyCode(currencyCode);
 
