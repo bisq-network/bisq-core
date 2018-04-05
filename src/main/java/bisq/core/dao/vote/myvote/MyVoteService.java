@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MyVoteService implements PersistedDataHost {
     private final PeriodService periodService;
     private final P2PService p2PService;
-    private final Storage<MyVoteList> myVoteListStorage;
+    private final Storage<MyVoteList> storage;
 
     // MyVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
     private final MyVoteList myVoteList = new MyVoteList();
@@ -63,10 +63,10 @@ public class MyVoteService implements PersistedDataHost {
     @Inject
     public MyVoteService(PeriodService periodService,
                          P2PService p2PService,
-                         Storage<MyVoteList> myVoteListStorage) {
+                         Storage<MyVoteList> storage) {
         this.periodService = periodService;
         this.p2PService = p2PService;
-        this.myVoteListStorage = myVoteListStorage;
+        this.storage = storage;
     }
 
 
@@ -77,7 +77,7 @@ public class MyVoteService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            MyVoteList persisted = myVoteListStorage.initAndGetPersisted(myVoteList, 20);
+            MyVoteList persisted = storage.initAndGetPersisted(myVoteList, 20);
             if (persisted != null) {
                 this.myVoteList.clear();
                 this.myVoteList.addAll(persisted.getList());
@@ -106,13 +106,13 @@ public class MyVoteService implements PersistedDataHost {
         MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote={}" + myVote);
         myVoteList.add(myVote);
-        persistMyVoteList();
+        persist();
     }
 
     public void applyRevealTxId(MyVote myVote, String voteRevealTxId) {
         log.info("apply revealTxId to myVote.\nmyVote={}\nvoteRevealTxId={}", myVote, voteRevealTxId);
         myVote.setRevealTxId(voteRevealTxId);
-        persistMyVoteList();
+        persist();
     }
 
     public List<MyVote> getMyVoteList() {
@@ -156,7 +156,7 @@ public class MyVoteService implements PersistedDataHost {
         return p2PService.addProtectedStorageEntry(blindVote, true);
     }
 
-    private void persistMyVoteList() {
-        myVoteListStorage.queueUpForSave();
+    private void persist() {
+        storage.queueUpForSave();
     }
 }

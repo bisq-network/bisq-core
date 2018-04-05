@@ -73,7 +73,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     private final WalletsManager walletsManager;
     private final PeriodService periodService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final Storage<ProposalList> proposalListStorage;
+    private final Storage<ProposalList> storage;
     private final PublicKey signaturePubKey;
 
     @Getter
@@ -97,12 +97,12 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                            PeriodService periodService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            KeyRing keyRing,
-                           Storage<ProposalList> proposalListStorage) {
+                           Storage<ProposalList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.periodService = periodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.proposalListStorage = proposalListStorage;
+        this.storage = storage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
         readableBsqBlockChain.addListener(this);
@@ -116,7 +116,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            ProposalList persisted = proposalListStorage.initAndGetPersisted(proposalList, 20);
+            ProposalList persisted = storage.initAndGetPersisted(proposalList, 20);
             if (persisted != null) {
                 this.observableList.clear();
                 this.observableList.addAll(persisted.getList());
@@ -250,7 +250,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     }
 
     public void persist() {
-        proposalListStorage.queueUpForSave();
+        storage.queueUpForSave();
     }
 
     public boolean isMine(Proposal proposal) {
