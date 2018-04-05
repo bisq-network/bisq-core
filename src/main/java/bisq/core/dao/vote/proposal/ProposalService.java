@@ -18,6 +18,10 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.wallet.BroadcastException;
+import bisq.core.btc.wallet.BroadcastTimeoutException;
+import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -43,8 +47,6 @@ import org.bitcoinj.core.Transaction;
 
 import com.google.inject.Inject;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import javafx.beans.value.ChangeListener;
 
 import javafx.collections.FXCollections;
@@ -57,10 +59,6 @@ import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -187,42 +185,39 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     public void publishProposal(Proposal proposal, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
         final Transaction proposalTx = proposal.getTx();
         checkNotNull(proposalTx, "proposal.getTx() at publishProposal must not be null");
-        walletsManager.publishAndCommitBsqTx(proposalTx, new FutureCallback<Transaction>() {
+        walletsManager.publishAndCommitBsqTx(proposalTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess(@Nullable Transaction transaction) {
-                try {
-                    checkNotNull(transaction, "transaction at publishProposal callback must not be null");
-                    final String txId = transaction.getHashAsString();
-                    if (txId.equals(proposalTx.getHashAsString())) {
-                        final ProposalPayload proposalPayload = proposal.getProposalPayload();
-                        proposalPayload.setTxId(txId);
-                        if (addToP2PNetwork(proposalPayload)) {
-                            log.info("Added proposalPayload to P2P network.\nproposalPayload={}", proposalPayload);
-                            resultHandler.handleResult();
-                        } else {
-                            final String msg = "Adding of proposalPayload to P2P network failed.\n" +
-                                    "proposalPayload=" + proposalPayload;
-                            log.error(msg);
-                            errorMessageHandler.handleErrorMessage(msg);
-                        }
-                    } else {
-                        final String msg = "We received a different tx ID as we had in our proposal. " +
-                                "That might be a caused due tx malleability. " +
-                                "proposal.getTx().getHashAsString()=" + proposalTx.getHashAsString() +
-                                ", transaction.getHashAsString()=" + txId;
-                        log.error(msg);
-                        errorMessageHandler.handleErrorMessage(msg);
-                    }
-                } catch (Throwable t) {
-                    log.error(t.toString());
-                    errorMessageHandler.handleErrorMessage(t.toString());
+            public void onSuccess() {
+                final String txId = proposalTx.getHashAsString();
+                final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                proposalPayload.setTxId(txId);
+                if (addToP2PNetwork(proposalPayload)) {
+                    log.info("Added proposalPayload to P2P network.\nproposalPayload={}", proposalPayload);
+                    resultHandler.handleResult();
+                } else {
+                    final String msg = "Adding of proposalPayload to P2P network failed.\n" +
+                            "proposalPayload=" + proposalPayload;
+                    log.error(msg);
+                    errorMessageHandler.handleErrorMessage(msg);
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Throwable t) {
-                log.error(t.toString());
-                errorMessageHandler.handleErrorMessage(t.toString());
+            public void onTimeout(BroadcastTimeoutException exception) {
+                // TODO handle
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
+            }
+
+            @Override
+            public void onTxMalleability(MalleabilityException exception) {
+                // TODO handle
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
+            }
+
+            @Override
+            public void onFailure(BroadcastException exception) {
+                // TODO handle
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
         });
     }

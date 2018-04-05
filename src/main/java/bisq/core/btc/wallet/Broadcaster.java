@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+//TODO replace by TxBroadcaster with better handling of timeout and malleability
 @Slf4j
 public class Broadcaster {
     private static final int DEFAULT_BROADCAST_TIMEOUT = 8;

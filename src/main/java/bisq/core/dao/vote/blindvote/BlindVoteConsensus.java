@@ -50,7 +50,7 @@ public class BlindVoteConsensus {
     // Sorted by TxId
     static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
-        log.info("sortProposalList for blind vote: " + proposals);
+        log.info("sortProposalList for blind vote: proposals=" + proposals);
     }
 
     // 128 bit AES key is good enough for our use case
@@ -92,5 +92,10 @@ public class BlindVoteConsensus {
     static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
         return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE,
                 readableBsqBlockChain.getChainHeadHeight()));
+    }
+
+    public static void sortBlindVoteList(List<BlindVote> list) {
+        list.sort(Comparator.comparing(BlindVote::getTxId));
+        log.info("sortBlindVoteList: list=" + list);
     }
 }

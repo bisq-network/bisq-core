@@ -19,8 +19,12 @@ package bisq.core.dao.vote.votereveal;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
+import bisq.core.btc.wallet.BroadcastException;
+import bisq.core.btc.wallet.BroadcastTimeoutException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
@@ -41,8 +45,6 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -55,10 +57,6 @@ import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 
 //TODO case that user misses reveal phase not impl. yet
 
@@ -130,7 +128,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     public BlindVoteList getSortedBlindVoteListForCurrentCycle() {
         final List<BlindVote> list = getBlindVoteListForCurrentCycle();
-        BlindVoteConsensus.sortedBlindVoteList(list);
+        BlindVoteConsensus.sortBlindVoteList(list);
         return new BlindVoteList(list);
     }
 
@@ -191,15 +189,31 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         //TODO add timeout error to broadcaster API
         myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
-        walletsManager.publishAndCommitBsqTx(voteRevealTx, new FutureCallback<Transaction>() {
+        walletsManager.publishAndCommitBsqTx(voteRevealTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess(@Nullable Transaction result) {
-                log.info("Reveal vote tx successfully broadcasted. txID={}", voteRevealTx.getHashAsString());
+            public void onSuccess() {
+                log.info("voteRevealTx successfully broadcasted");
             }
 
             @Override
-            public void onFailure(@NotNull Throwable t) {
-                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.", t, voteRevealTx));
+            public void onTimeout(BroadcastTimeoutException exception) {
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
+            }
+
+            @Override
+            public void onTxMalleability(MalleabilityException exception) {
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
+            }
+
+            @Override
+            public void onFailure(BroadcastException exception) {
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
             }
         });
     }

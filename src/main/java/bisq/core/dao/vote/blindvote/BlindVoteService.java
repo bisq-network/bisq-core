@@ -20,8 +20,12 @@ package bisq.core.dao.vote.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
+import bisq.core.btc.wallet.BroadcastException;
+import bisq.core.btc.wallet.BroadcastTimeoutException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.MalleabilityException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.param.DaoParamService;
@@ -48,8 +52,6 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import javax.crypto.SecretKey;
 
 import java.security.PublicKey;
@@ -60,12 +62,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Creates and published blind vote objects and tx and maintains blindVoteList.
@@ -155,47 +151,43 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
         //TODO add support for timeout
-        walletsManager.publishAndCommitBsqTx(blindVoteTx, new FutureCallback<Transaction>() {
+        walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
             @Override
-            public void onSuccess(@Nullable Transaction transaction) {
-                try {
-                    checkNotNull(transaction, "transaction at publishProposal callback must not be null");
-                    final String txId = transaction.getHashAsString();
-                    if (txId.equals(blindVoteTx.getHashAsString())) {
-                        // Only after successful broadcast we go on. We need to handle cases where a timeout happens and
-                        // the tx might get broadcasted at a later restart!
-                        BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
-                        addBlindVote(blindVote);
+            public void onSuccess() {
+                BlindVote blindVote = new BlindVote(encryptedProposals, blindVoteTx.getHashAsString(), stake.value, signaturePubKey);
+                addBlindVote(blindVote);
 
-                        if (addBlindVoteToP2PNetwork(blindVote)) {
-                            log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
-                            resultHandler.handleResult();
-                        } else {
-                            final String msg = "Adding of blindVote to P2P network failed.\n" +
-                                    "blindVote=" + blindVote;
-                            log.error(msg);
-                            errorMessageHandler.handleErrorMessage(msg);
-                        }
-
-                        myVoteService.applyNewBlindVote(proposalList, secretKey, blindVote);
-                    } else {
-                        final String msg = "We received a different tx ID as we had in our blindVote. " +
-                                "That might be a caused due tx malleability. " +
-                                "blindVote.getTx().getHashAsString()=" + blindVoteTx.getHashAsString() +
-                                ", transaction.getHashAsString()=" + txId;
-                        log.error(msg);
-                        errorMessageHandler.handleErrorMessage(msg);
-                    }
-                } catch (Throwable t) {
-                    log.error(t.toString());
-                    errorMessageHandler.handleErrorMessage(t.toString());
+                if (addBlindVoteToP2PNetwork(blindVote)) {
+                    log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
+                    resultHandler.handleResult();
+                } else {
+                    final String msg = "Adding of blindVote to P2P network failed.\n" +
+                            "blindVote=" + blindVote;
+                    log.error(msg);
+                    errorMessageHandler.handleErrorMessage(msg);
                 }
+
+                myVoteService.applyNewBlindVote(proposalList, secretKey, blindVote);
             }
 
             @Override
-            public void onFailure(@NotNull Throwable t) {
-                log.error(t.toString());
-                errorMessageHandler.handleErrorMessage(t.toString());
+            public void onTimeout(BroadcastTimeoutException exception) {
+                // TODO handle
+                // We need to handle cases where a timeout happens and
+                // the tx might get broadcasted at a later restart!
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
+            }
+
+            @Override
+            public void onTxMalleability(MalleabilityException exception) {
+                // TODO handle
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
+            }
+
+            @Override
+            public void onFailure(BroadcastException exception) {
+                // TODO handle
+                errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
         });
     }
