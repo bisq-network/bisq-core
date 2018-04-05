@@ -48,4 +48,12 @@ public class SpentInfo implements PersistablePayload {
                 .build();
     }
 
+    @Override
+    public String toString() {
+        return "SpentInfo{" +
+                "\n     blockHeight=" + blockHeight +
+                ",\n     txId='" + txId + '\'' +
+                ",\n     inputIndex=" + inputIndex +
+                "\n}";
+    }
 }

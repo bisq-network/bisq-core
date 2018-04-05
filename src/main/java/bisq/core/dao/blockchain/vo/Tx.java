@@ -31,13 +31,11 @@ import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 @Getter
-@ToString
 @EqualsAndHashCode
 @Slf4j
 public class Tx implements PersistablePayload {
@@ -213,5 +211,23 @@ public class Tx implements PersistablePayload {
             return outputs.get(1).getValue();
         else
             return 0;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Tx{" +
+                "\n     txVersion='" + txVersion + '\'' +
+                ",\n     id='" + id + '\'' +
+                ",\n     blockHeight=" + blockHeight +
+                ",\n     blockHash='" + blockHash + '\'' +
+                ",\n     time=" + time +
+                ",\n     inputs=" + inputs +
+                ",\n     outputs=" + outputs +
+                ",\n     burntFee=" + burntFee +
+                ",\n     txType=" + txType +
+                ",\n     isIssuanceTx=" + isIssuanceTx +
+                ",\n     issuanceBlockHeight=" + issuanceBlockHeight +
+                "\n}";
     }
 }

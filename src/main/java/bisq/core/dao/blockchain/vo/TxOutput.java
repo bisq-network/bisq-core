@@ -22,6 +22,7 @@ import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -32,13 +33,11 @@ import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 @Getter
-@ToString
 @EqualsAndHashCode
 @Slf4j
 public class TxOutput implements PersistablePayload {
@@ -193,5 +192,23 @@ public class TxOutput implements PersistablePayload {
             this.spentInfo = spentInfo;
         else
             throw new IllegalStateException("Already set spentInfo must not be changed.");
+    }
+
+
+    @Override
+    public String toString() {
+        return "TxOutput{" +
+                "\n     index=" + index +
+                ",\n     value=" + value +
+                ",\n     txId='" + txId + '\'' +
+                ",\n     pubKeyScript=" + pubKeyScript +
+                ",\n     address='" + address + '\'' +
+                ",\n     opReturnData=" + Utilities.bytesAsHexString(opReturnData) +
+                ",\n     blockHeight=" + blockHeight +
+                ",\n     isUnspent=" + isUnspent +
+                ",\n     isVerified=" + isVerified +
+                ",\n     txOutputType=" + txOutputType +
+                ",\n     spentInfo=" + spentInfo +
+                "\n}";
     }
 }
