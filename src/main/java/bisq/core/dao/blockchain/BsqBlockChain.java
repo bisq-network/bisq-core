@@ -209,23 +209,23 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public synchronized void addListener(Listener listener) {
-        listeners.add(listener);
+    public void addListener(Listener listener) {
+        lock.write(() -> listeners.add(listener));
     }
 
     @Override
-    public synchronized void removeListener(Listener listener) {
-        listeners.remove(listener);
+    public void removeListener(Listener listener) {
+        lock.write(() -> listeners.remove(listener));
     }
 
     @Override
-    public synchronized void addIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.add(listener);
+    public void addIssuanceListener(IssuanceListener listener) {
+        lock.write(() -> issuanceListeners.add(listener));
     }
 
     @Override
-    public synchronized void removeIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.remove(listener);
+    public void removeIssuanceListener(IssuanceListener listener) {
+        lock.write(() -> issuanceListeners.remove(listener));
     }
 
 
