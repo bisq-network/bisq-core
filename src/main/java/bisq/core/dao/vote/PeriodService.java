@@ -22,6 +22,7 @@ import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.param.DaoParamService;
 
 import com.google.inject.Inject;
 
@@ -59,10 +60,11 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     @Inject
     public PeriodService(ReadableBsqBlockChain readableBsqBlockChain,
-                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight,
+                         DaoParamService daoParamService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.genesisBlockHeight = genesisBlockHeight;
-        this.cycles = new Cycles(genesisBlockHeight);
+        this.cycles = new Cycles(genesisBlockHeight, daoParamService);
     }
 
 

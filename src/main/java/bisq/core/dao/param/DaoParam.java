@@ -50,7 +50,17 @@ public enum DaoParam {
     THRESHOLD_PROPOSAL(5_000),          // 50%
     THRESHOLD_COMP_REQUEST(5_000),      // 50%
     THRESHOLD_CHANGE_PARAM(7_500),      // 75% -> that might change the THRESHOLD_CHANGE_PARAM and QUORUM_CHANGE_PARAM!
-    THRESHOLD_REMOVE_ASSET(5_000);      // 50%
+    THRESHOLD_REMOVE_ASSET(5_000),      // 50%
+
+    // Period params, phase lenghts
+    PHASE_PROPOSAL(5),
+    PHASE_BREAK1(5),
+    PHASE_BLIND_VOTE(5),
+    PHASE_BREAK2(5),
+    PHASE_VOTE_REVEAL(5),
+    PHASE_BREAK3(5),
+    PHASE_BREAK4(5);
+
 
     @Getter
     private int defaultValue;

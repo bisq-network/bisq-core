@@ -30,7 +30,7 @@ public class PeriodServiceTest {
 
     @Before
     public void startup() {
-        service = new PeriodService(null, 0);
+//        service = new PeriodService(null, 0);
     }
 
     //TODO update with added periods

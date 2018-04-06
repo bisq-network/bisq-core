@@ -17,6 +17,9 @@
 
 package bisq.core.dao.vote;
 
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,18 +59,18 @@ public class Cycles {
         @Getter
         private int endBlock = 0;
 
-        Cycle(int startBlock) {
+        Cycle(int startBlock, DaoParamService daoParamService) {
             this.startBlock = startBlock;
             // TODO: Set all phase durations using param service
             phases.add(0); // UNDEFINED Must be set to 0
-            phases.add(2); // PROPOSAL
-            phases.add(1); // BREAK1
-            phases.add(2); // BLIND_VOTE
-            phases.add(1); // BREAK2
-            phases.add(2); // VOTE_REVEAL
-            phases.add(1); // BREAK3
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_PROPOSAL, startBlock));
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK1, startBlock));
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BLIND_VOTE, startBlock));
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK2, startBlock));
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_VOTE_REVEAL, startBlock));
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK3, startBlock));
             phases.add(1); // ISSUANCE Must have only 1 block!
-            phases.add(1); // BREAK4
+            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK4, startBlock));
             this.endBlock = startBlock + getCycleDuration();
         }
 
@@ -81,10 +84,12 @@ public class Cycles {
     }
 
     private List<Cycle> cycles = new ArrayList<>();
+    private DaoParamService daoParamService;
 
-    public Cycles(int genesisBlockHeight) {
-        this.cycles.add(new Cycle(0));
-        this.cycles.add(new Cycle(genesisBlockHeight));
+    public Cycles(int genesisBlockHeight, DaoParamService daoParamService) {
+        this.daoParamService = daoParamService;
+        this.cycles.add(new Cycle(0, daoParamService));
+        this.cycles.add(new Cycle(genesisBlockHeight, daoParamService));
     }
 
     // Return prehistoric cycle for blockHeight < genesis height (even for blockHeight < 0)
@@ -145,7 +150,7 @@ public class Cycles {
     public void onChainHeightChanged(int chainHeight) {
         Cycle lastCycle = cycles.get(cycles.size() - 1);
         while (chainHeight > lastCycle.getEndBlock()) {
-            cycles.add(new Cycle(lastCycle.getEndBlock()));
+            cycles.add(new Cycle(lastCycle.getEndBlock(), daoParamService));
             lastCycle = cycles.get(cycles.size() - 1);
         }
     }
