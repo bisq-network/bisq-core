@@ -46,30 +46,26 @@ public class Cycles {
 
     // The default cycle is used as the pre genesis cycle
     public class Cycle {
-        @Setter
+        // Durations of each phase
         private int undefined = 0;
-        @Setter
         private int proposal = 2;
-        @Setter
         private int break1 = 1;
-        @Setter
         private int blindVote = 2;
-        @Setter
         private int break2 = 1;
-        @Setter
         private int voteReveal = 2;
-        @Setter
         private int break3 = 1;
-        @Setter
         private int issuance = 1; // Must have only 1 block!
-        @Setter
         private int break4 = 1;
 
         @Getter
-        @Setter
         private int startBlock = 0;
+        @Getter
+        private int endBlock = 0;
 
-        Cycle() {
+        Cycle(int startBlock) {
+            this.startBlock = startBlock;
+            // TODO: Set all phase durations using param service
+            this.endBlock = startBlock + getCycleDuration();
         }
 
         List<Integer> getPhases() {
@@ -98,10 +94,8 @@ public class Cycles {
     private List<Cycle> cycles = new ArrayList<>();
 
     Cycles(int genesisBlockHeight) {
-        this.cycles.add(new Cycle());
-        Cycle genesis = new Cycle();
-        genesis.setStartBlock(genesisBlockHeight);
-        this.cycles.add(genesis);
+        this.cycles.add(new Cycle(0));
+        this.cycles.add(new Cycle(genesisBlockHeight));
     }
 
     // Return prehistoric cycle for blockHeight < genesis height (even for blockHeight < 0)
@@ -127,7 +121,7 @@ public class Cycles {
         return Phase.UNDEFINED;
     }
 
-    // TODO: This is a bit weird, why is blockheight and Phase needed?
+    // Get start of phase given the blockheight of the cycle
     int getStartBlockOfPhase(int blockHeight, Phase phase) {
         Cycle cycle = getCycle(blockHeight);
         int checkHeight = cycle.getStartBlock();
@@ -143,6 +137,7 @@ public class Cycles {
         return 0;
     }
 
+    // Get end of phase given the blockheight of the cycle
     int getEndBlockOfPhase(int blockHeight, Phase phase) {
         Cycle cycle = getCycle(blockHeight);
         int checkHeight = cycle.getStartBlock();
@@ -160,5 +155,12 @@ public class Cycles {
 
     int getNumberOfStartedCycles() {
         return cycles.size();
+    }
+
+    public void onChainHeightChanged(int chainHeight) {
+        Cycle lastCycle = cycles.get(cycles.size() - 1);
+        if (chainHeight > lastCycle.getEndBlock()) {
+            cycles.add(new Cycle(lastCycle.getEndBlock()));
+        }
     }
 }

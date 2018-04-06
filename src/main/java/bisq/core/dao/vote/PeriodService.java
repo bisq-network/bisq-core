@@ -142,6 +142,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void onChainHeightChanged(int chainHeight) {
+        cycles.onChainHeightChanged(chainHeight);
         phaseProperty.set(getPhase(chainHeight));
     }
 
