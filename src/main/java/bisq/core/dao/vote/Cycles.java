@@ -19,6 +19,7 @@ package bisq.core.dao.vote;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,15 +48,8 @@ public class Cycles {
     // The default cycle is used as the pre genesis cycle
     public class Cycle {
         // Durations of each phase
-        private int undefined = 0;
-        private int proposal = 2;
-        private int break1 = 1;
-        private int blindVote = 2;
-        private int break2 = 1;
-        private int voteReveal = 2;
-        private int break3 = 1;
-        private int issuance = 1; // Must have only 1 block!
-        private int break4 = 1;
+        @Getter
+        List<Integer> phases = new ArrayList<>();
 
         @Getter
         private int startBlock = 0;
@@ -65,21 +59,16 @@ public class Cycles {
         Cycle(int startBlock) {
             this.startBlock = startBlock;
             // TODO: Set all phase durations using param service
+            phases.add(0); // UNDEFINED
+            phases.add(2); // PROPOSAL
+            phases.add(1); // BREAK1
+            phases.add(2); // BLIND_VOTE
+            phases.add(1); // BREAK2
+            phases.add(2); // VOTE_REVEAL
+            phases.add(1); // BREAK3
+            phases.add(1); // ISSUANCE Must have only 1 block!
+            phases.add(1); // BREAK4
             this.endBlock = startBlock + getCycleDuration();
-        }
-
-        List<Integer> getPhases() {
-            List<Integer> list = new ArrayList<>();
-            list.add(undefined);
-            list.add(proposal);
-            list.add(break1);
-            list.add(blindVote);
-            list.add(break2);
-            list.add(voteReveal);
-            list.add(break3);
-            list.add(issuance);
-            list.add(break4);
-            return list;
         }
 
         public int getCycleDuration() {
@@ -100,13 +89,11 @@ public class Cycles {
 
     // Return prehistoric cycle for blockHeight < genesis height (even for blockHeight < 0)
     Cycle getCycle(int blockHeight) {
-        Cycle cycle = cycles.get(0);
-        for (Cycle c : cycles) {
-            if (c.getStartBlock() > blockHeight)
-                break;
-            cycle = c;
-        }
-        return cycle;
+        Optional<Cycle> cycle = cycles.stream().
+                filter(c -> c.getStartBlock() <= blockHeight && blockHeight <= c.getEndBlock()).findAny();
+        if (cycle.isPresent())
+            return cycle.get();
+        return cycles.get(0);
     }
 
     Phase getPhase(int blockHeight) {
@@ -128,7 +115,6 @@ public class Cycles {
         List<Integer> phases = cycle.getPhases();
         for (int i = 0; i < phases.size(); ++i) {
             if (checkHeight + phases.get(i) > blockHeight) {
-                checkArgument(phase.ordinal() == i, "Phase must match");
                 return checkHeight;
             }
             checkHeight += phases.get(i);
@@ -145,7 +131,6 @@ public class Cycles {
         for (int i = 0; i < phases.size(); ++i) {
             checkHeight += phases.get(i);
             if (checkHeight > blockHeight) {
-                checkArgument(phase.ordinal() == i, "Phase must match");
                 return checkHeight;
             }
         }
