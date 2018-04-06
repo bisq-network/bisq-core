@@ -27,7 +27,6 @@ public class BitcoreTest extends AbstractAssetTest {
         super(new Bitcore());
     }
 
-
     @Test
     public void testValidAddresses() {
         assertValidAddress("17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem");
