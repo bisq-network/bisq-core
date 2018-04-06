@@ -17,7 +17,6 @@
 
 package bisq.core.dao.vote.blindvote;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
@@ -50,7 +49,7 @@ public class BlindVoteConsensus {
     // Sorted by TxId
     static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
-        log.info("sortProposalList for blind vote: proposals=" + proposals);
+        log.info("Sorted proposalList for blind vote: " + proposals);
     }
 
     // 128 bit AES key is good enough for our use case
@@ -60,7 +59,9 @@ public class BlindVoteConsensus {
 
     static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
         final byte[] payload = proposalList.toProtoMessage().toByteArray();
-        return Encryption.encrypt(payload, secretKey);
+        final byte[] encryptedProposalList = Encryption.encrypt(payload, secretKey);
+        log.info("encryptedProposalList: " + Utilities.bytesAsHexString(encryptedProposalList));
+        return encryptedProposalList;
 
            /*  byte[] decryptedProposalList = Encryption.decrypt(encryptedProposalList, secretKey);
         try {
@@ -72,15 +73,20 @@ public class BlindVoteConsensus {
         }*/
     }
 
-    static byte[] getOpReturnData(byte[] encryptedProposalList) throws IOException {
-        log.info("encryptedProposalList " + Utilities.bytesAsHexString(encryptedProposalList));
+    static byte[] getHashOfEncryptedProposalList(byte[] encryptedProposalList) {
+        final byte[] hash = Hash.getSha256Ripemd160hash(encryptedProposalList);
+        log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
+        return hash;
+    }
+
+    static byte[] getOpReturnData(byte[] hash) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.BLIND_VOTE.getType());
             outputStream.write(Version.BLIND_VOTE_VERSION);
-            final byte[] hash = Hash.getSha256Ripemd160hash(encryptedProposalList);
-            log.info("Sha256Ripemd160 hash of encryptedProposalList " + Utilities.bytesAsHexString(hash));
             outputStream.write(hash);
-            return outputStream.toByteArray();
+            final byte[] bytes = outputStream.toByteArray();
+            log.info("OpReturnData: " + Utilities.bytesAsHexString(bytes));
+            return bytes;
         } catch (IOException e) {
             // Not expected to happen ever
             e.printStackTrace();
@@ -89,13 +95,15 @@ public class BlindVoteConsensus {
         }
     }
 
-    static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE,
-                readableBsqBlockChain.getChainHeadHeight()));
+
+    static Coin getFee(DaoParamService daoParamService, int chainHeadHeight) {
+        final Coin fee = Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, chainHeadHeight));
+        log.info("Fee for blind vote: " + fee);
+        return fee;
     }
 
     public static void sortBlindVoteList(List<BlindVote> list) {
         list.sort(Comparator.comparing(BlindVote::getTxId));
-        log.info("sortBlindVoteList: list=" + list);
+        log.info("sortBlindVoteList: " + list);
     }
 }
