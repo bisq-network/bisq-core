@@ -59,7 +59,7 @@ public class Cycles {
         Cycle(int startBlock) {
             this.startBlock = startBlock;
             // TODO: Set all phase durations using param service
-            phases.add(0); // UNDEFINED
+            phases.add(0); // UNDEFINED Must be set to 0
             phases.add(2); // PROPOSAL
             phases.add(1); // BREAK1
             phases.add(2); // BLIND_VOTE
@@ -82,7 +82,7 @@ public class Cycles {
 
     private List<Cycle> cycles = new ArrayList<>();
 
-    Cycles(int genesisBlockHeight) {
+    public Cycles(int genesisBlockHeight) {
         this.cycles.add(new Cycle(0));
         this.cycles.add(new Cycle(genesisBlockHeight));
     }
@@ -144,8 +144,9 @@ public class Cycles {
 
     public void onChainHeightChanged(int chainHeight) {
         Cycle lastCycle = cycles.get(cycles.size() - 1);
-        if (chainHeight > lastCycle.getEndBlock()) {
+        while (chainHeight > lastCycle.getEndBlock()) {
             cycles.add(new Cycle(lastCycle.getEndBlock()));
+            lastCycle = cycles.get(cycles.size() - 1);
         }
     }
 }
