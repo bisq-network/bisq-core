@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
 import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
@@ -44,6 +45,7 @@ import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
 
 import com.google.inject.Inject;
 
@@ -69,6 +71,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ProposalService implements PersistedDataHost, HashMapChangedListener, BsqBlockChain.Listener {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
+    private final BsqWalletService bsqWalletService;
     private final PeriodService periodService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
     private final Storage<ProposalList> storage;
@@ -92,18 +95,19 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     @Inject
     public ProposalService(P2PService p2PService,
                            WalletsManager walletsManager,
+                           BsqWalletService bsqWalletService,
                            PeriodService periodService,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
+        this.bsqWalletService = bsqWalletService;
         this.periodService = periodService;
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.storage = storage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-        readableBsqBlockChain.addListener(this);
     }
 
 
@@ -133,8 +137,14 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     }
 
     private void upDatePredicate() {
-        activeProposals.setPredicate(proposal -> periodService.isTxInCurrentCycle(proposal.getTxId()));
+        activeProposals.setPredicate(proposal -> periodService.isTxInCurrentCycle(proposal.getTxId()) ||
+                isUnconfirmed(proposal.getTxId()));
         closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId()));
+    }
+
+    private boolean isUnconfirmed(String txId) {
+        final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(txId);
+        return confidenceForTxId != null && confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
     }
 
 
@@ -177,6 +187,8 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
         numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyProposalsIfWellConnected();
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         publishMyProposalsIfWellConnected();
+
+        readableBsqBlockChain.addListener(this);
     }
 
     public void shutDown() {
@@ -192,7 +204,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                 final ProposalPayload proposalPayload = proposal.getProposalPayload();
                 proposalPayload.setTxId(txId);
                 if (addToP2PNetwork(proposalPayload)) {
-                    log.info("Added proposalPayload to P2P network.\nproposalPayload={}", proposalPayload);
+                    log.info("We added a proposalPayload to the P2P network.\nproposalPayload={}", proposalPayload);
                     resultHandler.handleResult();
                 } else {
                     final String msg = "Adding of proposalPayload to P2P network failed.\n" +
@@ -267,7 +279,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
 
     private void addProposal(ProposalPayload proposalPayload, boolean storeLocally) {
         if (!listContains(proposalPayload)) {
-            log.info("We got added a ProposalPayload from P2P network.\nProposalPayload={}" + proposalPayload);
+            log.info("We got a ProposalPayload added from the P2P network.\nProposalPayload={}" + proposalPayload);
             observableList.add(createSpecificProposal(proposalPayload));
 
             if (storeLocally)
