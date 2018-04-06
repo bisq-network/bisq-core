@@ -260,6 +260,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             bsqBlocks.add(bsqBlock);
             chainHeadHeight = bsqBlock.getHeight();
             printNewBlock(bsqBlock);
+            log.info("New block added at blockHeight " + bsqBlock.getHeight());
             listeners.forEach(l -> UserThread.execute(() -> l.onBlockAdded(bsqBlock)));
         });
     }

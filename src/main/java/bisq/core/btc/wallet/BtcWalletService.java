@@ -241,7 +241,7 @@ public class BtcWalletService extends WalletService {
         checkWalletConsistency(wallet);
         verifyTransaction(resultTx);
 
-        printTx("BTC wallet: Signed tx", resultTx);
+        // printTx("BTC wallet: Signed tx", resultTx);
         return resultTx;
     }
 
@@ -296,7 +296,7 @@ public class BtcWalletService extends WalletService {
         checkWalletConsistency(wallet);
         verifyTransaction(tx);
 
-        printTx("BTC wallet: Signed tx", tx);
+        // printTx("BTC wallet: Signed tx", tx);
         return tx;
     }
 

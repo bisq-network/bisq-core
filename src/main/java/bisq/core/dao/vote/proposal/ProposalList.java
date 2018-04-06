@@ -74,5 +74,12 @@ public class ProposalList extends PersistableList<Proposal> implements VoteConse
                 .map(Proposal::fromProto)
                 .collect(Collectors.toList())));
     }
+
+    @Override
+    public String toString() {
+        return "List of UID's in ProposalList: " + getList().stream()
+                .map(Proposal::getUid)
+                .collect(Collectors.toList());
+    }
 }
 

@@ -17,7 +17,6 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
@@ -34,9 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalConsensus {
-    public static Coin getFee(DaoParamService daoParamService, ReadableBsqBlockChain readableBsqBlockChain) {
-        return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE,
-                readableBsqBlockChain.getChainHeadHeight()));
+    public static Coin getFee(DaoParamService daoParamService, int chainHeadHeight) {
+        return Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, chainHeadHeight));
     }
 
     public static byte[] getHashOfPayload(ProposalPayload payload) {

@@ -391,7 +391,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
 
         checkWalletConsistency(wallet);
         verifyTransaction(tx);
-        printTx("BSQ wallet: Signed Tx", tx);
+        //printTx("BSQ wallet: Signed Tx", tx);
         return tx;
     }
 
@@ -447,7 +447,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
     public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
         addInputsAndChangeOutputForTx(tx, fee, bsqCoinSelector);
-        printTx("getPreparedFeeTx", tx);
+        // printTx("getPreparedFeeTx", tx);
         return tx;
     }
 
@@ -485,7 +485,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
         addInputsAndChangeOutputForTx(tx, fee.add(stake), bsqCoinSelector);
-        printTx("getPreparedBlindVoteTx", tx);
+        //printTx("getPreparedBlindVoteTx", tx);
         return tx;
     }
 
@@ -503,7 +503,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
         // Input is not signed yet so we use new byte[]{}
         tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, stake));
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        printTx("getPreparedVoteRevealTx", tx);
+        // printTx("getPreparedVoteRevealTx", tx);
         return tx;
     }
 

@@ -126,9 +126,8 @@ public class MyVote implements PersistablePayload {
                 "\n     proposalList=" + proposalList +
                 ",\n     secretKeyEncoded=" + Utilities.bytesAsHexString(secretKeyEncoded) +
                 ",\n     blindVote=" + blindVote +
-                ",\n     date=" + date +
+                ",\n     date=" + new Date(date) +
                 ",\n     revealTxId='" + revealTxId + '\'' +
-                ",\n     secretKey=" + secretKey +
                 "\n}";
     }
 }

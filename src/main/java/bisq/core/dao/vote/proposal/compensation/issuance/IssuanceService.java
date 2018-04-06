@@ -121,8 +121,6 @@ public class IssuanceService implements BsqBlockChain.Listener {
     public void onBlockAdded(BsqBlock bsqBlock) {
         if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.ISSUANCE) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
-            //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            log.info("blockHeight " + bsqBlock.getHeight());
             applyVoteResult();
         }
     }
@@ -316,14 +314,16 @@ public class IssuanceService implements BsqBlockChain.Listener {
             VoteResultPerProposal voteResultPerProposal = getDetailResult(voteResultsWithStake);
             long totalStake = voteResultPerProposal.getStakeOfAcceptedVotes() + voteResultPerProposal.getStakeOfRejectedVotes();
             long quorum = getQuorum(daoParamService, proposalPayload);
+            log.info("reached quorum: {}", quorum);
+            log.info("required quorum: {}", totalStake);
             if (totalStake >= quorum) {
                 // we use multiplied of 1000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 long reachedThreshold = voteResultPerProposal.getStakeOfAcceptedVotes() * 10_000 / totalStake;
                 // E.g. returns 5000 for 50% or 0.5 from the division of acceptedVotes/totalStake
                 long requiredVoteThreshold = getThreshold(daoParamService, proposalPayload);
-                log.info("reachedThreshold {} %", reachedThreshold / 100D);
-                log.info("requiredVoteThreshold {} %", requiredVoteThreshold / 100D);
+                log.info("reached threshold: {} %", reachedThreshold / 100D);
+                log.info("required threshold: {} %", requiredVoteThreshold / 100D);
                 if (reachedThreshold >= requiredVoteThreshold) {
                     processAcceptedCompletedVoteResult(proposalPayload, writableBsqBlockChain, readableBsqBlockChain);
                 } else {
@@ -420,10 +420,11 @@ public class IssuanceService implements BsqBlockChain.Listener {
         if (txOutputsByTxIdMap.containsKey(txId)) {
             final TxOutput txOutput = txOutputsByTxIdMap.get(txId);
             writableBsqBlockChain.issueBsq(txOutput);
-            log.info("################################################################################");
-            log.info("## We issued new BSQ to txId {} for proposalPayload with UID {}", txId, proposalPayload.getUid());
-            log.info("## txOutput {}, proposalPayload {}", txOutput, proposalPayload);
-            log.info("################################################################################");
+            StringBuilder sb = new StringBuilder("\n################################################################################");
+            sb.append("We issued new BSQ to txId ").append(txId)
+                    .append("\nfor proposalPayload with UID ").append(proposalPayload.getUid())
+                    .append("################################################################################\n");
+            log.info(sb.toString());
         } else {
             //TODO throw exception?
             log.error("txOutput not found in txOutputsByTxIdMap. That should never happen.");

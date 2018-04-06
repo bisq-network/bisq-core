@@ -38,6 +38,7 @@ import java.io.IOException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +50,9 @@ public class BlindVoteConsensus {
     // Sorted by TxId
     static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
-        log.info("Sorted proposalList for blind vote: " + proposals);
+        log.info("Sorted proposalList for blind vote: " + proposals.stream()
+                .map(Proposal::getUid)
+                .collect(Collectors.toList()));
     }
 
     // 128 bit AES key is good enough for our use case
@@ -96,7 +99,7 @@ public class BlindVoteConsensus {
     }
 
 
-    static Coin getFee(DaoParamService daoParamService, int chainHeadHeight) {
+    public static Coin getFee(DaoParamService daoParamService, int chainHeadHeight) {
         final Coin fee = Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, chainHeadHeight));
         log.info("Fee for blind vote: " + fee);
         return fee;
@@ -104,6 +107,8 @@ public class BlindVoteConsensus {
 
     public static void sortBlindVoteList(List<BlindVote> list) {
         list.sort(Comparator.comparing(BlindVote::getTxId));
-        log.info("sortBlindVoteList: " + list);
+        log.info("Sorted blindVote list: " + list.stream()
+                .map(BlindVote::getTxId)
+                .collect(Collectors.toList()));
     }
 }

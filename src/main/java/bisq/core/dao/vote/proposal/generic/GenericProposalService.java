@@ -38,6 +38,9 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GenericProposalService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -83,7 +86,7 @@ public class GenericProposalService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException {
         GenericProposal proposal = new GenericProposal(payload);
 
-        final Coin fee = ProposalConsensus.getFee(daoParamService, readableBsqBlockChain);
+        final Coin fee = ProposalConsensus.getFee(daoParamService, readableBsqBlockChain.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have tx ID at that moment
@@ -98,7 +101,7 @@ public class GenericProposalService {
 
         // We need the tx for showing the user tx details before publishing (fee, size).
         proposal.setTx(completedTx);
-
+        log.info("GenericProposal tx: " + completedTx);
         return proposal;
     }
 }

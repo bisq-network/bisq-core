@@ -62,6 +62,8 @@ public class OpReturnCompReqController {
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
                     "match our rules. tx={}", tx);
+            log.info("blockHeight: " + blockHeight);
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
             // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC

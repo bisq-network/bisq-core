@@ -208,9 +208,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     version=" + version +
-                ",\n     creationDate=" + creationDate +
+                ",\n     creationDate=" + new Date(creationDate) +
                 ",\n     extraDataMap=" + extraDataMap +
-                ",\n     ownerPubKey=" + ownerPubKey +
                 "\n}";
     }
 }

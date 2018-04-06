@@ -57,5 +57,12 @@ public class MyVoteList extends PersistableList<MyVote> {
                 .map(MyVote::fromProto)
                 .collect(Collectors.toList())));
     }
+
+    @Override
+    public String toString() {
+        return "List of TxId's in MyVoteList: " + getList().stream()
+                .map(MyVote::getTxId)
+                .collect(Collectors.toList());
+    }
 }
 

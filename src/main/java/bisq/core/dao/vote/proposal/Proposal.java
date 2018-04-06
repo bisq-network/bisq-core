@@ -135,7 +135,6 @@ public abstract class Proposal implements PersistablePayload {
                 "\n     proposalPayload=" + proposalPayload +
                 ",\n     voteResult=" + voteResult +
                 ",\n     extraDataMap=" + extraDataMap +
-                ",\n     voteResultProperty=" + voteResultProperty +
                 ",\n     tx=" + tx +
                 "\n}";
     }

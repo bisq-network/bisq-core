@@ -170,7 +170,6 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +
                 ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
-                ",\n     ownerPubKey=" + ownerPubKey +
                 ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }

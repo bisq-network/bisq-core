@@ -204,7 +204,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                 final ProposalPayload proposalPayload = proposal.getProposalPayload();
                 proposalPayload.setTxId(txId);
                 if (addToP2PNetwork(proposalPayload)) {
-                    log.info("We added a proposalPayload to the P2P network.\nproposalPayload={}", proposalPayload);
+                    log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
                     resultHandler.handleResult();
                 } else {
                     final String msg = "Adding of proposalPayload to P2P network failed.\n" +
@@ -279,7 +279,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
 
     private void addProposal(ProposalPayload proposalPayload, boolean storeLocally) {
         if (!listContains(proposalPayload)) {
-            log.info("We got a ProposalPayload added from the P2P network.\nProposalPayload={}" + proposalPayload);
+            log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
             observableList.add(createSpecificProposal(proposalPayload));
 
             if (storeLocally)
@@ -312,9 +312,9 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                 .filter(this::isMine)
                 .forEach(proposal -> {
                     if (addToP2PNetwork(proposal.getProposalPayload())) {
-                        log.info("Added ProposalPayload to P2P network.\nProposalPayload={}" + proposal.getProposalPayload());
+                        log.info("Added ProposalPayload to P2P network. ProposalPayload.UID=" + proposal.getProposalPayload().getUid());
                     } else {
-                        log.warn("Adding of ProposalPayload to P2P network failed.\nProposalPayload={}" + proposal.getProposalPayload());
+                        log.warn("Adding of ProposalPayload to P2P network failed.\nProposalPayload=" + proposal.getProposalPayload());
                     }
                 });
     }

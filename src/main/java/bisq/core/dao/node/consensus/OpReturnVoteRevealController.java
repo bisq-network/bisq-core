@@ -57,6 +57,8 @@ public class OpReturnVoteRevealController {
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
                     "match our rules. tx={}", tx);
+            log.info("blockHeight: " + blockHeight);
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration

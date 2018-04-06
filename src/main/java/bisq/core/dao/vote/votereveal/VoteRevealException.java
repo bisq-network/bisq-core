@@ -22,11 +22,9 @@ import bisq.core.dao.vote.myvote.MyVote;
 import org.bitcoinj.core.Transaction;
 
 import lombok.Getter;
-import lombok.ToString;
 
 import javax.annotation.Nullable;
 
-@ToString
 public class VoteRevealException extends Exception {
     @Getter
     @Nullable
@@ -51,5 +49,15 @@ public class VoteRevealException extends Exception {
     VoteRevealException(String message, Throwable cause, @SuppressWarnings("NullableProblems") Transaction voteRevealTx) {
         super(message, cause);
         this.voteRevealTx = voteRevealTx;
+    }
+
+
+    @Override
+    public String toString() {
+        return "VoteRevealException{" +
+                "\n     voteRevealTx=" + voteRevealTx +
+                ",\n     blindVoteTxId='" + blindVoteTxId + '\'' +
+                ",\n     myVote=" + myVote +
+                "\n} " + super.toString();
     }
 }

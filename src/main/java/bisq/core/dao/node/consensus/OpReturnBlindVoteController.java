@@ -62,6 +62,8 @@ public class OpReturnBlindVoteController {
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. tx={}", tx);
+            log.info("blockHeight: " + blockHeight);
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output
