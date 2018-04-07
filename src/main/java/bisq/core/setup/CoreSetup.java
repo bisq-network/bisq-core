@@ -23,24 +23,11 @@ import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.Res;
 
 import bisq.common.CommonOptionKeys;
-import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.app.Version;
-import bisq.common.crypto.LimitedKeyStrengthException;
 import bisq.common.util.Utilities;
 
-import org.bitcoinj.store.BlockStoreException;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-
 import java.nio.file.Paths;
-
-import java.util.function.BiConsumer;
 
 import ch.qos.logback.classic.Level;
 
@@ -49,55 +36,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CoreSetup {
 
-    public static void setup(BisqEnvironment bisqEnvironment, BiConsumer<Throwable, Boolean> errorHandler) {
+    public static void setup(BisqEnvironment bisqEnvironment) {
         setupLog(bisqEnvironment);
-        setupErrorHandler(errorHandler);
         CoreNetworkCapabilities.setSupportedCapabilities();
-        Security.addProvider(new BouncyCastleProvider());
         Res.setup();
         CurrencyUtil.setup();
 
         Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
         Version.printVersion();
-
-        if (Utilities.isLinux())
-            System.setProperty("prism.lcdtext", "false");
     }
 
-    public static void setupLog(BisqEnvironment bisqEnvironment) {
+    private static void setupLog(BisqEnvironment bisqEnvironment) {
         String logPath = Paths.get(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY), "bisq").toString();
         Log.setup(logPath);
         log.info("Log files under: " + logPath);
         Utilities.printSysInfo();
         Log.setLevel(Level.toLevel(bisqEnvironment.getRequiredProperty(CommonOptionKeys.LOG_LEVEL_KEY)));
-    }
-
-    public static void setupErrorHandler(BiConsumer<Throwable, Boolean> errorHandler) {
-        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
-            // Might come from another thread
-            if (throwable.getCause() != null && throwable.getCause().getCause() != null &&
-                    throwable.getCause().getCause() instanceof BlockStoreException) {
-                log.error(throwable.getMessage());
-            } else if (throwable instanceof ClassCastException &&
-                    "sun.awt.image.BufImgSurfaceData cannot be cast to sun.java2d.xr.XRSurfaceData".equals(throwable.getMessage())) {
-                log.warn(throwable.getMessage());
-            } else {
-                log.error("Uncaught Exception from thread " + Thread.currentThread().getName());
-                log.error("throwableMessage= " + throwable.getMessage());
-                log.error("throwableClass= " + throwable.getClass());
-                log.error("Stack trace:\n" + ExceptionUtils.getStackTrace(throwable));
-                throwable.printStackTrace();
-                UserThread.execute(() -> errorHandler.accept(throwable, false));
-            }
-        };
-        Thread.setDefaultUncaughtExceptionHandler(handler);
-        Thread.currentThread().setUncaughtExceptionHandler(handler);
-
-        try {
-            Utilities.checkCryptoPolicySetup();
-        } catch (NoSuchAlgorithmException | LimitedKeyStrengthException e) {
-            e.printStackTrace();
-            UserThread.execute(() -> errorHandler.accept(e, true));
-        }
     }
 }
