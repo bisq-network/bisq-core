@@ -119,8 +119,7 @@ public class PeriodService implements BsqBlockChain.Listener {
         this.readableBsqBlockChain = readableBsqBlockChain;
         this.daoParamService = daoParamService;
 
-        // Initialize dummy cycle and genesis cycle
-        this.cycles.add(new Cycle(0, daoParamService));
+        // Initialize genesis cycle
         this.cycles.add(new Cycle(genesisBlockHeight, daoParamService));
     }
 
@@ -154,13 +153,13 @@ public class PeriodService implements BsqBlockChain.Listener {
         return PeriodService.Phase.UNDEFINED;
     }
 
-    // Return dummy cycle for blockHeight < genesis height (even for blockHeight < 0)
+    // Return null for blockHeight < genesis height, it should never happen
     public Cycle getCycle(int blockHeight) {
         Optional<Cycle> cycle = cycles.stream().
                 filter(c -> c.getStartBlock() <= blockHeight && blockHeight <= c.getLastBlock()).findAny();
         if (cycle.isPresent())
             return cycle.get();
-        return cycles.get(0);
+        return null;
     }
 
     public boolean isInPhase(int blockHeight, Phase phase) {
@@ -186,7 +185,7 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     public int getNumberOfStartedCycles() {
         // There is one dummy cycle added before the genesis cycle
-        return cycles.size() - 1;
+        return cycles.size();
     }
 
 //    public int getNumOfCompletedCycles(int chainHeight) {
