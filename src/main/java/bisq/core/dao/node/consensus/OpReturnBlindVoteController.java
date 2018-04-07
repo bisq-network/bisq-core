@@ -25,8 +25,6 @@ import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 
-import bisq.common.app.Version;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +45,11 @@ public class OpReturnBlindVoteController {
         this.periodService = periodService;
     }
 
+    // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
+    // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (model.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
-                Version.BLIND_VOTE_VERSION == opReturnData[1] &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE)) {
             txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);

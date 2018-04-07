@@ -23,8 +23,6 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.vote.PeriodService;
 
-import bisq.common.app.Version;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,10 +42,12 @@ public class OpReturnVoteRevealController {
     }
 
     // opReturnData: 2 bytes version and type, 20 bytes hash, 16 bytes key
+
+    // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
+    // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, int blockHeight, Model model) {
         if (model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 38 &&
-                Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL)) {
             txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
