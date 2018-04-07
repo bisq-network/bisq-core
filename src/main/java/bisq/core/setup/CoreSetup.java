@@ -38,9 +38,10 @@ public class CoreSetup {
 
     public static void setup(BisqEnvironment bisqEnvironment) {
         setupLog(bisqEnvironment);
-        CoreNetworkCapabilities.setSupportedCapabilities();
+        CoreNetworkCapabilities.setSupportedCapabilities(bisqEnvironment);
         Res.setup();
         CurrencyUtil.setup();
+        bisqEnvironment.saveBaseCryptoNetwork(BisqEnvironment.getBaseCurrencyNetwork());
 
         Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
         Version.printVersion();

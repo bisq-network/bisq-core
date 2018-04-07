@@ -17,19 +17,28 @@
 
 package bisq.core.setup;
 
+import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.DaoOptionKeys;
+
 import bisq.common.app.Capabilities;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CoreNetworkCapabilities {
-    public static void setSupportedCapabilities() {
-        Capabilities.setSupportedCapabilities(new ArrayList<>(Arrays.asList(
+    public static void setSupportedCapabilities(BisqEnvironment bisqEnvironment) {
+        final ArrayList<Integer> supportedCapabilities = new ArrayList<>(Arrays.asList(
                 Capabilities.Capability.TRADE_STATISTICS.ordinal(),
                 Capabilities.Capability.TRADE_STATISTICS_2.ordinal(),
                 Capabilities.Capability.ACCOUNT_AGE_WITNESS.ordinal(),
                 Capabilities.Capability.COMP_REQUEST.ordinal(),
                 Capabilities.Capability.VOTE.ordinal()
-        )));
+        ));
+
+        Boolean fullDaoNode = bisqEnvironment.getProperty(DaoOptionKeys.FULL_DAO_NODE, Boolean.class);
+        if (fullDaoNode)
+            supportedCapabilities.add(Capabilities.Capability.DAO_FULL_NODE.ordinal());
+
+        Capabilities.setSupportedCapabilities(supportedCapabilities);
     }
 }
