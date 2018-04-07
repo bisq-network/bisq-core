@@ -86,4 +86,8 @@ public class CoreSetup {
     public static void setBouncyCastleProvider() {
         Security.addProvider(new BouncyCastleProvider());
     }
+
+    public static void setupCapabilities() {
+        CoreNetworkCapabilities.setSupportedCapabilities();
+    }
 }
