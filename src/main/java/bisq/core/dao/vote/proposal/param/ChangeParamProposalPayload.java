@@ -17,6 +17,8 @@
 
 package bisq.core.dao.vote.proposal.param;
 
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
@@ -104,5 +106,10 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     @Override
     public ProposalType getType() {
         return ProposalType.CHANGE_PARAM;
+    }
+
+    @Override
+    public boolean isCorrectTxType(Tx tx) {
+        return tx.getTxType() == TxType.PROPOSAL;
     }
 }

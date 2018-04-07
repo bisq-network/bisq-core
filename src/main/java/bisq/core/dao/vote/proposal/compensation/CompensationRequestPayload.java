@@ -18,6 +18,8 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 import bisq.core.dao.vote.proposal.ValidationException;
@@ -144,8 +146,8 @@ public final class CompensationRequestPayload extends ProposalPayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void validate() throws ValidationException {
-        super.validate();
+    public void validateInputData() throws ValidationException {
+        super.validateInputData();
         try {
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
@@ -186,5 +188,10 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 "\n     requestedBsq=" + requestedBsq +
                 ",\n     bsqAddress='" + bsqAddress + '\'' +
                 "\n} " + super.toString();
+    }
+
+    @Override
+    public boolean isCorrectTxType(Tx tx) {
+        return tx.getTxType() == TxType.COMPENSATION_REQUEST;
     }
 }

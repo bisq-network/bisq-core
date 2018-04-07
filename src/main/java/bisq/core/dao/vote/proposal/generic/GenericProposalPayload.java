@@ -17,6 +17,8 @@
 
 package bisq.core.dao.vote.proposal.generic;
 
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
@@ -59,7 +61,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                 description,
                 link,
                 Sig.getPublicKeyBytes(ownerPubKey),
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.PROPOSAL,
                 creationDate.getTime(),
                 null,
                 null);
@@ -113,5 +115,10 @@ public final class GenericProposalPayload extends ProposalPayload {
     @Override
     public ProposalType getType() {
         return ProposalType.GENERIC;
+    }
+
+    @Override
+    public boolean isCorrectTxType(Tx tx) {
+        return tx.getTxType() == TxType.PROPOSAL;
     }
 }

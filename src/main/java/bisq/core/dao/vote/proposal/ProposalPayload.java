@@ -17,6 +17,7 @@
 
 package bisq.core.dao.vote.proposal;
 
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 
@@ -37,6 +38,7 @@ import com.google.protobuf.ByteString;
 import java.security.PublicKey;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -51,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 /**
@@ -169,7 +172,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
-    public void validate() throws ValidationException {
+    public void validateInputData() throws ValidationException {
         try {
             notEmpty(name, "name must not be empty");
             notEmpty(title, "title must not be empty");
@@ -181,6 +184,23 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             throw new ValidationException(throwable);
         }
     }
+
+    public void validateOpReturnData(Tx tx) throws ValidationException {
+        try {
+            byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).get().getOpReturnData();
+            checkNotNull(txOpReturnData, "txOpReturnData must not be null");
+            // We do not verify type or version as that gets verified in parser. Version might have been changed as well
+            // so we don't want to fail in that case.
+            byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
+            byte[] hash = ProposalConsensus.getHashOfPayload(this);
+            checkArgument(Arrays.equals(txHashOfPayload, hash),
+                    "OpReturn data from proposal tx is not matching the one created from the payload");
+        } catch (Throwable e) {
+            log.warn("OpReturnData validation of proposalPayload failed. proposalPayload={}", this);
+            throw new ValidationException(e);
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
@@ -196,6 +216,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     public abstract ProposalType getType();
 
+    public abstract boolean isCorrectTxType(Tx tx);
 
     @Override
     public String toString() {
@@ -212,4 +233,5 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }
+
 }
