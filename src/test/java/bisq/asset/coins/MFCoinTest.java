@@ -4,8 +4,10 @@ import bisq.asset.AbstractAssetTest;
 
 import org.junit.Test;
 
-public class MfcoinTest extends AbstractAssetTest {
-    public MfcoinTest(){super(new Mfcoin());}
+public class MFCoinTest extends AbstractAssetTest {
+    public MFCoinTest(){
+        super(new MFCoin());
+    }
 
     @Test
     public void testValidAddresses(){
