@@ -46,11 +46,8 @@ import org.jetbrains.annotations.NotNull;
 public class Res {
     public static void setup() {
         final BaseCurrencyNetwork baseCurrencyNetwork = BisqEnvironment.getBaseCurrencyNetwork();
-        final String baseCurrencyName = baseCurrencyNetwork.getCurrencyCode();
-        Res.baseCurrencyCode = baseCurrencyName;
-
-        Res.baseCurrencyName = baseCurrencyName;
-        baseCurrencyNameLowerCase = baseCurrencyName.toLowerCase();
+        setBaseCurrencyCode(baseCurrencyNetwork.getCurrencyCode());
+        setBaseCurrencyName(baseCurrencyNetwork.getCurrencyName());
     }
 
     @SuppressWarnings("CanBeFinal")
@@ -79,6 +76,15 @@ public class Res {
     private static String baseCurrencyCode;
     private static String baseCurrencyName;
     private static String baseCurrencyNameLowerCase;
+
+    public static void setBaseCurrencyCode(String baseCurrencyCode) {
+        Res.baseCurrencyCode = baseCurrencyCode;
+    }
+
+    public static void setBaseCurrencyName(String baseCurrencyName) {
+        Res.baseCurrencyName = baseCurrencyName;
+        baseCurrencyNameLowerCase = baseCurrencyName.toLowerCase();
+    }
 
     public static String getBaseCurrencyCode() {
         return baseCurrencyCode;
