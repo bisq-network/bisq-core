@@ -165,7 +165,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     @Override
     public List<Integer> getRequiredCapabilities() {
         return new ArrayList<>(Collections.singletonList(
-                Capabilities.Capability.COMP_REQUEST.ordinal()
+                Capabilities.Capability.PROPOSAL.ordinal()
         ));
     }
 
