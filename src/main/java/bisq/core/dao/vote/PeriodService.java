@@ -196,13 +196,8 @@ public class PeriodService implements BsqBlockChain.Listener {
 //        return getNumberOfStartedCycles() - 1;
 //    }
 
-    public Phase getPhaseForHeight(int chainHeight) {
-        return getPhase(chainHeight);
-    }
-
-    // Get start of phase given the blockheight of the cycle
-    public int getAbsoluteStartBlockOfPhase(int chainHeight, Phase phase) {
-        Cycle cycle = getCycle(chainHeight);
+    // Get first block of phase within the given cycle
+    public int getFirstBlockOfPhase(Cycle cycle, Phase phase) {
         int checkHeight = cycle.getStartBlock();
         List<Integer> phases = cycle.getPhases();
         for (int i = 0; i < phases.size(); ++i) {
@@ -215,9 +210,8 @@ public class PeriodService implements BsqBlockChain.Listener {
         return 0;
     }
 
-    // Get end of phase given the blockheight of the cycle
-    public int getAbsoluteEndBlockOfPhase(int chainHeight, Phase phase) {
-        Cycle cycle = getCycle(chainHeight);
+    // Get last block of phase within the given cycle
+    public int getLastBlockOfPhase(Cycle cycle, Phase phase) {
         int checkHeight = cycle.getStartBlock();
         List<Integer> phases = cycle.getPhases();
         for (int i = 0; i < phases.size(); ++i) {

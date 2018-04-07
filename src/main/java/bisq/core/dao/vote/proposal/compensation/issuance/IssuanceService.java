@@ -119,7 +119,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
 
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.ISSUANCE) {
+        if (periodService.getPhase(bsqBlock.getHeight()) == PeriodService.Phase.ISSUANCE) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
             log.info("blockHeight " + bsqBlock.getHeight());

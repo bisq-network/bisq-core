@@ -18,11 +18,8 @@
 package bisq.core.dao.vote;
 
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
-
-import io.bisq.generated.protobuffer.PB;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
@@ -88,9 +85,9 @@ public class PeriodServiceTest {
     @Test
     public void getStartBlockOfPhase() {
         PeriodService.Cycle c = service.getCycle(genesisHeight);
-        assertEquals(genesisHeight, service.getAbsoluteStartBlockOfPhase(genesisHeight, PeriodService.Phase.PROPOSAL));
+        assertEquals(genesisHeight, service.getFirstBlockOfPhase(service.getCycle(genesisHeight), PeriodService.Phase.PROPOSAL));
         assertEquals(genesisHeight + phaseDuration,
-                service.getAbsoluteStartBlockOfPhase(genesisHeight, PeriodService.Phase.BREAK1));
+                service.getFirstBlockOfPhase(service.getCycle(genesisHeight), PeriodService.Phase.BREAK1));
     }
 
     @Test
@@ -99,9 +96,9 @@ public class PeriodServiceTest {
         service.onChainHeightChanged(newCycleStartBlock);
         PeriodService.Cycle c = service.getCycle(genesisHeight);
         assertEquals(genesisHeight + phaseDuration - 1,
-                service.getAbsoluteEndBlockOfPhase(genesisHeight, PeriodService.Phase.PROPOSAL));
+                service.getLastBlockOfPhase(service.getCycle(genesisHeight), PeriodService.Phase.PROPOSAL));
         assertEquals(genesisHeight + 2 * phaseDuration - 1,
-                service.getAbsoluteEndBlockOfPhase(genesisHeight, PeriodService.Phase.BREAK1));
+                service.getLastBlockOfPhase(service.getCycle(genesisHeight), PeriodService.Phase.BREAK1));
     }
 
     @Test
@@ -192,14 +189,14 @@ public class PeriodServiceTest {
 //        final int first = gen; // 1
 //        final int second = first + numBlocksOfCycle; //
 //        final int third = first + numBlocksOfCycle + numBlocksOfCycle; //
-//        assertEquals(gen, service.getAbsoluteStartBlockOfPhase(0, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(gen, service.getAbsoluteStartBlockOfPhase(gen, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(first, service.getAbsoluteStartBlockOfPhase(gen + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(first, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(third, service.getAbsoluteStartBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(gen, service.getFirstBlockOfPhase(0, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(gen, service.getFirstBlockOfPhase(gen, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getFirstBlockOfPhase(gen + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getFirstBlockOfPhase(gen + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getFirstBlockOfPhase(gen + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getFirstBlockOfPhase(gen + numBlocksOfCycle + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getFirstBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(third, service.getFirstBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
     }
 
     //TODO update with added periods
@@ -212,14 +209,14 @@ public class PeriodServiceTest {
 //        final int first = gen + blocks - 1; //10
 //        final int second = first + numBlocksOfCycle; // 30
 //        final int third = first + numBlocksOfCycle + numBlocksOfCycle; //40
-//        assertEquals(first, service.getAbsoluteEndBlockOfPhase(0, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(first, service.getAbsoluteEndBlockOfPhase(gen, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(first, service.getAbsoluteEndBlockOfPhase(gen + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(first, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(second, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
-//        assertEquals(third, service.getAbsoluteEndBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getLastBlockOfPhase(0, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getLastBlockOfPhase(gen, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getLastBlockOfPhase(gen + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(first, service.getLastBlockOfPhase(gen + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getLastBlockOfPhase(gen + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getLastBlockOfPhase(gen + numBlocksOfCycle + 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(second, service.getLastBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle - 1, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
+//        assertEquals(third, service.getLastBlockOfPhase(gen + numBlocksOfCycle + numBlocksOfCycle, gen, Cycles.Phase.PROPOSAL, numBlocksOfCycle));
     }
 
     //TODO update with added periods
