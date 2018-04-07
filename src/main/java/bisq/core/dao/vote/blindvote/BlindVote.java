@@ -19,6 +19,7 @@ package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.ValidationException;
 
@@ -62,7 +63,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 @Data
 public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload, VoteConsensusCritical {
+        CapabilityRequiringPayload, VoteConsensusCritical, ValidationCandidate {
 
     public static BlindVote clone(BlindVote blindVote) {
         return new BlindVote(blindVote.encryptedProposalList,

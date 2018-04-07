@@ -127,6 +127,8 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
     public BlindVoteList getSortedBlindVoteListForCurrentCycle() {
         final List<BlindVote> list = getBlindVoteListForCurrentCycle();
+        if (list.isEmpty())
+            log.warn("sortBlindVoteList is empty");
         BlindVoteConsensus.sortBlindVoteList(list);
         return new BlindVoteList(list);
     }
@@ -144,7 +146,8 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     private void maybeRevealVotes() {
         myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
-                .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.VOTE_REVEAL))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId()))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to
@@ -208,8 +211,15 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     }
 
     private List<BlindVote> getBlindVoteListForCurrentCycle() {
-        return blindVoteService.getBlindVoteList().stream()
-                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
+        if (blindVoteService.getValidBlindVotes().isEmpty())
+            log.warn("blindVoteService.getValidBlindVotes() is empty");
+        return blindVoteService.getValidBlindVotes().stream()
+                .filter(blindVote -> {
+                    final boolean txInPhase = periodService.isTxInPhase(blindVote.getTxId(), PeriodService.Phase.BLIND_VOTE);
+                    if (!txInPhase)
+                        log.warn("Blind vote tx is not in correct phase txId=", blindVote.getTxId());
+                    return txInPhase;
+                })
                 .collect(Collectors.toList());
     }
 

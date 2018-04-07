@@ -56,7 +56,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     public enum Phase {
         // TODO for testing
         UNDEFINED(0),
-        PROPOSAL(3),
+        PROPOSAL(2),
         BREAK1(1),
         BLIND_VOTE(2),
         BREAK2(1),
@@ -129,7 +129,7 @@ public class PeriodService implements BsqBlockChain.Listener {
         int end = getBlockUntilPhaseEnd(phase);
         int numBlocksOfTxHeightSinceGenesis = blockHeight - genesisBlockHeight;
         int heightInCycle = numBlocksOfTxHeightSinceGenesis % getNumBlocksOfCycle();
-        return heightInCycle >= start && heightInCycle < end;
+        return heightInCycle >= start && heightInCycle <= end;
     }
 
     // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
@@ -138,17 +138,25 @@ public class PeriodService implements BsqBlockChain.Listener {
         return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
-    public boolean isTxInCurrentCycle(String txId) {
-        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInCurrentCycle(tx.getBlockHeight(),
+    public boolean isTxInCorrectCycle(String txId) {
+        return readableBsqBlockChain.getTx(txId)
+                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight()))
+                .isPresent();
+    }
+
+    public boolean isTxInCorrectCycle(int txHeight) {
+        return isTxInCorrectCycle(txHeight,
                 readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
 
     public boolean isTxInPastCycle(String txId) {
-        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInPastCycle(tx.getBlockHeight(),
+        return readableBsqBlockChain.getTx(txId).filter(this::isTxInPastCycle).isPresent();
+    }
+
+    public boolean isTxInPastCycle(Tx tx) {
+        return isTxInPastCycle(tx.getBlockHeight(),
                 readableBsqBlockChain.getChainHeadHeight(),
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
@@ -279,7 +287,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     }
 
     @VisibleForTesting
-    boolean isTxInCurrentCycle(int txHeight, int chainHeight, int genesisHeight, int numBlocksOfCycle) {
+    boolean isTxInCorrectCycle(int txHeight, int chainHeight, int genesisHeight, int numBlocksOfCycle) {
         final int numOfCompletedCycles = getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle);
         final int blockAtCycleStart = genesisHeight + numOfCompletedCycles * numBlocksOfCycle;
         final int blockAtCycleEnd = blockAtCycleStart + numBlocksOfCycle - 1;

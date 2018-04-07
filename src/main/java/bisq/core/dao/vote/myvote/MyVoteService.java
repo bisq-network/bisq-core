@@ -136,8 +136,8 @@ public class MyVoteService implements PersistedDataHost {
 
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
-                .filter(myVote -> periodService.isTxInCurrentCycle(myVote.getTxId()))
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {

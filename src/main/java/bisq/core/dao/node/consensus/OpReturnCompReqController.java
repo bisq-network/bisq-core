@@ -60,7 +60,7 @@ public class OpReturnCompReqController {
             model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
-                    "match our rules. tx={}", tx);
+                    "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);

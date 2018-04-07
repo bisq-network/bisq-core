@@ -60,7 +60,7 @@ public class OpReturnBlindVoteController {
             model.getBlindVoteLockStakeOutput().setTxOutputType(TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
-                    "match our rules. tx={}", tx);
+                    "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);

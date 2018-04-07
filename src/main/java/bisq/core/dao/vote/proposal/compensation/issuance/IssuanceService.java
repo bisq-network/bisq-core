@@ -178,7 +178,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
         Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
         readableBsqBlockChain.getVoteRevealTxOutputs().stream()
-                .filter(txOutput -> periodService.isTxInCurrentCycle(txOutput.getTxId()))
+                .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId()))
                 .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
         return opReturnHashesByTxIdMap;
     }
@@ -201,8 +201,8 @@ public class IssuanceService implements BsqBlockChain.Listener {
 
     private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
         //TODO check not in current cycle but in the cycle of the tx
-        return blindVoteService.getBlindVoteList().stream()
-                .filter(blindVote -> periodService.isTxInCurrentCycle(blindVote.getTxId()))
+        return blindVoteService.getValidBlindVotes().stream()
+                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId()))
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
                             .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.BLIND_VOTE) // double check if type is matching

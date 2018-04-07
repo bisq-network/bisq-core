@@ -150,18 +150,18 @@ public class PeriodServiceTest {
         //int txHeight, int chainHeight, int genesisHeight, int numBlocksOfCycle
         int gen = 1;
         int numBlocksOfCycle = service.getNumBlocksOfCycle();
-        assertFalse(service.isTxInCurrentCycle(gen, gen + numBlocksOfCycle, gen, numBlocksOfCycle));
+        assertFalse(service.isTxInCorrectCycle(gen, gen + numBlocksOfCycle, gen, numBlocksOfCycle));
 
-        assertFalse(service.isTxInCurrentCycle(gen - 1, gen - 1, gen, numBlocksOfCycle));
-        assertFalse(service.isTxInCurrentCycle(gen, gen - 1, gen, numBlocksOfCycle));
-        assertFalse(service.isTxInCurrentCycle(gen - 1, gen, gen, numBlocksOfCycle));
-        assertTrue(service.isTxInCurrentCycle(gen, gen, gen, numBlocksOfCycle));
-        assertTrue(service.isTxInCurrentCycle(gen, gen + 1, gen, numBlocksOfCycle));
-        assertTrue(service.isTxInCurrentCycle(gen, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
+        assertFalse(service.isTxInCorrectCycle(gen - 1, gen - 1, gen, numBlocksOfCycle));
+        assertFalse(service.isTxInCorrectCycle(gen, gen - 1, gen, numBlocksOfCycle));
+        assertFalse(service.isTxInCorrectCycle(gen - 1, gen, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen, gen, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen, gen + 1, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
 
-        assertTrue(service.isTxInCurrentCycle(gen, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
-        assertTrue(service.isTxInCurrentCycle(gen + 1, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
-        assertTrue(service.isTxInCurrentCycle(gen + numBlocksOfCycle - 1, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
-        assertFalse(service.isTxInCurrentCycle(gen + numBlocksOfCycle, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen + 1, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
+        assertTrue(service.isTxInCorrectCycle(gen + numBlocksOfCycle - 1, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
+        assertFalse(service.isTxInCorrectCycle(gen + numBlocksOfCycle, gen + numBlocksOfCycle - 1, gen, numBlocksOfCycle));
     }
 }

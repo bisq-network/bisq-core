@@ -105,9 +105,12 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
     // BsqBlockChain.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // We get called delayed as we map to user thread! If follow up methods requests the blockchain data it
+    // might be out of sync!
+    // TODO find a solution to fix that
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        upDatePredicate();
+        onBlockHeightChanged(bsqBlock.getHeight());
     }
 
 
@@ -128,7 +131,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    abstract protected void upDatePredicate();
+    abstract protected void onBlockHeightChanged(int height);
 
     abstract protected void onProtectedStorageEntry(ProtectedStorageEntry entry, boolean isDataOwner);
 
@@ -142,16 +145,19 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
     }
 
     protected boolean isInPhaseOrUnconfirmed(String txId, PeriodService.Phase phase) {
-        return readableBsqBlockChain.getTxMap().get(txId) == null ||
-                (periodService.isTxInPhase(txId, phase) &&
-                        periodService.isTxInCurrentCycle(txId));
+        return isUnconfirmed(txId) ||
+                readableBsqBlockChain.getTx(txId)
+                        .filter(tx -> periodService.isTxInPhase(tx.getId(), phase))
+                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight()))
+                        .isPresent();
     }
 
-    protected boolean isProposalValid(ValidationCandidate validationCandidate) {
+
+    protected boolean isValid(ValidationCandidate validationCandidate) {
         final String txId = validationCandidate.getTxId();
 
         Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
-        if (optionalTx.isPresent() && periodService.isTxInCurrentCycle(txId)) {
+        if (optionalTx.isPresent() && periodService.isTxInCorrectCycle(txId)) {
             final Tx tx = optionalTx.get();
             try {
                 validationCandidate.validateDataFields();
@@ -165,7 +171,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
             }
         } else {
             log.debug("Validation failed. txId={},optionalTx.isPresent()={}, isTxInCurrentCycle={}",
-                    txId, optionalTx.isPresent(), periodService.isTxInCurrentCycle(txId));
+                    txId, optionalTx.isPresent(), periodService.isTxInCorrectCycle(txId));
             return false;
         }
     }
@@ -174,7 +180,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
         return p2PService.addProtectedStorageEntry(protectedStoragePayload, true);
     }
 
-    abstract protected List<ProtectedStoragePayload> getProtectedStoragePayloadList();
+    abstract protected List<ProtectedStoragePayload> getListForRepublishing();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +199,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
     }
 
     private void rePublish() {
-        getProtectedStoragePayloadList().stream()
+        getListForRepublishing().stream()
                 .filter(this::isMine)
                 .forEach(protectedStoragePayload -> {
                     if (!addToP2PNetwork(protectedStoragePayload))

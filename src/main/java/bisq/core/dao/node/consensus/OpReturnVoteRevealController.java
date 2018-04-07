@@ -56,7 +56,7 @@ public class OpReturnVoteRevealController {
             model.getVoteRevealUnlockStakeOutput().setTxOutputType(TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
-                    "match our rules. tx={}", tx);
+                    "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);

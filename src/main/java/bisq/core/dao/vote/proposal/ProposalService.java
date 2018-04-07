@@ -68,7 +68,9 @@ public class ProposalService extends BaseService {
     private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
     private final ProposalList proposalList = new ProposalList(observableList);
     @Getter
-    private final FilteredList<Proposal> activeProposals = new FilteredList<>(observableList);
+    private final FilteredList<Proposal> validProposals = new FilteredList<>(observableList);
+    @Getter
+    private final FilteredList<Proposal> validOrMyUnconfirmedProposals = new FilteredList<>(observableList);
     @Getter
     private final FilteredList<Proposal> closedProposals = new FilteredList<>(observableList);
 
@@ -143,16 +145,23 @@ public class ProposalService extends BaseService {
     }
 
     @Override
-    protected void upDatePredicate() {
+    protected void onBlockHeightChanged(int height) {
         // We display own unconfirmed proposals as there is no risk. Other proposals are only shown after they are in
         //the blockchain and verified
-        activeProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) && isMine(proposal.getProposalPayload())) || isProposalValid(proposal.getProposalPayload()));
-        closedProposals.setPredicate(proposal -> isProposalValid(proposal.getProposalPayload()) && periodService.isTxInPastCycle(proposal.getTxId()));
+        validProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()));
+        validOrMyUnconfirmedProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) &&
+                isMine(proposal.getProposalPayload())) ||
+                isValid(proposal.getProposalPayload()));
+        closedProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) &&
+                periodService.isTxInPastCycle(proposal.getTxId()));
     }
 
     @Override
-    protected List<ProtectedStoragePayload> getProtectedStoragePayloadList() {
-        return activeProposals.stream().map(Proposal::getProposalPayload).collect(Collectors.toList());
+    protected List<ProtectedStoragePayload> getListForRepublishing() {
+        return validProposals.stream()
+                .map(Proposal::getProposalPayload)
+                .filter(this::isMine)
+                .collect(Collectors.toList());
     }
 
 
@@ -166,18 +175,7 @@ public class ProposalService extends BaseService {
         walletsManager.publishAndCommitBsqTx(proposalTx, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
-                final String txId = proposalTx.getHashAsString();
-                final ProposalPayload proposalPayload = proposal.getProposalPayload();
-                proposalPayload.setTxId(txId);
-                if (addToP2PNetwork(proposalPayload)) {
-                    log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
-                    resultHandler.handleResult();
-                } else {
-                    final String msg = "Adding of proposalPayload to P2P network failed.\n" +
-                            "proposalPayload=" + proposalPayload;
-                    log.error(msg);
-                    errorMessageHandler.handleErrorMessage(msg);
-                }
+                onTxBroadcasted(proposalTx, proposal, resultHandler, errorMessageHandler);
             }
 
             @Override
@@ -198,6 +196,22 @@ public class ProposalService extends BaseService {
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
         });
+    }
+
+    private void onTxBroadcasted(Transaction proposalTx, Proposal proposal, ResultHandler resultHandler,
+                                 ErrorMessageHandler errorMessageHandler) {
+        final String txId = proposalTx.getHashAsString();
+        final ProposalPayload proposalPayload = proposal.getProposalPayload();
+        proposalPayload.setTxId(txId);
+        if (addToP2PNetwork(proposalPayload)) {
+            log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
+            resultHandler.handleResult();
+        } else {
+            final String msg = "Adding of proposalPayload to P2P network failed.\n" +
+                    "proposalPayload=" + proposalPayload;
+            log.error(msg);
+            errorMessageHandler.handleErrorMessage(msg);
+        }
     }
 
     public boolean removeProposal(Proposal proposal) {
@@ -241,10 +255,10 @@ public class ProposalService extends BaseService {
             if (storeLocally)
                 persist();
 
-            upDatePredicate();
+            onBlockHeightChanged(readableBsqBlockChain.getChainHeadHeight());
         } else {
-            if (!isMine(proposalPayload))
-                log.warn("We already have an item with the same Proposal.");
+            if (storeLocally && !isMine(proposalPayload))
+                log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
         }
     }
 
