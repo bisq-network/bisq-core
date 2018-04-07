@@ -21,6 +21,7 @@ import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,14 +37,14 @@ public class Cycles {
 
     // phase period: 30 days + 30 blocks
     public enum Phase {
-        UNDEFINED,
+        UNDEFINED, // Must be exactly 0 blocks
         PROPOSAL,
         BREAK1,
         BLIND_VOTE,
         BREAK2,
         VOTE_REVEAL,
         BREAK3,
-        ISSUANCE, // Must have only 1 block!
+        ISSUANCE, // Must be exactly 1 block
         BREAK4;
     }
 
@@ -60,16 +61,10 @@ public class Cycles {
 
         Cycle(int startBlock, DaoParamService daoParamService) {
             this.startBlock = startBlock;
-            // TODO: Set all phase durations using param service
-            phases.add(0); // UNDEFINED Must be set to 0
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_PROPOSAL, startBlock));
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK1, startBlock));
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BLIND_VOTE, startBlock));
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK2, startBlock));
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_VOTE_REVEAL, startBlock));
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK3, startBlock));
-            phases.add(1); // ISSUANCE Must have only 1 block!
-            phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK4, startBlock));
+            Arrays.asList(Phase.values()).stream().forEach(phase -> {
+                String name = "PHASE_" + phase.name();
+                phases.add((int) daoParamService.getDaoParamValue(DaoParam.valueOf(name), startBlock));
+            });
             this.lastBlock = startBlock + getCycleDuration() - 1;
         }
 

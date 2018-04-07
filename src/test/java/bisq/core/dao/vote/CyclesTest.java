@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +44,8 @@ public class CyclesTest {
     @Before
     public void startup() {
         when(daoParamService.getDaoParamValue(any(DaoParam.class), anyInt())).thenReturn(phaseDuration);
+        when(daoParamService.getDaoParamValue(eq(DaoParam.PHASE_UNDEFINED), anyInt())).thenReturn(0L);
+        when(daoParamService.getDaoParamValue(eq(DaoParam.PHASE_ISSUANCE), anyInt())).thenReturn(1L);
 
         cycles = new Cycles(genesisHeight, daoParamService);
     }

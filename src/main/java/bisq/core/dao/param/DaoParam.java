@@ -53,14 +53,15 @@ public enum DaoParam {
     THRESHOLD_REMOVE_ASSET(5_000),      // 50%
 
     // Period params, phase lenghts
+    PHASE_UNDEFINED(0), // Must be exactly 0 blocks
     PHASE_PROPOSAL(5),
     PHASE_BREAK1(5),
     PHASE_BLIND_VOTE(5),
     PHASE_BREAK2(5),
     PHASE_VOTE_REVEAL(5),
     PHASE_BREAK3(5),
+    PHASE_ISSUANCE(1), // Must be exactly 1 block
     PHASE_BREAK4(5);
-
 
     @Getter
     private int defaultValue;
