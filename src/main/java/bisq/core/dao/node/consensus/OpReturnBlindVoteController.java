@@ -23,7 +23,6 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.vote.Cycles;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
@@ -53,7 +52,7 @@ public class OpReturnBlindVoteController {
                 opReturnData.length == 22 &&
                 Version.BLIND_VOTE_VERSION == opReturnData[1] &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, Cycles.Phase.BLIND_VOTE)) {
+                periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE)) {
             txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 

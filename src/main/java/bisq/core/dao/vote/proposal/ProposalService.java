@@ -22,7 +22,6 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.vote.Cycles;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
@@ -313,7 +312,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {
         return readableBsqBlockChain.getTxMap().get(payload.getTxId()) == null ||
-                (periodService.isTxInPhase(payload.getTxId(), Cycles.Phase.PROPOSAL) &&
+                (periodService.isTxInPhase(payload.getTxId(), PeriodService.Phase.PROPOSAL) &&
                         periodService.isTxInCurrentCycle(payload.getTxId()));
     }
 

@@ -17,20 +17,105 @@
 
 package bisq.core.dao.vote;
 
+import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
+
+import io.bisq.generated.protobuffer.PB;
+
+import org.powermock.core.classloader.annotations.PrepareForTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@PrepareForTest({DaoParamService.class})
 public class PeriodServiceTest {
 
     private PeriodService service;
+    private int genesisHeight = 200;
+    DaoParamService daoParamService = mock(DaoParamService.class);
+    ReadableBsqBlockChain readableBsqBlockChain = mock(ReadableBsqBlockChain.class);
+    // All phases are 10 blocks long during test
+    long phaseDuration = 10L;
 
     @Before
     public void startup() {
-//        service = new PeriodService(null, 0);
+        when(daoParamService.getDaoParamValue(any(DaoParam.class), anyInt())).thenReturn(phaseDuration);
+        when(daoParamService.getDaoParamValue(eq(DaoParam.PHASE_UNDEFINED), anyInt())).thenReturn(0L);
+        when(daoParamService.getDaoParamValue(eq(DaoParam.PHASE_ISSUANCE), anyInt())).thenReturn(1L);
+
+        service = new PeriodService(readableBsqBlockChain, genesisHeight, daoParamService);
+    }
+
+    @Test
+    public void getCycle() {
+        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        service.onChainHeightChanged(newCycleStartBlock);
+        assertEquals(service.getCycle(genesisHeight), service.getCycle(newCycleStartBlock - 1));
+        assertEquals(service.getCycle(newCycleStartBlock), service.getCycle(newCycleStartBlock + 1));
+        assertEquals(service.getCycle(0), service.getCycle(genesisHeight - 1));
+        assertNotEquals(service.getCycle(0), service.getCycle(genesisHeight));
+        assertEquals(service.getCycle(genesisHeight).getPhaseDuration(PeriodService.Phase.PROPOSAL), phaseDuration);
+    }
+
+
+    @Test
+    public void getPhase() {
+        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        service.onChainHeightChanged(newCycleStartBlock);
+        assertEquals(PeriodService.Phase.PROPOSAL, service.getPhase(genesisHeight));
+        assertEquals(PeriodService.Phase.PROPOSAL,
+                service.getPhase(genesisHeight + (int) phaseDuration - 1));
+        assertEquals(PeriodService.Phase.BREAK1, service.getPhase(genesisHeight + (int) phaseDuration));
+        assertEquals(PeriodService.Phase.BREAK4,
+                service.getPhase(genesisHeight + service.getCycle(genesisHeight).getCycleDuration() - 1));
+        assertEquals(PeriodService.Phase.PROPOSAL,
+                service.getPhase(genesisHeight + service.getCycle(genesisHeight).getCycleDuration()));
+    }
+
+    @Test
+    public void getStartBlockOfPhase() {
+        PeriodService.Cycle c = service.getCycle(genesisHeight);
+        assertEquals(genesisHeight, service.getAbsoluteStartBlockOfPhase(genesisHeight, PeriodService.Phase.PROPOSAL));
+        assertEquals(genesisHeight + phaseDuration,
+                service.getAbsoluteStartBlockOfPhase(genesisHeight, PeriodService.Phase.BREAK1));
+    }
+
+    @Test
+    public void getEndBlockOfPhase() {
+        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        service.onChainHeightChanged(newCycleStartBlock);
+        PeriodService.Cycle c = service.getCycle(genesisHeight);
+        assertEquals(genesisHeight + phaseDuration - 1,
+                service.getAbsoluteEndBlockOfPhase(genesisHeight, PeriodService.Phase.PROPOSAL));
+        assertEquals(genesisHeight + 2 * phaseDuration - 1,
+                service.getAbsoluteEndBlockOfPhase(genesisHeight, PeriodService.Phase.BREAK1));
+    }
+
+    @Test
+    public void getNumberOfStartedCycles() {
+        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        service.onChainHeightChanged(newCycleStartBlock);
+        assertEquals(2, service.getNumberOfStartedCycles());
+    }
+
+    @Test
+    public void onChainHeightChanged() {
+        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        service.onChainHeightChanged(newCycleStartBlock);
+        assertNotEquals(service.getCycle(genesisHeight), service.getCycle(newCycleStartBlock));
     }
 
     //TODO update with added periods

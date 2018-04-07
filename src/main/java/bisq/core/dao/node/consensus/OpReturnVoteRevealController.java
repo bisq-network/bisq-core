@@ -21,7 +21,6 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.Cycles;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.app.Version;
@@ -49,7 +48,7 @@ public class OpReturnVoteRevealController {
         if (model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 38 &&
                 Version.VOTE_REVEAL_VERSION == opReturnData[1] &&
-                periodService.isInPhase(blockHeight, Cycles.Phase.VOTE_REVEAL)) {
+                periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL)) {
             txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
             checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
