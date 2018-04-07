@@ -135,7 +135,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     }
 
     public int getAbsoluteEndBlockOfPhase(int chainHeight, Cycles.Phase phase) {
-        return cycles.getEndBlockOfPhase(chainHeight, phase);
+        return cycles.getLastBlockOfPhase(chainHeight, phase);
     }
 
 

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -57,7 +56,7 @@ public class Cycles {
         @Getter
         private int startBlock = 0;
         @Getter
-        private int endBlock = 0;
+        private int lastBlock = 0;
 
         Cycle(int startBlock, DaoParamService daoParamService) {
             this.startBlock = startBlock;
@@ -71,7 +70,7 @@ public class Cycles {
             phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK3, startBlock));
             phases.add(1); // ISSUANCE Must have only 1 block!
             phases.add((int) daoParamService.getDaoParamValue(DaoParam.PHASE_BREAK4, startBlock));
-            this.endBlock = startBlock + getCycleDuration();
+            this.lastBlock = startBlock + getCycleDuration() - 1;
         }
 
         public int getCycleDuration() {
@@ -95,7 +94,7 @@ public class Cycles {
     // Return prehistoric cycle for blockHeight < genesis height (even for blockHeight < 0)
     Cycle getCycle(int blockHeight) {
         Optional<Cycle> cycle = cycles.stream().
-                filter(c -> c.getStartBlock() <= blockHeight && blockHeight <= c.getEndBlock()).findAny();
+                filter(c -> c.getStartBlock() <= blockHeight && blockHeight <= c.getLastBlock()).findAny();
         if (cycle.isPresent())
             return cycle.get();
         return cycles.get(0);
@@ -119,7 +118,7 @@ public class Cycles {
         int checkHeight = cycle.getStartBlock();
         List<Integer> phases = cycle.getPhases();
         for (int i = 0; i < phases.size(); ++i) {
-            if (checkHeight + phases.get(i) > blockHeight) {
+            if (i == phase.ordinal()) {
                 return checkHeight;
             }
             checkHeight += phases.get(i);
@@ -129,15 +128,15 @@ public class Cycles {
     }
 
     // Get end of phase given the blockheight of the cycle
-    int getEndBlockOfPhase(int blockHeight, Phase phase) {
+    int getLastBlockOfPhase(int blockHeight, Phase phase) {
         Cycle cycle = getCycle(blockHeight);
         int checkHeight = cycle.getStartBlock();
         List<Integer> phases = cycle.getPhases();
         for (int i = 0; i < phases.size(); ++i) {
-            checkHeight += phases.get(i);
-            if (checkHeight > blockHeight) {
-                return checkHeight;
+            if (i == phase.ordinal()) {
+                return checkHeight + phases.get(i) - 1;
             }
+            checkHeight += phases.get(i);
         }
         // Can't handle future phases until cycle is defined
         return 0;
@@ -149,8 +148,8 @@ public class Cycles {
 
     public void onChainHeightChanged(int chainHeight) {
         Cycle lastCycle = cycles.get(cycles.size() - 1);
-        while (chainHeight > lastCycle.getEndBlock()) {
-            cycles.add(new Cycle(lastCycle.getEndBlock(), daoParamService));
+        while (chainHeight > lastCycle.getLastBlock()) {
+            cycles.add(new Cycle(lastCycle.getLastBlock(), daoParamService));
             lastCycle = cycles.get(cycles.size() - 1);
         }
     }
