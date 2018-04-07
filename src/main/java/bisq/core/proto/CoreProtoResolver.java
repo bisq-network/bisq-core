@@ -18,30 +18,7 @@
 package bisq.core.proto;
 
 import bisq.core.payment.AccountAgeWitness;
-import bisq.core.payment.payload.AliPayAccountPayload;
-import bisq.core.payment.payload.CashAppAccountPayload;
-import bisq.core.payment.payload.CashDepositAccountPayload;
-import bisq.core.payment.payload.ChaseQuickPayAccountPayload;
-import bisq.core.payment.payload.ClearXchangeAccountPayload;
-import bisq.core.payment.payload.CryptoCurrencyAccountPayload;
-import bisq.core.payment.payload.FasterPaymentsAccountPayload;
-import bisq.core.payment.payload.InteracETransferAccountPayload;
-import bisq.core.payment.payload.MoneyBeamAccountPayload;
-import bisq.core.payment.payload.NationalBankAccountPayload;
-import bisq.core.payment.payload.OKPayAccountPayload;
-import bisq.core.payment.payload.PaymentAccountPayload;
-import bisq.core.payment.payload.PerfectMoneyAccountPayload;
-import bisq.core.payment.payload.PopmoneyAccountPayload;
-import bisq.core.payment.payload.RevolutAccountPayload;
-import bisq.core.payment.payload.SameBankAccountPayload;
-import bisq.core.payment.payload.SepaAccountPayload;
-import bisq.core.payment.payload.SepaInstantAccountPayload;
-import bisq.core.payment.payload.SpecificBanksAccountPayload;
-import bisq.core.payment.payload.SwishAccountPayload;
-import bisq.core.payment.payload.USPostalMoneyOrderAccountPayload;
-import bisq.core.payment.payload.UpholdAccountPayload;
-import bisq.core.payment.payload.VenmoAccountPayload;
-import bisq.core.payment.payload.WesternUnionAccountPayload;
+import bisq.core.payment.payload.*;
 import bisq.core.trade.statistics.TradeStatistics2;
 
 import bisq.common.proto.ProtoResolver;
@@ -61,6 +38,8 @@ public class CoreProtoResolver implements ProtoResolver {
             switch (messageCase) {
                 case ALI_PAY_ACCOUNT_PAYLOAD:
                     return AliPayAccountPayload.fromProto(proto);
+                case WECHAT_PAY_ACCOUNT_PAYLOAD:
+                    return WechatPayAccountPayload.fromProto(proto);
                 case CHASE_QUICK_PAY_ACCOUNT_PAYLOAD:
                     return ChaseQuickPayAccountPayload.fromProto(proto);
                 case CLEAR_XCHANGE_ACCOUNT_PAYLOAD:

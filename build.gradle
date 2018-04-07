@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    compile 'network.bisq:bisq-p2p:-SNAPSHOT'
+    compile 'com.github.abigail830:bisq-p2p:-SNAPSHOT'
     compile 'net.sf.jopt-simple:jopt-simple:5.0.3'
     compile('network.bisq.btcd-cli4j:btcd-cli4j-core:29f99be') {
         exclude(module: 'slf4j-api')
