@@ -121,7 +121,6 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            log.info("blockHeight " + bsqBlock.getHeight());
             maybeRevealVotes();
         }
     }

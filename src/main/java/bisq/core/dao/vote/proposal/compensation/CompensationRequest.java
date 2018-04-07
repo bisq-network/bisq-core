@@ -17,11 +17,9 @@
 
 package bisq.core.dao.vote.proposal.compensation;
 
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.proposal.ValidationException;
 import bisq.core.dao.vote.result.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
@@ -75,18 +73,6 @@ public class CompensationRequest extends Proposal {
         return new CompensationRequest(ProposalPayload.fromProto(proto.getProposalPayload()),
                 proto.hasVoteResult() ? VoteResult.fromProto(proto.getVoteResult()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
-    }
-
-    public void validateInputData() throws ValidationException {
-        getCompensationRequestPayload().validateInputData();
-    }
-
-    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
-        getCompensationRequestPayload().validateHashOfOpReturnData(tx);
-    }
-
-    public boolean isCorrectTxType(Tx tx) {
-        return getCompensationRequestPayload().isCorrectTxType(tx);
     }
 
 

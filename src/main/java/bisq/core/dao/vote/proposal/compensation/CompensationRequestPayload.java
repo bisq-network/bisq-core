@@ -146,8 +146,8 @@ public final class CompensationRequestPayload extends ProposalPayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void validateInputData() throws ValidationException {
-        super.validateInputData();
+    public void validateDataFields() throws ValidationException {
+        super.validateDataFields();
         try {
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
@@ -162,8 +162,13 @@ public final class CompensationRequestPayload extends ProposalPayload {
     }
 
     @Override
-    public boolean isCorrectTxType(Tx tx) {
-        return tx.getTxType() == TxType.COMPENSATION_REQUEST;
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.COMPENSATION_REQUEST, "ProposalPayload has wrong txType");
+        } catch (Throwable e) {
+            log.warn("CompensationRequestPayload has wrong txType. tx={}, compensationRequestPayload={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
     }
 
 
@@ -186,6 +191,11 @@ public final class CompensationRequestPayload extends ProposalPayload {
         return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
     }
 
+    protected ProposalPayload getCloneWithoutTxId() {
+        ProposalPayload clone = CompensationRequestPayload.fromProto(toProtoMessage().getProposalPayload());
+        clone.setTxId(null);
+        return clone;
+    }
 
     @Override
     public String toString() {

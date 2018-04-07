@@ -1,5 +1,7 @@
 package bisq.core.dao.vote.proposal;
 
+import bisq.core.dao.blockchain.vo.Tx;
+
 import org.bitcoinj.core.Coin;
 
 import lombok.Getter;
@@ -12,6 +14,8 @@ public class ValidationException extends Exception {
     private Coin requestedBsq;
     @Nullable
     private Coin minRequestAmount;
+    @Nullable
+    private Tx tx;
 
     public ValidationException(String message, Coin requestedBsq, Coin minRequestAmount) {
         super(message);
@@ -21,5 +25,26 @@ public class ValidationException extends Exception {
 
     public ValidationException(Throwable cause) {
         super(cause);
+    }
+
+    public ValidationException(String message, Tx tx) {
+        super(message);
+        this.tx = tx;
+    }
+
+    public ValidationException(Throwable cause, Tx tx) {
+        super(cause);
+        this.tx = tx;
+    }
+
+    @Override
+    public String toString() {
+        return "ValidationException{" +
+                "\n     message=" + getMessage() +
+                "\n     cause.message=" + getCause().getMessage() +
+                "\n     requestedBsq=" + requestedBsq +
+                ",\n     minRequestAmount=" + minRequestAmount +
+                ",\n     txId=" + tx.getId() +
+                "\n} " + super.toString();
     }
 }

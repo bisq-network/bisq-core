@@ -17,8 +17,6 @@
 
 package bisq.core.dao.vote.proposal.asset;
 
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
@@ -110,10 +108,5 @@ public final class RemoveAssetProposalPayload extends ProposalPayload {
     @Override
     public ProposalType getType() {
         return ProposalType.REMOVE_ALTCOIN;
-    }
-
-    @Override
-    public boolean isCorrectTxType(Tx tx) {
-        return tx.getTxType() == TxType.PROPOSAL;
     }
 }

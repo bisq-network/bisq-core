@@ -89,7 +89,7 @@ public class CompensationRequestService {
                 new Date()
         );
 
-        payload.validateInputData();
+        payload.validateDataFields();
 
         return payload;
     }

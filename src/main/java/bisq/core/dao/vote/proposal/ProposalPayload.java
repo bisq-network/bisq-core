@@ -18,6 +18,8 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 
@@ -67,7 +69,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Getter
 @EqualsAndHashCode
 public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+        CapabilityRequiringPayload, ValidationCandidate {
 
     protected final String uid;
     protected final String name;
@@ -172,7 +174,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
-    public void validateInputData() throws ValidationException {
+    @Override
+    public void validateDataFields() throws ValidationException {
         try {
             notEmpty(name, "name must not be empty");
             notEmpty(title, "title must not be empty");
@@ -187,21 +190,39 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     // We do not verify type or version as that gets verified in parser. Version might have been changed as well
     // so we don't want to fail in that case.
+    @Override
     public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
         try {
             byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).get().getOpReturnData();
             checkNotNull(txOpReturnData, "txOpReturnData must not be null");
             byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
-            byte[] hash = ProposalConsensus.getHashOfPayload(this);
+            // We need to set txId to null in clone to get same hash as used in the tx return data
+            byte[] hash = ProposalConsensus.getHashOfPayload(getCloneWithoutTxId());
             checkArgument(Arrays.equals(txHashOfPayload, hash),
-                    "OpReturn data from proposal tx is not matching the one created from the payload");
+                    "OpReturn data from proposal tx is not matching the one created from the payload." +
+                            "\ntxHashOfPayload=" + Utilities.encodeToHex(txHashOfPayload) +
+                            "\nhash=" + Utilities.encodeToHex(hash));
         } catch (Throwable e) {
-            log.warn("OpReturnData validation of proposalPayload failed. proposalPayload={}", this);
-            throw new ValidationException(e);
+            log.debug("OpReturnData validation of proposalPayload failed. proposalPayload={}, tx={}", this, tx);
+            throw new ValidationException(e, tx);
         }
     }
 
-    public abstract boolean isCorrectTxType(Tx tx);
+    protected ProposalPayload getCloneWithoutTxId() {
+        ProposalPayload clone = ProposalPayload.fromProto(toProtoMessage().getProposalPayload());
+        clone.setTxId(null);
+        return clone;
+    }
+
+    @Override
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.PROPOSAL, "ProposalPayload has wrong txType");
+        } catch (Throwable e) {
+            log.warn("ProposalPayload has wrong txType. tx={}, proposalPayload={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

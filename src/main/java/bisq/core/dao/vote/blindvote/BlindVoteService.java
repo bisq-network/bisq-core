@@ -28,11 +28,14 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
 import bisq.core.dao.vote.proposal.ProposalService;
+import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -60,6 +63,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,6 +76,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final ProposalService proposalService;
     private final MyVoteService myVoteService;
     private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final PeriodService periodService;
     private final DaoParamService daoParamService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -91,6 +97,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     public BlindVoteService(ProposalService proposalService,
                             MyVoteService myVoteService,
                             ReadableBsqBlockChain readableBsqBlockChain,
+                            PeriodService periodService,
                             DaoParamService daoParamService,
                             BsqWalletService bsqWalletService,
                             BtcWalletService btcWalletService,
@@ -101,6 +108,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         this.proposalService = proposalService;
         this.myVoteService = myVoteService;
         this.readableBsqBlockChain = readableBsqBlockChain;
+        this.periodService = periodService;
         this.daoParamService = daoParamService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
@@ -209,7 +217,9 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     }
 
     public List<BlindVote> getBlindVoteList() {
-        return blindVoteList.getList();
+        return blindVoteList.getList().stream()
+                .filter(this::isBlindVoteValid)
+                .collect(Collectors.toList());
     }
 
 
@@ -243,6 +253,28 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             log.info("Added blindVote to blindVoteList.\nblindVote={}", blindVote);
         } else {
             log.warn("We have that blindVote already in our list. blindVote={}", blindVote);
+        }
+    }
+
+    private boolean isBlindVoteValid(BlindVote blindVote) {
+        final String txId = blindVote.getTxId();
+        Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
+        if (optionalTx.isPresent() && periodService.isTxInCurrentCycle(txId)) {
+            final Tx tx = optionalTx.get();
+            try {
+                blindVote.validateDataFields();
+                blindVote.validateHashOfOpReturnData(tx);
+                // All other tx validation is done in parser, so if type is correct we know it's a correct blindVote tx
+                blindVote.validateCorrectTxType(tx);
+                return true;
+            } catch (ValidationException e) {
+                log.warn("BlindVote validation failed. txId={}, blindVote={}, validationException={}", txId, blindVote, e);
+                return false;
+            }
+        } else {
+            log.debug("BlindVote validation failed. txId={}, optionalTx.isPresent()={}, isTxInCurrentCycle={}",
+                    txId, optionalTx.isPresent(), periodService.isTxInCurrentCycle(txId));
+            return false;
         }
     }
 

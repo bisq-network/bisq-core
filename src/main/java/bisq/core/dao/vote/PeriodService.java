@@ -56,7 +56,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     public enum Phase {
         // TODO for testing
         UNDEFINED(0),
-        PROPOSAL(2),
+        PROPOSAL(3),
         BREAK1(1),
         BLIND_VOTE(2),
         BREAK2(1),

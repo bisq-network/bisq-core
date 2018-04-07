@@ -17,11 +17,9 @@
 
 package bisq.core.dao.vote.proposal.generic;
 
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.proposal.ValidationException;
 import bisq.core.dao.vote.result.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
@@ -78,18 +76,6 @@ public class GenericProposal extends Proposal {
     @Override
     public ProposalType getType() {
         return ProposalType.GENERIC;
-    }
-
-    public void validateInputData() throws ValidationException {
-        getGenericProposalPayload().validateInputData();
-    }
-
-    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
-        getGenericProposalPayload().validateHashOfOpReturnData(tx);
-    }
-
-    public boolean isCorrectTxType(Tx tx) {
-        return getGenericProposalPayload().isCorrectTxType(tx);
     }
 
     private GenericProposalPayload getGenericProposalPayload() {
