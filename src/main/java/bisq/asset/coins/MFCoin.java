@@ -21,7 +21,7 @@ import bisq.asset.RegexAddressValidator;
 
 public class MFCoin extends Coin {
     
-    public Mfcoin(){
+    public MFCoin(){
         super("MFCoin", "MFC", new RegexAddressValidator("^[M][a-km-zA-HJ-NP-Z1-9]{33}$"));
     }
 }
