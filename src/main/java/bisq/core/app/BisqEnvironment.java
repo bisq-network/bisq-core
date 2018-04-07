@@ -230,8 +230,8 @@ public class BisqEnvironment extends StandardEnvironment {
         useDevPrivilegeKeys = commandLineProperties.containsProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS) ?
                 (String) commandLineProperties.getProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS) :
                 "";
-        useDevMode = commandLineProperties.containsProperty(AppOptionKeys.USE_DEV_MODE) ?
-                (String) commandLineProperties.getProperty(AppOptionKeys.USE_DEV_MODE) :
+        useDevMode = commandLineProperties.containsProperty(CommonOptionKeys.USE_DEV_MODE) ?
+                (String) commandLineProperties.getProperty(CommonOptionKeys.USE_DEV_MODE) :
                 "";
         dumpStatistics = commandLineProperties.containsProperty(AppOptionKeys.DUMP_STATISTICS) ?
                 (String) commandLineProperties.getProperty(AppOptionKeys.DUMP_STATISTICS) :
@@ -428,7 +428,7 @@ public class BisqEnvironment extends StandardEnvironment {
                 setProperty(AppOptionKeys.APP_DATA_DIR_KEY, appDataDir);
                 setProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY, ignoreDevMsg);
                 setProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, useDevPrivilegeKeys);
-                setProperty(AppOptionKeys.USE_DEV_MODE, useDevMode);
+                setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);
                 setProperty(AppOptionKeys.DUMP_STATISTICS, dumpStatistics);
                 setProperty(AppOptionKeys.APP_NAME_KEY, appName);
                 setProperty(AppOptionKeys.MAX_MEMORY, maxMemory);
