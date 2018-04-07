@@ -185,12 +185,12 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         }
     }
 
-    public void validateOpReturnData(Tx tx) throws ValidationException {
+    // We do not verify type or version as that gets verified in parser. Version might have been changed as well
+    // so we don't want to fail in that case.
+    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
         try {
             byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).get().getOpReturnData();
             checkNotNull(txOpReturnData, "txOpReturnData must not be null");
-            // We do not verify type or version as that gets verified in parser. Version might have been changed as well
-            // so we don't want to fail in that case.
             byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
             byte[] hash = ProposalConsensus.getHashOfPayload(this);
             checkArgument(Arrays.equals(txHashOfPayload, hash),
@@ -200,6 +200,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             throw new ValidationException(e);
         }
     }
+
+    public abstract boolean isCorrectTxType(Tx tx);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -216,7 +218,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     public abstract ProposalType getType();
 
-    public abstract boolean isCorrectTxType(Tx tx);
 
     @Override
     public String toString() {

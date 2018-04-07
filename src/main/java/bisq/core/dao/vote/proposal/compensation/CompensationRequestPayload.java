@@ -161,6 +161,11 @@ public final class CompensationRequestPayload extends ProposalPayload {
         }
     }
 
+    @Override
+    public boolean isCorrectTxType(Tx tx) {
+        return tx.getTxType() == TxType.COMPENSATION_REQUEST;
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
@@ -188,10 +193,5 @@ public final class CompensationRequestPayload extends ProposalPayload {
                 "\n     requestedBsq=" + requestedBsq +
                 ",\n     bsqAddress='" + bsqAddress + '\'' +
                 "\n} " + super.toString();
-    }
-
-    @Override
-    public boolean isCorrectTxType(Tx tx) {
-        return tx.getTxType() == TxType.COMPENSATION_REQUEST;
     }
 }

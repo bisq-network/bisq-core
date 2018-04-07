@@ -17,6 +17,7 @@
 
 package bisq.core.dao.vote.proposal;
 
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
 import bisq.core.dao.vote.result.VoteResult;
@@ -107,6 +108,17 @@ public abstract class Proposal implements PersistablePayload {
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }
     }
+
+    public void validateInputData() throws ValidationException {
+        getProposalPayload().validateInputData();
+    }
+
+    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
+        getProposalPayload().validateHashOfOpReturnData(tx);
+    }
+
+    public abstract boolean isCorrectTxType(Tx tx);
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

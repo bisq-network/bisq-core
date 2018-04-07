@@ -322,10 +322,10 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
         if (optionalTx.isPresent() && periodService.isTxInCurrentCycle(txId)) {
             final Tx tx = optionalTx.get();
             try {
-                proposal.getProposalPayload().validateInputData();
-                proposal.getProposalPayload().validateOpReturnData(tx);
+                proposal.validateInputData();
+                proposal.validateHashOfOpReturnData(tx);
                 // All other tx validation is done in parser, so if type is correct we know it's a correct proposal tx
-                proposal.getProposalPayload().isCorrectTxType(tx);
+                proposal.isCorrectTxType(tx);
                 return true;
             } catch (ValidationException e) {
                 log.warn("Proposal validation failed. proposal={}, validationException={}", proposal, e);
