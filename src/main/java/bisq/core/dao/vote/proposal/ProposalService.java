@@ -27,6 +27,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
@@ -134,17 +135,6 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
         upDatePredicate();
-    }
-
-    private void upDatePredicate() {
-        activeProposals.setPredicate(proposal -> periodService.isTxInCurrentCycle(proposal.getTxId()) ||
-                isUnconfirmed(proposal.getTxId()));
-        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId()));
-    }
-
-    private boolean isUnconfirmed(String txId) {
-        final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(txId);
-        return confidenceForTxId != null && confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
     }
 
 
@@ -317,6 +307,40 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
                         log.warn("Adding of ProposalPayload to P2P network failed.\nProposalPayload=" + proposal.getProposalPayload());
                     }
                 });
+    }
+
+    private void upDatePredicate() {
+        // We display own unconfirmed proposals as there is no risk. Other proposals are only shown after they are in
+        //the blockchain and verified
+        activeProposals.setPredicate(proposal -> (isUnconfirmed(proposal) && isMine(proposal)) || isProposalValid(proposal));
+        closedProposals.setPredicate(proposal -> isProposalValid(proposal) && periodService.isTxInPastCycle(proposal.getTxId()));
+    }
+
+    private boolean isProposalValid(Proposal proposal) {
+        final String txId = proposal.getTxId();
+        Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
+        if (optionalTx.isPresent() && periodService.isTxInCurrentCycle(txId)) {
+            final Tx tx = optionalTx.get();
+            try {
+                proposal.getProposalPayload().validateInputData();
+                proposal.getProposalPayload().validateOpReturnData(tx);
+                // All other tx validation is done in parser, so if type is correct we know it's a correct proposal tx
+                proposal.getProposalPayload().isCorrectTxType(tx);
+                return true;
+            } catch (ValidationException e) {
+                log.warn("Proposal validation failed. proposal={}, validationException={}", proposal, e);
+                return false;
+            }
+        } else {
+            log.warn("Proposal validation failed. optionalTx.isPresent()={}, isTxInCurrentCycle={}",
+                    optionalTx.isPresent(), periodService.isTxInCurrentCycle(txId));
+            return false;
+        }
+    }
+
+    private boolean isUnconfirmed(Proposal proposal) {
+        final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(proposal.getTxId());
+        return confidenceForTxId != null && confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
     }
 
     private boolean isInPhaseOrUnconfirmed(ProposalPayload payload) {
