@@ -30,7 +30,10 @@ import org.bitcoinj.store.BlockStoreException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 
 import java.nio.file.Paths;
 
@@ -78,5 +81,9 @@ public class CoreSetup {
             e.printStackTrace();
             UserThread.execute(() -> errorHandler.accept(e, true));
         }
+    }
+
+    public static void setBouncyCastleProvider() {
+        Security.addProvider(new BouncyCastleProvider());
     }
 }
