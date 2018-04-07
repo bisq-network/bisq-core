@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CoreNetworkCapabilities {
-    public static void init() {
+    public static void setSupportedCapabilities() {
         Capabilities.setSupportedCapabilities(new ArrayList<>(Arrays.asList(
                 Capabilities.Capability.TRADE_STATISTICS.ordinal(),
                 Capabilities.Capability.TRADE_STATISTICS_2.ordinal(),
