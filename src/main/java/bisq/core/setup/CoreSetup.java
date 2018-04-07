@@ -19,10 +19,13 @@ package bisq.core.setup;
 
 import bisq.core.app.AppOptionKeys;
 import bisq.core.app.BisqEnvironment;
+import bisq.core.locale.CurrencyUtil;
+import bisq.core.locale.Res;
 
 import bisq.common.CommonOptionKeys;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
+import bisq.common.app.Version;
 import bisq.common.crypto.LimitedKeyStrengthException;
 import bisq.common.util.Utilities;
 
@@ -45,6 +48,21 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CoreSetup {
+
+    public static void setup(BisqEnvironment bisqEnvironment, BiConsumer<Throwable, Boolean> errorHandler) {
+        setupLog(bisqEnvironment);
+        setupErrorHandler(errorHandler);
+        CoreNetworkCapabilities.setSupportedCapabilities();
+        Security.addProvider(new BouncyCastleProvider());
+        Res.setup();
+        CurrencyUtil.setup();
+
+        Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
+        Version.printVersion();
+
+        if (Utilities.isLinux())
+            System.setProperty("prism.lcdtext", "false");
+    }
 
     public static void setupLog(BisqEnvironment bisqEnvironment) {
         String logPath = Paths.get(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY), "bisq").toString();
@@ -81,13 +99,5 @@ public class CoreSetup {
             e.printStackTrace();
             UserThread.execute(() -> errorHandler.accept(e, true));
         }
-    }
-
-    public static void setBouncyCastleProvider() {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    public static void setupCapabilities() {
-        CoreNetworkCapabilities.setSupportedCapabilities();
     }
 }

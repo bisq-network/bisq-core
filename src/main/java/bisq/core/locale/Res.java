@@ -17,6 +17,9 @@
 
 package bisq.core.locale;
 
+import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.BaseCurrencyNetwork;
+
 import bisq.common.app.DevEnv;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,13 +38,20 @@ import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
 
+@Slf4j
 public class Res {
-    private static final Logger log = LoggerFactory.getLogger(Res.class);
+    public static void setup() {
+        final BaseCurrencyNetwork baseCurrencyNetwork = BisqEnvironment.getBaseCurrencyNetwork();
+        final String baseCurrencyName = baseCurrencyNetwork.getCurrencyCode();
+        Res.baseCurrencyCode = baseCurrencyName;
+
+        Res.baseCurrencyName = baseCurrencyName;
+        baseCurrencyNameLowerCase = baseCurrencyName.toLowerCase();
+    }
 
     @SuppressWarnings("CanBeFinal")
     private static ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n.displayStrings", GlobalSettings.getLocale(), new UTF8Control());
@@ -69,15 +79,6 @@ public class Res {
     private static String baseCurrencyCode;
     private static String baseCurrencyName;
     private static String baseCurrencyNameLowerCase;
-
-    public static void setBaseCurrencyCode(String baseCurrencyCode) {
-        Res.baseCurrencyCode = baseCurrencyCode;
-    }
-
-    public static void setBaseCurrencyName(String baseCurrencyName) {
-        Res.baseCurrencyName = baseCurrencyName;
-        baseCurrencyNameLowerCase = baseCurrencyName.toLowerCase();
-    }
 
     public static String getBaseCurrencyCode() {
         return baseCurrencyCode;
