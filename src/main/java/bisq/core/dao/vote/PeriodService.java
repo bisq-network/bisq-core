@@ -22,8 +22,8 @@ import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
-
-import bisq.common.app.DevEnv;
+import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.param.DaoParamService;
 
 import com.google.inject.Inject;
 
@@ -34,7 +34,10 @@ import com.google.common.annotations.VisibleForTesting;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -54,45 +57,55 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     // phase period: 30 days + 30 blocks
     public enum Phase {
-        // TODO for testing
-        UNDEFINED(0),
-        PROPOSAL(2),
-        BREAK1(1),
-        BLIND_VOTE(2),
-        BREAK2(1),
-        VOTE_REVEAL(2),
-        BREAK3(1),
-        ISSUANCE(1), // Must have only 1 block!
-        BREAK4(1);
-
-      /* UNDEFINED(0),
-        COMPENSATION_REQUESTS(144 * 23),
-        BREAK1(10),
-        BLIND_VOTE(144 * 4),
-        BREAK2(10),
-        VOTE_REVEAL(144 * 3),
-        BREAK3(10);*/
-
-        /**
-         * 144 blocks is 1 day if a block is found each 10 min.
-         */
-        @Getter
-        private int durationInBlocks;
-
-        Phase(int durationInBlocks) {
-            this.durationInBlocks = durationInBlocks;
-        }
+        UNDEFINED, // Must be exactly 0 blocks
+        PROPOSAL,
+        BREAK1,
+        BLIND_VOTE,
+        BREAK2,
+        VOTE_REVEAL,
+        BREAK3,
+        ISSUANCE, // Must be exactly 1 block
+        BREAK4;
     }
 
+    // The default cycle is used as the pre genesis cycle
+    public class Cycle {
+        // Durations of each phase
+        @Getter
+        List<Integer> phases = new ArrayList<>();
+
+        @Getter
+        private int startBlock = 0;
+        @Getter
+        private int lastBlock = 0;
+
+        Cycle(int startBlock, DaoParamService daoParamService) {
+            this.startBlock = startBlock;
+            Arrays.asList(PeriodService.Phase.values()).stream().forEach(phase -> {
+                String name = "PHASE_" + phase.name();
+                phases.add((int) daoParamService.getDaoParamValue(DaoParam.valueOf(name), startBlock));
+            });
+            this.lastBlock = startBlock + getCycleDuration() - 1;
+        }
+
+        public int getCycleDuration() {
+            return getPhases().stream().mapToInt(Integer::intValue).sum();
+        }
+
+        public int getPhaseDuration(PeriodService.Phase phase) {
+            return getPhases().get(phase.ordinal());
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    private List<Cycle> cycles = new ArrayList<>();
+    private DaoParamService daoParamService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -101,9 +114,13 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     @Inject
     public PeriodService(ReadableBsqBlockChain readableBsqBlockChain,
-                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight,
+                         DaoParamService daoParamService) {
         this.readableBsqBlockChain = readableBsqBlockChain;
-        this.genesisBlockHeight = genesisBlockHeight;
+        this.daoParamService = daoParamService;
+
+        // Initialize genesis cycle
+        this.cycles.add(new Cycle(genesisBlockHeight, daoParamService));
     }
 
 
@@ -124,12 +141,29 @@ public class PeriodService implements BsqBlockChain.Listener {
         onChainHeightChanged(bsqBlock.getHeight());
     }
 
+    public PeriodService.Phase getPhase(int blockHeight) {
+        Cycle cycle = getCycle(blockHeight);
+        int checkHeight = cycle.getStartBlock();
+        List<Integer> phases = cycle.getPhases();
+        for (int i = 0; i < phases.size(); ++i) {
+            if (checkHeight + phases.get(i) > blockHeight)
+                return PeriodService.Phase.values()[i];
+            checkHeight += phases.get(i);
+        }
+        return PeriodService.Phase.UNDEFINED;
+    }
+
+    // Return null for blockHeight < genesis height, it should never happen
+    public Cycle getCycle(int blockHeight) {
+        Optional<Cycle> cycle = cycles.stream().
+                filter(c -> c.getStartBlock() <= blockHeight && blockHeight <= c.getLastBlock()).findAny();
+        if (cycle.isPresent())
+            return cycle.get();
+        return null;
+    }
+
     public boolean isInPhase(int blockHeight, Phase phase) {
-        int start = getBlockUntilPhaseStart(phase);
-        int end = getBlockUntilPhaseEnd(phase);
-        int numBlocksOfTxHeightSinceGenesis = blockHeight - genesisBlockHeight;
-        int heightInCycle = numBlocksOfTxHeightSinceGenesis % getNumBlocksOfCycle();
-        return heightInCycle >= start && heightInCycle < end;
+        return getPhase(blockHeight) == phase;
     }
 
     // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
@@ -140,51 +174,53 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     public boolean isTxInCurrentCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInCurrentCycle(tx.getBlockHeight(),
-                readableBsqBlockChain.getChainHeadHeight(),
-                genesisBlockHeight,
-                getNumBlocksOfCycle());
+        return tx != null && getCycle(tx.getBlockHeight()) == getCycle(readableBsqBlockChain.getChainHeadHeight());
     }
 
     public boolean isTxInPastCycle(String txId) {
         Tx tx = readableBsqBlockChain.getTxMap().get(txId);
-        return tx != null && isTxInPastCycle(tx.getBlockHeight(),
-                readableBsqBlockChain.getChainHeadHeight(),
-                genesisBlockHeight,
-                getNumBlocksOfCycle());
+        return tx != null && getCycle(tx.getBlockHeight()).getStartBlock() <
+                getCycle(readableBsqBlockChain.getChainHeadHeight()).getStartBlock();
     }
 
-    public int getNumOfStartedCycles(int chainHeight) {
-        return getNumOfStartedCycles(chainHeight,
-                genesisBlockHeight,
-                getNumBlocksOfCycle());
+    public int getNumberOfStartedCycles() {
+        // There is one dummy cycle added before the genesis cycle
+        return cycles.size();
     }
 
-    // Not used yet be leave it
-    public int getNumOfCompletedCycles(int chainHeight) {
-        return getNumOfCompletedCycles(chainHeight,
-                genesisBlockHeight,
-                getNumBlocksOfCycle());
+//    public int getNumOfCompletedCycles(int chainHeight) {
+//        Cycle lastCycle = getCycle(chainHeight);
+//        if (lastCycle.getStartBlock() + lastCycle.getCycleDuration() == chainHeight)
+//            return getNumberOfStartedCycles();
+//        return getNumberOfStartedCycles() - 1;
+//    }
+
+    // Get first block of phase within the given cycle
+    public int getFirstBlockOfPhase(Cycle cycle, Phase phase) {
+        int checkHeight = cycle.getStartBlock();
+        List<Integer> phases = cycle.getPhases();
+        for (int i = 0; i < phases.size(); ++i) {
+            if (i == phase.ordinal()) {
+                return checkHeight;
+            }
+            checkHeight += phases.get(i);
+        }
+        // Can't handle future phases until cycle is defined
+        return 0;
     }
 
-    public Phase getPhaseForHeight(int chainHeight) {
-        int startOfCurrentCycle = getAbsoluteStartBlockOfCycle(chainHeight, genesisBlockHeight, getNumBlocksOfCycle());
-        int offset = chainHeight - startOfCurrentCycle;
-        return calculatePhase(offset);
-    }
-
-    public int getAbsoluteStartBlockOfPhase(int chainHeight, Phase phase) {
-        return getAbsoluteStartBlockOfPhase(chainHeight,
-                genesisBlockHeight,
-                phase,
-                getNumBlocksOfCycle());
-    }
-
-    public int getAbsoluteEndBlockOfPhase(int chainHeight, Phase phase) {
-        return getAbsoluteEndBlockOfPhase(chainHeight,
-                genesisBlockHeight,
-                phase,
-                getNumBlocksOfCycle());
+    // Get last block of phase within the given cycle
+    public int getLastBlockOfPhase(Cycle cycle, Phase phase) {
+        int checkHeight = cycle.getStartBlock();
+        List<Integer> phases = cycle.getPhases();
+        for (int i = 0; i < phases.size(); ++i) {
+            if (i == phase.ordinal()) {
+                return checkHeight + phases.get(i) - 1;
+            }
+            checkHeight += phases.get(i);
+        }
+        // Can't handle future phases until cycle is defined
+        return 0;
     }
 
 
@@ -192,161 +228,13 @@ public class PeriodService implements BsqBlockChain.Listener {
     // Private methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void onChainHeightChanged(int chainHeight) {
-        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
-        phaseProperty.set(calculatePhase(relativeBlocksInCycle));
-    }
-
     @VisibleForTesting
-    int getRelativeBlocksInCycle(int genesisHeight, int bestChainHeight, int numBlocksOfCycle) {
-        return (bestChainHeight - genesisHeight) % numBlocksOfCycle;
-    }
-
-    int getBlockUntilPhaseStart(Phase target) {
-        int totalDuration = 0;
-        for (Phase phase : Arrays.asList(Phase.values())) {
-            if (phase == target)
-                break;
-            else
-                totalDuration += phase.getDurationInBlocks();
+    void onChainHeightChanged(int chainHeight) {
+        Cycle lastCycle = cycles.get(cycles.size() - 1);
+        while (chainHeight > lastCycle.getLastBlock()) {
+            cycles.add(new Cycle(lastCycle.getLastBlock(), daoParamService));
+            lastCycle = cycles.get(cycles.size() - 1);
         }
-        return totalDuration;
-    }
-
-    int getBlockUntilPhaseEnd(Phase target) {
-        int totalDuration = 0;
-        for (Phase phase : Arrays.asList(Phase.values())) {
-            totalDuration += phase.getDurationInBlocks();
-            if (phase == target)
-                break;
-        }
-        return totalDuration;
-    }
-
-    @VisibleForTesting
-    Phase calculatePhase(int blocksInNewPhase) {
-        if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks())
-            return Phase.PROPOSAL;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks())
-            return Phase.BREAK1;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks())
-            return Phase.BLIND_VOTE;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks() +
-                Phase.BREAK2.getDurationInBlocks())
-            return Phase.BREAK2;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks() +
-                Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_REVEAL.getDurationInBlocks())
-            return Phase.VOTE_REVEAL;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks() +
-                Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_REVEAL.getDurationInBlocks() +
-                Phase.BREAK3.getDurationInBlocks())
-            return Phase.BREAK3;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks() +
-                Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_REVEAL.getDurationInBlocks() +
-                Phase.BREAK3.getDurationInBlocks() +
-                Phase.ISSUANCE.getDurationInBlocks())
-            return Phase.ISSUANCE;
-        else if (blocksInNewPhase < Phase.PROPOSAL.getDurationInBlocks() +
-                Phase.BREAK1.getDurationInBlocks() +
-                Phase.BLIND_VOTE.getDurationInBlocks() +
-                Phase.BREAK2.getDurationInBlocks() +
-                Phase.VOTE_REVEAL.getDurationInBlocks() +
-                Phase.BREAK3.getDurationInBlocks() +
-                Phase.ISSUANCE.getDurationInBlocks() +
-                Phase.BREAK4.getDurationInBlocks())
-            return Phase.BREAK4;
-        else {
-            log.error("blocksInNewPhase is not covered by phase checks. blocksInNewPhase={}", blocksInNewPhase);
-            if (DevEnv.isDevMode())
-                throw new RuntimeException("blocksInNewPhase is not covered by phase checks. blocksInNewPhase=" + blocksInNewPhase);
-            else
-                return Phase.UNDEFINED;
-        }
-    }
-
-    @VisibleForTesting
-    boolean isTxInCurrentCycle(int txHeight, int chainHeight, int genesisHeight, int numBlocksOfCycle) {
-        final int numOfCompletedCycles = getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle);
-        final int blockAtCycleStart = genesisHeight + numOfCompletedCycles * numBlocksOfCycle;
-        final int blockAtCycleEnd = blockAtCycleStart + numBlocksOfCycle - 1;
-        return txHeight <= chainHeight &&
-                chainHeight >= genesisHeight &&
-                txHeight >= blockAtCycleStart &&
-                txHeight <= blockAtCycleEnd;
-    }
-
-    @VisibleForTesting
-    boolean isTxInPastCycle(int txHeight, int chainHeight, int genesisHeight, int numBlocksOfCycle) {
-        final int numOfCompletedCycles = getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle);
-        final int blockAtCycleStart = genesisHeight + numOfCompletedCycles * numBlocksOfCycle;
-        return txHeight <= chainHeight &&
-                chainHeight >= genesisHeight &&
-                txHeight <= blockAtCycleStart;
-    }
-
-    @VisibleForTesting
-    int getAbsoluteStartBlockOfPhase(int chainHeight, int genesisHeight, Phase phase, int numBlocksOfCycle) {
-        return genesisHeight + getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle) * getNumBlocksOfCycle() + getNumBlocksOfPhaseStart(phase);
-    }
-
-    @VisibleForTesting
-    int getAbsoluteStartBlockOfCycle(int chainHeight, int genesisHeight, int numBlocksOfCycle) {
-        return genesisHeight + getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle) * getNumBlocksOfCycle() + getNumBlocksOfPhaseStart(Phase.PROPOSAL);
-    }
-
-    @VisibleForTesting
-    int getAbsoluteEndBlockOfPhase(int chainHeight, int genesisHeight, Phase phase, int numBlocksOfCycle) {
-        return getAbsoluteStartBlockOfPhase(chainHeight, genesisHeight, phase, numBlocksOfCycle) + phase.getDurationInBlocks() - 1;
-    }
-
-    @VisibleForTesting
-    int getNumOfStartedCycles(int chainHeight, int genesisHeight, int numBlocksOfCycle) {
-        if (chainHeight >= genesisHeight)
-            return getNumOfCompletedCycles(chainHeight, genesisHeight, numBlocksOfCycle) + 1;
-        else
-            return 0;
-    }
-
-    int getNumOfCompletedCycles(int chainHeight, int genesisHeight, int numBlocksOfCycle) {
-        if (chainHeight >= genesisHeight && numBlocksOfCycle > 0)
-            return (chainHeight - genesisHeight) / numBlocksOfCycle;
-        else
-            return 0;
-    }
-
-    @VisibleForTesting
-    int getNumBlocksOfPhaseStart(Phase phase) {
-        int blocks = 0;
-        for (int i = 0; i < Phase.values().length; i++) {
-            final Phase currentPhase = Phase.values()[i];
-            if (currentPhase == phase)
-                break;
-
-            blocks += currentPhase.getDurationInBlocks();
-        }
-        return blocks;
-    }
-
-    @VisibleForTesting
-    int getNumBlocksOfCycle() {
-        int blocks = 0;
-        for (int i = 0; i < Phase.values().length; i++) {
-            blocks += Phase.values()[i].getDurationInBlocks();
-        }
-        return blocks;
+        phaseProperty.set(getPhase(chainHeight));
     }
 }
