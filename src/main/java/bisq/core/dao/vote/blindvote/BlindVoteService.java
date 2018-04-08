@@ -164,7 +164,7 @@ public class BlindVoteService extends BaseService {
         //the blockchain and verified
         validOrMyUnconfirmedBlindVotes.setPredicate(blindVote -> (isUnconfirmed(blindVote.getTxId()) &&
                 isMine(blindVote)) || isValid(blindVote));
-        // validBlindVotes.setPredicate(this::isValid);
+        validBlindVotes.setPredicate(this::isValid);
     }
 
     @Override

@@ -138,26 +138,26 @@ public class PeriodService implements BsqBlockChain.Listener {
         return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
-    public boolean isTxInCorrectCycle(String txId) {
-        return readableBsqBlockChain.getTx(txId)
-                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight()))
-                .isPresent();
-    }
-
-    public boolean isTxInCorrectCycle(int txHeight) {
+    public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
         return isTxInCorrectCycle(txHeight,
-                readableBsqBlockChain.getChainHeadHeight(),
+                chainHeadHeight,
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }
 
-    public boolean isTxInPastCycle(String txId) {
-        return readableBsqBlockChain.getTx(txId).filter(this::isTxInPastCycle).isPresent();
+    public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
+        return readableBsqBlockChain.getTx(txId)
+                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
+                .isPresent();
     }
 
-    public boolean isTxInPastCycle(Tx tx) {
+    public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
+        return readableBsqBlockChain.getTx(txId).filter(tx -> isTxInPastCycle(tx, chainHeadHeight)).isPresent();
+    }
+
+    public boolean isTxInPastCycle(Tx tx, int chainHeadHeight) {
         return isTxInPastCycle(tx.getBlockHeight(),
-                readableBsqBlockChain.getChainHeadHeight(),
+                chainHeadHeight,
                 genesisBlockHeight,
                 getNumBlocksOfCycle());
     }

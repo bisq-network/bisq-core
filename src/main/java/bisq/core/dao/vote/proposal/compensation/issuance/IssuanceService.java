@@ -121,7 +121,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
     public void onBlockAdded(BsqBlock bsqBlock) {
         if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.ISSUANCE) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
-            applyVoteResult();
+            applyVoteResult(bsqBlock.getHeight());
         }
     }
 
@@ -130,10 +130,10 @@ public class IssuanceService implements BsqBlockChain.Listener {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void applyVoteResult() {
+    private void applyVoteResult(int chainHeight) {
         // We make a map with txIds of VoteReveal TxOutputs as key and the opReturn data as value (containing secret key
         // and hash of proposal list)
-        Map<String, byte[]> opReturnByVoteRevealTxIdMap = getOpReturnByTxIdMap();
+        Map<String, byte[]> opReturnByVoteRevealTxIdMap = getOpReturnByTxIdMap(chainHeight);
         if (!opReturnByVoteRevealTxIdMap.isEmpty()) {
             // From the opReturnByVoteRevealTxIdMap we create a map with the hash of blind vote list as key and a list
             // of txIds as value. That map is used for calculating the majority of the blind vote lists. If there are
@@ -148,7 +148,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
             // We make a set of BlindVoteWithRevealTxId objects. BlindVoteWithRevealTxId holds the blind vote with
             // the reveal tx ID. The stake output of the blind vote tx is used as the input for the reveal tx,
             // this is used to connect those transactions.
-            Set<BlindVoteWithRevealTxId> blindVoteWithRevealTxIdSet = getBlindVoteWithRevealTxIdSet();
+            Set<BlindVoteWithRevealTxId> blindVoteWithRevealTxIdSet = getBlindVoteWithRevealTxIdSet(chainHeight);
 
             // We have now all data prepared required to get the decrypted vote data so we can calculate the result
             Set<RevealedVote> revealedVotes = getRevealedVotes(blindVoteWithRevealTxIdSet, secretKeysByTxIdMap);
@@ -174,11 +174,15 @@ public class IssuanceService implements BsqBlockChain.Listener {
         }
     }
 
-    private Map<String, byte[]> getOpReturnByTxIdMap() {
+    private Map<String, byte[]> getOpReturnByTxIdMap(int chainHeight) {
         Map<String, byte[]> opReturnHashesByTxIdMap = new HashMap<>();
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
-        readableBsqBlockChain.getVoteRevealTxOutputs().stream()
-                .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId()))
+        final Set<TxOutput> voteRevealTxOutputs = readableBsqBlockChain.getVoteRevealTxOutputs();
+        if (voteRevealTxOutputs.isEmpty())
+            log.warn("voteRevealTxOutputs is empty");
+
+        voteRevealTxOutputs.stream()
+                .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .forEach(txOutput -> opReturnHashesByTxIdMap.put(txOutput.getTxId(), txOutput.getOpReturnData()));
         return opReturnHashesByTxIdMap;
     }
@@ -199,10 +203,10 @@ public class IssuanceService implements BsqBlockChain.Listener {
         return map;
     }
 
-    private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet() {
+    private Set<BlindVoteWithRevealTxId> getBlindVoteWithRevealTxIdSet(int chainHeight) {
         //TODO check not in current cycle but in the cycle of the tx
         return blindVoteService.getValidBlindVotes().stream()
-                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId()))
+                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
                 .map(blindVote -> {
                     return readableBsqBlockChain.getTx(blindVote.getTxId())
                             .filter(blindVoteTx -> blindVoteTx.getTxType() == TxType.BLIND_VOTE) // double check if type is matching

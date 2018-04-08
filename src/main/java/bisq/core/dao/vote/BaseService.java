@@ -144,11 +144,11 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
         return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
     }
 
-    protected boolean isInPhaseOrUnconfirmed(String txId, PeriodService.Phase phase) {
+    protected boolean isInPhaseOrUnconfirmed(String txId, PeriodService.Phase phase, int blockHeight) {
         return isUnconfirmed(txId) ||
                 readableBsqBlockChain.getTx(txId)
                         .filter(tx -> periodService.isTxInPhase(tx.getId(), phase))
-                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight()))
+                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), blockHeight))
                         .isPresent();
     }
 
@@ -157,7 +157,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
         final String txId = validationCandidate.getTxId();
 
         Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
-        if (optionalTx.isPresent() && periodService.isTxInCorrectCycle(txId)) {
+        if (optionalTx.isPresent()) {
             final Tx tx = optionalTx.get();
             try {
                 validationCandidate.validateDataFields();
@@ -170,8 +170,8 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
                 return false;
             }
         } else {
-            log.debug("Validation failed. txId={},optionalTx.isPresent()={}, isTxInCurrentCycle={}",
-                    txId, optionalTx.isPresent(), periodService.isTxInCorrectCycle(txId));
+            log.warn("Validation failed. txId={}, optionalTx.isPresent()={}",
+                    txId, optionalTx.isPresent());
             return false;
         }
     }

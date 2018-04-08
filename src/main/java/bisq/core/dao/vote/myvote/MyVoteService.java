@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.myvote;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalList;
@@ -47,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MyVoteService implements PersistedDataHost {
     private final PeriodService periodService;
+    private final ReadableBsqBlockChain readableBsqBlockChain;
     private final P2PService p2PService;
     private final Storage<MyVoteList> storage;
 
@@ -62,9 +64,11 @@ public class MyVoteService implements PersistedDataHost {
 
     @Inject
     public MyVoteService(PeriodService periodService,
+                         ReadableBsqBlockChain readableBsqBlockChain,
                          P2PService p2PService,
                          Storage<MyVoteList> storage) {
         this.periodService = periodService;
+        this.readableBsqBlockChain = readableBsqBlockChain;
         this.p2PService = p2PService;
         this.storage = storage;
     }
@@ -137,7 +141,8 @@ public class MyVoteService implements PersistedDataHost {
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
-                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId()))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(),
+                        readableBsqBlockChain.getChainHeadHeight()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {

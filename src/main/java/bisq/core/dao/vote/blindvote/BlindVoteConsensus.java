@@ -105,7 +105,7 @@ public class BlindVoteConsensus {
 
     public static void sortBlindVoteList(List<BlindVote> list) {
         list.sort(Comparator.comparing(BlindVote::getTxId));
-        log.info("Sorted blindVote list: " + list.stream()
+        log.info("Sorted blindVote txId list: " + list.stream()
                 .map(BlindVote::getTxId)
                 .collect(Collectors.toList()));
     }

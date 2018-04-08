@@ -146,8 +146,8 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     private void maybeRevealVotes() {
         myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
-                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.VOTE_REVEAL))
-                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId()))
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), readableBsqBlockChain.getChainHeadHeight()))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to
@@ -211,9 +211,9 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     }
 
     private List<BlindVote> getBlindVoteListForCurrentCycle() {
-        if (blindVoteService.getValidBlindVotes().isEmpty())
-            log.warn("blindVoteService.getValidBlindVotes() is empty");
-        return blindVoteService.getValidBlindVotes().stream()
+        if (blindVoteService.getObservableList().isEmpty())
+            log.warn("blindVoteService.getObservableList() is empty");
+        return blindVoteService.getObservableList().stream()
                 .filter(blindVote -> {
                     final boolean txInPhase = periodService.isTxInPhase(blindVote.getTxId(), PeriodService.Phase.BLIND_VOTE);
                     if (!txInPhase)

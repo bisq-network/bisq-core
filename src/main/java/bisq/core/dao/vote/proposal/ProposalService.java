@@ -123,7 +123,8 @@ public class ProposalService extends BaseService {
         if (protectedStoragePayload instanceof ProposalPayload) {
             findProposal((ProposalPayload) protectedStoragePayload)
                     .ifPresent(proposal -> {
-                        if (isInPhaseOrUnconfirmed(proposal.getTxId(), PeriodService.Phase.PROPOSAL)) {
+                        if (isInPhaseOrUnconfirmed(proposal.getTxId(), PeriodService.Phase.PROPOSAL,
+                                readableBsqBlockChain.getChainHeadHeight())) {
                             removeProposalFromList(proposal);
                         } else {
                             final String msg = "onRemoved called of a Proposal which is outside of the Request phase is invalid and we ignore it.";
@@ -153,7 +154,7 @@ public class ProposalService extends BaseService {
                 isMine(proposal.getProposalPayload())) ||
                 isValid(proposal.getProposalPayload()));
         closedProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) &&
-                periodService.isTxInPastCycle(proposal.getTxId()));
+                periodService.isTxInPastCycle(proposal.getTxId(), height));
     }
 
     @Override
@@ -218,7 +219,8 @@ public class ProposalService extends BaseService {
         final ProposalPayload proposalPayload = proposal.getProposalPayload();
         // We allow removal which are not confirmed yet or if it we are in the right phase
         if (isMine(proposal.getProposalPayload())) {
-            if (isInPhaseOrUnconfirmed(proposalPayload.getTxId(), PeriodService.Phase.PROPOSAL)) {
+            if (isInPhaseOrUnconfirmed(proposalPayload.getTxId(), PeriodService.Phase.PROPOSAL,
+                    readableBsqBlockChain.getChainHeadHeight())) {
                 boolean success = p2PService.removeData(proposalPayload, true);
                 if (success)
                     removeProposalFromList(proposal);
