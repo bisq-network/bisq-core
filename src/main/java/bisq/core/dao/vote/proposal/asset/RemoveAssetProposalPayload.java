@@ -17,6 +17,7 @@
 
 package bisq.core.dao.vote.proposal.asset;
 
+import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
@@ -108,5 +109,15 @@ public final class RemoveAssetProposalPayload extends ProposalPayload {
     @Override
     public ProposalType getType() {
         return ProposalType.REMOVE_ALTCOIN;
+    }
+
+    @Override
+    public DaoParam getQuorumDaoParam() {
+        return DaoParam.QUORUM_REMOVE_ASSET;
+    }
+
+    @Override
+    public DaoParam getThresholdDaoParam() {
+        return DaoParam.THRESHOLD_REMOVE_ASSET;
     }
 }

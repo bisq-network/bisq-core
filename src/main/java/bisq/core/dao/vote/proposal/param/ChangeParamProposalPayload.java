@@ -17,6 +17,7 @@
 
 package bisq.core.dao.vote.proposal.param;
 
+import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 
@@ -104,5 +105,15 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     @Override
     public ProposalType getType() {
         return ProposalType.CHANGE_PARAM;
+    }
+
+    @Override
+    public DaoParam getQuorumDaoParam() {
+        return DaoParam.QUORUM_CHANGE_PARAM;
+    }
+
+    @Override
+    public DaoParam getThresholdDaoParam() {
+        return DaoParam.THRESHOLD_CHANGE_PARAM;
     }
 }

@@ -25,7 +25,6 @@ import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
@@ -343,25 +342,26 @@ public class VoteResultService implements BsqBlockChain.Listener {
     private void processAllVoteResults(Map<ProposalPayload, List<VoteWithStake>> map,
                                        int chainHeight,
                                        DaoParamService daoParamService) {
-        map.forEach((proposalPayload, voteResultsWithStake) -> {
-            VoteResultPerProposal voteResultPerProposal = getDetailResult(voteResultsWithStake);
-            long totalStake = voteResultPerProposal.getStakeOfAcceptedVotes() + voteResultPerProposal.getStakeOfRejectedVotes();
-            long quorum = getQuorum(daoParamService, proposalPayload, chainHeight);
+        map.forEach((payload, voteResultsWithStake) -> {
+            ResultPerProposal resultPerProposal = getResultPerProposal(voteResultsWithStake);
+            long totalStake = resultPerProposal.getStakeOfAcceptedVotes() + resultPerProposal.getStakeOfRejectedVotes();
+            long quorum = daoParamService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
             log.info("totalStake: {}", totalStake);
             log.info("required quorum: {}", quorum);
             if (totalStake >= quorum) {
-                long reachedThreshold = voteResultPerProposal.getStakeOfAcceptedVotes() / totalStake;
+                long reachedThreshold = resultPerProposal.getStakeOfAcceptedVotes() / totalStake;
                 // We multiply by 10000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 reachedThreshold *= 10_000;
-                long requiredVoteThreshold = getThreshold(daoParamService, proposalPayload, chainHeight);
+                long requiredVoteThreshold = daoParamService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
                 log.info("reached threshold: {} %", reachedThreshold / 100D);
                 log.info("required threshold: {} %", requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold
                 if (reachedThreshold > requiredVoteThreshold) {
-                    processCompletedVoteResult(proposalPayload, chainHeight);
+                    processCompletedVoteResult(payload, chainHeight);
                 } else {
-                    log.warn("We did not reach the quorum. reachedThreshold={} %, requiredVoteThreshold={} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
+                    log.warn("We did not reach the quorum. reachedThreshold={} %, requiredVoteThreshold={} %",
+                            reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 }
             } else {
                 log.warn("We did not reach the quorum. totalStake={}, quorum={}", totalStake, quorum);
@@ -381,39 +381,7 @@ public class VoteResultService implements BsqBlockChain.Listener {
         }
     }
 
-    private long getQuorum(DaoParamService daoParamService, ProposalPayload proposalPayload, int chainHeight) {
-        DaoParam daoParam;
-        if (proposalPayload instanceof CompensationRequestPayload)
-            daoParam = DaoParam.QUORUM_COMP_REQUEST;
-        else if (proposalPayload instanceof GenericProposalPayload)
-            daoParam = DaoParam.QUORUM_PROPOSAL;
-        else if (proposalPayload instanceof ChangeParamProposalPayload)
-            daoParam = DaoParam.QUORUM_CHANGE_PARAM;
-        else if (proposalPayload instanceof RemoveAssetProposalPayload)
-            daoParam = DaoParam.QUORUM_REMOVE_ASSET;
-        else
-            throw new RuntimeException("proposalPayload type is not reflected in DaoParam");
-
-        return daoParamService.getDaoParamValue(daoParam, chainHeight);
-    }
-
-    private long getThreshold(DaoParamService daoParamService, ProposalPayload proposalPayload, int chainHeight) {
-        DaoParam daoParam;
-        if (proposalPayload instanceof CompensationRequestPayload)
-            daoParam = DaoParam.THRESHOLD_COMP_REQUEST;
-        else if (proposalPayload instanceof GenericProposalPayload)
-            daoParam = DaoParam.THRESHOLD_PROPOSAL;
-        else if (proposalPayload instanceof ChangeParamProposalPayload)
-            daoParam = DaoParam.THRESHOLD_CHANGE_PARAM;
-        else if (proposalPayload instanceof RemoveAssetProposalPayload)
-            daoParam = DaoParam.THRESHOLD_REMOVE_ASSET;
-        else
-            throw new RuntimeException("proposalPayload type is not reflected in DaoParam");
-
-        return daoParamService.getDaoParamValue(daoParam, chainHeight);
-    }
-
-    private VoteResultPerProposal getDetailResult(List<VoteWithStake> voteResultsWithStake) {
+    private ResultPerProposal getResultPerProposal(List<VoteWithStake> voteResultsWithStake) {
         long stakeOfAcceptedVotes = 0;
         long stakeOfRejectedVotes = 0;
         for (VoteWithStake voteWithStake : voteResultsWithStake) {
@@ -434,7 +402,7 @@ public class VoteResultService implements BsqBlockChain.Listener {
                 log.debug("Voter ignored proposal");
             }
         }
-        return new VoteResultPerProposal(stakeOfAcceptedVotes, stakeOfRejectedVotes);
+        return new ResultPerProposal(stakeOfAcceptedVotes, stakeOfRejectedVotes);
     }
 
 
@@ -465,11 +433,11 @@ public class VoteResultService implements BsqBlockChain.Listener {
     }
 
     @Value
-    private static class VoteResultPerProposal {
+    private static class ResultPerProposal {
         private final long stakeOfAcceptedVotes;
         private final long stakeOfRejectedVotes;
 
-        VoteResultPerProposal(long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
+        ResultPerProposal(long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
             this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
             this.stakeOfRejectedVotes = stakeOfRejectedVotes;
         }

@@ -19,6 +19,7 @@ package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
@@ -239,6 +240,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     public abstract ProposalType getType();
 
+    public abstract DaoParam getQuorumDaoParam();
+
+    public abstract DaoParam getThresholdDaoParam();
 
     @Override
     public String toString() {
@@ -255,5 +259,4 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }
-
 }
