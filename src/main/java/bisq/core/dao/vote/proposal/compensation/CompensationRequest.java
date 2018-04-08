@@ -20,7 +20,7 @@ package bisq.core.dao.vote.proposal.compensation;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.result.VoteResult;
+import bisq.core.dao.vote.voteresult.VoteResult;
 
 import io.bisq.generated.protobuffer.PB;
 
