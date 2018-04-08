@@ -37,9 +37,9 @@ import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
-import bisq.core.dao.vote.voteresult.BooleanVoteResult;
-import bisq.core.dao.vote.voteresult.LongVoteResult;
-import bisq.core.dao.vote.voteresult.VoteResult;
+import bisq.core.dao.vote.voteresult.BooleanVote;
+import bisq.core.dao.vote.voteresult.LongVote;
+import bisq.core.dao.vote.voteresult.Vote;
 import bisq.core.dao.vote.votereveal.RevealedVote;
 import bisq.core.dao.vote.votereveal.VoteRevealConsensus;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
@@ -305,7 +305,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
                     final ProposalPayload proposalPayload = proposal.getProposalPayload();
                     stakeByProposalMap.putIfAbsent(proposalPayload, new ArrayList<>());
                     final List<VoteResultWithStake> voteResultWithStakes = stakeByProposalMap.get(proposalPayload);
-                    voteResultWithStakes.add(new VoteResultWithStake(proposal.getVoteResult(), revealedVote.getStake()));
+                    voteResultWithStakes.add(new VoteResultWithStake(proposal.getVote(), revealedVote.getStake()));
                 }));
         return stakeByProposalMap;
     }
@@ -376,16 +376,16 @@ public class IssuanceService implements BsqBlockChain.Listener {
         long stakeOfRejectedVotes = 0;
         for (VoteResultWithStake voteResultWithStake : voteResultsWithStake) {
             long stake = voteResultWithStake.getStake();
-            VoteResult voteResult = voteResultWithStake.getVoteResult();
-            if (voteResult != null) {
-                if (voteResult instanceof BooleanVoteResult) {
-                    BooleanVoteResult result = (BooleanVoteResult) voteResult;
+            Vote vote = voteResultWithStake.getVote();
+            if (vote != null) {
+                if (vote instanceof BooleanVote) {
+                    BooleanVote result = (BooleanVote) vote;
                     if (result.isAccepted()) {
                         stakeOfAcceptedVotes += stake;
                     } else {
                         stakeOfRejectedVotes += stake;
                     }
-                } else if (voteResult instanceof LongVoteResult) {
+                } else if (vote instanceof LongVote) {
                     //TODO impl
                 }
             } else {
@@ -476,11 +476,11 @@ public class IssuanceService implements BsqBlockChain.Listener {
     @Value
     private static class VoteResultWithStake {
         @Nullable
-        private final VoteResult voteResult;
+        private final Vote vote;
         private final long stake;
 
-        VoteResultWithStake(@Nullable VoteResult voteResult, long stake) {
-            this.voteResult = voteResult;
+        VoteResultWithStake(@Nullable Vote vote, long stake) {
+            this.vote = vote;
             this.stake = stake;
         }
     }

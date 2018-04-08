@@ -20,7 +20,7 @@ package bisq.core.dao.vote.proposal.compensation;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.voteresult.VoteResult;
+import bisq.core.dao.vote.voteresult.Vote;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -56,10 +56,10 @@ public class CompensationRequest extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private CompensationRequest(ProposalPayload proposalPayload,
-                                @Nullable VoteResult voteResult,
+                                @Nullable Vote vote,
                                 @Nullable Map<String, String> extraDataMap) {
         super(proposalPayload,
-                voteResult,
+                vote,
                 extraDataMap);
     }
 
@@ -71,7 +71,7 @@ public class CompensationRequest extends Proposal {
 
     public static CompensationRequest fromProto(PB.Proposal proto) {
         return new CompensationRequest(ProposalPayload.fromProto(proto.getProposalPayload()),
-                proto.hasVoteResult() ? VoteResult.fromProto(proto.getVoteResult()) : null,
+                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 

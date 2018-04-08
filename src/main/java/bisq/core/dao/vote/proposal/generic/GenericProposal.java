@@ -20,7 +20,7 @@ package bisq.core.dao.vote.proposal.generic;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.voteresult.VoteResult;
+import bisq.core.dao.vote.voteresult.Vote;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -49,10 +49,10 @@ public class GenericProposal extends Proposal {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private GenericProposal(ProposalPayload proposalPayload,
-                            @Nullable VoteResult voteResult,
+                            @Nullable Vote vote,
                             @Nullable Map<String, String> extraDataMap) {
         super(proposalPayload,
-                voteResult,
+                vote,
                 extraDataMap);
     }
 
@@ -64,7 +64,7 @@ public class GenericProposal extends Proposal {
 
     public static GenericProposal fromProto(PB.Proposal proto) {
         return new GenericProposal(ProposalPayload.fromProto(proto.getProposalPayload()),
-                proto.hasVoteResult() ? VoteResult.fromProto(proto.getVoteResult()) : null,
+                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
