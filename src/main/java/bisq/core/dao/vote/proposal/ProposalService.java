@@ -68,8 +68,6 @@ public class ProposalService extends BaseService {
     private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
     private final ProposalList proposalList = new ProposalList(observableList);
     @Getter
-    private final FilteredList<Proposal> activeProposals = new FilteredList<>(observableList);
-    @Getter
     private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(observableList);
     @Getter
     private final FilteredList<Proposal> closedProposals = new FilteredList<>(observableList);
@@ -152,7 +150,6 @@ public class ProposalService extends BaseService {
         activeOrMyUnconfirmedProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) &&
                 isMine(proposal.getProposalPayload())) ||
                 isValid(proposal.getProposalPayload()) && isTxInCorrectCycle(proposal, height));
-        activeProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) && isTxInCorrectCycle(proposal, height));
         closedProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) &&
                 periodService.isTxInPastCycle(proposal.getTxId(), height));
     }

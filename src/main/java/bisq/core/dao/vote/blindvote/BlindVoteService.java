@@ -61,7 +61,6 @@ import javax.crypto.SecretKey;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -189,7 +188,11 @@ public class BlindVoteService extends BaseService {
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            ProposalList proposalList = getSortedProposalList();
+            ProposalList proposalList = getSortedProposalList(readableBsqBlockChain.getChainHeadHeight());
+            log.info("ProposalList used in blind vote. proposalList={}", proposalList);
+
+            //TODO publish to P2P network for more redundancy?
+
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
             byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
 
@@ -256,7 +259,6 @@ public class BlindVoteService extends BaseService {
     }
 
 
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -276,9 +278,11 @@ public class BlindVoteService extends BaseService {
         }
     }
 
-    private ProposalList getSortedProposalList() {
-        // Need to clone as we cannot sort a filteredList
-        List<Proposal> proposals = new ArrayList<>(proposalService.getActiveProposals());
+    private ProposalList getSortedProposalList(int chainHeight) {
+        List<Proposal> proposals = proposalService.getObservableList().stream()
+                .filter(proposal -> isValid(proposal.getProposalPayload()))
+                .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), chainHeight))
+                .collect(Collectors.toList());
         BlindVoteConsensus.sortProposalList(proposals);
         return new ProposalList(proposals);
     }
