@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.issuance;
+package bisq.core.dao.vote.voteresult;
 
 import bisq.core.dao.vote.blindvote.BlindVote;
 
@@ -25,17 +25,17 @@ import lombok.ToString;
 import javax.annotation.Nullable;
 
 @ToString
-public class IssuanceException extends Exception {
+public class VoteResultException extends Exception {
     @Getter
     @Nullable
     private BlindVote blindVote;
 
-    public IssuanceException(String message, Exception cause, BlindVote blindVote) {
+    public VoteResultException(String message, Exception cause, BlindVote blindVote) {
         super(message, cause);
         this.blindVote = blindVote;
     }
 
-    public IssuanceException(String message) {
+    public VoteResultException(String message) {
         super(message);
     }
 }

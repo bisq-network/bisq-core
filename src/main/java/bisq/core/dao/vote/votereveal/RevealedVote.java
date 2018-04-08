@@ -25,13 +25,9 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import java.util.Optional;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nullable;
 
 @EqualsAndHashCode
 @Slf4j
@@ -40,19 +36,9 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
 
     private final ProposalList proposalList;
     private final BlindVote blindVote;
-    @Nullable
     private String revealTxId;
 
-    public RevealedVote(ProposalList proposalList, BlindVote blindVote) {
-        this(proposalList, blindVote, null);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PROTO BUFFER
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private RevealedVote(ProposalList proposalList, BlindVote blindVote, @Nullable String revealTxId) {
+    public RevealedVote(ProposalList proposalList, BlindVote blindVote, String revealTxId) {
         this.proposalList = proposalList;
         this.blindVote = blindVote;
         this.revealTxId = revealTxId;
@@ -62,15 +48,15 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     public PB.RevealedVote toProtoMessage() {
         final PB.RevealedVote.Builder builder = PB.RevealedVote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
-                .setProposalList(proposalList.getBuilder());
-        Optional.ofNullable(revealTxId).ifPresent(builder::setRevealTxId);
+                .setProposalList(proposalList.getBuilder())
+                .setRevealTxId(revealTxId);
         return builder.build();
     }
 
     public static RevealedVote fromProto(PB.RevealedVote proto) {
         return new RevealedVote(ProposalList.fromProto(proto.getProposalList()),
                 BlindVote.fromProto(proto.getBlindVote()),
-                proto.getRevealTxId().isEmpty() ? null : proto.getRevealTxId());
+                proto.getRevealTxId());
     }
 
 
@@ -78,7 +64,7 @@ public class RevealedVote implements PersistablePayload, VoteConsensusCritical {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public String getTxId() {
+    public String getBlindVoteTxId() {
         return blindVote.getTxId();
     }
 

@@ -79,7 +79,9 @@ public interface ReadableBsqBlockChain {
 
     Set<TxOutput> getUnspentTxOutputs();
 
-    Set<TxOutput> getBlindVoteStakeTxOutputs();
+    Set<TxOutput> getUnspentBlindVoteStakeTxOutputs();
+
+    Set<TxOutput> getVerifiedBlindVoteStakeTxOutputs();
 
     Set<TxOutput> getLockedInBondsOutputs();
 
@@ -98,4 +100,6 @@ public interface ReadableBsqBlockChain {
     BsqBlockChain getClone();
 
     BsqBlockChain getClone(BsqBlockChain bsqBlockChain);
+
+    Coin getIssuedAmountFromCompRequests();
 }

@@ -125,8 +125,8 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         }
     }
 
-    public BlindVoteList getSortedBlindVoteListForCurrentCycle(int chainHeight) {
-        final List<BlindVote> list = getBlindVoteListForCurrentCycle(chainHeight);
+    public BlindVoteList getSortedBlindVoteListOfCycle(int chainHeight) {
+        final List<BlindVote> list = getBlindVoteListOfCycle(chainHeight);
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
         BlindVoteConsensus.sortBlindVoteList(list);
@@ -172,7 +172,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         // To ensure we get a consensus of the data for later calculating the result we will put a hash of each
         // voters  blind vote collection into the opReturn data and check for a majority at issuance time.
         // The voters "vote" with their stake at the reveal tx for their version of the blind vote collection.
-        final BlindVoteList blindVoteList = getSortedBlindVoteListForCurrentCycle(chainHeight);
+        final BlindVoteList blindVoteList = getSortedBlindVoteListOfCycle(chainHeight);
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
 
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
@@ -180,7 +180,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
 
         // We search for my unspent stake output.
         // myVote is already tested if it is in current cycle at maybeRevealVotes
-        final Set<TxOutput> blindVoteStakeTxOutputs = readableBsqBlockChain.getBlindVoteStakeTxOutputs();
+        final Set<TxOutput> blindVoteStakeTxOutputs = readableBsqBlockChain.getUnspentBlindVoteStakeTxOutputs();
         // We expect that the blind vote tx and stake output is available. If not we throw an exception.
         TxOutput stakeTxOutput = blindVoteStakeTxOutputs.stream()
                 .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId())).findFirst()
@@ -229,7 +229,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         }
     }
 
-    private List<BlindVote> getBlindVoteListForCurrentCycle(int chainHeight) {
+    private List<BlindVote> getBlindVoteListOfCycle(int chainHeight) {
         if (blindVoteService.getObservableList().isEmpty())
             log.warn("blindVoteService.getObservableList() is empty");
         return blindVoteService.getObservableList().stream()

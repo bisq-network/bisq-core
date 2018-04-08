@@ -208,7 +208,7 @@ public class BsqWalletService extends WalletService implements BsqBlockChain.Lis
                 .map(Transaction::getHashAsString)
                 .collect(Collectors.toSet());
 
-        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getBlindVoteStakeTxOutputs().stream()
+        lockedForVotingBalance = Coin.valueOf(readableBsqBlockChain.getUnspentBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
