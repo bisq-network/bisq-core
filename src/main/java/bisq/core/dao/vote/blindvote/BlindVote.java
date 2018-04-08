@@ -17,7 +17,11 @@
 
 package bisq.core.dao.vote.blindvote;
 
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.VoteConsensusCritical;
+import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
@@ -38,6 +42,7 @@ import org.springframework.util.CollectionUtils;
 import java.security.PublicKey;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +56,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @EqualsAndHashCode
 @Slf4j
 @Data
 public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload, VoteConsensusCritical {
+        CapabilityRequiringPayload, VoteConsensusCritical, ValidationCandidate {
 
     public static BlindVote clone(BlindVote blindVote) {
         return new BlindVote(blindVote.encryptedProposalList,
@@ -163,6 +171,46 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     }
 
 
+    public void validateDataFields() throws ValidationException {
+        try {
+            checkNotNull(encryptedProposalList, "encryptedProposalList must not be null");
+            checkArgument(encryptedProposalList.length > 0, "encryptedProposalList must not be empty");
+            checkNotNull(txId, "txId must not be null");
+            checkArgument(txId.length() > 0, "txId must not be empty");
+            checkNotNull(ownerPubKeyEncoded, "ownerPubKeyEncoded must not be null");
+            checkArgument(ownerPubKeyEncoded.length > 0, "ownerPubKeyEncoded must not be empty");
+            checkArgument(stake > 0, "encryptedProposalList must not be null");
+            //TODO check stake min/max
+        } catch (Throwable throwable) {
+            throw new ValidationException(throwable);
+        }
+    }
+
+    // We do not verify type or version as that gets verified in parser. Version might have been changed as well
+    // so we don't want to fail in that case.
+    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
+        try {
+            byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).get().getOpReturnData();
+            checkNotNull(txOpReturnData, "txOpReturnData must not be null");
+            byte[] txHashOfEncryptedProposalList = Arrays.copyOfRange(txOpReturnData, 2, 22);
+            byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
+            checkArgument(Arrays.equals(txHashOfEncryptedProposalList, hash),
+                    "OpReturn data from blind vote tx is not matching the one created from the encryptedProposalList");
+        } catch (Throwable e) {
+            log.warn("OpReturnData validation of blind vote failed.  blindVote={}, tx={}", this, tx);
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.BLIND_VOTE, "BlindVote has wrong txType");
+        } catch (Throwable e) {
+            log.warn("BlindVote has wrong txType. tx={},BlindVote={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
+    }
+
     @Override
     public String toString() {
         return "BlindVote{" +
@@ -170,7 +218,6 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +
                 ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
-                ",\n     ownerPubKey=" + ownerPubKey +
                 ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }

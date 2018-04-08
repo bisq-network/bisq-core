@@ -54,7 +54,6 @@ import org.bitcoinj.wallet.Wallet;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.FutureCallback;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -175,7 +174,7 @@ public class TradeWalletService {
                                              Coin tradingFee,
                                              Coin txFee,
                                              String feeReceiverAddresses,
-                                             FutureCallback<Transaction> callback)
+                                             TxBroadcaster.Callback callback)
             throws InsufficientMoneyException, AddressFormatException {
         log.debug("fundingAddress " + fundingAddress.toString());
         log.debug("reservedForTradeAddress " + reservedForTradeAddress.toString());
@@ -607,7 +606,7 @@ public class TradeWalletService {
                                                        byte[] buyerPubKey,
                                                        byte[] sellerPubKey,
                                                        byte[] arbitratorPubKey,
-                                                       FutureCallback<Transaction> callback) throws SigningException, TransactionVerificationException,
+                                                       TxBroadcaster.Callback callback) throws SigningException, TransactionVerificationException,
             WalletException {
         Transaction makersDepositTx = new Transaction(params, makersDepositTxSerialized);
 
@@ -988,7 +987,7 @@ public class TradeWalletService {
                                                        String sellerPubKeyAsHex,
                                                        String arbitratorPubKeyAsHex,
                                                        String P2SHMultiSigOutputScript,
-                                                       FutureCallback<Transaction> callback)
+                                                       TxBroadcaster.Callback callback)
             throws AddressFormatException, TransactionVerificationException, WalletException {
         log.info("signAndPublishPayoutTx called");
         log.info("depositTxHex " + depositTxHex);
@@ -1071,14 +1070,14 @@ public class TradeWalletService {
     // Broadcast tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void broadcastTx(Transaction tx, FutureCallback<Transaction> callback) {
+    public void broadcastTx(Transaction tx, TxBroadcaster.Callback callback) {
         checkNotNull(walletConfig);
-        Broadcaster.broadcastTx(wallet, walletConfig.peerGroup(), tx, callback);
+        TxBroadcaster.broadcastTx(wallet, walletConfig.peerGroup(), tx, callback);
     }
 
-    public void broadcastTx(Transaction tx, FutureCallback<Transaction> callback, int timeoutInSec) {
+    public void broadcastTx(Transaction tx, TxBroadcaster.Callback callback, int timeoutInSec) {
         checkNotNull(walletConfig);
-        Broadcaster.broadcastTx(wallet, walletConfig.peerGroup(), tx, callback, timeoutInSec);
+        TxBroadcaster.broadcastTx(wallet, walletConfig.peerGroup(), tx, callback, timeoutInSec);
     }
 
 

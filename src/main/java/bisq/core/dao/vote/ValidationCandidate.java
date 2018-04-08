@@ -15,14 +15,19 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.btc.wallet;
+package bisq.core.dao.vote;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.vote.proposal.ValidationException;
 
-public class InsufficientBsqException extends InsufficientMoneyException {
+public interface ValidationCandidate {
+    void validateDataFields() throws ValidationException;
 
-    public InsufficientBsqException(Coin missing) {
-        super(missing, "Insufficient BSQ,  missing " + missing.value / 100D + " BSQ");
-    }
+    // We do not verify type or version as that gets verified in parser. Version might have been changed as well
+    // so we don't want to fail in that case.
+    void validateHashOfOpReturnData(Tx tx) throws ValidationException;
+
+    void validateCorrectTxType(Tx tx) throws ValidationException;
+
+    String getTxId();
 }

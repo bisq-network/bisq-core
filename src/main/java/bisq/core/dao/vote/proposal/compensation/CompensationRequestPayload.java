@@ -18,6 +18,8 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 import bisq.core.dao.vote.proposal.ValidationException;
@@ -144,8 +146,8 @@ public final class CompensationRequestPayload extends ProposalPayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void validate() throws ValidationException {
-        super.validate();
+    public void validateDataFields() throws ValidationException {
+        super.validateDataFields();
         try {
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
@@ -156,6 +158,16 @@ public final class CompensationRequestPayload extends ProposalPayload {
                     "Requested BSQ must not be less than MinCompensationRequestAmount");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
+        }
+    }
+
+    @Override
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.COMPENSATION_REQUEST, "ProposalPayload has wrong txType");
+        } catch (Throwable e) {
+            log.warn("CompensationRequestPayload has wrong txType. tx={}, compensationRequestPayload={}", tx, this);
+            throw new ValidationException(e, tx);
         }
     }
 
@@ -179,6 +191,11 @@ public final class CompensationRequestPayload extends ProposalPayload {
         return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
     }
 
+    protected ProposalPayload getCloneWithoutTxId() {
+        ProposalPayload clone = CompensationRequestPayload.fromProto(toProtoMessage().getProposalPayload());
+        clone.setTxId(null);
+        return clone;
+    }
 
     @Override
     public String toString() {

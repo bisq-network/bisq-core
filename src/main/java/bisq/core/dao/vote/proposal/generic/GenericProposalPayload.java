@@ -59,7 +59,7 @@ public final class GenericProposalPayload extends ProposalPayload {
                 description,
                 link,
                 Sig.getPublicKeyBytes(ownerPubKey),
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.PROPOSAL,
                 creationDate.getTime(),
                 null,
                 null);

@@ -26,7 +26,6 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.consensus.GenesisTxOutputController;
-import bisq.core.dao.node.consensus.IssuanceController;
 import bisq.core.dao.node.consensus.OpReturnBlindVoteController;
 import bisq.core.dao.node.consensus.OpReturnCompReqController;
 import bisq.core.dao.node.consensus.OpReturnController;
@@ -51,8 +50,9 @@ import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
-import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
 import bisq.core.dao.vote.proposal.generic.GenericProposalService;
+import bisq.core.dao.vote.voteresult.VoteResultService;
+import bisq.core.dao.vote.voteresult.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.AppModule;
@@ -106,7 +106,6 @@ public class DaoModule extends AppModule {
         bind(OpReturnCompReqController.class).in(Singleton.class);
         bind(OpReturnBlindVoteController.class).in(Singleton.class);
         bind(OpReturnVoteRevealController.class).in(Singleton.class);
-        bind(IssuanceController.class).in(Singleton.class);
 
         bind(PeriodService.class).in(Singleton.class);
         bind(ProposalService.class).in(Singleton.class);
@@ -115,6 +114,7 @@ public class DaoModule extends AppModule {
         bind(MyVoteService.class).in(Singleton.class);
         bind(BlindVoteService.class).in(Singleton.class);
         bind(VoteRevealService.class).in(Singleton.class);
+        bind(VoteResultService.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);
 
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));

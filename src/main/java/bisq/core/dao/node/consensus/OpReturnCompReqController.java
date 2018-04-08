@@ -25,8 +25,6 @@ import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 
-import bisq.common.app.Version;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +45,11 @@ public class OpReturnCompReqController {
         this.periodService = periodService;
     }
 
+    // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
+    // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
-                Version.COMPENSATION_REQUEST_VERSION == opReturnData[1] &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
             txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
@@ -61,7 +60,9 @@ public class OpReturnCompReqController {
             model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
-                    "match our rules. tx={}", tx);
+                    "match our rules. txOutput={}", txOutput);
+            log.info("blockHeight: " + blockHeight);
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL));
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
             // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC

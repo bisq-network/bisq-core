@@ -49,10 +49,10 @@ public class ProposalList extends PersistableList<Proposal> implements VoteConse
 
     public static ProposalList clone(ProposalList proposalList) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope proto = proposalList.toProtoMessage();
-        return ProposalList.getProposalListFromBytes(proto.toByteArray());
+        return ProposalList.parseProposalList(proto.toByteArray());
     }
 
-    public static ProposalList getProposalListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
+    public static ProposalList parseProposalList(byte[] bytes) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(bytes);
         return ProposalList.fromProto(envelope.getProposalList());
     }
@@ -73,6 +73,13 @@ public class ProposalList extends PersistableList<Proposal> implements VoteConse
         return new ProposalList(new ArrayList<>(proto.getProposalList().stream()
                 .map(Proposal::fromProto)
                 .collect(Collectors.toList())));
+    }
+
+    @Override
+    public String toString() {
+        return "List of UID's in ProposalList: " + getList().stream()
+                .map(Proposal::getUid)
+                .collect(Collectors.toList());
     }
 }
 

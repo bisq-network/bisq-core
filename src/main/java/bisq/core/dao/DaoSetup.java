@@ -24,7 +24,8 @@ import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.ProposalService;
-import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
+import bisq.core.dao.vote.voteresult.VoteResultService;
+import bisq.core.dao.vote.voteresult.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.DevEnv;
@@ -41,6 +42,7 @@ public class DaoSetup {
     private final BsqNode bsqNode;
     private final DaoParamService daoParamService;
     private final VoteRevealService voteRevealService;
+    private final VoteResultService voteResultService;
     private final IssuanceService issuanceService;
     private final BlindVoteService blindVoteService;
 
@@ -55,12 +57,14 @@ public class DaoSetup {
                     ProposalService proposalService,
                     BlindVoteService blindVoteService,
                     VoteRevealService voteRevealService,
+                    VoteResultService voteResultService,
                     IssuanceService issuanceService,
                     DaoParamService daoParamService) {
         this.periodService = periodService;
         this.proposalService = proposalService;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
+        this.voteResultService = voteResultService;
         this.issuanceService = issuanceService;
         this.daoParamService = daoParamService;
 
@@ -74,6 +78,7 @@ public class DaoSetup {
             bsqNode.onAllServicesInitialized(errorMessageHandler);
             blindVoteService.onAllServicesInitialized();
             voteRevealService.onAllServicesInitialized();
+            voteResultService.onAllServicesInitialized();
             issuanceService.onAllServicesInitialized();
             daoParamService.onAllServicesInitialized();
         }
@@ -86,6 +91,7 @@ public class DaoSetup {
             bsqNode.shutDown();
             blindVoteService.shutDown();
             voteRevealService.shutDown();
+            voteResultService.shutDown();
             issuanceService.shutDown();
             daoParamService.shutDown();
         }

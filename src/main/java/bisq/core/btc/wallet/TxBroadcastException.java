@@ -17,12 +17,32 @@
 
 package bisq.core.btc.wallet;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
+import lombok.Getter;
 
-public class InsufficientBsqException extends InsufficientMoneyException {
+import javax.annotation.Nullable;
 
-    public InsufficientBsqException(Coin missing) {
-        super(missing, "Insufficient BSQ,  missing " + missing.value / 100D + " BSQ");
+public class TxBroadcastException extends Exception {
+    @Getter
+    @Nullable
+    private String txId;
+
+    public TxBroadcastException(String message) {
+        super(message);
+    }
+
+    public TxBroadcastException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public TxBroadcastException(String message, String txId) {
+        super(message);
+        this.txId = txId;
+    }
+
+    @Override
+    public String toString() {
+        return "TxBroadcastException{" +
+                "\n     txId='" + txId + '\'' +
+                "\n} " + super.toString();
     }
 }

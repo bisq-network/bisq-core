@@ -17,6 +17,9 @@
 
 package bisq.core.dao.vote.proposal;
 
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 
@@ -37,6 +40,7 @@ import com.google.protobuf.ByteString;
 import java.security.PublicKey;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -51,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 /**
@@ -64,7 +69,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Getter
 @EqualsAndHashCode
 public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+        CapabilityRequiringPayload, ValidationCandidate {
 
     protected final String uid;
     protected final String name;
@@ -169,7 +174,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
-    public void validate() throws ValidationException {
+    @Override
+    public void validateDataFields() throws ValidationException {
         try {
             notEmpty(name, "name must not be empty");
             notEmpty(title, "title must not be empty");
@@ -181,6 +187,43 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             throw new ValidationException(throwable);
         }
     }
+
+    // We do not verify type or version as that gets verified in parser. Version might have been changed as well
+    // so we don't want to fail in that case.
+    @Override
+    public void validateHashOfOpReturnData(Tx tx) throws ValidationException {
+        try {
+            byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).get().getOpReturnData();
+            checkNotNull(txOpReturnData, "txOpReturnData must not be null");
+            byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
+            // We need to set txId to null in clone to get same hash as used in the tx return data
+            byte[] hash = ProposalConsensus.getHashOfPayload(getCloneWithoutTxId());
+            checkArgument(Arrays.equals(txHashOfPayload, hash),
+                    "OpReturn data from proposal tx is not matching the one created from the payload." +
+                            "\ntxHashOfPayload=" + Utilities.encodeToHex(txHashOfPayload) +
+                            "\nhash=" + Utilities.encodeToHex(hash));
+        } catch (Throwable e) {
+            log.debug("OpReturnData validation of proposalPayload failed. proposalPayload={}, tx={}", this, tx);
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    protected ProposalPayload getCloneWithoutTxId() {
+        ProposalPayload clone = ProposalPayload.fromProto(toProtoMessage().getProposalPayload());
+        clone.setTxId(null);
+        return clone;
+    }
+
+    @Override
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.PROPOSAL, "ProposalPayload has wrong txType");
+        } catch (Throwable e) {
+            log.warn("ProposalPayload has wrong txType. tx={}, proposalPayload={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
@@ -208,9 +251,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
                 ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     version=" + version +
-                ",\n     creationDate=" + creationDate +
+                ",\n     creationDate=" + new Date(creationDate) +
                 ",\n     extraDataMap=" + extraDataMap +
-                ",\n     ownerPubKey=" + ownerPubKey +
                 "\n}";
     }
+
 }

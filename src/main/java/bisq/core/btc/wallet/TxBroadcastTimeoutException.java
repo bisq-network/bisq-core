@@ -15,27 +15,34 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal.compensation.issuance;
+package bisq.core.btc.wallet;
 
-import bisq.core.dao.vote.blindvote.BlindVote;
+import org.bitcoinj.core.Transaction;
 
 import lombok.Getter;
-import lombok.ToString;
 
 import javax.annotation.Nullable;
 
-@ToString
-public class IssuanceException extends Exception {
+
+public class TxBroadcastTimeoutException extends TxBroadcastException {
     @Getter
     @Nullable
-    private BlindVote blindVote;
+    private final Transaction localTx;
+    @Getter
+    private int delay;
 
-    public IssuanceException(String message, Exception cause, BlindVote blindVote) {
-        super(message, cause);
-        this.blindVote = blindVote;
+    public TxBroadcastTimeoutException(Transaction localTx, int delay) {
+        super("The transaction was not broadcasted in " + delay +
+                "seconds. txId=" + localTx.getHashAsString());
+        this.localTx = localTx;
+        this.delay = delay;
     }
 
-    public IssuanceException(String message) {
-        super(message);
+    @Override
+    public String toString() {
+        return "TxBroadcastTimeoutException{" +
+                "\n     localTx=" + localTx +
+                ",\n     delay=" + delay +
+                "\n} " + super.toString();
     }
 }

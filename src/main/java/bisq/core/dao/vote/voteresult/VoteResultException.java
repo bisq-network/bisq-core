@@ -15,14 +15,27 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.btc.wallet;
+package bisq.core.dao.vote.voteresult;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
+import bisq.core.dao.vote.blindvote.BlindVote;
 
-public class InsufficientBsqException extends InsufficientMoneyException {
+import lombok.Getter;
+import lombok.ToString;
 
-    public InsufficientBsqException(Coin missing) {
-        super(missing, "Insufficient BSQ,  missing " + missing.value / 100D + " BSQ");
+import javax.annotation.Nullable;
+
+@ToString
+public class VoteResultException extends Exception {
+    @Getter
+    @Nullable
+    private BlindVote blindVote;
+
+    public VoteResultException(String message, Exception cause, BlindVote blindVote) {
+        super(message, cause);
+        this.blindVote = blindVote;
+    }
+
+    public VoteResultException(String message) {
+        super(message);
     }
 }

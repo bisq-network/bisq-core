@@ -41,6 +41,9 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class CompensationRequestService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -86,7 +89,7 @@ public class CompensationRequestService {
                 new Date()
         );
 
-        payload.validate();
+        payload.validateDataFields();
 
         return payload;
     }
@@ -96,7 +99,7 @@ public class CompensationRequestService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
         CompensationRequest compensationRequest = new CompensationRequest(payload);
 
-        final Coin fee = ProposalConsensus.getFee(daoParamService, readableBsqBlockChain);
+        final Coin fee = ProposalConsensus.getFee(daoParamService, readableBsqBlockChain.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment
@@ -115,7 +118,7 @@ public class CompensationRequestService {
         // After publishing the tx we will check again if the txId is the same, otherwise we throw an
         // error (tx malleability)
         compensationRequest.setTx(completedTx);
-
+        log.info("CompensationRequest tx: " + completedTx);
         return compensationRequest;
     }
 }

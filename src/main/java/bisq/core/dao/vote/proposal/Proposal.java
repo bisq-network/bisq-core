@@ -17,9 +17,9 @@
 
 package bisq.core.dao.vote.proposal;
 
+import bisq.core.dao.vote.Vote;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
-import bisq.core.dao.vote.result.VoteResult;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
@@ -48,12 +48,12 @@ import javax.annotation.Nullable;
 public abstract class Proposal implements PersistablePayload {
     protected final ProposalPayload proposalPayload;
     @Nullable
-    protected VoteResult voteResult;
+    protected Vote vote;
     @Nullable
     protected Map<String, String> extraDataMap;
 
     // Not persisted!
-    protected transient ObjectProperty<VoteResult> voteResultProperty = new SimpleObjectProperty<>();
+    protected transient ObjectProperty<Vote> voteResultProperty = new SimpleObjectProperty<>();
     // Not persisted!
     @Nullable
     @Setter
@@ -74,10 +74,10 @@ public abstract class Proposal implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected Proposal(ProposalPayload proposalPayload,
-                       @Nullable VoteResult voteResult,
+                       @Nullable Vote vote,
                        @Nullable Map<String, String> extraDataMap) {
         this.proposalPayload = proposalPayload;
-        this.voteResult = voteResult;
+        this.vote = vote;
         this.extraDataMap = extraDataMap;
     }
 
@@ -91,7 +91,7 @@ public abstract class Proposal implements PersistablePayload {
         final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
                 .setProposalPayload(proposalPayload.getPayloadBuilder());
 
-        Optional.ofNullable(voteResult).ifPresent(e -> builder.setVoteResult((PB.VoteResult) e.toProtoMessage()));
+        Optional.ofNullable(vote).ifPresent(e -> builder.setVote((PB.Vote) e.toProtoMessage()));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
         return builder;
     }
@@ -113,9 +113,9 @@ public abstract class Proposal implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setVoteResult(VoteResult voteResult) {
-        this.voteResult = voteResult;
-        voteResultProperty.set(voteResult);
+    public void setVote(Vote vote) {
+        this.vote = vote;
+        voteResultProperty.set(vote);
     }
 
     abstract public ProposalType getType();
@@ -133,9 +133,8 @@ public abstract class Proposal implements PersistablePayload {
     public String toString() {
         return "Proposal{" +
                 "\n     proposalPayload=" + proposalPayload +
-                ",\n     voteResult=" + voteResult +
+                ",\n     vote=" + vote +
                 ",\n     extraDataMap=" + extraDataMap +
-                ",\n     voteResultProperty=" + voteResultProperty +
                 ",\n     tx=" + tx +
                 "\n}";
     }

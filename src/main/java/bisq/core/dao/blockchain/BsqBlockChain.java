@@ -209,23 +209,23 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public synchronized void addListener(Listener listener) {
-        listeners.add(listener);
+    public void addListener(Listener listener) {
+        lock.write(() -> listeners.add(listener));
     }
 
     @Override
-    public synchronized void removeListener(Listener listener) {
-        listeners.remove(listener);
+    public void removeListener(Listener listener) {
+        lock.write(() -> listeners.remove(listener));
     }
 
     @Override
-    public synchronized void addIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.add(listener);
+    public void addIssuanceListener(IssuanceListener listener) {
+        lock.write(() -> issuanceListeners.add(listener));
     }
 
     @Override
-    public synchronized void removeIssuanceListener(IssuanceListener listener) {
-        issuanceListeners.remove(listener);
+    public void removeIssuanceListener(IssuanceListener listener) {
+        lock.write(() -> issuanceListeners.remove(listener));
     }
 
 
@@ -260,6 +260,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             bsqBlocks.add(bsqBlock);
             chainHeadHeight = bsqBlock.getHeight();
             printNewBlock(bsqBlock);
+            log.info("New block added at blockHeight " + bsqBlock.getHeight());
             listeners.forEach(l -> UserThread.execute(() -> l.onBlockAdded(bsqBlock)));
         });
     }
@@ -458,8 +459,14 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-    public Set<TxOutput> getBlindVoteStakeTxOutputs() {
+    public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
+                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
+                .collect(Collectors.toSet()));
+    }
+
+    public Set<TxOutput> getVerifiedBlindVoteStakeTxOutputs() {
+        return lock.read(() -> getVerifiedTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
@@ -551,6 +558,14 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         return lock.read(() -> BsqBlockChain.GENESIS_TOTAL_SUPPLY);
     }
 
+    @Override
+    public Coin getIssuedAmountFromCompRequests() {
+        return lock.read(() -> Coin.valueOf(getCompReqIssuanceTxOutputs().stream()
+                .filter(txOutput -> getTx(txOutput.getTxId()).isPresent())
+                .filter(txOutput -> getTx(txOutput.getTxId()).get().isIssuanceTx())
+                .mapToLong(txOutput -> txOutput.getValue())
+                .sum()));
+    }
 
     private long getValueAtHeight(Set<Tuple2<Long, Integer>> set, int blockHeight) {
         return lock.read(() -> {

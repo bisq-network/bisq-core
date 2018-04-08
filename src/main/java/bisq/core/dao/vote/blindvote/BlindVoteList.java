@@ -59,4 +59,11 @@ public class BlindVoteList extends PersistableList<BlindVote> implements VoteCon
                 .map(BlindVote::fromProto)
                 .collect(Collectors.toList())));
     }
+
+    @Override
+    public String toString() {
+        return "List of TxId's in BlindVoteList: " + getList().stream()
+                .map(BlindVote::getTxId)
+                .collect(Collectors.toList());
+    }
 }

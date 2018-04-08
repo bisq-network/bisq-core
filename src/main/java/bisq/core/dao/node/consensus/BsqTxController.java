@@ -158,8 +158,8 @@ public class BsqTxController {
         } else {
             final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
             log.warn(msg);
-            if (DevEnv.isDevMode())
-                throw new RuntimeException(msg);
+            //  if (DevEnv.isDevMode())
+            //      throw new RuntimeException(msg);
         }
         return Optional.empty();
     }

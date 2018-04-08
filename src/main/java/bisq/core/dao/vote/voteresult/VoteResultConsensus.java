@@ -15,10 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.proposal.compensation.issuance;
+package bisq.core.dao.vote.voteresult;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
+import bisq.common.util.Utilities;
 
 import javax.crypto.SecretKey;
 
@@ -31,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 @Slf4j
-public class IssuanceConsensus {
+public class VoteResultConsensus {
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
     public static byte[] getBlindVoteListHash(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);
@@ -41,10 +42,15 @@ public class IssuanceConsensus {
         return Encryption.decrypt(encryptedProposalList, secretKey);
     }
 
+    //TODO add tests
+    // We compare first by stake and in case we have multiple entries with same stake we use the
+    // hex encoded hashOfProposalList for comparision
     @Nullable
-    public static byte[] getMajorityHash(List<IssuanceService.HashWithTxIdList> list) {
-        list.sort(Comparator.comparingInt(o -> o.getTxIds().size()));
-        return !list.isEmpty() ? list.get(0).getHashOfProposalList() : null;
+    public static byte[] getMajorityHash(List<VoteResultService.HashWithTxIdList> list) {
+        list.sort(Comparator.comparingLong(VoteResultService.HashWithTxIdList::getStake).reversed()
+                .thenComparing(o -> Utilities.encodeToHex(o.getHashOfProposalList())));
+
+        return list.isEmpty() ? null : list.get(0).getHashOfProposalList();
     }
 
     // Key is stored after version and type bytes and list of Blind votes. It has 16 bytes

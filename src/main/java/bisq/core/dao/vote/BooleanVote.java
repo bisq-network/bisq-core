@@ -15,22 +15,23 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.result;
+package bisq.core.dao.vote;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 @Getter
-public class LongVoteResult extends VoteResult {
+public class BooleanVote extends Vote {
 
-    private long value;
+    private boolean accepted;
 
-    @SuppressWarnings("WeakerAccess")
-    public LongVoteResult(long value) {
-        this.value = value;
+    public BooleanVote(boolean accepted) {
+        this.accepted = accepted;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -39,14 +40,13 @@ public class LongVoteResult extends VoteResult {
 
     @Override
     public Message toProtoMessage() {
-        return getVoteResultBuilder()
-                .setLongVoteResult(PB.LongVoteResult.newBuilder()
-                        .setValue(value))
+        return getVoteBuilder()
+                .setBooleanVote(PB.BooleanVote.newBuilder()
+                        .setAccepted(accepted))
                 .build();
     }
 
-    public static LongVoteResult fromProto(PB.VoteResult proto) {
-        return new LongVoteResult(proto.getLongVoteResult().getValue());
+    public static BooleanVote fromProto(PB.Vote proto) {
+        return new BooleanVote(proto.getBooleanVote().getAccepted());
     }
-
 }
