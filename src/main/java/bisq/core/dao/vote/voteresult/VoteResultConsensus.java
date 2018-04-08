@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteResultConsensus {
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
-    public static byte[] getBlindVoteListHash(byte[] opReturnData) {
+    public static byte[] getHashOfBlindVoteList(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
@@ -46,11 +46,11 @@ public class VoteResultConsensus {
     // We compare first by stake and in case we have multiple entries with same stake we use the
     // hex encoded hashOfProposalList for comparision
     @Nullable
-    public static byte[] getMajorityHash(List<VoteResultService.HashWithTxIdList> list) {
-        list.sort(Comparator.comparingLong(VoteResultService.HashWithTxIdList::getStake).reversed()
+    public static byte[] getMajorityHash(List<VoteResultService.HashWithStake> hashWithStakeList) {
+        hashWithStakeList.sort(Comparator.comparingLong(VoteResultService.HashWithStake::getStake).reversed()
                 .thenComparing(o -> Utilities.encodeToHex(o.getHashOfProposalList())));
 
-        return list.isEmpty() ? null : list.get(0).getHashOfProposalList();
+        return hashWithStakeList.isEmpty() ? null : hashWithStakeList.get(0).getHashOfProposalList();
     }
 
     // Key is stored after version and type bytes and list of Blind votes. It has 16 bytes

@@ -128,7 +128,6 @@ public abstract class Proposal implements PersistablePayload {
         return proposalPayload.getUid();
     }
 
-
     @Override
     public String toString() {
         return "Proposal{" +

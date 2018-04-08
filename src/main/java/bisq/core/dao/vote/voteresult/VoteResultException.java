@@ -38,4 +38,8 @@ public class VoteResultException extends Exception {
     public VoteResultException(String message) {
         super(message);
     }
+
+    public VoteResultException(Throwable cause) {
+        super(cause);
+    }
 }

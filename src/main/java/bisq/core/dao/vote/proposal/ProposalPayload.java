@@ -21,6 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.ValidationCandidate;
+import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 
@@ -70,7 +71,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Getter
 @EqualsAndHashCode
 public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload, ValidationCandidate {
+        CapabilityRequiringPayload, ValidationCandidate, VoteConsensusCritical {
 
     protected final String uid;
     protected final String name;
