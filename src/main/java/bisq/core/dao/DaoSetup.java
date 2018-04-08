@@ -23,8 +23,8 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
+import bisq.core.dao.vote.issuance.IssuanceService;
 import bisq.core.dao.vote.proposal.ProposalService;
-import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.DevEnv;
