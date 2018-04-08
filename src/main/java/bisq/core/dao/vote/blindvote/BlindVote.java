@@ -171,17 +171,6 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     }
 
 
-    @Override
-    public String toString() {
-        return "BlindVote{" +
-                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedProposalList) +
-                ",\n     txId='" + txId + '\'' +
-                ",\n     stake=" + stake +
-                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
-                ",\n     extraDataMap=" + extraDataMap +
-                "\n}";
-    }
-
     public void validateDataFields() throws ValidationException {
         try {
             checkNotNull(encryptedProposalList, "encryptedProposalList must not be null");
@@ -220,5 +209,16 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
             log.warn("BlindVote has wrong txType. tx={},BlindVote={}", tx, this);
             throw new ValidationException(e, tx);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "BlindVote{" +
+                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedProposalList) +
+                ",\n     txId='" + txId + '\'' +
+                ",\n     stake=" + stake +
+                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
+                ",\n     extraDataMap=" + extraDataMap +
+                "\n}";
     }
 }

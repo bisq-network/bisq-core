@@ -41,6 +41,11 @@ public class VoteRevealException extends Exception {
         this.blindVoteTxId = blindVoteTxId;
     }
 
+    VoteRevealException(String message, @SuppressWarnings("NullableProblems") String blindVoteTxId) {
+        super(message);
+        this.blindVoteTxId = blindVoteTxId;
+    }
+
     VoteRevealException(String message, @SuppressWarnings("NullableProblems") MyVote myVote) {
         super(message);
         this.myVote = myVote;
