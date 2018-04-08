@@ -155,7 +155,6 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
 
     protected boolean isValid(ValidationCandidate validationCandidate) {
         final String txId = validationCandidate.getTxId();
-
         Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
         if (optionalTx.isPresent()) {
             final Tx tx = optionalTx.get();
@@ -170,8 +169,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
                 return false;
             }
         } else {
-            log.warn("Validation failed. txId={}, optionalTx.isPresent()={}",
-                    txId, optionalTx.isPresent());
+            log.warn("Validation failed. Tx not found in readableBsqBlockChain. txId={}", txId);
             return false;
         }
     }

@@ -278,7 +278,7 @@ public class BlindVoteService extends BaseService {
 
     private ProposalList getSortedProposalList() {
         // Need to clone as we cannot sort a filteredList
-        List<Proposal> proposals = new ArrayList<>(proposalService.getValidProposals());
+        List<Proposal> proposals = new ArrayList<>(proposalService.getActiveProposals());
         BlindVoteConsensus.sortProposalList(proposals);
         return new ProposalList(proposals);
     }

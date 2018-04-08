@@ -121,12 +121,12 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            maybeRevealVotes();
+            maybeRevealVotes(bsqBlock.getHeight());
         }
     }
 
-    public BlindVoteList getSortedBlindVoteListForCurrentCycle() {
-        final List<BlindVote> list = getBlindVoteListForCurrentCycle();
+    public BlindVoteList getSortedBlindVoteListForCurrentCycle(int chainHeight) {
+        final List<BlindVote> list = getBlindVoteListForCurrentCycle(chainHeight);
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
         BlindVoteConsensus.sortBlindVoteList(list);
@@ -143,17 +143,17 @@ public class VoteRevealService implements BsqBlockChain.Listener {
     // the blind vote was created in case we have not done it already.
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
-    private void maybeRevealVotes() {
+    private void maybeRevealVotes(int chainHeight) {
         myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null)
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
-                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), readableBsqBlockChain.getChainHeadHeight()))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), chainHeight))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an
                     // outside user intent anyway. We keep errors in a observable list so clients can observe that to
                     // get notified if anything went wrong.
                     try {
-                        revealVote(myVote);
+                        revealVote(myVote, chainHeight);
                     } catch (IOException | WalletException | TransactionVerificationException
                             | InsufficientMoneyException e) {
                         voteRevealExceptions.add(new VoteRevealException("Exception at calling revealVote.",
@@ -164,9 +164,10 @@ public class VoteRevealService implements BsqBlockChain.Listener {
                 });
     }
 
-    private void revealVote(MyVote myVote) throws IOException, WalletException, InsufficientMoneyException,
+    private void revealVote(MyVote myVote, int chainHeight) throws IOException, WalletException, InsufficientMoneyException,
             TransactionVerificationException, VoteRevealException {
-        final BlindVoteList blindVoteList = getSortedBlindVoteListForCurrentCycle();
+        readableBsqBlockChain.getChainHeadHeight();
+        final BlindVoteList blindVoteList = getSortedBlindVoteListForCurrentCycle(chainHeight);
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
@@ -210,7 +211,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         });
     }
 
-    private List<BlindVote> getBlindVoteListForCurrentCycle() {
+    private List<BlindVote> getBlindVoteListForCurrentCycle(int chainHeight) {
         if (blindVoteService.getObservableList().isEmpty())
             log.warn("blindVoteService.getObservableList() is empty");
         return blindVoteService.getObservableList().stream()
@@ -220,6 +221,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
                         log.warn("Blind vote tx is not in correct phase txId=", blindVote.getTxId());
                     return txInPhase;
                 })
+                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
                 .collect(Collectors.toList());
     }
 

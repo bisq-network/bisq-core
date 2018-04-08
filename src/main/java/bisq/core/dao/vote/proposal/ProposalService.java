@@ -68,9 +68,9 @@ public class ProposalService extends BaseService {
     private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
     private final ProposalList proposalList = new ProposalList(observableList);
     @Getter
-    private final FilteredList<Proposal> validProposals = new FilteredList<>(observableList);
+    private final FilteredList<Proposal> activeProposals = new FilteredList<>(observableList);
     @Getter
-    private final FilteredList<Proposal> validOrMyUnconfirmedProposals = new FilteredList<>(observableList);
+    private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(observableList);
     @Getter
     private final FilteredList<Proposal> closedProposals = new FilteredList<>(observableList);
 
@@ -149,19 +149,22 @@ public class ProposalService extends BaseService {
     protected void onBlockHeightChanged(int height) {
         // We display own unconfirmed proposals as there is no risk. Other proposals are only shown after they are in
         //the blockchain and verified
-        validProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()));
-        validOrMyUnconfirmedProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) &&
+        activeOrMyUnconfirmedProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) &&
                 isMine(proposal.getProposalPayload())) ||
-                isValid(proposal.getProposalPayload()));
+                isValid(proposal.getProposalPayload()) && isTxInCorrectCycle(proposal, height));
+        activeProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) && isTxInCorrectCycle(proposal, height));
         closedProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) &&
                 periodService.isTxInPastCycle(proposal.getTxId(), height));
     }
 
+    private boolean isTxInCorrectCycle(Proposal proposal, int chainHeight) {
+        return periodService.isTxInCorrectCycle(proposal.getTxId(), chainHeight);
+    }
+
     @Override
     protected List<ProtectedStoragePayload> getListForRepublishing() {
-        return validProposals.stream()
+        return activeOrMyUnconfirmedProposals.stream()
                 .map(Proposal::getProposalPayload)
-                .filter(this::isMine)
                 .collect(Collectors.toList());
     }
 

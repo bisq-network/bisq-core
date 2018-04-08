@@ -156,7 +156,7 @@ public class IssuanceService implements BsqBlockChain.Listener {
             byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(txIdListMap);
 
             if (majorityVoteListHash != null) {
-                if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
+                if (isBlindVoteListMatchingMajority(majorityVoteListHash, chainHeight)) {
                     Map<ProposalPayload, List<VoteResultWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(revealedVotes);
                     processAllVoteResults(resultListByProposalPayloadMap, daoParamService, writableBsqBlockChain, readableBsqBlockChain);
                     log.info("processAllVoteResults completed");
@@ -290,8 +290,8 @@ public class IssuanceService implements BsqBlockChain.Listener {
         return IssuanceConsensus.getMajorityHash(list);
     }
 
-    private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
-        final BlindVoteList blindVoteList = voteRevealService.getSortedBlindVoteListForCurrentCycle();
+    private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash, int chainHeight) {
+        final BlindVoteList blindVoteList = voteRevealService.getSortedBlindVoteListForCurrentCycle(chainHeight);
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("Sha256Ripemd160 hash of my blindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
