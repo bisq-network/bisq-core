@@ -17,13 +17,40 @@
 
 package bisq.core.proto;
 
+import bisq.core.payment.AccountAgeWitness;
+import bisq.core.payment.payload.AliPayAccountPayload;
+import bisq.core.payment.payload.WechatPayAccountPayload;
+import bisq.core.payment.payload.CashAppAccountPayload;
+import bisq.core.payment.payload.CashDepositAccountPayload;
+import bisq.core.payment.payload.ChaseQuickPayAccountPayload;
+import bisq.core.payment.payload.ClearXchangeAccountPayload;
+import bisq.core.payment.payload.CryptoCurrencyAccountPayload;
+import bisq.core.payment.payload.FasterPaymentsAccountPayload;
+import bisq.core.payment.payload.InteracETransferAccountPayload;
+import bisq.core.payment.payload.MoneyBeamAccountPayload;
+import bisq.core.payment.payload.NationalBankAccountPayload;
+import bisq.core.payment.payload.OKPayAccountPayload;
+import bisq.core.payment.payload.PaymentAccountPayload;
+import bisq.core.payment.payload.PerfectMoneyAccountPayload;
+import bisq.core.payment.payload.PopmoneyAccountPayload;
+import bisq.core.payment.payload.RevolutAccountPayload;
+import bisq.core.payment.payload.SameBankAccountPayload;
+import bisq.core.payment.payload.SepaAccountPayload;
+import bisq.core.payment.payload.SepaInstantAccountPayload;
+import bisq.core.payment.payload.SpecificBanksAccountPayload;
+import bisq.core.payment.payload.SwishAccountPayload;
+import bisq.core.payment.payload.USPostalMoneyOrderAccountPayload;
+import bisq.core.payment.payload.UpholdAccountPayload;
+import bisq.core.payment.payload.VenmoAccountPayload;
+import bisq.core.payment.payload.WesternUnionAccountPayload;
+import bisq.core.trade.statistics.TradeStatistics2;
+
 import bisq.common.proto.ProtoResolver;
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistableEnvelope;
-import bisq.core.payment.AccountAgeWitness;
-import bisq.core.payment.payload.*;
-import bisq.core.trade.statistics.TradeStatistics2;
+
 import io.bisq.generated.protobuffer.PB;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
