@@ -24,7 +24,6 @@ import bisq.core.locale.Res;
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Option;
 
 import org.springframework.util.CollectionUtils;
 
