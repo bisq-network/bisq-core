@@ -249,8 +249,8 @@ public class PeriodService implements BsqBlockChain.Listener {
     @VisibleForTesting
     void onChainHeightChanged(int chainHeight) {
         Cycle lastCycle = cycles.get(cycles.size() - 1);
-        while (chainHeight > lastCycle.getLastBlock()) {
-            cycles.add(new Cycle(lastCycle.getLastBlock(), daoParamService));
+        while (chainHeight >= lastCycle.getLastBlock()) {
+            cycles.add(new Cycle(lastCycle.getLastBlock() + 1, daoParamService));
             lastCycle = cycles.get(cycles.size() - 1);
         }
         phaseProperty.set(getPhase(chainHeight));

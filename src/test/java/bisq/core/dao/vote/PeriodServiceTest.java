@@ -58,13 +58,19 @@ public class PeriodServiceTest {
 
     @Test
     public void getCycle() {
-        int newCycleStartBlock = service.getCycle(genesisHeight).getLastBlock() + 1;
+        int newCycleStartBlock = genesisHeight + service.getCycle(genesisHeight).getCycleDuration();
         service.onChainHeightChanged(newCycleStartBlock);
         assertEquals(service.getCycle(genesisHeight), service.getCycle(newCycleStartBlock - 1));
         assertEquals(service.getCycle(newCycleStartBlock), service.getCycle(newCycleStartBlock + 1));
-        assertEquals(service.getCycle(0), service.getCycle(genesisHeight - 1));
-        assertNotEquals(service.getCycle(0), service.getCycle(genesisHeight));
-        assertEquals(service.getCycle(genesisHeight).getPhaseDuration(PeriodService.Phase.PROPOSAL), phaseDuration);
+        assertEquals(null, service.getCycle(0));
+        assertEquals(null, service.getCycle(genesisHeight - 1));
+        assertEquals(phaseDuration, service.getCycle(genesisHeight).getPhaseDuration(PeriodService.Phase.PROPOSAL));
+        assertEquals(newCycleStartBlock, service.getCycle(newCycleStartBlock).getStartBlock());
+        int lastBlockOfNewCycle = newCycleStartBlock + service.getCycle(newCycleStartBlock).getCycleDuration() - 1;
+        // Should add another cycle when reaching last block of the last cycle
+        service.onChainHeightChanged(lastBlockOfNewCycle);
+        assertEquals(lastBlockOfNewCycle + 1,
+                service.getCycle(lastBlockOfNewCycle + 1).getStartBlock());
     }
 
 
