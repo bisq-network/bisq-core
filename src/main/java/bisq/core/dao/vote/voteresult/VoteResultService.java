@@ -127,7 +127,7 @@ public class VoteResultService implements BsqBlockChain.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void maybeApplyVoteResult(int chainHeight) {
-        if (periodService.getPhase(chainHeight) == PeriodService.Phase.ISSUANCE) {
+        if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.ISSUANCE) {
             applyVoteResult(chainHeight);
         }
     }
