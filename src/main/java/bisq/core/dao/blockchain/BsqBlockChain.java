@@ -98,6 +98,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         void onBlockAdded(BsqBlock bsqBlock);
     }
 
+    public interface SameThreadListener {
+        void onBlockAdded(BsqBlock bsqBlock);
+    }
+
     public interface IssuanceListener {
         void onIssuance();
     }
@@ -116,6 +120,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
+    private final List<SameThreadListener> sameThreadListeners = new ArrayList<>();
 
     private int chainHeadHeight = 0;
     @Nullable
@@ -228,6 +233,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> issuanceListeners.remove(listener));
     }
 
+    public void addSameThreadListener(SameThreadListener listener) {
+        lock.write(() -> sameThreadListeners.add(listener));
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: BsqBlockChain
@@ -261,7 +270,22 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             chainHeadHeight = bsqBlock.getHeight();
             printNewBlock(bsqBlock);
             log.info("New block added at blockHeight " + bsqBlock.getHeight());
-            listeners.forEach(l -> UserThread.execute(() -> l.onBlockAdded(bsqBlock)));
+            sameThreadListeners.forEach(sameThreadListener -> sameThreadListener.onBlockAdded(bsqBlock));
+            listeners.forEach(listener -> UserThread.execute(() -> listener.onBlockAdded(bsqBlock)));
+        });
+    }
+
+    public BsqBlock getLastBsqBlock() {
+        return lock.read(() -> {
+            return bsqBlocks.peekLast();
+        });
+    }
+
+    public Optional<BsqBlock> getBsqBlock(int blockHeight) {
+        return lock.read(() -> {
+            return bsqBlocks.stream()
+                    .filter(bsqBlock -> bsqBlock.getHeight() == blockHeight)
+                    .findFirst();
         });
     }
 

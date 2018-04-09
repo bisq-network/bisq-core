@@ -83,7 +83,8 @@ public class Tx implements PersistablePayload {
     private int issuanceBlockHeight;
 
 
-    public Tx(String id, int blockHeight,
+    public Tx(String id,
+              int blockHeight,
               String blockHash,
               long time,
               ImmutableList<TxInput> inputs,
