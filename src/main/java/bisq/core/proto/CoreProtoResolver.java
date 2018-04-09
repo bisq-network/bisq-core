@@ -17,16 +17,13 @@
 
 package bisq.core.proto;
 
-import bisq.core.payment.AccountAgeWitness;
-import bisq.core.payment.payload.*;
-import bisq.core.trade.statistics.TradeStatistics2;
-
 import bisq.common.proto.ProtoResolver;
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistableEnvelope;
-
+import bisq.core.payment.AccountAgeWitness;
+import bisq.core.payment.payload.*;
+import bisq.core.trade.statistics.TradeStatistics2;
 import io.bisq.generated.protobuffer.PB;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
