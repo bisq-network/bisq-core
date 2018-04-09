@@ -24,7 +24,6 @@ import bisq.network.crypto.EncryptionService;
 import bisq.network.p2p.peers.keepalive.messages.Ping;
 import bisq.network.p2p.storage.P2PDataStorage;
 
-import bisq.common.UserThread;
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.SealedAndSigned;
@@ -68,7 +67,7 @@ public class SetupUtils {
                         log.debug("Crypto test succeeded");
 
                         if (Security.getProvider("BC") != null) {
-                            UserThread.execute(resultHandler::handleResult);
+                            resultHandler.handleResult();
                         } else {
                             errorHandler.accept(new CryptoException("Security provider BountyCastle is not available."));
                         }
@@ -97,7 +96,7 @@ public class SetupUtils {
             p2PDataStorage.readFromResources(P2PDataStorage.PERSISTABLE_NETWORK_PAYLOAD_MAP_FILE_NAME, postFix);
             p2PDataStorage.readFromResources(P2PDataStorage.PERSISTED_ENTRY_MAP_FILE_NAME, postFix);
             log.info("readFromResources took {} ms", (new Date().getTime() - ts));
-            UserThread.execute(() -> result.set(true));
+            result.set(true);
         });
         thread.start();
         return result;
