@@ -19,8 +19,8 @@ package bisq.asset;
 
 /**
  * Interface representing a given ("crypto") asset in its most abstract form, having a
- * {@link #getName() name}, e.g. "Bitcoin", a {@link #getTickerSymbol() ticker symbol},
- * e.g. "BTC", and an address validation function. Together, these properties represent
+ * {@link #getName() name}, eg "Bitcoin", a {@link #getTickerSymbol() ticker symbol},
+ * eg "BTC", and an address validation function. Together, these properties represent
  * the minimum information and functionality required to register and trade an asset on
  * the Bisq network.
  * <p>
