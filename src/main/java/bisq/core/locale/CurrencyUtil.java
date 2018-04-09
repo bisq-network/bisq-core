@@ -19,6 +19,11 @@ package bisq.core.locale;
 
 import bisq.core.app.BisqEnvironment;
 
+import bisq.asset.Asset;
+import bisq.asset.AssetRegistry;
+import bisq.asset.Token;
+import bisq.asset.coins.BSQ;
+
 import bisq.common.app.DevEnv;
 
 import java.util.ArrayList;
@@ -33,13 +38,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
-
-
-
-import bisq.asset.Asset;
-import bisq.asset.AssetRegistry;
-import bisq.asset.Token;
-import bisq.asset.coins.BSQ;
 
 @Slf4j
 public class CurrencyUtil {
