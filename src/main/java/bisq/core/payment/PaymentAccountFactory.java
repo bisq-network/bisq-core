@@ -52,6 +52,8 @@ public class PaymentAccountFactory {
                 return new SpecificBanksAccount();
             case PaymentMethod.ALI_PAY_ID:
                 return new AliPayAccount();
+            case PaymentMethod.WECHAT_PAY_ID:
+                return new WeChatPayAccount();
             case PaymentMethod.SWISH_ID:
                 return new SwishAccount();
             case PaymentMethod.CLEAR_X_CHANGE_ID:
