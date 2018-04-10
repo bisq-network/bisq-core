@@ -17,9 +17,6 @@
 
 package bisq.core.proto;
 
-import bisq.common.proto.ProtoResolver;
-import bisq.common.proto.ProtobufferException;
-import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.core.payment.AccountAgeWitness;
 import bisq.core.payment.payload.AliPayAccountPayload;
 import bisq.core.payment.payload.CashAppAccountPayload;
@@ -44,10 +41,16 @@ import bisq.core.payment.payload.SwishAccountPayload;
 import bisq.core.payment.payload.USPostalMoneyOrderAccountPayload;
 import bisq.core.payment.payload.UpholdAccountPayload;
 import bisq.core.payment.payload.VenmoAccountPayload;
-import bisq.core.payment.payload.WechatPayAccountPayload;
+import bisq.core.payment.payload.WeChatPayAccountPayload;
 import bisq.core.payment.payload.WesternUnionAccountPayload;
 import bisq.core.trade.statistics.TradeStatistics2;
+
+import bisq.common.proto.ProtoResolver;
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.persistable.PersistableEnvelope;
+
 import io.bisq.generated.protobuffer.PB;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,8 +62,8 @@ public class CoreProtoResolver implements ProtoResolver {
             switch (messageCase) {
                 case ALI_PAY_ACCOUNT_PAYLOAD:
                     return AliPayAccountPayload.fromProto(proto);
-                case WECHAT_PAY_ACCOUNT_PAYLOAD:
-                    return WechatPayAccountPayload.fromProto(proto);
+                case WE_CHAT_PAY_ACCOUNT_PAYLOAD:
+                    return WeChatPayAccountPayload.fromProto(proto);
                 case CHASE_QUICK_PAY_ACCOUNT_PAYLOAD:
                     return ChaseQuickPayAccountPayload.fromProto(proto);
                 case CLEAR_XCHANGE_ACCOUNT_PAYLOAD:

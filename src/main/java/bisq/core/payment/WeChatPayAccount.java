@@ -20,26 +20,28 @@ package bisq.core.payment;
 import bisq.core.locale.FiatCurrency;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
-import bisq.core.payment.payload.WechatPayAccountPayload;
+import bisq.core.payment.payload.WeChatPayAccountPayload;
+
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
-public final class WechatPayAccount extends PaymentAccount {
-    public WechatPayAccount() {
+public final class WeChatPayAccount extends PaymentAccount {
+
+    public WeChatPayAccount() {
         super(PaymentMethod.WECHAT_PAY);
         setSingleTradeCurrency(new FiatCurrency("CNY"));
     }
 
     @Override
     protected PaymentAccountPayload createPayload() {
-        return new WechatPayAccountPayload(paymentMethod.getId(), id);
+        return new WeChatPayAccountPayload(paymentMethod.getId(), id);
     }
 
     public void setAccountNr(String accountNr) {
-        ((WechatPayAccountPayload) paymentAccountPayload).setAccountNr(accountNr);
+        ((WeChatPayAccountPayload) paymentAccountPayload).setAccountNr(accountNr);
     }
 
     public String getAccountNr() {
-        return ((WechatPayAccountPayload) paymentAccountPayload).getAccountNr();
+        return ((WeChatPayAccountPayload) paymentAccountPayload).getAccountNr();
     }
 }

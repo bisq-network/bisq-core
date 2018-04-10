@@ -17,27 +17,32 @@
 
 package bisq.core.payment.payload;
 
-import com.google.protobuf.Message;
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.Message;
+
+import org.springframework.util.CollectionUtils;
+
+import java.nio.charset.Charset;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
 @ToString
-public final class WechatPayAccountPayload extends PaymentAccountPayload {
+public final class WeChatPayAccountPayload extends PaymentAccountPayload {
     private String accountNr = "";
 
-    public WechatPayAccountPayload(String paymentMethod, String id) {
+    public WeChatPayAccountPayload(String paymentMethod, String id) {
         super(paymentMethod, id);
     }
 
@@ -46,7 +51,7 @@ public final class WechatPayAccountPayload extends PaymentAccountPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private WechatPayAccountPayload(String paymentMethod,
+    private WeChatPayAccountPayload(String paymentMethod,
                                     String id,
                                     String accountNr,
                                     long maxTradePeriod,
@@ -61,15 +66,15 @@ public final class WechatPayAccountPayload extends PaymentAccountPayload {
     @Override
     public Message toProtoMessage() {
         return getPaymentAccountPayloadBuilder()
-                .setWechatPayAccountPayload(PB.WechatPayAccountPayload.newBuilder()
+                .setWeChatPayAccountPayload(PB.WeChatPayAccountPayload.newBuilder()
                         .setAccountNr(accountNr))
                 .build();
     }
 
-    public static WechatPayAccountPayload fromProto(PB.PaymentAccountPayload proto) {
-        return new WechatPayAccountPayload(proto.getPaymentMethodId(),
+    public static WeChatPayAccountPayload fromProto(PB.PaymentAccountPayload proto) {
+        return new WeChatPayAccountPayload(proto.getPaymentMethodId(),
                 proto.getId(),
-                proto.getWechatPayAccountPayload().getAccountNr(),
+                proto.getWeChatPayAccountPayload().getAccountNr(),
                 proto.getMaxTradePeriod(),
                 CollectionUtils.isEmpty(proto.getExcludeFromJsonDataMap()) ? null : new HashMap<>(proto.getExcludeFromJsonDataMap()));
     }
@@ -81,7 +86,7 @@ public final class WechatPayAccountPayload extends PaymentAccountPayload {
 
     @Override
     public String getPaymentDetails() {
-        return "WechatPay - Account no.: " + accountNr;
+        return "WeChat Pay - Account no.: " + accountNr;
     }
 
     @Override
