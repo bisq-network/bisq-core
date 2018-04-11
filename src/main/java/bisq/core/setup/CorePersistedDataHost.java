@@ -22,6 +22,7 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVoteService;
+import bisq.core.dao.vote.proposal.MyProposalService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.TradeManager;
@@ -57,6 +58,7 @@ public class CorePersistedDataHost {
         persistedDataHosts.add(injector.getInstance(DisputeManager.class));
         persistedDataHosts.add(injector.getInstance(P2PService.class));
         persistedDataHosts.add(injector.getInstance(ProposalService.class));
+        persistedDataHosts.add(injector.getInstance(MyProposalService.class));
         persistedDataHosts.add(injector.getInstance(BlindVoteService.class));
         persistedDataHosts.add(injector.getInstance(MyVoteService.class));
         persistedDataHosts.add(injector.getInstance(DaoParamService.class));
