@@ -15,15 +15,25 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.asset.coins;
 
-public class AppOptionKeys {
-    public static final String APP_NAME_KEY = "appName";
-    public static final String USER_DATA_DIR_KEY = "userDataDir";
-    public static final String APP_DATA_DIR_KEY = "appDataDir";
-    public static final String PROVIDERS = "providers";
-    public static final String MAX_MEMORY = "maxMemory";
-    public static final String DUMP_STATISTICS = "dumpStatistics";
-    public static final String IGNORE_DEV_MSG_KEY = "ignoreDevMsg";
-    public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
+import bisq.asset.Base58BitcoinAddressValidator;
+import bisq.asset.Coin;
+import bisq.asset.NetworkParametersAdapter;
+
+public class BitZeny extends Coin {
+
+    public BitZeny() {
+        super("BitZeny", "ZNY", new Base58BitcoinAddressValidator(new BitZenyParams()));
+    }
+
+
+    public static class BitZenyParams extends NetworkParametersAdapter {
+
+        public BitZenyParams() {
+            addressHeader = 81;
+            p2shHeader = 5;
+            acceptableAddressCodes = new int[]{addressHeader, p2shHeader};
+        }
+    }
 }

@@ -170,7 +170,9 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     // Pre 0.7 version don't know the new message type and throw an error which leads to disconnecting the peer.
     @Override
     public List<Integer> getRequiredCapabilities() {
-        return new ArrayList<>(Collections.singletonList(Capabilities.Capability.VOTE.ordinal()));
+        return new ArrayList<>(Collections.singletonList(
+                Capabilities.Capability.BLIND_VOTE.ordinal()
+        ));
     }
 
     public void validate(Tx tx, PeriodService periodService) throws ValidationException {

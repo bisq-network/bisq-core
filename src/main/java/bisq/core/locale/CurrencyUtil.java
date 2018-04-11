@@ -42,6 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CurrencyUtil {
 
+    public static void setup() {
+        setBaseCurrencyCode(BisqEnvironment.getBaseCurrencyNetwork().getCurrencyCode());
+    }
+
     private static final AssetRegistry assetRegistry = new AssetRegistry();
 
     private static String baseCurrencyCode = "BTC";

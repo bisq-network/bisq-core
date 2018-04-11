@@ -15,15 +15,25 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.asset.coins;
 
-public class AppOptionKeys {
-    public static final String APP_NAME_KEY = "appName";
-    public static final String USER_DATA_DIR_KEY = "userDataDir";
-    public static final String APP_DATA_DIR_KEY = "appDataDir";
-    public static final String PROVIDERS = "providers";
-    public static final String MAX_MEMORY = "maxMemory";
-    public static final String DUMP_STATISTICS = "dumpStatistics";
-    public static final String IGNORE_DEV_MSG_KEY = "ignoreDevMsg";
-    public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
+import bisq.asset.Base58BitcoinAddressValidator;
+import bisq.asset.Coin;
+import bisq.asset.NetworkParametersAdapter;
+
+public class NEETCOIN extends Coin {
+
+    public NEETCOIN() {
+        super("NEETCOIN", "NEET", new Base58BitcoinAddressValidator(new NEETCOINParams()));
+    }
+
+
+    public static class NEETCOINParams extends NetworkParametersAdapter {
+
+        public NEETCOINParams() {
+            addressHeader = 53;
+            p2shHeader = 112;
+            acceptableAddressCodes = new int[]{addressHeader, p2shHeader};
+        }
+    }
 }

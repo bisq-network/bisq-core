@@ -13,7 +13,9 @@ bisq.asset.coins.Bitcoin$Testnet
 bisq.asset.coins.BitcoinCash
 bisq.asset.coins.BitcoinClashic
 bisq.asset.coins.BitcoinGold
+bisq.asset.coins.Bitcore
 bisq.asset.coins.BitDaric
+bisq.asset.coins.BitZeny
 bisq.asset.coins.BSQ$Mainnet
 bisq.asset.coins.BSQ$Regtest
 bisq.asset.coins.BSQ$Testnet
@@ -34,6 +36,7 @@ bisq.asset.coins.DeepOnion
 bisq.asset.coins.DigiMoney
 bisq.asset.coins.Dinero
 bisq.asset.coins.Dogecoin
+bisq.asset.coins.DSTRA
 bisq.asset.coins.DynamicCoin
 bisq.asset.coins.Espers
 bisq.asset.coins.Ether
@@ -43,16 +46,19 @@ bisq.asset.coins.InfinityEconomics
 bisq.asset.coins.Instacash
 bisq.asset.coins.InternetOfPeople
 bisq.asset.coins.Koto
+bisq.asset.coins.Kumacoin
 bisq.asset.coins.LBRY
 bisq.asset.coins.Lisk
 bisq.asset.coins.Litecoin$Mainnet
 bisq.asset.coins.Litecoin$Regtest
 bisq.asset.coins.Litecoin$Testnet
+bisq.asset.coins.Madbyte
 bisq.asset.coins.Madcoin
 bisq.asset.coins.MaidSafeCoin
 bisq.asset.coins.Monero
 bisq.asset.coins.Namecoin
 bisq.asset.coins.NavCoin
+bisq.asset.coins.NEETCOIN
 bisq.asset.coins.NuBits
 bisq.asset.coins.Nxt
 bisq.asset.coins.Obsidian
@@ -64,6 +70,7 @@ bisq.asset.coins.PIVX
 bisq.asset.coins.PostCoin
 bisq.asset.coins.Pranacoin
 bisq.asset.coins.ReddCoin
+bisq.asset.coins.Ringo
 bisq.asset.coins.Roicoin
 bisq.asset.coins.SafeFileSystemCoin
 bisq.asset.coins.Siacoin
@@ -74,6 +81,7 @@ bisq.asset.coins.SpeedCash
 bisq.asset.coins.STEEM
 bisq.asset.coins.Stellite
 bisq.asset.coins.Strayacoin
+bisq.asset.coins.Tamadcoin
 bisq.asset.coins.Terracoin
 bisq.asset.coins.Ubiq
 bisq.asset.coins.Unobtanium

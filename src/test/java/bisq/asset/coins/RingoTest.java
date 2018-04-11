@@ -15,15 +15,28 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.asset.coins;
 
-public class AppOptionKeys {
-    public static final String APP_NAME_KEY = "appName";
-    public static final String USER_DATA_DIR_KEY = "userDataDir";
-    public static final String APP_DATA_DIR_KEY = "appDataDir";
-    public static final String PROVIDERS = "providers";
-    public static final String MAX_MEMORY = "maxMemory";
-    public static final String DUMP_STATISTICS = "dumpStatistics";
-    public static final String IGNORE_DEV_MSG_KEY = "ignoreDevMsg";
-    public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
+import bisq.asset.AbstractAssetTest;
+
+import org.junit.Test;
+
+public class RingoTest extends AbstractAssetTest {
+
+    public RingoTest() {
+        super(new Ringo());
+    }
+
+    @Test
+    public void testValidAddresses() {
+        assertValidAddress("RDSLfRn23XQQRDGaPVYCph9zjcHeBPQsXA");
+        assertValidAddress("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1G");
+    }
+
+    @Test
+    public void testInvalidAddresses() {
+        assertInvalidAddress("RGZQep8XoEXe6KqZt7rD2YFLxgGTp3nhBTT");
+        assertInvalidAddress("RGZQep8XoEXe6KqZt7rD2YFLxgGTp3nhB");
+        assertInvalidAddress("baXqokPfTAqPeGVjP4NWCjg7xohdsrNZ1G#");
+    }
 }

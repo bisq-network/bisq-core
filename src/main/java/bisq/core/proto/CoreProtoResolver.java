@@ -41,6 +41,7 @@ import bisq.core.payment.payload.SwishAccountPayload;
 import bisq.core.payment.payload.USPostalMoneyOrderAccountPayload;
 import bisq.core.payment.payload.UpholdAccountPayload;
 import bisq.core.payment.payload.VenmoAccountPayload;
+import bisq.core.payment.payload.WeChatPayAccountPayload;
 import bisq.core.payment.payload.WesternUnionAccountPayload;
 import bisq.core.trade.statistics.TradeStatistics2;
 
@@ -61,6 +62,8 @@ public class CoreProtoResolver implements ProtoResolver {
             switch (messageCase) {
                 case ALI_PAY_ACCOUNT_PAYLOAD:
                     return AliPayAccountPayload.fromProto(proto);
+                case WE_CHAT_PAY_ACCOUNT_PAYLOAD:
+                    return WeChatPayAccountPayload.fromProto(proto);
                 case CHASE_QUICK_PAY_ACCOUNT_PAYLOAD:
                     return ChaseQuickPayAccountPayload.fromProto(proto);
                 case CLEAR_XCHANGE_ACCOUNT_PAYLOAD:
