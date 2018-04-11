@@ -18,11 +18,11 @@
 package bisq.core.dao.blockchain.json;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.ChainState;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.common.storage.FileUtil;
 import bisq.common.storage.JsonFileManager;
@@ -47,6 +47,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public class JsonBlockChainExporter {
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final boolean dumpBlockchainData;
 
     private final ListeningExecutorService executor = Utilities.getListeningExecutorService("JsonExporter", 1, 1, 1200);
@@ -63,10 +64,10 @@ public class JsonBlockChainExporter {
     private JsonFileManager txFileManager, txOutputFileManager, bsqBlockChainFileManager;
 
     @Inject
-    public JsonBlockChainExporter(ReadableBsqBlockChain readableBsqBlockChain,
+    public JsonBlockChainExporter(ChainStateService chainStateService,
                                   @Named(Storage.STORAGE_DIR) File storageDir,
                                   @Named(DaoOptionKeys.DUMP_BLOCKCHAIN_DATA) boolean dumpBlockchainData) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.dumpBlockchainData = dumpBlockchainData;
 
         init(storageDir, dumpBlockchainData);
@@ -114,12 +115,15 @@ public class JsonBlockChainExporter {
     public void maybeExport() {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
-                final BsqBlockChain bsqBlockChainClone = readableBsqBlockChain.getClone();
-                for (Tx tx : bsqBlockChainClone.getTxMap().values()) {
+                final ChainState chainStateClone = chainStateService.getClone();
+                Map<String, Tx> txMap = chainStateClone.getBsqBlocks().stream()
+                        .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
+                        .collect(Collectors.toMap(Tx::getId, tx -> tx));
+                for (Tx tx : txMap.values()) {
                     String txId = tx.getId();
                     JsonTxType txType = tx.getTxType() != TxType.UNDEFINED_TX_TYPE ? JsonTxType.valueOf(tx.getTxType().name()) : null;
                     List<JsonTxOutput> outputs = new ArrayList<>();
-                    tx.getOutputs().stream().forEach(txOutput -> {
+                    tx.getOutputs().forEach(txOutput -> {
                         final JsonTxOutput outputForJson = new JsonTxOutput(txId,
                                 txOutput.getIndex(),
                                 txOutput.isVerified() ? txOutput.getValue() : 0,
@@ -166,7 +170,7 @@ public class JsonBlockChainExporter {
                     txFileManager.writeToDisc(Utilities.objectToJson(jsonTx), txId);
                 }
 
-                bsqBlockChainFileManager.writeToDisc(Utilities.objectToJson(bsqBlockChainClone), "BsqBlockChain");
+                bsqBlockChainFileManager.writeToDisc(Utilities.objectToJson(chainStateClone), "ChainStateService");
                 return null;
             });
 

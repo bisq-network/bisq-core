@@ -17,12 +17,12 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.common.app.DevEnv;
 
@@ -42,15 +42,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class BsqTxController {
 
-    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final TxInputsController txInputsController;
     private final TxOutputsController txOutputsController;
 
     @Inject
-    public BsqTxController(WritableBsqBlockChain writableBsqBlockChain,
+    public BsqTxController(ChainStateService chainStateService,
                            TxInputsController txInputsController,
                            TxOutputsController txOutputsController) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.txInputsController = txInputsController;
         this.txOutputsController = txOutputsController;
     }
@@ -71,7 +71,7 @@ public class BsqTxController {
             if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
                 tx.setTxType(getTxType(tx, model));
                 tx.setBurntFee(model.getAvailableInputValue());
-                writableBsqBlockChain.addTxToMap(tx);
+                chainStateService.addTxToMap(tx);
             } else {
                 String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                 DevEnv.logErrorAndThrowIfDevMode(msg);

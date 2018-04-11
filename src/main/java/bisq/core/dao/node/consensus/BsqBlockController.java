@@ -17,10 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -29,25 +28,23 @@ import java.util.LinkedList;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Checks if a block is valid and if so adds it to the BsqBlockChain.
+ * Checks if a block is valid and if so adds it to the ChainStateService.
  */
 @Slf4j
 public class BsqBlockController {
 
-    private final WritableBsqBlockChain writableBsqBlockChain;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
 
     @Inject
-    public BsqBlockController(WritableBsqBlockChain writableBsqBlockChain, ReadableBsqBlockChain readableBsqBlockChain) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+    public BsqBlockController(ChainStateService chainStateService) {
+        this.chainStateService = chainStateService;
     }
 
     public void addBlockIfValid(BsqBlock bsqBlock) throws BlockNotConnectingException {
-        LinkedList<BsqBlock> bsqBlocks = readableBsqBlockChain.getBsqBlocks();
+        LinkedList<BsqBlock> bsqBlocks = chainStateService.getBsqBlocks();
         if (!bsqBlocks.contains(bsqBlock)) {
             if (isBlockConnecting(bsqBlock, bsqBlocks)) {
-                writableBsqBlockChain.addBlock(bsqBlock);
+                chainStateService.addBlock(bsqBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",

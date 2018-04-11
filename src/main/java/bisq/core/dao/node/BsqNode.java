@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.SnapshotManager;
+import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.SnapshotManager;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
@@ -40,7 +40,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected final P2PService p2PService;
-    protected final ReadableBsqBlockChain readableBsqBlockChain;
+    protected final ChainStateService chainStateService;
     @SuppressWarnings("WeakerAccess")
     private final String genesisTxId;
     private final int genesisBlockHeight;
@@ -57,15 +57,15 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqNode(ReadableBsqBlockChain readableBsqBlockChain,
+    public BsqNode(ChainStateService chainStateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
 
         this.p2PService = p2PService;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
 
-        genesisTxId = readableBsqBlockChain.getGenesisTxId();
-        genesisBlockHeight = readableBsqBlockChain.getGenesisBlockHeight();
+        genesisTxId = chainStateService.getGenesisTxId();
+        genesisBlockHeight = chainStateService.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
     }
 
@@ -138,7 +138,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, readableBsqBlockChain.getChainHeadHeight() + 1);
+        final int startBlockHeight = Math.max(genesisBlockHeight, chainStateService.getChainHeadHeight() + 1);
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -147,7 +147,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                readableBsqBlockChain.getChainHeadHeight());
+                chainStateService.getChainHeadHeight());
 
         return startBlockHeight;
     }

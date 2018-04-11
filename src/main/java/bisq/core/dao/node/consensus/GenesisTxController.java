@@ -18,10 +18,9 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,20 +30,17 @@ import javax.inject.Named;
  */
 public class GenesisTxController {
 
-    private final WritableBsqBlockChain writableBsqBlockChain;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final GenesisTxOutputController genesisTxOutputController;
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
     @Inject
-    public GenesisTxController(WritableBsqBlockChain writableBsqBlockChain,
-                               ReadableBsqBlockChain readableBsqBlockChain,
+    public GenesisTxController(ChainStateService chainStateService,
                                GenesisTxOutputController genesisTxOutputController,
                                @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                                @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.genesisTxOutputController = genesisTxOutputController;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
@@ -55,13 +51,13 @@ public class GenesisTxController {
     }
 
     public void applyStateChange(Tx tx) {
-        Model model = new Model(readableBsqBlockChain.getIssuedAmountAtGenesis().getValue());
+        Model model = new Model(chainStateService.getIssuedAmountAtGenesis().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
             genesisTxOutputController.verify(tx.getOutputs().get(i), model);
         }
 
         tx.setTxType(TxType.GENESIS);
-        writableBsqBlockChain.setGenesisTx(tx);
-        writableBsqBlockChain.addTxToMap(tx);
+        chainStateService.setGenesisTx(tx);
+        chainStateService.addTxToMap(tx);
     }
 }

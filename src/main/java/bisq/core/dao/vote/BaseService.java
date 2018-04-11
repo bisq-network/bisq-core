@@ -19,10 +19,9 @@ package bisq.core.dao.vote;
 
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.network.p2p.P2PService;
@@ -47,12 +46,12 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class BaseService implements PersistedDataHost, HashMapChangedListener, BsqBlockChain.Listener {
+public abstract class BaseService implements PersistedDataHost, HashMapChangedListener, ChainStateService.Listener {
     protected final P2PService p2PService;
     protected final WalletsManager walletsManager;
     protected final BsqWalletService bsqWalletService;
     protected final PeriodService periodService;
-    protected final ReadableBsqBlockChain readableBsqBlockChain;
+    protected final ChainStateService chainStateService;
     protected final PublicKey signaturePubKey;
     protected ChangeListener<Number> numConnectedPeersListener;
 
@@ -60,13 +59,13 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
                        WalletsManager walletsManager,
                        BsqWalletService bsqWalletService,
                        PeriodService periodService,
-                       ReadableBsqBlockChain readableBsqBlockChain,
+                       ChainStateService chainStateService,
                        KeyRing keyRing) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.periodService = periodService;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -86,7 +85,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         rePublishWhenWellConnected();
 
-        readableBsqBlockChain.addListener(this);
+        chainStateService.addListener(this);
     }
 
     public void shutDown() {
@@ -102,7 +101,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BsqBlockChain.Listener
+    // ChainStateService.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called delayed as we map to user thread! If follow up methods requests the blockchain data it
@@ -146,7 +145,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
 
     protected boolean isInPhaseOrUnconfirmed(String txId, PeriodService.Phase phase, int blockHeight) {
         return isUnconfirmed(txId) ||
-                readableBsqBlockChain.getTx(txId)
+                chainStateService.getTx(txId)
                         .filter(tx -> periodService.isTxInPhase(tx.getId(), phase))
                         .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), blockHeight))
                         .isPresent();
@@ -155,7 +154,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
 
     protected boolean isValid(ValidationCandidate validationCandidate) {
         final String txId = validationCandidate.getTxId();
-        Optional<Tx> optionalTx = readableBsqBlockChain.getTx(txId);
+        Optional<Tx> optionalTx = chainStateService.getTx(txId);
         if (optionalTx.isPresent()) {
             final Tx tx = optionalTx.get();
             try {
@@ -169,7 +168,7 @@ public abstract class BaseService implements PersistedDataHost, HashMapChangedLi
                 return false;
             }
         } else {
-            log.warn("Validation failed. Tx not found in readableBsqBlockChain. txId={}", txId);
+            log.warn("Validation failed. Tx not found in chainStateService. txId={}", txId);
             return false;
         }
     }

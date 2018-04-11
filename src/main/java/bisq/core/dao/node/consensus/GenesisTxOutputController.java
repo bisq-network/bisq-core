@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -31,8 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GenesisTxOutputController extends TxOutputController {
     @Inject
-    public GenesisTxOutputController(WritableBsqBlockChain writableBsqBlockChain, OpReturnController opReturnController) {
-        super(writableBsqBlockChain, opReturnController);
+    public GenesisTxOutputController(ChainStateService chainStateService, OpReturnController opReturnController) {
+        super(chainStateService, opReturnController);
     }
 
     void verify(TxOutput txOutput, Model model) {

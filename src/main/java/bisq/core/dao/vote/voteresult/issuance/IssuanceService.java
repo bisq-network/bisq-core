@@ -17,9 +17,8 @@
 
 package bisq.core.dao.vote.voteresult.issuance;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 
@@ -33,8 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class IssuanceService {
-    private final ReadableBsqBlockChain readableBsqBlockChain;
-    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final PeriodService periodService;
 
 
@@ -43,17 +41,15 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public IssuanceService(ReadableBsqBlockChain readableBsqBlockChain,
-                           WritableBsqBlockChain writableBsqBlockChain,
+    public IssuanceService(ChainStateService chainStateService,
                            PeriodService periodService) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
-        this.writableBsqBlockChain = writableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.periodService = periodService;
     }
 
 
     public void issueBsq(CompensationRequestPayload compensationRequestPayload, int chainHeight) {
-        final Set<TxOutput> compReqIssuanceTxOutputs = readableBsqBlockChain.getCompReqIssuanceTxOutputs();
+        final Set<TxOutput> compReqIssuanceTxOutputs = chainStateService.getCompReqIssuanceTxOutputs();
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> txOutput.getTxId().equals(compensationRequestPayload.getTxId()))
                 .filter(txOutput -> compensationRequestPayload.getRequestedBsq().value == txOutput.getValue())
@@ -65,7 +61,7 @@ public class IssuanceService {
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .filter(txOutput -> !txOutput.isVerified()) // our candidate is not yet verified
                 .forEach(txOutput -> {
-                    writableBsqBlockChain.issueBsq(txOutput);
+                    chainStateService.issueBsq(txOutput);
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
                     sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())

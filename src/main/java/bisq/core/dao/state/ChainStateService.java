@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain;
+package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.vo.BsqBlock;
@@ -27,13 +27,8 @@ import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
 import bisq.common.ThreadContextAwareListener;
 import bisq.common.UserThread;
-import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.util.FunctionalReadWriteLock;
 import bisq.common.util.Tuple2;
-
-import io.bisq.generated.protobuffer.PB;
-
-import com.google.protobuf.Message;
 
 import org.bitcoinj.core.Coin;
 
@@ -42,7 +37,6 @@ import javax.inject.Named;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -64,13 +58,13 @@ import static com.google.common.base.Preconditions.checkArgument;
  * We only have one thread which is writing data from the lite node or full node executors.
  * We use ReentrantReadWriteLock in a functional style.
  * <p>
- * We limit the access to BsqBlockChain over interfaces for read (ReadableBsqBlockChain) and
- * write (WritableBsqBlockChain) to have better overview and control about access.
+ * We limit the access to ChainStateService over interfaces for read (ChainStateService) and
+ * write (ChainStateService) to have better overview and control about access.
  * <p>
  * TODO consider refactoring to move data access to a ChainStateService class.
  */
 @Slf4j
-public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain, ReadableBsqBlockChain {
+public class ChainStateService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Static
@@ -108,19 +102,13 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Instance fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private final ChainState chainState;
+
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
-    private final LinkedList<BsqBlock> bsqBlocks;
-    private final Map<String, Tx> txMap;
-    private final Map<TxIdIndexTuple, TxOutput> unspentTxOutputsMap;
-
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
-
-    private int chainHeadHeight = 0;
-    @Nullable
-    private Tx genesisTx;
 
     transient private final FunctionalReadWriteLock lock;
 
@@ -131,122 +119,51 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqBlockChain(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
-                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this(new LinkedList<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                genesisTxId,
-                genesisBlockHeight,
-                0,
-                null);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PROTO BUFFER
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private BsqBlockChain(LinkedList<BsqBlock> bsqBlocks,
-                          Map<String, Tx> txMap,
-                          Map<TxIdIndexTuple, TxOutput> unspentTxOutputsMap,
-                          String genesisTxId,
-                          int genesisBlockHeight,
-                          int chainHeadHeight,
-                          @Nullable Tx genesisTx) {
-        this.bsqBlocks = bsqBlocks;
-        this.txMap = txMap;
-        this.unspentTxOutputsMap = unspentTxOutputsMap;
+    public ChainStateService(ChainState chainState,
+                             @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
+                             @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+        this.chainState = chainState;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
-        this.chainHeadHeight = chainHeadHeight;
-        this.genesisTx = genesisTx;
 
         lock = new FunctionalReadWriteLock(true);
+
     }
-
-    @Override
-    public Message toProtoMessage() {
-        return PB.PersistableEnvelope.newBuilder().setBsqBlockChain(getBsqBlockChainBuilder()).build();
-    }
-
-    private PB.BsqBlockChain.Builder getBsqBlockChainBuilder() {
-        final PB.BsqBlockChain.Builder builder = PB.BsqBlockChain.newBuilder()
-                .addAllBsqBlocks(bsqBlocks.stream()
-                        .map(BsqBlock::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .putAllTxMap(txMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey,
-                                v -> v.getValue().toProtoMessage())))
-                .putAllUnspentTxOutputsMap(unspentTxOutputsMap.entrySet().stream()
-                        .collect(Collectors.toMap(k -> k.getKey().getAsString(),
-                                v -> v.getValue().toProtoMessage())))
-                .setGenesisTxId(genesisTxId)
-                .setGenesisBlockHeight(genesisBlockHeight)
-                .setChainHeadHeight(chainHeadHeight);
-
-        Optional.ofNullable(genesisTx).ifPresent(e -> builder.setGenesisTx(genesisTx.toProtoMessage()));
-
-        return builder;
-    }
-
-    public static PersistableEnvelope fromProto(PB.BsqBlockChain proto) {
-        return new BsqBlockChain(new LinkedList<>(proto.getBsqBlocksList().stream()
-                .map(BsqBlock::fromProto)
-                .collect(Collectors.toList())),
-                new HashMap<>(proto.getTxMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, v -> Tx.fromProto(v.getValue())))),
-                new HashMap<>(proto.getUnspentTxOutputsMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(k -> new TxIdIndexTuple(k.getKey()), v -> TxOutput.fromProto(v.getValue())))),
-                proto.getGenesisTxId(),
-                proto.getGenesisBlockHeight(),
-                proto.getChainHeadHeight(),
-                proto.hasGenesisTx() ? Tx.fromProto(proto.getGenesisTx()) : null);
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public void addListener(Listener listener) {
         lock.write(() -> listeners.add(listener));
     }
 
-    @Override
     public void removeListener(Listener listener) {
         lock.write(() -> listeners.remove(listener));
     }
 
-    @Override
     public void addIssuanceListener(IssuanceListener listener) {
         lock.write(() -> issuanceListeners.add(listener));
     }
 
-    @Override
     public void removeIssuanceListener(IssuanceListener listener) {
         lock.write(() -> issuanceListeners.remove(listener));
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: BsqBlockChain
+    // Write access: ChainStateService
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void applySnapshot(BsqBlockChain snapshot) {
+    public void applySnapshot(ChainState snapshot) {
         lock.write(() -> {
-            bsqBlocks.clear();
-            bsqBlocks.addAll(snapshot.bsqBlocks);
+            chainState.getBsqBlocks().clear();
+            chainState.getBsqBlocks().addAll(snapshot.getBsqBlocks());
 
-            txMap.clear();
-            txMap.putAll(snapshot.txMap);
+            chainState.getUnspentTxOutputs().clear();
+            chainState.getUnspentTxOutputs().putAll(snapshot.getUnspentTxOutputs());
 
-            unspentTxOutputsMap.clear();
-            unspentTxOutputsMap.putAll(snapshot.unspentTxOutputsMap);
-
-            chainHeadHeight = snapshot.chainHeadHeight;
-            genesisTx = snapshot.genesisTx;
+            //TODO
         });
     }
 
@@ -255,11 +172,9 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Write access: BsqBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public void addBlock(BsqBlock bsqBlock) {
         lock.write(() -> {
-            bsqBlocks.add(bsqBlock);
-            chainHeadHeight = bsqBlock.getHeight();
+            chainState.getBsqBlocks().add(bsqBlock);
             printNewBlock(bsqBlock);
             log.info("New block added at blockHeight " + bsqBlock.getHeight());
 
@@ -271,13 +186,13 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     public BsqBlock getLastBsqBlock() {
         return lock.read(() -> {
-            return bsqBlocks.peekLast();
+            return chainState.getBsqBlocks().peekLast();
         });
     }
 
     public Optional<BsqBlock> getBsqBlock(int blockHeight) {
         return lock.read(() -> {
-            return bsqBlocks.stream()
+            return chainState.getBsqBlocks().stream()
                     .filter(bsqBlock -> bsqBlock.getHeight() == blockHeight)
                     .findFirst();
         });
@@ -288,14 +203,12 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Write access: Tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public void setGenesisTx(Tx tx) {
-        lock.write(() -> genesisTx = tx);
+        lock.write(() -> chainState.setGenesisTx(tx));
     }
 
-    @Override
     public void addTxToMap(Tx tx) {
-        lock.write(() -> txMap.put(tx.getId(), tx));
+        lock.write(() -> getTxMap().put(tx.getId(), tx));
     }
 
 
@@ -303,20 +216,17 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Write access: TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public void addUnspentTxOutput(TxOutput txOutput) {
         lock.write(() -> {
             checkArgument(txOutput.isVerified(), "txOutput must be verified at addUnspentTxOutput");
-            unspentTxOutputsMap.put(txOutput.getTxIdIndexTuple(), txOutput);
+            chainState.getUnspentTxOutputs().put(txOutput.getTxIdIndexTuple(), txOutput);
         });
     }
 
-    @Override
     public void removeUnspentTxOutput(TxOutput txOutput) {
-        lock.write(() -> unspentTxOutputsMap.remove(txOutput.getTxIdIndexTuple()));
+        lock.write(() -> chainState.getUnspentTxOutputs().remove(txOutput.getTxIdIndexTuple()));
     }
 
-    @Override
     public void issueBsq(TxOutput txOutput) {
         lock.write(() -> {
             // The magic happens, we print money! ;-)
@@ -330,7 +240,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             final Optional<Tx> optionalTx = getTx(txOutput.getTxId());
             checkArgument(optionalTx.isPresent(), "optionalTx must be present");
             final Tx tx = optionalTx.get();
-            tx.setIssuanceBlockHeight(chainHeadHeight);
+            tx.setIssuanceBlockHeight(getChainHeadHeight());
             tx.setIssuanceTx(true);
 
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
@@ -339,48 +249,32 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Read access: BsqBlockChain
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public BsqBlockChain getClone() {
-        return lock.read(() -> getClone(this));
-    }
-
-    @Override
-    public BsqBlockChain getClone(BsqBlockChain bsqBlockChain) {
-        return lock.read(() -> (BsqBlockChain) BsqBlockChain.fromProto(bsqBlockChain.getBsqBlockChainBuilder().build()));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // Read access: BsqBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
+    public ChainState getClone() {
+        return chainState.getClone();
+    }
+
     public LinkedList<BsqBlock> getBsqBlocks() {
-        return lock.read(() -> bsqBlocks);
+        return lock.read(() -> chainState.getBsqBlocks());
     }
 
-    @Override
     public boolean containsBsqBlock(BsqBlock bsqBlock) {
-        return lock.read(() -> bsqBlocks.contains(bsqBlock));
+        return lock.read(() -> chainState.getBsqBlocks().contains(bsqBlock));
     }
 
-    @Override
     public int getChainHeadHeight() {
-        return chainHeadHeight;
+        return !chainState.getBsqBlocks().isEmpty() ? chainState.getBsqBlocks().getLast().getHeight() : 0;
     }
 
-    @Override
     public int getGenesisBlockHeight() {
         return genesisBlockHeight;
     }
 
-    @Override
     public List<BsqBlock> getClonedBlocksFrom(int fromBlockHeight) {
         return lock.read(() -> {
-            return getClone().bsqBlocks.stream()
+            return chainState.getClone().getBsqBlocks().stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
                     .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
                     .collect(Collectors.toList());
@@ -392,24 +286,22 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Read access: Tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public Optional<Tx> getTx(String txId) {
-        return lock.read(() -> Optional.ofNullable(txMap.get(txId)));
+        return lock.read(() -> Optional.ofNullable(getTxMap().get(txId)));
     }
 
-    @Override
     public Map<String, Tx> getTxMap() {
-        return lock.read(() -> txMap);
+        return lock.read(() -> chainState.getBsqBlocks().stream()
+                .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
+                .collect(Collectors.toMap(Tx::getId, tx -> tx)));
     }
 
-    @Override
     public Set<Tx> getTransactions() {
         return lock.read(() -> getTxMap().entrySet().stream()
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toSet()));
     }
 
-    @Override
     public Set<Tx> getFeeTransactions() {
         return lock.read(() -> getTxMap().entrySet().stream()
                 .filter(e -> e.getValue().getBurntFee() > 0)
@@ -417,7 +309,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-    @Override
     public boolean hasTxBurntFee(String txId) {
         return lock.read(() -> getTx(txId)
                 .map(Tx::getBurntFee)
@@ -425,25 +316,22 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .isPresent());
     }
 
-    @Override
     public boolean containsTx(String txId) {
         return lock.read(() -> getTx(txId).isPresent());
     }
 
     @Nullable
     public Tx getGenesisTx() {
-        return genesisTx;
+        return chainState.getGenesisTx();
     }
 
-    @Override
     public String getGenesisTxId() {
         return genesisTxId;
     }
 
-    @Override
     public long getBlockTime(int height) {
         return lock.read(() -> {
-            return bsqBlocks.stream()
+            return chainState.getBsqBlocks().stream()
                     .filter(block -> block.getHeight() == height)
                     .mapToLong(BsqBlock::getTime)
                     .sum();
@@ -457,14 +345,12 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     // TODO handle BOND_LOCK, BOND_UNLOCK
     // TODO handle BLIND_VOTE_STAKE_OUTPUT more specifically
-    @Override
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
                 .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .isPresent());
     }
 
-    @Override
     public Set<TxOutput> getUnspentTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream().
                 filter(e -> e.isVerified() && e.isUnspent())
@@ -489,31 +375,26 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
                 .collect(Collectors.toSet()));
     }
 
-    @Override
     public Set<TxOutput> getLockedInBondsOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.BOND_LOCK)
                 .collect(Collectors.toSet()));
     }
 
-    @Override
     public Set<TxOutput> getSpentTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream().filter(e -> e.isVerified() && !e.isUnspent()).collect(Collectors.toSet()));
     }
 
 
-    @Override
     public Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> getUnspentTxOutput(txIdIndexTuple)
                 .filter(this::isTxOutputMature));
     }
 
-    @Override
     public Optional<TxOutput> getUnspentAndMatureTxOutput(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(new TxIdIndexTuple(txId, index)));
     }
 
-    @Override
     public Set<TxOutput> getVoteRevealTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
@@ -523,7 +404,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // We don't use getVerifiedTxOutputs as out output is not a valid BSQ output before the issuance.
     // We marked it only as candidate for issuance and after voting result is applied it might change it's state.
     //TODO we should add unspent check (need to be set in parser)
-    @Override
     public Set<TxOutput> getCompReqIssuanceTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
                 .filter(e -> e.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
@@ -531,7 +411,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
-        return lock.read(() -> unspentTxOutputsMap.entrySet().stream()
+        return lock.read(() -> chainState.getUnspentTxOutputs().entrySet().stream()
                 .filter(e -> e.getKey().equals(txIdIndexTuple))
                 .map(Map.Entry::getValue)
                 .filter(TxOutput::isVerified) //TODO is it needed?
@@ -540,7 +420,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     }
 
     public Set<TxOutput> getAllTxOutputs() {
-        return lock.read(() -> txMap.values().stream()
+        return lock.read(() -> getTxMap().values().stream()
                 .flatMap(tx -> tx.getOutputs().stream())
                 .collect(Collectors.toSet()));
     }
@@ -556,7 +436,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Read access: TxType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public Optional<TxType> getTxType(String txId) {
         return lock.read(() -> getTx(txId).map(Tx::getTxType));
     }
@@ -566,17 +445,14 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Read access: Misc
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public Coin getTotalBurntFee() {
         return lock.read(() -> Coin.valueOf(getTxMap().entrySet().stream().mapToLong(e -> e.getValue().getBurntFee()).sum()));
     }
 
-    @Override
     public Coin getIssuedAmountAtGenesis() {
-        return lock.read(() -> BsqBlockChain.GENESIS_TOTAL_SUPPLY);
+        return lock.read(() -> ChainStateService.GENESIS_TOTAL_SUPPLY);
     }
 
-    @Override
     public Coin getIssuedAmountFromCompRequests() {
         return lock.read(() -> Coin.valueOf(getCompReqIssuanceTxOutputs().stream()
                 .filter(txOutput -> getTx(txOutput.getTxId()).isPresent())
@@ -600,14 +476,14 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     private void printNewBlock(BsqBlock bsqBlock) {
         log.debug("\nchainHeadHeight={}\n" +
                         "    blocks.size={}\n" +
-                        "    txMap.size={}\n" +
-                        "    unspentTxOutputsMap.size={}\n" +
+                        "    getTxMap().size={}\n" +
+                        "    chainState.getUnspentTxOutputs().size={}\n" +
                         getChainHeadHeight(),
-                bsqBlocks.size(),
-                txMap.size(),
-                unspentTxOutputsMap.size());
+                chainState.getBsqBlocks().size(),
+                getTxMap().size(),
+                chainState.getUnspentTxOutputs().size());
 
-        if (!bsqBlocks.isEmpty()) {
+        if (!chainState.getBsqBlocks().isEmpty()) {
             StringBuilder sb = new StringBuilder();
             sb.append("\n##############################################################################");
             printBlock(bsqBlock, sb);
@@ -622,7 +498,7 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         sb.append("\nNew BSQ txs in block: ");
         sb.append(bsqBlock.getTxs().stream().map(Tx::getId).collect(Collectors.toList()).toString());
         sb.append("\nAll BSQ tx new state: ");
-        txMap.values().stream()
+        getTxMap().values().stream()
                 .sorted(Comparator.comparing(Tx::getBlockHeight))
                 .forEach(tx -> printTx(tx, sb));
     }

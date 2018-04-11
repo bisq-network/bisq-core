@@ -18,11 +18,10 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -48,7 +47,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Listens on the BsqBlockChain for new blocks and for ProposalPayload from the P2P network.
+ * Listens on the ChainStateService for new blocks and for ProposalPayload from the P2P network.
  * We configure both listeners thread context aware so we get our listeners called in the parser
  * thread created by the single threaded executor created in the NodeExecutor.
  * <p>
@@ -66,9 +65,8 @@ public class ProposalService implements PersistedDataHost {
     private NodeExecutor nodeExecutor;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
-    private final BsqBlockChain bsqBlockChain;
     private final PublicKey signaturePubKey;
-    private ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final Storage<ProposalList> storage;
 
     @Getter
@@ -79,15 +77,13 @@ public class ProposalService implements PersistedDataHost {
     public ProposalService(NodeExecutor nodeExecutor,
                            P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
-                           BsqBlockChain bsqBlockChain,
-                           ReadableBsqBlockChain readableBsqBlockChain,
+                           ChainStateService chainStateService,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
         this.nodeExecutor = nodeExecutor;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
-        this.bsqBlockChain = bsqBlockChain;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -98,7 +94,7 @@ public class ProposalService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        bsqBlockChain.addListener(new BsqBlockChain.Listener() {
+        chainStateService.addListener(new ChainStateService.Listener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
             public Executor getExecutor() {
@@ -166,7 +162,7 @@ public class ProposalService implements PersistedDataHost {
                 Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
                 proposalList.add(proposal);
 
-                maybeAddProposalToTx(proposalPayload, readableBsqBlockChain.getChainHeadHeight());
+                maybeAddProposalToTx(proposalPayload, chainStateService.getChainHeadHeight());
 
                 if (storeLocally)
                     persist();
@@ -184,9 +180,9 @@ public class ProposalService implements PersistedDataHost {
             final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
             findProposal(proposalPayload)
                     .ifPresent(payload -> {
-                        if (isInPhaseOrUnconfirmed(readableBsqBlockChain.getTx(payload.getTxId()), payload.getTxId(),
+                        if (isInPhaseOrUnconfirmed(chainStateService.getTx(payload.getTxId()), payload.getTxId(),
                                 PeriodService.Phase.PROPOSAL,
-                                readableBsqBlockChain.getChainHeadHeight())) {
+                                chainStateService.getChainHeadHeight())) {
                             removeProposalFromList(proposalPayload);
                         } else {
                             final String msg = "onRemoved called of a Proposal which is outside of the Request phase " +
@@ -207,7 +203,7 @@ public class ProposalService implements PersistedDataHost {
     }
 
     private Optional<Tx> getTxForProposalInCorrectPhase(ProposalPayload proposalPayload, int chainHeight) {
-        return readableBsqBlockChain.getTx(proposalPayload.getTxId())
+        return chainStateService.getTx(proposalPayload.getTxId())
                 .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
                 .filter(tx -> isValid(tx, proposalPayload));
     }
@@ -229,10 +225,10 @@ public class ProposalService implements PersistedDataHost {
             log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
     }
 
-    // We use the BsqBlockChain not the TransactionConfidence from the wallet to not mix 2 different and possibly
+    // We use the ChainStateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
     // out of sync data sources.
     public boolean isUnconfirmed(String txId) {
-        return !readableBsqBlockChain.getTx(txId).isPresent();
+        return !chainStateService.getTx(txId).isPresent();
     }
 
     public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {

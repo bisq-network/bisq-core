@@ -23,7 +23,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.network.p2p.P2PService;
@@ -60,7 +60,7 @@ public class MyProposalService implements PersistedDataHost {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final ProposalService proposalService;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private ChangeListener<Number> numConnectedPeersListener;
     private final Storage<ProposalList> storage;
 
@@ -77,12 +77,12 @@ public class MyProposalService implements PersistedDataHost {
     public MyProposalService(P2PService p2PService,
                              WalletsManager walletsManager,
                              ProposalService proposalService,
-                             ReadableBsqBlockChain readableBsqBlockChain,
+                             ChainStateService chainStateService,
                              Storage<ProposalList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.proposalService = proposalService;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
 
         this.storage = storage;
     }
@@ -167,10 +167,10 @@ public class MyProposalService implements PersistedDataHost {
     public boolean removeProposal(Proposal proposal) {
         final ProposalPayload proposalPayload = proposal.getProposalPayload();
         // We allow removal which are not confirmed yet or if it we are in the right phase
-        if (proposalService.isInPhaseOrUnconfirmed(readableBsqBlockChain.getTx(proposalPayload.getTxId()),
+        if (proposalService.isInPhaseOrUnconfirmed(chainStateService.getTx(proposalPayload.getTxId()),
                 proposalPayload.getTxId(),
                 PeriodService.Phase.PROPOSAL,
-                readableBsqBlockChain.getChainHeadHeight())) {
+                chainStateService.getChainHeadHeight())) {
             boolean success = p2PService.removeData(proposalPayload, true);
             if (success) {
                 if (observableList.remove(proposal))

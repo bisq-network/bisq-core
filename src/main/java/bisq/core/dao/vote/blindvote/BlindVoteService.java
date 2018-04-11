@@ -27,8 +27,8 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.BaseService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
@@ -96,7 +96,7 @@ public class BlindVoteService extends BaseService {
                             WalletsManager walletsManager,
                             BsqWalletService bsqWalletService,
                             PeriodService periodService,
-                            ReadableBsqBlockChain readableBsqBlockChain,
+                            ChainStateService chainStateService,
                             KeyRing keyRing,
                             MyVoteService myVoteService,
                             ProposalService proposalService,
@@ -107,7 +107,7 @@ public class BlindVoteService extends BaseService {
                 walletsManager,
                 bsqWalletService,
                 periodService,
-                readableBsqBlockChain,
+                chainStateService,
                 keyRing);
 
         this.myVoteService = myVoteService;
@@ -188,7 +188,7 @@ public class BlindVoteService extends BaseService {
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            ProposalList proposalList = getSortedProposalList(readableBsqBlockChain.getChainHeadHeight());
+            ProposalList proposalList = getSortedProposalList(chainStateService.getChainHeadHeight());
             log.info("ProposalList used in blind vote. proposalList={}", proposalList);
 
             //TODO publish to P2P network for more redundancy?
@@ -199,7 +199,7 @@ public class BlindVoteService extends BaseService {
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(daoParamService, readableBsqBlockChain.getChainHeadHeight());
+            final Coin fee = BlindVoteConsensus.getFee(daoParamService, chainStateService.getChainHeadHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
@@ -271,7 +271,7 @@ public class BlindVoteService extends BaseService {
             if (storeLocally)
                 persist();
 
-            onBlockHeightChanged(readableBsqBlockChain.getChainHeadHeight());
+            onBlockHeightChanged(chainStateService.getChainHeadHeight());
         } else {
             if (storeLocally && !isMine(blindVote))
                 log.debug("We have that blindVote already in our list. blindVote={}", blindVote);

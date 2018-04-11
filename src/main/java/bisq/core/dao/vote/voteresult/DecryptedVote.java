@@ -17,12 +17,12 @@
 
 package bisq.core.dao.vote.voteresult;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
@@ -52,25 +52,25 @@ public class DecryptedVote {
     private final ProposalList proposalListUsedForVoting;
 
     public DecryptedVote(byte[] opReturnData, String voteRevealTxId,
-                         ReadableBsqBlockChain readableBsqBlockChain, BlindVoteService blindVoteService,
+                         ChainStateService chainStateService, BlindVoteService blindVoteService,
                          PeriodService periodService, int chainHeight)
             throws VoteResultException {
         hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
         this.voteRevealTxId = voteRevealTxId;
 
         SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
-        Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, readableBsqBlockChain, periodService, chainHeight);
+        Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, chainStateService, periodService, chainHeight);
         TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx);
-        blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, readableBsqBlockChain, periodService, chainHeight);
+        blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, chainStateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
         BlindVote blindVote = getBlindVote(blindVoteService);
         proposalListUsedForVoting = getProposalList(blindVote, secretKey);
     }
 
-    private Tx getVoteRevealTx(String voteRevealTxId, ReadableBsqBlockChain readableBsqBlockChain,
+    private Tx getVoteRevealTx(String voteRevealTxId, ChainStateService chainStateService,
                                PeriodService periodService, int chainHeight)
             throws VoteResultException {
-        Optional<Tx> optionalVoteRevealTx = readableBsqBlockChain.getTx(voteRevealTxId);
+        Optional<Tx> optionalVoteRevealTx = chainStateService.getTx(voteRevealTxId);
         try {
             checkArgument(optionalVoteRevealTx.isPresent(), "voteRevealTx with txId " +
                     voteRevealTxId + "not found.");
@@ -100,12 +100,12 @@ public class DecryptedVote {
         }
     }
 
-    private String getBlindVoteTxId(TxOutput blindVoteStakeOutput, ReadableBsqBlockChain readableBsqBlockChain,
+    private String getBlindVoteTxId(TxOutput blindVoteStakeOutput, ChainStateService chainStateService,
                                     PeriodService periodService, int chainHeight)
             throws VoteResultException {
         try {
             String blindVoteTxId = blindVoteStakeOutput.getTxId();
-            Optional<Tx> optionalBlindVoteTx = readableBsqBlockChain.getTx(blindVoteTxId);
+            Optional<Tx> optionalBlindVoteTx = chainStateService.getTx(blindVoteTxId);
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
                     blindVoteTxId + "not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();

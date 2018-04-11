@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain;
+package bisq.core.dao.state;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
 
@@ -34,34 +34,37 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages snapshots of the BsqBlockChain.
+ * Manages snapshots of the ChainStateService.
  */
 //TODO add tests; check if current logic is correct.
 @Slf4j
-public class SnapshotManager implements BsqBlockChain.Listener {
+public class SnapshotManager implements ChainStateService.Listener {
     private static final int SNAPSHOT_GRID = 10000;
 
-    private final BsqBlockChain bsqBlockChain;
-    private final Storage<BsqBlockChain> storage;
+    private final ChainState chainState;
+    private final ChainStateService chainStateService;
+    private final Storage<ChainState> storage;
 
-    private BsqBlockChain snapshotCandidate;
+    private ChainState snapshotCandidate;
 
     @Inject
-    public SnapshotManager(BsqBlockChain bsqBlockChain,
+    public SnapshotManager(ChainState chainState,
+                           ChainStateService chainStateService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
-        this.bsqBlockChain = bsqBlockChain;
+        this.chainState = chainState;
+        this.chainStateService = chainStateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        bsqBlockChain.addListener(this);
+        chainStateService.addListener(this);
     }
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
-        BsqBlockChain persisted = storage.initAndGetPersisted(bsqBlockChain, 100);
+        ChainState persisted = storage.initAndGetPersisted(chainState, 100);
         if (persisted != null) {
-            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getChainHeadHeight());
-            bsqBlockChain.applySnapshot(persisted);
+            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getBsqBlocks().getLast().getHeight());
+            chainStateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
         }
@@ -69,19 +72,19 @@ public class SnapshotManager implements BsqBlockChain.Listener {
 
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        final int chainHeadHeight = bsqBlockChain.getChainHeadHeight();
+        final int chainHeadHeight = chainStateService.getChainHeadHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
                 (snapshotCandidate == null ||
                         snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
             // At trigger event we store the latest snapshotCandidate to disc
             if (snapshotCandidate != null) {
                 // We clone because storage is in a threaded context
-                final BsqBlockChain cloned = bsqBlockChain.getClone(snapshotCandidate);
+                final ChainState cloned = chainState.getClone(snapshotCandidate);
                 storage.queueUpForSave(cloned);
                 log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
             }
             // Now we clone and keep it in memory for the next trigger
-            snapshotCandidate = bsqBlockChain.getClone((BsqBlockChain) bsqBlockChain);
+            snapshotCandidate = chainState.getClone();
             // don't access cloned anymore with methods as locks are transient!
             log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
         }
@@ -98,7 +101,7 @@ public class SnapshotManager implements BsqBlockChain.Listener {
     }
 
     private boolean isSnapshotHeight(int height) {
-        return isSnapshotHeight(bsqBlockChain.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
+        return isSnapshotHeight(chainStateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
     }
 
 }

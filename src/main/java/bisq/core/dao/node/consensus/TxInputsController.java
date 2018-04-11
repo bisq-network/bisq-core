@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -30,19 +30,19 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TxInputsController {
-    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final TxInputController txInputController;
 
     @Inject
-    public TxInputsController(WritableBsqBlockChain writableBsqBlockChain, TxInputController txInputController) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
+    public TxInputsController(ChainStateService chainStateService, TxInputController txInputController) {
+        this.chainStateService = chainStateService;
         this.txInputController = txInputController;
     }
 
     void iterateInputs(Tx tx, int blockHeight, Model model) {
         for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
             TxInput input = tx.getInputs().get(inputIndex);
-            txInputController.processInput(input, blockHeight, tx.getId(), inputIndex, model, writableBsqBlockChain);
+            txInputController.processInput(input, blockHeight, tx.getId(), inputIndex, model, chainStateService);
         }
     }
 }

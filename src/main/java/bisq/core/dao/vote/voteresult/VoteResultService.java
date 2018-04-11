@@ -17,10 +17,9 @@
 
 package bisq.core.dao.vote.voteresult;
 
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.PeriodService;
@@ -69,10 +68,10 @@ import javax.annotation.Nullable;
  */
 
 @Slf4j
-public class VoteResultService implements BsqBlockChain.Listener {
+public class VoteResultService implements ChainStateService.Listener {
     private final BlindVoteService blindVoteService;
     private final VoteRevealService voteRevealService;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final DaoParamService daoParamService;
     private final PeriodService periodService;
     private final IssuanceService issuanceService;
@@ -87,13 +86,13 @@ public class VoteResultService implements BsqBlockChain.Listener {
     @Inject
     public VoteResultService(BlindVoteService blindVoteService,
                              VoteRevealService voteRevealService,
-                             ReadableBsqBlockChain readableBsqBlockChain,
+                             ChainStateService chainStateService,
                              DaoParamService daoParamService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.daoParamService = daoParamService;
         this.periodService = periodService;
         this.issuanceService = issuanceService;
@@ -105,7 +104,7 @@ public class VoteResultService implements BsqBlockChain.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        readableBsqBlockChain.addListener(this);
+        chainStateService.addListener(this);
     }
 
     public void shutDown() {
@@ -113,7 +112,7 @@ public class VoteResultService implements BsqBlockChain.Listener {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BsqBlockChain.Listener
+    // ChainStateService.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
@@ -164,14 +163,14 @@ public class VoteResultService implements BsqBlockChain.Listener {
 
     private Set<DecryptedVote> getDecryptedVoteByVoteRevealTxIdSet(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
-        return readableBsqBlockChain.getVoteRevealTxOutputs().stream()
+        return chainStateService.getVoteRevealTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .map(txOutput -> {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
                     try {
                         return new DecryptedVote(opReturnData, voteRevealTxId,
-                                readableBsqBlockChain, blindVoteService, periodService, chainHeight);
+                                chainStateService, blindVoteService, periodService, chainHeight);
                     } catch (VoteResultException e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;

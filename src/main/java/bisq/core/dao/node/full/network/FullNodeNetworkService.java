@@ -17,10 +17,10 @@
 
 package bisq.core.dao.node.full.network;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -57,7 +57,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
 
     // Key is connection UID
     private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
@@ -72,11 +72,11 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  ReadableBsqBlockChain readableBsqBlockChain) {
+                                  ChainStateService chainStateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
 
         networkNode.addMessageListener(this);
         peerManager.addListener(this);
@@ -134,7 +134,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
                     GetBsqBlocksRequestHandler requestHandler = new GetBsqBlocksRequestHandler(networkNode,
-                            readableBsqBlockChain,
+                            chainStateService,
                             new GetBsqBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {

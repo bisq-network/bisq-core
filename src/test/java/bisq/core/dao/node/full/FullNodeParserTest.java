@@ -17,9 +17,6 @@
 
 package bisq.core.dao.node.full;
 
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.blockchain.vo.Tx;
@@ -32,6 +29,7 @@ import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.consensus.TxInputsController;
 import bisq.core.dao.node.consensus.TxOutputsController;
 import bisq.core.dao.node.full.rpc.RpcService;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 
@@ -76,9 +74,9 @@ public class FullNodeParserTest {
     FullNodeParser fullNodeParser;
 
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    BsqBlockChain bsqBlockChain;
+    ChainStateService chainStateService;
     @Tested(availableDuringSetup = true)
-    ReadableBsqBlockChain readModel;
+    ChainStateService readModel;
 
     // Used by bsqTxController
     @Tested(fullyInitialized = true, availableDuringSetup = true)
@@ -89,7 +87,7 @@ public class FullNodeParserTest {
     // @Injectable are mocked resources used to for injecting into @Tested classes
     // The naming of these resources doesn't matter, any resource that fits will be used for injection
 
-    // Used by bsqBlockChain
+    // Used by chainStateService
     @Injectable
     PersistenceProtoResolver persistenceProtoResolver;
     @Injectable
@@ -103,7 +101,7 @@ public class FullNodeParserTest {
     @Injectable
     RpcService rpcService;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    WritableBsqBlockChain writeModel;
+    ChainStateService writeModel;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     GenesisTxController genesisTxController;
     @Tested(fullyInitialized = true, availableDuringSetup = true)

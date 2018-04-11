@@ -17,11 +17,10 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -33,16 +32,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TxInputController {
 
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
 
     @Inject
-    public TxInputController(ReadableBsqBlockChain readableBsqBlockChain) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
+    public TxInputController(ChainStateService chainStateService) {
+        this.chainStateService = chainStateService;
     }
 
     void processInput(TxInput txInput, int blockHeight, String txId, int inputIndex, Model model,
-                      WritableBsqBlockChain writableBsqBlockChain) {
-        readableBsqBlockChain.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
+                      ChainStateService chainStateService) {
+        this.chainStateService.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
             model.addToInputValue(connectedTxOutput.getValue());
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
@@ -60,7 +59,7 @@ public class TxInputController {
             connectedTxOutput.setUnspent(false);
             connectedTxOutput.setSpentInfo(new SpentInfo(blockHeight, txId, inputIndex));
 
-            writableBsqBlockChain.removeUnspentTxOutput(connectedTxOutput);
+            chainStateService.removeUnspentTxOutput(connectedTxOutput);
         });
     }
 }

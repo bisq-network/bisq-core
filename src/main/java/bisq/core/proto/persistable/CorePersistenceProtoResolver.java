@@ -20,8 +20,8 @@ package bisq.core.proto.persistable;
 import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.param.ParamChangeEventList;
+import bisq.core.dao.state.ChainState;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.myvote.MyVoteList;
 import bisq.core.dao.vote.proposal.ProposalList;
@@ -102,8 +102,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return NavigationPath.fromProto(proto.getNavigationPath());
                 case PAYMENT_ACCOUNT_LIST:
                     return PaymentAccountList.fromProto(proto.getPaymentAccountList(), this);
-                case BSQ_BLOCK_CHAIN:
-                    return BsqBlockChain.fromProto(proto.getBsqBlockChain());
+                case BSQ_BLOCK_CHAIN:   //TODO
+                    return ChainState.fromProto(proto.getBsqBlockChain());   //TODO
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case PROPOSAL_LIST:

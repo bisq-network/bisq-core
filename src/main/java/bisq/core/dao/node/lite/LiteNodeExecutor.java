@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Processes tasks in custom thread. Results are mapped back to user thread so client don't need to deal with threading.
  * We use a SingleThreadExecutor to guarantee that the parser is only running from one thread at a time to avoid
- * risks with concurrent write to the BsqBlockChain.
+ * risks with concurrent write to the ChainStateService.
  */
 @Slf4j
 public class LiteNodeExecutor {

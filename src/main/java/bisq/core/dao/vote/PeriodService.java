@@ -18,10 +18,9 @@
 package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.common.app.DevEnv;
 
@@ -46,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class PeriodService implements BsqBlockChain.Listener {
+public class PeriodService implements ChainStateService.Listener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -89,7 +88,7 @@ public class PeriodService implements BsqBlockChain.Listener {
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
@@ -100,9 +99,9 @@ public class PeriodService implements BsqBlockChain.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(ReadableBsqBlockChain readableBsqBlockChain,
+    public PeriodService(ChainStateService chainStateService,
                          @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.chainStateService = chainStateService;
         this.genesisBlockHeight = genesisBlockHeight;
     }
 
@@ -115,8 +114,8 @@ public class PeriodService implements BsqBlockChain.Listener {
     }
 
     public void onAllServicesInitialized() {
-        readableBsqBlockChain.addListener(this);
-        onChainHeightChanged(readableBsqBlockChain.getChainHeadHeight());
+        chainStateService.addListener(this);
+        onChainHeightChanged(chainStateService.getChainHeadHeight());
     }
 
     @Override
@@ -134,7 +133,7 @@ public class PeriodService implements BsqBlockChain.Listener {
 
     // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
     public boolean isTxInPhase(String txId, Phase phase) {
-        Tx tx = readableBsqBlockChain.getTxMap().get(txId);
+        Tx tx = chainStateService.getTxMap().get(txId);
         return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
@@ -146,13 +145,13 @@ public class PeriodService implements BsqBlockChain.Listener {
     }
 
     public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
-        return readableBsqBlockChain.getTx(txId)
+        return chainStateService.getTx(txId)
                 .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
                 .isPresent();
     }
 
     public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
-        return readableBsqBlockChain.getTx(txId).filter(tx -> isTxInPastCycle(tx, chainHeadHeight)).isPresent();
+        return chainStateService.getTx(txId).filter(tx -> isTxInPastCycle(tx, chainHeadHeight)).isPresent();
     }
 
     public boolean isTxInPastCycle(Tx tx, int chainHeadHeight) {

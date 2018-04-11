@@ -17,11 +17,11 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -34,12 +34,12 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 public class TxOutputController {
-    private final WritableBsqBlockChain writableBsqBlockChain;
+    private final ChainStateService chainStateService;
     private final OpReturnController opReturnController;
 
     @Inject
-    public TxOutputController(WritableBsqBlockChain writableBsqBlockChain, OpReturnController opReturnController) {
-        this.writableBsqBlockChain = writableBsqBlockChain;
+    public TxOutputController(ChainStateService chainStateService, OpReturnController opReturnController) {
+        this.chainStateService = chainStateService;
         this.opReturnController = opReturnController;
     }
 
@@ -110,7 +110,7 @@ public class TxOutputController {
         txOutput.setUnspent(true);
         if (txOutputType != null)
             txOutput.setTxOutputType(txOutputType);
-        writableBsqBlockChain.addUnspentTxOutput(txOutput);
+        chainStateService.addUnspentTxOutput(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
