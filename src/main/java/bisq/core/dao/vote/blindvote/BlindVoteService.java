@@ -72,8 +72,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteService extends BaseService {
-    private final ProposalService proposalService;
     private final MyVoteService myVoteService;
+    private final ProposalService proposalService;
     private final DaoParamService daoParamService;
     private final BtcWalletService btcWalletService;
     private final Storage<BlindVoteList> storage;
@@ -110,8 +110,8 @@ public class BlindVoteService extends BaseService {
                 readableBsqBlockChain,
                 keyRing);
 
-        this.proposalService = proposalService;
         this.myVoteService = myVoteService;
+        this.proposalService = proposalService;
         this.daoParamService = daoParamService;
         this.btcWalletService = btcWalletService;
 
@@ -279,7 +279,7 @@ public class BlindVoteService extends BaseService {
     }
 
     private ProposalList getSortedProposalList(int chainHeight) {
-        List<Proposal> proposals = proposalService.getObservableList().stream()
+        List<Proposal> proposals = proposalService.getProposals().stream()
                 .filter(proposal -> isValid(proposal.getProposalPayload()))
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), chainHeight))
                 .collect(Collectors.toList());

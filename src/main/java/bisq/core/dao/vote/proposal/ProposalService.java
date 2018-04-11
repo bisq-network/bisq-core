@@ -18,80 +18,121 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
-import bisq.core.btc.wallet.TxBroadcaster;
-import bisq.core.btc.wallet.TxMalleabilityException;
-import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.blockchain.BsqBlockChain;
 import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.vote.BaseService;
+import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
-import bisq.core.dao.vote.proposal.generic.GenericProposal;
 
-import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.KeyRing;
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
-import org.bitcoinj.core.Transaction;
+import javax.inject.Inject;
 
-import com.google.inject.Inject;
+import java.security.PublicKey;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.Executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Manages proposal collections.
+ * Listens on the BsqBlockChain for new blocks and for ProposalPayload from the P2P network.
+ * We configure both listeners thread context aware so we get our listeners called in the parser
+ * thread created by the single threaded executor created in the NodeExecutor.
+ * <p>
+ * We put all ProposalPayload data into the Tx to store it with the BsqBlockchain data structure.
+ * ProposalPayload data will be taken in later periods from the BsqBlockchain only and it is guaranteed that it is
+ * already validated and in the right period and cycle.
+ * <p>
+ * We maintain as well the ProposalList which gets persisted independently.
+ * <p>
+ * We could consider to not persist the ProposalPayloads but keep it in memory only with a long TTL (about 30 days).
+ * But to persist it gives us more reliability that the data will be available.
  */
 @Slf4j
-public class ProposalService extends BaseService {
+public class ProposalService implements PersistedDataHost {
+    private NodeExecutor nodeExecutor;
+    private final P2PDataStorage p2pDataStorage;
+    private final PeriodService periodService;
+    private final BsqBlockChain bsqBlockChain;
+    private final PublicKey signaturePubKey;
+    private ReadableBsqBlockChain readableBsqBlockChain;
     private final Storage<ProposalList> storage;
 
     @Getter
-    private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
-    private final ProposalList proposalList = new ProposalList(observableList);
-    @Getter
-    private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(observableList);
-    @Getter
-    private final FilteredList<Proposal> closedProposals = new FilteredList<>(observableList);
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    private final List<Proposal> proposals = new ArrayList<>();
+    private final ProposalList proposalList = new ProposalList(proposals);
 
     @Inject
-    public ProposalService(P2PService p2PService,
-                           WalletsManager walletsManager,
-                           BsqWalletService bsqWalletService,
+    public ProposalService(NodeExecutor nodeExecutor,
+                           P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
+                           BsqBlockChain bsqBlockChain,
                            ReadableBsqBlockChain readableBsqBlockChain,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
-        super(p2PService,
-                walletsManager,
-                bsqWalletService,
-                periodService,
-                readableBsqBlockChain,
-                keyRing);
+        this.nodeExecutor = nodeExecutor;
+        this.p2pDataStorage = p2pDataStorage;
+        this.periodService = periodService;
+        this.bsqBlockChain = bsqBlockChain;
+        this.readableBsqBlockChain = readableBsqBlockChain;
         this.storage = storage;
+        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void onAllServicesInitialized() {
+        bsqBlockChain.addListener(new BsqBlockChain.Listener() {
+            // We set the nodeExecutor as we want to get called in the context of the parser thread
+            @Override
+            public Executor getExecutor() {
+                return nodeExecutor.get();
+            }
+
+            @Override
+            public void onBlockAdded(BsqBlock bsqBlock) {
+                // We iterate all proposals and if all valid we store it at the Tx
+                proposalList.forEach(proposal -> maybeAddProposalToTx(proposal.getProposalPayload(), bsqBlock.getHeight()));
+            }
+        });
+
+        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() { // User thread context
+            // We set the nodeExecutor as we want to get called in the context of the parser thread
+            @Override
+            public Executor getExecutor() {
+                return nodeExecutor.get();
+            }
+
+            @Override
+            public void onAdded(ProtectedStorageEntry entry) {
+                onAddedProtectedStorageEntry(entry, true);
+            }
+
+            @Override
+            public void onRemoved(ProtectedStorageEntry entry) {
+                onRemovedProtectedStorageEntry(entry);
+            }
+        });
+        p2pDataStorage.getMap().values().forEach(entry -> onAddedProtectedStorageEntry(entry, false));
+    }
+
+    public void shutDown() {
     }
 
 
@@ -104,144 +145,10 @@ public class ProposalService extends BaseService {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
             ProposalList persisted = storage.initAndGetPersisted(proposalList, 20);
             if (persisted != null) {
-                this.observableList.clear();
-                this.observableList.addAll(persisted.getList());
+                this.proposalList.clear();
+                this.proposalList.addAll(persisted.getList());
             }
         }
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // HashMapChangedListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onRemoved(ProtectedStorageEntry data) {
-        final ProtectedStoragePayload protectedStoragePayload = data.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload) {
-            findProposal((ProposalPayload) protectedStoragePayload)
-                    .ifPresent(proposal -> {
-                        if (isInPhaseOrUnconfirmed(proposal.getTxId(), PeriodService.Phase.PROPOSAL,
-                                readableBsqBlockChain.getChainHeadHeight())) {
-                            removeProposalFromList(proposal);
-                        } else {
-                            final String msg = "onRemoved called of a Proposal which is outside of the Request phase is invalid and we ignore it.";
-                            DevEnv.logErrorAndThrowIfDevMode(msg);
-                        }
-                    });
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // BaseService
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    protected void onProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
-        final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload)
-            addProposal((ProposalPayload) protectedStoragePayload, storeLocally);
-    }
-
-    @Override
-    protected void onBlockHeightChanged(int height) {
-        // We display own unconfirmed proposals as there is no risk. Other proposals are only shown after they are in
-        //the blockchain and verified
-        activeOrMyUnconfirmedProposals.setPredicate(proposal -> (isUnconfirmed(proposal.getTxId()) &&
-                isMine(proposal.getProposalPayload())) ||
-                isValid(proposal.getProposalPayload()) && isTxInCorrectCycle(proposal, height));
-        closedProposals.setPredicate(proposal -> isValid(proposal.getProposalPayload()) &&
-                periodService.isTxInPastCycle(proposal.getTxId(), height));
-    }
-
-    private boolean isTxInCorrectCycle(Proposal proposal, int chainHeight) {
-        return periodService.isTxInCorrectCycle(proposal.getTxId(), chainHeight);
-    }
-
-    @Override
-    protected List<ProtectedStoragePayload> getListForRepublishing() {
-        return activeOrMyUnconfirmedProposals.stream()
-                .map(Proposal::getProposalPayload)
-                .collect(Collectors.toList());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void publishProposal(Proposal proposal, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
-        final Transaction proposalTx = proposal.getTx();
-        checkNotNull(proposalTx, "proposal.getTx() at publishProposal must not be null");
-        walletsManager.publishAndCommitBsqTx(proposalTx, new TxBroadcaster.Callback() {
-            @Override
-            public void onSuccess(Transaction transaction) {
-                onTxBroadcasted(proposalTx, proposal, resultHandler, errorMessageHandler);
-            }
-
-            @Override
-            public void onTimeout(TxBroadcastTimeoutException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-
-            @Override
-            public void onTxMalleability(TxMalleabilityException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-
-            @Override
-            public void onFailure(TxBroadcastException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-        });
-    }
-
-    private void onTxBroadcasted(Transaction proposalTx, Proposal proposal, ResultHandler resultHandler,
-                                 ErrorMessageHandler errorMessageHandler) {
-        final String txId = proposalTx.getHashAsString();
-        final ProposalPayload proposalPayload = proposal.getProposalPayload();
-        proposalPayload.setTxId(txId);
-        if (addToP2PNetwork(proposalPayload)) {
-            log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
-            resultHandler.handleResult();
-        } else {
-            final String msg = "Adding of proposalPayload to P2P network failed.\n" +
-                    "proposalPayload=" + proposalPayload;
-            log.error(msg);
-            errorMessageHandler.handleErrorMessage(msg);
-        }
-    }
-
-    public boolean removeProposal(Proposal proposal) {
-        final ProposalPayload proposalPayload = proposal.getProposalPayload();
-        // We allow removal which are not confirmed yet or if it we are in the right phase
-        if (isMine(proposal.getProposalPayload())) {
-            if (isInPhaseOrUnconfirmed(proposalPayload.getTxId(), PeriodService.Phase.PROPOSAL,
-                    readableBsqBlockChain.getChainHeadHeight())) {
-                boolean success = p2PService.removeData(proposalPayload, true);
-                if (success)
-                    removeProposalFromList(proposal);
-                else
-                    log.warn("Removal of proposal from p2p network failed. proposal={}", proposal);
-
-                return success;
-            } else {
-                final String msg = "removeProposal called with a Proposal which is outside of the Proposal phase.";
-                DevEnv.logErrorAndThrowIfDevMode(msg);
-                return false;
-            }
-        } else {
-            final String msg = "removeProposal called for a Proposal which is not ours. That must not happen.";
-            DevEnv.logErrorAndThrowIfDevMode(msg);
-            return false;
-        }
-    }
-
-    public void persist() {
-        storage.queueUpForSave();
     }
 
 
@@ -249,39 +156,60 @@ public class ProposalService extends BaseService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void addProposal(ProposalPayload proposalPayload, boolean storeLocally) {
-        if (!listContains(proposalPayload)) {
-            log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
-            observableList.add(createSpecificProposal(proposalPayload));
+    private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
+        final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
+            if (!listContains(proposalPayload)) {
+                log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" +
+                        proposalPayload.getUid());
+                Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
+                proposalList.add(proposal);
 
-            if (storeLocally)
-                persist();
+                maybeAddProposalToTx(proposalPayload, readableBsqBlockChain.getChainHeadHeight());
 
-            onBlockHeightChanged(readableBsqBlockChain.getChainHeadHeight());
-        } else {
-            if (storeLocally && !isMine(proposalPayload))
-                log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
+                if (storeLocally)
+                    persist();
+            } else {
+                if (storeLocally && !isMine(proposalPayload))
+                    log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
+            }
+        }
+    }
+
+    // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
+    private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
+        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
+            findProposal(proposalPayload)
+                    .ifPresent(payload -> {
+                        if (isInPhaseOrUnconfirmed(readableBsqBlockChain.getTx(payload.getTxId()), payload.getTxId(),
+                                PeriodService.Phase.PROPOSAL,
+                                readableBsqBlockChain.getChainHeadHeight())) {
+                            removeProposalFromList(proposalPayload);
+                        } else {
+                            final String msg = "onRemoved called of a Proposal which is outside of the Request phase " +
+                                    "is invalid and we ignore it.";
+                            DevEnv.logErrorAndThrowIfDevMode(msg);
+                        }
+                    });
         }
     }
 
 
-    private Proposal createSpecificProposal(ProposalPayload proposalPayload) {
-        switch (proposalPayload.getType()) {
-            case COMPENSATION_REQUEST:
-                return new CompensationRequest(proposalPayload);
-            case GENERIC:
-                return new GenericProposal(proposalPayload);
-            case CHANGE_PARAM:
-                //TODO
-                throw new RuntimeException("Not implemented yet");
-            case REMOVE_ALTCOIN:
-                //TODO
-                throw new RuntimeException("Not implemented yet");
-            default:
-                final String msg = "Undefined ProposalType " + proposalPayload.getType();
-                log.error(msg);
-                throw new RuntimeException(msg);
-        }
+    // We store the proposal to the tx if the tx is already available and all is valid
+    // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
+    // during the proposal phase)
+    private void maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
+        getTxForProposalInCorrectPhase(proposalPayload, chainHeight)
+                .ifPresent(tx -> tx.setProposalPayload(proposalPayload));
+    }
+
+    private Optional<Tx> getTxForProposalInCorrectPhase(ProposalPayload proposalPayload, int chainHeight) {
+        return readableBsqBlockChain.getTx(proposalPayload.getTxId())
+                .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
+                .filter(tx -> isValid(tx, proposalPayload));
     }
 
     private boolean listContains(ProposalPayload proposalPayload) {
@@ -289,15 +217,48 @@ public class ProposalService extends BaseService {
     }
 
     private Optional<Proposal> findProposal(ProposalPayload proposalPayload) {
-        return observableList.stream()
-                .filter(e -> e.getProposalPayload().equals(proposalPayload))
+        return proposalList.stream()
+                .filter(proposal -> proposal.getProposalPayload().equals(proposalPayload))
                 .findAny();
     }
 
-    private void removeProposalFromList(Proposal proposal) {
-        if (observableList.remove(proposal))
+    private void removeProposalFromList(ProposalPayload proposalPayload) {
+        if (proposalList.remove(proposalPayload))
             persist();
         else
-            log.warn("We called removeProposalFromList at a proposal which was not in our list");
+            log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
+    }
+
+    // We use the BsqBlockChain not the TransactionConfidence from the wallet to not mix 2 different and possibly
+    // out of sync data sources.
+    public boolean isUnconfirmed(String txId) {
+        return !readableBsqBlockChain.getTx(txId).isPresent();
+    }
+
+    public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {
+        return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
+    }
+
+    public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, PeriodService.Phase phase,
+                                          int blockHeight) {
+        return isUnconfirmed(txId) ||
+                optionalProposalTx.filter(tx -> periodService.isTxInPhase(txId, phase))
+                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), blockHeight))
+                        .isPresent();
+    }
+
+    public boolean isValid(Tx tx, ProposalPayload proposalPayload) {
+        try {
+            proposalPayload.validate(tx, periodService);
+            return true;
+        } catch (ValidationException e) {
+            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
+                    tx.getId(), proposalPayload, e.toString());
+            return false;
+        }
+    }
+
+    public void persist() {
+        storage.queueUpForSave();
     }
 }

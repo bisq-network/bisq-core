@@ -19,6 +19,8 @@ package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.proposal.ProposalPayload;
@@ -168,6 +170,18 @@ public final class CompensationRequestPayload extends ProposalPayload {
             checkArgument(tx.getTxType() == TxType.COMPENSATION_REQUEST, "ProposalPayload has wrong txType");
         } catch (Throwable e) {
             log.warn("CompensationRequestPayload has wrong txType. tx={}, compensationRequestPayload={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    @Override
+    public void validateCorrectTxOutputType(Tx tx) throws ValidationException {
+        try {
+            final TxOutput lastOutput = tx.getLastOutput();
+            checkArgument(lastOutput.getTxOutputType() == TxOutputType.COMP_REQ_OP_RETURN_OUTPUT,
+                    "Last output of tx has wrong txOutputType: txOutputType=" + lastOutput.getTxOutputType());
+        } catch (Throwable e) {
+            log.warn(e.toString());
             throw new ValidationException(e, tx);
         }
     }

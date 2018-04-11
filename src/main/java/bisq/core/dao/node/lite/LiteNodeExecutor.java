@@ -18,10 +18,10 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.node.NodeExecutor;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
 
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 public class LiteNodeExecutor {
 
     private final LiteNodeParser liteNodeParser;
-    private final ListeningExecutorService executor = Utilities.getListeningSingleThreadExecutor("LiteNodeExecutor");
+    private final ListeningExecutorService executor;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -55,8 +55,9 @@ public class LiteNodeExecutor {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public LiteNodeExecutor(LiteNodeParser liteNodeParser) {
+    public LiteNodeExecutor(LiteNodeParser liteNodeParser, NodeExecutor nodeExecutor) {
         this.liteNodeParser = liteNodeParser;
+        executor = nodeExecutor.get();
     }
 
 

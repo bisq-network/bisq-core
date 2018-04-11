@@ -23,6 +23,7 @@ import bisq.core.dao.blockchain.SnapshotManager;
 import bisq.core.dao.blockchain.WritableBsqBlockChain;
 import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.node.BsqNodeProvider;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.consensus.GenesisTxOutputController;
@@ -48,6 +49,8 @@ import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVoteService;
+import bisq.core.dao.vote.proposal.MyProposalService;
+import bisq.core.dao.vote.proposal.ProposalListService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
 import bisq.core.dao.vote.proposal.generic.GenericProposalService;
@@ -76,6 +79,7 @@ public class DaoModule extends AppModule {
 
         bind(BsqNodeProvider.class).in(Singleton.class);
 
+        bind(NodeExecutor.class).in(Singleton.class);
         bind(FullNode.class).in(Singleton.class);
         bind(FullNodeExecutor.class).in(Singleton.class);
         bind(FullNodeNetworkService.class).in(Singleton.class);
@@ -109,6 +113,8 @@ public class DaoModule extends AppModule {
 
         bind(PeriodService.class).in(Singleton.class);
         bind(ProposalService.class).in(Singleton.class);
+        bind(ProposalListService.class).in(Singleton.class);
+        bind(MyProposalService.class).in(Singleton.class);
         bind(CompensationRequestService.class).in(Singleton.class);
         bind(GenericProposalService.class).in(Singleton.class);
         bind(MyVoteService.class).in(Singleton.class);

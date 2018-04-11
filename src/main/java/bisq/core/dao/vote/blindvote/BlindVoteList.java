@@ -36,7 +36,7 @@ public class BlindVoteList extends PersistableList<BlindVote> implements VoteCon
         super(list);
     }
 
-    BlindVoteList() {
+    public BlindVoteList() {
         super();
     }
 

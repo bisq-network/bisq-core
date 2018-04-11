@@ -23,6 +23,8 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
+import bisq.core.dao.vote.proposal.MyProposalService;
+import bisq.core.dao.vote.proposal.ProposalListService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.voteresult.VoteResultService;
 import bisq.core.dao.vote.voteresult.issuance.IssuanceService;
@@ -38,12 +40,14 @@ import com.google.inject.Inject;
  */
 public class DaoSetup {
     private final PeriodService periodService;
-    private final ProposalService proposalService;
+    private final MyProposalService myProposalService;
     private final BsqNode bsqNode;
     private final DaoParamService daoParamService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final IssuanceService issuanceService;
+    private final ProposalService proposalService;
+    private final ProposalListService proposalListService;
     private final BlindVoteService blindVoteService;
 
 
@@ -54,14 +58,18 @@ public class DaoSetup {
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
                     PeriodService periodService,
+                    MyProposalService myProposalService,
                     ProposalService proposalService,
+                    ProposalListService proposalListService,
                     BlindVoteService blindVoteService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
                     IssuanceService issuanceService,
                     DaoParamService daoParamService) {
         this.periodService = periodService;
+        this.myProposalService = myProposalService;
         this.proposalService = proposalService;
+        this.proposalListService = proposalListService;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
@@ -74,7 +82,9 @@ public class DaoSetup {
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             periodService.onAllServicesInitialized();
+            myProposalService.onAllServicesInitialized();
             proposalService.onAllServicesInitialized();
+            proposalListService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
             blindVoteService.onAllServicesInitialized();
             voteRevealService.onAllServicesInitialized();
@@ -87,7 +97,9 @@ public class DaoSetup {
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             periodService.shutDown();
+            myProposalService.shutDown();
             proposalService.shutDown();
+            proposalListService.shutDown();
             bsqNode.shutDown();
             blindVoteService.shutDown();
             voteRevealService.shutDown();

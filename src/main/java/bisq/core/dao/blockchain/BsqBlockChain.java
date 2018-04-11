@@ -25,6 +25,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
+import bisq.common.ThreadContextAwareListener;
 import bisq.common.UserThread;
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.util.FunctionalReadWriteLock;
@@ -94,16 +95,12 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
     // Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public interface Listener {
-        void onBlockAdded(BsqBlock bsqBlock);
-    }
-
-    public interface SameThreadListener {
-        void onBlockAdded(BsqBlock bsqBlock);
-    }
-
     public interface IssuanceListener {
         void onIssuance();
+    }
+
+    public interface Listener extends ThreadContextAwareListener {
+        void onBlockAdded(BsqBlock bsqBlock);
     }
 
 
@@ -120,7 +117,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
 
     private final List<Listener> listeners = new ArrayList<>();
     private final List<IssuanceListener> issuanceListeners = new ArrayList<>();
-    private final List<SameThreadListener> sameThreadListeners = new ArrayList<>();
 
     private int chainHeadHeight = 0;
     @Nullable
@@ -233,10 +229,6 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
         lock.write(() -> issuanceListeners.remove(listener));
     }
 
-    public void addSameThreadListener(SameThreadListener listener) {
-        lock.write(() -> sameThreadListeners.add(listener));
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: BsqBlockChain
@@ -270,8 +262,10 @@ public class BsqBlockChain implements PersistableEnvelope, WritableBsqBlockChain
             chainHeadHeight = bsqBlock.getHeight();
             printNewBlock(bsqBlock);
             log.info("New block added at blockHeight " + bsqBlock.getHeight());
-            sameThreadListeners.forEach(sameThreadListener -> sameThreadListener.onBlockAdded(bsqBlock));
-            listeners.forEach(listener -> UserThread.execute(() -> listener.onBlockAdded(bsqBlock)));
+
+            // If the client has set a specific executor we call on that thread.
+            // By default the Userthreads executor is used.
+            listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(bsqBlock)));
         });
     }
 

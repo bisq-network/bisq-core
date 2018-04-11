@@ -18,8 +18,11 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
@@ -176,6 +179,54 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
+    protected ProposalPayload getCloneWithoutTxId() {
+        ProposalPayload clone = ProposalPayload.fromProto(toProtoMessage().getProposalPayload());
+        clone.setTxId(null);
+        return clone;
+    }
+
+    public void validate(Tx tx, PeriodService periodService) throws ValidationException {
+        validateCorrectTxType(tx);
+        validateCorrectTxOutputType(tx);
+        validatePhase(tx.getBlockHeight(), periodService);
+        validateDataFields();
+        validateHashOfOpReturnData(tx);
+    }
+
+    @Override
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.PROPOSAL,
+                    "ProposalPayload has wrong txType. txType=" + tx.getTxType());
+        } catch (Throwable e) {
+            log.warn(e.toString());
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    @Override
+    public void validateCorrectTxOutputType(Tx tx) throws ValidationException {
+        try {
+            final TxOutput lastOutput = tx.getLastOutput();
+            checkArgument(lastOutput.getTxOutputType() == TxOutputType.PROPOSAL_OP_RETURN_OUTPUT,
+                    "Last output of tx has wrong txOutputType: txOutputType=" + lastOutput.getTxOutputType());
+        } catch (Throwable e) {
+            log.warn(e.toString());
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    @Override
+    public void validatePhase(int txBlockHeight, PeriodService periodService) throws ValidationException {
+        try {
+            checkArgument(periodService.isInPhase(txBlockHeight, PeriodService.Phase.PROPOSAL),
+                    "Tx is not in PROPOSAL phase");
+        } catch (Throwable e) {
+            log.warn(e.toString());
+            throw new ValidationException(e);
+        }
+    }
+
     @Override
     public void validateDataFields() throws ValidationException {
         try {
@@ -189,6 +240,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             throw new ValidationException(throwable);
         }
     }
+
 
     // We do not verify type or version as that gets verified in parser. Version might have been changed as well
     // so we don't want to fail in that case.
@@ -210,19 +262,14 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         }
     }
 
-    protected ProposalPayload getCloneWithoutTxId() {
-        ProposalPayload clone = ProposalPayload.fromProto(toProtoMessage().getProposalPayload());
-        clone.setTxId(null);
-        return clone;
-    }
-
     @Override
-    public void validateCorrectTxType(Tx tx) throws ValidationException {
+    public void validateCycle(int txBlockHeight, int currentChainHeight, PeriodService periodService) throws ValidationException {
         try {
-            checkArgument(tx.getTxType() == TxType.PROPOSAL, "ProposalPayload has wrong txType");
+            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, currentChainHeight),
+                    "Tx is not in current cycle");
         } catch (Throwable e) {
-            log.warn("ProposalPayload has wrong txType. tx={}, proposalPayload={}", tx, this);
-            throw new ValidationException(e, tx);
+            log.warn(e.toString());
+            throw new ValidationException(e);
         }
     }
 

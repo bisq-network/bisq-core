@@ -17,6 +17,10 @@
 
 package bisq.core.dao.blockchain.vo;
 
+import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.blindvote.BlindVoteList;
+import bisq.core.dao.vote.proposal.ProposalPayload;
+
 import bisq.common.app.Version;
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -81,6 +85,8 @@ public class Tx implements PersistablePayload {
     private boolean isIssuanceTx;
     // We use a manual setter as we want to prevent that already set values get changed
     private int issuanceBlockHeight;
+    private ProposalPayload proposalPayload;
+    private BlindVoteList blindVoteList;
 
 
     public Tx(String id,
@@ -198,6 +204,10 @@ public class Tx implements PersistablePayload {
             throw new IllegalStateException("Already set txType must not be changed.");
     }
 
+    public TxOutput getLastOutput() {
+        return getOutputs().get(getOutputs().size() - 1);
+    }
+
     public void setIssuanceBlockHeight(int issuanceBlockHeight) {
         if (this.issuanceBlockHeight == 0)
             this.issuanceBlockHeight = issuanceBlockHeight;
@@ -215,6 +225,21 @@ public class Tx implements PersistablePayload {
     }
 
 
+    public void setProposalPayload(ProposalPayload proposalPayload) {
+        if (txType == TxType.UNDEFINED_TX_TYPE || txType == TxType.COMPENSATION_REQUEST || txType == TxType.PROPOSAL)
+            this.proposalPayload = proposalPayload;
+        else
+            log.warn("You tried to set a proposalPayload at a tx which is has a different type set. TxType={}", txType);
+    }
+
+    public void addBlindVote(BlindVote blindVote) {
+        if (blindVoteList == null)
+            blindVoteList = new BlindVoteList();
+
+        if (!blindVoteList.contains(blindVote))
+            blindVoteList.add(blindVote);
+    }
+
     @Override
     public String toString() {
         return "Tx{" +
@@ -229,6 +254,8 @@ public class Tx implements PersistablePayload {
                 ",\n     txType=" + txType +
                 ",\n     isIssuanceTx=" + isIssuanceTx +
                 ",\n     issuanceBlockHeight=" + issuanceBlockHeight +
+                ",\n     proposal=" + proposalPayload +
+                ",\n     blindVoteList=" + blindVoteList +
                 "\n}";
     }
 }

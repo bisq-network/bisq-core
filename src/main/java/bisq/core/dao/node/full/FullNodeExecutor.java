@@ -18,11 +18,11 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.node.full.rpc.RpcService;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.util.Utilities;
 
 import com.neemre.btcdcli4j.core.domain.Block;
 
@@ -49,7 +49,7 @@ public class FullNodeExecutor {
 
     private final FullNodeParser fullNodeParser;
     private final RpcService rpcService;
-    private final ListeningExecutorService executor = Utilities.getListeningSingleThreadExecutor("FullNodeExecutor");
+    private final ListeningExecutorService executor;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -58,9 +58,10 @@ public class FullNodeExecutor {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public FullNodeExecutor(RpcService rpcService, FullNodeParser fullNodeParser) {
+    public FullNodeExecutor(RpcService rpcService, FullNodeParser fullNodeParser, NodeExecutor nodeExecutor) {
         this.rpcService = rpcService;
         this.fullNodeParser = fullNodeParser;
+        executor = nodeExecutor.get();
     }
 
 

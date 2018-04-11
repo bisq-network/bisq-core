@@ -18,7 +18,10 @@
 package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.ValidationCandidate;
 import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.ValidationException;
@@ -170,6 +173,50 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         return new ArrayList<>(Collections.singletonList(Capabilities.Capability.VOTE.ordinal()));
     }
 
+    public void validate(Tx tx, PeriodService periodService) throws ValidationException {
+        validateCorrectTxType(tx);
+        validateCorrectTxOutputType(tx);
+        validatePhase(tx.getBlockHeight(), periodService);
+        validateDataFields();
+        validateHashOfOpReturnData(tx);
+    }
+
+    public void validateCorrectTxType(Tx tx) throws ValidationException {
+        try {
+            checkArgument(tx.getTxType() == TxType.BLIND_VOTE, "BlindVote has wrong txType");
+        } catch (Throwable e) {
+            log.warn("BlindVote has wrong txType. tx={},BlindVote={}", tx, this);
+            throw new ValidationException(e, tx);
+        }
+    }
+
+
+    @Override
+    public void validateCorrectTxOutputType(Tx tx) throws ValidationException {
+        try {
+            final TxOutput lastOutput = tx.getLastOutput();
+            checkArgument(lastOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT,
+                    "Last output of tx has wrong txOutputType: txOutputType=" + lastOutput.getTxOutputType());
+
+            final TxOutput stakeOutput = tx.getOutputs().get(0);
+            checkArgument(lastOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
+                    "Stake output of tx has wrong txOutputType: txOutputType=" + lastOutput.getTxOutputType());
+        } catch (Throwable e) {
+            log.warn(e.toString());
+            throw new ValidationException(e, tx);
+        }
+    }
+
+    @Override
+    public void validatePhase(int txBlockHeight, PeriodService periodService) throws ValidationException {
+        try {
+            checkArgument(periodService.isInPhase(txBlockHeight, PeriodService.Phase.BLIND_VOTE),
+                    "Tx is not in BLIND_VOTE phase");
+        } catch (Throwable e) {
+            log.warn(e.toString());
+            throw new ValidationException(e);
+        }
+    }
 
     public void validateDataFields() throws ValidationException {
         try {
@@ -202,12 +249,15 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         }
     }
 
-    public void validateCorrectTxType(Tx tx) throws ValidationException {
+    @Override
+    public void validateCycle(int txBlockHeight, int currentChainHeight, PeriodService periodService)
+            throws ValidationException {
         try {
-            checkArgument(tx.getTxType() == TxType.BLIND_VOTE, "BlindVote has wrong txType");
+            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, currentChainHeight),
+                    "Tx is not in current cycle");
         } catch (Throwable e) {
-            log.warn("BlindVote has wrong txType. tx={},BlindVote={}", tx, this);
-            throw new ValidationException(e, tx);
+            log.warn(e.toString());
+            throw new ValidationException(e);
         }
     }
 

@@ -21,6 +21,8 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.vote.proposal.ValidationException;
 
 public interface ValidationCandidate {
+    void validate(Tx tx, PeriodService periodService) throws ValidationException;
+
     void validateDataFields() throws ValidationException;
 
     // We do not verify type or version as that gets verified in parser. Version might have been changed as well
@@ -28,6 +30,12 @@ public interface ValidationCandidate {
     void validateHashOfOpReturnData(Tx tx) throws ValidationException;
 
     void validateCorrectTxType(Tx tx) throws ValidationException;
+
+    void validateCorrectTxOutputType(Tx tx) throws ValidationException;
+
+    void validatePhase(int height, PeriodService periodService) throws ValidationException;
+
+    void validateCycle(int txBlockHeight, int currentChainHeight, PeriodService periodService) throws ValidationException;
 
     String getTxId();
 }

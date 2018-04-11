@@ -29,6 +29,8 @@ import org.bitcoinj.core.Coin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -54,6 +56,10 @@ public class ProposalConsensus {
             log.error(e.toString());
             return new byte[0];
         }
+    }
+
+    public static byte[] getHashOfPayload(byte[] opReturnData) {
+        return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
     public static int getMaxLengthDescriptionText() {
