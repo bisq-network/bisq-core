@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 
 import lombok.Value;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 @Value
 public class BsqBlock implements PersistablePayload {
 

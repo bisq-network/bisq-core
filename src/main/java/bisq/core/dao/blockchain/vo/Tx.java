@@ -30,18 +30,20 @@ import java.util.stream.Collectors;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 @Slf4j
 @Value
 public class Tx implements PersistablePayload {
 
     public static Tx clone(Tx tx) {
         final ImmutableList<TxInput> inputs = ImmutableList.copyOf(tx.getInputs().stream()
-                .map(txInput -> TxInput.clone(txInput))
+                .map(TxInput::clone)
                 .collect(Collectors.toList()));
         final ImmutableList<TxOutput> outputs = ImmutableList.copyOf(tx.getOutputs().stream()
-                .map(txOutput -> TxOutput.clone(txOutput))
+                .map(TxOutput::clone)
                 .collect(Collectors.toList()));
-        //noinspection SimplifiableConditionalExpression
         return new Tx(tx.getTxVersion(),
                 tx.getId(),
                 tx.getBlockHeight(),
@@ -50,7 +52,6 @@ public class Tx implements PersistablePayload {
                 inputs,
                 outputs);
     }
-
 
     private final String txVersion;
     private final String id;
@@ -133,7 +134,7 @@ public class Tx implements PersistablePayload {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // Utils
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public TxOutput getTxOutput(int index) {

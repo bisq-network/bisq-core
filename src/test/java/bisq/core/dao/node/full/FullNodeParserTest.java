@@ -22,7 +22,6 @@ import bisq.core.dao.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
@@ -130,12 +129,12 @@ public class FullNodeParserTest {
             // Results are returned in the order they're recorded, so in this case for the first call to
             // getSpendableTxOutput("tx1", 0) the return value will be Optional.empty()
             // for the second call the return is Optional.of(new TxOutput(0,... and so on
-            chainStateService.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 0));
+            chainStateService.getUnspentAndMatureTxOutput(new TxOutput.Key("tx1", 0));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout1", null, null, null, height));
             result = Optional.of(new TxOutput(0, 0, "txout1", null, null, null, height));
 
-            chainStateService.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 1));
+            chainStateService.getUnspentAndMatureTxOutput(new TxOutput.Key("tx1", 1));
             result = Optional.of(new TxOutput(0, 0, "txout2", null, null, null, height));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout2", null, null, null, height));

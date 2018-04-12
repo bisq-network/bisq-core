@@ -25,7 +25,6 @@ import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.ThreadContextAwareListener;
@@ -95,7 +94,7 @@ public class ChainStateService {
     }
 
     public long getBurntFee(String txId) {
-        return chainState.getBurntFeeByTxIdMap().get(txId);
+        return chainState.getBurntFeeByTxIdMap().containsKey(txId) ? chainState.getBurntFeeByTxIdMap().get(txId) : 0;
     }
 
     public void setProposalPayload(String txId, ProposalPayload proposalPayload) {
@@ -116,35 +115,35 @@ public class ChainStateService {
     }
 
     public boolean isInUTXOMap(TxOutput txOutput) {
-        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getTxIdIndexTuple());
+        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getKey());
     }
 
     public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
-        chainState.getTxOutputSpentInfoMap().put(txOutput.getTxIdIndexTuple(),
+        chainState.getTxOutputSpentInfoMap().put(txOutput.getKey(),
                 new SpentInfo(blockHeight, txId, inputIndex));
 
     }
 
     public SpentInfo getSpentInfo(TxOutput txOutput) {
-        return chainState.getTxOutputSpentInfoMap().get(txOutput.getTxIdIndexTuple());
+        return chainState.getTxOutputSpentInfoMap().get(txOutput.getKey());
     }
 
     public boolean isUnspent(TxOutput txOutput) {
-        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getTxIdIndexTuple());
+        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getKey());
     }
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        chainState.getTxOutputTypeMap().put(txOutput.getTxIdIndexTuple(), txOutputType);
+        chainState.getTxOutputTypeMap().put(txOutput.getKey(), txOutputType);
     }
 
     public TxOutputType getTxOutputType(TxOutput txOutput) {
-        return chainState.getTxOutputTypeMap().get(txOutput.getTxIdIndexTuple());
+        return chainState.getTxOutputTypeMap().get(txOutput.getKey());
     }
 
     public boolean isBsqTxOutputType(TxOutput txOutput) {
         return getTxOutputType(txOutput) != TxOutputType.UNDEFINED &&
-                getTxOutputType(txOutput) == TxOutputType.BTC_OUTPUT &&
-                getTxOutputType(txOutput) == TxOutputType.INVALID_OUTPUT;
+                getTxOutputType(txOutput) != TxOutputType.BTC_OUTPUT &&
+                getTxOutputType(txOutput) != TxOutputType.INVALID_OUTPUT;
     }
 
 
@@ -281,12 +280,12 @@ public class ChainStateService {
 
     public void addUTXO(TxOutput txOutput) {
         lock.write(() -> {
-            chainState.getUnspentTxOutputMap().put(txOutput.getTxIdIndexTuple(), txOutput);
+            chainState.getUnspentTxOutputMap().put(txOutput.getKey(), txOutput);
         });
     }
 
     public void removeFromUTXOMap(TxOutput txOutput) {
-        lock.write(() -> chainState.getUnspentTxOutputMap().remove(txOutput.getTxIdIndexTuple()));
+        lock.write(() -> chainState.getUnspentTxOutputMap().remove(txOutput.getKey()));
     }
 
     public void issueBsq(TxOutput txOutput) {
@@ -422,13 +421,13 @@ public class ChainStateService {
                 .collect(Collectors.toSet()));
     }
 
-    public Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple) {
-        return lock.read(() -> getUnspentTxOutput(txIdIndexTuple)
+    public Optional<TxOutput> getUnspentAndMatureTxOutput(TxOutput.Key key) {
+        return lock.read(() -> getUnspentTxOutput(key)
                 .filter(this::isTxOutputMature));
     }
 
     public Optional<TxOutput> getUnspentAndMatureTxOutput(String txId, int index) {
-        return lock.read(() -> getUnspentAndMatureTxOutput(new TxIdIndexTuple(txId, index)));
+        return lock.read(() -> getUnspentAndMatureTxOutput(new TxOutput.Key(txId, index)));
     }
 
     public Set<TxOutput> getVoteRevealTxOutputs() {
@@ -446,9 +445,9 @@ public class ChainStateService {
                 .collect(Collectors.toSet()));
     }
 
-    private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
+    private Optional<TxOutput> getUnspentTxOutput(TxOutput.Key key) {
         return lock.read(() -> chainState.getUnspentTxOutputMap().entrySet().stream()
-                .filter(e -> e.getKey().equals(txIdIndexTuple))
+                .filter(e -> e.getKey().equals(key))
                 .map(Map.Entry::getValue)
                 .findAny()
         );
@@ -456,7 +455,7 @@ public class ChainStateService {
 
     private Optional<TxOutput> getUnspentTxOutput(TxOutput txOutput) {
         return lock.read(() -> chainState.getUnspentTxOutputMap().entrySet().stream()
-                .filter(e -> e.getKey().equals(txOutput.getTxIdIndexTuple()))
+                .filter(e -> e.getKey().equals(txOutput.getKey()))
                 .map(Map.Entry::getValue)
                 .findAny()
         );

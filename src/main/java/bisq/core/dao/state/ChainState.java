@@ -23,7 +23,6 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -77,9 +76,9 @@ public class ChainState implements PersistableEnvelope {
     private final Map<String, TxOutput> connectedTxOutputByTxIdMap = new HashMap<>();
 
     // TxOutput specific
-    private final Map<TxIdIndexTuple, TxOutput> unspentTxOutputMap;
-    private final Map<TxIdIndexTuple, TxOutputType> txOutputTypeMap = new HashMap<>();
-    private final Map<TxIdIndexTuple, SpentInfo> txOutputSpentInfoMap = new HashMap<>();
+    private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
+    private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap = new HashMap<>();
+    private final Map<TxOutput.Key, SpentInfo> txOutputSpentInfoMap = new HashMap<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +99,7 @@ public class ChainState implements PersistableEnvelope {
 
     private ChainState(LinkedList<BsqBlock> bsqBlocks,
                        LinkedList<StateChangeEvent> stateChangeEvents,
-                       Map<TxIdIndexTuple, TxOutput> unspentTxOutputMap) {
+                       Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
         this.bsqBlocks = bsqBlocks;
         this.stateChangeEvents = stateChangeEvents;
         this.unspentTxOutputMap = unspentTxOutputMap;
@@ -143,7 +142,7 @@ public class ChainState implements PersistableEnvelope {
                 new HashMap<>(proto.getTxMapMap().entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, v -> Tx.fromProto(v.getValue())))),
                 new HashMap<>(proto.getUnspentTxOutputsMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(k -> new TxIdIndexTuple(k.getKey()), v -> TxOutput.fromProto(v.getValue())))),
+                        .collect(Collectors.toMap(k -> new Key(k.getKey()), v -> TxOutput.fromProto(v.getValue())))),
                 proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
                 proto.getChainHeadHeight(),

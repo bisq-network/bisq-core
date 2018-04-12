@@ -17,8 +17,6 @@
 
 package bisq.core.dao.blockchain.vo;
 
-import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
-
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -26,10 +24,13 @@ import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * An input is really just a reference to the spending output. It gets identified by the
- * txId and the index of the output. We use TxIdIndexTuple to encapsulate that.
+ * txId and the index of that output. We use TxOutput.Key to encapsulate that.
  */
+@Immutable
 @Value
 @EqualsAndHashCode
 public class TxInput implements PersistablePayload {
@@ -70,8 +71,8 @@ public class TxInput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public TxIdIndexTuple getTxIdIndexTuple() {
-        return new TxIdIndexTuple(connectedTxOutputTxId, connectedTxOutputIndex);
+    public TxOutput.Key getTxIdIndexTuple() {
+        return new TxOutput.Key(connectedTxOutputTxId, connectedTxOutputIndex);
     }
 
     @Override

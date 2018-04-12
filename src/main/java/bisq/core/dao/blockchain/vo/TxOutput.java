@@ -18,7 +18,6 @@
 package bisq.core.dao.blockchain.vo;
 
 import bisq.core.dao.blockchain.btcd.PubKeyScript;
-import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
 
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
@@ -34,13 +33,14 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
+@Immutable
 @Value
 @Slf4j
 public class TxOutput implements PersistablePayload {
 
     public static TxOutput clone(TxOutput txOutput) {
-        //noinspection SimplifiableConditionalExpression
         return new TxOutput(txOutput.getIndex(),
                 txOutput.getValue(),
                 txOutput.getTxId(),
@@ -111,19 +111,12 @@ public class TxOutput implements PersistablePayload {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // Util
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-
-    public String getId() {
-        return txId + ":" + index;
+    public Key getKey() {
+        return new Key(txId, index);
     }
-
-    public TxIdIndexTuple getTxIdIndexTuple() {
-        return new TxIdIndexTuple(txId, index);
-    }
-
-
 
     @Override
     public String toString() {
@@ -136,5 +129,21 @@ public class TxOutput implements PersistablePayload {
                 ",\n     opReturnData=" + Utilities.bytesAsHexString(opReturnData) +
                 ",\n     blockHeight=" + blockHeight +
                 "\n}";
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Inner class
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Value
+    public static class Key {
+        private final String txId;
+        private final int index;
+
+        public Key(String txId, int index) {
+            this.txId = txId;
+            this.index = index;
+        }
     }
 }
