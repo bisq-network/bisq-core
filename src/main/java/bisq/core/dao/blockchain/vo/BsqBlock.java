@@ -31,9 +31,9 @@ import lombok.Value;
 @Value
 public class BsqBlock implements PersistablePayload {
 
-    public static BsqBlock clone(BsqBlock bsqBlock, boolean reset) {
+    public static BsqBlock clone(BsqBlock bsqBlock) {
         final ImmutableList<Tx> txs = ImmutableList.copyOf(bsqBlock.getTxs().stream()
-                .map(tx -> Tx.clone(tx, reset))
+                .map(tx -> Tx.clone(tx))
                 .collect(Collectors.toList()));
         return new BsqBlock(bsqBlock.getHeight(),
                 bsqBlock.getTime(),

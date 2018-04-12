@@ -17,10 +17,6 @@
 
 package bisq.core.dao.blockchain.vo;
 
-import bisq.core.dao.vote.blindvote.BlindVote;
-import bisq.core.dao.vote.blindvote.BlindVoteList;
-import bisq.core.dao.vote.proposal.ProposalPayload;
-
 import bisq.common.app.Version;
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -29,27 +25,21 @@ import io.bisq.generated.protobuffer.PB;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
-
-@Getter
-@EqualsAndHashCode
 @Slf4j
+@Value
 public class Tx implements PersistablePayload {
 
-    public static Tx clone(Tx tx, boolean reset) {
+    public static Tx clone(Tx tx) {
         final ImmutableList<TxInput> inputs = ImmutableList.copyOf(tx.getInputs().stream()
-                .map(txInput -> TxInput.clone(txInput, reset))
+                .map(txInput -> TxInput.clone(txInput))
                 .collect(Collectors.toList()));
         final ImmutableList<TxOutput> outputs = ImmutableList.copyOf(tx.getOutputs().stream()
-                .map(txOutput -> TxOutput.clone(txOutput, reset))
+                .map(txOutput -> TxOutput.clone(txOutput))
                 .collect(Collectors.toList()));
         //noinspection SimplifiableConditionalExpression
         return new Tx(tx.getTxVersion(),
@@ -58,11 +48,7 @@ public class Tx implements PersistablePayload {
                 tx.getBlockHash(),
                 tx.getTime(),
                 inputs,
-                outputs,
-                reset ? 0 : tx.getBurntFee(),
-                reset ? TxType.UNDEFINED_TX_TYPE : tx.getTxType(),
-                reset ? false : tx.isIssuanceTx(),
-                reset ? 0 : tx.getIssuanceBlockHeight());
+                outputs);
     }
 
 
@@ -73,21 +59,6 @@ public class Tx implements PersistablePayload {
     private final long time;
     private final ImmutableList<TxInput> inputs;
     private final ImmutableList<TxOutput> outputs;
-
-    // Mutable data
-    // We use a manual setter as we want to prevent that already set values get changed
-    private long burntFee;
-    // We use a manual setter as we want to prevent that already set values get changed
-    @Nullable
-    private TxType txType;
-
-    @Setter
-    private boolean isIssuanceTx;
-    // We use a manual setter as we want to prevent that already set values get changed
-    private int issuanceBlockHeight;
-    private ProposalPayload proposalPayload;
-    private BlindVoteList blindVoteList;
-
 
     public Tx(String id,
               int blockHeight,
@@ -101,11 +72,7 @@ public class Tx implements PersistablePayload {
                 blockHash,
                 time,
                 inputs,
-                outputs,
-                0,
-                TxType.UNDEFINED_TX_TYPE,
-                false,
-                0);
+                outputs);
     }
 
 
@@ -119,11 +86,7 @@ public class Tx implements PersistablePayload {
                String blockHash,
                long time,
                ImmutableList<TxInput> inputs,
-               ImmutableList<TxOutput> outputs,
-               long burntFee,
-               @Nullable TxType txType,
-               boolean isIssuanceTx,
-               int issuanceBlockHeight) {
+               ImmutableList<TxOutput> outputs) {
         this.txVersion = txVersion;
         this.id = id;
         this.blockHeight = blockHeight;
@@ -131,10 +94,6 @@ public class Tx implements PersistablePayload {
         this.time = time;
         this.inputs = inputs;
         this.outputs = outputs;
-        this.burntFee = burntFee;
-        this.txType = txType;
-        this.isIssuanceTx = isIssuanceTx;
-        this.issuanceBlockHeight = issuanceBlockHeight;
     }
 
     public PB.Tx toProtoMessage() {
@@ -149,12 +108,7 @@ public class Tx implements PersistablePayload {
                         .collect(Collectors.toList()))
                 .addAllOutputs(outputs.stream()
                         .map(TxOutput::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .setBurntFee(burntFee)
-                .setIsSsuanceTx(isIssuanceTx)
-                .setIssuanceBlockHeight(issuanceBlockHeight);
-
-        Optional.ofNullable(txType).ifPresent(e -> builder.setTxType(e.toProtoMessage()));
+                        .collect(Collectors.toList()));
 
         return builder.build();
     }
@@ -174,11 +128,7 @@ public class Tx implements PersistablePayload {
                         ImmutableList.copyOf(new ArrayList<>()) :
                         ImmutableList.copyOf(proto.getOutputsList().stream()
                                 .map(TxOutput::fromProto)
-                                .collect(Collectors.toList())),
-                proto.getBurntFee(),
-                TxType.fromProto(proto.getTxType()),
-                proto.getIsSsuanceTx(),
-                proto.getIssuanceBlockHeight());
+                                .collect(Collectors.toList())));
     }
 
 
@@ -186,58 +136,12 @@ public class Tx implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Optional<TxOutput> getTxOutput(int index) {
-        return outputs.size() > index ? Optional.of(outputs.get(index)) : Optional.empty();
-    }
-
-    public void setBurntFee(long burntFee) {
-        if (this.burntFee == 0)
-            this.burntFee = burntFee;
-        else
-            throw new IllegalStateException("Already set burntFee must not be changed.");
-    }
-
-    public void setTxType(TxType txType) {
-        if (this.txType == TxType.UNDEFINED_TX_TYPE)
-            this.txType = txType;
-        else
-            throw new IllegalStateException("Already set txType must not be changed.");
+    public TxOutput getTxOutput(int index) {
+        return outputs.get(index);
     }
 
     public TxOutput getLastOutput() {
         return getOutputs().get(getOutputs().size() - 1);
-    }
-
-    public void setIssuanceBlockHeight(int issuanceBlockHeight) {
-        if (this.issuanceBlockHeight == 0)
-            this.issuanceBlockHeight = issuanceBlockHeight;
-        else
-            throw new IllegalStateException("Already set txType must not be changed.");
-    }
-
-    public long getIssuanceAmount() {
-        // Compensation request tx has at least 3 outputs
-        // Second output is issuance candidate
-        if (txType == TxType.COMPENSATION_REQUEST && isIssuanceTx && outputs.size() >= 3)
-            return outputs.get(1).getValue();
-        else
-            return 0;
-    }
-
-
-    public void setProposalPayload(ProposalPayload proposalPayload) {
-        if (txType == TxType.UNDEFINED_TX_TYPE || txType == TxType.COMPENSATION_REQUEST || txType == TxType.PROPOSAL)
-            this.proposalPayload = proposalPayload;
-        else
-            log.warn("You tried to set a proposalPayload at a tx which is has a different type set. TxType={}", txType);
-    }
-
-    public void addBlindVote(BlindVote blindVote) {
-        if (blindVoteList == null)
-            blindVoteList = new BlindVoteList();
-
-        if (!blindVoteList.contains(blindVote))
-            blindVoteList.add(blindVote);
     }
 
     @Override
@@ -250,12 +154,6 @@ public class Tx implements PersistablePayload {
                 ",\n     time=" + time +
                 ",\n     inputs=" + inputs +
                 ",\n     outputs=" + outputs +
-                ",\n     burntFee=" + burntFee +
-                ",\n     txType=" + txType +
-                ",\n     isIssuanceTx=" + isIssuanceTx +
-                ",\n     issuanceBlockHeight=" + issuanceBlockHeight +
-                ",\n     proposal=" + proposalPayload +
-                ",\n     blindVoteList=" + blindVoteList +
                 "\n}";
     }
 }

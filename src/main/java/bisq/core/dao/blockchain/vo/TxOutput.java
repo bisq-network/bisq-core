@@ -30,19 +30,16 @@ import com.google.protobuf.ByteString;
 
 import java.util.Optional;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@Getter
-@EqualsAndHashCode
+@Value
 @Slf4j
 public class TxOutput implements PersistablePayload {
 
-    public static TxOutput clone(TxOutput txOutput, boolean reset) {
+    public static TxOutput clone(TxOutput txOutput) {
         //noinspection SimplifiableConditionalExpression
         return new TxOutput(txOutput.getIndex(),
                 txOutput.getValue(),
@@ -50,11 +47,7 @@ public class TxOutput implements PersistablePayload {
                 txOutput.getPubKeyScript(),
                 txOutput.getAddress(),
                 txOutput.getOpReturnData(),
-                txOutput.getBlockHeight(),
-                reset ? false : txOutput.isUnspent(),
-                reset ? false : txOutput.isVerified(),
-                reset ? TxOutputType.UNDEFINED : txOutput.getTxOutputType(),
-                reset ? null : txOutput.getSpentInfo());
+                txOutput.getBlockHeight());
     }
 
     private final int index;
@@ -71,17 +64,6 @@ public class TxOutput implements PersistablePayload {
     private final byte[] opReturnData;
     private final int blockHeight;
 
-    // Mutable data
-    @Setter
-    private boolean isUnspent;
-    @Setter
-    private boolean isVerified;
-    // We use a manual setter as we want to prevent that already set values get changed
-    private TxOutputType txOutputType;
-    // We use a manual setter as we want to prevent that already set values get changed
-    @Nullable
-    private SpentInfo spentInfo;
-
     public TxOutput(int index,
                     long value,
                     String txId,
@@ -89,35 +71,6 @@ public class TxOutput implements PersistablePayload {
                     @Nullable String address,
                     @Nullable byte[] opReturnData,
                     int blockHeight) {
-        this(index,
-                value,
-                txId,
-                pubKeyScript,
-                address,
-                opReturnData,
-                blockHeight,
-                false,
-                false,
-                TxOutputType.UNDEFINED,
-                null);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PROTO BUFFER
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private TxOutput(int index,
-                     long value,
-                     String txId,
-                     @Nullable PubKeyScript pubKeyScript,
-                     @Nullable String address,
-                     @Nullable byte[] opReturnData,
-                     int blockHeight,
-                     boolean isUnspent,
-                     boolean isVerified,
-                     TxOutputType txOutputType,
-                     @Nullable SpentInfo spentInfo) {
         this.index = index;
         this.value = value;
         this.txId = txId;
@@ -125,26 +78,23 @@ public class TxOutput implements PersistablePayload {
         this.address = address;
         this.opReturnData = opReturnData;
         this.blockHeight = blockHeight;
-        this.isUnspent = isUnspent;
-        this.isVerified = isVerified;
-        this.txOutputType = txOutputType;
-        this.spentInfo = spentInfo;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public PB.TxOutput toProtoMessage() {
         final PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
                 .setIndex(index)
                 .setValue(value)
                 .setTxId(txId)
-                .setBlockHeight(blockHeight)
-                .setIsUnspent(isUnspent)
-                .setIsVerified(isVerified)
-                .setTxOutputType(txOutputType.toProtoMessage());
+                .setBlockHeight(blockHeight);
 
         Optional.ofNullable(pubKeyScript).ifPresent(e -> builder.setPubKeyScript(pubKeyScript.toProtoMessage()));
         Optional.ofNullable(address).ifPresent(e -> builder.setAddress(address));
         Optional.ofNullable(opReturnData).ifPresent(e -> builder.setOpReturnData(ByteString.copyFrom(opReturnData)));
-        Optional.ofNullable(spentInfo).ifPresent(e -> builder.setSpentInfo(e.toProtoMessage()));
 
         return builder.build();
     }
@@ -156,11 +106,7 @@ public class TxOutput implements PersistablePayload {
                 proto.hasPubKeyScript() ? PubKeyScript.fromProto(proto.getPubKeyScript()) : null,
                 proto.getAddress().isEmpty() ? null : proto.getAddress(),
                 proto.getOpReturnData().isEmpty() ? null : proto.getOpReturnData().toByteArray(),
-                proto.getBlockHeight(),
-                proto.getIsUnspent(),
-                proto.getIsVerified(),
-                TxOutputType.fromProto(proto.getTxOutputType()),
-                proto.hasSpentInfo() ? SpentInfo.fromProto(proto.getSpentInfo()) : null);
+                proto.getBlockHeight());
     }
 
 
@@ -168,9 +114,6 @@ public class TxOutput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean isCompensationRequestBtcOutput() {
-        return txOutputType == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT;
-    }
 
     public String getId() {
         return txId + ":" + index;
@@ -180,19 +123,6 @@ public class TxOutput implements PersistablePayload {
         return new TxIdIndexTuple(txId, index);
     }
 
-    public void setTxOutputType(TxOutputType txOutputType) {
-        if (this.txOutputType == TxOutputType.UNDEFINED)
-            this.txOutputType = txOutputType;
-        else
-            throw new IllegalStateException("Already set txOutputType must not be changed.");
-    }
-
-    public void setSpentInfo(SpentInfo spentInfo) {
-        if (this.spentInfo == null)
-            this.spentInfo = spentInfo;
-        else
-            throw new IllegalStateException("Already set spentInfo must not be changed.");
-    }
 
 
     @Override
@@ -205,10 +135,6 @@ public class TxOutput implements PersistablePayload {
                 ",\n     address='" + address + '\'' +
                 ",\n     opReturnData=" + Utilities.bytesAsHexString(opReturnData) +
                 ",\n     blockHeight=" + blockHeight +
-                ",\n     isUnspent=" + isUnspent +
-                ",\n     isVerified=" + isVerified +
-                ",\n     txOutputType=" + txOutputType +
-                ",\n     spentInfo=" + spentInfo +
                 "\n}";
     }
 }

@@ -56,8 +56,7 @@ public class GenesisTxController {
             genesisTxOutputController.verify(tx.getOutputs().get(i), model);
         }
 
-        tx.setTxType(TxType.GENESIS);
+        chainStateService.setTxType(tx.getId(), TxType.GENESIS);
         chainStateService.setGenesisTx(tx);
-        chainStateService.addTxToMap(tx);
     }
 }

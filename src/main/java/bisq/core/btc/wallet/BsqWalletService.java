@@ -306,9 +306,8 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                         // We cannot make that findTx call outside of the loop as the parent tx can change at each iteration
                         Optional<Tx> txOptional = chainStateService.getTx(parentTransaction.getHash().toString());
                         if (txOptional.isPresent()) {
-                            // BSQ tx and BitcoinJ tx have same outputs (mirrored data structure)
                             TxOutput txOutput = txOptional.get().getOutputs().get(connectedOutput.getIndex());
-                            if (txOutput.isVerified()) {
+                            if (chainStateService.isBsqTxOutputType(txOutput)) {
                                 //TODO check why values are not the same
                                 if (txOutput.getValue() != connectedOutput.getValue().value)
                                     log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +
@@ -347,7 +346,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                     if (txOptional.isPresent()) {
                         // The index of the BSQ tx outputs are the same like the bitcoinj tx outputs
                         TxOutput txOutput = txOptional.get().getOutputs().get(i);
-                        if (txOutput.isVerified()) {
+                        if (chainStateService.isBsqTxOutputType(txOutput)) {
                             //TODO check why values are not the same
                             if (txOutput.getValue() != output.getValue().value)
                                 log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +

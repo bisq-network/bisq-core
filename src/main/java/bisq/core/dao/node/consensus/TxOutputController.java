@@ -106,14 +106,12 @@ public class TxOutputController {
     }
 
     protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
-        txOutput.setVerified(true);
-        txOutput.setUnspent(true);
         if (txOutputType != null)
-            txOutput.setTxOutputType(txOutputType);
-        chainStateService.addUnspentTxOutput(txOutput);
+            chainStateService.setTxOutputType(txOutput, txOutputType);
+        chainStateService.addUTXO(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
-        txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+        chainStateService.setTxOutputType(txOutput, TxOutputType.BTC_OUTPUT);
     }
 }

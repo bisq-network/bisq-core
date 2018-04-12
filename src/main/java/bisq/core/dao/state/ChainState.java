@@ -18,9 +18,13 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
+import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 
@@ -43,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
  * Root class for the state of the crucial Bsq data.
  * We maintain 2 immutable data structures, the bsqBlocks and the stateChangeEvents.
  * All mutable data is kept in maps.
- * The complete ChainState data gets persisted as one file.
  */
 @Slf4j
 @Getter
@@ -61,10 +64,22 @@ public class ChainState implements PersistableEnvelope {
     private final LinkedList<StateChangeEvent> stateChangeEvents;
 
 
-    // Mutable data kept in maps
-    private final Map<TxIdIndexTuple, TxOutput> unspentTxOutputs;
+    // Mutable data
+    // Tx specific
     @Setter
     private Tx genesisTx;
+    private final Map<String, Long> burntFeeByTxIdMap = new HashMap<>();
+    private final Map<String, TxType> txTypeByTxIdMap = new HashMap<>();
+    private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
+    private final Map<String, Integer> issuanceBlockHeightByTxIdMap = new HashMap<>();
+
+    // TxInput specific
+    private final Map<String, TxOutput> connectedTxOutputByTxIdMap = new HashMap<>();
+
+    // TxOutput specific
+    private final Map<TxIdIndexTuple, TxOutput> unspentTxOutputMap;
+    private final Map<TxIdIndexTuple, TxOutputType> txOutputTypeMap = new HashMap<>();
+    private final Map<TxIdIndexTuple, SpentInfo> txOutputSpentInfoMap = new HashMap<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -85,10 +100,11 @@ public class ChainState implements PersistableEnvelope {
 
     private ChainState(LinkedList<BsqBlock> bsqBlocks,
                        LinkedList<StateChangeEvent> stateChangeEvents,
-                       Map<TxIdIndexTuple, TxOutput> unspentTxOutputs) {
+                       Map<TxIdIndexTuple, TxOutput> unspentTxOutputMap) {
         this.bsqBlocks = bsqBlocks;
         this.stateChangeEvents = stateChangeEvents;
-        this.unspentTxOutputs = unspentTxOutputs;
+        this.unspentTxOutputMap = unspentTxOutputMap;
+
     }
 
     @Override
@@ -96,6 +112,7 @@ public class ChainState implements PersistableEnvelope {
         return PB.PersistableEnvelope.newBuilder().setBsqBlockChain(getBsqBlockChainBuilder()).build();
     }
 
+    //TODO
     private PB.BsqBlockChain.Builder getBsqBlockChainBuilder() {
         final PB.BsqBlockChain.Builder builder = PB.BsqBlockChain.newBuilder();
         /*
@@ -117,6 +134,7 @@ public class ChainState implements PersistableEnvelope {
         return builder;
     }
 
+    //TODO
     public static PersistableEnvelope fromProto(PB.BsqBlockChain proto) {
         return null;
         /*new ChainState(new LinkedList<>(proto.getBsqBlocksList().stream()
@@ -133,18 +151,24 @@ public class ChainState implements PersistableEnvelope {
         ;*/
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Utils
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public int getChainHeadHeight() {
         return !getBsqBlocks().isEmpty() ? getBsqBlocks().getLast().getHeight() : 0;
     }
 
     public ChainState getClone() {
         //TODO
-        return null;
+        return this;
         // return lock.read(() -> (ChainStateService) ChainStateService.fromProto(chainStateService.getBsqBlockChainBuilder().build()));
     }
 
+    //TODO
     public ChainState getClone(ChainState snapshotCandidate) {
-        return null;
+        return this;
     }
 }
 

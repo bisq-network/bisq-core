@@ -23,38 +23,28 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import java.util.Optional;
-
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
-import javax.annotation.Nullable;
+import lombok.Value;
 
 /**
  * An input is really just a reference to the spending output. It gets identified by the
  * txId and the index of the output. We use TxIdIndexTuple to encapsulate that.
  */
-@Getter
+@Value
 @EqualsAndHashCode
 public class TxInput implements PersistablePayload {
 
-    public static TxInput clone(TxInput txInput, boolean reset) {
+    public static TxInput clone(TxInput txInput) {
         return new TxInput(txInput.getConnectedTxOutputTxId(),
-                txInput.getConnectedTxOutputIndex(),
-                reset ? null : txInput.getConnectedTxOutput());
+                txInput.getConnectedTxOutputIndex());
     }
-
 
     private final String connectedTxOutputTxId;
     private final int connectedTxOutputIndex;
 
-    // Mutable data
-    // We use a manual setter as we want to prevent that already set values get changed
-    @Nullable
-    private TxOutput connectedTxOutput;
-
     public TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex) {
-        this(connectedTxOutputTxId, connectedTxOutputIndex, null);
+        this.connectedTxOutputTxId = connectedTxOutputTxId;
+        this.connectedTxOutputIndex = connectedTxOutputIndex;
     }
 
 
@@ -62,26 +52,17 @@ public class TxInput implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex, @Nullable TxOutput connectedTxOutput) {
-        this.connectedTxOutputTxId = connectedTxOutputTxId;
-        this.connectedTxOutputIndex = connectedTxOutputIndex;
-        this.connectedTxOutput = connectedTxOutput;
-    }
-
     public PB.TxInput toProtoMessage() {
         final PB.TxInput.Builder builder = PB.TxInput.newBuilder()
                 .setConnectedTxOutputTxId(connectedTxOutputTxId)
                 .setConnectedTxOutputIndex(connectedTxOutputIndex);
-
-        Optional.ofNullable(connectedTxOutput).ifPresent(e -> builder.setConnectedTxOutput(e.toProtoMessage()));
 
         return builder.build();
     }
 
     public static TxInput fromProto(PB.TxInput proto) {
         return new TxInput(proto.getConnectedTxOutputTxId(),
-                proto.getConnectedTxOutputIndex(),
-                proto.hasConnectedTxOutput() ? TxOutput.fromProto(proto.getConnectedTxOutput()) : null);
+                proto.getConnectedTxOutputIndex());
     }
 
 
@@ -93,19 +74,11 @@ public class TxInput implements PersistablePayload {
         return new TxIdIndexTuple(connectedTxOutputTxId, connectedTxOutputIndex);
     }
 
-    public void setConnectedTxOutput(@Nullable TxOutput connectedTxOutput) {
-        if (this.connectedTxOutput == null)
-            this.connectedTxOutput = connectedTxOutput;
-        else
-            throw new IllegalStateException("Already set connectedTxOutput must not be changed.");
-    }
-
     @Override
     public String toString() {
         return "TxInput{" +
                 "\n     connectedTxOutputTxId='" + connectedTxOutputTxId + '\'' +
                 ",\n     connectedTxOutputIndex=" + connectedTxOutputIndex +
-                ",\n     connectedTxOutput=" + connectedTxOutput +
                 "\n}";
     }
 }

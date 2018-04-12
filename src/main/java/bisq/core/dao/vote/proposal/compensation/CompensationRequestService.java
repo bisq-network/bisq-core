@@ -48,6 +48,7 @@ public class CompensationRequestService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final DaoParamService daoParamService;
+    private final CompensationRequestPayloadValidator compensationRequestPayloadValidator;
     private final PublicKey signaturePubKey;
     private final ChainStateService chainStateService;
 
@@ -61,11 +62,13 @@ public class CompensationRequestService {
                                       BtcWalletService btcWalletService,
                                       ChainStateService chainStateService,
                                       DaoParamService daoParamService,
+                                      CompensationRequestPayloadValidator compensationRequestPayloadValidator,
                                       KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.chainStateService = chainStateService;
         this.daoParamService = daoParamService;
+        this.compensationRequestPayloadValidator = compensationRequestPayloadValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -89,7 +92,7 @@ public class CompensationRequestService {
                 new Date()
         );
 
-        payload.validateDataFields();
+        compensationRequestPayloadValidator.validateDataFields(payload);
 
         return payload;
     }

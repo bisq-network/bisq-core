@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.state.ChainStateService;
@@ -46,7 +45,7 @@ public class TxInputController {
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
             // for later verification at the outputs of a reveal tx.
-            if (connectedTxOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
+            if (chainStateService.getTxOutputType(connectedTxOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                 if (!model.isVoteStakeSpentAtInputs()) {
                     model.setVoteStakeSpentAtInputs(true);
                 } else {
@@ -55,11 +54,8 @@ public class TxInputController {
                 }
             }
 
-            txInput.setConnectedTxOutput(connectedTxOutput);
-            connectedTxOutput.setUnspent(false);
-            connectedTxOutput.setSpentInfo(new SpentInfo(blockHeight, txId, inputIndex));
-
-            chainStateService.removeUnspentTxOutput(connectedTxOutput);
+            chainStateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
+            chainStateService.removeFromUTXOMap(connectedTxOutput);
         });
     }
 }

@@ -67,6 +67,7 @@ public class ProposalService implements PersistedDataHost {
     private final PeriodService periodService;
     private final PublicKey signaturePubKey;
     private final ChainStateService chainStateService;
+    private final ProposalPayloadValidator proposalPayloadValidator;
     private final Storage<ProposalList> storage;
 
     @Getter
@@ -78,12 +79,14 @@ public class ProposalService implements PersistedDataHost {
                            P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
                            ChainStateService chainStateService,
+                           ProposalPayloadValidator proposalPayloadValidator,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
         this.nodeExecutor = nodeExecutor;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
         this.chainStateService = chainStateService;
+        this.proposalPayloadValidator = proposalPayloadValidator;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -198,8 +201,10 @@ public class ProposalService implements PersistedDataHost {
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
     // during the proposal phase)
     private void maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
+
         getTxForProposalInCorrectPhase(proposalPayload, chainHeight)
-                .ifPresent(tx -> tx.setProposalPayload(proposalPayload));
+                .ifPresent(tx -> chainStateService.setProposalPayload(tx.getId(), proposalPayload));
+
     }
 
     private Optional<Tx> getTxForProposalInCorrectPhase(ProposalPayload proposalPayload, int chainHeight) {
@@ -245,7 +250,7 @@ public class ProposalService implements PersistedDataHost {
 
     public boolean isValid(Tx tx, ProposalPayload proposalPayload) {
         try {
-            proposalPayload.validate(tx, periodService);
+            proposalPayloadValidator.validate(proposalPayload, tx);
             return true;
         } catch (ValidationException e) {
             log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",

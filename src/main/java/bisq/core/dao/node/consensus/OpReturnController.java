@@ -21,6 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.state.ChainStateService;
 
 import bisq.common.app.DevEnv;
 
@@ -41,16 +42,19 @@ public class OpReturnController {
     private final OpReturnCompReqController opReturnCompReqController;
     private final OpReturnBlindVoteController opReturnBlindVoteController;
     private final OpReturnVoteRevealController opReturnVoteRevealController;
+    private final ChainStateService chainStateService;
 
     @Inject
     public OpReturnController(OpReturnProposalController opReturnProposalController,
                               OpReturnCompReqController opReturnCompReqController,
                               OpReturnBlindVoteController opReturnBlindVoteController,
-                              OpReturnVoteRevealController opReturnVoteRevealController) {
+                              OpReturnVoteRevealController opReturnVoteRevealController,
+                              ChainStateService chainStateService) {
         this.opReturnProposalController = opReturnProposalController;
         this.opReturnCompReqController = opReturnCompReqController;
         this.opReturnBlindVoteController = opReturnBlindVoteController;
         this.opReturnVoteRevealController = opReturnVoteRevealController;
+        this.chainStateService = chainStateService;
     }
 
     // We only check partially the rules here as we do not know the BSQ fee at that moment which is always used when
@@ -82,11 +86,11 @@ public class OpReturnController {
                             break;
                         case LOCK_UP:
                             // TODO
-                            txOutput.setTxOutputType(TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
+                            chainStateService.setTxOutputType(txOutput, TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
                             break;
                         case UNLOCK:
                             // TODO
-                            txOutput.setTxOutputType(TxOutputType.BOND_UNLOCK_OP_RETURN_OUTPUT);
+                            chainStateService.setTxOutputType(txOutput, TxOutputType.BOND_UNLOCK_OP_RETURN_OUTPUT);
                             break;
                         default:
                             // Should never happen as long we keep OpReturnType entries in sync with out switch case.

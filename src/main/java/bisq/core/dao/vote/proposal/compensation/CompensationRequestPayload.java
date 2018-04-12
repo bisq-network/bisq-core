@@ -18,14 +18,11 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
-import bisq.core.dao.vote.proposal.ValidationException;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
@@ -48,11 +45,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
-
-import static bisq.core.dao.vote.proposal.compensation.CompensationRequestConsensus.getMaxCompensationRequestAmount;
-import static bisq.core.dao.vote.proposal.compensation.CompensationRequestConsensus.getMinCompensationRequestAmount;
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.apache.commons.lang3.Validate.notEmpty;
 
 /**
  * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request
@@ -145,49 +137,6 @@ public final class CompensationRequestPayload extends ProposalPayload {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void validateDataFields() throws ValidationException {
-        super.validateDataFields();
-        try {
-            notEmpty(bsqAddress, "bsqAddress must not be empty");
-            checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
-            getAddress(); // throws AddressFormatException if wrong address
-            checkArgument(getRequestedBsq().compareTo(getMaxCompensationRequestAmount()) <= 0,
-                    "Requested BSQ must not exceed MaxCompensationRequestAmount");
-            checkArgument(getRequestedBsq().compareTo(getMinCompensationRequestAmount()) >= 0,
-                    "Requested BSQ must not be less than MinCompensationRequestAmount");
-        } catch (Throwable throwable) {
-            throw new ValidationException(throwable);
-        }
-    }
-
-    @Override
-    public void validateCorrectTxType(Tx tx) throws ValidationException {
-        try {
-            checkArgument(tx.getTxType() == TxType.COMPENSATION_REQUEST, "ProposalPayload has wrong txType");
-        } catch (Throwable e) {
-            log.warn("CompensationRequestPayload has wrong txType. tx={}, compensationRequestPayload={}", tx, this);
-            throw new ValidationException(e, tx);
-        }
-    }
-
-    @Override
-    public void validateCorrectTxOutputType(Tx tx) throws ValidationException {
-        try {
-            final TxOutput lastOutput = tx.getLastOutput();
-            checkArgument(lastOutput.getTxOutputType() == TxOutputType.COMP_REQ_OP_RETURN_OUTPUT,
-                    "Last output of tx has wrong txOutputType: txOutputType=" + lastOutput.getTxOutputType());
-        } catch (Throwable e) {
-            log.warn(e.toString());
-            throw new ValidationException(e, tx);
-        }
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -214,6 +163,14 @@ public final class CompensationRequestPayload extends ProposalPayload {
         // Remove leading 'B'
         String underlyingBtcAddress = bsqAddress.substring(1, bsqAddress.length());
         return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
+    }
+
+    public TxType getTxType() {
+        return TxType.COMPENSATION_REQUEST;
+    }
+
+    public TxOutputType getTxOutputType() {
+        return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
     }
 
     protected ProposalPayload getCloneWithoutTxId() {

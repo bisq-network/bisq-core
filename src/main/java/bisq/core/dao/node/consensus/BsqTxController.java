@@ -69,9 +69,11 @@ public class BsqTxController {
             txOutputsController.processOpReturnCandidate(tx, model);
             txOutputsController.iterateOutputs(tx, blockHeight, model);
             if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
-                tx.setTxType(getTxType(tx, model));
-                tx.setBurntFee(model.getAvailableInputValue());
-                chainStateService.addTxToMap(tx);
+                final TxType txType = getTxType(tx, model);
+                final String txId = tx.getId();
+                chainStateService.setTxType(txId, txType);
+                final long burnedFee = model.getAvailableInputValue();
+                chainStateService.setBurntFee(txId, burnedFee);
             } else {
                 String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                 DevEnv.logErrorAndThrowIfDevMode(msg);
@@ -114,7 +116,7 @@ public class BsqTxController {
             case COMPENSATION_REQUEST:
                 checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
                 final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
-                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                checkArgument(chainStateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;
                 break;

@@ -75,8 +75,6 @@ public class FullNodeParserTest {
 
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     ChainStateService chainStateService;
-    @Tested(availableDuringSetup = true)
-    ChainStateService readModel;
 
     // Used by bsqTxController
     @Tested(fullyInitialized = true, availableDuringSetup = true)
@@ -126,18 +124,18 @@ public class FullNodeParserTest {
         // 1) - null, 0     -> not BSQ transaction
         // 2) - 100, null   -> BSQ transaction
         // 3) - 0, 100      -> BSQ transaction
-        new Expectations(readModel) {{
+        new Expectations(chainStateService) {{
             // Expectations can be recorded on mocked instances, either with specific matching arguments or catch all
             // http://jmockit.github.io/tutorial/Mocking.html#results
             // Results are returned in the order they're recorded, so in this case for the first call to
             // getSpendableTxOutput("tx1", 0) the return value will be Optional.empty()
             // for the second call the return is Optional.of(new TxOutput(0,... and so on
-            readModel.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 0));
+            chainStateService.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 0));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout1", null, null, null, height));
             result = Optional.of(new TxOutput(0, 0, "txout1", null, null, null, height));
 
-            readModel.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 1));
+            chainStateService.getUnspentAndMatureTxOutput(new TxIdIndexTuple("tx1", 1));
             result = Optional.of(new TxOutput(0, 0, "txout2", null, null, null, height));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout2", null, null, null, height));
@@ -224,25 +222,25 @@ public class FullNodeParserTest {
         });
 
         // Verify that the genesis tx has been added to the bsq blockchain with the correct issuance amount
-        assertTrue(readModel.getGenesisTx() == genesisTx);
-        assertTrue(readModel.getIssuedAmountAtGenesis().getValue() == issuance.getValue());
+        assertTrue(chainStateService.getGenesisTx() == genesisTx);
+        assertTrue(chainStateService.getIssuedAmountAtGenesis().getValue() == issuance.getValue());
 
         // And that other txs are not added
-        assertFalse(readModel.containsTx(cbId199));
-        assertFalse(readModel.containsTx(cbId200));
-        assertFalse(readModel.containsTx(cbId201));
+        assertFalse(chainStateService.containsTx(cbId199));
+        assertFalse(chainStateService.containsTx(cbId200));
+        assertFalse(chainStateService.containsTx(cbId201));
 
         // But bsq txs are added
-        assertTrue(readModel.containsTx(bsqTx1Id));
-        TxOutput bsqOut1 = readModel.getUnspentAndMatureTxOutput(bsqTx1Id, 0).get();
-        assertTrue(bsqOut1.isUnspent());
+        assertTrue(chainStateService.containsTx(bsqTx1Id));
+        TxOutput bsqOut1 = chainStateService.getUnspentAndMatureTxOutput(bsqTx1Id, 0).get();
+        assertTrue(chainStateService.isUnspent(bsqOut1));
         assertTrue(bsqOut1.getValue() == bsqTx1Value1);
-        TxOutput bsqOut2 = readModel.getUnspentAndMatureTxOutput(bsqTx1Id, 1).get();
-        assertTrue(bsqOut2.isUnspent());
+        TxOutput bsqOut2 = chainStateService.getUnspentAndMatureTxOutput(bsqTx1Id, 1).get();
+        assertTrue(chainStateService.isUnspent(bsqOut2));
         assertTrue(bsqOut2.getValue() == bsqTx1Value2);
-        assertFalse(readModel.isTxOutputSpendable(genesisTxId, 0));
-        assertTrue(readModel.isTxOutputSpendable(bsqTx1Id, 0));
-        assertTrue(readModel.isTxOutputSpendable(bsqTx1Id, 1));
+        assertFalse(chainStateService.isTxOutputSpendable(genesisTxId, 0));
+        assertTrue(chainStateService.isTxOutputSpendable(bsqTx1Id, 0));
+        assertTrue(chainStateService.isTxOutputSpendable(bsqTx1Id, 1));
 
     }
 }

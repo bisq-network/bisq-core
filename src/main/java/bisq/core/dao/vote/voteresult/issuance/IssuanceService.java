@@ -59,7 +59,6 @@ public class IssuanceService {
                     return rawBsqAddress.equals(txOutput.getAddress());
                 })
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
-                .filter(txOutput -> !txOutput.isVerified()) // our candidate is not yet verified
                 .forEach(txOutput -> {
                     chainStateService.issueBsq(txOutput);
                     StringBuilder sb = new StringBuilder();

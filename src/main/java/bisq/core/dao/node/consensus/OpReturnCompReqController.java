@@ -23,6 +23,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.PeriodService;
 
 import javax.inject.Inject;
@@ -38,11 +39,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class OpReturnCompReqController {
     private final DaoParamService daoParamService;
     private final PeriodService periodService;
+    private final ChainStateService chainStateService;
+
 
     @Inject
-    public OpReturnCompReqController(DaoParamService daoParamService, PeriodService periodService) {
+    public OpReturnCompReqController(DaoParamService daoParamService, PeriodService periodService,
+                                     ChainStateService chainStateService) {
         this.daoParamService = daoParamService;
         this.periodService = periodService;
+        this.chainStateService = chainStateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
@@ -52,22 +57,22 @@ public class OpReturnCompReqController {
                 opReturnData.length == 22 &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
-            txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+            chainStateService.setTxOutputType(txOutput, TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
 
             checkArgument(model.getIssuanceCandidate() != null,
                     "model.getCompRequestIssuanceOutputCandidate() must not be null");
-            model.getIssuanceCandidate().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+            chainStateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL));
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
+            chainStateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
             if (model.getIssuanceCandidate() != null)
-                model.getIssuanceCandidate().setTxOutputType(TxOutputType.BTC_OUTPUT);
+                chainStateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
         }
     }
 }

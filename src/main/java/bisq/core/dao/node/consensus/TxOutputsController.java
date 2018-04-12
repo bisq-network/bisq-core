@@ -20,6 +20,7 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
+import bisq.core.dao.state.ChainStateService;
 
 import javax.inject.Inject;
 
@@ -36,10 +37,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class TxOutputsController {
 
     private final TxOutputController txOutputController;
+    private final ChainStateService chainStateService;
 
     @Inject
-    public TxOutputsController(TxOutputController txOutputController) {
+    public TxOutputsController(TxOutputController txOutputController, ChainStateService chainStateService) {
         this.txOutputController = txOutputController;
+        this.chainStateService = chainStateService;
     }
 
     void processOpReturnCandidate(Tx tx, Model model) {
@@ -67,11 +70,12 @@ public class TxOutputsController {
         // If we have an issuanceCandidate and the type was not applied in the opReturnController we set
         // it now to an BTC_OUTPUT.
         if (model.getIssuanceCandidate() != null &&
-                model.getIssuanceCandidate().getTxOutputType() == TxOutputType.UNDEFINED)
-            model.getIssuanceCandidate().setTxOutputType(TxOutputType.BTC_OUTPUT);
+                chainStateService.getTxOutputType(model.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
+            chainStateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
+        }
     }
 
     boolean isAnyTxOutputTypeUndefined(Tx tx) {
-        return tx.getOutputs().stream().anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
+        return tx.getOutputs().stream().anyMatch(txOutput -> TxOutputType.UNDEFINED == chainStateService.getTxOutputType(txOutput));
     }
 }

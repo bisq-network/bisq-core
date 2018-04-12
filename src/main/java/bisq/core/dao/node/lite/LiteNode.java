@@ -138,7 +138,7 @@ public class LiteNode extends BsqNode {
             log.info("block height of last item: {}", bsqBlockList.get(bsqBlockList.size() - 1).getHeight());
         // We clone with a reset of all mutable data in case the provider would not have done it.
         List<BsqBlock> clonedBsqBlockList = bsqBlockList.stream()
-                .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
+                .map(bsqBlock -> BsqBlock.clone(bsqBlock))
                 .collect(Collectors.toList());
         bsqLiteNodeExecutor.parseBlocks(clonedBsqBlockList,
                 this::onNewBsqBlock,
@@ -151,7 +151,7 @@ public class LiteNode extends BsqNode {
         log.info("onNewBlockReceived: bsqBlock={}", bsqBlock.getHeight());
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
-        BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock, true);
+        BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock);
         if (!chainStateService.containsBsqBlock(clonedBsqBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
             bsqLiteNodeExecutor.parseBlock(clonedBsqBlock, this::onNewBsqBlock, getErrorHandler());

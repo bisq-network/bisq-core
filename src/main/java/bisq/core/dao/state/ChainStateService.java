@@ -19,11 +19,14 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.Tx;
+import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.blockchain.vo.util.TxIdIndexTuple;
+import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.ThreadContextAwareListener;
 import bisq.common.UserThread;
@@ -36,7 +39,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +85,67 @@ public class ChainStateService {
     // BTC MAIN NET
     public static final String BTC_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
     public static final int BTC_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
+
+    public void setTxType(String txId, TxType txType) {
+        chainState.getTxTypeByTxIdMap().put(txId, txType);
+    }
+
+    public void setBurntFee(String txId, long burnedFee) {
+        chainState.getBurntFeeByTxIdMap().put(txId, burnedFee);
+    }
+
+    public long getBurntFee(String txId) {
+        return chainState.getBurntFeeByTxIdMap().get(txId);
+    }
+
+    public void setProposalPayload(String txId, ProposalPayload proposalPayload) {
+        chainState.getProposalPayloadByTxIdMap().put(txId, proposalPayload);
+    }
+
+    public boolean isIssuanceTx(String txId) {
+        return chainState.getIssuanceBlockHeightByTxIdMap().containsKey(txId);
+    }
+
+    public int getIssuanceBlockHeight(String txId) {
+        return isIssuanceTx(txId) ? chainState.getIssuanceBlockHeightByTxIdMap().get(txId) : -1;
+    }
+
+    public Optional<TxOutput> getConnectedTxOutput(TxInput txInput) {
+        return getTx(txInput.getConnectedTxOutputTxId())
+                .map(tx -> tx.getOutputs().get(txInput.getConnectedTxOutputIndex()));
+    }
+
+    public boolean isInUTXOMap(TxOutput txOutput) {
+        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getTxIdIndexTuple());
+    }
+
+    public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
+        chainState.getTxOutputSpentInfoMap().put(txOutput.getTxIdIndexTuple(),
+                new SpentInfo(blockHeight, txId, inputIndex));
+
+    }
+
+    public SpentInfo getSpentInfo(TxOutput txOutput) {
+        return chainState.getTxOutputSpentInfoMap().get(txOutput.getTxIdIndexTuple());
+    }
+
+    public boolean isUnspent(TxOutput txOutput) {
+        return chainState.getUnspentTxOutputMap().containsKey(txOutput.getTxIdIndexTuple());
+    }
+
+    public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
+        chainState.getTxOutputTypeMap().put(txOutput.getTxIdIndexTuple(), txOutputType);
+    }
+
+    public TxOutputType getTxOutputType(TxOutput txOutput) {
+        return chainState.getTxOutputTypeMap().get(txOutput.getTxIdIndexTuple());
+    }
+
+    public boolean isBsqTxOutputType(TxOutput txOutput) {
+        return getTxOutputType(txOutput) != TxOutputType.UNDEFINED &&
+                getTxOutputType(txOutput) == TxOutputType.BTC_OUTPUT &&
+                getTxOutputType(txOutput) == TxOutputType.INVALID_OUTPUT;
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -160,8 +223,8 @@ public class ChainStateService {
             chainState.getBsqBlocks().clear();
             chainState.getBsqBlocks().addAll(snapshot.getBsqBlocks());
 
-            chainState.getUnspentTxOutputs().clear();
-            chainState.getUnspentTxOutputs().putAll(snapshot.getUnspentTxOutputs());
+            chainState.getUnspentTxOutputMap().clear();
+            chainState.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
 
             //TODO
         });
@@ -216,32 +279,23 @@ public class ChainStateService {
     // Write access: TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addUnspentTxOutput(TxOutput txOutput) {
+    public void addUTXO(TxOutput txOutput) {
         lock.write(() -> {
-            checkArgument(txOutput.isVerified(), "txOutput must be verified at addUnspentTxOutput");
-            chainState.getUnspentTxOutputs().put(txOutput.getTxIdIndexTuple(), txOutput);
+            chainState.getUnspentTxOutputMap().put(txOutput.getTxIdIndexTuple(), txOutput);
         });
     }
 
-    public void removeUnspentTxOutput(TxOutput txOutput) {
-        lock.write(() -> chainState.getUnspentTxOutputs().remove(txOutput.getTxIdIndexTuple()));
+    public void removeFromUTXOMap(TxOutput txOutput) {
+        lock.write(() -> chainState.getUnspentTxOutputMap().remove(txOutput.getTxIdIndexTuple()));
     }
 
     public void issueBsq(TxOutput txOutput) {
         lock.write(() -> {
-            // The magic happens, we print money! ;-)
             //TODO handle maturity
 
-            // We should track spent status and output has to be unspent anyway
-            txOutput.setUnspent(true);
-            txOutput.setVerified(true);
-            addUnspentTxOutput(txOutput);
+            addUTXO(txOutput);
 
-            final Optional<Tx> optionalTx = getTx(txOutput.getTxId());
-            checkArgument(optionalTx.isPresent(), "optionalTx must be present");
-            final Tx tx = optionalTx.get();
-            tx.setIssuanceBlockHeight(getChainHeadHeight());
-            tx.setIssuanceTx(true);
+            chainState.getIssuanceBlockHeightByTxIdMap().put(txOutput.getTxId(), getChainHeadHeight());
 
             issuanceListeners.forEach(l -> UserThread.execute(l::onIssuance));
         });
@@ -276,7 +330,7 @@ public class ChainStateService {
         return lock.read(() -> {
             return chainState.getClone().getBsqBlocks().stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
-                    .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
+                    .map(bsqBlock -> BsqBlock.clone(bsqBlock))
                     .collect(Collectors.toList());
         });
     }
@@ -303,16 +357,14 @@ public class ChainStateService {
     }
 
     public Set<Tx> getFeeTransactions() {
-        return lock.read(() -> getTxMap().entrySet().stream()
-                .filter(e -> e.getValue().getBurntFee() > 0)
-                .map(Map.Entry::getValue)
+        return lock.read(() -> getTxMap().values().stream()
+                .filter(e -> getBurntFee(e.getId()) > 0)
                 .collect(Collectors.toSet()));
     }
 
     public boolean hasTxBurntFee(String txId) {
         return lock.read(() -> getTx(txId)
-                .map(Tx::getBurntFee)
-                .filter(fee -> fee > 0)
+                .filter(tx -> chainState.getBurntFeeByTxIdMap().containsKey(txId))
                 .isPresent());
     }
 
@@ -347,44 +399,28 @@ public class ChainStateService {
     // TODO handle BLIND_VOTE_STAKE_OUTPUT more specifically
     public boolean isTxOutputSpendable(String txId, int index) {
         return lock.read(() -> getUnspentAndMatureTxOutput(txId, index)
-                .filter(txOutput -> txOutput.getTxOutputType() != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
+                .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .isPresent());
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream().
-                filter(e -> e.isVerified() && e.isUnspent())
-                .collect(Collectors.toSet()));
-    }
-
-    public Set<TxOutput> getVerifiedTxOutputs() {
-        return lock.read(() -> getAllTxOutputs().stream().
-                filter(TxOutput::isVerified)
+                filter(txOutput -> getUnspentTxOutput(txOutput).isPresent())
                 .collect(Collectors.toSet()));
     }
 
     public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
+                .filter(e -> getTxOutputType(e) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
-    public Set<TxOutput> getVerifiedBlindVoteStakeTxOutputs() {
-        return lock.read(() -> getVerifiedTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
-                .collect(Collectors.toSet()));
-    }
 
     public Set<TxOutput> getLockedInBondsOutputs() {
         return lock.read(() -> getUnspentTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.BOND_LOCK)
+                .filter(e -> getTxOutputType(e) == TxOutputType.BOND_LOCK)
                 .collect(Collectors.toSet()));
     }
-
-    public Set<TxOutput> getSpentTxOutputs() {
-        return lock.read(() -> getAllTxOutputs().stream().filter(e -> e.isVerified() && !e.isUnspent()).collect(Collectors.toSet()));
-    }
-
 
     public Optional<TxOutput> getUnspentAndMatureTxOutput(TxIdIndexTuple txIdIndexTuple) {
         return lock.read(() -> getUnspentTxOutput(txIdIndexTuple)
@@ -397,7 +433,7 @@ public class ChainStateService {
 
     public Set<TxOutput> getVoteRevealTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
+                .filter(e -> getTxOutputType(e) == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
@@ -406,15 +442,22 @@ public class ChainStateService {
     //TODO we should add unspent check (need to be set in parser)
     public Set<TxOutput> getCompReqIssuanceTxOutputs() {
         return lock.read(() -> getAllTxOutputs().stream()
-                .filter(e -> e.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
+                .filter(e -> getTxOutputType(e) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
                 .collect(Collectors.toSet()));
     }
 
     private Optional<TxOutput> getUnspentTxOutput(TxIdIndexTuple txIdIndexTuple) {
-        return lock.read(() -> chainState.getUnspentTxOutputs().entrySet().stream()
+        return lock.read(() -> chainState.getUnspentTxOutputMap().entrySet().stream()
                 .filter(e -> e.getKey().equals(txIdIndexTuple))
                 .map(Map.Entry::getValue)
-                .filter(TxOutput::isVerified) //TODO is it needed?
+                .findAny()
+        );
+    }
+
+    private Optional<TxOutput> getUnspentTxOutput(TxOutput txOutput) {
+        return lock.read(() -> chainState.getUnspentTxOutputMap().entrySet().stream()
+                .filter(e -> e.getKey().equals(txOutput.getTxIdIndexTuple()))
+                .map(Map.Entry::getValue)
                 .findAny()
         );
     }
@@ -437,7 +480,12 @@ public class ChainStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Optional<TxType> getTxType(String txId) {
-        return lock.read(() -> getTx(txId).map(Tx::getTxType));
+        return lock.read(() -> {
+            if (chainState.getTxTypeByTxIdMap().containsKey(txId))
+                return Optional.of(chainState.getTxTypeByTxIdMap().get(txId));
+            else
+                return Optional.empty();
+        });
     }
 
 
@@ -446,7 +494,7 @@ public class ChainStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Coin getTotalBurntFee() {
-        return lock.read(() -> Coin.valueOf(getTxMap().entrySet().stream().mapToLong(e -> e.getValue().getBurntFee()).sum()));
+        return lock.read(() -> Coin.valueOf(chainState.getBurntFeeByTxIdMap().values().stream().mapToLong(fee -> fee).sum()));
     }
 
     public Coin getIssuedAmountAtGenesis() {
@@ -456,8 +504,8 @@ public class ChainStateService {
     public Coin getIssuedAmountFromCompRequests() {
         return lock.read(() -> Coin.valueOf(getCompReqIssuanceTxOutputs().stream()
                 .filter(txOutput -> getTx(txOutput.getTxId()).isPresent())
-                .filter(txOutput -> getTx(txOutput.getTxId()).get().isIssuanceTx())
-                .mapToLong(txOutput -> txOutput.getValue())
+                .filter(txOutput -> isIssuanceTx(txOutput.getTxId()))
+                .mapToLong(TxOutput::getValue)
                 .sum()));
     }
 
@@ -474,14 +522,14 @@ public class ChainStateService {
     }
 
     private void printNewBlock(BsqBlock bsqBlock) {
-        log.debug("\nchainHeadHeight={}\n" +
+     /*   log.debug("\nchainHeadHeight={}\n" +
                         "    blocks.size={}\n" +
                         "    getTxMap().size={}\n" +
                         "    chainState.getUnspentTxOutputs().size={}\n" +
                         getChainHeadHeight(),
                 chainState.getBsqBlocks().size(),
                 getTxMap().size(),
-                chainState.getUnspentTxOutputs().size());
+                chainState.getUnspentTxOutputMap().size());
 
         if (!chainState.getBsqBlocks().isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -489,22 +537,22 @@ public class ChainStateService {
             printBlock(bsqBlock, sb);
             sb.append("\n\n##############################################################################\n");
             log.debug(sb.toString());
-        }
+        }*/
     }
 
     private void printBlock(BsqBlock bsqBlock, StringBuilder sb) {
-        sb.append("\n\nBsqBlock prev -> current hash: ").append(bsqBlock.getPreviousBlockHash()).append(" -> ").append(bsqBlock.getHash());
+/*        sb.append("\n\nBsqBlock prev -> current hash: ").append(bsqBlock.getPreviousBlockHash()).append(" -> ").append(bsqBlock.getHash());
         sb.append("\nblockHeight: ").append(bsqBlock.getHeight());
         sb.append("\nNew BSQ txs in block: ");
         sb.append(bsqBlock.getTxs().stream().map(Tx::getId).collect(Collectors.toList()).toString());
         sb.append("\nAll BSQ tx new state: ");
         getTxMap().values().stream()
                 .sorted(Comparator.comparing(Tx::getBlockHeight))
-                .forEach(tx -> printTx(tx, sb));
+                .forEach(tx -> printTx(tx, sb));*/
     }
 
     private void printTx(Tx tx, StringBuilder sb) {
-        sb.append("\n\nTx with ID: ").append(tx.getId());
+      /*  sb.append("\n\nTx with ID: ").append(tx.getId());
         sb.append("\n    added at blockHeight: ").append(tx.getBlockHeight());
         sb.append("\n    txType: ").append(tx.getTxType());
         sb.append("\n    burntFee: ").append(tx.getBurntFee());
@@ -515,7 +563,7 @@ public class ChainStateService {
                     .append(", isVerified: ").append(txOutput.isVerified())
                     .append(", isUnspent: ").append(txOutput.isUnspent())
                     .append(", getSpentInfo: ").append(txOutput.getSpentInfo());
-        }
+        }*/
     }
 
     // Probably not needed anymore

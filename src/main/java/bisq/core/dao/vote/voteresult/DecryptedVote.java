@@ -36,7 +36,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Holds all data from a decrypted vote item.
@@ -60,7 +59,7 @@ public class DecryptedVote {
 
         SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
         Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, chainStateService, periodService, chainHeight);
-        TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx);
+        TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, chainStateService);
         blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, chainStateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
         BlindVote blindVote = getBlindVote(blindVoteService);
@@ -75,7 +74,9 @@ public class DecryptedVote {
             checkArgument(optionalVoteRevealTx.isPresent(), "voteRevealTx with txId " +
                     voteRevealTxId + "not found.");
             Tx voteRevealTx = optionalVoteRevealTx.get();
-            checkArgument(voteRevealTx.getTxType() == TxType.VOTE_REVEAL,
+            Optional<TxType> optionalTxType = chainStateService.getTxType(voteRevealTx.getId());
+            checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
+            checkArgument(optionalTxType.get() == TxType.VOTE_REVEAL,
                     "voteRevealTx must have type VOTE_REVEAL");
             checkArgument(periodService.isTxInCorrectCycle(voteRevealTx.getBlockHeight(), chainHeight),
                     "voteRevealTx is not in correct cycle. chainHeight=" + chainHeight);
@@ -85,16 +86,17 @@ public class DecryptedVote {
         }
     }
 
-    private TxOutput getBlindVoteStakeOutput(Tx voteRevealTx)
+    private TxOutput getBlindVoteStakeOutput(Tx voteRevealTx, ChainStateService chainStateService)
             throws VoteResultException {
         try {
             // We use the stake output of the blind vote tx as first input
             final TxInput stakeIxInput = voteRevealTx.getInputs().get(0);
-            TxOutput blindVoteStakeOutput = stakeIxInput.getConnectedTxOutput();
-            checkNotNull(blindVoteStakeOutput, "blindVoteStakeOutput must not be null");
-            checkArgument(blindVoteStakeOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
+            Optional<TxOutput> optionalTxOutput = chainStateService.getConnectedTxOutput(stakeIxInput);
+            checkArgument(optionalTxOutput.isPresent(), "blindVoteStakeOutput must not be present");
+            final TxOutput txOutput = optionalTxOutput.get();
+            checkArgument(chainStateService.getTxOutputType(txOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
                     "blindVoteStakeOutput must have type BLIND_VOTE_LOCK_STAKE_OUTPUT");
-            return blindVoteStakeOutput;
+            return txOutput;
         } catch (Throwable t) {
             throw new VoteResultException(t);
         }
@@ -109,7 +111,9 @@ public class DecryptedVote {
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
                     blindVoteTxId + "not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();
-            checkArgument(blindVoteTx.getTxType() == TxType.BLIND_VOTE,
+            Optional<TxType> optionalTxType = chainStateService.getTxType(blindVoteTx.getId());
+            checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
+            checkArgument(optionalTxType.get() == TxType.BLIND_VOTE,
                     "blindVoteTx must have type BLIND_VOTE");
             checkArgument(periodService.isTxInCorrectCycle(blindVoteTx.getBlockHeight(), chainHeight),
                     "blindVoteTx is not in correct cycle. chainHeight=" + chainHeight);

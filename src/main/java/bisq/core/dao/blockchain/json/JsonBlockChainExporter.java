@@ -18,6 +18,7 @@
 package bisq.core.dao.blockchain.json;
 
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxType;
@@ -48,6 +49,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -117,57 +120,71 @@ public class JsonBlockChainExporter {
             ListenableFuture<Void> future = executor.submit(() -> {
                 final ChainState chainStateClone = chainStateService.getClone();
                 Map<String, Tx> txMap = chainStateClone.getBsqBlocks().stream()
+                        .filter(Objects::nonNull)
                         .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));
                 for (Tx tx : txMap.values()) {
                     String txId = tx.getId();
-                    JsonTxType txType = tx.getTxType() != TxType.UNDEFINED_TX_TYPE ? JsonTxType.valueOf(tx.getTxType().name()) : null;
-                    List<JsonTxOutput> outputs = new ArrayList<>();
-                    tx.getOutputs().forEach(txOutput -> {
-                        final JsonTxOutput outputForJson = new JsonTxOutput(txId,
-                                txOutput.getIndex(),
-                                txOutput.isVerified() ? txOutput.getValue() : 0,
-                                !txOutput.isVerified() ? txOutput.getValue() : 0,
-                                txOutput.getBlockHeight(),
-                                txOutput.isVerified(),
-                                tx.getBurntFee(),
-                                txOutput.getAddress(),
-                                new JsonScriptPubKey(txOutput.getPubKeyScript()),
-                                txOutput.getSpentInfo() != null ?
-                                        new JsonSpentInfo(txOutput.getSpentInfo()) : null,
+                    final Optional<TxType> optionalTxType = chainStateService.getTxType(txId);
+                    if (optionalTxType.isPresent()) {
+                        JsonTxType txType = optionalTxType.get() != TxType.UNDEFINED_TX_TYPE ?
+                                JsonTxType.valueOf(optionalTxType.get().name()) : null;
+                        List<JsonTxOutput> outputs = new ArrayList<>();
+                        tx.getOutputs().forEach(txOutput -> {
+                            final SpentInfo spentInfo = chainStateService.getSpentInfo(txOutput);
+                            final boolean isBsqOutput = chainStateService.isBsqTxOutputType(txOutput);
+                            final JsonTxOutput outputForJson = new JsonTxOutput(txId,
+                                    txOutput.getIndex(),
+                                    isBsqOutput ? txOutput.getValue() : 0,
+                                    !isBsqOutput ? txOutput.getValue() : 0,
+                                    txOutput.getBlockHeight(),
+                                    isBsqOutput,
+                                    chainStateService.getBurntFee(tx.getId()),
+                                    txOutput.getAddress(),
+                                    new JsonScriptPubKey(txOutput.getPubKeyScript()),
+                                    spentInfo != null ?
+                                            new JsonSpentInfo(spentInfo) : null,
+                                    tx.getTime(),
+                                    txType,
+                                    txType != null ? txType.getDisplayString() : "",
+                                    txOutput.getOpReturnData() != null ? Utils.HEX.encode(txOutput.getOpReturnData()) : null
+                            );
+                            outputs.add(outputForJson);
+                            txOutputFileManager.writeToDisc(Utilities.objectToJson(outputForJson), outputForJson.getId());
+                        });
+
+
+                        List<JsonTxInput> inputs = tx.getInputs().stream()
+                                .map(txInput -> {
+                                    Optional<TxOutput> optionalTxOutput = chainStateService.getConnectedTxOutput(txInput);
+                                    if (optionalTxOutput.isPresent()) {
+                                        final TxOutput connectedTxOutput = optionalTxOutput.get();
+                                        final boolean isBsqOutput = chainStateService.isBsqTxOutputType(connectedTxOutput);
+                                        return new JsonTxInput(txInput.getConnectedTxOutputIndex(),
+                                                txInput.getConnectedTxOutputTxId(),
+                                                connectedTxOutput != null ? connectedTxOutput.getValue() : 0,
+                                                connectedTxOutput != null && isBsqOutput,
+                                                connectedTxOutput != null ? connectedTxOutput.getAddress() : null,
+                                                tx.getTime());
+                                    } else {
+                                        return null;
+                                    }
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+
+                        final JsonTx jsonTx = new JsonTx(txId,
+                                tx.getBlockHeight(),
+                                tx.getBlockHash(),
                                 tx.getTime(),
+                                inputs,
+                                outputs,
                                 txType,
                                 txType != null ? txType.getDisplayString() : "",
-                                txOutput.getOpReturnData() != null ? Utils.HEX.encode(txOutput.getOpReturnData()) : null
-                        );
-                        outputs.add(outputForJson);
-                        txOutputFileManager.writeToDisc(Utilities.objectToJson(outputForJson), outputForJson.getId());
-                    });
+                                chainStateService.getBurntFee(tx.getId()));
 
-
-                    List<JsonTxInput> inputs = tx.getInputs().stream()
-                            .map(txInput -> {
-                                final TxOutput connectedTxOutput = txInput.getConnectedTxOutput();
-                                return new JsonTxInput(txInput.getConnectedTxOutputIndex(),
-                                        txInput.getConnectedTxOutputTxId(),
-                                        connectedTxOutput != null ? connectedTxOutput.getValue() : 0,
-                                        connectedTxOutput != null && connectedTxOutput.isVerified(),
-                                        connectedTxOutput != null ? connectedTxOutput.getAddress() : null,
-                                        tx.getTime());
-                            })
-                            .collect(Collectors.toList());
-
-                    final JsonTx jsonTx = new JsonTx(txId,
-                            tx.getBlockHeight(),
-                            tx.getBlockHash(),
-                            tx.getTime(),
-                            inputs,
-                            outputs,
-                            txType,
-                            txType != null ? txType.getDisplayString() : "",
-                            tx.getBurntFee());
-
-                    txFileManager.writeToDisc(Utilities.objectToJson(jsonTx), txId);
+                        txFileManager.writeToDisc(Utilities.objectToJson(jsonTx), txId);
+                    }
                 }
 
                 bsqBlockChainFileManager.writeToDisc(Utilities.objectToJson(chainStateClone), "ChainStateService");
