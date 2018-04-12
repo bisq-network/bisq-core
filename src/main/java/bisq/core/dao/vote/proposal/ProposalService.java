@@ -22,6 +22,8 @@ import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.events.AddProposalPayloadEvent;
+import bisq.core.dao.state.events.ChainStateChangeEvent;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -108,6 +110,13 @@ public class ProposalService implements PersistedDataHost {
             public void onBlockAdded(BsqBlock bsqBlock) {
                 // We iterate all proposals and if all valid we store it at the Tx
                 proposalList.forEach(proposal -> maybeAddProposalToTx(proposal.getProposalPayload(), bsqBlock.getHeight()));
+            }
+
+            @Override
+            public void onChainStateChange(ChainStateChangeEvent chainStateChangeEvent) {
+                if (chainStateChangeEvent instanceof AddProposalPayloadEvent) {
+                    ProposalService.this.onAddProposalPayloadEvent((AddProposalPayloadEvent) chainStateChangeEvent);
+                }
             }
         });
 
@@ -196,20 +205,25 @@ public class ProposalService implements PersistedDataHost {
         }
     }
 
-
-    // We store the proposal to the tx if the tx is already available and all is valid
+    // We fire a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
-    // during the proposal phase)
+    // during the proposal phase).
     private void maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
-
-        getTxForProposalInCorrectPhase(proposalPayload, chainHeight)
-                .ifPresent(tx -> chainStateService.setProposalPayload(tx.getId(), proposalPayload));
-
+        getTxForProposal(proposalPayload)
+                .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
+                .ifPresent(tx -> chainStateService.addStateChangeEvent(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
     }
 
-    private Optional<Tx> getTxForProposalInCorrectPhase(ProposalPayload proposalPayload, int chainHeight) {
+    private void onAddProposalPayloadEvent(AddProposalPayloadEvent event) {
+        ProposalPayload proposalPayload = (ProposalPayload) event.getPayload();
+        getTxForProposal(proposalPayload)
+                .filter(tx -> !periodService.isInPhase(event.getChainHeight(), PeriodService.Phase.PROPOSAL))
+                .ifPresent(tx -> chainStateService.putProposalPayload(tx.getId(), proposalPayload));
+    }
+
+
+    private Optional<Tx> getTxForProposal(ProposalPayload proposalPayload) {
         return chainStateService.getTx(proposalPayload.getTxId())
-                .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
                 .filter(tx -> isValid(tx, proposalPayload));
     }
 

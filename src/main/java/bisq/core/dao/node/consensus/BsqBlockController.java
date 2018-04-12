@@ -44,7 +44,7 @@ public class BsqBlockController {
         LinkedList<BsqBlock> bsqBlocks = chainStateService.getBsqBlocks();
         if (!bsqBlocks.contains(bsqBlock)) {
             if (isBlockConnecting(bsqBlock, bsqBlocks)) {
-                chainStateService.addBlock(bsqBlock);
+                chainStateService.blockParsingComplete(bsqBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",

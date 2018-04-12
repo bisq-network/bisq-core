@@ -25,6 +25,7 @@ import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.events.ChainStateChangeEvent;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.ThreadContextAwareListener;
@@ -88,6 +89,9 @@ public class ChainStateService {
 
     public interface Listener extends ThreadContextAwareListener {
         void onBlockAdded(BsqBlock bsqBlock);
+
+        default void onChainStateChange(ChainStateChangeEvent chainStateChangeEvent) {
+        }
     }
 
 
@@ -153,10 +157,30 @@ public class ChainStateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // Write access: ChainStateChangeEvent
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addStateChangeEvent(ChainStateChangeEvent chainStateChangeEvent) {
+        lock.write(() -> {
+            if (!doesStateChangeEventWithPayloadExist(chainStateChangeEvent)) {
+                chainState.getChainStateChangeEvents().add(chainStateChangeEvent);
+            }
+        });
+    }
+
+    public boolean doesStateChangeEventWithPayloadExist(ChainStateChangeEvent chainStateChangeEvent) {
+        return lock.read(() -> chainState.getChainStateChangeEvents().stream()
+                .anyMatch(event -> event.getPayload().equals(chainStateChangeEvent.getPayload())));
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: BsqBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addBlock(BsqBlock bsqBlock) {
+    // After parsing of a new block is complete we trigger the processing of any non blockchain data like
+    // Proposals or Blind votes.
+    public void blockParsingComplete(BsqBlock bsqBlock) {
         lock.write(() -> {
             chainState.getBsqBlocks().add(bsqBlock);
             log.info("New block added at blockHeight " + bsqBlock.getHeight());
@@ -164,6 +188,16 @@ public class ChainStateService {
             // If the client has set a specific executor we call on that thread.
             // By default the userThread's executor is used.
             listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(bsqBlock)));
+
+            // We check if we have a ChainStateChangeEvent at that blockHeight and if so we notify the listeners.
+            // The onBlockAdded handler usually triggers that new ChainStateChangeEvent gets added so we are processing
+            // those newly added events in the listener handler.
+            // Though we support also to process a collection of old events which the client has not added himself.
+            // The immutable data structures like the bsqBlocks and the stateChangeEvents can be used to recreate the
+            // mutable state.
+            chainState.getChainStateChangeEvents().stream()
+                    .filter(event -> event.getChainHeight() == bsqBlock.getHeight())
+                    .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onChainStateChange(event))));
         });
     }
 
@@ -222,7 +256,7 @@ public class ChainStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-    public void setProposalPayload(String txId, ProposalPayload proposalPayload) {
+    public void putProposalPayload(String txId, ProposalPayload proposalPayload) {
         lock.write(() -> chainState.getProposalPayloadByTxIdMap().put(txId, proposalPayload));
     }
 

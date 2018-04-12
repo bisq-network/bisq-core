@@ -15,7 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state;
+package bisq.core.dao.state.events;
 
-public class StateChangeEvent {
+import bisq.core.dao.vote.proposal.ProposalPayload;
+
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+
+@EqualsAndHashCode(callSuper = true)
+@Value
+public class AddProposalPayloadEvent extends ChainStateChangeEvent {
+
+    public AddProposalPayloadEvent(ProposalPayload payload, int chainHeight) {
+        super(payload, chainHeight);
+    }
 }

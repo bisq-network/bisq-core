@@ -22,6 +22,7 @@ import bisq.core.dao.blockchain.vo.SpentInfo;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.events.ChainStateChangeEvent;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -42,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Root class of all relevant data for determining the state of the BSQ block chain.
- * We maintain 2 immutable data structures, the bsqBlocks and the stateChangeEvents.
+ * We maintain 2 immutable data structures, the bsqBlocks and the chainStateChangeEvents.
  * All mutable data is kept in maps.
  */
 @Slf4j
@@ -58,7 +59,7 @@ public class ChainState implements PersistableEnvelope {
     private final LinkedList<BsqBlock> bsqBlocks;
 
     // The state change events containing any non-blockchain data which can trigger a state change in the Bisq DAO
-    private final LinkedList<StateChangeEvent> stateChangeEvents;
+    private final LinkedList<ChainStateChangeEvent> chainStateChangeEvents;
 
 
     // Mutable data
@@ -97,10 +98,10 @@ public class ChainState implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private ChainState(LinkedList<BsqBlock> bsqBlocks,
-                       LinkedList<StateChangeEvent> stateChangeEvents,
+                       LinkedList<ChainStateChangeEvent> chainStateChangeEvents,
                        Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
         this.bsqBlocks = bsqBlocks;
-        this.stateChangeEvents = stateChangeEvents;
+        this.chainStateChangeEvents = chainStateChangeEvents;
         this.unspentTxOutputMap = unspentTxOutputMap;
 
     }
