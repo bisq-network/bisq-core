@@ -19,7 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import javax.inject.Inject;
 
@@ -31,21 +31,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TxInputController {
 
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
-    public TxInputController(ChainStateService chainStateService) {
-        this.chainStateService = chainStateService;
+    public TxInputController(StateService stateService) {
+        this.stateService = stateService;
     }
 
     void processInput(TxInput txInput, int blockHeight, String txId, int inputIndex, Model model,
-                      ChainStateService chainStateService) {
-        this.chainStateService.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
+                      StateService stateService) {
+        this.stateService.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple()).ifPresent(connectedTxOutput -> {
             model.addToInputValue(connectedTxOutput.getValue());
 
             // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our model
             // for later verification at the outputs of a reveal tx.
-            if (chainStateService.getTxOutputType(connectedTxOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
+            if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                 if (!model.isVoteStakeSpentAtInputs()) {
                     model.setVoteStakeSpentAtInputs(true);
                 } else {
@@ -54,8 +54,8 @@ public class TxInputController {
                 }
             }
 
-            chainStateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
-            chainStateService.removeUnspentTxOutput(connectedTxOutput);
+            stateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
+            stateService.removeUnspentTxOutput(connectedTxOutput);
         });
     }
 }

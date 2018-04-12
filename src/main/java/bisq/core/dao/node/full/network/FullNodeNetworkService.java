@@ -20,7 +20,7 @@ package bisq.core.dao.node.full.network;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -57,7 +57,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     // Key is connection UID
     private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
@@ -72,11 +72,11 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  ChainStateService chainStateService) {
+                                  StateService stateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
 
         networkNode.addMessageListener(this);
         peerManager.addListener(this);
@@ -134,7 +134,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
                     GetBsqBlocksRequestHandler requestHandler = new GetBsqBlocksRequestHandler(networkNode,
-                            chainStateService,
+                            stateService,
                             new GetBsqBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {

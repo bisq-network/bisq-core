@@ -22,7 +22,7 @@ import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import bisq.common.app.DevEnv;
 
@@ -42,15 +42,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class BsqTxController {
 
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final TxInputsController txInputsController;
     private final TxOutputsController txOutputsController;
 
     @Inject
-    public BsqTxController(ChainStateService chainStateService,
+    public BsqTxController(StateService stateService,
                            TxInputsController txInputsController,
                            TxOutputsController txOutputsController) {
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.txInputsController = txInputsController;
         this.txOutputsController = txOutputsController;
     }
@@ -71,9 +71,9 @@ public class BsqTxController {
             if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
                 final TxType txType = getTxType(tx, model);
                 final String txId = tx.getId();
-                chainStateService.setTxType(txId, txType);
+                stateService.setTxType(txId, txType);
                 final long burnedFee = model.getAvailableInputValue();
-                chainStateService.setBurntFee(txId, burnedFee);
+                stateService.setBurntFee(txId, burnedFee);
             } else {
                 String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                 DevEnv.logErrorAndThrowIfDevMode(msg);
@@ -116,7 +116,7 @@ public class BsqTxController {
             case COMPENSATION_REQUEST:
                 checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
                 final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
-                checkArgument(chainStateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                checkArgument(stateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;
                 break;

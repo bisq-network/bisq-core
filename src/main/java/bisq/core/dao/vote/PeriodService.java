@@ -20,7 +20,7 @@ package bisq.core.dao.vote;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import bisq.common.app.DevEnv;
 
@@ -45,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class PeriodService implements ChainStateService.Listener {
+public class PeriodService implements StateService.Listener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -88,7 +88,7 @@ public class PeriodService implements ChainStateService.Listener {
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
@@ -99,9 +99,9 @@ public class PeriodService implements ChainStateService.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(ChainStateService chainStateService,
+    public PeriodService(StateService stateService,
                          @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.genesisBlockHeight = genesisBlockHeight;
     }
 
@@ -114,8 +114,8 @@ public class PeriodService implements ChainStateService.Listener {
     }
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(this);
-        onChainHeightChanged(chainStateService.getChainHeadHeight());
+        stateService.addListener(this);
+        onChainHeightChanged(stateService.getChainHeadHeight());
     }
 
     @Override
@@ -133,7 +133,7 @@ public class PeriodService implements ChainStateService.Listener {
 
     // If we are not in the parsing, it is safe to call it without explicit chainHeadHeight
     public boolean isTxInPhase(String txId, Phase phase) {
-        Tx tx = chainStateService.getTxMap().get(txId);
+        Tx tx = stateService.getTxMap().get(txId);
         return tx != null && isInPhase(tx.getBlockHeight(), phase);
     }
 
@@ -145,13 +145,13 @@ public class PeriodService implements ChainStateService.Listener {
     }
 
     public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
-        return chainStateService.getTx(txId)
+        return stateService.getTx(txId)
                 .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
                 .isPresent();
     }
 
     public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
-        return chainStateService.getTx(txId).filter(tx -> isTxInPastCycle(tx, chainHeadHeight)).isPresent();
+        return stateService.getTx(txId).filter(tx -> isTxInPastCycle(tx, chainHeadHeight)).isPresent();
     }
 
     public boolean isTxInPastCycle(Tx tx, int chainHeadHeight) {

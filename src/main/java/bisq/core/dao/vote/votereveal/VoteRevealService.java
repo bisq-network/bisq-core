@@ -28,7 +28,7 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
@@ -60,8 +60,8 @@ import lombok.extern.slf4j.Slf4j;
 //TODO case that user misses reveal phase not impl. yet
 
 @Slf4j
-public class VoteRevealService implements ChainStateService.Listener {
-    private final ChainStateService chainStateService;
+public class VoteRevealService implements StateService.Listener {
+    private final StateService stateService;
     private final MyVoteService myVoteService;
     private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
@@ -78,14 +78,14 @@ public class VoteRevealService implements ChainStateService.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public VoteRevealService(ChainStateService chainStateService,
+    public VoteRevealService(StateService stateService,
                              MyVoteService myVoteService,
                              PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager,
                              BlindVoteService blindVoteService) {
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.myVoteService = myVoteService;
         this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
@@ -107,7 +107,7 @@ public class VoteRevealService implements ChainStateService.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(this);
+        stateService.addListener(this);
     }
 
     @SuppressWarnings("EmptyMethod")
@@ -179,7 +179,7 @@ public class VoteRevealService implements ChainStateService.Listener {
 
         // We search for my unspent stake output.
         // myVote is already tested if it is in current cycle at maybeRevealVotes
-        final Set<TxOutput> blindVoteStakeTxOutputs = chainStateService.getUnspentBlindVoteStakeTxOutputs();
+        final Set<TxOutput> blindVoteStakeTxOutputs = stateService.getUnspentBlindVoteStakeTxOutputs();
         // We expect that the blind vote tx and stake output is available. If not we throw an exception.
         TxOutput stakeTxOutput = blindVoteStakeTxOutputs.stream()
                 .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId())).findFirst()

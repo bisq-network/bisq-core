@@ -17,7 +17,7 @@
 
 package bisq.core.btc.wallet;
 
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import org.bitcoinj.core.TransactionOutput;
 
@@ -31,18 +31,18 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BsqCoinSelector extends BisqDefaultCoinSelector {
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
-    public BsqCoinSelector(ChainStateService chainStateService) {
+    public BsqCoinSelector(StateService stateService) {
         super(true);
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     @Override
     protected boolean isTxOutputSpendable(TransactionOutput output) {
         // output.getParentTransaction() cannot be null as it is checked in calling method
         return output.getParentTransaction() != null &&
-                chainStateService.isTxOutputSpendable(output.getParentTransaction().getHashAsString(), output.getIndex());
+                stateService.isTxOutputSpendable(output.getParentTransaction().getHashAsString(), output.getIndex());
     }
 }

@@ -20,7 +20,7 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import javax.inject.Inject;
 
@@ -37,12 +37,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class TxOutputsController {
 
     private final TxOutputController txOutputController;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
-    public TxOutputsController(TxOutputController txOutputController, ChainStateService chainStateService) {
+    public TxOutputsController(TxOutputController txOutputController, StateService stateService) {
         this.txOutputController = txOutputController;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     void processOpReturnCandidate(Tx tx, Model model) {
@@ -70,12 +70,12 @@ public class TxOutputsController {
         // If we have an issuanceCandidate and the type was not applied in the opReturnController we set
         // it now to an BTC_OUTPUT.
         if (model.getIssuanceCandidate() != null &&
-                chainStateService.getTxOutputType(model.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
-            chainStateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
+                stateService.getTxOutputType(model.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
+            stateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
         }
     }
 
     boolean isAnyTxOutputTypeUndefined(Tx tx) {
-        return tx.getOutputs().stream().anyMatch(txOutput -> TxOutputType.UNDEFINED == chainStateService.getTxOutputType(txOutput));
+        return tx.getOutputs().stream().anyMatch(txOutput -> TxOutputType.UNDEFINED == stateService.getTxOutputType(txOutput));
     }
 }

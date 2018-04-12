@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.SnapshotManager;
 
 import bisq.network.p2p.P2PService;
@@ -40,7 +40,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected final P2PService p2PService;
-    protected final ChainStateService chainStateService;
+    protected final StateService stateService;
     @SuppressWarnings("WeakerAccess")
     private final String genesisTxId;
     private final int genesisBlockHeight;
@@ -57,15 +57,15 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqNode(ChainStateService chainStateService,
+    public BsqNode(StateService stateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
 
         this.p2PService = p2PService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
 
-        genesisTxId = chainStateService.getGenesisTxId();
-        genesisBlockHeight = chainStateService.getGenesisBlockHeight();
+        genesisTxId = stateService.getGenesisTxId();
+        genesisBlockHeight = stateService.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
     }
 
@@ -138,7 +138,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, chainStateService.getChainHeadHeight() + 1);
+        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeadHeight() + 1);
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -147,7 +147,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                chainStateService.getChainHeadHeight());
+                stateService.getChainHeadHeight());
 
         return startBlockHeight;
     }

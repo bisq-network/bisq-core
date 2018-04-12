@@ -34,37 +34,37 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages snapshots of the ChainStateService.
+ * Manages snapshots of the StateService.
  */
 //TODO add tests; check if current logic is correct.
 @Slf4j
-public class SnapshotManager implements ChainStateService.Listener {
+public class SnapshotManager implements StateService.Listener {
     private static final int SNAPSHOT_GRID = 10000;
 
-    private final ChainState chainState;
-    private final ChainStateService chainStateService;
-    private final Storage<ChainState> storage;
+    private final State state;
+    private final StateService stateService;
+    private final Storage<State> storage;
 
-    private ChainState snapshotCandidate;
+    private State snapshotCandidate;
 
     @Inject
-    public SnapshotManager(ChainState chainState,
-                           ChainStateService chainStateService,
+    public SnapshotManager(State state,
+                           StateService stateService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
-        this.chainState = chainState;
-        this.chainStateService = chainStateService;
+        this.state = state;
+        this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        chainStateService.addListener(this);
+        stateService.addListener(this);
     }
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
-        ChainState persisted = storage.initAndGetPersisted(chainState, 100);
+        State persisted = storage.initAndGetPersisted(state, 100);
         if (persisted != null) {
             log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getBsqBlocks().getLast().getHeight());
-            chainStateService.applySnapshot(persisted);
+            stateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
         }
@@ -72,19 +72,19 @@ public class SnapshotManager implements ChainStateService.Listener {
 
     @Override
     public void onBlockAdded(BsqBlock bsqBlock) {
-        final int chainHeadHeight = chainStateService.getChainHeadHeight();
+        final int chainHeadHeight = stateService.getChainHeadHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
                 (snapshotCandidate == null ||
                         snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
             // At trigger event we store the latest snapshotCandidate to disc
             if (snapshotCandidate != null) {
                 // We clone because storage is in a threaded context
-                final ChainState cloned = chainState.getClone(snapshotCandidate);
+                final State cloned = state.getClone(snapshotCandidate);
                 storage.queueUpForSave(cloned);
                 log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
             }
             // Now we clone and keep it in memory for the next trigger
-            snapshotCandidate = chainState.getClone();
+            snapshotCandidate = state.getClone();
             // don't access cloned anymore with methods as locks are transient!
             log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
         }
@@ -101,7 +101,7 @@ public class SnapshotManager implements ChainStateService.Listener {
     }
 
     private boolean isSnapshotHeight(int height) {
-        return isSnapshotHeight(chainStateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
+        return isSnapshotHeight(stateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
     }
 
 }

@@ -24,7 +24,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -70,9 +70,9 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements bisq.core.dao.state.ChainStateService.Listener {
+public class BsqWalletService extends WalletService implements StateService.Listener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
@@ -92,7 +92,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
     @Inject
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
-                            ChainStateService chainStateService,
+                            StateService stateService,
                             Preferences preferences,
                             FeeService feeService) {
         super(walletsSetup,
@@ -100,7 +100,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                 feeService);
 
         this.bsqCoinSelector = bsqCoinSelector;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
 
         if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
             walletsSetup.addSetupCompletedHandler(() -> {
@@ -159,12 +159,12 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
             });
         }
 
-        chainStateService.addListener(this);
+        stateService.addListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainStateService.Listener
+    // StateService.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
@@ -207,12 +207,12 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                 .map(Transaction::getHashAsString)
                 .collect(Collectors.toSet());
 
-        lockedForVotingBalance = Coin.valueOf(chainStateService.getUnspentBlindVoteStakeTxOutputs().stream()
+        lockedForVotingBalance = Coin.valueOf(stateService.getUnspentBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        lockedInBondsBalance = Coin.valueOf(chainStateService.getLockedInBondsOutputs().stream()
+        lockedInBondsBalance = Coin.valueOf(stateService.getLockedInBondsOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -259,7 +259,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
     private Set<Transaction> getBsqWalletTransactions() {
         return getTransactions(false).stream()
                 .filter(transaction -> transaction.getConfidence().getConfidenceType() == PENDING ||
-                        chainStateService.containsTx(transaction.getHashAsString()))
+                        stateService.containsTx(transaction.getHashAsString()))
                 .collect(Collectors.toSet());
     }
 
@@ -304,10 +304,10 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                     if (isConfirmed) {
                         // We lookup if we have a BSQ tx matching the parent tx
                         // We cannot make that findTx call outside of the loop as the parent tx can change at each iteration
-                        Optional<Tx> txOptional = chainStateService.getTx(parentTransaction.getHash().toString());
+                        Optional<Tx> txOptional = stateService.getTx(parentTransaction.getHash().toString());
                         if (txOptional.isPresent()) {
                             TxOutput txOutput = txOptional.get().getOutputs().get(connectedOutput.getIndex());
-                            if (chainStateService.isBsqTxOutputType(txOutput)) {
+                            if (stateService.isBsqTxOutputType(txOutput)) {
                                 //TODO check why values are not the same
                                 if (txOutput.getValue() != connectedOutput.getValue().value)
                                     log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +
@@ -335,7 +335,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
         Coin result = Coin.ZERO;
         final String txId = transaction.getHashAsString();
         // We check if we have a matching BSQ tx. We do that call here to avoid repeated calls in the loop.
-        Optional<Tx> txOptional = chainStateService.getTx(txId);
+        Optional<Tx> txOptional = stateService.getTx(txId);
         // We check all the outputs of our tx
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             TransactionOutput output = transaction.getOutputs().get(i);
@@ -346,7 +346,7 @@ public class BsqWalletService extends WalletService implements bisq.core.dao.sta
                     if (txOptional.isPresent()) {
                         // The index of the BSQ tx outputs are the same like the bitcoinj tx outputs
                         TxOutput txOutput = txOptional.get().getOutputs().get(i);
-                        if (chainStateService.isBsqTxOutputType(txOutput)) {
+                        if (stateService.isBsqTxOutputType(txOutput)) {
                             //TODO check why values are not the same
                             if (txOutput.getValue() != output.getValue().value)
                                 log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +

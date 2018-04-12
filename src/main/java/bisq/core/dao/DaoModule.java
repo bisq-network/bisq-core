@@ -42,8 +42,8 @@ import bisq.core.dao.node.lite.LiteNodeExecutor;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainState;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.State;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
@@ -93,8 +93,8 @@ public class DaoModule extends AppModule {
         bind(LiteNodeParser.class).in(Singleton.class);
 
         // chain state
-        bind(ChainState.class).in(Singleton.class);
-        bind(ChainStateService.class).in(Singleton.class);
+        bind(State.class).in(Singleton.class);
+        bind(StateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
         bind(DaoParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
@@ -133,10 +133,10 @@ public class DaoModule extends AppModule {
         bind(IssuanceService.class).in(Singleton.class);
 
         // constants
-        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, ChainStateService.BTC_GENESIS_TX_ID);
+        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, StateService.BTC_GENESIS_TX_ID);
         bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
 
-        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, ChainStateService.BTC_GENESIS_BLOCK_HEIGHT);
+        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, StateService.BTC_GENESIS_BLOCK_HEIGHT);
         bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
 
         // options

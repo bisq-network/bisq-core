@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
-public class ChainState implements PersistableEnvelope {
+public class State implements PersistableEnvelope {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Instance fields
@@ -86,7 +86,7 @@ public class ChainState implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ChainState() {
+    public State() {
         this(new LinkedList<>(),
                 new LinkedList<>(),
                 new HashMap<>());
@@ -97,9 +97,9 @@ public class ChainState implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChainState(LinkedList<BsqBlock> bsqBlocks,
-                       LinkedList<ChainStateChangeEvent> chainStateChangeEvents,
-                       Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
+    private State(LinkedList<BsqBlock> bsqBlocks,
+                  LinkedList<ChainStateChangeEvent> chainStateChangeEvents,
+                  Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
         this.bsqBlocks = bsqBlocks;
         this.chainStateChangeEvents = chainStateChangeEvents;
         this.unspentTxOutputMap = unspentTxOutputMap;
@@ -136,7 +136,7 @@ public class ChainState implements PersistableEnvelope {
     //TODO
     public static PersistableEnvelope fromProto(PB.BsqBlockChain proto) {
         return null;
-        /*new ChainState(new LinkedList<>(proto.getBsqBlocksList().stream()
+        /*new State(new LinkedList<>(proto.getBsqBlocksList().stream()
                 .map(BsqBlock::fromProto)
                 .collect(Collectors.toList())),
                 new HashMap<>(proto.getTxMapMap().entrySet().stream()
@@ -159,14 +159,14 @@ public class ChainState implements PersistableEnvelope {
         return !getBsqBlocks().isEmpty() ? getBsqBlocks().getLast().getHeight() : 0;
     }
 
-    public ChainState getClone() {
+    public State getClone() {
         //TODO
         return this;
-        // return lock.read(() -> (ChainStateService) ChainStateService.fromProto(chainStateService.getBsqBlockChainBuilder().build()));
+        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getBsqBlockChainBuilder().build()));
     }
 
     //TODO
-    public ChainState getClone(ChainState snapshotCandidate) {
+    public State getClone(State snapshotCandidate) {
         return this;
     }
 }

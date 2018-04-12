@@ -23,7 +23,7 @@ import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.param.DaoParam;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 
 import javax.inject.Inject;
@@ -39,14 +39,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class OpReturnBlindVoteController {
     private final DaoParamService daoParamService;
     private final PeriodService periodService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
     public OpReturnBlindVoteController(DaoParamService daoParamService, PeriodService periodService,
-                                       ChainStateService chainStateService) {
+                                       StateService stateService) {
         this.daoParamService = daoParamService;
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
@@ -56,23 +56,23 @@ public class OpReturnBlindVoteController {
                 opReturnData.length == 22 &&
                 bsqFee == daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE)) {
-            chainStateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
+            stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
             checkArgument(model.getBlindVoteLockStakeOutput() != null,
                     "model.getBlindVoteLockStakeOutput() must not be null");
-            chainStateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
+            stateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE));
-            chainStateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
+            stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output
             // iteration that it is valid BSQ.
             if (model.getBlindVoteLockStakeOutput() != null)
-                chainStateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BSQ_OUTPUT);
+                stateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BSQ_OUTPUT);
         }
     }
 }

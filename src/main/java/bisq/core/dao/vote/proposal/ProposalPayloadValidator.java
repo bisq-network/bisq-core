@@ -21,7 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.common.util.Utilities;
@@ -40,12 +40,12 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Slf4j
 public class ProposalPayloadValidator {
     protected final PeriodService periodService;
-    protected final ChainStateService chainStateService;
+    protected final StateService stateService;
 
     @Inject
-    public ProposalPayloadValidator(PeriodService periodService, ChainStateService chainStateService) {
+    public ProposalPayloadValidator(PeriodService periodService, StateService stateService) {
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     public void validate(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
@@ -58,7 +58,7 @@ public class ProposalPayloadValidator {
 
     public void validateCorrectTxType(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
         try {
-            Optional<TxType> optionalTxType = chainStateService.getTxType(tx.getId());
+            Optional<TxType> optionalTxType = stateService.getTxType(tx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == proposalPayload.getTxType(),
                     "ProposalPayload has wrong txType. txType=" + optionalTxType.get());
@@ -71,7 +71,7 @@ public class ProposalPayloadValidator {
     public void validateCorrectTxOutputType(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
         try {
             final TxOutput lastOutput = tx.getLastOutput();
-            final TxOutputType txOutputType = chainStateService.getTxOutputType(lastOutput);
+            final TxOutputType txOutputType = stateService.getTxOutputType(lastOutput);
             checkArgument(txOutputType == proposalPayload.getTxOutputType(),
                     "Last output of tx has wrong txOutputType: txOutputType=" + txOutputType);
         } catch (Throwable e) {

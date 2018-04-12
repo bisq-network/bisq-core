@@ -20,7 +20,7 @@ package bisq.core.dao.vote.proposal;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -59,7 +59,7 @@ public class ProposalListService {
     private MyProposalService myProposalService;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Getter
     private final ObservableList<Proposal> activeOrMyUnconfirmedProposals = FXCollections.observableArrayList();
@@ -77,13 +77,13 @@ public class ProposalListService {
                                MyProposalService myProposalService,
                                P2PDataStorage p2pDataStorage,
                                PeriodService periodService,
-                               ChainStateService chainStateService) {
+                               StateService stateService) {
         this.nodeExecutor = nodeExecutor;
         this.proposalService = proposalService;
         this.myProposalService = myProposalService;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ public class ProposalListService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(new ChainStateService.Listener() {
+        stateService.addListener(new StateService.Listener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
             public Executor getExecutor() {
@@ -130,15 +130,15 @@ public class ProposalListService {
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload)
-            updateLists(chainStateService.getChainHeadHeight());
+            updateLists(stateService.getChainHeadHeight());
     }
 
     private void updateLists(int chainHeadHeight) {
-        // We are on the parser thread, so we are in sync with proposalService and chainStateService
+        // We are on the parser thread, so we are in sync with proposalService and stateService
         // proposalService.isMine and  proposalService.isValid are not accessing any mutable state.
         final List<Proposal> proposals = new ArrayList<>(proposalService.getProposals());
         Map<String, Optional<Tx>> map = new HashMap<>();
-        proposals.forEach(proposal -> map.put(proposal.getTxId(), chainStateService.getTx(proposal.getTxId())));
+        proposals.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
 
         UserThread.execute(() -> {
             activeOrMyUnconfirmedProposals.clear();

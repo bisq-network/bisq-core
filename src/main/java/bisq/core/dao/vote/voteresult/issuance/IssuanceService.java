@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.voteresult.issuance;
 
 import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class IssuanceService {
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final PeriodService periodService;
 
 
@@ -41,15 +41,15 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public IssuanceService(ChainStateService chainStateService,
+    public IssuanceService(StateService stateService,
                            PeriodService periodService) {
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.periodService = periodService;
     }
 
 
     public void issueBsq(CompensationRequestPayload compensationRequestPayload, int chainHeight) {
-        final Set<TxOutput> compReqIssuanceTxOutputs = chainStateService.getCompReqIssuanceTxOutputs();
+        final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getCompReqIssuanceTxOutputs();
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> txOutput.getTxId().equals(compensationRequestPayload.getTxId()))
                 .filter(txOutput -> compensationRequestPayload.getRequestedBsq().value == txOutput.getValue())
@@ -60,7 +60,7 @@ public class IssuanceService {
                 })
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .forEach(txOutput -> {
-                    chainStateService.addIssuanceTxOutput(txOutput);
+                    stateService.addIssuanceTxOutput(txOutput);
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
                     sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())

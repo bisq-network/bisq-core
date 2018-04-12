@@ -22,7 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ValidationException;
 
@@ -50,7 +50,7 @@ public class CompensationRequestService {
     private final DaoParamService daoParamService;
     private final CompensationRequestPayloadValidator compensationRequestPayloadValidator;
     private final PublicKey signaturePubKey;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -60,13 +60,13 @@ public class CompensationRequestService {
     @Inject
     public CompensationRequestService(BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
-                                      ChainStateService chainStateService,
+                                      StateService stateService,
                                       DaoParamService daoParamService,
                                       CompensationRequestPayloadValidator compensationRequestPayloadValidator,
                                       KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.daoParamService = daoParamService;
         this.compensationRequestPayloadValidator = compensationRequestPayloadValidator;
 
@@ -102,7 +102,7 @@ public class CompensationRequestService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
         CompensationRequest compensationRequest = new CompensationRequest(payload);
 
-        final Coin fee = ProposalConsensus.getFee(daoParamService, chainStateService.getChainHeadHeight());
+        final Coin fee = ProposalConsensus.getFee(daoParamService, stateService.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

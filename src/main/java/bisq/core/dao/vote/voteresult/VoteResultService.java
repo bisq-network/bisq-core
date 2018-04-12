@@ -20,7 +20,7 @@ package bisq.core.dao.vote.voteresult;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.PeriodService;
@@ -73,7 +73,7 @@ public class VoteResultService {
     private final NodeExecutor nodeExecutor;
     private final BlindVoteService blindVoteService;
     private final VoteRevealService voteRevealService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final DaoParamService daoParamService;
     private final PeriodService periodService;
     private final IssuanceService issuanceService;
@@ -89,14 +89,14 @@ public class VoteResultService {
     public VoteResultService(NodeExecutor nodeExecutor,
                              BlindVoteService blindVoteService,
                              VoteRevealService voteRevealService,
-                             ChainStateService chainStateService,
+                             StateService stateService,
                              DaoParamService daoParamService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
         this.nodeExecutor = nodeExecutor;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.daoParamService = daoParamService;
         this.periodService = periodService;
         this.issuanceService = issuanceService;
@@ -108,7 +108,7 @@ public class VoteResultService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(new ChainStateService.Listener() {
+        stateService.addListener(new StateService.Listener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             //TODO issuance fails if parser thread is set. need to refactor class first
           /*  @Override
@@ -170,14 +170,14 @@ public class VoteResultService {
 
     private Set<DecryptedVote> getDecryptedVoteByVoteRevealTxIdSet(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
-        return chainStateService.getVoteRevealOpReturnTxOutputs().stream()
+        return stateService.getVoteRevealOpReturnTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .map(txOutput -> {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
                     try {
                         return new DecryptedVote(opReturnData, voteRevealTxId,
-                                chainStateService, blindVoteService, periodService, chainHeight);
+                                stateService, blindVoteService, periodService, chainHeight);
                     } catch (VoteResultException e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;

@@ -21,7 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.ValidationException;
 
@@ -39,12 +39,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlindVoteValidator {
 
     private final PeriodService periodService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
-    public BlindVoteValidator(PeriodService periodService, ChainStateService chainStateService) {
+    public BlindVoteValidator(PeriodService periodService, StateService stateService) {
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
 
@@ -58,7 +58,7 @@ public class BlindVoteValidator {
 
     public void validateCorrectTxType(Tx tx) throws ValidationException {
         try {
-            Optional<TxType> optionalTxType = chainStateService.getTxType(tx.getId());
+            Optional<TxType> optionalTxType = stateService.getTxType(tx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == TxType.BLIND_VOTE, "BlindVote has wrong txType");
         } catch (Throwable e) {
@@ -71,12 +71,12 @@ public class BlindVoteValidator {
     public void validateCorrectTxOutputType(Tx tx) throws ValidationException {
         try {
             final TxOutput opReturnTxOutput = tx.getLastOutput();
-            final TxOutputType opReturnTxOutputType = chainStateService.getTxOutputType(opReturnTxOutput);
+            final TxOutputType opReturnTxOutputType = stateService.getTxOutputType(opReturnTxOutput);
             checkArgument(opReturnTxOutputType == TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT,
                     "Last output of tx has wrong txOutputType: txOutputType=" + opReturnTxOutputType);
 
             final TxOutput stakeOutput = tx.getOutputs().get(0);
-            final TxOutputType stakeTxOutputType = chainStateService.getTxOutputType(stakeOutput);
+            final TxOutputType stakeTxOutputType = stateService.getTxOutputType(stakeOutput);
             checkArgument(stakeTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
                     "Stake output of tx has wrong txOutputType: txOutputType=" + stakeTxOutputType);
         } catch (Throwable e) {

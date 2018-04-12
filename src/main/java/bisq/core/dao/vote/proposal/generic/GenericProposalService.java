@@ -22,7 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 
 import bisq.common.crypto.KeyRing;
@@ -46,7 +46,7 @@ public class GenericProposalService {
     private final BtcWalletService btcWalletService;
     private final DaoParamService daoParamService;
     private final PublicKey signaturePubKey;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -56,12 +56,12 @@ public class GenericProposalService {
     @Inject
     public GenericProposalService(BsqWalletService bsqWalletService,
                                   BtcWalletService btcWalletService,
-                                  ChainStateService chainStateService,
+                                  StateService stateService,
                                   DaoParamService daoParamService,
                                   KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.daoParamService = daoParamService;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
@@ -86,7 +86,7 @@ public class GenericProposalService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException {
         GenericProposal proposal = new GenericProposal(payload);
 
-        final Coin fee = ProposalConsensus.getFee(daoParamService, chainStateService.getChainHeadHeight());
+        final Coin fee = ProposalConsensus.getFee(daoParamService, stateService.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have tx ID at that moment

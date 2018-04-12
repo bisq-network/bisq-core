@@ -20,7 +20,7 @@ package bisq.core.dao.node.consensus;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,17 +30,17 @@ import javax.inject.Named;
  */
 public class GenesisTxController {
 
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final GenesisTxOutputController genesisTxOutputController;
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
     @Inject
-    public GenesisTxController(ChainStateService chainStateService,
+    public GenesisTxController(StateService stateService,
                                GenesisTxOutputController genesisTxOutputController,
                                @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                                @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.genesisTxOutputController = genesisTxOutputController;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
@@ -51,11 +51,11 @@ public class GenesisTxController {
     }
 
     public void applyStateChange(Tx tx) {
-        Model model = new Model(chainStateService.getIssuedAmountAtGenesis().getValue());
+        Model model = new Model(stateService.getIssuedAmountAtGenesis().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
             genesisTxOutputController.verify(tx.getOutputs().get(i), model);
         }
 
-        chainStateService.setTxType(tx.getId(), TxType.GENESIS);
+        stateService.setTxType(tx.getId(), TxType.GENESIS);
     }
 }

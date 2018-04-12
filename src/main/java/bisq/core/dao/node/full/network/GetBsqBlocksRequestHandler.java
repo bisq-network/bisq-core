@@ -20,7 +20,7 @@ package bisq.core.dao.node.full.network;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
@@ -65,7 +65,7 @@ class GetBsqBlocksRequestHandler {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final NetworkNode networkNode;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final Listener listener;
     private Timer timeoutTimer;
     private boolean stopped;
@@ -75,9 +75,9 @@ class GetBsqBlocksRequestHandler {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GetBsqBlocksRequestHandler(NetworkNode networkNode, ChainStateService chainStateService, Listener listener) {
+    public GetBsqBlocksRequestHandler(NetworkNode networkNode, StateService stateService, Listener listener) {
         this.networkNode = networkNode;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.listener = listener;
     }
 
@@ -88,7 +88,7 @@ class GetBsqBlocksRequestHandler {
 
     public void onGetBsqBlocksRequest(GetBsqBlocksRequest getBsqBlocksRequest, final Connection connection) {
         Log.traceCall(getBsqBlocksRequest + "\n\tconnection=" + connection);
-        List<BsqBlock> bsqBlocks = chainStateService.getClonedBlocksFrom(getBsqBlocksRequest.getFromBlockHeight());
+        List<BsqBlock> bsqBlocks = stateService.getClonedBlocksFrom(getBsqBlocksRequest.getFromBlockHeight());
         final GetBsqBlocksResponse bsqBlocksResponse = new GetBsqBlocksResponse(bsqBlocks, getBsqBlocksRequest.getNonce());
         log.debug("bsqBlocksResponse " + bsqBlocksResponse.getRequestNonce());
 

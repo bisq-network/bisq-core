@@ -55,13 +55,13 @@ import lombok.extern.slf4j.Slf4j;
  * We only have one thread which is writing data from the lite node or full node executors.
  * We use ReentrantReadWriteLock in a functional style.
  * <p>
- * We limit the access to ChainStateService over interfaces for read (ChainStateService) and
- * write (ChainStateService) to have better overview and control about access.
+ * We limit the access to StateService over interfaces for read (StateService) and
+ * write (StateService) to have better overview and control about access.
  * <p>
- * TODO consider refactoring to move data access to a ChainStateService class.
+ * TODO consider refactoring to move data access to a StateService class.
  */
 @Slf4j
-public class ChainStateService {
+public class StateService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Static
@@ -99,7 +99,7 @@ public class ChainStateService {
     // Instance fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final ChainState chainState;
+    private final State state;
 
     private final String genesisTxId;
     private final int genesisBlockHeight;
@@ -115,10 +115,10 @@ public class ChainStateService {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public ChainStateService(ChainState chainState,
-                             @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
-                             @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.chainState = chainState;
+    public StateService(State state,
+                        @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
+                        @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+        this.state = state;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
 
@@ -140,16 +140,16 @@ public class ChainStateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: ChainStateService
+    // Write access: StateService
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void applySnapshot(ChainState snapshot) {
+    public void applySnapshot(State snapshot) {
         lock.write(() -> {
-            chainState.getBsqBlocks().clear();
-            chainState.getBsqBlocks().addAll(snapshot.getBsqBlocks());
+            state.getBsqBlocks().clear();
+            state.getBsqBlocks().addAll(snapshot.getBsqBlocks());
 
-            chainState.getUnspentTxOutputMap().clear();
-            chainState.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
+            state.getUnspentTxOutputMap().clear();
+            state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
 
             //TODO
         });
@@ -163,13 +163,13 @@ public class ChainStateService {
     public void addStateChangeEvent(ChainStateChangeEvent chainStateChangeEvent) {
         lock.write(() -> {
             if (!doesStateChangeEventWithPayloadExist(chainStateChangeEvent)) {
-                chainState.getChainStateChangeEvents().add(chainStateChangeEvent);
+                state.getChainStateChangeEvents().add(chainStateChangeEvent);
             }
         });
     }
 
     public boolean doesStateChangeEventWithPayloadExist(ChainStateChangeEvent chainStateChangeEvent) {
-        return lock.read(() -> chainState.getChainStateChangeEvents().stream()
+        return lock.read(() -> state.getChainStateChangeEvents().stream()
                 .anyMatch(event -> event.getPayload().equals(chainStateChangeEvent.getPayload())));
     }
 
@@ -182,7 +182,7 @@ public class ChainStateService {
     // Proposals or Blind votes.
     public void blockParsingComplete(BsqBlock bsqBlock) {
         lock.write(() -> {
-            chainState.getBsqBlocks().add(bsqBlock);
+            state.getBsqBlocks().add(bsqBlock);
             log.info("New block added at blockHeight " + bsqBlock.getHeight());
 
             // If the client has set a specific executor we call on that thread.
@@ -195,7 +195,7 @@ public class ChainStateService {
             // Though we support also to process a collection of old events which the client has not added himself.
             // The immutable data structures like the bsqBlocks and the stateChangeEvents can be used to recreate the
             // mutable state.
-            chainState.getChainStateChangeEvents().stream()
+            state.getChainStateChangeEvents().stream()
                     .filter(event -> event.getChainHeight() == bsqBlock.getHeight())
                     .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onChainStateChange(event))));
         });
@@ -208,11 +208,11 @@ public class ChainStateService {
 
 
     public void setTxType(String txId, TxType txType) {
-        lock.write(() -> chainState.getTxTypeMap().put(txId, txType));
+        lock.write(() -> state.getTxTypeMap().put(txId, txType));
     }
 
     public void setBurntFee(String txId, long burnedFee) {
-        lock.write(() -> chainState.getBurntFeeMap().put(txId, burnedFee));
+        lock.write(() -> state.getBurntFeeMap().put(txId, burnedFee));
     }
 
 
@@ -222,12 +222,12 @@ public class ChainStateService {
 
     public void addUnspentTxOutput(TxOutput txOutput) {
         lock.write(() -> {
-            chainState.getUnspentTxOutputMap().put(txOutput.getKey(), txOutput);
+            state.getUnspentTxOutputMap().put(txOutput.getKey(), txOutput);
         });
     }
 
     public void removeUnspentTxOutput(TxOutput txOutput) {
-        lock.write(() -> chainState.getUnspentTxOutputMap().remove(txOutput.getKey()));
+        lock.write(() -> state.getUnspentTxOutputMap().remove(txOutput.getKey()));
     }
 
     public void addIssuanceTxOutput(TxOutput txOutput) {
@@ -236,18 +236,18 @@ public class ChainStateService {
 
             addUnspentTxOutput(txOutput);
 
-            chainState.getIssuanceBlockHeightMap().put(txOutput.getTxId(), getChainHeadHeight());
+            state.getIssuanceBlockHeightMap().put(txOutput.getTxId(), getChainHeadHeight());
         });
     }
 
     public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
-        lock.write(() -> chainState.getTxOutputSpentInfoMap().put(txOutput.getKey(),
+        lock.write(() -> state.getTxOutputSpentInfoMap().put(txOutput.getKey(),
                 new SpentInfo(blockHeight, txId, inputIndex)));
 
     }
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        lock.write(() -> chainState.getTxOutputTypeMap().put(txOutput.getKey(), txOutputType));
+        lock.write(() -> state.getTxOutputTypeMap().put(txOutput.getKey(), txOutputType));
     }
 
 
@@ -257,7 +257,7 @@ public class ChainStateService {
 
 
     public void putProposalPayload(String txId, ProposalPayload proposalPayload) {
-        lock.write(() -> chainState.getProposalPayloadByTxIdMap().put(txId, proposalPayload));
+        lock.write(() -> state.getProposalPayloadByTxIdMap().put(txId, proposalPayload));
     }
 
 
@@ -265,20 +265,20 @@ public class ChainStateService {
     // Read access: BsqBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public ChainState getClone() {
-        return lock.read((Supplier<ChainState>) chainState::getClone);
+    public State getClone() {
+        return lock.read((Supplier<State>) state::getClone);
     }
 
     public LinkedList<BsqBlock> getBsqBlocks() {
-        return lock.read(chainState::getBsqBlocks);
+        return lock.read(state::getBsqBlocks);
     }
 
     public boolean containsBsqBlock(BsqBlock bsqBlock) {
-        return lock.read(() -> chainState.getBsqBlocks().contains(bsqBlock));
+        return lock.read(() -> state.getBsqBlocks().contains(bsqBlock));
     }
 
     public int getChainHeadHeight() {
-        return lock.read(() -> !chainState.getBsqBlocks().isEmpty() ? chainState.getBsqBlocks().getLast().getHeight() : 0);
+        return lock.read(() -> !state.getBsqBlocks().isEmpty() ? state.getBsqBlocks().getLast().getHeight() : 0);
     }
 
     public int getGenesisBlockHeight() {
@@ -287,7 +287,7 @@ public class ChainStateService {
 
     public List<BsqBlock> getClonedBlocksFrom(int fromBlockHeight) {
         return lock.read(() -> {
-            return chainState.getClone().getBsqBlocks().stream()
+            return state.getClone().getBsqBlocks().stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
                     .map(BsqBlock::clone)
                     .collect(Collectors.toList());
@@ -308,16 +308,16 @@ public class ChainStateService {
     }
 
     public long getBurntFee(String txId) {
-        return lock.read(() -> chainState.getBurntFeeMap().containsKey(txId) ?
-                (long) chainState.getBurntFeeMap().get(txId) : 0);
+        return lock.read(() -> state.getBurntFeeMap().containsKey(txId) ?
+                (long) state.getBurntFeeMap().get(txId) : 0);
     }
 
     public boolean isIssuanceTx(String txId) {
-        return lock.read(() -> chainState.getIssuanceBlockHeightMap().containsKey(txId));
+        return lock.read(() -> state.getIssuanceBlockHeightMap().containsKey(txId));
     }
 
     public int getIssuanceBlockHeight(String txId) {
-        return lock.read(() -> isIssuanceTx(txId) ? chainState.getIssuanceBlockHeightMap().get(txId) : -1);
+        return lock.read(() -> isIssuanceTx(txId) ? state.getIssuanceBlockHeightMap().get(txId) : -1);
     }
 
 
@@ -326,7 +326,7 @@ public class ChainStateService {
     }
 
     public Map<String, Tx> getTxMap() {
-        return lock.read(() -> chainState.getBsqBlocks().stream()
+        return lock.read(() -> state.getBsqBlocks().stream()
                 .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
                 .collect(Collectors.toMap(Tx::getId, tx -> tx)));
     }
@@ -351,8 +351,8 @@ public class ChainStateService {
 
     public Optional<TxType> getTxType(String txId) {
         return lock.read(() -> {
-            if (chainState.getTxTypeMap().containsKey(txId))
-                return Optional.of(chainState.getTxTypeMap().get(txId));
+            if (state.getTxTypeMap().containsKey(txId))
+                return Optional.of(state.getTxTypeMap().get(txId));
             else
                 return Optional.empty();
         });
@@ -374,15 +374,15 @@ public class ChainStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public SpentInfo getSpentInfo(TxOutput txOutput) {
-        return lock.read(() -> chainState.getTxOutputSpentInfoMap().get(txOutput.getKey()));
+        return lock.read(() -> state.getTxOutputSpentInfoMap().get(txOutput.getKey()));
     }
 
     public boolean isUnspent(TxOutput txOutput) {
-        return lock.read(() -> chainState.getUnspentTxOutputMap().containsKey(txOutput.getKey()));
+        return lock.read(() -> state.getUnspentTxOutputMap().containsKey(txOutput.getKey()));
     }
 
     public TxOutputType getTxOutputType(TxOutput txOutput) {
-        return lock.read(() -> chainState.getTxOutputTypeMap().get(txOutput.getKey()));
+        return lock.read(() -> state.getTxOutputTypeMap().get(txOutput.getKey()));
     }
 
     public boolean isBsqTxOutputType(TxOutput txOutput) {
@@ -400,7 +400,7 @@ public class ChainStateService {
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
-        return lock.read(() -> new HashSet<>(chainState.getUnspentTxOutputMap().values()));
+        return lock.read(() -> new HashSet<>(state.getUnspentTxOutputMap().values()));
     }
 
     public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
@@ -441,8 +441,8 @@ public class ChainStateService {
     }
 
     private Optional<TxOutput> getUnspentTxOutput(TxOutput.Key key) {
-        return lock.read(() -> chainState.getUnspentTxOutputMap().containsKey(key) ?
-                Optional.of(chainState.getUnspentTxOutputMap().get(key)) :
+        return lock.read(() -> state.getUnspentTxOutputMap().containsKey(key) ?
+                Optional.of(state.getUnspentTxOutputMap().get(key)) :
                 Optional.empty()
         );
     }
@@ -466,7 +466,7 @@ public class ChainStateService {
 
     public long getBlockTime(int height) {
         return lock.read(() -> {
-            return chainState.getBsqBlocks().stream()
+            return state.getBsqBlocks().stream()
                     .filter(block -> block.getHeight() == height)
                     .mapToLong(BsqBlock::getTime)
                     .sum();
@@ -474,13 +474,13 @@ public class ChainStateService {
     }
 
     public Coin getTotalBurntFee() {
-        return lock.read(() -> Coin.valueOf(chainState.getBurntFeeMap().values().stream()
+        return lock.read(() -> Coin.valueOf(state.getBurntFeeMap().values().stream()
                 .mapToLong(fee -> fee)
                 .sum()));
     }
 
     public Coin getIssuedAmountAtGenesis() {
-        return ChainStateService.GENESIS_TOTAL_SUPPLY;
+        return StateService.GENESIS_TOTAL_SUPPLY;
     }
 
     public Coin getIssuedAmountFromCompRequests() {

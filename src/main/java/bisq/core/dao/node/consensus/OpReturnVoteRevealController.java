@@ -21,7 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 
 import javax.inject.Inject;
@@ -36,14 +36,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class OpReturnVoteRevealController {
     private final PeriodService periodService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
 
     @Inject
     public OpReturnVoteRevealController(PeriodService periodService,
-                                        ChainStateService chainStateService) {
+                                        StateService stateService) {
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
     }
 
     // opReturnData: 2 bytes version and type, 20 bytes hash, 16 bytes key
@@ -54,23 +54,23 @@ public class OpReturnVoteRevealController {
         if (model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 38 &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL)) {
-            chainStateService.setTxOutputType(txOutput, TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
+            stateService.setTxOutputType(txOutput, TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
             checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
                     "model.getVoteRevealUnlockStakeOutput() must not be null");
-            chainStateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
+            stateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
 
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
             log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.VOTE_REVEAL));
-            chainStateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
+            stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration
             // that it is valid BSQ.
             if (model.getVoteRevealUnlockStakeOutput() != null)
-                chainStateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
+                stateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
         }
     }
 }

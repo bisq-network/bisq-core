@@ -21,7 +21,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import javax.inject.Inject;
 
@@ -34,12 +34,12 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 public class TxOutputController {
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final OpReturnController opReturnController;
 
     @Inject
-    public TxOutputController(ChainStateService chainStateService, OpReturnController opReturnController) {
-        this.chainStateService = chainStateService;
+    public TxOutputController(StateService stateService, OpReturnController opReturnController) {
+        this.stateService = stateService;
         this.opReturnController = opReturnController;
     }
 
@@ -107,11 +107,11 @@ public class TxOutputController {
 
     protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
         if (txOutputType != null)
-            chainStateService.setTxOutputType(txOutput, txOutputType);
-        chainStateService.addUnspentTxOutput(txOutput);
+            stateService.setTxOutputType(txOutput, txOutputType);
+        stateService.addUnspentTxOutput(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
-        chainStateService.setTxOutputType(txOutput, TxOutputType.BTC_OUTPUT);
+        stateService.setTxOutputType(txOutput, TxOutputType.BTC_OUTPUT);
     }
 }

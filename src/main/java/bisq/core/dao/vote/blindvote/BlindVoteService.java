@@ -30,7 +30,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.Proposal;
@@ -87,12 +87,12 @@ import lombok.extern.slf4j.Slf4j;
  * TODO split up
  */
 @Slf4j
-public class BlindVoteService implements PersistedDataHost, HashMapChangedListener, ChainStateService.Listener {
+public class BlindVoteService implements PersistedDataHost, HashMapChangedListener, StateService.Listener {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final PeriodService periodService;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final PublicKey signaturePubKey;
     private final MyVoteService myVoteService;
     private final ProposalService proposalService;
@@ -122,7 +122,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                             WalletsManager walletsManager,
                             BsqWalletService bsqWalletService,
                             PeriodService periodService,
-                            ChainStateService chainStateService,
+                            StateService stateService,
                             MyVoteService myVoteService,
                             ProposalService proposalService,
                             DaoParamService daoParamService,
@@ -135,7 +135,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.myVoteService = myVoteService;
         this.proposalService = proposalService;
         this.daoParamService = daoParamService;
@@ -162,7 +162,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         rePublishWhenWellConnected();
 
-        chainStateService.addListener(this);
+        stateService.addListener(this);
     }
 
     public void shutDown() {
@@ -185,7 +185,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainStateService.Listener
+    // StateService.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called delayed as we map to user thread! If follow up methods requests the blockchain data it
@@ -226,7 +226,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            ProposalList proposalList = getSortedProposalList(chainStateService.getChainHeadHeight());
+            ProposalList proposalList = getSortedProposalList(stateService.getChainHeadHeight());
             log.info("ProposalList used in blind vote. proposalList={}", proposalList);
 
             //TODO publish to P2P network for more redundancy?
@@ -237,7 +237,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(daoParamService, chainStateService.getChainHeadHeight());
+            final Coin fee = BlindVoteConsensus.getFee(daoParamService, stateService.getChainHeadHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
@@ -329,7 +329,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             if (storeLocally)
                 persist();
 
-            onBlockHeightChanged(chainStateService.getChainHeadHeight());
+            onBlockHeightChanged(stateService.getChainHeadHeight());
         } else {
             if (storeLocally && !isMine(blindVote))
                 log.debug("We have that blindVote already in our list. blindVote={}", blindVote);
@@ -364,7 +364,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
     private boolean isProposalPayloadValid(ProposalPayload proposalPayload) {
         final String txId = proposalPayload.getTxId();
-        Optional<Tx> optionalTx = chainStateService.getTx(txId);
+        Optional<Tx> optionalTx = stateService.getTx(txId);
         if (optionalTx.isPresent()) {
             final Tx tx = optionalTx.get();
             try {
@@ -378,14 +378,14 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 return false;
             }
         } else {
-            log.warn("Validation failed. Tx not found in chainStateService. txId={}", txId);
+            log.warn("Validation failed. Tx not found in stateService. txId={}", txId);
             return false;
         }
     }
 
     private boolean isBlindVoteValid(BlindVote blindVote) {
         final String txId = blindVote.getTxId();
-        Optional<Tx> optionalTx = chainStateService.getTx(txId);
+        Optional<Tx> optionalTx = stateService.getTx(txId);
         if (optionalTx.isPresent()) {
             final Tx tx = optionalTx.get();
             try {
@@ -399,7 +399,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 return false;
             }
         } else {
-            log.warn("Validation failed. Tx not found in chainStateService. txId={}", txId);
+            log.warn("Validation failed. Tx not found in stateService. txId={}", txId);
             return false;
         }
     }

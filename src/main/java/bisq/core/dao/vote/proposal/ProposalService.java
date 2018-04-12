@@ -21,7 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.ChainStateChangeEvent;
 import bisq.core.dao.vote.PeriodService;
@@ -49,7 +49,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Listens on the ChainStateService for new blocks and for ProposalPayload from the P2P network.
+ * Listens on the StateService for new blocks and for ProposalPayload from the P2P network.
  * We configure both listeners thread context aware so we get our listeners called in the parser
  * thread created by the single threaded executor created in the NodeExecutor.
  * <p>
@@ -68,7 +68,7 @@ public class ProposalService implements PersistedDataHost {
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final PublicKey signaturePubKey;
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
     private final ProposalPayloadValidator proposalPayloadValidator;
     private final Storage<ProposalList> storage;
 
@@ -80,14 +80,14 @@ public class ProposalService implements PersistedDataHost {
     public ProposalService(NodeExecutor nodeExecutor,
                            P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
-                           ChainStateService chainStateService,
+                           StateService stateService,
                            ProposalPayloadValidator proposalPayloadValidator,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
         this.nodeExecutor = nodeExecutor;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
-        this.chainStateService = chainStateService;
+        this.stateService = stateService;
         this.proposalPayloadValidator = proposalPayloadValidator;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
@@ -99,7 +99,7 @@ public class ProposalService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(new ChainStateService.Listener() {
+        stateService.addListener(new StateService.Listener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
             public Executor getExecutor() {
@@ -174,7 +174,7 @@ public class ProposalService implements PersistedDataHost {
                 Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
                 proposalList.add(proposal);
 
-                maybeAddProposalToTx(proposalPayload, chainStateService.getChainHeadHeight());
+                maybeAddProposalToTx(proposalPayload, stateService.getChainHeadHeight());
 
                 if (storeLocally)
                     persist();
@@ -192,9 +192,9 @@ public class ProposalService implements PersistedDataHost {
             final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
             findProposal(proposalPayload)
                     .ifPresent(payload -> {
-                        if (isInPhaseOrUnconfirmed(chainStateService.getTx(payload.getTxId()), payload.getTxId(),
+                        if (isInPhaseOrUnconfirmed(stateService.getTx(payload.getTxId()), payload.getTxId(),
                                 PeriodService.Phase.PROPOSAL,
-                                chainStateService.getChainHeadHeight())) {
+                                stateService.getChainHeadHeight())) {
                             removeProposalFromList(proposalPayload);
                         } else {
                             final String msg = "onRemoved called of a Proposal which is outside of the Request phase " +
@@ -211,19 +211,19 @@ public class ProposalService implements PersistedDataHost {
     private void maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
         getTxForProposal(proposalPayload)
                 .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
-                .ifPresent(tx -> chainStateService.addStateChangeEvent(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
+                .ifPresent(tx -> stateService.addStateChangeEvent(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
     }
 
     private void onAddProposalPayloadEvent(AddProposalPayloadEvent event) {
         ProposalPayload proposalPayload = (ProposalPayload) event.getPayload();
         getTxForProposal(proposalPayload)
                 .filter(tx -> !periodService.isInPhase(event.getChainHeight(), PeriodService.Phase.PROPOSAL))
-                .ifPresent(tx -> chainStateService.putProposalPayload(tx.getId(), proposalPayload));
+                .ifPresent(tx -> stateService.putProposalPayload(tx.getId(), proposalPayload));
     }
 
 
     private Optional<Tx> getTxForProposal(ProposalPayload proposalPayload) {
-        return chainStateService.getTx(proposalPayload.getTxId())
+        return stateService.getTx(proposalPayload.getTxId())
                 .filter(tx -> isValid(tx, proposalPayload));
     }
 
@@ -244,10 +244,10 @@ public class ProposalService implements PersistedDataHost {
             log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
     }
 
-    // We use the ChainStateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
+    // We use the StateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
     // out of sync data sources.
     public boolean isUnconfirmed(String txId) {
-        return !chainStateService.getTx(txId).isPresent();
+        return !stateService.getTx(txId).isPresent();
     }
 
     public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {

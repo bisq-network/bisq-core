@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * in the voting process. The events contain the blockHeight when they become valid. When obtaining the value of an
  * parameter we look up the latest change in case we have any changeEvents, otherwise we use the default value from the
  * DaoParam.
- * We do not need to sync that data structure with the ChainStateService or have handling for snapshots because changes by
+ * We do not need to sync that data structure with the StateService or have handling for snapshots because changes by
  * voting are safe against blockchain re-orgs as we use sufficient breaks between the phases. So even in case the
  * BsqBlockchain gets changed due a re-org we will not suffer from a stale state.
  */

@@ -19,7 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 
 import javax.inject.Inject;
 
@@ -28,23 +28,23 @@ import java.util.LinkedList;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Checks if a block is valid and if so adds it to the ChainStateService.
+ * Checks if a block is valid and if so adds it to the StateService.
  */
 @Slf4j
 public class BsqBlockController {
 
-    private final ChainStateService chainStateService;
+    private final StateService stateService;
 
     @Inject
-    public BsqBlockController(ChainStateService chainStateService) {
-        this.chainStateService = chainStateService;
+    public BsqBlockController(StateService stateService) {
+        this.stateService = stateService;
     }
 
     public void addBlockIfValid(BsqBlock bsqBlock) throws BlockNotConnectingException {
-        LinkedList<BsqBlock> bsqBlocks = chainStateService.getBsqBlocks();
+        LinkedList<BsqBlock> bsqBlocks = stateService.getBsqBlocks();
         if (!bsqBlocks.contains(bsqBlock)) {
             if (isBlockConnecting(bsqBlock, bsqBlocks)) {
-                chainStateService.blockParsingComplete(bsqBlock);
+                stateService.blockParsingComplete(bsqBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",

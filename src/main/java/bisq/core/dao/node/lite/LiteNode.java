@@ -23,7 +23,7 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.SnapshotManager;
 
 import bisq.network.p2p.P2PService;
@@ -61,12 +61,12 @@ public class LiteNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public LiteNode(ChainStateService chainStateService,
+    public LiteNode(StateService stateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     LiteNodeExecutor bsqLiteNodeExecutor,
                     LiteNodeNetworkService liteNodeNetworkService) {
-        super(chainStateService,
+        super(stateService,
                 snapshotManager,
                 p2PService);
         this.bsqLiteNodeExecutor = bsqLiteNodeExecutor;
@@ -152,7 +152,7 @@ public class LiteNode extends BsqNode {
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
         BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock);
-        if (!chainStateService.containsBsqBlock(clonedBsqBlock)) {
+        if (!stateService.containsBsqBlock(clonedBsqBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
             bsqLiteNodeExecutor.parseBlock(clonedBsqBlock, this::onNewBsqBlock, getErrorHandler());
         }

@@ -22,7 +22,7 @@ import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.state.ChainStateService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
@@ -51,30 +51,30 @@ public class DecryptedVote {
     private final ProposalList proposalListUsedForVoting;
 
     public DecryptedVote(byte[] opReturnData, String voteRevealTxId,
-                         ChainStateService chainStateService, BlindVoteService blindVoteService,
+                         StateService stateService, BlindVoteService blindVoteService,
                          PeriodService periodService, int chainHeight)
             throws VoteResultException {
         hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
         this.voteRevealTxId = voteRevealTxId;
 
         SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
-        Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, chainStateService, periodService, chainHeight);
-        TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, chainStateService);
-        blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, chainStateService, periodService, chainHeight);
+        Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, stateService, periodService, chainHeight);
+        TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, stateService);
+        blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
         BlindVote blindVote = getBlindVote(blindVoteService);
         proposalListUsedForVoting = getProposalList(blindVote, secretKey);
     }
 
-    private Tx getVoteRevealTx(String voteRevealTxId, ChainStateService chainStateService,
+    private Tx getVoteRevealTx(String voteRevealTxId, StateService stateService,
                                PeriodService periodService, int chainHeight)
             throws VoteResultException {
-        Optional<Tx> optionalVoteRevealTx = chainStateService.getTx(voteRevealTxId);
+        Optional<Tx> optionalVoteRevealTx = stateService.getTx(voteRevealTxId);
         try {
             checkArgument(optionalVoteRevealTx.isPresent(), "voteRevealTx with txId " +
                     voteRevealTxId + "not found.");
             Tx voteRevealTx = optionalVoteRevealTx.get();
-            Optional<TxType> optionalTxType = chainStateService.getTxType(voteRevealTx.getId());
+            Optional<TxType> optionalTxType = stateService.getTxType(voteRevealTx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == TxType.VOTE_REVEAL,
                     "voteRevealTx must have type VOTE_REVEAL");
@@ -86,15 +86,15 @@ public class DecryptedVote {
         }
     }
 
-    private TxOutput getBlindVoteStakeOutput(Tx voteRevealTx, ChainStateService chainStateService)
+    private TxOutput getBlindVoteStakeOutput(Tx voteRevealTx, StateService stateService)
             throws VoteResultException {
         try {
             // We use the stake output of the blind vote tx as first input
             final TxInput stakeIxInput = voteRevealTx.getInputs().get(0);
-            Optional<TxOutput> optionalTxOutput = chainStateService.getConnectedTxOutput(stakeIxInput);
+            Optional<TxOutput> optionalTxOutput = stateService.getConnectedTxOutput(stakeIxInput);
             checkArgument(optionalTxOutput.isPresent(), "blindVoteStakeOutput must not be present");
             final TxOutput txOutput = optionalTxOutput.get();
-            checkArgument(chainStateService.getTxOutputType(txOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
+            checkArgument(stateService.getTxOutputType(txOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
                     "blindVoteStakeOutput must have type BLIND_VOTE_LOCK_STAKE_OUTPUT");
             return txOutput;
         } catch (Throwable t) {
@@ -102,16 +102,16 @@ public class DecryptedVote {
         }
     }
 
-    private String getBlindVoteTxId(TxOutput blindVoteStakeOutput, ChainStateService chainStateService,
+    private String getBlindVoteTxId(TxOutput blindVoteStakeOutput, StateService stateService,
                                     PeriodService periodService, int chainHeight)
             throws VoteResultException {
         try {
             String blindVoteTxId = blindVoteStakeOutput.getTxId();
-            Optional<Tx> optionalBlindVoteTx = chainStateService.getTx(blindVoteTxId);
+            Optional<Tx> optionalBlindVoteTx = stateService.getTx(blindVoteTxId);
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
                     blindVoteTxId + "not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();
-            Optional<TxType> optionalTxType = chainStateService.getTxType(blindVoteTx.getId());
+            Optional<TxType> optionalTxType = stateService.getTxType(blindVoteTx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == TxType.BLIND_VOTE,
                     "blindVoteTx must have type BLIND_VOTE");
