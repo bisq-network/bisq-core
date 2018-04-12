@@ -25,7 +25,7 @@ import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
-import bisq.core.dao.state.events.ChainStateChangeEvent;
+import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.ThreadContextAwareListener;
@@ -90,7 +90,7 @@ public class StateService {
     public interface Listener extends ThreadContextAwareListener {
         void onBlockAdded(BsqBlock bsqBlock);
 
-        default void onChainStateChange(ChainStateChangeEvent chainStateChangeEvent) {
+        default void onStateChange(StateChangeEvent stateChangeEvent) {
         }
     }
 
@@ -157,20 +157,20 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: ChainStateChangeEvent
+    // Write access: StateChangeEvent
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addStateChangeEvent(ChainStateChangeEvent chainStateChangeEvent) {
+    public void addStateChangeEvent(StateChangeEvent stateChangeEvent) {
         lock.write(() -> {
-            if (!doesStateChangeEventWithPayloadExist(chainStateChangeEvent)) {
-                state.getChainStateChangeEvents().add(chainStateChangeEvent);
+            if (!stateChangeEventWithPayloadExists(stateChangeEvent)) {
+                state.getStateChangeEvents().add(stateChangeEvent);
             }
         });
     }
 
-    public boolean doesStateChangeEventWithPayloadExist(ChainStateChangeEvent chainStateChangeEvent) {
-        return lock.read(() -> state.getChainStateChangeEvents().stream()
-                .anyMatch(event -> event.getPayload().equals(chainStateChangeEvent.getPayload())));
+    public boolean stateChangeEventWithPayloadExists(StateChangeEvent stateChangeEvent) {
+        return lock.read(() -> state.getStateChangeEvents().stream()
+                .anyMatch(event -> event.getPayload().equals(stateChangeEvent.getPayload())));
     }
 
 
@@ -189,15 +189,15 @@ public class StateService {
             // By default the userThread's executor is used.
             listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(bsqBlock)));
 
-            // We check if we have a ChainStateChangeEvent at that blockHeight and if so we notify the listeners.
-            // The onBlockAdded handler usually triggers that new ChainStateChangeEvent gets added so we are processing
+            // We check if we have a StateChangeEvent at that blockHeight and if so we notify the listeners.
+            // The onBlockAdded handler usually triggers that new StateChangeEvent gets added so we are processing
             // those newly added events in the listener handler.
             // Though we support also to process a collection of old events which the client has not added himself.
             // The immutable data structures like the bsqBlocks and the stateChangeEvents can be used to recreate the
             // mutable state.
-            state.getChainStateChangeEvents().stream()
+            state.getStateChangeEvents().stream()
                     .filter(event -> event.getChainHeight() == bsqBlock.getHeight())
-                    .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onChainStateChange(event))));
+                    .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onStateChange(event))));
         });
     }
 

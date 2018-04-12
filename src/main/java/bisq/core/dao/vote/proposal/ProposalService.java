@@ -23,7 +23,7 @@ import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
-import bisq.core.dao.state.events.ChainStateChangeEvent;
+import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.PeriodService;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -113,9 +113,9 @@ public class ProposalService implements PersistedDataHost {
             }
 
             @Override
-            public void onChainStateChange(ChainStateChangeEvent chainStateChangeEvent) {
-                if (chainStateChangeEvent instanceof AddProposalPayloadEvent) {
-                    ProposalService.this.onAddProposalPayloadEvent((AddProposalPayloadEvent) chainStateChangeEvent);
+            public void onStateChange(StateChangeEvent stateChangeEvent) {
+                if (stateChangeEvent instanceof AddProposalPayloadEvent) {
+                    ProposalService.this.onAddProposalPayloadEvent((AddProposalPayloadEvent) stateChangeEvent);
                 }
             }
         });

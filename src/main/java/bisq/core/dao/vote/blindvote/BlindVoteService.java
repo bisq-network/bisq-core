@@ -374,11 +374,11 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 proposalPayloadValidator.validateCorrectTxType(proposalPayload, tx);
                 return true;
             } catch (ValidationException e) {
-                log.warn("Validation failed. txId={}, proposalPayload={}, validationException={}", txId, proposalPayload, e.toString());
+                log.warn("isProposalPayloadValid failed. txId={}, proposalPayload={}, validationException={}", txId, proposalPayload, e.toString());
                 return false;
             }
         } else {
-            log.warn("Validation failed. Tx not found in stateService. txId={}", txId);
+            log.debug("isProposalPayloadValid failed. Tx not found in stateService. txId={}", txId);
             return false;
         }
     }
@@ -395,11 +395,11 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 blindVoteValidator.validateCorrectTxType(tx);
                 return true;
             } catch (ValidationException e) {
-                log.warn("Validation failed. txId={}, blindVote={}, validationException={}", txId, blindVote, e.toString());
+                log.warn("isBlindVoteValid failed. txId={}, blindVote={}, validationException={}", txId, blindVote, e.toString());
                 return false;
             }
         } else {
-            log.warn("Validation failed. Tx not found in stateService. txId={}", txId);
+            log.debug("isBlindVoteValid failed. Tx not found in stateService. txId={}", txId);
             return false;
         }
     }

@@ -24,7 +24,7 @@ import lombok.Value;
 
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class AddProposalPayloadEvent extends ChainStateChangeEvent {
+public class AddProposalPayloadEvent extends StateChangeEvent {
 
     public AddProposalPayloadEvent(ProposalPayload payload, int chainHeight) {
         super(payload, chainHeight);

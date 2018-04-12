@@ -24,11 +24,11 @@ import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode
-public class ChainStateChangeEvent {
+public class StateChangeEvent {
     private int chainHeight;
     private final ProtectedStoragePayload payload;
 
-    public ChainStateChangeEvent(ProtectedStoragePayload payload, int chainHeight) {
+    public StateChangeEvent(ProtectedStoragePayload payload, int chainHeight) {
         this.payload = payload;
         this.chainHeight = chainHeight;
     }
