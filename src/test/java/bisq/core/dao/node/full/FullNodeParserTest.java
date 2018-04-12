@@ -221,7 +221,7 @@ public class FullNodeParserTest {
         });
 
         // Verify that the genesis tx has been added to the bsq blockchain with the correct issuance amount
-        assertTrue(chainStateService.getGenesisTx() == genesisTx);
+        assertTrue(chainStateService.getGenesisTx().get() == genesisTx);
         assertTrue(chainStateService.getIssuedAmountAtGenesis().getValue() == issuance.getValue());
 
         // And that other txs are not added

@@ -57,6 +57,5 @@ public class GenesisTxController {
         }
 
         chainStateService.setTxType(tx.getId(), TxType.GENESIS);
-        chainStateService.setGenesisTx(tx);
     }
 }

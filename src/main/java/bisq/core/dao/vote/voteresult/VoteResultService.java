@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.voteresult;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.state.ChainStateService;
 import bisq.core.dao.vote.BooleanVote;
@@ -68,7 +69,8 @@ import javax.annotation.Nullable;
  */
 
 @Slf4j
-public class VoteResultService implements ChainStateService.Listener {
+public class VoteResultService {
+    private final NodeExecutor nodeExecutor;
     private final BlindVoteService blindVoteService;
     private final VoteRevealService voteRevealService;
     private final ChainStateService chainStateService;
@@ -84,12 +86,14 @@ public class VoteResultService implements ChainStateService.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public VoteResultService(BlindVoteService blindVoteService,
+    public VoteResultService(NodeExecutor nodeExecutor,
+                             BlindVoteService blindVoteService,
                              VoteRevealService voteRevealService,
                              ChainStateService chainStateService,
                              DaoParamService daoParamService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
+        this.nodeExecutor = nodeExecutor;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.chainStateService = chainStateService;
@@ -104,7 +108,19 @@ public class VoteResultService implements ChainStateService.Listener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        chainStateService.addListener(this);
+        chainStateService.addListener(new ChainStateService.Listener() {
+            // We set the nodeExecutor as we want to get called in the context of the parser thread
+            //TODO issuance fails if parser thread is set. need to refactor class first
+          /*  @Override
+            public Executor getExecutor() {
+                return nodeExecutor.get();
+            }*/
+
+            @Override
+            public void onBlockAdded(BsqBlock bsqBlock) {
+                maybeApplyVoteResult(bsqBlock.getHeight());
+            }
+        });
     }
 
     public void shutDown() {
@@ -112,19 +128,10 @@ public class VoteResultService implements ChainStateService.Listener {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainStateService.Listener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
-        maybeApplyVoteResult(bsqBlock.getHeight());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // We are in parser thread!
     private void maybeApplyVoteResult(int chainHeight) {
         if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.ISSUANCE) {
             applyVoteResult(chainHeight);
@@ -163,7 +170,7 @@ public class VoteResultService implements ChainStateService.Listener {
 
     private Set<DecryptedVote> getDecryptedVoteByVoteRevealTxIdSet(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
-        return chainStateService.getVoteRevealTxOutputs().stream()
+        return chainStateService.getVoteRevealOpReturnTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .map(txOutput -> {
                     final byte[] opReturnData = txOutput.getOpReturnData();

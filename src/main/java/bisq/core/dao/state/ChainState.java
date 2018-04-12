@@ -19,7 +19,6 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.blockchain.vo.SpentInfo;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.blockchain.vo.TxType;
@@ -38,12 +37,11 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * Root class for the state of the crucial Bsq data.
+ * Root class of all relevant data for determining the state of the BSQ block chain.
  * We maintain 2 immutable data structures, the bsqBlocks and the stateChangeEvents.
  * All mutable data is kept in maps.
  */
@@ -64,21 +62,22 @@ public class ChainState implements PersistableEnvelope {
 
 
     // Mutable data
-    // Tx specific
-    @Setter
-    private Tx genesisTx;
-    private final Map<String, Long> burntFeeByTxIdMap = new HashMap<>();
-    private final Map<String, TxType> txTypeByTxIdMap = new HashMap<>();
-    private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
-    private final Map<String, Integer> issuanceBlockHeightByTxIdMap = new HashMap<>();
 
-    // TxInput specific
-    private final Map<String, TxOutput> connectedTxOutputByTxIdMap = new HashMap<>();
+    // Tx specific, key is txId
+    private final Map<String, TxType> txTypeMap = new HashMap<>();
+    private final Map<String, Long> burntFeeMap = new HashMap<>();
+    private final Map<String, Integer> issuanceBlockHeightMap = new HashMap<>();
+
+    // TxInput specific, key is txId
+    private final Map<String, TxOutput> connectedTxOutputMap = new HashMap<>();
 
     // TxOutput specific
     private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap = new HashMap<>();
     private final Map<TxOutput.Key, SpentInfo> txOutputSpentInfoMap = new HashMap<>();
+
+    // non blockchain data
+    private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

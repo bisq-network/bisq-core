@@ -55,7 +55,7 @@ public class TxInputController {
             }
 
             chainStateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
-            chainStateService.removeFromUTXOMap(connectedTxOutput);
+            chainStateService.removeUnspentTxOutput(connectedTxOutput);
         });
     }
 }

@@ -62,7 +62,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ProposalService implements PersistedDataHost {
-    private NodeExecutor nodeExecutor;
+    private final NodeExecutor nodeExecutor;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final PublicKey signaturePubKey;

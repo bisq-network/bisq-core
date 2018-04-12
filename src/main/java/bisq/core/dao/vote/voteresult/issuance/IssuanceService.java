@@ -60,7 +60,7 @@ public class IssuanceService {
                 })
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .forEach(txOutput -> {
-                    chainStateService.issueBsq(txOutput);
+                    chainStateService.addIssuanceTxOutput(txOutput);
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
                     sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())

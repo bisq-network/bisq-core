@@ -108,7 +108,7 @@ public class TxOutputController {
     protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
         if (txOutputType != null)
             chainStateService.setTxOutputType(txOutput, txOutputType);
-        chainStateService.addUTXO(txOutput);
+        chainStateService.addUnspentTxOutput(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
