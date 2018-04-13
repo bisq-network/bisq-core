@@ -22,11 +22,13 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ValidationException;
 import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.common.crypto.KeyRing;
+import bisq.common.util.Tuple2;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -73,12 +75,12 @@ public class CompensationRequestService {
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public CompensationRequest makeTxAndGetCompensationRequest(String name,
-                                                               String title,
-                                                               String description,
-                                                               String link,
-                                                               Coin requestedBsq,
-                                                               String bsqAddress)
+    public Tuple2<Proposal, Transaction> makeTxAndGetCompensationRequest(String name,
+                                                                         String title,
+                                                                         String description,
+                                                                         String link,
+                                                                         Coin requestedBsq,
+                                                                         String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
@@ -98,7 +100,7 @@ public class CompensationRequestService {
 
         Transaction transaction = createCompensationRequestTx(tempPayload);
 
-        return createCompensationRequest(tempPayload, transaction);
+        return new Tuple2<>(createCompensationRequest(tempPayload, transaction), transaction);
     }
 
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.

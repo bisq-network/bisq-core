@@ -45,13 +45,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Persists, publishes and republishes own proposals.
@@ -127,11 +124,8 @@ public class MyProposalService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void publishProposal(Proposal proposal, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
-        final String txId = Objects.requireNonNull(proposal).getTxId();
-        Transaction tx = Objects.requireNonNull(bsqWalletService.getTransaction(txId));
-        checkNotNull(tx, "proposal.getTx() at publishProposal must not be null");
-        walletsManager.publishAndCommitBsqTx(tx, new TxBroadcaster.Callback() {
+    public void publishProposal(Proposal proposal, Transaction transaction, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
                 final String txId = transaction.getHashAsString();

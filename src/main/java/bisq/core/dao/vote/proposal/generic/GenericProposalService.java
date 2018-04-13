@@ -22,12 +22,14 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ProposalPayloadValidator;
 import bisq.core.dao.vote.proposal.ValidationException;
 import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.common.crypto.KeyRing;
+import bisq.common.util.Tuple2;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -74,10 +76,10 @@ public class GenericProposalService {
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public GenericProposal makeTxAndGetGenericProposal(String name,
-                                                       String title,
-                                                       String description,
-                                                       String link)
+    public Tuple2<Proposal, Transaction> makeTxAndGetGenericProposal(String name,
+                                                                     String title,
+                                                                     String description,
+                                                                     String link)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
@@ -95,7 +97,7 @@ public class GenericProposalService {
 
         Transaction transaction = createGenericProposalTx(tempPayload);
 
-        return createGenericProposal(tempPayload, transaction);
+        return new Tuple2<>(createGenericProposal(tempPayload, transaction), transaction);
     }
 
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.
