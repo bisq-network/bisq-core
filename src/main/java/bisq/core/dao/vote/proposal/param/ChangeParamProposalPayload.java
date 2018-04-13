@@ -102,6 +102,18 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     }
 
     @Override
+    public ProposalPayload cloneWithoutTxId() {
+        //TODO impl
+        return null;
+    }
+
+    @Override
+    public ProposalPayload cloneWithTxId(String txId) {
+        //TODO impl
+        return null;
+    }
+
+    @Override
     public ProposalType getType() {
         return ProposalType.CHANGE_PARAM;
     }

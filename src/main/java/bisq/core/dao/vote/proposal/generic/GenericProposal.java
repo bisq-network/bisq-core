@@ -28,11 +28,18 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.annotation.Nullable;
 
 /**
  * Generic proposal for anything not covered by specific proposals.
  */
+@Slf4j
+@EqualsAndHashCode(callSuper = true)
+@Value
 public class GenericProposal extends Proposal {
 
     ///////////////////////////////////////////////////////////////////////////////////////////

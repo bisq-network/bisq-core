@@ -21,9 +21,11 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
+import bisq.core.dao.vote.proposal.ProposalPayloadValidator;
+import bisq.core.dao.vote.proposal.ValidationException;
+import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.common.crypto.KeyRing;
 
@@ -35,6 +37,8 @@ import javax.inject.Inject;
 
 import java.security.PublicKey;
 
+import java.io.IOException;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -45,6 +49,7 @@ public class GenericProposalService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ParamService paramService;
+    private final ProposalPayloadValidator proposalPayloadValidator;
     private final PublicKey signaturePubKey;
     private final StateService stateService;
 
@@ -58,20 +63,26 @@ public class GenericProposalService {
                                   BtcWalletService btcWalletService,
                                   StateService stateService,
                                   ParamService paramService,
+                                  ProposalPayloadValidator proposalPayloadValidator,
                                   KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.stateService = stateService;
         this.paramService = paramService;
+        this.proposalPayloadValidator = proposalPayloadValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public GenericProposalPayload createGenericProposalPayload(String name,
-                                                               String title,
-                                                               String description,
-                                                               String link) {
-        return new GenericProposalPayload(
+    public GenericProposal makeTxAndGetGenericProposal(String name,
+                                                       String title,
+                                                       String description,
+                                                       String link)
+            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+            WalletException {
+
+        // As we don't know the txId we create a temp object with TxId set to null.
+        final GenericProposalPayload tempPayload = new GenericProposalPayload(
                 UUID.randomUUID().toString(),
                 name,
                 title,
@@ -80,17 +91,24 @@ public class GenericProposalService {
                 signaturePubKey,
                 new Date()
         );
+        proposalPayloadValidator.validateDataFields(tempPayload);
+
+        Transaction transaction = createGenericProposalTx(tempPayload);
+
+        return createGenericProposal(tempPayload, transaction);
     }
 
-    public GenericProposal createGenericProposal(GenericProposalPayload payload)
-            throws InsufficientMoneyException, TransactionVerificationException, WalletException {
-        GenericProposal proposal = new GenericProposal(payload);
+    // We have txId set to null in tempPayload as we cannot know it before the tx is created.
+    // Once the tx is known we will create a new object including the txId.
+    // The hashOfPayload used in the opReturnData is created with the txId set to null.
+    private Transaction createGenericProposalTx(GenericProposalPayload tempPayload)
+            throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(paramService, stateService.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
-        // payload does not have tx ID at that moment
-        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(payload);
+        // payload does not have txId at that moment
+        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(tempPayload);
         byte[] opReturnData = ProposalConsensus.getOpReturnData(hashOfPayload);
 
         final Transaction txWithBtcFee = btcWalletService.completePreparedGenericProposalTx(
@@ -98,10 +116,15 @@ public class GenericProposalService {
                 opReturnData);
 
         final Transaction completedTx = bsqWalletService.signTx(txWithBtcFee);
-
-        // We need the tx for showing the user tx details before publishing (fee, size).
-        proposal.setTx(completedTx);
         log.info("GenericProposal tx: " + completedTx);
-        return proposal;
+        return completedTx;
+    }
+
+    // We have txId set to null in tempPayload as we cannot know it before the tx is created.
+    // Once the tx is known we will create a new object including the txId.
+    private GenericProposal createGenericProposal(GenericProposalPayload tempPayload, Transaction transaction) {
+        final String txId = transaction.getHashAsString();
+        GenericProposalPayload compensationRequestPayload = (GenericProposalPayload) tempPayload.cloneWithTxId(txId);
+        return new GenericProposal(compensationRequestPayload);
     }
 }

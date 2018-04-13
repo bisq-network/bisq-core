@@ -26,25 +26,28 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import org.bitcoinj.core.Transaction;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
 /**
- * Base class for all proposals like compensation request, generic request, remove altcoin request, change param request, etc.
+ * Base class for all proposals like compensation request, generic request, remove altcoin request,
+ * change param request, etc.
+ * It contains the ProposalPayload and the Vote. If a ProposalPayload is ignored for voting the vote object is null.
  */
+@Slf4j
 @Getter
+@EqualsAndHashCode
 public abstract class Proposal implements PersistablePayload {
     protected final ProposalPayload proposalPayload;
     @Nullable
@@ -54,10 +57,6 @@ public abstract class Proposal implements PersistablePayload {
 
     // Not persisted!
     protected transient ObjectProperty<Vote> voteResultProperty = new SimpleObjectProperty<>();
-    // Not persisted!
-    @Nullable
-    @Setter
-    private transient Transaction tx;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +133,6 @@ public abstract class Proposal implements PersistablePayload {
                 "\n     proposalPayload=" + proposalPayload +
                 ",\n     vote=" + vote +
                 ",\n     extraDataMap=" + extraDataMap +
-                ",\n     tx=" + tx +
                 "\n}";
     }
 }

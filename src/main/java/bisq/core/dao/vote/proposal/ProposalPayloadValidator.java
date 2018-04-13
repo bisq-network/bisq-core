@@ -113,7 +113,7 @@ public class ProposalPayloadValidator {
             checkNotNull(txOpReturnData, "txOpReturnData must not be null");
             byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
             // We need to set txId to null in clone to get same hash as used in the tx return data
-            byte[] hash = ProposalConsensus.getHashOfPayload(proposalPayload.getCloneWithoutTxId());
+            byte[] hash = ProposalConsensus.getHashOfPayload(proposalPayload.cloneWithoutTxId());
             checkArgument(Arrays.equals(txHashOfPayload, hash),
                     "OpReturn data from proposal tx is not matching the one created from the payload." +
                             "\ntxHashOfPayload=" + Utilities.encodeToHex(txHashOfPayload) +

@@ -49,6 +49,7 @@ public class AddChangeParamEvent extends StateChangeEvent {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    //TODO add StateChangeEvent.builder
     @Override
     public PB.AddChangeParamEvent toProtoMessage() {
         final PB.AddChangeParamEvent.Builder builder = PB.AddChangeParamEvent.newBuilder()

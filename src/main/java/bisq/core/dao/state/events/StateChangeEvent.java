@@ -27,11 +27,13 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public abstract class StateChangeEvent implements PersistablePayload {
-    private int height;
     private final ProtectedStoragePayload payload;
+    private final int height;
 
     public StateChangeEvent(ProtectedStoragePayload payload, int height) {
         this.payload = payload;
         this.height = height;
     }
+
+    //TODO add PB StateChangeEvent.builder
 }

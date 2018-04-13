@@ -21,10 +21,10 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.proposal.ProposalConsensus;
 import bisq.core.dao.vote.proposal.ValidationException;
+import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.common.crypto.KeyRing;
 
@@ -73,14 +73,17 @@ public class CompensationRequestService {
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public CompensationRequestPayload createCompensationRequestPayload(String name,
-                                                                       String title,
-                                                                       String description,
-                                                                       String link,
-                                                                       Coin requestedBsq,
-                                                                       String bsqAddress)
-            throws ValidationException {
-        final CompensationRequestPayload payload = new CompensationRequestPayload(
+    public CompensationRequest makeTxAndGetCompensationRequest(String name,
+                                                               String title,
+                                                               String description,
+                                                               String link,
+                                                               Coin requestedBsq,
+                                                               String bsqAddress)
+            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+            WalletException {
+
+        // As we don't know the txId we create a temp object with TxId set to null.
+        final CompensationRequestPayload tempPayload = new CompensationRequestPayload(
                 UUID.randomUUID().toString(),
                 name,
                 title,
@@ -91,37 +94,42 @@ public class CompensationRequestService {
                 signaturePubKey,
                 new Date()
         );
+        compensationRequestPayloadValidator.validateDataFields(tempPayload);
 
-        compensationRequestPayloadValidator.validateDataFields(payload);
+        Transaction transaction = createCompensationRequestTx(tempPayload);
 
-        return payload;
+        return createCompensationRequest(tempPayload, transaction);
     }
 
-
-    public CompensationRequest createCompensationRequest(CompensationRequestPayload payload)
+    // We have txId set to null in tempPayload as we cannot know it before the tx is created.
+    // Once the tx is known we will create a new object including the txId.
+    // The hashOfPayload used in the opReturnData is created with the txId set to null.
+    private Transaction createCompensationRequestTx(CompensationRequestPayload tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
-        CompensationRequest compensationRequest = new CompensationRequest(payload);
 
         final Coin fee = ProposalConsensus.getFee(paramService, stateService.getChainHeadHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment
-        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(payload);
+        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(tempPayload);
         byte[] opReturnData = CompensationRequestConsensus.getOpReturnData(hashOfPayload);
 
         final Transaction txWithBtcFee = btcWalletService.completePreparedCompensationRequestTx(
-                compensationRequest.getRequestedBsq(),
-                compensationRequest.getAddress(),
+                tempPayload.getRequestedBsq(),
+                tempPayload.getAddress(),
                 preparedBurnFeeTx,
                 opReturnData);
 
         final Transaction completedTx = bsqWalletService.signTx(txWithBtcFee);
-
-        // We need the tx for showing the user tx details before publishing (fee, size).
-        // After publishing the tx we will check again if the txId is the same, otherwise we throw an
-        // error (tx malleability)
-        compensationRequest.setTx(completedTx);
         log.info("CompensationRequest tx: " + completedTx);
-        return compensationRequest;
+        return completedTx;
+    }
+
+    // We have txId set to null in tempPayload as we cannot know it before the tx is created.
+    // Once the tx is known we will create a new object including the txId.
+    private CompensationRequest createCompensationRequest(CompensationRequestPayload tempPayload, Transaction transaction) {
+        final String txId = transaction.getHashAsString();
+        CompensationRequestPayload compensationRequestPayload = (CompensationRequestPayload) tempPayload.cloneWithTxId(txId);
+        return new CompensationRequest(compensationRequestPayload);
     }
 }

@@ -17,9 +17,9 @@
 
 package bisq.core.dao.vote.proposal.generic;
 
-import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
@@ -38,12 +38,14 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Payload for generic proposals.
  */
-@EqualsAndHashCode(callSuper = true)
+@Immutable
 @Slf4j
+@EqualsAndHashCode(callSuper = true)
 @Value
 public final class GenericProposalPayload extends ProposalPayload {
 
@@ -124,5 +126,33 @@ public final class GenericProposalPayload extends ProposalPayload {
     @Override
     public Param getThresholdDaoParam() {
         return Param.THRESHOLD_PROPOSAL;
+    }
+
+    @Override
+    public ProposalPayload cloneWithTxId(String txId) {
+        return new GenericProposalPayload(getUid(),
+                getName(),
+                getTitle(),
+                getDescription(),
+                getLink(),
+                getOwnerPubKeyEncoded(),
+                getVersion(),
+                getCreationDate().getTime(),
+                txId,
+                getExtraDataMap());
+    }
+
+    @Override
+    public ProposalPayload cloneWithoutTxId() {
+        return new GenericProposalPayload(getUid(),
+                getName(),
+                getTitle(),
+                getDescription(),
+                getLink(),
+                getOwnerPubKeyEncoded(),
+                getVersion(),
+                getCreationDate().getTime(),
+                null,
+                getExtraDataMap());
     }
 }

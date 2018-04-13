@@ -18,11 +18,11 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
@@ -45,14 +45,17 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request
  */
-@EqualsAndHashCode(callSuper = true)
+@Immutable
 @Slf4j
+@EqualsAndHashCode(callSuper = true)
 @Value
 public final class CompensationRequestPayload extends ProposalPayload {
+
     private final long requestedBsq;
     private final String bsqAddress;
 
@@ -84,18 +87,18 @@ public final class CompensationRequestPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationRequestPayload(String uid,
-                                       String name,
-                                       String title,
-                                       String description,
-                                       String link,
-                                       String bsqAddress,
-                                       long requestedBsq,
-                                       byte[] ownerPubKeyEncoded,
-                                       byte version,
-                                       long creationDate,
-                                       String txId,
-                                       @Nullable Map<String, String> extraDataMap) {
+    public CompensationRequestPayload(String uid,
+                                      String name,
+                                      String title,
+                                      String description,
+                                      String link,
+                                      String bsqAddress,
+                                      long requestedBsq,
+                                      byte[] ownerPubKeyEncoded,
+                                      byte version,
+                                      long creationDate,
+                                      String txId,
+                                      @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -173,10 +176,36 @@ public final class CompensationRequestPayload extends ProposalPayload {
         return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
     }
 
-    protected ProposalPayload getCloneWithoutTxId() {
-        ProposalPayload clone = CompensationRequestPayload.fromProto(toProtoMessage().getProposalPayload());
-        clone.setTxId(null);
-        return clone;
+    @Override
+    public ProposalPayload cloneWithTxId(String txId) {
+        return new CompensationRequestPayload(getUid(),
+                getName(),
+                getTitle(),
+                getDescription(),
+                getLink(),
+                getBsqAddress(),
+                getRequestedBsq().value,
+                getOwnerPubKeyEncoded(),
+                getVersion(),
+                getCreationDate().getTime(),
+                txId,
+                getExtraDataMap());
+    }
+
+    @Override
+    public ProposalPayload cloneWithoutTxId() {
+        return new CompensationRequestPayload(getUid(),
+                getName(),
+                getTitle(),
+                getDescription(),
+                getLink(),
+                getBsqAddress(),
+                getRequestedBsq().value,
+                getOwnerPubKeyEncoded(),
+                getVersion(),
+                getCreationDate().getTime(),
+                null,
+                getExtraDataMap());
     }
 
     @Override

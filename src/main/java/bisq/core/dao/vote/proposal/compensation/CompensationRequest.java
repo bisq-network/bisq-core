@@ -32,14 +32,18 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
 
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 /**
  * Locally persisted CompensationRequest data.
  */
-@Getter
+@Slf4j
+@EqualsAndHashCode(callSuper = true)
+@Value
 public class CompensationRequest extends Proposal {
 
     ///////////////////////////////////////////////////////////////////////////////////////////

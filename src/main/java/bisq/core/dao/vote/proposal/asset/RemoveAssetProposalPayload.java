@@ -17,9 +17,9 @@
 
 package bisq.core.dao.vote.proposal.asset;
 
-import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import bisq.network.p2p.NodeAddress;
 
@@ -102,6 +102,18 @@ public final class RemoveAssetProposalPayload extends ProposalPayload {
     }
 
     public static RemoveAssetProposalPayload fromProto(PB.ProposalPayload proto) {
+        //TODO impl
+        return null;
+    }
+
+    @Override
+    public ProposalPayload cloneWithoutTxId() {
+        //TODO impl
+        return null;
+    }
+
+    @Override
+    public ProposalPayload cloneWithTxId(String txId) {
         //TODO impl
         return null;
     }

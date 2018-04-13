@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
 import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
@@ -44,6 +45,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import lombok.Getter;
@@ -59,10 +61,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MyProposalService implements PersistedDataHost {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
+    private final BsqWalletService bsqWalletService;
     private final ProposalService proposalService;
     private final StateService stateService;
-    private ChangeListener<Number> numConnectedPeersListener;
     private final Storage<ProposalList> storage;
+    private ChangeListener<Number> numConnectedPeersListener;
 
     @Getter
     private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
@@ -76,11 +79,13 @@ public class MyProposalService implements PersistedDataHost {
     @Inject
     public MyProposalService(P2PService p2PService,
                              WalletsManager walletsManager,
+                             BsqWalletService bsqWalletService,
                              ProposalService proposalService,
                              StateService stateService,
                              Storage<ProposalList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
+        this.bsqWalletService = bsqWalletService;
         this.proposalService = proposalService;
         this.stateService = stateService;
 
@@ -123,22 +128,29 @@ public class MyProposalService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void publishProposal(Proposal proposal, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
-        final Transaction proposalTx = proposal.getTx();
-        checkNotNull(proposalTx, "proposal.getTx() at publishProposal must not be null");
-        walletsManager.publishAndCommitBsqTx(proposalTx, new TxBroadcaster.Callback() {
+        final String txId = Objects.requireNonNull(proposal).getTxId();
+        Transaction tx = Objects.requireNonNull(bsqWalletService.getTransaction(txId));
+        checkNotNull(tx, "proposal.getTx() at publishProposal must not be null");
+        walletsManager.publishAndCommitBsqTx(tx, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
-                final String txId = proposalTx.getHashAsString();
-                final ProposalPayload proposalPayload = proposal.getProposalPayload();
-                proposalPayload.setTxId(txId);
-                if (addToP2PNetwork(proposalPayload)) {
-                    log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
-                    if (!listContains(proposal.getProposalPayload()))
-                        observableList.add(proposal);
-                    resultHandler.handleResult();
+                final String txId = transaction.getHashAsString();
+                if (proposal.getTxId().equals(txId)) {
+                    final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                    if (addToP2PNetwork(proposalPayload)) {
+                        log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
+                        if (!listContains(proposal.getProposalPayload()))
+                            observableList.add(proposal);
+                        resultHandler.handleResult();
+                    } else {
+                        final String msg = "Adding of proposalPayload to P2P network failed.\n" +
+                                "proposalPayload=" + proposalPayload;
+                        log.error(msg);
+                        errorMessageHandler.handleErrorMessage(msg);
+                    }
                 } else {
-                    final String msg = "Adding of proposalPayload to P2P network failed.\n" +
-                            "proposalPayload=" + proposalPayload;
+                    final String msg = "TxId of broadcasted transaction is different as the one in our " +
+                            "proposalPayload. TxId of broadcasted transaction=" + txId;
                     log.error(msg);
                     errorMessageHandler.handleErrorMessage(msg);
                 }

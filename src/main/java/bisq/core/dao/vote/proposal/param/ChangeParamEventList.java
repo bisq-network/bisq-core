@@ -34,6 +34,7 @@ public class ChangeParamEventList extends PersistableList<AddChangeParamEvent> i
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    //TODO
     private ChangeParamEventList(List<AddChangeParamEvent> list) {
         super(list);
     }

@@ -17,12 +17,12 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.VoteConsensusCritical;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
@@ -49,18 +49,19 @@ import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 /**
- * Payload is sent over wire as well as it gets persisted.
+ * ProposalPayload is sent over wire as well as it gets persisted.
  * <p>
- * We persist all ProposalPayload data in PersistableNetworkPayloadMap.
+ * We persist all ProposalPayload data in the PersistedEntryMap.
  * Data size on disk for one item is: about 743 bytes (443 bytes is for ownerPubKeyEncoded)
- * As there are not 1000s of proposals we consider that acceptable.
+ * As Proposals gets persisted in the Blocks of the State as well we could consider pruning of old data.
  */
+@Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
@@ -72,13 +73,8 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     protected final String title;
     protected final String description;
     protected final String link;
-    protected byte[] ownerPubKeyEncoded;
-
-    //TODO make immutable
-    @Setter
-    @Nullable
-    protected String txId;
-
+    protected final byte[] ownerPubKeyEncoded;
+    protected final String txId;
     protected final byte version;
     protected final long creationDate;
 
@@ -88,7 +84,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
     @Nullable
     protected final Map<String, String> extraDataMap;
 
-    // Used just for caching
+    // Used just for caching. Don't persist.
     @Nullable
     private transient PublicKey ownerPubKey;
 
@@ -172,11 +168,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
-    protected ProposalPayload getCloneWithoutTxId() {
-        ProposalPayload clone = ProposalPayload.fromProto(toProtoMessage().getProposalPayload());
-        clone.setTxId(null);
-        return clone;
-    }
+    abstract public ProposalPayload cloneWithoutTxId();
+
+    abstract public ProposalPayload cloneWithTxId(String txId);
 
     public Date getCreationDate() {
         return new Date(creationDate);
