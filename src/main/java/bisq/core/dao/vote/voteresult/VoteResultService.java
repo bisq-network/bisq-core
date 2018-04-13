@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.voteresult;
 
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.vote.param.DaoParamService;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;

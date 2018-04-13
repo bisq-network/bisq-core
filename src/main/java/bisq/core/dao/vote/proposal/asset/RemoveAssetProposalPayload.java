@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.proposal.asset;
 
-import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.vote.param.DaoParam;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.ProposalType;
 

@@ -17,8 +17,8 @@
 
 package bisq.core.dao.state.events;
 
-import bisq.core.dao.param.ChangeParamPayload;
-import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.vote.param.ChangeParamPayload;
+import bisq.core.dao.vote.param.DaoParam;
 
 import io.bisq.generated.protobuffer.PB;
 

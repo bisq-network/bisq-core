@@ -18,8 +18,8 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.param.DaoParam;
-import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.vote.param.DaoParam;
+import bisq.core.dao.vote.param.DaoParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;

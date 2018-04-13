@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.param.DaoParam;
+import bisq.core.dao.vote.param.DaoParam;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
