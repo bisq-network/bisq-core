@@ -24,7 +24,7 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import lombok.Value;
 import lombok.experimental.Delegate;
@@ -61,10 +61,10 @@ public class Block implements PersistablePayload {
 
     // The state change events for that block containing any non-blockchain data which can
     // trigger a state change in the Bisq DAO.
-    private final ImmutableList<StateChangeEvent> stateChangeEvents;
+    private final ImmutableSet<StateChangeEvent> stateChangeEvents;
 
 
-    public Block(TxBlock txBlock, ImmutableList<StateChangeEvent> stateChangeEvents) {
+    public Block(TxBlock txBlock, ImmutableSet<StateChangeEvent> stateChangeEvents) {
         this.txBlock = txBlock;
         this.stateChangeEvents = stateChangeEvents;
     }

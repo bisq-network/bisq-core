@@ -25,12 +25,15 @@ import io.bisq.generated.protobuffer.PB;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 @EqualsAndHashCode(callSuper = true)
 @Value
 public class AddChangeParamEvent extends StateChangeEvent {
 
-    public AddChangeParamEvent(ChangeParamPayload changeParamPayload, int blockHeight) {
-        super(changeParamPayload, blockHeight);
+    public AddChangeParamEvent(ChangeParamPayload changeParamPayload, int height) {
+        super(changeParamPayload, height);
     }
 
     public long getValue() {

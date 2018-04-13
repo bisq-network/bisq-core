@@ -40,8 +40,10 @@ import javax.inject.Inject;
 import java.security.PublicKey;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 import lombok.Getter;
@@ -99,13 +101,15 @@ public class ProposalService implements PersistedDataHost {
 
     public void onAllServicesInitialized() {
         // We get called in the context of the parser thread
-        stateService.registerStateChangeEventListProvider(txBlock -> {
-            List<StateChangeEvent> stateChangeEvent = new ArrayList<>();
-            proposalList.forEach(proposal -> {
-                List<StateChangeEvent> events = maybeAddProposalToTx(proposal.getProposalPayload(), txBlock.getHeight());
-                stateChangeEvent.addAll(events);
-            });
-            return stateChangeEvent;
+        stateService.registerStateChangeEventsProvider(txBlock -> {
+            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+            proposalList.stream()
+                    .map(Proposal::getProposalPayload)
+                    .map(proposalPayload -> getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach(stateChangeEvents::add);
+            return stateChangeEvents;
         });
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() { // User thread context
@@ -162,8 +166,6 @@ public class ProposalService implements PersistedDataHost {
                 Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
                 proposalList.add(proposal);
 
-                //maybeAddProposalToTx(proposalPayload, stateService.getChainHeadHeight(), stateChangeEvent);
-
                 if (storeLocally)
                     persist();
             } else {
@@ -193,28 +195,27 @@ public class ProposalService implements PersistedDataHost {
         }
     }
 
-    // We fire a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
+    // We add a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
     // during the proposal phase).
-    private List<StateChangeEvent> maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
-        List<StateChangeEvent> stateChangeEvent = new ArrayList<>();
-        getTxForProposal(proposalPayload)
-                .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
-                .ifPresent(tx -> stateChangeEvent.add(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
-        return stateChangeEvent;
-    }
-
-  /*  private void onAddProposalPayloadEvent(AddProposalPayloadEvent event) {
-        ProposalPayload proposalPayload = (ProposalPayload) event.getPayload();
-        getTxForProposal(proposalPayload)
-                .filter(tx -> !periodService.isInPhase(event.getChainHeight(), PeriodService.Phase.PROPOSAL))
-                .ifPresent(tx -> stateService.putProposalPayload(tx.getId(), proposalPayload));
-    }
-*/
-
-    private Optional<Tx> getTxForProposal(ProposalPayload proposalPayload) {
+    // We use the first block in the BLIND_VOTE phase to set all proposals for that cycle.
+    // If a proposal would arrive later it will be ignored.
+    private Optional<StateChangeEvent> getAddProposalPayloadEvent(ProposalPayload proposalPayload, int height) {
         return stateService.getTx(proposalPayload.getTxId())
-                .filter(tx -> isValid(tx, proposalPayload));
+                .filter(tx -> {
+                    try {
+                        //TODO check if validateCycle can be included in isValid
+                        proposalPayloadValidator.validate(proposalPayload, tx);
+                        proposalPayloadValidator.validateCycle(tx.getBlockHeight(), height);
+                        return true;
+                    } catch (ValidationException e) {
+                        log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
+                                tx.getId(), proposalPayload, e.toString());
+                        return false;
+                    }
+                })
+                .filter(tx -> height == periodService.getAbsoluteStartBlockOfPhase(height, PeriodService.Phase.BLIND_VOTE))
+                .map(tx -> new AddProposalPayloadEvent(proposalPayload, height));
     }
 
     private boolean listContains(ProposalPayload proposalPayload) {

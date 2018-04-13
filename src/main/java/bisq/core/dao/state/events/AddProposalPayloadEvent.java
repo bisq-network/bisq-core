@@ -24,12 +24,15 @@ import com.google.protobuf.Message;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 @EqualsAndHashCode(callSuper = true)
 @Value
 public class AddProposalPayloadEvent extends StateChangeEvent {
 
-    public AddProposalPayloadEvent(ProposalPayload payload, int chainHeight) {
-        super(payload, chainHeight);
+    public AddProposalPayloadEvent(ProposalPayload payload, int height) {
+        super(payload, height);
     }
 
     //TODO

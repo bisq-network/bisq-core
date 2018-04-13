@@ -37,10 +37,9 @@ import org.bitcoinj.core.Coin;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,7 +87,6 @@ public class StateService {
     // BlockListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-
     public interface BlockListener extends ThreadContextAwareListener {
         void onBlockAdded(Block block);
     }
@@ -109,7 +107,7 @@ public class StateService {
 
     // StateChangeEventListProviders get added from the user thread, thought they will be called in the
     // nodeExecutors thread. To avoid ConcurrentModificationException we use a CopyOnWriteArrayList.
-    private List<Function<TxBlock, List<StateChangeEvent>>> stateChangeEventListProviders = new CopyOnWriteArrayList<>();
+    private List<Function<TxBlock, Set<StateChangeEvent>>> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
 
     transient private final FunctionalReadWriteLock lock;
 
@@ -146,8 +144,8 @@ public class StateService {
         blockListeners.remove(blockListener);
     }
 
-    public void registerStateChangeEventListProvider(Function<TxBlock, List<StateChangeEvent>> stateChangeEventListProvider) {
-        stateChangeEventListProviders.add(stateChangeEventListProvider);
+    public void registerStateChangeEventsProvider(Function<TxBlock, Set<StateChangeEvent>> stateChangeEventsProvider) {
+        stateChangeEventsProviders.add(stateChangeEventsProvider);
     }
 
 
@@ -180,16 +178,16 @@ public class StateService {
             // Those who registered to process a txBlock might return a list of StateChangeEvents.
             // We collect all from all providers and then go on.
             // The providers are called in the parser thread, so we have a single threaded execution model here.
-            List<StateChangeEvent> stateChangeEventList = new ArrayList<>();
-            stateChangeEventListProviders.forEach(stateChangeEventListProvider -> {
+            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+            stateChangeEventsProviders.forEach(stateChangeEventsProvider -> {
                 nodeExecutor.execute(() -> {
-                    stateChangeEventList.addAll(stateChangeEventListProvider.apply(txBlock));
+                    stateChangeEvents.addAll(stateChangeEventsProvider.apply(txBlock));
                 });
             });
 
             // Now we have both the immutable txBlock and the collected stateChangeEvents.
             // We now add the immutable Block containing both data.
-            final Block block = new Block(txBlock, ImmutableList.copyOf(stateChangeEventList));
+            final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
             state.getBlocks().add(block);
 
             blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));

@@ -24,6 +24,9 @@ import bisq.common.proto.persistable.PersistablePayload;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 @Getter
 @EqualsAndHashCode
 public abstract class StateChangeEvent implements PersistablePayload {

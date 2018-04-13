@@ -42,9 +42,9 @@ public class ValidationException extends Exception {
         return "ValidationException{" +
                 "\n     message=" + getMessage() +
                 "\n     cause.message=" + getCause().getMessage() +
-                "\n     requestedBsq=" + requestedBsq +
-                ",\n     minRequestAmount=" + minRequestAmount +
-                ",\n     txId=" + tx.getId() +
+                "\n     requestedBsq=" + (requestedBsq == null ? "null" : requestedBsq) +
+                ",\n     minRequestAmount=" + (minRequestAmount == null ? "null" : minRequestAmount) +
+                ",\n     txId=" + (tx == null ? "null" : tx.getId()) +
                 "\n} " + super.toString();
     }
 }
