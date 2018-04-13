@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.voteresult.issuance;
+package bisq.core.dao.vote.result.issuance;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;

@@ -15,10 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.voteresult;
+package bisq.core.dao.vote.result;
 
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;
@@ -32,7 +31,8 @@ import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
-import bisq.core.dao.vote.voteresult.issuance.IssuanceService;
+import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.result.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealConsensus;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 

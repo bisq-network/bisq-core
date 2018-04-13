@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.voteresult;
+package bisq.core.dao.vote.result;
 
 import bisq.core.dao.vote.blindvote.BlindVote;
 
