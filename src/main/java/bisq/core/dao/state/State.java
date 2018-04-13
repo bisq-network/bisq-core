@@ -17,11 +17,11 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.blockchain.vo.SpentInfo;
-import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.blockchain.vo.TxOutputType;
-import bisq.core.dao.blockchain.vo.TxType;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.vo.SpentInfo;
+import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.vo.TxOutputType;
+import bisq.core.dao.state.blockchain.vo.TxType;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 

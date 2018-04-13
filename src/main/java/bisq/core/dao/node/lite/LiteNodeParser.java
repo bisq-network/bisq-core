@@ -17,13 +17,13 @@
 
 package bisq.core.dao.node.lite;
 
-import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.state.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.vo.Tx;
 
 import javax.inject.Inject;
 

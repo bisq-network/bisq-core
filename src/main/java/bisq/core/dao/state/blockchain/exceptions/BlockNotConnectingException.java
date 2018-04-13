@@ -15,30 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.json;
+package bisq.core.dao.state.blockchain.exceptions;
+
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
 
 import lombok.Getter;
 
-//TODO sync up with data model
-public enum JsonTxType {
-    UNDEFINED_TX_TYPE("Undefined"),
-    UNVERIFIED("Unverified"),
-    INVALID("Invalid"),
-    GENESIS("Genesis"),
-    TRANSFER_BSQ("Transfer BSQ"),
-    PAY_TRADE_FEE("Pay trade fee"),
-    PROPOSAL("Proposal"),
-    COMPENSATION_REQUEST("Compensation request"),
-    VOTE("Vote"),
-    BLIND_VOTE("Blind vote"),
-    VOTE_REVEAL("Vote reveal"),
-    LOCK_UP("Lockup"),
-    UN_LOCK("Unlock");
+@Getter
+public class BlockNotConnectingException extends Exception {
 
-    @Getter
-    private String displayString;
+    private BsqBlock block;
 
-    JsonTxType(String displayString) {
-        this.displayString = displayString;
+    public BlockNotConnectingException(BsqBlock block) {
+        this.block = block;
     }
 }

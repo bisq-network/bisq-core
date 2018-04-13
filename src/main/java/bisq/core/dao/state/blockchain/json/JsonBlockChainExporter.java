@@ -15,15 +15,15 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.json;
+package bisq.core.dao.state.blockchain.json;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.vo.SpentInfo;
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.blockchain.vo.TxType;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.vo.SpentInfo;
+import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.vo.TxType;
 
 import bisq.common.storage.FileUtil;
 import bisq.common.storage.JsonFileManager;

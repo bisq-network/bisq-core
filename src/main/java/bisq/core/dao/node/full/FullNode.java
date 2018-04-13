@@ -17,13 +17,13 @@
 
 package bisq.core.dao.node.full;
 
-import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
-import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.blockchain.json.JsonBlockChainExporter;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
 
 import bisq.network.p2p.P2PService;
 

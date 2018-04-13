@@ -17,11 +17,11 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxInput;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.vo.TxInput;
 
 import bisq.common.app.DevEnv;
 

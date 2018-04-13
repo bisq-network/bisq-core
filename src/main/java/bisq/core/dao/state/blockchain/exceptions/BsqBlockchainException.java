@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.exceptions;
+package bisq.core.dao.state.blockchain.exceptions;
 
 public class BsqBlockchainException extends Exception {
     public BsqBlockchainException(String message) {

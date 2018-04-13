@@ -15,9 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.vo;
+package bisq.core.dao.state.blockchain.vo;
 
-import bisq.core.dao.blockchain.btcd.PubKeyScript;
+import bisq.core.dao.state.blockchain.btcd.PubKeyScript;
 
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;

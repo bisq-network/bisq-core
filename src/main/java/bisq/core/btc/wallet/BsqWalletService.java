@@ -21,10 +21,10 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxOutput;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.vo.TxOutput;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 

@@ -17,10 +17,10 @@
 
 package bisq.core.dao.vote.voteresult;
 
-import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.PeriodService;

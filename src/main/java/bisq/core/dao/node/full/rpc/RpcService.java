@@ -18,11 +18,11 @@
 package bisq.core.dao.node.full.rpc;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.blockchain.btcd.PubKeyScript;
-import bisq.core.dao.blockchain.exceptions.BsqBlockchainException;
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxInput;
-import bisq.core.dao.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.btcd.PubKeyScript;
+import bisq.core.dao.state.blockchain.exceptions.BsqBlockchainException;
+import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.vo.TxInput;
+import bisq.core.dao.state.blockchain.vo.TxOutput;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Utils;

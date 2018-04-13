@@ -18,10 +18,10 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.vo.Tx;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.PeriodService;

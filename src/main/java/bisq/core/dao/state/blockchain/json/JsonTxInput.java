@@ -15,18 +15,20 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.exceptions;
+package bisq.core.dao.state.blockchain.json;
 
-import bisq.core.dao.blockchain.vo.BsqBlock;
+import lombok.Value;
 
-import lombok.Getter;
+import javax.annotation.concurrent.Immutable;
 
-@Getter
-public class BlockNotConnectingException extends Exception {
-
-    private BsqBlock block;
-
-    public BlockNotConnectingException(BsqBlock block) {
-        this.block = block;
-    }
+//TODO sync up with data model
+@Value
+@Immutable
+public class JsonTxInput {
+    private final int spendingTxOutputIndex;
+    private final String spendingTxId;
+    private final long bsqAmount;
+    private final boolean isVerified;
+    private final String address;
+    private final long time;
 }

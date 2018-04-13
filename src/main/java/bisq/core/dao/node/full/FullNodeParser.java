@@ -17,15 +17,15 @@
 
 package bisq.core.dao.node.full;
 
-import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.blockchain.exceptions.BsqBlockchainException;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.blockchain.vo.Tx;
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.full.rpc.RpcService;
+import bisq.core.dao.state.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.blockchain.exceptions.BsqBlockchainException;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.vo.Tx;
 
 import com.neemre.btcdcli4j.core.domain.Block;
 

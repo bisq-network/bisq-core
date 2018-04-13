@@ -15,40 +15,48 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.blockchain.vo;
+package bisq.core.dao.state.blockchain.vo;
 
 import bisq.common.proto.ProtoUtil;
 
 import io.bisq.generated.protobuffer.PB;
 
-public enum TxOutputType {
-    UNDEFINED,
-    GENESIS_OUTPUT,
-    BSQ_OUTPUT,
-    BTC_OUTPUT,
-    PROPOSAL_OP_RETURN_OUTPUT,
-    COMP_REQ_OP_RETURN_OUTPUT,
-    ISSUANCE_CANDIDATE_OUTPUT,
-    BLIND_VOTE_LOCK_STAKE_OUTPUT,
-    BLIND_VOTE_OP_RETURN_OUTPUT,
-    VOTE_REVEAL_UNLOCK_STAKE_OUTPUT,
-    VOTE_REVEAL_OP_RETURN_OUTPUT,
-    BOND_LOCK,
-    BOND_LOCK_OP_RETURN_OUTPUT,
-    BOND_UNLOCK,
-    BOND_UNLOCK_OP_RETURN_OUTPUT,
-    INVALID_OUTPUT;
+import lombok.Getter;
+
+public enum TxType {
+    UNDEFINED_TX_TYPE(false, false),
+    UNVERIFIED(false, false),
+    INVALID(false, false),
+    GENESIS(false, false),
+    TRANSFER_BSQ(false, false),
+    PAY_TRADE_FEE(false, true),
+    PROPOSAL(true, true),
+    COMPENSATION_REQUEST(true, true),
+    BLIND_VOTE(true, true),
+    VOTE_REVEAL(true, false),
+    LOCK_UP(true, false),
+    UN_LOCK(true, false);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static TxOutputType fromProto(PB.TxOutputType txOutputType) {
-        return ProtoUtil.enumFromProto(TxOutputType.class, txOutputType.name());
+    @Getter
+    private final boolean hasOpReturn;
+    @Getter
+    private final boolean requiresFee;
+
+    TxType(boolean hasOpReturn, boolean requiresFee) {
+        this.hasOpReturn = hasOpReturn;
+        this.requiresFee = requiresFee;
     }
 
-    public PB.TxOutputType toProtoMessage() {
-        return PB.TxOutputType.valueOf(name());
+    public static TxType fromProto(PB.TxType txType) {
+        return ProtoUtil.enumFromProto(TxType.class, txType.name());
+    }
+
+    public PB.TxType toProtoMessage() {
+        return PB.TxType.valueOf(name());
     }
 }

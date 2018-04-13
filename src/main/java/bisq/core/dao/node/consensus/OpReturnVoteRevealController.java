@@ -17,11 +17,11 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.vo.Tx;
-import bisq.core.dao.blockchain.vo.TxOutput;
-import bisq.core.dao.blockchain.vo.TxOutputType;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.vo.TxOutputType;
 import bisq.core.dao.vote.PeriodService;
 
 import javax.inject.Inject;

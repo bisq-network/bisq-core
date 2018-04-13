@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
 
 import javax.inject.Inject;
 
