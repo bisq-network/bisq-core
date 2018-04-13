@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.proposal.param;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.state.events.ChangeParamEvent;
+import bisq.core.dao.state.events.AddChangeParamEvent;
 
 import bisq.common.app.DevEnv;
 import bisq.common.proto.persistable.PersistedDataHost;
@@ -84,41 +84,41 @@ public class DaoParamService implements PersistedDataHost {
     }
 
     public long getDaoParamValue(DaoParam daoParam, int blockHeight) {
-        final List<ChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(daoParam).stream()
+        final List<AddChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(daoParam).stream()
                 .filter(e -> e.getHeight() <= blockHeight)
-                .sorted(Comparator.comparing(ChangeParamEvent::getHeight))
+                .sorted(Comparator.comparing(AddChangeParamEvent::getHeight))
                 .collect(Collectors.toList());
 
         if (sortedFilteredList.isEmpty()) {
             return daoParam.getDefaultValue();
         } else {
-            final ChangeParamEvent mostRecentEvent = sortedFilteredList.get(sortedFilteredList.size() - 1);
+            final AddChangeParamEvent mostRecentEvent = sortedFilteredList.get(sortedFilteredList.size() - 1);
             return mostRecentEvent.getValue();
         }
     }
 
-    public void addChangeEvent(ChangeParamEvent event) {
+    public void addChangeEvent(AddChangeParamEvent event) {
         if (!changeParamEventList.contains(event)) {
             if (!hasConflictingValue(getParamChangeEventListForParam(event.getDaoParam()), event)) {
                 changeParamEventList.add(event);
             } else {
-                String msg = "We have already an ChangeParamEvent with the same blockHeight but a different value. " +
+                String msg = "We have already an AddChangeParamEvent with the same blockHeight but a different value. " +
                         "That must not happen.";
                 DevEnv.logErrorAndThrowIfDevMode(msg);
             }
         } else {
-            log.warn("We have that ChangeParamEvent already in our list. ChangeParamEvent={}", event);
+            log.warn("We have that AddChangeParamEvent already in our list. AddChangeParamEvent={}", event);
         }
         persist();
     }
 
-    private List<ChangeParamEvent> getParamChangeEventListForParam(DaoParam daoParam) {
+    private List<AddChangeParamEvent> getParamChangeEventListForParam(DaoParam daoParam) {
         return changeParamEventList.getList().stream()
                 .filter(e -> e.getDaoParam() == daoParam)
                 .collect(Collectors.toList());
     }
 
-    private boolean hasConflictingValue(List<ChangeParamEvent> list, ChangeParamEvent event) {
+    private boolean hasConflictingValue(List<AddChangeParamEvent> list, AddChangeParamEvent event) {
         return list.stream()
                 .filter(e -> e.getHeight() == event.getHeight())
                 .anyMatch(e -> e.getValue() != event.getValue());

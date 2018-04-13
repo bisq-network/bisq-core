@@ -27,9 +27,9 @@ import lombok.Value;
 
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class ChangeParamEvent extends StateChangeEvent {
+public class AddChangeParamEvent extends StateChangeEvent {
 
-    public ChangeParamEvent(ChangeParamPayload changeParamPayload, int blockHeight) {
+    public AddChangeParamEvent(ChangeParamPayload changeParamPayload, int blockHeight) {
         super(changeParamPayload, blockHeight);
     }
 
@@ -50,15 +50,15 @@ public class ChangeParamEvent extends StateChangeEvent {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.ChangeParamEvent toProtoMessage() {
-        final PB.ChangeParamEvent.Builder builder = PB.ChangeParamEvent.newBuilder()
+    public PB.AddChangeParamEvent toProtoMessage() {
+        final PB.AddChangeParamEvent.Builder builder = PB.AddChangeParamEvent.newBuilder()
                 .setChangeParamPayload(getChangeParam().toProtoMessage())
                 .setHeight(getHeight());
         return builder.build();
     }
 
-    public static ChangeParamEvent fromProto(PB.ChangeParamEvent proto) {
-        return new ChangeParamEvent(ChangeParamPayload.fromProto(proto.getChangeParamPayload()),
+    public static AddChangeParamEvent fromProto(PB.AddChangeParamEvent proto) {
+        return new AddChangeParamEvent(ChangeParamPayload.fromProto(proto.getChangeParamPayload()),
                 proto.getHeight());
     }
 }

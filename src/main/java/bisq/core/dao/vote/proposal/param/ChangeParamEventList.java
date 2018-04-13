@@ -17,14 +17,14 @@
 
 package bisq.core.dao.vote.proposal.param;
 
-import bisq.core.dao.state.events.ChangeParamEvent;
+import bisq.core.dao.state.events.AddChangeParamEvent;
 import bisq.core.dao.vote.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
 import java.util.List;
 
-public class ChangeParamEventList extends PersistableList<ChangeParamEvent> implements VoteConsensusCritical {
+public class ChangeParamEventList extends PersistableList<AddChangeParamEvent> implements VoteConsensusCritical {
 
     ChangeParamEventList() {
         super();
@@ -34,7 +34,7 @@ public class ChangeParamEventList extends PersistableList<ChangeParamEvent> impl
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeParamEventList(List<ChangeParamEvent> list) {
+    private ChangeParamEventList(List<AddChangeParamEvent> list) {
         super(list);
     }
 
@@ -47,14 +47,14 @@ public class ChangeParamEventList extends PersistableList<ChangeParamEvent> impl
         return PB.PersistableEnvelope.newBuilder()
                 .setParamChangeEventList(PB.ParamChangeEventList.newBuilder()
                         .addAllParamChangeEvent(getList().stream()
-                                .map(ChangeParamEvent::toProtoMessage)
+                                .map(AddChangeParamEvent::toProtoMessage)
                                 .collect(Collectors.toList())))
                 .build();
     }
 
     public static PersistableEnvelope fromProto(PB.ParamChangeEventList proto) {
         return new ChangeParamEventList(new ArrayList<>(proto.getParamChangeEventList().stream()
-                .map(ChangeParamEvent::fromProto)
+                .map(AddChangeParamEvent::fromProto)
                 .collect(Collectors.toList())));
     }*/
 }
