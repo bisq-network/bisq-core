@@ -15,25 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.json;
+package bisq.core.dao.node.blockchain.exceptions;
 
-import bisq.common.app.Version;
+import bisq.core.dao.state.blockchain.vo.BsqBlock;
 
-import java.util.List;
+import lombok.Getter;
 
-import lombok.Value;
+@Getter
+public class BlockNotConnectingException extends Exception {
 
-//TODO sync up with data model
-@Value
-public class JsonTx {
-    private final String txVersion = Version.BSQ_TX_VERSION;
-    private final String id;
-    private final int blockHeight;
-    private final String blockHash;
-    private final long time;
-    private final List<JsonTxInput> inputs;
-    private final List<JsonTxOutput> outputs;
-    private final JsonTxType txType;
-    private final String txTypeDisplayString;
-    private final long burntFee;
+    private BsqBlock block;
+
+    public BlockNotConnectingException(BsqBlock block) {
+        this.block = block;
+    }
 }

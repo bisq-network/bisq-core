@@ -15,29 +15,21 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.json;
+package bisq.core.dao.node.blockchain.json;
 
-import bisq.core.dao.state.blockchain.btcd.PubKeyScript;
-
-import java.util.List;
+import bisq.core.dao.state.blockchain.vo.SpentInfo;
 
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Value
-public class JsonScriptPubKey {
-    private final List<String> addresses;
-    private final String asm;
-    private final String hex;
-    private final int reqSigs;
-    private final String type;
+public class JsonSpentInfo {
+    private final long height;
+    private final int inputIndex;
+    private final String txId;
 
-    public JsonScriptPubKey(PubKeyScript pubKeyScript) {
-        addresses = pubKeyScript.getAddresses();
-        asm = pubKeyScript.getAsm();
-        hex = pubKeyScript.getHex();
-        reqSigs = pubKeyScript.getReqSigs();
-        type = pubKeyScript.getScriptType().toString();
+    public JsonSpentInfo(SpentInfo spentInfo) {
+        height = spentInfo.getBlockHeight();
+        inputIndex = spentInfo.getInputIndex();
+        txId = spentInfo.getTxId();
     }
 }

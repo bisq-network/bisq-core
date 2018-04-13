@@ -15,21 +15,25 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.json;
+package bisq.core.dao.node.blockchain.json;
 
-import bisq.core.dao.state.blockchain.vo.SpentInfo;
+import bisq.common.app.Version;
+
+import java.util.List;
 
 import lombok.Value;
 
+//TODO sync up with data model
 @Value
-public class JsonSpentInfo {
-    private final long height;
-    private final int inputIndex;
-    private final String txId;
-
-    public JsonSpentInfo(SpentInfo spentInfo) {
-        height = spentInfo.getBlockHeight();
-        inputIndex = spentInfo.getInputIndex();
-        txId = spentInfo.getTxId();
-    }
+public class JsonTx {
+    private final String txVersion = Version.BSQ_TX_VERSION;
+    private final String id;
+    private final int blockHeight;
+    private final String blockHash;
+    private final long time;
+    private final List<JsonTxInput> inputs;
+    private final List<JsonTxOutput> outputs;
+    private final JsonTxType txType;
+    private final String txTypeDisplayString;
+    private final long burntFee;
 }

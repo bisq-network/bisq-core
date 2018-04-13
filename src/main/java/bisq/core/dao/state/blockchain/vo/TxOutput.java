@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state.blockchain.vo;
 
-import bisq.core.dao.state.blockchain.btcd.PubKeyScript;
+import bisq.core.dao.node.blockchain.btcd.PubKeyScript;
 
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;

@@ -44,7 +44,7 @@ import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.json.JsonBlockChainExporter;
+import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.blindvote.BlindVoteValidator;

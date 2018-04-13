@@ -22,8 +22,8 @@ import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.full.rpc.RpcService;
-import bisq.core.dao.state.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.exceptions.BsqBlockchainException;
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.state.blockchain.vo.BsqBlock;
 import bisq.core.dao.state.blockchain.vo.Tx;
 

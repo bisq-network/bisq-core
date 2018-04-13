@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.json;
+package bisq.core.dao.node.blockchain.json;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.State;

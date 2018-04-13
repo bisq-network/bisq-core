@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.btcd;
+package bisq.core.dao.node.blockchain.btcd;
 
 import bisq.common.proto.persistable.PersistablePayload;
 

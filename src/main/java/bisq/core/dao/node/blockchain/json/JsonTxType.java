@@ -15,18 +15,30 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.exceptions;
+package bisq.core.dao.node.blockchain.json;
 
-public class BsqBlockchainException extends Exception {
-    public BsqBlockchainException(String message) {
-        super(message);
-    }
+import lombok.Getter;
 
-    public BsqBlockchainException(String message, Throwable cause) {
-        super(message, cause);
-    }
+//TODO sync up with data model
+public enum JsonTxType {
+    UNDEFINED_TX_TYPE("Undefined"),
+    UNVERIFIED("Unverified"),
+    INVALID("Invalid"),
+    GENESIS("Genesis"),
+    TRANSFER_BSQ("Transfer BSQ"),
+    PAY_TRADE_FEE("Pay trade fee"),
+    PROPOSAL("Proposal"),
+    COMPENSATION_REQUEST("Compensation request"),
+    VOTE("Vote"),
+    BLIND_VOTE("Blind vote"),
+    VOTE_REVEAL("Vote reveal"),
+    LOCK_UP("Lockup"),
+    UN_LOCK("Unlock");
 
-    public BsqBlockchainException(Throwable cause) {
-        super(cause);
+    @Getter
+    private String displayString;
+
+    JsonTxType(String displayString) {
+        this.displayString = displayString;
     }
 }

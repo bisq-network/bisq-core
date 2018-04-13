@@ -15,30 +15,20 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.json;
+package bisq.core.dao.node.blockchain.json;
 
-import lombok.Getter;
+import lombok.Value;
+
+import javax.annotation.concurrent.Immutable;
 
 //TODO sync up with data model
-public enum JsonTxType {
-    UNDEFINED_TX_TYPE("Undefined"),
-    UNVERIFIED("Unverified"),
-    INVALID("Invalid"),
-    GENESIS("Genesis"),
-    TRANSFER_BSQ("Transfer BSQ"),
-    PAY_TRADE_FEE("Pay trade fee"),
-    PROPOSAL("Proposal"),
-    COMPENSATION_REQUEST("Compensation request"),
-    VOTE("Vote"),
-    BLIND_VOTE("Blind vote"),
-    VOTE_REVEAL("Vote reveal"),
-    LOCK_UP("Lockup"),
-    UN_LOCK("Unlock");
-
-    @Getter
-    private String displayString;
-
-    JsonTxType(String displayString) {
-        this.displayString = displayString;
-    }
+@Value
+@Immutable
+public class JsonTxInput {
+    private final int spendingTxOutputIndex;
+    private final String spendingTxId;
+    private final long bsqAmount;
+    private final boolean isVerified;
+    private final String address;
+    private final long time;
 }
