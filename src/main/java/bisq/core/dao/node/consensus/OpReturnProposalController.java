@@ -18,8 +18,8 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.proposal.param.DaoParam;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.Param;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -35,15 +35,15 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class OpReturnProposalController {
-    private final DaoParamService daoParamService;
+    private final ParamService paramService;
     private final PeriodService periodService;
     private final StateService stateService;
 
 
     @Inject
-    public OpReturnProposalController(DaoParamService daoParamService, PeriodService periodService,
+    public OpReturnProposalController(ParamService paramService, PeriodService periodService,
                                       StateService stateService) {
-        this.daoParamService = daoParamService;
+        this.paramService = paramService;
         this.periodService = periodService;
         this.stateService = stateService;
     }
@@ -52,7 +52,7 @@ public class OpReturnProposalController {
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (opReturnData.length == 22 &&
-                bsqFee == daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, blockHeight) &&
+                bsqFee == paramService.getDaoParamValue(Param.PROPOSAL_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
             stateService.setTxOutputType(txOutput, TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.PROPOSAL);

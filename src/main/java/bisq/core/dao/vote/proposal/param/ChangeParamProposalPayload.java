@@ -107,12 +107,12 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public DaoParam getQuorumDaoParam() {
-        return DaoParam.QUORUM_CHANGE_PARAM;
+    public Param getQuorumDaoParam() {
+        return Param.QUORUM_CHANGE_PARAM;
     }
 
     @Override
-    public DaoParam getThresholdDaoParam() {
-        return DaoParam.THRESHOLD_CHANGE_PARAM;
+    public Param getThresholdDaoParam() {
+        return Param.THRESHOLD_CHANGE_PARAM;
     }
 }

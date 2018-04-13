@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.proposal.compensation;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.vote.proposal.param.DaoParam;
+import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.proposal.ProposalPayload;
@@ -146,13 +146,13 @@ public final class CompensationRequestPayload extends ProposalPayload {
     }
 
     @Override
-    public DaoParam getQuorumDaoParam() {
-        return DaoParam.QUORUM_COMP_REQUEST;
+    public Param getQuorumDaoParam() {
+        return Param.QUORUM_COMP_REQUEST;
     }
 
     @Override
-    public DaoParam getThresholdDaoParam() {
-        return DaoParam.THRESHOLD_COMP_REQUEST;
+    public Param getThresholdDaoParam() {
+        return Param.THRESHOLD_COMP_REQUEST;
     }
 
     public Coin getRequestedBsq() {

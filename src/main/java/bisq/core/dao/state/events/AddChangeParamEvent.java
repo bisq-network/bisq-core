@@ -18,7 +18,7 @@
 package bisq.core.dao.state.events;
 
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
-import bisq.core.dao.vote.proposal.param.DaoParam;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -37,8 +37,8 @@ public class AddChangeParamEvent extends StateChangeEvent {
         return getChangeParam().getValue();
     }
 
-    public DaoParam getDaoParam() {
-        return (getChangeParam()).getDaoParam();
+    public Param getDaoParam() {
+        return (getChangeParam()).getParam();
     }
 
     private ChangeParamPayload getChangeParam() {

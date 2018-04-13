@@ -25,7 +25,7 @@ import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.MyProposalService;
 import bisq.core.dao.vote.proposal.ProposalListService;
 import bisq.core.dao.vote.proposal.ProposalService;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.result.VoteResultService;
 import bisq.core.dao.vote.result.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
@@ -42,7 +42,7 @@ public class DaoSetup {
     private final PeriodService periodService;
     private final MyProposalService myProposalService;
     private final BsqNode bsqNode;
-    private final DaoParamService daoParamService;
+    private final ParamService paramService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final IssuanceService issuanceService;
@@ -65,7 +65,7 @@ public class DaoSetup {
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
                     IssuanceService issuanceService,
-                    DaoParamService daoParamService) {
+                    ParamService paramService) {
         this.periodService = periodService;
         this.myProposalService = myProposalService;
         this.proposalService = proposalService;
@@ -74,7 +74,7 @@ public class DaoSetup {
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
         this.issuanceService = issuanceService;
-        this.daoParamService = daoParamService;
+        this.paramService = paramService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
@@ -90,7 +90,7 @@ public class DaoSetup {
             voteRevealService.onAllServicesInitialized();
             voteResultService.onAllServicesInitialized();
             issuanceService.onAllServicesInitialized();
-            daoParamService.onAllServicesInitialized();
+            paramService.onAllServicesInitialized();
         }
     }
 
@@ -105,7 +105,7 @@ public class DaoSetup {
             voteRevealService.shutDown();
             voteResultService.shutDown();
             issuanceService.shutDown();
-            daoParamService.shutDown();
+            paramService.shutDown();
         }
     }
 }

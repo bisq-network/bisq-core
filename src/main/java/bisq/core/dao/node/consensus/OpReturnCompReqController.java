@@ -18,8 +18,8 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.proposal.param.DaoParam;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.Param;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -37,15 +37,15 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class OpReturnCompReqController {
-    private final DaoParamService daoParamService;
+    private final ParamService paramService;
     private final PeriodService periodService;
     private final StateService stateService;
 
 
     @Inject
-    public OpReturnCompReqController(DaoParamService daoParamService, PeriodService periodService,
+    public OpReturnCompReqController(ParamService paramService, PeriodService periodService,
                                      StateService stateService) {
-        this.daoParamService = daoParamService;
+        this.paramService = paramService;
         this.periodService = periodService;
         this.stateService = stateService;
     }
@@ -55,7 +55,7 @@ public class OpReturnCompReqController {
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (model.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
-                bsqFee == daoParamService.getDaoParamValue(DaoParam.PROPOSAL_FEE, blockHeight) &&
+                bsqFee == paramService.getDaoParamValue(Param.PROPOSAL_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, PeriodService.Phase.PROPOSAL)) {
             stateService.setTxOutputType(txOutput, TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);

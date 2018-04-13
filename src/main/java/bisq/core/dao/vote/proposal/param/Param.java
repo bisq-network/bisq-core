@@ -23,7 +23,7 @@ import lombok.Getter;
  * All parameters in the Bisq DAO which can be changed by voting.
  * We will add more on demand.
  */
-public enum DaoParam {
+public enum Param {
     // Trade fees in BSQ
     MIN_MAKER_FEE_IN_BSQ(5),
     MIN_TAKER_FEE_IN_BSQ(5),
@@ -58,7 +58,7 @@ public enum DaoParam {
     /**
      * @param defaultValue for param. If not set it is -1.
      */
-    DaoParam(int defaultValue) {
+    Param(int defaultValue) {
         this.defaultValue = defaultValue;
     }
 }

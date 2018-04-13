@@ -37,13 +37,13 @@ import lombok.extern.slf4j.Slf4j;
  * Maintains a list of Dao parameter change events which gets created in case a Parameter change proposal gets accepted
  * in the voting process. The events contain the blockHeight when they become valid. When obtaining the value of an
  * parameter we look up the latest change in case we have any changeEvents, otherwise we use the default value from the
- * DaoParam.
+ * Param.
  * We do not need to sync that data structure with the StateService or have handling for snapshots because changes by
  * voting are safe against blockchain re-orgs as we use sufficient breaks between the phases. So even in case the
  * BsqBlockchain gets changed due a re-org we will not suffer from a stale state.
  */
 @Slf4j
-public class DaoParamService implements PersistedDataHost {
+public class ParamService implements PersistedDataHost {
     private final Storage<ChangeParamEventList> storage;
     @Getter
     private final ChangeParamEventList changeParamEventList = new ChangeParamEventList();
@@ -54,7 +54,7 @@ public class DaoParamService implements PersistedDataHost {
 
 
     @Inject
-    public DaoParamService(Storage<ChangeParamEventList> storage) {
+    public ParamService(Storage<ChangeParamEventList> storage) {
         this.storage = storage;
     }
 
@@ -83,14 +83,14 @@ public class DaoParamService implements PersistedDataHost {
     public void shutDown() {
     }
 
-    public long getDaoParamValue(DaoParam daoParam, int blockHeight) {
-        final List<AddChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(daoParam).stream()
+    public long getDaoParamValue(Param param, int blockHeight) {
+        final List<AddChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(param).stream()
                 .filter(e -> e.getHeight() <= blockHeight)
                 .sorted(Comparator.comparing(AddChangeParamEvent::getHeight))
                 .collect(Collectors.toList());
 
         if (sortedFilteredList.isEmpty()) {
-            return daoParam.getDefaultValue();
+            return param.getDefaultValue();
         } else {
             final AddChangeParamEvent mostRecentEvent = sortedFilteredList.get(sortedFilteredList.size() - 1);
             return mostRecentEvent.getValue();
@@ -112,9 +112,9 @@ public class DaoParamService implements PersistedDataHost {
         persist();
     }
 
-    private List<AddChangeParamEvent> getParamChangeEventListForParam(DaoParam daoParam) {
+    private List<AddChangeParamEvent> getParamChangeEventListForParam(Param param) {
         return changeParamEventList.getList().stream()
-                .filter(e -> e.getDaoParam() == daoParam)
+                .filter(e -> e.getDaoParam() == param)
                 .collect(Collectors.toList());
     }
 

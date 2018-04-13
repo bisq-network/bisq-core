@@ -31,11 +31,11 @@ import javax.annotation.Nullable;
 
 @Value
 public class ChangeParamPayload implements ProtectedStoragePayload {
-    private final DaoParam daoParam;
+    private final Param param;
     private final long value;
 
-    public ChangeParamPayload(DaoParam daoParam, long value) {
-        this.daoParam = daoParam;
+    public ChangeParamPayload(Param param, long value) {
+        this.param = param;
         this.value = value;
     }
 
@@ -47,20 +47,20 @@ public class ChangeParamPayload implements ProtectedStoragePayload {
     @Override
     public PB.ChangeParamPayload toProtoMessage() {
         final PB.ChangeParamPayload.Builder builder = PB.ChangeParamPayload.newBuilder()
-                .setDaoParamOrdinal(daoParam.ordinal())
+                .setDaoParamOrdinal(param.ordinal())
                 .setValue(value);
         return builder.build();
     }
 
     public static ChangeParamPayload fromProto(PB.ChangeParamPayload proto) {
-        return new ChangeParamPayload(DaoParam.values()[proto.getDaoParamOrdinal()],
+        return new ChangeParamPayload(Param.values()[proto.getDaoParamOrdinal()],
                 proto.getValue());
     }
 
     @Override
     public String toString() {
         return "ChangeParamPayload{" +
-                "\n     daoParam=" + daoParam +
+                "\n     param=" + param +
                 ",\n     value=" + value +
                 "\n}";
     }

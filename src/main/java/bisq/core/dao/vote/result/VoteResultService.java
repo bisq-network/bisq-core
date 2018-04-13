@@ -31,7 +31,7 @@ import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 import bisq.core.dao.vote.proposal.generic.GenericProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamProposalPayload;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.result.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealConsensus;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
@@ -74,7 +74,7 @@ public class VoteResultService {
     private final BlindVoteService blindVoteService;
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
-    private final DaoParamService daoParamService;
+    private final ParamService paramService;
     private final PeriodService periodService;
     private final IssuanceService issuanceService;
     @Getter
@@ -90,14 +90,14 @@ public class VoteResultService {
                              BlindVoteService blindVoteService,
                              VoteRevealService voteRevealService,
                              StateService stateService,
-                             DaoParamService daoParamService,
+                             ParamService paramService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
         this.nodeExecutor = nodeExecutor;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
-        this.daoParamService = daoParamService;
+        this.paramService = paramService;
         this.periodService = periodService;
         this.issuanceService = issuanceService;
     }
@@ -153,7 +153,7 @@ public class VoteResultService {
             if (majorityVoteListHash != null) {
                 if (isBlindVoteListMatchingMajority(majorityVoteListHash, chainHeight)) {
                     Map<ProposalPayload, List<VoteWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(decryptedVoteByVoteRevealTxIdSet);
-                    processAllVoteResults(resultListByProposalPayloadMap, chainHeight, daoParamService);
+                    processAllVoteResults(resultListByProposalPayloadMap, chainHeight, paramService);
                     log.info("processAllVoteResults completed");
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
@@ -236,11 +236,11 @@ public class VoteResultService {
 
     private void processAllVoteResults(Map<ProposalPayload, List<VoteWithStake>> map,
                                        int chainHeight,
-                                       DaoParamService daoParamService) {
+                                       ParamService paramService) {
         map.forEach((payload, voteResultsWithStake) -> {
             ResultPerProposal resultPerProposal = getResultPerProposal(voteResultsWithStake);
             long totalStake = resultPerProposal.getStakeOfAcceptedVotes() + resultPerProposal.getStakeOfRejectedVotes();
-            long quorum = daoParamService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
+            long quorum = paramService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
             log.info("totalStake: {}", totalStake);
             log.info("required quorum: {}", quorum);
             if (totalStake >= quorum) {
@@ -248,7 +248,7 @@ public class VoteResultService {
                 // We multiply by 10000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 reachedThreshold *= 10_000;
-                long requiredVoteThreshold = daoParamService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
+                long requiredVoteThreshold = paramService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
                 log.info("reached threshold: {} %", reachedThreshold / 100D);
                 log.info("required threshold: {} %", requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold

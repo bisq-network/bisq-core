@@ -55,7 +55,7 @@ import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayloadValidator;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
 import bisq.core.dao.vote.proposal.generic.GenericProposalService;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.result.VoteResultService;
 import bisq.core.dao.vote.result.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
@@ -96,7 +96,7 @@ public class DaoModule extends AppModule {
         bind(State.class).in(Singleton.class);
         bind(StateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
-        bind(DaoParamService.class).in(Singleton.class);
+        bind(ParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 
         // blockchain parser

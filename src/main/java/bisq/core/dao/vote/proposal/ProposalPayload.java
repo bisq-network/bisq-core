@@ -17,7 +17,7 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.vote.proposal.param.DaoParam;
+import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.VoteConsensusCritical;
@@ -196,9 +196,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
     }
 
-    public abstract DaoParam getQuorumDaoParam();
+    public abstract Param getQuorumDaoParam();
 
-    public abstract DaoParam getThresholdDaoParam();
+    public abstract Param getThresholdDaoParam();
 
     @Override
     public String toString() {

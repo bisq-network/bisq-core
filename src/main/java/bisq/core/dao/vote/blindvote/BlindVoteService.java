@@ -27,7 +27,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -96,7 +96,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     private final PublicKey signaturePubKey;
     private final MyVoteService myVoteService;
     private final ProposalService proposalService;
-    private final DaoParamService daoParamService;
+    private final ParamService paramService;
     private final ProposalPayloadValidator proposalPayloadValidator;
     private final BlindVoteValidator blindVoteValidator;
     private final BtcWalletService btcWalletService;
@@ -125,7 +125,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                             StateService stateService,
                             MyVoteService myVoteService,
                             ProposalService proposalService,
-                            DaoParamService daoParamService,
+                            ParamService paramService,
                             ProposalPayloadValidator proposalPayloadValidator,
                             BlindVoteValidator blindVoteValidator,
                             BtcWalletService btcWalletService,
@@ -138,7 +138,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         this.stateService = stateService;
         this.myVoteService = myVoteService;
         this.proposalService = proposalService;
-        this.daoParamService = daoParamService;
+        this.paramService = paramService;
         this.proposalPayloadValidator = proposalPayloadValidator;
         this.blindVoteValidator = blindVoteValidator;
         this.btcWalletService = btcWalletService;
@@ -237,7 +237,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(daoParamService, stateService.getChainHeadHeight());
+            final Coin fee = BlindVoteConsensus.getFee(paramService, stateService.getChainHeadHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {

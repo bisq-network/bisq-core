@@ -18,8 +18,8 @@
 package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.proposal.param.DaoParam;
-import bisq.core.dao.vote.proposal.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.Param;
+import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
 
@@ -97,8 +97,8 @@ public class BlindVoteConsensus {
     }
 
 
-    public static Coin getFee(DaoParamService daoParamService, int chainHeadHeight) {
-        final Coin fee = Coin.valueOf(daoParamService.getDaoParamValue(DaoParam.BLIND_VOTE_FEE, chainHeadHeight));
+    public static Coin getFee(ParamService paramService, int chainHeadHeight) {
+        final Coin fee = Coin.valueOf(paramService.getDaoParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
         log.info("Fee for blind vote: " + fee);
         return fee;
     }
