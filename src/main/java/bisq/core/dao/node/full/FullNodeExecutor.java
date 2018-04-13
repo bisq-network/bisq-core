@@ -19,7 +19,7 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.node.full.rpc.RpcService;
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;

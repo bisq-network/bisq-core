@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;

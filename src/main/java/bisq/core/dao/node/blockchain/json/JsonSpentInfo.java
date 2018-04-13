@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.blockchain.json;
 
-import bisq.core.dao.state.blockchain.vo.SpentInfo;
+import bisq.core.dao.state.blockchain.SpentInfo;
 
 import lombok.Value;
 

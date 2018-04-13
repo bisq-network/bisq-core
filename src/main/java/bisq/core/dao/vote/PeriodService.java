@@ -19,8 +19,8 @@ package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
-import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.Tx;
 
 import bisq.common.app.DevEnv;
 

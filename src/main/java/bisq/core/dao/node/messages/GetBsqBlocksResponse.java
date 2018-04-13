@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import bisq.network.p2p.DirectMessage;
 import bisq.network.p2p.ExtendedDataSizePermission;

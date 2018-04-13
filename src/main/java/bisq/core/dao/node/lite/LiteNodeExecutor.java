@@ -18,7 +18,7 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;

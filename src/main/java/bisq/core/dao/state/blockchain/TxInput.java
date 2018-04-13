@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain.vo;
+package bisq.core.dao.state.blockchain;
 
 import bisq.common.proto.persistable.PersistablePayload;
 

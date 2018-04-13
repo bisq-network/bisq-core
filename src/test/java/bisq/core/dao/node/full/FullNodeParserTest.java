@@ -26,9 +26,9 @@ import bisq.core.dao.node.full.rpc.RpcService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
-import bisq.core.dao.state.blockchain.vo.Tx;
-import bisq.core.dao.state.blockchain.vo.TxInput;
-import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxInput;
+import bisq.core.dao.state.blockchain.TxOutput;
 
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 

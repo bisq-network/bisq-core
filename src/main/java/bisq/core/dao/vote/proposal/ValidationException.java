@@ -1,6 +1,6 @@
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.state.blockchain.vo.Tx;
+import bisq.core.dao.state.blockchain.Tx;
 
 import org.bitcoinj.core.Coin;
 

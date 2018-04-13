@@ -18,8 +18,8 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.vo.Tx;
-import bisq.core.dao.state.blockchain.vo.TxInput;
+import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxInput;
 
 import javax.inject.Inject;
 

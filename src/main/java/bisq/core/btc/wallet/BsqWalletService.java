@@ -22,9 +22,9 @@ import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
-import bisq.core.dao.state.blockchain.vo.Tx;
-import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 

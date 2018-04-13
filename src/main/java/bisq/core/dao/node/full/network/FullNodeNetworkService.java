@@ -20,7 +20,7 @@ package bisq.core.dao.node.full.network;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;

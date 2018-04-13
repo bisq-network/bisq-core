@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.blockchain.exceptions;
 
-import bisq.core.dao.state.blockchain.vo.BsqBlock;
+import bisq.core.dao.state.blockchain.BsqBlock;
 
 import lombok.Getter;
 

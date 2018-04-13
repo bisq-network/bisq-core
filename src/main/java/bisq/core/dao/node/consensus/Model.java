@@ -18,7 +18,7 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutput;
 
 import lombok.Getter;
 import lombok.Setter;

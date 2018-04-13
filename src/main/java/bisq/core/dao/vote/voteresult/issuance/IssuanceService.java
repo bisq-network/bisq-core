@@ -18,7 +18,7 @@
 package bisq.core.dao.vote.voteresult.issuance;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.vo.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;
 
