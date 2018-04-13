@@ -18,8 +18,8 @@
 package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.param.DaoParam;
-import bisq.core.dao.vote.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.DaoParam;
+import bisq.core.dao.vote.proposal.param.DaoParamService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
 

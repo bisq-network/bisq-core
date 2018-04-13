@@ -19,7 +19,7 @@ package bisq.core.setup;
 
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.btc.AddressEntryList;
-import bisq.core.dao.vote.param.DaoParamService;
+import bisq.core.dao.vote.proposal.param.DaoParamService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.myvote.MyVoteService;
 import bisq.core.dao.vote.proposal.MyProposalService;

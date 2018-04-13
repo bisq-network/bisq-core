@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.param;
+package bisq.core.dao.vote.proposal.param;
 
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 

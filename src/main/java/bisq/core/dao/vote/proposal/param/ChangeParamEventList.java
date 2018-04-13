@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.param;
+package bisq.core.dao.vote.proposal.param;
 
 import bisq.core.dao.state.events.ChangeParamEvent;
 import bisq.core.dao.vote.VoteConsensusCritical;
