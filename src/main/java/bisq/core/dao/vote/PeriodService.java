@@ -19,7 +19,7 @@ package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 
 import bisq.common.app.DevEnv;
@@ -119,8 +119,8 @@ public class PeriodService implements StateService.Listener {
     }
 
     @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
-        onChainHeightChanged(bsqBlock.getHeight());
+    public void onBlockAdded(TxBlock txBlock) {
+        onChainHeightChanged(txBlock.getHeight());
     }
 
     public boolean isInPhase(int blockHeight, Phase phase) {

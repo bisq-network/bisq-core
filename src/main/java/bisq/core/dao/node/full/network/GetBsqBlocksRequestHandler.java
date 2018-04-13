@@ -20,7 +20,7 @@ package bisq.core.dao.node.full.network;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
@@ -88,8 +88,8 @@ class GetBsqBlocksRequestHandler {
 
     public void onGetBsqBlocksRequest(GetBsqBlocksRequest getBsqBlocksRequest, final Connection connection) {
         Log.traceCall(getBsqBlocksRequest + "\n\tconnection=" + connection);
-        List<BsqBlock> bsqBlocks = stateService.getClonedBlocksFrom(getBsqBlocksRequest.getFromBlockHeight());
-        final GetBsqBlocksResponse bsqBlocksResponse = new GetBsqBlocksResponse(bsqBlocks, getBsqBlocksRequest.getNonce());
+        List<TxBlock> txBlocks = stateService.getClonedBlocksFrom(getBsqBlocksRequest.getFromBlockHeight());
+        final GetBsqBlocksResponse bsqBlocksResponse = new GetBsqBlocksResponse(txBlocks, getBsqBlocksRequest.getNonce());
         log.debug("bsqBlocksResponse " + bsqBlocksResponse.getRequestNonce());
 
         if (timeoutTimer == null) {

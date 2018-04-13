@@ -22,7 +22,7 @@ import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
@@ -48,22 +48,22 @@ public class LiteNodeParser extends BsqParser {
         super(bsqBlockController, genesisTxController, bsqTxController);
     }
 
-    void parseBsqBlocks(List<BsqBlock> bsqBlocks,
-                        Consumer<BsqBlock> newBlockHandler)
+    void parseBsqBlocks(List<TxBlock> txBlocks,
+                        Consumer<TxBlock> newBlockHandler)
             throws BlockNotConnectingException {
-        for (BsqBlock bsqBlock : bsqBlocks) {
-            parseBsqBlock(bsqBlock);
-            newBlockHandler.accept(bsqBlock);
+        for (TxBlock txBlock : txBlocks) {
+            parseBsqBlock(txBlock);
+            newBlockHandler.accept(txBlock);
         }
     }
 
-    void parseBsqBlock(BsqBlock bsqBlock) throws BlockNotConnectingException {
-        int blockHeight = bsqBlock.getHeight();
+    void parseBsqBlock(TxBlock txBlock) throws BlockNotConnectingException {
+        int blockHeight = txBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
-        List<Tx> txList = new ArrayList<>(bsqBlock.getTxs());
+        List<Tx> txList = new ArrayList<>(txBlock.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
-        bsqBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
+        txBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
         recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
-        bsqBlockController.addBlockIfValid(bsqBlock);
+        bsqBlockController.addBlockIfValid(txBlock);
     }
 }

@@ -29,7 +29,7 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.param.DaoParamService;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
@@ -192,8 +192,8 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
     // might be out of sync!
     // TODO find a solution to fix that
     @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
-        onBlockHeightChanged(bsqBlock.getHeight());
+    public void onBlockAdded(TxBlock txBlock) {
+        onBlockHeightChanged(txBlock.getHeight());
     }
 
 

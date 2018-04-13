@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.DirectMessage;
 import bisq.network.p2p.ExtendedDataSizePermission;
@@ -37,11 +37,11 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public final class GetBsqBlocksResponse extends NetworkEnvelope implements DirectMessage, ExtendedDataSizePermission {
-    private final List<BsqBlock> bsqBlocks;
+    private final List<TxBlock> txBlocks;
     private final int requestNonce;
 
-    public GetBsqBlocksResponse(List<BsqBlock> bsqBlocks, int requestNonce) {
-        this(bsqBlocks, requestNonce, Version.getP2PMessageVersion());
+    public GetBsqBlocksResponse(List<TxBlock> txBlocks, int requestNonce) {
+        this(txBlocks, requestNonce, Version.getP2PMessageVersion());
     }
 
 
@@ -49,9 +49,9 @@ public final class GetBsqBlocksResponse extends NetworkEnvelope implements Direc
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GetBsqBlocksResponse(List<BsqBlock> bsqBlocks, int requestNonce, int messageVersion) {
+    private GetBsqBlocksResponse(List<TxBlock> txBlocks, int requestNonce, int messageVersion) {
         super(messageVersion);
-        this.bsqBlocks = bsqBlocks;
+        this.txBlocks = txBlocks;
         this.requestNonce = requestNonce;
     }
 
@@ -59,8 +59,8 @@ public final class GetBsqBlocksResponse extends NetworkEnvelope implements Direc
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
                 .setGetBsqBlocksResponse(PB.GetBsqBlocksResponse.newBuilder()
-                        .addAllBsqBlocks(bsqBlocks.stream()
-                                .map(BsqBlock::toProtoMessage)
+                        .addAllBsqBlocks(txBlocks.stream()
+                                .map(TxBlock::toProtoMessage)
                                 .collect(Collectors.toList()))
                         .setRequestNonce(requestNonce))
                 .build();
@@ -70,7 +70,7 @@ public final class GetBsqBlocksResponse extends NetworkEnvelope implements Direc
         return new GetBsqBlocksResponse(proto.getBsqBlocksList().isEmpty() ?
                 new ArrayList<>() :
                 proto.getBsqBlocksList().stream()
-                        .map(BsqBlock::fromProto)
+                        .map(TxBlock::fromProto)
                         .collect(Collectors.toList()),
                 proto.getRequestNonce(),
                 messageVersion);

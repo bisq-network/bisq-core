@@ -22,7 +22,7 @@ import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.provider.fee.FeeService;
@@ -168,7 +168,7 @@ public class BsqWalletService extends WalletService implements StateService.List
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
+    public void onBlockAdded(TxBlock txBlock) {
         if (isWalletReady())
             updateBsqWalletTransactions();
     }

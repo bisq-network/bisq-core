@@ -19,7 +19,7 @@ package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import javax.inject.Inject;
 
@@ -40,28 +40,28 @@ public class BsqBlockController {
         this.stateService = stateService;
     }
 
-    public void addBlockIfValid(BsqBlock bsqBlock) throws BlockNotConnectingException {
-        LinkedList<BsqBlock> bsqBlocks = stateService.getBsqBlocks();
-        if (!bsqBlocks.contains(bsqBlock)) {
-            if (isBlockConnecting(bsqBlock, bsqBlocks)) {
-                stateService.blockParsingComplete(bsqBlock);
+    public void addBlockIfValid(TxBlock txBlock) throws BlockNotConnectingException {
+        LinkedList<TxBlock> txBlocks = stateService.getBsqBlocks();
+        if (!txBlocks.contains(txBlock)) {
+            if (isBlockConnecting(txBlock, txBlocks)) {
+                stateService.blockParsingComplete(txBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",
-                        bsqBlock.getHeight(), bsqBlock.getHash(), bsqBlocks.getLast().getHeight(), bsqBlocks.getLast().getHash());
-                throw new BlockNotConnectingException(bsqBlock);
+                        txBlock.getHeight(), txBlock.getHash(), txBlocks.getLast().getHeight(), txBlocks.getLast().getHash());
+                throw new BlockNotConnectingException(txBlock);
             }
         } else {
             log.warn("We got that block already. Ignore the call.");
         }
     }
 
-    private boolean isBlockConnecting(BsqBlock bsqBlock, LinkedList<BsqBlock> bsqBlocks) {
-        // Case 1: bsqBlocks is empty
-        // Case 2: bsqBlocks not empty. Last block must match new blocks getPreviousBlockHash and
+    private boolean isBlockConnecting(TxBlock txBlock, LinkedList<TxBlock> txBlocks) {
+        // Case 1: txBlocks is empty
+        // Case 2: txBlocks not empty. Last block must match new blocks getPreviousBlockHash and
         // height of last block +1 must be new blocks height
-        return bsqBlocks.isEmpty() ||
-                (bsqBlocks.getLast().getHash().equals(bsqBlock.getPreviousBlockHash()) &&
-                        bsqBlocks.getLast().getHeight() + 1 == bsqBlock.getHeight());
+        return txBlocks.isEmpty() ||
+                (txBlocks.getLast().getHash().equals(txBlock.getPreviousBlockHash()) &&
+                        txBlocks.getLast().getHeight() + 1 == txBlock.getHeight());
     }
 }

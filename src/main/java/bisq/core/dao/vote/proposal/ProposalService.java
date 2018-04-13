@@ -20,7 +20,7 @@ package bisq.core.dao.vote.proposal;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
@@ -107,9 +107,9 @@ public class ProposalService implements PersistedDataHost {
             }
 
             @Override
-            public void onBlockAdded(BsqBlock bsqBlock) {
+            public void onBlockAdded(TxBlock txBlock) {
                 // We iterate all proposals and if all valid we store it at the Tx
-                proposalList.forEach(proposal -> maybeAddProposalToTx(proposal.getProposalPayload(), bsqBlock.getHeight()));
+                proposalList.forEach(proposal -> maybeAddProposalToTx(proposal.getProposalPayload(), txBlock.getHeight()));
             }
 
             @Override

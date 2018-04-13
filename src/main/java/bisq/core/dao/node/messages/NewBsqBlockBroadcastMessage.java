@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.storage.messages.BroadcastMessage;
 
@@ -32,10 +32,10 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public final class NewBsqBlockBroadcastMessage extends BroadcastMessage {
-    private final BsqBlock bsqBlock;
+    private final TxBlock txBlock;
 
-    public NewBsqBlockBroadcastMessage(BsqBlock bsqBlock) {
-        this(bsqBlock, Version.getP2PMessageVersion());
+    public NewBsqBlockBroadcastMessage(TxBlock txBlock) {
+        this(txBlock, Version.getP2PMessageVersion());
     }
 
 
@@ -43,21 +43,21 @@ public final class NewBsqBlockBroadcastMessage extends BroadcastMessage {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private NewBsqBlockBroadcastMessage(BsqBlock bsqBlock, int messageVersion) {
+    private NewBsqBlockBroadcastMessage(TxBlock txBlock, int messageVersion) {
         super(messageVersion);
-        this.bsqBlock = bsqBlock;
+        this.txBlock = txBlock;
     }
 
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
                 .setNewBsqBlockBroadcastMessage(PB.NewBsqBlockBroadcastMessage.newBuilder()
-                        .setBsqBlock(bsqBlock.toProtoMessage()))
+                        .setBsqBlock(txBlock.toProtoMessage()))
                 .build();
     }
 
     public static NetworkEnvelope fromProto(PB.NewBsqBlockBroadcastMessage proto, int messageVersion) {
-        return new NewBsqBlockBroadcastMessage(BsqBlock.fromProto(proto.getBsqBlock()),
+        return new NewBsqBlockBroadcastMessage(TxBlock.fromProto(proto.getBsqBlock()),
                 messageVersion);
     }
 }

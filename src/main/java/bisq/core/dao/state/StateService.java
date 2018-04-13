@@ -18,7 +18,7 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -88,7 +88,7 @@ public class StateService {
 
 
     public interface Listener extends ThreadContextAwareListener {
-        void onBlockAdded(BsqBlock bsqBlock);
+        void onBlockAdded(TxBlock txBlock);
 
         default void onStateChange(StateChangeEvent stateChangeEvent) {
         }
@@ -145,8 +145,8 @@ public class StateService {
 
     public void applySnapshot(State snapshot) {
         lock.write(() -> {
-            state.getBsqBlocks().clear();
-            state.getBsqBlocks().addAll(snapshot.getBsqBlocks());
+            state.getTxBlocks().clear();
+            state.getTxBlocks().addAll(snapshot.getTxBlocks());
 
             state.getUnspentTxOutputMap().clear();
             state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
@@ -175,19 +175,19 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: BsqBlock
+    // Write access: TxBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // After parsing of a new block is complete we trigger the processing of any non blockchain data like
     // Proposals or Blind votes.
-    public void blockParsingComplete(BsqBlock bsqBlock) {
+    public void blockParsingComplete(TxBlock txBlock) {
         lock.write(() -> {
-            state.getBsqBlocks().add(bsqBlock);
-            log.info("New block added at blockHeight " + bsqBlock.getHeight());
+            state.getTxBlocks().add(txBlock);
+            log.info("New block added at blockHeight " + txBlock.getHeight());
 
             // If the client has set a specific executor we call on that thread.
             // By default the userThread's executor is used.
-            listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(bsqBlock)));
+            listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(txBlock)));
 
             // We check if we have a StateChangeEvent at that blockHeight and if so we notify the listeners.
             // The onBlockAdded handler usually triggers that new StateChangeEvent gets added so we are processing
@@ -196,7 +196,7 @@ public class StateService {
             // The immutable data structures like the bsqBlocks and the stateChangeEvents can be used to recreate the
             // mutable state.
             state.getStateChangeEvents().stream()
-                    .filter(event -> event.getChainHeight() == bsqBlock.getHeight())
+                    .filter(event -> event.getChainHeight() == txBlock.getHeight())
                     .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onStateChange(event))));
         });
     }
@@ -262,34 +262,34 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Read access: BsqBlock
+    // Read access: TxBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public State getClone() {
         return lock.read((Supplier<State>) state::getClone);
     }
 
-    public LinkedList<BsqBlock> getBsqBlocks() {
-        return lock.read(state::getBsqBlocks);
+    public LinkedList<TxBlock> getBsqBlocks() {
+        return lock.read(state::getTxBlocks);
     }
 
-    public boolean containsBsqBlock(BsqBlock bsqBlock) {
-        return lock.read(() -> state.getBsqBlocks().contains(bsqBlock));
+    public boolean containsBsqBlock(TxBlock txBlock) {
+        return lock.read(() -> state.getTxBlocks().contains(txBlock));
     }
 
     public int getChainHeadHeight() {
-        return lock.read(() -> !state.getBsqBlocks().isEmpty() ? state.getBsqBlocks().getLast().getHeight() : 0);
+        return lock.read(() -> !state.getTxBlocks().isEmpty() ? state.getTxBlocks().getLast().getHeight() : 0);
     }
 
     public int getGenesisBlockHeight() {
         return genesisBlockHeight;
     }
 
-    public List<BsqBlock> getClonedBlocksFrom(int fromBlockHeight) {
+    public List<TxBlock> getClonedBlocksFrom(int fromBlockHeight) {
         return lock.read(() -> {
-            return state.getClone().getBsqBlocks().stream()
+            return state.getClone().getTxBlocks().stream()
                     .filter(block -> block.getHeight() >= fromBlockHeight)
-                    .map(BsqBlock::clone)
+                    .map(TxBlock::clone)
                     .collect(Collectors.toList());
         });
     }
@@ -326,7 +326,7 @@ public class StateService {
     }
 
     public Map<String, Tx> getTxMap() {
-        return lock.read(() -> state.getBsqBlocks().stream()
+        return lock.read(() -> state.getTxBlocks().stream()
                 .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
                 .collect(Collectors.toMap(Tx::getId, tx -> tx)));
     }
@@ -466,9 +466,9 @@ public class StateService {
 
     public long getBlockTime(int height) {
         return lock.read(() -> {
-            return state.getBsqBlocks().stream()
+            return state.getTxBlocks().stream()
                     .filter(block -> block.getHeight() == height)
-                    .mapToLong(BsqBlock::getTime)
+                    .mapToLong(TxBlock::getTime)
                     .sum();
         });
     }

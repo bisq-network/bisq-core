@@ -20,7 +20,7 @@ package bisq.core.dao.node.full.network;
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -94,9 +94,9 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
         peerManager.removeListener(this);
     }
 
-    public void publishNewBlock(BsqBlock bsqBlock) {
-        log.info("Publish new block at height={} and block hash={}", bsqBlock.getHeight(), bsqBlock.getHash());
-        final NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage = new NewBsqBlockBroadcastMessage(bsqBlock);
+    public void publishNewBlock(TxBlock txBlock) {
+        log.info("Publish new block at height={} and block hash={}", txBlock.getHeight(), txBlock.getHash());
+        final NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage = new NewBsqBlockBroadcastMessage(txBlock);
         broadcaster.broadcast(newBsqBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
     }
 

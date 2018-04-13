@@ -18,7 +18,7 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
@@ -65,15 +65,15 @@ public class LiteNodeExecutor {
     // Package private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    void parseBlocks(List<BsqBlock> bsqBlockList,
-                     Consumer<BsqBlock> newBlockHandler,
+    void parseBlocks(List<TxBlock> txBlockList,
+                     Consumer<TxBlock> newBlockHandler,
                      ResultHandler resultHandler,
                      Consumer<Throwable> errorHandler) {
         ListenableFuture<Void> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
-            liteNodeParser.parseBsqBlocks(bsqBlockList,
+            liteNodeParser.parseBsqBlocks(txBlockList,
                     newBsqBlock -> UserThread.execute(() -> newBlockHandler.accept(newBsqBlock)));
-            log.info("parseBlocks took {} ms for {} blocks", System.currentTimeMillis() - startTs, bsqBlockList.size());
+            log.info("parseBlocks took {} ms for {} blocks", System.currentTimeMillis() - startTs, txBlockList.size());
             return null;
         });
 
@@ -90,20 +90,20 @@ public class LiteNodeExecutor {
         });
     }
 
-    void parseBlock(BsqBlock bsqBlock,
-                    Consumer<BsqBlock> newBlockHandler,
+    void parseBlock(TxBlock txBlock,
+                    Consumer<TxBlock> newBlockHandler,
                     Consumer<Throwable> errorHandler) {
-        ListenableFuture<BsqBlock> future = executor.submit(() -> {
+        ListenableFuture<TxBlock> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
-            liteNodeParser.parseBsqBlock(bsqBlock);
+            liteNodeParser.parseBsqBlock(txBlock);
             log.info("parseBlocks took {} ms", System.currentTimeMillis() - startTs);
-            return bsqBlock;
+            return txBlock;
         });
 
-        Futures.addCallback(future, new FutureCallback<BsqBlock>() {
+        Futures.addCallback(future, new FutureCallback<TxBlock>() {
             @Override
-            public void onSuccess(BsqBlock bsqBlock) {
-                UserThread.execute(() -> UserThread.execute(() -> newBlockHandler.accept(bsqBlock)));
+            public void onSuccess(TxBlock txBlock) {
+                UserThread.execute(() -> UserThread.execute(() -> newBlockHandler.accept(txBlock)));
             }
 
             @Override

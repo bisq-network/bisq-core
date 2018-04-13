@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
@@ -63,7 +63,7 @@ public class SnapshotManager implements StateService.Listener {
         checkNotNull(storage, "storage must not be null");
         State persisted = storage.initAndGetPersisted(state, 100);
         if (persisted != null) {
-            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getBsqBlocks().getLast().getHeight());
+            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getTxBlocks().getLast().getHeight());
             stateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
@@ -71,7 +71,7 @@ public class SnapshotManager implements StateService.Listener {
     }
 
     @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
+    public void onBlockAdded(TxBlock txBlock) {
         final int chainHeadHeight = stateService.getChainHeadHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
                 (snapshotCandidate == null ||

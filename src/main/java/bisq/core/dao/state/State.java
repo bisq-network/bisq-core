@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Root class of all relevant data for determining the state of the BSQ block chain.
- * We maintain 2 immutable data structures, the bsqBlocks and the stateChangeEvents.
+ * We maintain 2 immutable data structures, the txBlocks and the stateChangeEvents.
  * All mutable data is kept in maps.
  */
 @Slf4j
@@ -56,7 +56,7 @@ public class State implements PersistableEnvelope {
 
     // Immutable data structures
     // The blockchain data filtered for Bsq transactions
-    private final LinkedList<BsqBlock> bsqBlocks;
+    private final LinkedList<TxBlock> txBlocks;
 
     // The state change events containing any non-blockchain data which can trigger a state change in the Bisq DAO
     private final LinkedList<StateChangeEvent> stateChangeEvents;
@@ -97,10 +97,10 @@ public class State implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private State(LinkedList<BsqBlock> bsqBlocks,
+    private State(LinkedList<TxBlock> txBlocks,
                   LinkedList<StateChangeEvent> stateChangeEvents,
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
-        this.bsqBlocks = bsqBlocks;
+        this.txBlocks = txBlocks;
         this.stateChangeEvents = stateChangeEvents;
         this.unspentTxOutputMap = unspentTxOutputMap;
 
@@ -115,8 +115,8 @@ public class State implements PersistableEnvelope {
     private PB.BsqBlockChain.Builder getBsqBlockChainBuilder() {
         final PB.BsqBlockChain.Builder builder = PB.BsqBlockChain.newBuilder();
         /*
-        builder.addAllBsqBlocks(bsqBlocks.stream()
-                        .map(BsqBlock::toProtoMessage)
+        builder.addAllBsqBlocks(txBlocks.stream()
+                        .map(TxBlock::toProtoMessage)
                         .collect(Collectors.toList()))
                 .putAllTxMap(txMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey,
@@ -137,7 +137,7 @@ public class State implements PersistableEnvelope {
     public static PersistableEnvelope fromProto(PB.BsqBlockChain proto) {
         return null;
         /*new State(new LinkedList<>(proto.getBsqBlocksList().stream()
-                .map(BsqBlock::fromProto)
+                .map(TxBlock::fromProto)
                 .collect(Collectors.toList())),
                 new HashMap<>(proto.getTxMapMap().entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, v -> Tx.fromProto(v.getValue())))),
@@ -156,7 +156,7 @@ public class State implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public int getChainHeadHeight() {
-        return !getBsqBlocks().isEmpty() ? getBsqBlocks().getLast().getHeight() : 0;
+        return !this.getTxBlocks().isEmpty() ? this.getTxBlocks().getLast().getHeight() : 0;
     }
 
     public State getClone() {

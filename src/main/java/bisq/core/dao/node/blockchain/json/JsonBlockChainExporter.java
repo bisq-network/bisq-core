@@ -119,7 +119,7 @@ public class JsonBlockChainExporter {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
                 final State stateClone = stateService.getClone();
-                Map<String, Tx> txMap = stateClone.getBsqBlocks().stream()
+                Map<String, Tx> txMap = stateClone.getTxBlocks().stream()
                         .filter(Objects::nonNull)
                         .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));

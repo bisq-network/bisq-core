@@ -24,7 +24,7 @@ import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.network.Connection;
@@ -99,12 +99,12 @@ public class LiteNode extends BsqNode {
         liteNodeNetworkService.addListener(new LiteNodeNetworkService.Listener() {
             @Override
             public void onRequestedBlocksReceived(GetBsqBlocksResponse getBsqBlocksResponse) {
-                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBsqBlocksResponse.getBsqBlocks()));
+                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBsqBlocksResponse.getTxBlocks()));
             }
 
             @Override
             public void onNewBlockReceived(NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage) {
-                LiteNode.this.onNewBlockReceived(newBsqBlockBroadcastMessage.getBsqBlock());
+                LiteNode.this.onNewBlockReceived(newBsqBlockBroadcastMessage.getTxBlock());
             }
 
             @Override
@@ -132,34 +132,34 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We received the missing blocks
-    private void onRequestedBlocksReceived(List<BsqBlock> bsqBlockList) {
-        log.info("onRequestedBlocksReceived: blocks with {} items", bsqBlockList.size());
-        if (bsqBlockList.size() > 0)
-            log.info("block height of last item: {}", bsqBlockList.get(bsqBlockList.size() - 1).getHeight());
+    private void onRequestedBlocksReceived(List<TxBlock> txBlockList) {
+        log.info("onRequestedBlocksReceived: blocks with {} items", txBlockList.size());
+        if (txBlockList.size() > 0)
+            log.info("block height of last item: {}", txBlockList.get(txBlockList.size() - 1).getHeight());
         // We clone with a reset of all mutable data in case the provider would not have done it.
-        List<BsqBlock> clonedBsqBlockList = bsqBlockList.stream()
-                .map(bsqBlock -> BsqBlock.clone(bsqBlock))
+        List<TxBlock> clonedTxBlockList = txBlockList.stream()
+                .map(bsqBlock -> TxBlock.clone(bsqBlock))
                 .collect(Collectors.toList());
-        bsqLiteNodeExecutor.parseBlocks(clonedBsqBlockList,
+        bsqLiteNodeExecutor.parseBlocks(clonedTxBlockList,
                 this::onNewBsqBlock,
                 this::onParseBlockChainComplete,
                 getErrorHandler());
     }
 
     // We received a new block
-    private void onNewBlockReceived(BsqBlock bsqBlock) {
-        log.info("onNewBlockReceived: bsqBlock={}", bsqBlock.getHeight());
+    private void onNewBlockReceived(TxBlock txBlock) {
+        log.info("onNewBlockReceived: txBlock={}", txBlock.getHeight());
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
-        BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock);
-        if (!stateService.containsBsqBlock(clonedBsqBlock)) {
+        TxBlock clonedTxBlock = TxBlock.clone(txBlock);
+        if (!stateService.containsBsqBlock(clonedTxBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
-            bsqLiteNodeExecutor.parseBlock(clonedBsqBlock, this::onNewBsqBlock, getErrorHandler());
+            bsqLiteNodeExecutor.parseBlock(clonedTxBlock, this::onNewBsqBlock, getErrorHandler());
         }
     }
 
-    private void onNewBsqBlock(BsqBlock bsqBlock) {
-        log.debug("new bsqBlock parsed: " + bsqBlock);
+    private void onNewBsqBlock(TxBlock txBlock) {
+        log.debug("new txBlock parsed: " + txBlock);
     }
 
     @NotNull

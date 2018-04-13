@@ -19,7 +19,7 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.node.full.rpc.RpcService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
@@ -101,7 +101,7 @@ public class FullNodeExecutor {
 
     void parseBlocks(int startBlockHeight,
                      int chainHeadHeight,
-                     Consumer<BsqBlock> newBlockHandler,
+                     Consumer<TxBlock> newBlockHandler,
                      ResultHandler resultHandler,
                      Consumer<Throwable> errorHandler) {
         ListenableFuture<Void> future = executor.submit(() -> {
@@ -127,14 +127,14 @@ public class FullNodeExecutor {
     }
 
     void parseBtcdBlock(Block btcdBlock,
-                        Consumer<BsqBlock> resultHandler,
+                        Consumer<TxBlock> resultHandler,
                         Consumer<Throwable> errorHandler) {
-        ListenableFuture<BsqBlock> future = executor.submit(() -> fullNodeParser.parseBlock(btcdBlock));
+        ListenableFuture<TxBlock> future = executor.submit(() -> fullNodeParser.parseBlock(btcdBlock));
 
-        Futures.addCallback(future, new FutureCallback<BsqBlock>() {
+        Futures.addCallback(future, new FutureCallback<TxBlock>() {
             @Override
-            public void onSuccess(BsqBlock bsqBlock) {
-                UserThread.execute(() -> resultHandler.accept(bsqBlock));
+            public void onSuccess(TxBlock txBlock) {
+                UserThread.execute(() -> resultHandler.accept(txBlock));
             }
 
             @Override

@@ -27,7 +27,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
@@ -116,11 +116,11 @@ public class VoteRevealService implements StateService.Listener {
     }
 
     @Override
-    public void onBlockAdded(BsqBlock bsqBlock) {
-        if (periodService.getPhaseForHeight(bsqBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
+    public void onBlockAdded(TxBlock txBlock) {
+        if (periodService.getPhaseForHeight(txBlock.getHeight()) == PeriodService.Phase.VOTE_REVEAL) {
             // A phase change is triggered by a new block but we need to wait for the parser to complete
             //TODO use handler only triggered at end of parsing. -> Refactor bsqBlockChain and BsqNode handlers
-            maybeRevealVotes(bsqBlock.getHeight());
+            maybeRevealVotes(txBlock.getHeight());
         }
     }
 

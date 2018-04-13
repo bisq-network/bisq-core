@@ -23,7 +23,7 @@ import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.P2PService;
 
@@ -106,10 +106,10 @@ public class FullNode extends BsqNode {
             addBlockHandler();
     }
 
-    private void onNewBsqBlock(BsqBlock bsqBlock) {
+    private void onNewBsqBlock(TxBlock txBlock) {
         jsonBlockChainExporter.maybeExport();
         if (parseBlockchainComplete && p2pNetworkReady)
-            fullNodeNetworkService.publishNewBlock(bsqBlock);
+            fullNodeNetworkService.publishNewBlock(txBlock);
     }
 
 

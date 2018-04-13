@@ -19,7 +19,7 @@ package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.BsqBlock;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.PeriodService;
 
@@ -99,8 +99,8 @@ public class ProposalListService {
             }
 
             @Override
-            public void onBlockAdded(BsqBlock bsqBlock) {
-                updateLists(bsqBlock.getHeight());
+            public void onBlockAdded(TxBlock txBlock) {
+                updateLists(txBlock.getHeight());
             }
         });
 
