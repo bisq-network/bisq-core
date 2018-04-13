@@ -19,6 +19,8 @@ package bisq.core.dao.state.events;
 
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
+import com.google.protobuf.Message;
+
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
@@ -28,5 +30,11 @@ public class AddProposalPayloadEvent extends StateChangeEvent {
 
     public AddProposalPayloadEvent(ProposalPayload payload, int chainHeight) {
         super(payload, chainHeight);
+    }
+
+    //TODO
+    @Override
+    public Message toProtoMessage() {
+        return null;
     }
 }

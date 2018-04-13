@@ -18,6 +18,7 @@
 package bisq.core.dao.param;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.state.events.ChangeParamEvent;
 
 import bisq.common.app.DevEnv;
 import bisq.common.proto.persistable.PersistedDataHost;
@@ -43,9 +44,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class DaoParamService implements PersistedDataHost {
-    private final Storage<ParamChangeEventList> storage;
+    private final Storage<ChangeParamEventList> storage;
     @Getter
-    private final ParamChangeEventList paramChangeEventList = new ParamChangeEventList();
+    private final ChangeParamEventList changeParamEventList = new ChangeParamEventList();
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -53,7 +54,7 @@ public class DaoParamService implements PersistedDataHost {
 
 
     @Inject
-    public DaoParamService(Storage<ParamChangeEventList> storage) {
+    public DaoParamService(Storage<ChangeParamEventList> storage) {
         this.storage = storage;
     }
 
@@ -64,10 +65,10 @@ public class DaoParamService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            ParamChangeEventList persisted = storage.initAndGetPersisted(paramChangeEventList, 20);
+            ChangeParamEventList persisted = storage.initAndGetPersisted(changeParamEventList, 20);
             if (persisted != null) {
-                this.paramChangeEventList.clear();
-                this.paramChangeEventList.addAll(persisted.getList());
+                this.changeParamEventList.clear();
+                this.changeParamEventList.addAll(persisted.getList());
             }
         }
     }
@@ -83,43 +84,43 @@ public class DaoParamService implements PersistedDataHost {
     }
 
     public long getDaoParamValue(DaoParam daoParam, int blockHeight) {
-        final List<ParamChangeEvent> sortedFilteredList = getParamChangeEventListForParam(daoParam).stream()
-                .filter(e -> e.getBlockHeight() <= blockHeight)
-                .sorted(Comparator.comparing(ParamChangeEvent::getBlockHeight))
+        final List<ChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(daoParam).stream()
+                .filter(e -> e.getHeight() <= blockHeight)
+                .sorted(Comparator.comparing(ChangeParamEvent::getHeight))
                 .collect(Collectors.toList());
 
         if (sortedFilteredList.isEmpty()) {
             return daoParam.getDefaultValue();
         } else {
-            final ParamChangeEvent mostRecentEvent = sortedFilteredList.get(sortedFilteredList.size() - 1);
+            final ChangeParamEvent mostRecentEvent = sortedFilteredList.get(sortedFilteredList.size() - 1);
             return mostRecentEvent.getValue();
         }
     }
 
-    public void addChangeEvent(ParamChangeEvent event) {
-        if (!paramChangeEventList.contains(event)) {
+    public void addChangeEvent(ChangeParamEvent event) {
+        if (!changeParamEventList.contains(event)) {
             if (!hasConflictingValue(getParamChangeEventListForParam(event.getDaoParam()), event)) {
-                paramChangeEventList.add(event);
+                changeParamEventList.add(event);
             } else {
-                String msg = "We have already an ParamChangeEvent with the same blockHeight but a different value. " +
+                String msg = "We have already an ChangeParamEvent with the same blockHeight but a different value. " +
                         "That must not happen.";
                 DevEnv.logErrorAndThrowIfDevMode(msg);
             }
         } else {
-            log.warn("We have that ParamChangeEvent already in our list. ParamChangeEvent={}", event);
+            log.warn("We have that ChangeParamEvent already in our list. ChangeParamEvent={}", event);
         }
         persist();
     }
 
-    private List<ParamChangeEvent> getParamChangeEventListForParam(DaoParam daoParam) {
-        return paramChangeEventList.getList().stream()
+    private List<ChangeParamEvent> getParamChangeEventListForParam(DaoParam daoParam) {
+        return changeParamEventList.getList().stream()
                 .filter(e -> e.getDaoParam() == daoParam)
                 .collect(Collectors.toList());
     }
 
-    private boolean hasConflictingValue(List<ParamChangeEvent> list, ParamChangeEvent event) {
+    private boolean hasConflictingValue(List<ChangeParamEvent> list, ChangeParamEvent event) {
         return list.stream()
-                .filter(e -> e.getBlockHeight() == event.getBlockHeight())
+                .filter(e -> e.getHeight() == event.getHeight())
                 .anyMatch(e -> e.getValue() != event.getValue());
     }
 

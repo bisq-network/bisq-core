@@ -15,7 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain;
+package bisq.core.dao.state;
+
+import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.events.StateChangeEvent;
 
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -23,43 +26,47 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-
 import lombok.Value;
+import lombok.experimental.Delegate;
 
 import javax.annotation.concurrent.Immutable;
 
 /**
- * A block derived from the BTC blockchain and filtered for BSQ relevant transactions.
+ * The base unit collecting data which leads to a state change.
+ * Consists of the TxBlock for blockchain related change events (transactions) and the stateChangeEvents
+ * for non-blockchain related events like AddProposalPayloadEvents or ChangeParamEvents.
  */
 @Immutable
 @Value
-public class TxBlock implements PersistablePayload {
+public class Block implements PersistablePayload {
 
-    public static TxBlock clone(TxBlock txBlock) {
+    /*public static Block clone(Block txBlock) {
         final ImmutableList<Tx> txs = ImmutableList.copyOf(txBlock.getTxs().stream()
-                .map(Tx::clone)
+                .map(tx -> Tx.clone(tx))
                 .collect(Collectors.toList()));
-        return new TxBlock(txBlock.getHeight(),
+        return new Block(txBlock.getHeight(),
                 txBlock.getTime(),
                 txBlock.getHash(),
                 txBlock.getPreviousBlockHash(),
                 txs);
+    }*/
+
+    // We use the TxBlock as delegate
+    @Delegate(excludes = Block.ExcludesDelegateMethods.class)
+    private final TxBlock txBlock;
+
+    private interface ExcludesDelegateMethods {
+        PB.BsqBlock toProtoMessage();
     }
 
-    private final int height;
-    private final long time;
-    private final String hash;
-    private final String previousBlockHash;
-    private final ImmutableList<Tx> txs;
+    // The state change events for that block containing any non-blockchain data which can
+    // trigger a state change in the Bisq DAO.
+    private final ImmutableList<StateChangeEvent> stateChangeEvents;
 
-    public TxBlock(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
-        this.height = height;
-        this.time = time;
-        this.hash = hash;
-        this.previousBlockHash = previousBlockHash;
-        this.txs = txs;
+
+    public Block(TxBlock txBlock, ImmutableList<StateChangeEvent> stateChangeEvents) {
+        this.txBlock = txBlock;
+        this.stateChangeEvents = stateChangeEvents;
     }
 
 
@@ -68,7 +75,8 @@ public class TxBlock implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public PB.BsqBlock toProtoMessage() {
-        return PB.BsqBlock.newBuilder()
+        return null;
+       /* return PB.BsqBlock.newBuilder()
                 .setHeight(height)
                 .setTime(time)
                 .setHash(hash)
@@ -76,11 +84,12 @@ public class TxBlock implements PersistablePayload {
                 .addAllTxs(txs.stream()
                         .map(Tx::toProtoMessage)
                         .collect(Collectors.toList()))
-                .build();
+                .build();*/
     }
 
-    public static TxBlock fromProto(PB.BsqBlock proto) {
-        return new TxBlock(proto.getHeight(),
+    public static Block fromProto(PB.BsqBlock proto) {
+        return null;
+       /* return new Block(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
@@ -88,22 +97,6 @@ public class TxBlock implements PersistablePayload {
                         ImmutableList.copyOf(new ArrayList<>()) :
                         ImmutableList.copyOf(proto.getTxsList().stream()
                                 .map(Tx::fromProto)
-                                .collect(Collectors.toList())));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String toString() {
-        return "TxBlock{" +
-                "\n     height=" + height +
-                ",\n     time=" + time +
-                ",\n     hash='" + hash + '\'' +
-                ",\n     previousBlockHash='" + previousBlockHash + '\'' +
-                ",\n     txs=" + txs +
-                "\n}";
+                                .collect(Collectors.toList())));*/
     }
 }

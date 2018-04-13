@@ -17,12 +17,11 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.SpentInfo;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -54,15 +53,15 @@ public class State implements PersistableEnvelope {
     // Instance fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Immutable data structures
-    // The blockchain data filtered for Bsq transactions
-    private final LinkedList<TxBlock> txBlocks;
-
-    // The state change events containing any non-blockchain data which can trigger a state change in the Bisq DAO
-    private final LinkedList<StateChangeEvent> stateChangeEvents;
-
+    // Immutable data
+    // The block is the fundamental data structure for state transition.
+    // It consists of the txBlock for blockchain related data and the stateChangeEvents for non-blockchain related
+    // data like Proposals, BlindVotes or ParamChangeEvents.
+    private final LinkedList<Block> blocks;
 
     // Mutable data
+
+    // Blockchain related data
 
     // Tx specific, key is txId
     private final Map<String, TxType> txTypeMap = new HashMap<>();
@@ -77,7 +76,7 @@ public class State implements PersistableEnvelope {
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap = new HashMap<>();
     private final Map<TxOutput.Key, SpentInfo> txOutputSpentInfoMap = new HashMap<>();
 
-    // non blockchain data
+    // StateChangeEvents (non blockchain data)
     private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
 
 
@@ -88,7 +87,6 @@ public class State implements PersistableEnvelope {
     @Inject
     public State() {
         this(new LinkedList<>(),
-                new LinkedList<>(),
                 new HashMap<>());
     }
 
@@ -97,11 +95,9 @@ public class State implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private State(LinkedList<TxBlock> txBlocks,
-                  LinkedList<StateChangeEvent> stateChangeEvents,
+    private State(LinkedList<Block> blocks,
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
-        this.txBlocks = txBlocks;
-        this.stateChangeEvents = stateChangeEvents;
+        this.blocks = blocks;
         this.unspentTxOutputMap = unspentTxOutputMap;
 
     }
@@ -156,7 +152,7 @@ public class State implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public int getChainHeadHeight() {
-        return !this.getTxBlocks().isEmpty() ? this.getTxBlocks().getLast().getHeight() : 0;
+        return !this.getBlocks().isEmpty() ? this.getBlocks().getLast().getHeight() : 0;
     }
 
     public State getClone() {
@@ -168,6 +164,12 @@ public class State implements PersistableEnvelope {
     //TODO
     public State getClone(State snapshotCandidate) {
         return this;
+    }
+
+    public LinkedList<TxBlock> getTxBlocks() {
+        LinkedList<TxBlock> list = new LinkedList<>();
+        blocks.stream().map(Block::getTxBlock).forEach(list::add);
+        return list;
     }
 }
 

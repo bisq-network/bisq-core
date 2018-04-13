@@ -18,9 +18,10 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
@@ -36,6 +37,9 @@ import org.bitcoinj.core.Coin;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListeningExecutorService;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -43,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -50,15 +56,10 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * Mutual state of the BSQ blockchain data.
+ * Encapluslates the access to the State of the DAO.
+ * Write access is in the context of the nodeExecutor thread. Read access can be any thread.
  * <p>
- * We only have one thread which is writing data from the lite node or full node executors.
- * We use ReentrantReadWriteLock in a functional style.
- * <p>
- * We limit the access to StateService over interfaces for read (StateService) and
- * write (StateService) to have better overview and control about access.
- * <p>
- * TODO consider refactoring to move data access to a StateService class.
+ * TODO check if locks are required.
  */
 @Slf4j
 public class StateService {
@@ -80,18 +81,16 @@ public class StateService {
     // BTC MAIN NET
     public static final String BTC_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
     public static final int BTC_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
+    private final ListeningExecutorService nodeExecutor;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listener
+    // BlockListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-    public interface Listener extends ThreadContextAwareListener {
-        void onBlockAdded(TxBlock txBlock);
-
-        default void onStateChange(StateChangeEvent stateChangeEvent) {
-        }
+    public interface BlockListener extends ThreadContextAwareListener {
+        void onBlockAdded(Block block);
     }
 
 
@@ -104,7 +103,13 @@ public class StateService {
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
-    private final List<Listener> listeners = new ArrayList<>();
+    // BlockListeners can be added and removed from the user thread but iterated at the parser thread, which would
+    // lead to a ConcurrentModificationException
+    private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
+
+    // StateChangeEventListProviders get added from the user thread, thought they will be called in the
+    // nodeExecutors thread. To avoid ConcurrentModificationException we use a CopyOnWriteArrayList.
+    private List<Function<TxBlock, List<StateChangeEvent>>> stateChangeEventListProviders = new CopyOnWriteArrayList<>();
 
     transient private final FunctionalReadWriteLock lock;
 
@@ -116,11 +121,14 @@ public class StateService {
     @SuppressWarnings("WeakerAccess")
     @Inject
     public StateService(State state,
+                        NodeExecutor nodeExecutor,
                         @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.state = state;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
+
+        this.nodeExecutor = nodeExecutor.get();
 
         lock = new FunctionalReadWriteLock(true);
 
@@ -130,12 +138,16 @@ public class StateService {
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addListener(Listener listener) {
-        lock.write(() -> listeners.add(listener));
+    public void addBlockListener(BlockListener blockListener) {
+        blockListeners.add(blockListener);
     }
 
-    public void removeListener(Listener listener) {
-        lock.write(() -> listeners.remove(listener));
+    public void removeBlockListener(BlockListener blockListener) {
+        blockListeners.remove(blockListener);
+    }
+
+    public void registerStateChangeEventListProvider(Function<TxBlock, List<StateChangeEvent>> stateChangeEventListProvider) {
+        stateChangeEventListProviders.add(stateChangeEventListProvider);
     }
 
 
@@ -145,8 +157,8 @@ public class StateService {
 
     public void applySnapshot(State snapshot) {
         lock.write(() -> {
-            state.getTxBlocks().clear();
-            state.getTxBlocks().addAll(snapshot.getTxBlocks());
+            state.getBlocks().clear();
+            state.getBlocks().addAll(snapshot.getBlocks());
 
             state.getUnspentTxOutputMap().clear();
             state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
@@ -157,47 +169,31 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: StateChangeEvent
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addStateChangeEvent(StateChangeEvent stateChangeEvent) {
-        lock.write(() -> {
-            if (!stateChangeEventWithPayloadExists(stateChangeEvent)) {
-                state.getStateChangeEvents().add(stateChangeEvent);
-            }
-        });
-    }
-
-    public boolean stateChangeEventWithPayloadExists(StateChangeEvent stateChangeEvent) {
-        return lock.read(() -> state.getStateChangeEvents().stream()
-                .anyMatch(event -> event.getPayload().equals(stateChangeEvent.getPayload())));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // Write access: TxBlock
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // After parsing of a new block is complete we trigger the processing of any non blockchain data like
-    // Proposals or Blind votes.
-    public void blockParsingComplete(TxBlock txBlock) {
+    // After parsing of a new txBlock is complete we trigger the processing of any non blockchain data like
+    // proposalPayloads or blindVotes and after we have collected all stateChangeEvents we create a Block and
+    // notify the listeners.
+    public void onNewTxBlock(TxBlock txBlock) {
         lock.write(() -> {
-            state.getTxBlocks().add(txBlock);
-            log.info("New block added at blockHeight " + txBlock.getHeight());
+            // Those who registered to process a txBlock might return a list of StateChangeEvents.
+            // We collect all from all providers and then go on.
+            // The providers are called in the parser thread, so we have a single threaded execution model here.
+            List<StateChangeEvent> stateChangeEventList = new ArrayList<>();
+            stateChangeEventListProviders.forEach(stateChangeEventListProvider -> {
+                nodeExecutor.execute(() -> {
+                    stateChangeEventList.addAll(stateChangeEventListProvider.apply(txBlock));
+                });
+            });
 
-            // If the client has set a specific executor we call on that thread.
-            // By default the userThread's executor is used.
-            listeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(txBlock)));
+            // Now we have both the immutable txBlock and the collected stateChangeEvents.
+            // We now add the immutable Block containing both data.
+            final Block block = new Block(txBlock, ImmutableList.copyOf(stateChangeEventList));
+            state.getBlocks().add(block);
 
-            // We check if we have a StateChangeEvent at that blockHeight and if so we notify the listeners.
-            // The onBlockAdded handler usually triggers that new StateChangeEvent gets added so we are processing
-            // those newly added events in the listener handler.
-            // Though we support also to process a collection of old events which the client has not added himself.
-            // The immutable data structures like the bsqBlocks and the stateChangeEvents can be used to recreate the
-            // mutable state.
-            state.getStateChangeEvents().stream()
-                    .filter(event -> event.getChainHeight() == txBlock.getHeight())
-                    .forEach(event -> listeners.forEach(listener -> listener.execute(() -> listener.onStateChange(event))));
+            blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));
+            log.info("New block added at blockHeight " + block.getHeight());
         });
     }
 

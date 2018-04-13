@@ -18,8 +18,8 @@
 package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 
 import bisq.common.app.DevEnv;
@@ -45,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class PeriodService implements StateService.Listener {
+public class PeriodService implements StateService.BlockListener {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -114,13 +114,13 @@ public class PeriodService implements StateService.Listener {
     }
 
     public void onAllServicesInitialized() {
-        stateService.addListener(this);
+        stateService.addBlockListener(this);
         onChainHeightChanged(stateService.getChainHeadHeight());
     }
 
     @Override
-    public void onBlockAdded(TxBlock txBlock) {
-        onChainHeightChanged(txBlock.getHeight());
+    public void onBlockAdded(Block block) {
+        onChainHeightChanged(block.getHeight());
     }
 
     public boolean isInPhase(int blockHeight, Phase phase) {

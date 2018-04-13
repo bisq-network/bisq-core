@@ -17,22 +17,16 @@
 
 package bisq.core.dao.param;
 
+import bisq.core.dao.state.events.ChangeParamEvent;
 import bisq.core.dao.vote.VoteConsensusCritical;
 
-import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
 
-import io.bisq.generated.protobuffer.PB;
-
-import com.google.protobuf.Message;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class ParamChangeEventList extends PersistableList<ParamChangeEvent> implements VoteConsensusCritical {
+public class ChangeParamEventList extends PersistableList<ChangeParamEvent> implements VoteConsensusCritical {
 
-    ParamChangeEventList() {
+    ChangeParamEventList() {
         super();
     }
 
@@ -40,23 +34,27 @@ public class ParamChangeEventList extends PersistableList<ParamChangeEvent> impl
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ParamChangeEventList(List<ParamChangeEvent> list) {
+    private ChangeParamEventList(List<ChangeParamEvent> list) {
         super(list);
     }
 
-    @Override
+   /* public static PersistableEnvelope fromProto(PB.ParamChangeEventList paramChangeEventList) {
+        return null;
+    }*/
+
+  /*  @Override
     public Message toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder()
                 .setParamChangeEventList(PB.ParamChangeEventList.newBuilder()
                         .addAllParamChangeEvent(getList().stream()
-                                .map(ParamChangeEvent::toProtoMessage)
+                                .map(ChangeParamEvent::toProtoMessage)
                                 .collect(Collectors.toList())))
                 .build();
     }
 
     public static PersistableEnvelope fromProto(PB.ParamChangeEventList proto) {
-        return new ParamChangeEventList(new ArrayList<>(proto.getParamChangeEventList().stream()
-                .map(ParamChangeEvent::fromProto)
+        return new ChangeParamEventList(new ArrayList<>(proto.getParamChangeEventList().stream()
+                .map(ChangeParamEvent::fromProto)
                 .collect(Collectors.toList())));
-    }
+    }*/
 }

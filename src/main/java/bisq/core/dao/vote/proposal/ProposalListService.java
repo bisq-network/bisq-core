@@ -18,8 +18,8 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.node.NodeExecutor;
+import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.PeriodService;
 
@@ -91,7 +91,7 @@ public class ProposalListService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        stateService.addListener(new StateService.Listener() {
+        stateService.addBlockListener(new StateService.BlockListener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
             public Executor getExecutor() {
@@ -99,8 +99,8 @@ public class ProposalListService {
             }
 
             @Override
-            public void onBlockAdded(TxBlock txBlock) {
-                updateLists(txBlock.getHeight());
+            public void onBlockAdded(Block block) {
+                updateLists(block.getHeight());
             }
         });
 

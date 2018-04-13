@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 
 import javax.inject.Inject;
@@ -44,7 +44,7 @@ public class BsqBlockController {
         LinkedList<TxBlock> txBlocks = stateService.getBsqBlocks();
         if (!txBlocks.contains(txBlock)) {
             if (isBlockConnecting(txBlock, txBlocks)) {
-                stateService.blockParsingComplete(txBlock);
+                stateService.onNewTxBlock(txBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",

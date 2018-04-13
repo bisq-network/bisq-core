@@ -19,17 +19,19 @@ package bisq.core.dao.state.events;
 
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
+import bisq.common.proto.persistable.PersistablePayload;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode
-public class StateChangeEvent {
-    private int chainHeight;
+public abstract class StateChangeEvent implements PersistablePayload {
+    private int height;
     private final ProtectedStoragePayload payload;
 
-    public StateChangeEvent(ProtectedStoragePayload payload, int chainHeight) {
+    public StateChangeEvent(ProtectedStoragePayload payload, int height) {
         this.payload = payload;
-        this.chainHeight = chainHeight;
+        this.height = height;
     }
 }

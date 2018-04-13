@@ -17,8 +17,6 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.TxBlock;
-
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
 
@@ -38,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 //TODO add tests; check if current logic is correct.
 @Slf4j
-public class SnapshotManager implements StateService.Listener {
+public class SnapshotManager implements StateService.BlockListener {
     private static final int SNAPSHOT_GRID = 10000;
 
     private final State state;
@@ -56,7 +54,7 @@ public class SnapshotManager implements StateService.Listener {
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        stateService.addListener(this);
+        stateService.addBlockListener(this);
     }
 
     public void applySnapshot() {
@@ -71,7 +69,7 @@ public class SnapshotManager implements StateService.Listener {
     }
 
     @Override
-    public void onBlockAdded(TxBlock txBlock) {
+    public void onBlockAdded(Block block) {
         final int chainHeadHeight = stateService.getChainHeadHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
                 (snapshotCandidate == null ||

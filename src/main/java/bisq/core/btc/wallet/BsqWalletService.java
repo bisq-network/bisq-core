@@ -21,8 +21,8 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
+import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.provider.fee.FeeService;
@@ -70,7 +70,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements StateService.Listener {
+public class BsqWalletService extends WalletService implements StateService.BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
     private final StateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
@@ -159,16 +159,16 @@ public class BsqWalletService extends WalletService implements StateService.List
             });
         }
 
-        stateService.addListener(this);
+        stateService.addBlockListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateService.Listener
+    // StateService.BlockListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onBlockAdded(TxBlock txBlock) {
+    public void onBlockAdded(Block block) {
         if (isWalletReady())
             updateBsqWalletTransactions();
     }

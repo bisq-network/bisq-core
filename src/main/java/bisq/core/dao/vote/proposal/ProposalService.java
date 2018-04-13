@@ -20,7 +20,6 @@ package bisq.core.dao.vote.proposal;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
@@ -99,25 +98,14 @@ public class ProposalService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        stateService.addListener(new StateService.Listener() {
-            // We set the nodeExecutor as we want to get called in the context of the parser thread
-            @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
-            }
-
-            @Override
-            public void onBlockAdded(TxBlock txBlock) {
-                // We iterate all proposals and if all valid we store it at the Tx
-                proposalList.forEach(proposal -> maybeAddProposalToTx(proposal.getProposalPayload(), txBlock.getHeight()));
-            }
-
-            @Override
-            public void onStateChange(StateChangeEvent stateChangeEvent) {
-                if (stateChangeEvent instanceof AddProposalPayloadEvent) {
-                    ProposalService.this.onAddProposalPayloadEvent((AddProposalPayloadEvent) stateChangeEvent);
-                }
-            }
+        // We get called in the context of the parser thread
+        stateService.registerStateChangeEventListProvider(txBlock -> {
+            List<StateChangeEvent> stateChangeEvent = new ArrayList<>();
+            proposalList.forEach(proposal -> {
+                List<StateChangeEvent> events = maybeAddProposalToTx(proposal.getProposalPayload(), txBlock.getHeight());
+                stateChangeEvent.addAll(events);
+            });
+            return stateChangeEvent;
         });
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() { // User thread context
@@ -174,7 +162,7 @@ public class ProposalService implements PersistedDataHost {
                 Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
                 proposalList.add(proposal);
 
-                maybeAddProposalToTx(proposalPayload, stateService.getChainHeadHeight());
+                //maybeAddProposalToTx(proposalPayload, stateService.getChainHeadHeight(), stateChangeEvent);
 
                 if (storeLocally)
                     persist();
@@ -208,19 +196,21 @@ public class ProposalService implements PersistedDataHost {
     // We fire a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
     // during the proposal phase).
-    private void maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
+    private List<StateChangeEvent> maybeAddProposalToTx(ProposalPayload proposalPayload, int chainHeight) {
+        List<StateChangeEvent> stateChangeEvent = new ArrayList<>();
         getTxForProposal(proposalPayload)
                 .filter(tx -> !periodService.isInPhase(chainHeight, PeriodService.Phase.PROPOSAL))
-                .ifPresent(tx -> stateService.addStateChangeEvent(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
+                .ifPresent(tx -> stateChangeEvent.add(new AddProposalPayloadEvent(proposalPayload, chainHeight)));
+        return stateChangeEvent;
     }
 
-    private void onAddProposalPayloadEvent(AddProposalPayloadEvent event) {
+  /*  private void onAddProposalPayloadEvent(AddProposalPayloadEvent event) {
         ProposalPayload proposalPayload = (ProposalPayload) event.getPayload();
         getTxForProposal(proposalPayload)
                 .filter(tx -> !periodService.isInPhase(event.getChainHeight(), PeriodService.Phase.PROPOSAL))
                 .ifPresent(tx -> stateService.putProposalPayload(tx.getId(), proposalPayload));
     }
-
+*/
 
     private Optional<Tx> getTxForProposal(ProposalPayload proposalPayload) {
         return stateService.getTx(proposalPayload.getTxId())

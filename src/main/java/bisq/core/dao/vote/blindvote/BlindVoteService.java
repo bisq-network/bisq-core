@@ -28,8 +28,8 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.myvote.MyVoteService;
@@ -87,7 +87,7 @@ import lombok.extern.slf4j.Slf4j;
  * TODO split up
  */
 @Slf4j
-public class BlindVoteService implements PersistedDataHost, HashMapChangedListener, StateService.Listener {
+public class BlindVoteService implements PersistedDataHost, HashMapChangedListener, StateService.BlockListener {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
@@ -162,7 +162,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         rePublishWhenWellConnected();
 
-        stateService.addListener(this);
+        stateService.addBlockListener(this);
     }
 
     public void shutDown() {
@@ -185,15 +185,15 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateService.Listener
+    // StateService.BlockListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called delayed as we map to user thread! If follow up methods requests the blockchain data it
     // might be out of sync!
     // TODO find a solution to fix that
     @Override
-    public void onBlockAdded(TxBlock txBlock) {
-        onBlockHeightChanged(txBlock.getHeight());
+    public void onBlockAdded(Block block) {
+        onBlockHeightChanged(block.getHeight());
     }
 
 

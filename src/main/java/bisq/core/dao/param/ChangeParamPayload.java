@@ -17,22 +17,26 @@
 
 package bisq.core.dao.param;
 
-import bisq.common.proto.persistable.PersistablePayload;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import java.security.PublicKey;
+
+import java.util.Map;
+
 import lombok.Value;
 
+import javax.annotation.Nullable;
+
 @Value
-public class ParamChangeEvent implements PersistablePayload {
+public class ChangeParamPayload implements ProtectedStoragePayload {
     private final DaoParam daoParam;
     private final long value;
-    private final int blockHeight;
 
-    public ParamChangeEvent(DaoParam daoParam, long value, int blockHeight) {
+    public ChangeParamPayload(DaoParam daoParam, long value) {
         this.daoParam = daoParam;
         this.value = value;
-        this.blockHeight = blockHeight;
     }
 
 
@@ -41,27 +45,34 @@ public class ParamChangeEvent implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.ParamChangeEvent toProtoMessage() {
-        final PB.ParamChangeEvent.Builder builder = PB.ParamChangeEvent.newBuilder()
+    public PB.ChangeParamPayload toProtoMessage() {
+        final PB.ChangeParamPayload.Builder builder = PB.ChangeParamPayload.newBuilder()
                 .setDaoParamOrdinal(daoParam.ordinal())
-                .setValue(value)
-                .setBlockHeight(blockHeight);
+                .setValue(value);
         return builder.build();
     }
 
-    public static ParamChangeEvent fromProto(PB.ParamChangeEvent proto) {
-        return new ParamChangeEvent(DaoParam.values()[proto.getDaoParamOrdinal()],
-                proto.getValue(),
-                proto.getBlockHeight());
+    public static ChangeParamPayload fromProto(PB.ChangeParamPayload proto) {
+        return new ChangeParamPayload(DaoParam.values()[proto.getDaoParamOrdinal()],
+                proto.getValue());
     }
-
 
     @Override
     public String toString() {
-        return "ParamChangeEvent{" +
+        return "ChangeParamPayload{" +
                 "\n     daoParam=" + daoParam +
                 ",\n     value=" + value +
-                ",\n     blockHeight=" + blockHeight +
                 "\n}";
+    }
+
+    @Override
+    public PublicKey getOwnerPubKey() {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public Map<String, String> getExtraDataMap() {
+        return null;
     }
 }

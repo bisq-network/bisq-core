@@ -19,8 +19,8 @@ package bisq.core.dao.vote.voteresult;
 
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.param.DaoParamService;
+import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.PeriodService;
@@ -108,7 +108,7 @@ public class VoteResultService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        stateService.addListener(new StateService.Listener() {
+        stateService.addBlockListener(new StateService.BlockListener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             //TODO issuance fails if parser thread is set. need to refactor class first
           /*  @Override
@@ -117,8 +117,8 @@ public class VoteResultService {
             }*/
 
             @Override
-            public void onBlockAdded(TxBlock txBlock) {
-                maybeApplyVoteResult(txBlock.getHeight());
+            public void onBlockAdded(Block block) {
+                maybeApplyVoteResult(block.getHeight());
             }
         });
     }
