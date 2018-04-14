@@ -18,7 +18,6 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
@@ -42,7 +41,6 @@ import java.security.PublicKey;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +59,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ProposalService implements PersistedDataHost {
-    private final NodeExecutor nodeExecutor;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final PublicKey signaturePubKey;
@@ -73,14 +70,12 @@ public class ProposalService implements PersistedDataHost {
     private final ProposalList openProposalList = new ProposalList();
 
     @Inject
-    public ProposalService(NodeExecutor nodeExecutor,
-                           P2PDataStorage p2pDataStorage,
+    public ProposalService(P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
                            StateService stateService,
                            ProposalPayloadValidator proposalPayloadValidator,
                            KeyRing keyRing,
                            Storage<ProposalList> storage) {
-        this.nodeExecutor = nodeExecutor;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
         this.stateService = stateService;
@@ -94,19 +89,16 @@ public class ProposalService implements PersistedDataHost {
     // PersistedDataHost
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from the user thread at startup. It is not really required to map to parser thread here, but we want
-    // to be consistent for all methods of that class to be executed in the parser thread.
+    // We get called from the user thread at startup.
     @Override
     public void readPersisted() {
-        nodeExecutor.get().execute(() -> {
-            if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-                ProposalList persisted = storage.initAndGetPersisted(openProposalList, 20);
-                if (persisted != null) {
-                    this.openProposalList.clear();
-                    this.openProposalList.addAll(persisted.getList());
-                }
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+            ProposalList persisted = storage.initAndGetPersisted(openProposalList, 20);
+            if (persisted != null) {
+                this.openProposalList.clear();
+                this.openProposalList.addAll(persisted.getList());
             }
-        });
+        }
     }
 
 
@@ -143,12 +135,10 @@ public class ProposalService implements PersistedDataHost {
             return stateChangeEvents;
         });
 
-        // We implement the getExecutor method in the HashMapChangedListener as we want to get called from
-        // the parser thread.
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
+            public boolean executeOnUserThread() {
+                return false;
             }
 
             @Override

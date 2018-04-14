@@ -36,6 +36,7 @@ import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
 
 import bisq.common.ThreadContextAwareListener;
+import bisq.common.UserThread;
 import bisq.common.util.FunctionalReadWriteLock;
 
 import org.bitcoinj.core.Coin;
@@ -192,7 +193,19 @@ public class StateService {
             final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
             state.getBlocks().add(block);
 
-            blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));
+            // blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));
+
+            // If the listener has not implemented the executeOnUserThread method and overwritten with a return
+            // value of false we map to user thread. Otherwise we run the code directly from our current thread.
+            // Using executor.execute() would not work as the parser thread can be busy for a long time when parsing
+            // all the blocks and we want to get called our listener synchronously and not once the parsing task is
+            // completed.
+            blockListeners.forEach(listener -> {
+                if (listener.executeOnUserThread())
+                    UserThread.execute(() -> listener.onBlockAdded(block));
+                else
+                    listener.onBlockAdded(block);
+            });
             log.info("New block added at blockHeight " + block.getHeight());
         });
     }
@@ -308,6 +321,10 @@ public class StateService {
         return state.getPhaseValueMap();
     }
 
+    public void setPhaseValueMap(Map<PeriodService.Phase, Integer> phases) {
+        state.getPhaseValueMap().clear();
+        state.getPhaseValueMap().putAll(phases);
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

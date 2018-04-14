@@ -18,7 +18,6 @@
 package bisq.core.dao.vote.blindvote;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
@@ -37,7 +36,6 @@ import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +49,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteService implements PersistedDataHost {
-    private final NodeExecutor nodeExecutor;
     private final P2PService p2PService;
     private final PeriodService periodService;
     private final StateService stateService;
@@ -67,13 +64,11 @@ public class BlindVoteService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteService(NodeExecutor nodeExecutor,
-                            P2PService p2PService,
+    public BlindVoteService(P2PService p2PService,
                             PeriodService periodService,
                             StateService stateService,
                             BlindVoteValidator blindVoteValidator,
                             Storage<BlindVoteList> storage) {
-        this.nodeExecutor = nodeExecutor;
         this.p2PService = p2PService;
         this.periodService = periodService;
         this.stateService = stateService;
@@ -86,19 +81,16 @@ public class BlindVoteService implements PersistedDataHost {
     // PersistedDataHost
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from the user thread at startup. It is not really required to map to parser thread here, but we want
-    // to be consistent for all methods of that class to be executed in the parser thread.
+    // We get called from the user thread at startup.
     @Override
     public void readPersisted() {
-        nodeExecutor.get().execute(() -> {
-            if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-                BlindVoteList persisted = storage.initAndGetPersisted(openBlindVoteList, 20);
-                if (persisted != null) {
-                    openBlindVoteList.clear();
-                    openBlindVoteList.addAll(persisted.getList());
-                }
+        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+            BlindVoteList persisted = storage.initAndGetPersisted(openBlindVoteList, 20);
+            if (persisted != null) {
+                openBlindVoteList.clear();
+                openBlindVoteList.addAll(persisted.getList());
             }
-        });
+        }
     }
 
 
@@ -140,12 +132,10 @@ public class BlindVoteService implements PersistedDataHost {
             return stateChangeEvents;
         });
 
-        // We implement the getExecutor method in the HashMapChangedListener as we want to get called from
-        // the parser thread.
         p2PService.getP2PDataStorage().addHashMapChangedListener(new HashMapChangedListener() {
             @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
+            public boolean executeOnUserThread() {
+                return false;
             }
 
             @Override

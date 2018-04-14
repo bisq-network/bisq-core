@@ -17,7 +17,6 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -40,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -54,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ProposalListService {
-    private final NodeExecutor nodeExecutor;
     private final ProposalService proposalService;
     private final MyProposalService myProposalService;
     private final P2PDataStorage p2pDataStorage;
@@ -73,14 +70,12 @@ public class ProposalListService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalListService(NodeExecutor nodeExecutor,
-                               ProposalService proposalService,
+    public ProposalListService(ProposalService proposalService,
                                MyProposalService myProposalService,
                                P2PDataStorage p2pDataStorage,
                                PeriodService periodService,
                                ProposalPayloadValidator proposalPayloadValidator,
                                StateService stateService) {
-        this.nodeExecutor = nodeExecutor;
         this.proposalService = proposalService;
         this.myProposalService = myProposalService;
         this.p2pDataStorage = p2pDataStorage;
@@ -96,10 +91,9 @@ public class ProposalListService {
     public void onAllServicesInitialized() {
         //TODO
         stateService.addBlockListener(new StateService.BlockListener() {
-            // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
+            public boolean executeOnUserThread() {
+                return false;
             }
 
             @Override
@@ -108,11 +102,10 @@ public class ProposalListService {
             }
         });
 
-        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() { // User thread context
-            // We set the nodeExecutor as we want to get called in the context of the parser thread
+        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
+            public boolean executeOnUserThread() {
+                return false;
             }
 
             @Override

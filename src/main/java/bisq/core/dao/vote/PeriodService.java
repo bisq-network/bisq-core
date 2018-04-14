@@ -18,7 +18,6 @@
 package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -44,7 +43,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -123,24 +121,21 @@ public class PeriodService {
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private final NodeExecutor nodeExecutor;
     private final StateService stateService;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
     //  private Phases phases = new Phases();
     private Map<Phase, Integer> phases = new HashMap<>();
-
+    private int chainHeight;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(NodeExecutor nodeExecutor,
-                         StateService stateService,
+    public PeriodService(StateService stateService,
                          @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.nodeExecutor = nodeExecutor;
         this.stateService = stateService;
         this.genesisBlockHeight = genesisBlockHeight;
     }
@@ -159,36 +154,35 @@ public class PeriodService {
                 Arrays.asList(Phase.values())
                         .forEach(phase -> initWithDefaultValueAtGenesisHeight(phase, height)
                                 .ifPresent(stateChangeEvents::add));
-                log.error("GenesisBlockHeight " + stateChangeEvents);
             }
             return stateChangeEvents;
         });
 
-        // Afterwards at the
         stateService.addBlockListener(new StateService.BlockListener() {
             @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
+            public boolean executeOnUserThread() {
+                return false;
             }
 
             @Override
             public void onBlockAdded(Block block) {
-                final int height = block.getHeight();
+                chainHeight = block.getHeight();
 
                 // At genesis we want to get triggered the update. Afterwards we only apply changes at the last
                 // block in a cycle.
-                if (height == stateService.getGenesisBlockHeight() || isLastBlockInCycle(height)) {
+                if (chainHeight == stateService.getGenesisBlockHeight() || isLastBlockInCycle(chainHeight)) {
                     processChangeParamPayloads();
                 }
-                onChainHeightChanged(block.getHeight());
+
+                final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
+                phaseProperty.set(calculatePhase(relativeBlocksInCycle));
             }
         });
-
-        //onChainHeightChanged(stateService.getChainHeight());
     }
 
     private void processChangeParamPayloads() {
         stateService.getChangeParamPayloads().forEach(this::processChangeParamPayload);
+        stateService.setPhaseValueMap(phases);
     }
 
     private void processChangeParamPayload(ChangeParamPayload changeParamPayload) {
@@ -197,7 +191,6 @@ public class PeriodService {
             final String phaseName = paramName.replace("PHASE_", "");
             final Phase phase = Phase.valueOf(phaseName);
             phases.put(phase, (int) changeParamPayload.getValue());
-            log.error("processChangeParamPayloadEvent: phase ={}, val={}", phase, changeParamPayload.getValue());
         }
     }
 
@@ -217,11 +210,6 @@ public class PeriodService {
         return param.name().replace("PHASE_", "").equals(phase.name());
     }
 
-
-    private void onChainHeightChanged(int chainHeight) {
-        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
-        phaseProperty.set(calculatePhase(relativeBlocksInCycle));
-    }
 
     public int getDurationInBlocks(Phase phase) {
         return 1;
