@@ -28,7 +28,6 @@ import bisq.core.dao.vote.proposal.ProposalListService;
 import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.result.VoteResultService;
-import bisq.core.dao.vote.result.issuance.IssuanceService;
 import bisq.core.dao.vote.votereveal.VoteRevealService;
 
 import bisq.common.app.DevEnv;
@@ -47,7 +46,6 @@ public class DaoSetup {
     private final ParamService paramService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
-    private final IssuanceService issuanceService;
     private final ProposalService proposalService;
     private final ProposalListService proposalListService;
     private final BlindVoteService blindVoteService;
@@ -67,7 +65,6 @@ public class DaoSetup {
                     BlindVoteService blindVoteService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
-                    IssuanceService issuanceService,
                     ParamService paramService) {
         this.nodeExecutor = nodeExecutor;
         this.periodService = periodService;
@@ -77,7 +74,6 @@ public class DaoSetup {
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.issuanceService = issuanceService;
         this.paramService = paramService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
