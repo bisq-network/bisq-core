@@ -17,15 +17,20 @@
 
 package bisq.core.app;
 
+import bisq.core.alert.Alert;
+import bisq.core.alert.PrivateNotificationPayload;
 import bisq.core.arbitration.ArbitratorManager;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.dao.DaoSetup;
+import bisq.core.offer.Offer;
+import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.setup.CorePersistedDataHost;
 import bisq.core.setup.CoreSetup;
 import bisq.core.trade.TradeManager;
+import bisq.core.user.Preferences;
 
 import bisq.network.p2p.P2PService;
 
@@ -36,11 +41,15 @@ import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.setup.CommonSetup;
 import bisq.common.util.Utilities;
 
+import org.bitcoinj.core.Coin;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Headless {
     private static BisqEnvironment bisqEnvironment;
-    private final AppSetupFullApp appSetup;
+    private final AppSetupFullApp appSetupFullApp;
 
     protected static void setEnvironment(BisqEnvironment bisqEnvironment) {
         Headless.bisqEnvironment = bisqEnvironment;
@@ -62,7 +71,7 @@ public class Headless {
 
     public Headless() {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("SeedNodeMain")
+                .setNameFormat("Headless")
                 .setDaemon(true)
                 .build();
         UserThread.setExecutor(Executors.newSingleThreadExecutor(threadFactory));
@@ -83,8 +92,148 @@ public class Headless {
 
         checkForCorrectOSArchitecture();
 
-        appSetup = injector.getInstance(AppSetupFullApp.class);
-        appSetup.start();
+        appSetupFullApp = injector.getInstance(AppSetupFullApp.class);
+        appSetupFullApp.start(new StartupHandler() {
+            @Override
+            public void onCryptoSetupError(String errorMessage) {
+                log.error("onCryptoSetupError {}", errorMessage);
+            }
+
+            @Override
+            public void onShowTac() {
+                log.info("onShowTac");
+
+                // First time startup we need to get TAC acceptance
+                Preferences preferences = injector.getInstance(Preferences.class);
+                preferences.setTacAccepted(true);
+                appSetupFullApp.checkIfLocalHostNodeIsRunning();
+            }
+
+            @Override
+            public void onShowAppScreen() {
+                log.info("onShowAppScreen");
+            }
+
+            @Override
+            public void onShowTorNetworkSettingsWindow() {
+                log.info("onShowTorNetworkSettingsWindow");
+            }
+
+            @Override
+            public void onHideTorNetworkSettingsWindow() {
+                log.info("onHideTorNetworkSettingsWindow");
+            }
+
+            @Override
+            public void onLockedUpFundsWarning(Coin balance, String addressString, String offerId) {
+                log.warn("onLockedUpFundsWarning");
+            }
+
+            @Override
+            public void onBtcDownloadProgress(double percentage, int peers) {
+                log.info("onBtcDownloadProgress");
+            }
+
+            @Override
+            public void onBtcDownloadError(int numBtcPeers) {
+                log.error("onBtcDownloadError");
+            }
+
+            @Override
+            public void onWalletSetupException(Throwable exception) {
+                log.info("onWalletSetupException {}", exception);
+            }
+
+            @Override
+            public void onShowFirstPopupIfResyncSPVRequested() {
+                log.info("onShowFirstPopupIfResyncSPVRequested");
+            }
+
+            @Override
+            public void onShowWalletPasswordWindow() {
+                log.info("onShowWalletPasswordWindow");
+            }
+
+            @Override
+            public void onShowTakeOfferRequestError(String errorMessage) {
+                log.error(errorMessage);
+            }
+
+            @Override
+            public void onFeeServiceInitialized() {
+                log.info("onFeeServiceInitialized");
+            }
+
+            @Override
+            public void onDaoSetupError(String errorMessage) {
+                log.error(errorMessage);
+            }
+
+            @Override
+            public void onSeedNodeBanned() {
+                log.warn("onSeedNodeBanned");
+            }
+
+            @Override
+            public void onPriceNodeBanned() {
+                log.warn("onPriceNodeBanned");
+            }
+
+            @Override
+            public void onShowSecurityRecommendation(String key) {
+                log.info("onShowSecurityRecommendation");
+            }
+
+            @Override
+            public void onDisplayPrivateNotification(PrivateNotificationPayload notificationPayload) {
+                log.info("onDisplayPrivateNotification");
+            }
+
+            @Override
+            public void onDisplayUpdateDownloadWindow(Alert alert, String key) {
+                log.info("onDisplayUpdateDownloadWindow");
+            }
+
+            @Override
+            public void onDisplayAlertMessageWindow(Alert alert) {
+                log.info("onDisplayAlertMessageWindow");
+            }
+
+            @Override
+            public void onWarnOldOffers(String offers, List<OpenOffer> outDatedOffers) {
+                log.warn("onWarnOldOffers");
+            }
+
+            @Override
+            public void onHalfTradePeriodReached(String shortId, Date maxTradePeriodDate) {
+                log.warn("onHalfTradePeriodReached");
+            }
+
+            @Override
+            public void onTradePeriodEnded(String shortId, Date maxTradePeriodDate) {
+                log.warn("onTradePeriodEnded");
+            }
+
+            @Override
+            public void onOfferWithoutAccountAgeWitness(Offer offer) {
+                log.warn("onOfferWithoutAccountAgeWitness offerId={}", offer.getId());
+            }
+
+            @Override
+            public void setTotalAvailableBalance(Coin balance) {
+                log.info("TotalAvailableBalance {}", balance);
+            }
+
+            @Override
+            public void setReservedBalance(Coin balance) {
+                log.info("ReservedBalance {}", balance);
+            }
+
+            @Override
+            public void setLockedBalance(Coin balance) {
+                log.info("LockedBalance {}", balance);
+            }
+        });
     }
 
 
