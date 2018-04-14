@@ -30,8 +30,10 @@ import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.AddChangeParamEvent;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalPayload;
+import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
 
 import bisq.common.ThreadContextAwareListener;
 import bisq.common.util.FunctionalReadWriteLock;
@@ -133,7 +135,6 @@ public class StateService {
         this.nodeExecutor = nodeExecutor.get();
 
         lock = new FunctionalReadWriteLock(true);
-
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -296,6 +297,17 @@ public class StateService {
                 .map(AddBlindVoteEvent::getBlindVote)
                 .collect(Collectors.toSet());
     }
+
+    public Set<ChangeParamPayload> getChangeParamPayloads() {
+        return getAddChangeParamEvents().stream()
+                .map(AddChangeParamEvent::getChangeParamPayload)
+                .collect(Collectors.toSet());
+    }
+
+    public Map<PeriodService.Phase, Integer> getPhaseValueMap() {
+        return state.getPhaseValueMap();
+    }
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

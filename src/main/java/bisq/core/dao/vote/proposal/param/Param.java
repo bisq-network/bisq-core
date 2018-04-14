@@ -50,7 +50,18 @@ public enum Param {
     THRESHOLD_PROPOSAL(5_000),          // 50%
     THRESHOLD_COMP_REQUEST(5_000),      // 50%
     THRESHOLD_CHANGE_PARAM(7_500),      // 75% -> that might change the THRESHOLD_CHANGE_PARAM and QUORUM_CHANGE_PARAM!
-    THRESHOLD_REMOVE_ASSET(5_000);      // 50%
+    THRESHOLD_REMOVE_ASSET(5_000),      // 50%
+
+    // Period phase
+    PHASE_UNDEFINED(0),
+    PHASE_PROPOSAL(2),
+    PHASE_BREAK1(1),
+    PHASE_BLIND_VOTE(2),
+    PHASE_BREAK2(1),
+    PHASE_VOTE_REVEAL(2),
+    PHASE_BREAK3(1),
+    PHASE_ISSUANCE(1),
+    PHASE_BREAK4(1);
 
     @Getter
     private int defaultValue;

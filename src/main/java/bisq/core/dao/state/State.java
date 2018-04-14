@@ -22,6 +22,7 @@ import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -78,6 +79,10 @@ public class State implements PersistableEnvelope {
 
     // StateChangeEvents (non blockchain data)
     private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
+    //TODO reveal votes
+
+    private Map<PeriodService.Phase, Integer> phaseValueMap = new HashMap<>();
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

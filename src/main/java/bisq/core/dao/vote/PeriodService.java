@@ -18,9 +18,14 @@
 package bisq.core.dao.vote;
 
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.events.AddChangeParamEvent;
+import bisq.core.dao.state.events.StateChangeEvent;
+import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
+import bisq.core.dao.vote.proposal.param.Param;
 
 import bisq.common.app.DevEnv;
 
@@ -34,6 +39,12 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executor;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * The index of first cycle is 1 not 0! The index of first block in first phase is 0 (genesis height).
  */
 @Slf4j
-public class PeriodService implements StateService.BlockListener {
+public class PeriodService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Enum
@@ -83,15 +94,42 @@ public class PeriodService implements StateService.BlockListener {
         }
     }
 
+    public static class Phases extends HashMap<Phase, Integer> {
+        public Phase getPhase() {
+            return phase;
+        }
+
+        public void setPhase(Phase phase) {
+            this.phase = phase;
+        }
+
+        public void setDurationInBlocks(int durationInBlocks) {
+            this.durationInBlocks = durationInBlocks;
+        }
+
+        public int getDurationInBlocks() {
+            return durationInBlocks;
+        }
+
+        private Phase phase;
+        private int durationInBlocks;
+
+        public Phases() {
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private final NodeExecutor nodeExecutor;
     private final StateService stateService;
     private final int genesisBlockHeight;
     @Getter
     private ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    //  private Phases phases = new Phases();
+    private Map<Phase, Integer> phases = new HashMap<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -99,8 +137,10 @@ public class PeriodService implements StateService.BlockListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(StateService stateService,
+    public PeriodService(NodeExecutor nodeExecutor,
+                         StateService stateService,
                          @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+        this.nodeExecutor = nodeExecutor;
         this.stateService = stateService;
         this.genesisBlockHeight = genesisBlockHeight;
     }
@@ -111,14 +151,82 @@ public class PeriodService implements StateService.BlockListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        stateService.addBlockListener(this);
-        onChainHeightChanged(stateService.getChainHeight());
+        // At genesis height we add the default values from the Param enum to our StateChangeEvent list.
+        stateService.registerStateChangeEventsProvider(txBlock -> {
+            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+            final int height = txBlock.getHeight();
+            if (height == stateService.getGenesisBlockHeight()) {
+                Arrays.asList(Phase.values())
+                        .forEach(phase -> initWithDefaultValueAtGenesisHeight(phase, height)
+                                .ifPresent(stateChangeEvents::add));
+                log.error("GenesisBlockHeight " + stateChangeEvents);
+            }
+            return stateChangeEvents;
+        });
+
+        // Afterwards at the
+        stateService.addBlockListener(new StateService.BlockListener() {
+            @Override
+            public Executor getExecutor() {
+                return nodeExecutor.get();
+            }
+
+            @Override
+            public void onBlockAdded(Block block) {
+                final int height = block.getHeight();
+
+                // At genesis we want to get triggered the update. Afterwards we only apply changes at the last
+                // block in a cycle.
+                if (height == stateService.getGenesisBlockHeight() || isLastBlockInCycle(height)) {
+                    processChangeParamPayloads();
+                }
+                onChainHeightChanged(block.getHeight());
+            }
+        });
+
+        //onChainHeightChanged(stateService.getChainHeight());
     }
 
-    @Override
-    public void onBlockAdded(Block block) {
-        onChainHeightChanged(block.getHeight());
+    private void processChangeParamPayloads() {
+        stateService.getChangeParamPayloads().forEach(this::processChangeParamPayload);
     }
+
+    private void processChangeParamPayload(ChangeParamPayload changeParamPayload) {
+        final String paramName = changeParamPayload.getParam().name();
+        if (paramName.startsWith("PHASE_")) {
+            final String phaseName = paramName.replace("PHASE_", "");
+            final Phase phase = Phase.valueOf(phaseName);
+            phases.put(phase, (int) changeParamPayload.getValue());
+            log.error("processChangeParamPayloadEvent: phase ={}, val={}", phase, changeParamPayload.getValue());
+        }
+    }
+
+    private boolean isLastBlockInCycle(int height) {
+        return height == getAbsoluteEndBlockOfPhase(height, Phase.BREAK4);
+    }
+
+    private Optional<AddChangeParamEvent> initWithDefaultValueAtGenesisHeight(Phase phase, int height) {
+        return Arrays.stream(Param.values())
+                .filter(param -> isParamMatchingPhase(param, phase))
+                .map(param -> new ChangeParamPayload(param, param.getDefaultValue()))
+                .map(changeParamPayload -> new AddChangeParamEvent(changeParamPayload, height))
+                .findAny();
+    }
+
+    private boolean isParamMatchingPhase(Param param, Phase phase) {
+        return param.name().replace("PHASE_", "").equals(phase.name());
+    }
+
+
+    private void onChainHeightChanged(int chainHeight) {
+        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
+        phaseProperty.set(calculatePhase(relativeBlocksInCycle));
+    }
+
+    public int getDurationInBlocks(Phase phase) {
+        return 1;
+    }
+
 
     public boolean isInPhase(int blockHeight, Phase phase) {
         int start = getBlockUntilPhaseStart(phase);
@@ -196,10 +304,6 @@ public class PeriodService implements StateService.BlockListener {
     // Private methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void onChainHeightChanged(int chainHeight) {
-        final int relativeBlocksInCycle = getRelativeBlocksInCycle(genesisBlockHeight, chainHeight, getNumBlocksOfCycle());
-        phaseProperty.set(calculatePhase(relativeBlocksInCycle));
-    }
 
     @VisibleForTesting
     int getRelativeBlocksInCycle(int genesisHeight, int bestChainHeight, int numBlocksOfCycle) {
@@ -316,6 +420,7 @@ public class PeriodService implements StateService.BlockListener {
     int getAbsoluteEndBlockOfPhase(int chainHeight, int genesisHeight, Phase phase, int numBlocksOfCycle) {
         return getAbsoluteStartBlockOfPhase(chainHeight, genesisHeight, phase, numBlocksOfCycle) + phase.getDurationInBlocks() - 1;
     }
+
 
     @VisibleForTesting
     int getNumOfStartedCycles(int chainHeight, int genesisHeight, int numBlocksOfCycle) {

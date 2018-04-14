@@ -37,14 +37,14 @@ public class AddChangeParamEvent extends StateChangeEvent {
     }
 
     public long getValue() {
-        return getChangeParam().getValue();
+        return getChangeParamPayload().getValue();
     }
 
     public Param getDaoParam() {
-        return (getChangeParam()).getParam();
+        return (getChangeParamPayload()).getParam();
     }
 
-    public ChangeParamPayload getChangeParam() {
+    public ChangeParamPayload getChangeParamPayload() {
         return (ChangeParamPayload) getPayload();
     }
 
@@ -56,7 +56,7 @@ public class AddChangeParamEvent extends StateChangeEvent {
     @Override
     public PB.AddChangeParamEvent toProtoMessage() {
         final PB.AddChangeParamEvent.Builder builder = PB.AddChangeParamEvent.newBuilder()
-                .setChangeParamPayload(getChangeParam().toProtoMessage())
+                .setChangeParamPayload(getChangeParamPayload().toProtoMessage())
                 .setHeight(getHeight());
         return builder.build();
     }
