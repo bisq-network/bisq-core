@@ -87,18 +87,15 @@ public class DaoSetup {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             periodService.onAllServicesInitialized();
             myProposalService.onAllServicesInitialized();
-
             proposalListService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
-
-            voteRevealService.onAllServicesInitialized();
             voteResultService.onAllServicesInitialized();
-            issuanceService.onAllServicesInitialized();
             paramService.onAllServicesInitialized();
 
             nodeExecutor.get().execute(() -> {
                 proposalService.onAllServicesInitialized();
                 blindVoteService.onAllServicesInitialized();
+                voteRevealService.onAllServicesInitialized();
             });
         }
     }

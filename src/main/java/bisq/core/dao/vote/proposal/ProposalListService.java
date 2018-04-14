@@ -56,9 +56,10 @@ import lombok.extern.slf4j.Slf4j;
 public class ProposalListService {
     private final NodeExecutor nodeExecutor;
     private final ProposalService proposalService;
-    private MyProposalService myProposalService;
+    private final MyProposalService myProposalService;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
+    private final ProposalPayloadValidator proposalPayloadValidator;
     private final StateService stateService;
 
     @Getter
@@ -77,12 +78,14 @@ public class ProposalListService {
                                MyProposalService myProposalService,
                                P2PDataStorage p2pDataStorage,
                                PeriodService periodService,
+                               ProposalPayloadValidator proposalPayloadValidator,
                                StateService stateService) {
         this.nodeExecutor = nodeExecutor;
         this.proposalService = proposalService;
         this.myProposalService = myProposalService;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
+        this.proposalPayloadValidator = proposalPayloadValidator;
         this.stateService = stateService;
     }
 
@@ -148,7 +151,8 @@ public class ProposalListService {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
                         final ProposalPayload proposalPayload = proposal.getProposalPayload();
                         return (optionalTx.isPresent() &&
-                                proposalService.isValid(optionalTx.get(), proposalPayload) &&
+                                proposalPayloadValidator.isValid(proposalPayload) &&
+                                periodService.isInPhase(optionalTx.get().getBlockHeight(), PeriodService.Phase.PROPOSAL) &&
                                 periodService.isTxInCorrectCycle(optionalTx.get().getBlockHeight(), chainHeadHeight));
                     }).collect(Collectors.toList()));
 
@@ -177,8 +181,10 @@ public class ProposalListService {
             final List<Proposal> proposalList = proposals.stream()
                     .filter(proposal -> {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
+                        final ProposalPayload proposalPayload = proposal.getProposalPayload();
                         return optionalTx.isPresent() &&
-                                proposalService.isValid(optionalTx.get(), proposal.getProposalPayload()) &&
+                                proposalPayloadValidator.isValid(proposalPayload) &&
+                                periodService.isInPhase(optionalTx.get().getBlockHeight(), PeriodService.Phase.PROPOSAL) &&
                                 periodService.isTxInPastCycle(optionalTx.get(), chainHeadHeight);
                     }).collect(Collectors.toList());
             closedProposals.addAll(proposalList);

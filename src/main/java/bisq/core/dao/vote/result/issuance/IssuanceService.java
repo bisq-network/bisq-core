@@ -47,7 +47,7 @@ public class IssuanceService {
         this.periodService = periodService;
     }
 
-
+    // Called from parser thread
     public void issueBsq(CompensationRequestPayload compensationRequestPayload, int chainHeight) {
         final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getCompReqIssuanceTxOutputs();
         compReqIssuanceTxOutputs.stream()
@@ -68,11 +68,5 @@ public class IssuanceService {
                             .append("\n################################################################################\n");
                     log.info(sb.toString());
                 });
-    }
-
-    public void onAllServicesInitialized() {
-    }
-
-    public void shutDown() {
     }
 }

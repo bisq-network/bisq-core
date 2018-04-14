@@ -25,7 +25,6 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.ProposalList;
 
 import javax.crypto.SecretKey;
@@ -50,8 +49,7 @@ public class DecryptedVote {
     private final long stake;
     private final ProposalList proposalListUsedForVoting;
 
-    public DecryptedVote(byte[] opReturnData, String voteRevealTxId,
-                         StateService stateService, BlindVoteService blindVoteService,
+    public DecryptedVote(byte[] opReturnData, String voteRevealTxId, StateService stateService,
                          PeriodService periodService, int chainHeight)
             throws VoteResultException {
         hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
@@ -66,8 +64,8 @@ public class DecryptedVote {
         proposalListUsedForVoting = getProposalList(blindVote, secretKey);
     }
 
-    private Tx getVoteRevealTx(String voteRevealTxId, StateService stateService,
-                               PeriodService periodService, int chainHeight)
+    private Tx getVoteRevealTx(String voteRevealTxId, StateService stateService, PeriodService periodService,
+                               int chainHeight)
             throws VoteResultException {
         Optional<Tx> optionalVoteRevealTx = stateService.getTx(voteRevealTxId);
         try {

@@ -17,93 +17,26 @@
 
 package bisq.core.dao.vote.proposal;
 
-import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.vote.PeriodService;
-
-import bisq.common.util.Utilities;
-
 import javax.inject.Inject;
-
-import java.util.Arrays;
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
 public class ProposalPayloadValidator {
-    protected final PeriodService periodService;
-    protected final StateService stateService;
 
     @Inject
-    public ProposalPayloadValidator(PeriodService periodService, StateService stateService) {
-        this.periodService = periodService;
-        this.stateService = stateService;
+    public ProposalPayloadValidator() {
     }
 
-    public boolean isValid(ProposalPayload proposalPayload, Tx tx, int chainHeight) {
+    public boolean isValid(ProposalPayload proposalPayload) {
         try {
-            validateCorrectTxType(proposalPayload, tx);
-            validateCorrectTxOutputType(proposalPayload, tx);
-            validatePhase(tx.getBlockHeight());
-            validateCycle(tx.getBlockHeight(), chainHeight);
             validateDataFields(proposalPayload);
-            validateHashOfOpReturnData(proposalPayload, tx);
             return true;
         } catch (ValidationException e) {
-            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
-                    tx.getId(), proposalPayload, e.toString());
             return false;
-        }
-    }
-
-    public void validate(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
-        validateCorrectTxType(proposalPayload, tx);
-        validateCorrectTxOutputType(proposalPayload, tx);
-        validatePhase(tx.getBlockHeight());
-        validateDataFields(proposalPayload);
-        validateHashOfOpReturnData(proposalPayload, tx);
-    }
-
-    public void validateCorrectTxType(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
-        try {
-            Optional<TxType> optionalTxType = stateService.getTxType(tx.getId());
-            checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
-            checkArgument(optionalTxType.get() == proposalPayload.getTxType(),
-                    "ProposalPayload has wrong txType. txType=" + optionalTxType.get());
-        } catch (Throwable e) {
-            log.warn(e.toString());
-            throw new ValidationException(e, tx);
-        }
-    }
-
-    public void validateCorrectTxOutputType(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
-        try {
-            final TxOutput lastOutput = tx.getLastOutput();
-            final TxOutputType txOutputType = stateService.getTxOutputType(lastOutput);
-            checkArgument(txOutputType == proposalPayload.getTxOutputType(),
-                    "Last output of tx has wrong txOutputType: txOutputType=" + txOutputType);
-        } catch (Throwable e) {
-            log.warn(e.toString());
-            throw new ValidationException(e, tx);
-        }
-    }
-
-
-    public void validatePhase(int txBlockHeight) throws ValidationException {
-        try {
-            checkArgument(periodService.isInPhase(txBlockHeight, PeriodService.Phase.PROPOSAL),
-                    "Tx is not in PROPOSAL phase");
-        } catch (Throwable e) {
-            log.warn(e.toString());
-            throw new ValidationException(e);
         }
     }
 
@@ -117,37 +50,6 @@ public class ProposalPayloadValidator {
             checkArgument(ProposalConsensus.isDescriptionSizeValid(proposalPayload.getDescription()), "description is too long");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
-        }
-    }
-
-
-    // We do not verify type or version as that gets verified in parser. Version might have been changed as well
-    // so we don't want to fail in that case.
-    public void validateHashOfOpReturnData(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
-        try {
-            byte[] txOpReturnData = tx.getTxOutput(tx.getOutputs().size() - 1).getOpReturnData();
-            checkNotNull(txOpReturnData, "txOpReturnData must not be null");
-            byte[] txHashOfPayload = Arrays.copyOfRange(txOpReturnData, 2, 22);
-            // We need to set txId to null in clone to get same hash as used in the tx return data
-            byte[] hash = ProposalConsensus.getHashOfPayload(proposalPayload.cloneWithoutTxId());
-            checkArgument(Arrays.equals(txHashOfPayload, hash),
-                    "OpReturn data from proposal tx is not matching the one created from the payload." +
-                            "\ntxHashOfPayload=" + Utilities.encodeToHex(txHashOfPayload) +
-                            "\nhash=" + Utilities.encodeToHex(hash));
-        } catch (Throwable e) {
-            log.debug("OpReturnData validation of proposalPayload failed. proposalPayload={}, tx={}", this, tx);
-            throw new ValidationException(e, tx);
-        }
-    }
-
-
-    public void validateCycle(int txBlockHeight, int chainHeight) throws ValidationException {
-        try {
-            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, chainHeight),
-                    "Tx is not in current cycle. txBlockHeight=" + txBlockHeight + "; chainHeight=" + chainHeight);
-        } catch (Throwable e) {
-            log.warn(e.toString());
-            throw new ValidationException(e);
         }
     }
 }

@@ -18,7 +18,6 @@
 package bisq.core.dao.vote.result;
 
 import bisq.core.dao.node.NodeExecutor;
-import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
@@ -46,6 +45,7 @@ import javafx.collections.ObservableList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,36 +107,27 @@ public class VoteResultService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+
+    // We get called from DaoSetup in the parser thread
     public void onAllServicesInitialized() {
-        stateService.addBlockListener(new StateService.BlockListener() {
-            // We set the nodeExecutor as we want to get called in the context of the parser thread
-            //TODO issuance fails if parser thread is set. need to refactor class first
-          /*  @Override
-            public Executor getExecutor() {
-                return nodeExecutor.get();
-            }*/
-
-            @Override
-            public void onBlockAdded(Block block) {
-                maybeApplyVoteResult(block.getHeight());
+        // We get called from stateService in the parser thread
+        stateService.registerStateChangeEventsProvider(txBlock -> {
+            final int chainHeight = txBlock.getHeight();
+            if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.ISSUANCE) {
+                // We map to user thread because we access other user thread domains like wallet and the only state
+                // relevant data we need is the chainHeight
+                applyVoteResult(chainHeight);
             }
-        });
-    }
 
-    public void shutDown() {
+            // We have nothing to return as there are no p2p network data for vote reveal.
+            return new HashSet<>();
+        });
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // We are in parser thread!
-    private void maybeApplyVoteResult(int chainHeight) {
-        if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.ISSUANCE) {
-            applyVoteResult(chainHeight);
-        }
-    }
 
     private void applyVoteResult(int chainHeight) {
         Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet = getDecryptedVoteByVoteRevealTxIdSet(chainHeight);
@@ -176,8 +167,7 @@ public class VoteResultService {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
                     try {
-                        return new DecryptedVote(opReturnData, voteRevealTxId,
-                                stateService, blindVoteService, periodService, chainHeight);
+                        return new DecryptedVote(opReturnData, voteRevealTxId, stateService, periodService, chainHeight);
                     } catch (VoteResultException e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;

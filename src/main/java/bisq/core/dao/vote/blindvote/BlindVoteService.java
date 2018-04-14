@@ -203,7 +203,9 @@ public class BlindVoteService implements PersistedDataHost {
     private Optional<StateChangeEvent> getAddBlindVoteEvent(BlindVote blindVote, int height) {
         return stateService.getTx(blindVote.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
-                .filter(tx -> blindVoteValidator.isValid(blindVote, tx, height))
+                .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
+                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), PeriodService.Phase.BLIND_VOTE))
+                .filter(tx -> blindVoteValidator.isValid(blindVote))
                 .map(tx -> new AddBlindVoteEvent(blindVote, height));
     }
 

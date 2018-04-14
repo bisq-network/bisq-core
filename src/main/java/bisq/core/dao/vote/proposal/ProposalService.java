@@ -185,17 +185,6 @@ public class ProposalService implements PersistedDataHost {
         return !stateService.getTx(txId).isPresent();
     }
 
-    public boolean isValid(Tx tx, ProposalPayload proposalPayload) {
-        try {
-            proposalPayloadValidator.validate(proposalPayload, tx);
-            return true;
-        } catch (ValidationException e) {
-            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
-                    tx.getId(), proposalPayload, e.toString());
-            return false;
-        }
-    }
-
     public void persist() {
         storage.queueUpForSave();
     }
@@ -260,7 +249,9 @@ public class ProposalService implements PersistedDataHost {
     private Optional<StateChangeEvent> getAddProposalPayloadEvent(ProposalPayload proposalPayload, int height) {
         return stateService.getTx(proposalPayload.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
-                .filter(tx -> proposalPayloadValidator.isValid(proposalPayload, tx, height))
+                .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
+                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), PeriodService.Phase.PROPOSAL))
+                .filter(tx -> proposalPayloadValidator.isValid(proposalPayload))
                 .map(tx -> new AddProposalPayloadEvent(proposalPayload, height));
     }
 

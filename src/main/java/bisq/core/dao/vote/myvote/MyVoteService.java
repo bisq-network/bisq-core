@@ -34,6 +34,8 @@ import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalFactory;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.dao.vote.proposal.ProposalPayload;
+import bisq.core.dao.vote.proposal.ProposalService;
 import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.network.p2p.P2PService;
@@ -72,12 +74,13 @@ import lombok.extern.slf4j.Slf4j;
  * Creates and published blind vote and blind vote tx. After broadcast it creates myVote which gets persisted and holds
  * all proposals with the votes.
  * Republished all my active myVotes at startup and applies the revealTxId to myVote once the reveal tx is published.
- *
+ * <p>
  * Executed from the user tread.
  */
 @Slf4j
 public class MyVoteService implements PersistedDataHost {
     private final PeriodService periodService;
+    private final ProposalService proposalService;
     private final StateService stateService;
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
@@ -99,6 +102,7 @@ public class MyVoteService implements PersistedDataHost {
 
     @Inject
     public MyVoteService(PeriodService periodService,
+                         ProposalService proposalService,
                          StateService stateService,
                          P2PService p2PService,
                          WalletsManager walletsManager,
@@ -108,6 +112,7 @@ public class MyVoteService implements PersistedDataHost {
                          KeyRing keyRing,
                          Storage<MyVoteList> storage) {
         this.periodService = periodService;
+        this.proposalService = proposalService;
         this.stateService = stateService;
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
@@ -220,10 +225,17 @@ public class MyVoteService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private ProposalList getSortedProposalList() {
-        List<Proposal> proposals = stateService.getProposalPayloads().stream()
+        List<ProposalPayload> proposalPayloadsFromStateService = stateService.getProposalPayloads().stream()
                 .map(ProposalFactory::getProposalFromPayload)
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
+                .map(Proposal::getProposalPayload)
                 .collect(Collectors.toList());
+
+        List<Proposal> proposals = proposalService.getOpenProposalList().stream()
+                .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
+                .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposalPayload()))
+                .collect(Collectors.toList());
+
         BlindVoteConsensus.sortProposalList(proposals);
         return new ProposalList(proposals);
     }

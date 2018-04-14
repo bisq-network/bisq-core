@@ -17,7 +17,6 @@
 
 package bisq.core.dao.vote.proposal.param;
 
-import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.events.AddChangeParamEvent;
 
 import bisq.common.app.DevEnv;
@@ -64,13 +63,14 @@ public class ParamService implements PersistedDataHost {
 
     @Override
     public void readPersisted() {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+        //TODO
+       /* if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
             ChangeParamEventList persisted = storage.initAndGetPersisted(changeParamEventList, 20);
             if (persisted != null) {
                 this.changeParamEventList.clear();
                 this.changeParamEventList.addAll(persisted.getList());
             }
-        }
+        }*/
     }
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
