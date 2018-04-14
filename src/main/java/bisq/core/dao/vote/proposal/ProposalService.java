@@ -127,8 +127,9 @@ public class ProposalService implements PersistedDataHost {
 
                         // If we are in the correct block and we add a AddProposalPayloadEvent to the state we remove
                         // the proposalPayload from our list after we have completed iteration.
-                        if (optional.isPresent())
-                            toRemove.add(proposalPayload);
+                        //TODO activate once we persist state
+                       /* if (optional.isPresent())
+                            toRemove.add(proposalPayload);*/
 
                         return optional;
                     })
@@ -211,7 +212,7 @@ public class ProposalService implements PersistedDataHost {
             if (!listContains(proposalPayload)) {
                 // For adding a proposal we need to be before the last block in BREAK1 as in the last block at BREAK1
                 // we write our proposals to the state.
-                if (isInToleratedBlockRange(stateService.getChainHeadHeight())) {
+                if (isInToleratedBlockRange(stateService.getChainHeight())) {
                     log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" +
                             proposalPayload.getUid());
                     Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
@@ -222,7 +223,7 @@ public class ProposalService implements PersistedDataHost {
                 } else {
                     log.warn("We are not in the tolerated phase anymore and ignore that " +
                                     "proposalPayload. proposalPayload={}, height={}", proposalPayload,
-                            stateService.getChainHeadHeight());
+                            stateService.getChainHeight());
                 }
             } else {
                 if (storeLocally && !isMine(proposalPayload))
@@ -240,7 +241,7 @@ public class ProposalService implements PersistedDataHost {
                     .ifPresent(payload -> {
                         if (isInPhaseOrUnconfirmed(stateService.getTx(payload.getTxId()), payload.getTxId(),
                                 PeriodService.Phase.PROPOSAL,
-                                stateService.getChainHeadHeight())) {
+                                stateService.getChainHeight())) {
                             removeProposalFromList(proposalPayload);
                         } else {
                             final String msg = "onRemoved called of a Proposal which is outside of the Request phase " +

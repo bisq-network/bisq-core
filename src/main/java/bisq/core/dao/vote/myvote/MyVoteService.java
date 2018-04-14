@@ -27,7 +27,6 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
@@ -70,12 +69,14 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Manages list of my votes, creates new MyVote, republished all my active myVotes at startup and applies
- * revealTx ID to MyVote once the reveal tx is published.
+ * Creates and published blind vote and blind vote tx. After broadcast it creates myVote which gets persisted and holds
+ * all proposals with the votes.
+ * Republished all my active myVotes at startup and applies the revealTxId to myVote once the reveal tx is published.
+ *
+ * Executed from the user tread.
  */
 @Slf4j
 public class MyVoteService implements PersistedDataHost {
-    private final NodeExecutor nodeExecutor;
     private final PeriodService periodService;
     private final StateService stateService;
     private final P2PService p2PService;
@@ -97,8 +98,7 @@ public class MyVoteService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteService(NodeExecutor nodeExecutor,
-                         PeriodService periodService,
+    public MyVoteService(PeriodService periodService,
                          StateService stateService,
                          P2PService p2PService,
                          WalletsManager walletsManager,
@@ -107,7 +107,6 @@ public class MyVoteService implements PersistedDataHost {
                          ParamService paramService,
                          KeyRing keyRing,
                          Storage<MyVoteList> storage) {
-        this.nodeExecutor = nodeExecutor;
         this.periodService = periodService;
         this.stateService = stateService;
         this.p2PService = p2PService;
@@ -147,11 +146,6 @@ public class MyVoteService implements PersistedDataHost {
         publishMyBlindVotesIfWellConnected();
     }
 
-    @SuppressWarnings("EmptyMethod")
-    public void shutDown() {
-        // TODO keep for later, maybe we get resources to clean up later
-    }
-
     // Useful for showing fee estimation in confirmation popup so we expose it publicly
     public Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
@@ -171,7 +165,7 @@ public class MyVoteService implements PersistedDataHost {
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(paramService, stateService.getChainHeadHeight());
+            final Coin fee = BlindVoteConsensus.getFee(paramService, stateService.getChainHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
@@ -210,13 +204,6 @@ public class MyVoteService implements PersistedDataHost {
         }
     }
 
-    public void applyNewBlindVote(ProposalList proposalList, SecretKey secretKey, BlindVote blindVote) {
-        MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
-        log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
-        myVoteList.add(myVote);
-        persist();
-    }
-
     public void applyRevealTxId(MyVote myVote, String voteRevealTxId) {
         myVote.setRevealTxId(voteRevealTxId);
         log.info("Applied revealTxId to myVote.\nmyVote={}\nvoteRevealTxId={}", myVote, voteRevealTxId);
@@ -235,6 +222,7 @@ public class MyVoteService implements PersistedDataHost {
     private ProposalList getSortedProposalList() {
         List<Proposal> proposals = stateService.getProposalPayloads().stream()
                 .map(ProposalFactory::getProposalFromPayload)
+                .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
                 .collect(Collectors.toList());
         BlindVoteConsensus.sortProposalList(proposals);
         return new ProposalList(proposals);
@@ -260,8 +248,12 @@ public class MyVoteService implements PersistedDataHost {
             exceptionHandler.handleException(new Exception(msg));
         }
 
-        applyNewBlindVote(proposalList, secretKey, blindVote);
+        MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
+        log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
+        myVoteList.add(myVote);
+        persist();
     }
+
 
     private void publishMyBlindVotesIfWellConnected() {
         // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
@@ -277,8 +269,7 @@ public class MyVoteService implements PersistedDataHost {
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
-                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(),
-                        stateService.getChainHeadHeight()))
+                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), stateService.getChainHeight()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {

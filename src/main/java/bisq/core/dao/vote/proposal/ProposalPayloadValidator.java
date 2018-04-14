@@ -144,7 +144,7 @@ public class ProposalPayloadValidator {
     public void validateCycle(int txBlockHeight, int chainHeight) throws ValidationException {
         try {
             checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, chainHeight),
-                    "Tx is not in current cycle");
+                    "Tx is not in current cycle. txBlockHeight=" + txBlockHeight + "; chainHeight=" + chainHeight);
         } catch (Throwable e) {
             log.warn(e.toString());
             throw new ValidationException(e);

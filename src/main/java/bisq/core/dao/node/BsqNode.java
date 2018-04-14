@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
@@ -138,7 +138,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeadHeight() + 1);
+        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeight() + 1);
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -147,7 +147,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                stateService.getChainHeadHeight());
+                stateService.getChainHeight());
 
         return startBlockHeight;
     }

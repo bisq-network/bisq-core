@@ -235,7 +235,7 @@ public class VoteRevealService implements StateService.BlockListener {
                 .filter(blindVote -> {
                     final boolean txInPhase = periodService.isTxInPhase(blindVote.getTxId(), PeriodService.Phase.BLIND_VOTE);
                     if (!txInPhase)
-                        log.warn("Blind vote tx is not in correct phase txId=", blindVote.getTxId());
+                        log.warn("Blind vote tx is not in correct phase txId={}", blindVote.getTxId());
                     return txInPhase;
                 })
                 .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))

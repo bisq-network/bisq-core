@@ -109,7 +109,7 @@ public class CompensationRequestService {
     private Transaction createCompensationRequestTx(CompensationRequestPayload tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
-        final Coin fee = ProposalConsensus.getFee(paramService, stateService.getChainHeadHeight());
+        final Coin fee = ProposalConsensus.getFee(paramService, stateService.getChainHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

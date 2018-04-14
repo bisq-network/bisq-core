@@ -184,11 +184,8 @@ public class StateService {
             // The providers are called in the parser thread, so we have a single threaded execution model here.
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
             stateChangeEventsProviders.forEach(stateChangeEventsProvider -> {
-                nodeExecutor.execute(() -> {
-                    stateChangeEvents.addAll(stateChangeEventsProvider.apply(txBlock));
-                });
+                stateChangeEvents.addAll(stateChangeEventsProvider.apply(txBlock));
             });
-
             // Now we have both the immutable txBlock and the collected stateChangeEvents.
             // We now add the immutable Block containing both data.
             final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
@@ -233,7 +230,7 @@ public class StateService {
 
             addUnspentTxOutput(txOutput);
 
-            state.getIssuanceBlockHeightMap().put(txOutput.getTxId(), getChainHeadHeight());
+            state.getIssuanceBlockHeightMap().put(txOutput.getTxId(), getChainHeight());
         });
     }
 
@@ -317,7 +314,7 @@ public class StateService {
         return lock.read(() -> state.getTxBlocks().contains(txBlock));
     }
 
-    public int getChainHeadHeight() {
+    public int getChainHeight() {
         return lock.read(() -> !state.getTxBlocks().isEmpty() ? state.getTxBlocks().getLast().getHeight() : 0);
     }
 

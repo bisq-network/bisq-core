@@ -115,7 +115,7 @@ public class PeriodService implements StateService.BlockListener {
 
     public void onAllServicesInitialized() {
         stateService.addBlockListener(this);
-        onChainHeightChanged(stateService.getChainHeadHeight());
+        onChainHeightChanged(stateService.getChainHeight());
     }
 
     @Override

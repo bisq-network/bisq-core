@@ -70,7 +70,7 @@ public class SnapshotManager implements StateService.BlockListener {
 
     @Override
     public void onBlockAdded(Block block) {
-        final int chainHeadHeight = stateService.getChainHeadHeight();
+        final int chainHeadHeight = stateService.getChainHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
                 (snapshotCandidate == null ||
                         snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {

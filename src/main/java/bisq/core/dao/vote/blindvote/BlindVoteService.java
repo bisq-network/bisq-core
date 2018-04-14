@@ -112,14 +112,16 @@ public class BlindVoteService implements PersistedDataHost {
         stateService.registerStateChangeEventsProvider(txBlock -> {
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
             Set<BlindVote> toRemove = new HashSet<>();
+
             openBlindVoteList.stream()
                     .map(blindVote -> {
                         final Optional<StateChangeEvent> optional = getAddBlindVoteEvent(blindVote, txBlock.getHeight());
 
                         // If we are in the correct block and we add a AddBlindVoteEvent to the state we remove
                         // the blindVote from our list after we have completed iteration.
-                        if (optional.isPresent())
-                            toRemove.add(blindVote);
+                        //TODO activate once we persist state
+                      /*  if (optional.isPresent())
+                            toRemove.add(blindVote);*/
 
                         return optional;
                     })
@@ -175,7 +177,7 @@ public class BlindVoteService implements PersistedDataHost {
             if (openBlindVoteList.stream().noneMatch(e -> e.equals(blindVote))) {
                 // For adding a blindVote we need to be before the last block in BREAK2 as in the last block at BREAK2
                 // we write our blindVotes to the state.
-                final int height = stateService.getChainHeadHeight();
+                final int height = stateService.getChainHeight();
                 if (isInToleratedBlockRange(height)) {
                     log.info("We received a BlindVote from the P2P network. BlindVote=" + blindVote);
                     openBlindVoteList.add(blindVote);
@@ -210,7 +212,7 @@ public class BlindVoteService implements PersistedDataHost {
     }
 
     private boolean isInToleratedBlockRange(int height) {
-        return height < periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK1);
+        return height < periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK2);
     }
 
     private void persist() {

@@ -176,7 +176,7 @@ public class MyProposalService implements PersistedDataHost {
         if (proposalService.isInPhaseOrUnconfirmed(stateService.getTx(proposalPayload.getTxId()),
                 proposalPayload.getTxId(),
                 PeriodService.Phase.PROPOSAL,
-                stateService.getChainHeadHeight())) {
+                stateService.getChainHeight())) {
             boolean success = p2PService.removeData(proposalPayload, true);
             if (success) {
                 if (observableList.remove(proposal))

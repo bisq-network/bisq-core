@@ -91,6 +91,7 @@ public class ProposalListService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
+        //TODO
         stateService.addBlockListener(new StateService.BlockListener() {
             // We set the nodeExecutor as we want to get called in the context of the parser thread
             @Override
@@ -130,7 +131,7 @@ public class ProposalListService {
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload)
-            updateLists(stateService.getChainHeadHeight());
+            updateLists(stateService.getChainHeight());
     }
 
     private void updateLists(int chainHeadHeight) {
