@@ -102,15 +102,7 @@ public class DaoSetup {
 
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            /*periodService.shutDown();
-            myProposalService.shutDown();
-            proposalService.shutDown();
-            proposalListService.shutDown();
             bsqNode.shutDown();
-            voteRevealService.shutDown();
-            voteResultService.shutDown();
-            issuanceService.shutDown();
-            paramService.shutDown();*/
         }
     }
 }

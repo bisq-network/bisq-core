@@ -110,9 +110,6 @@ public class PeriodService implements StateService.BlockListener {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void shutDown() {
-    }
-
     public void onAllServicesInitialized() {
         stateService.addBlockListener(this);
         onChainHeightChanged(stateService.getChainHeight());

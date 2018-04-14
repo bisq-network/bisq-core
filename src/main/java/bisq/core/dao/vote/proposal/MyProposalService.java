@@ -100,9 +100,6 @@ public class MyProposalService implements PersistedDataHost {
         maybeRePublish();
     }
 
-    public void shutDown() {
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PersistedDataHost

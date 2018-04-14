@@ -80,8 +80,6 @@ public class ParamService implements PersistedDataHost {
         persist();
     }
 
-    public void shutDown() {
-    }
 
     public long getDaoParamValue(Param param, int blockHeight) {
         final List<AddChangeParamEvent> sortedFilteredList = getParamChangeEventListForParam(param).stream()

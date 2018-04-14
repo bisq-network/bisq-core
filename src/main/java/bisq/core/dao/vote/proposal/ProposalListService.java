@@ -127,9 +127,6 @@ public class ProposalListService {
         });
     }
 
-    public void shutDown() {
-    }
-
 
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
