@@ -20,61 +20,58 @@ package bisq.core.app;
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;
 
+import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-
 import lombok.extern.slf4j.Slf4j;
 
-import static bisq.core.app.BisqEnvironment.DEFAULT_APP_NAME;
 import static bisq.core.app.BisqEnvironment.DEFAULT_USER_DATA_DIR;
 
 @Slf4j
 public class HeadlessMain extends BisqExecutable {
-    private Headless headless;
-
     static {
         Utilities.removeCryptographyRestrictions();
     }
 
-    public static void main(String[] args) {
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("HeadlessMain")
-                .setDaemon(true)
-                .build();
-        UserThread.setExecutor(Executors.newSingleThreadExecutor(threadFactory));
+    private Headless headless;
 
+    public static void main(String[] args) throws Exception {
         // We don't want to do the full argument parsing here as that might easily change in update versions
         // So we only handle the absolute minimum which is APP_NAME, APP_DATA_DIR_KEY and USER_DATA_DIR
-        BisqEnvironment.setDefaultAppName("bisq_headless");
         OptionParser parser = new OptionParser();
         parser.allowsUnrecognizedOptions();
         parser.accepts(AppOptionKeys.USER_DATA_DIR_KEY, description("User data directory", DEFAULT_USER_DATA_DIR))
                 .withRequiredArg();
-        parser.accepts(AppOptionKeys.APP_NAME_KEY, description("Application name", DEFAULT_APP_NAME))
+        parser.accepts(AppOptionKeys.APP_NAME_KEY, description("Application name", "Bisq_headless"))
                 .withRequiredArg();
 
+        OptionSet options;
         try {
-            OptionSet options = parser.parse(args);
-            BisqEnvironment bisqEnvironment = getBisqEnvironment(options);
-            BisqExecutable.initAppDir(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY));
-
-            new HeadlessMain().execute(args);
-        } catch (Throwable t) {
-            System.out.println(t.toString());
+            options = parser.parse(args);
+        } catch (OptionException ex) {
+            System.out.println("error: " + ex.getMessage());
+            System.out.println();
+            parser.printHelpOn(System.out);
             System.exit(EXIT_FAILURE);
+            return;
         }
+        BisqEnvironment bisqEnvironment = getBisqEnvironment(options);
+
+        // need to call that before bisqAppMain().execute(args)
+        initAppDir(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY));
+
+        // For some reason the JavaFX launch process results in us losing the thread context class loader: reset it.
+        // In order to work around a bug in JavaFX 8u25 and below, you must include the following code as the first line of your realMain method:
+        Thread.currentThread().setContextClassLoader(Headless.class.getClassLoader());
+
+        new HeadlessMain().execute(args);
     }
 
     @SuppressWarnings("InfiniteLoopStatement")
     @Override
     protected void doExecute(OptionSet options) {
-        final BisqEnvironment bisqEnvironment = getBisqEnvironment(options);
-        Headless.setEnvironment(bisqEnvironment);
+        Headless.setEnvironment(getBisqEnvironment(options));
 
         UserThread.execute(() -> {
             try {

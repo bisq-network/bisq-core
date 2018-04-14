@@ -64,25 +64,26 @@ class HeadlessModule extends AppModule {
     protected void configure() {
         bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
 
-        // bind(CachingViewLoader.class).in(Singleton.class);
         bind(KeyStorage.class).in(Singleton.class);
         bind(KeyRing.class).in(Singleton.class);
         bind(User.class).in(Singleton.class);
-        // bind(NotificationCenter.class).in(Singleton.class);
         bind(Clock.class).in(Singleton.class);
-        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
-        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
         bind(Preferences.class).in(Singleton.class);
         bind(BridgeAddressProvider.class).to(Preferences.class).in(Singleton.class);
 
         bind(SeedNodeAddressLookup.class).in(Singleton.class);
         bind(SeedNodeRepository.class).to(DefaultSeedNodeRepository.class).in(Singleton.class);
 
+        bind(AppSetupFullApp.class).in(Singleton.class);
+
         File storageDir = new File(environment.getRequiredProperty(Storage.STORAGE_DIR));
         bind(File.class).annotatedWith(named(Storage.STORAGE_DIR)).toInstance(storageDir);
 
         File keyStorageDir = new File(environment.getRequiredProperty(KeyStorage.KEY_STORAGE_DIR));
         bind(File.class).annotatedWith(named(KeyStorage.KEY_STORAGE_DIR)).toInstance(keyStorageDir);
+
+        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
+        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
 
         Boolean useDevPrivilegeKeys = environment.getProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, Boolean.class, false);
         bind(boolean.class).annotatedWith(Names.named(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS)).toInstance(useDevPrivilegeKeys);
@@ -95,10 +96,9 @@ class HeadlessModule extends AppModule {
         install(encryptionServiceModule());
         install(arbitratorModule());
         install(offerModule());
-        install(torModule());
+        install(p2pModule());
         install(bitcoinModule());
         install(daoModule());
-        //install(guiModule());
         install(alertModule());
         install(filterModule());
     }
@@ -127,7 +127,7 @@ class HeadlessModule extends AppModule {
         return new OfferModule(environment);
     }
 
-    private P2PModule torModule() {
+    private P2PModule p2pModule() {
         return new P2PModule(environment);
     }
 
