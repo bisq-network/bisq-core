@@ -18,18 +18,41 @@
 package bisq.core.dao.vote.myvote;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.exceptions.TransactionVerificationException;
+import bisq.core.btc.exceptions.WalletException;
+import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcastTimeoutException;
+import bisq.core.btc.wallet.TxBroadcaster;
+import bisq.core.btc.wallet.TxMalleabilityException;
+import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
+import bisq.core.dao.vote.proposal.Proposal;
+import bisq.core.dao.vote.proposal.ProposalFactory;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.network.p2p.P2PService;
 
 import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
+import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
+import bisq.common.crypto.KeyRing;
+import bisq.common.handlers.ExceptionHandler;
+import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
+import bisq.common.util.Utilities;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
@@ -37,7 +60,12 @@ import javafx.beans.value.ChangeListener;
 
 import javax.crypto.SecretKey;
 
+import java.security.PublicKey;
+
+import java.io.IOException;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,10 +75,16 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MyVoteService implements PersistedDataHost {
+    private final NodeExecutor nodeExecutor;
     private final PeriodService periodService;
     private final StateService stateService;
     private final P2PService p2PService;
+    private final WalletsManager walletsManager;
+    private final BsqWalletService bsqWalletService;
+    private final BtcWalletService btcWalletService;
+    private final ParamService paramService;
     private final Storage<MyVoteList> storage;
+    private final PublicKey signaturePubKey;
 
     // MyVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
     private final MyVoteList myVoteList = new MyVoteList();
@@ -63,14 +97,26 @@ public class MyVoteService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteService(PeriodService periodService,
+    public MyVoteService(NodeExecutor nodeExecutor,
+                         PeriodService periodService,
                          StateService stateService,
                          P2PService p2PService,
+                         WalletsManager walletsManager,
+                         BsqWalletService bsqWalletService,
+                         BtcWalletService btcWalletService,
+                         ParamService paramService,
+                         KeyRing keyRing,
                          Storage<MyVoteList> storage) {
+        this.nodeExecutor = nodeExecutor;
         this.periodService = periodService;
         this.stateService = stateService;
         this.p2PService = p2PService;
+        this.walletsManager = walletsManager;
+        this.bsqWalletService = bsqWalletService;
+        this.btcWalletService = btcWalletService;
+        this.paramService = paramService;
         this.storage = storage;
+        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
 
@@ -106,6 +152,64 @@ public class MyVoteService implements PersistedDataHost {
         // TODO keep for later, maybe we get resources to clean up later
     }
 
+    // Useful for showing fee estimation in confirmation popup so we expose it publicly
+    public Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
+            throws InsufficientMoneyException, WalletException, TransactionVerificationException {
+        Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(fee, stake);
+        Transaction txWithBtcFee = btcWalletService.completePreparedBlindVoteTx(preparedTx, opReturnData);
+        return bsqWalletService.signTx(txWithBtcFee);
+    }
+
+    public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
+        try {
+            ProposalList proposalList = getSortedProposalList();
+            log.info("ProposalList used in blind vote. proposalList={}", proposalList);
+
+            SecretKey secretKey = BlindVoteConsensus.getSecretKey();
+            byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
+
+            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
+            log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
+            byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
+            final Coin fee = BlindVoteConsensus.getFee(paramService, stateService.getChainHeadHeight());
+            final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
+            log.info("blindVoteTx={}", blindVoteTx);
+            walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
+                @Override
+                public void onSuccess(Transaction transaction) {
+                    onTxBroadcasted(encryptedProposalList, blindVoteTx, stake, resultHandler, exceptionHandler,
+                            proposalList, secretKey);
+                }
+
+                @Override
+                public void onTimeout(TxBroadcastTimeoutException exception) {
+                    // TODO handle
+                    // We need to handle cases where a timeout happens and
+                    // the tx might get broadcasted at a later restart!
+                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                    exceptionHandler.handleException(exception);
+                }
+
+                @Override
+                public void onTxMalleability(TxMalleabilityException exception) {
+                    // TODO handle
+                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                    exceptionHandler.handleException(exception);
+                }
+
+                @Override
+                public void onFailure(TxBroadcastException exception) {
+                    // TODO handle
+                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                    exceptionHandler.handleException(exception);
+                }
+            });
+        } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
+                WalletException | IOException exception) {
+            exceptionHandler.handleException(exception);
+        }
+    }
+
     public void applyNewBlindVote(ProposalList proposalList, SecretKey secretKey, BlindVote blindVote) {
         MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
@@ -123,9 +227,41 @@ public class MyVoteService implements PersistedDataHost {
         return myVoteList.getList();
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private ProposalList getSortedProposalList() {
+        List<Proposal> proposals = stateService.getProposalPayloads().stream()
+                .map(ProposalFactory::getProposalFromPayload)
+                .collect(Collectors.toList());
+        BlindVoteConsensus.sortProposalList(proposals);
+        return new ProposalList(proposals);
+    }
+
+    private void onTxBroadcasted(byte[] encryptedProposalList, Transaction blindVoteTx, Coin stake,
+                                 ResultHandler resultHandler, ExceptionHandler exceptionHandler,
+                                 ProposalList proposalList, SecretKey secretKey) {
+        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(),
+                stake.value, signaturePubKey);
+
+        // We map from user thread to parser thread as we will read the block height in the addBlindVoteToList method
+        // and want to avoid inconsistency from threading issues.
+        // nodeExecutor.get().execute(() -> addBlindVoteToList(blindVote, true));
+
+        if (p2PService.addProtectedStorageEntry(blindVote, true)) {
+            log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
+            resultHandler.handleResult();
+        } else {
+            final String msg = "Adding of blindVote to P2P network failed.\nblindVote=" + blindVote;
+            log.error(msg);
+            //TODO define specific exception
+            exceptionHandler.handleException(new Exception(msg));
+        }
+
+        applyNewBlindVote(proposalList, secretKey, blindVote);
+    }
 
     private void publishMyBlindVotesIfWellConnected() {
         // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version

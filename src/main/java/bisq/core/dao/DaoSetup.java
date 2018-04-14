@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
+import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.vote.PeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.MyProposalService;
@@ -39,6 +40,7 @@ import com.google.inject.Inject;
  * High level entry point for Dao domain
  */
 public class DaoSetup {
+    private final NodeExecutor nodeExecutor;
     private final PeriodService periodService;
     private final MyProposalService myProposalService;
     private final BsqNode bsqNode;
@@ -56,7 +58,8 @@ public class DaoSetup {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public DaoSetup(BsqNodeProvider bsqNodeProvider,
+    public DaoSetup(NodeExecutor nodeExecutor,
+                    BsqNodeProvider bsqNodeProvider,
                     PeriodService periodService,
                     MyProposalService myProposalService,
                     ProposalService proposalService,
@@ -66,6 +69,7 @@ public class DaoSetup {
                     VoteResultService voteResultService,
                     IssuanceService issuanceService,
                     ParamService paramService) {
+        this.nodeExecutor = nodeExecutor;
         this.periodService = periodService;
         this.myProposalService = myProposalService;
         this.proposalService = proposalService;
@@ -83,29 +87,33 @@ public class DaoSetup {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             periodService.onAllServicesInitialized();
             myProposalService.onAllServicesInitialized();
-            proposalService.onAllServicesInitialized();
+
             proposalListService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
-            blindVoteService.onAllServicesInitialized();
+
             voteRevealService.onAllServicesInitialized();
             voteResultService.onAllServicesInitialized();
             issuanceService.onAllServicesInitialized();
             paramService.onAllServicesInitialized();
+
+            nodeExecutor.get().execute(() -> {
+                proposalService.onAllServicesInitialized();
+                blindVoteService.onAllServicesInitialized();
+            });
         }
     }
 
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            periodService.shutDown();
+            /*periodService.shutDown();
             myProposalService.shutDown();
             proposalService.shutDown();
             proposalListService.shutDown();
             bsqNode.shutDown();
-            blindVoteService.shutDown();
             voteRevealService.shutDown();
             voteResultService.shutDown();
             issuanceService.shutDown();
-            paramService.shutDown();
+            paramService.shutDown();*/
         }
     }
 }

@@ -18,10 +18,10 @@
 package bisq.core.dao.vote.blindvote;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.proposal.param.Param;
-import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.vote.proposal.Proposal;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.dao.vote.proposal.param.Param;
+import bisq.core.dao.vote.proposal.param.ParamService;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.CryptoException;
@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlindVoteConsensus {
     // Sorted by TxId
-    static void sortProposalList(List<Proposal> proposals) {
+    public static void sortProposalList(List<Proposal> proposals) {
         proposals.sort(Comparator.comparing(Proposal::getTxId));
         log.info("Sorted proposalList for blind vote: " + proposals.stream()
                 .map(Proposal::getUid)
@@ -56,11 +56,11 @@ public class BlindVoteConsensus {
     }
 
     // 128 bit AES key is good enough for our use case
-    static SecretKey getSecretKey() {
+    public static SecretKey getSecretKey() {
         return Encryption.generateSecretKey(128);
     }
 
-    static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
+    public static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
         final byte[] payload = proposalList.toProtoMessage().toByteArray();
         final byte[] encryptedProposalList = Encryption.encrypt(payload, secretKey);
         log.info("encryptedProposalList: " + Utilities.bytesAsHexString(encryptedProposalList));
@@ -76,11 +76,11 @@ public class BlindVoteConsensus {
         }*/
     }
 
-    static byte[] getHashOfEncryptedProposalList(byte[] encryptedProposalList) {
+    public static byte[] getHashOfEncryptedProposalList(byte[] encryptedProposalList) {
         return Hash.getSha256Ripemd160hash(encryptedProposalList);
     }
 
-    static byte[] getOpReturnData(byte[] hash) throws IOException {
+    public static byte[] getOpReturnData(byte[] hash) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.BLIND_VOTE.getType());
             outputStream.write(Version.BLIND_VOTE_VERSION);

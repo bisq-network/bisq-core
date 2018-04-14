@@ -229,9 +229,9 @@ public class VoteRevealService implements StateService.BlockListener {
     }
 
     private List<BlindVote> getBlindVoteListOfCycle(int chainHeight) {
-        if (blindVoteService.getObservableList().isEmpty())
+        if (blindVoteService.getOpenBlindVoteList().isEmpty())
             log.warn("blindVoteService.getObservableList() is empty");
-        return blindVoteService.getObservableList().stream()
+        return blindVoteService.getOpenBlindVoteList().stream()
                 .filter(blindVote -> {
                     final boolean txInPhase = periodService.isTxInPhase(blindVote.getTxId(), PeriodService.Phase.BLIND_VOTE);
                     if (!txInPhase)

@@ -39,9 +39,7 @@ import javax.inject.Inject;
 
 import java.security.PublicKey;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -50,18 +48,16 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Listens on the StateService for new blocks and for ProposalPayload from the P2P network.
- * We configure both listeners thread context aware so we get our listeners called in the parser
+ * Listens on the StateService for new txBlocks and for ProposalPayload from the P2P network.
+ * We configure the P2P network listener thread context aware so we get our listeners called in the parser
  * thread created by the single threaded executor created in the NodeExecutor.
  * <p>
- * We put all ProposalPayload data into the Tx to store it with the BsqBlockchain data structure.
- * ProposalPayload data will be taken in later periods from the BsqBlockchain only and it is guaranteed that it is
- * already validated and in the right period and cycle.
+ * When the last block of the break after the proposal phase is parsed we will add all proposalPayloads we have received
+ * from the P2P network to the stateChangeEvents and pass that back to the stateService where they get accumulated and be
+ * included in that block's stateChangeEvents.
  * <p>
- * We maintain as well the ProposalList which gets persisted independently.
- * <p>
- * We could consider to not persist the ProposalPayloads but keep it in memory only with a long TTL (about 30 days).
- * But to persist it gives us more reliability that the data will be available.
+ * We maintain as well the openProposalList which gets persisted independently at the moment when the proposal arrives
+ * and remove the proposal at the moment we put it to the stateChangeEvent.
  */
 @Slf4j
 public class ProposalService implements PersistedDataHost {
@@ -74,8 +70,7 @@ public class ProposalService implements PersistedDataHost {
     private final Storage<ProposalList> storage;
 
     @Getter
-    private final List<Proposal> proposals = new ArrayList<>();
-    private final ProposalList proposalList = new ProposalList(proposals);
+    private final ProposalList openProposalList = new ProposalList();
 
     @Inject
     public ProposalService(NodeExecutor nodeExecutor,
@@ -96,24 +91,60 @@ public class ProposalService implements PersistedDataHost {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // PersistedDataHost
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // We get called from the user thread at startup. It is not really required to map to parser thread here, but we want
+    // to be consistent for all methods of that class to be executed in the parser thread.
+    @Override
+    public void readPersisted() {
+        nodeExecutor.get().execute(() -> {
+            if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
+                ProposalList persisted = storage.initAndGetPersisted(openProposalList, 20);
+                if (persisted != null) {
+                    this.openProposalList.clear();
+                    this.openProposalList.addAll(persisted.getList());
+                }
+            }
+        });
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // We get called from DaoSetup in the parser thread
     public void onAllServicesInitialized() {
-        // We get called in the context of the parser thread
+        // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            proposalList.stream()
+            Set<ProposalPayload> toRemove = new HashSet<>();
+            openProposalList.stream()
                     .map(Proposal::getProposalPayload)
-                    .map(proposalPayload -> getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight()))
+                    .map(proposalPayload -> {
+                        final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
+
+                        // If we are in the correct block and we add a AddProposalPayloadEvent to the state we remove
+                        // the proposalPayload from our list after we have completed iteration.
+                        if (optional.isPresent())
+                            toRemove.add(proposalPayload);
+
+                        return optional;
+                    })
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(stateChangeEvents::add);
+
+            // We remove those proposals we have just added to the state.
+            toRemove.forEach(this::removeProposalFromList);
+
             return stateChangeEvents;
         });
 
-        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() { // User thread context
-            // We set the nodeExecutor as we want to get called in the context of the parser thread
+        // We implement the getExecutor method in the HashMapChangedListener as we want to get called from
+        // the parser thread.
+        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
             public Executor getExecutor() {
                 return nodeExecutor.get();
@@ -129,26 +160,43 @@ public class ProposalService implements PersistedDataHost {
                 onRemovedProtectedStorageEntry(entry);
             }
         });
-        p2pDataStorage.getMap().values().forEach(entry -> onAddedProtectedStorageEntry(entry, false));
+
+        // We apply already existing protectedStorageEntries
+        p2pDataStorage.getMap().values()
+                .forEach(entry -> onAddedProtectedStorageEntry(entry, false));
     }
 
-    public void shutDown() {
+    public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {
+        return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
     }
 
+    public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, PeriodService.Phase phase,
+                                          int blockHeight) {
+        return isUnconfirmed(txId) ||
+                optionalProposalTx.filter(tx -> periodService.isTxInPhase(txId, phase))
+                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), blockHeight))
+                        .isPresent();
+    }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PersistedDataHost
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    // We use the StateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
+    // out of sync data sources.
+    public boolean isUnconfirmed(String txId) {
+        return !stateService.getTx(txId).isPresent();
+    }
 
-    @Override
-    public void readPersisted() {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            ProposalList persisted = storage.initAndGetPersisted(proposalList, 20);
-            if (persisted != null) {
-                this.proposalList.clear();
-                this.proposalList.addAll(persisted.getList());
-            }
+    public boolean isValid(Tx tx, ProposalPayload proposalPayload) {
+        try {
+            proposalPayloadValidator.validate(proposalPayload, tx);
+            return true;
+        } catch (ValidationException e) {
+            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
+                    tx.getId(), proposalPayload, e.toString());
+            return false;
         }
+    }
+
+    public void persist() {
+        storage.queueUpForSave();
     }
 
 
@@ -161,13 +209,21 @@ public class ProposalService implements PersistedDataHost {
         if (protectedStoragePayload instanceof ProposalPayload) {
             final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
             if (!listContains(proposalPayload)) {
-                log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" +
-                        proposalPayload.getUid());
-                Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
-                proposalList.add(proposal);
+                // For adding a proposal we need to be before the last block in BREAK1 as in the last block at BREAK1
+                // we write our proposals to the state.
+                if (isInToleratedBlockRange(stateService.getChainHeadHeight())) {
+                    log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" +
+                            proposalPayload.getUid());
+                    Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
+                    openProposalList.add(proposal);
 
-                if (storeLocally)
-                    persist();
+                    if (storeLocally)
+                        persist();
+                } else {
+                    log.warn("We are not in the tolerated phase anymore and ignore that " +
+                                    "proposalPayload. proposalPayload={}, height={}", proposalPayload,
+                            stateService.getChainHeadHeight());
+                }
             } else {
                 if (storeLocally && !isMine(proposalPayload))
                     log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
@@ -198,24 +254,28 @@ public class ProposalService implements PersistedDataHost {
     // We add a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
     // during the proposal phase).
-    // We use the first block in the BLIND_VOTE phase to set all proposals for that cycle.
+    // We use the last block in the BREAK1 phase to set all proposals for that cycle.
     // If a proposal would arrive later it will be ignored.
     private Optional<StateChangeEvent> getAddProposalPayloadEvent(ProposalPayload proposalPayload, int height) {
         return stateService.getTx(proposalPayload.getTxId())
-                .filter(tx -> {
-                    try {
-                        //TODO check if validateCycle can be included in isValid
-                        proposalPayloadValidator.validate(proposalPayload, tx);
-                        proposalPayloadValidator.validateCycle(tx.getBlockHeight(), height);
-                        return true;
-                    } catch (ValidationException e) {
-                        log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
-                                tx.getId(), proposalPayload, e.toString());
-                        return false;
-                    }
-                })
-                .filter(tx -> height == periodService.getAbsoluteStartBlockOfPhase(height, PeriodService.Phase.BLIND_VOTE))
+                .filter(tx -> isLastToleratedBlock(height))
+                .filter(tx -> proposalPayloadValidator.isValid(proposalPayload, tx, height))
                 .map(tx -> new AddProposalPayloadEvent(proposalPayload, height));
+    }
+
+    private boolean isLastToleratedBlock(int height) {
+        return height == periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK1);
+    }
+
+    private boolean isInToleratedBlockRange(int height) {
+        return height < periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK1);
+    }
+
+    private void removeProposalFromList(ProposalPayload proposalPayload) {
+        if (openProposalList.remove(proposalPayload))
+            persist();
+        else
+            log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
     }
 
     private boolean listContains(ProposalPayload proposalPayload) {
@@ -223,48 +283,8 @@ public class ProposalService implements PersistedDataHost {
     }
 
     private Optional<Proposal> findProposal(ProposalPayload proposalPayload) {
-        return proposalList.stream()
+        return openProposalList.stream()
                 .filter(proposal -> proposal.getProposalPayload().equals(proposalPayload))
                 .findAny();
-    }
-
-    private void removeProposalFromList(ProposalPayload proposalPayload) {
-        if (proposalList.remove(proposalPayload))
-            persist();
-        else
-            log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
-    }
-
-    // We use the StateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
-    // out of sync data sources.
-    public boolean isUnconfirmed(String txId) {
-        return !stateService.getTx(txId).isPresent();
-    }
-
-    public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {
-        return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
-    }
-
-    public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, PeriodService.Phase phase,
-                                          int blockHeight) {
-        return isUnconfirmed(txId) ||
-                optionalProposalTx.filter(tx -> periodService.isTxInPhase(txId, phase))
-                        .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), blockHeight))
-                        .isPresent();
-    }
-
-    public boolean isValid(Tx tx, ProposalPayload proposalPayload) {
-        try {
-            proposalPayloadValidator.validate(proposalPayload, tx);
-            return true;
-        } catch (ValidationException e) {
-            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
-                    tx.getId(), proposalPayload, e.toString());
-            return false;
-        }
-    }
-
-    public void persist() {
-        storage.queueUpForSave();
     }
 }

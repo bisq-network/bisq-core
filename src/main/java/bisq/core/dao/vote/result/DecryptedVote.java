@@ -62,7 +62,7 @@ public class DecryptedVote {
         TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, stateService);
         blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
-        BlindVote blindVote = getBlindVote(blindVoteService);
+        BlindVote blindVote = getBlindVote(stateService);
         proposalListUsedForVoting = getProposalList(blindVote, secretKey);
     }
 
@@ -127,13 +127,13 @@ public class DecryptedVote {
         return blindVoteStakeOutput.getValue();
     }
 
-    private BlindVote getBlindVote(BlindVoteService blindVoteService) throws VoteResultException {
+    private BlindVote getBlindVote(StateService stateService) throws VoteResultException {
         try {
-            Optional<BlindVote> optionalBlindVote = blindVoteService.getValidBlindVotes().stream()
+            Optional<BlindVote> optionalBlindVote = stateService.getBlindVotes().stream()
                     .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                     .findAny();
             checkArgument(optionalBlindVote.isPresent(), "blindVote with txId " + blindVoteTxId +
-                    "not found in blindVoteService.");
+                    "not found in stateService.");
             return optionalBlindVote.get();
         } catch (Throwable t) {
             throw new VoteResultException(t);

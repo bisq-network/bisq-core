@@ -48,10 +48,27 @@ public class BlindVoteValidator {
     }
 
 
-    public void validate(BlindVote blindVote, Tx tx) throws ValidationException {
+    public boolean isValid(BlindVote blindVote, Tx tx, int chainHeight) {
+        try {
+            validateCorrectTxType(tx);
+            validateCorrectTxOutputType(tx);
+            validatePhase(tx.getBlockHeight());
+            validateCycle(tx.getBlockHeight(), chainHeight);
+            validateDataFields(blindVote);
+            validateHashOfOpReturnData(blindVote, tx);
+            return true;
+        } catch (Throwable e) {
+            log.warn("BlindVote validation failed. txId={}, blindVote={}, validationException={}",
+                    tx.getId(), blindVote, e.toString());
+            return false;
+        }
+    }
+
+    public void validate(BlindVote blindVote, Tx tx, int chainHeight) throws ValidationException {
         validateCorrectTxType(tx);
         validateCorrectTxOutputType(tx);
         validatePhase(tx.getBlockHeight());
+        validateCycle(tx.getBlockHeight(), chainHeight);
         validateDataFields(blindVote);
         validateHashOfOpReturnData(blindVote, tx);
     }
@@ -126,10 +143,10 @@ public class BlindVoteValidator {
         }
     }
 
-    public void validateCycle(int txBlockHeight, int currentChainHeight)
+    public void validateCycle(int txBlockHeight, int chainHeight)
             throws ValidationException {
         try {
-            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, currentChainHeight),
+            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, chainHeight),
                     "Tx is not in current cycle");
         } catch (Throwable e) {
             log.warn(e.toString());

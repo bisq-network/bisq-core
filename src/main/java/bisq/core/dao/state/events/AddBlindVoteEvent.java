@@ -17,7 +17,8 @@
 
 package bisq.core.dao.state.events;
 
-import bisq.core.dao.vote.proposal.ProposalPayload;
+
+import bisq.core.dao.vote.blindvote.BlindVote;
 
 import com.google.protobuf.Message;
 
@@ -29,9 +30,9 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class AddProposalPayloadEvent extends StateChangeEvent {
+public class AddBlindVoteEvent extends StateChangeEvent {
 
-    public AddProposalPayloadEvent(ProposalPayload payload, int height) {
+    public AddBlindVoteEvent(BlindVote payload, int height) {
         super(payload, height);
     }
 
@@ -41,7 +42,8 @@ public class AddProposalPayloadEvent extends StateChangeEvent {
         return null;
     }
 
-    public ProposalPayload getProposalPayload() {
-        return (ProposalPayload) getPayload();
+
+    public BlindVote getBlindVote() {
+        return (BlindVote) getPayload();
     }
 }

@@ -26,7 +26,11 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.events.AddBlindVoteEvent;
+import bisq.core.dao.state.events.AddChangeParamEvent;
+import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
+import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.ThreadContextAwareListener;
@@ -251,6 +255,49 @@ public class StateService {
 
     public void putProposalPayload(String txId, ProposalPayload proposalPayload) {
         lock.write(() -> state.getProposalPayloadByTxIdMap().put(txId, proposalPayload));
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Read access: StateChangeEvent
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Set<StateChangeEvent> getStateChangeEvents() {
+        return state.getBlocks().stream()
+                .flatMap(block -> block.getStateChangeEvents().stream())
+                .collect(Collectors.toSet());
+    }
+
+    public Set<AddChangeParamEvent> getAddChangeParamEvents() {
+        return getStateChangeEvents().stream()
+                .filter(event -> event instanceof AddChangeParamEvent)
+                .map(event -> (AddChangeParamEvent) event)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<AddProposalPayloadEvent> getAddProposalPayloadEvents() {
+        return getStateChangeEvents().stream()
+                .filter(event -> event instanceof AddProposalPayloadEvent)
+                .map(event -> (AddProposalPayloadEvent) event)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<AddBlindVoteEvent> getAddBlindVoteEvents() {
+        return getStateChangeEvents().stream()
+                .filter(event -> event instanceof AddBlindVoteEvent)
+                .map(event -> (AddBlindVoteEvent) event)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<ProposalPayload> getProposalPayloads() {
+        return getAddProposalPayloadEvents().stream()
+                .map(AddProposalPayloadEvent::getProposalPayload)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<BlindVote> getBlindVotes() {
+        return getAddBlindVoteEvents().stream()
+                .map(AddBlindVoteEvent::getBlindVote)
+                .collect(Collectors.toSet());
     }
 
 

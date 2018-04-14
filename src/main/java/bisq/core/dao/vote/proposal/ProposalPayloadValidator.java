@@ -48,6 +48,22 @@ public class ProposalPayloadValidator {
         this.stateService = stateService;
     }
 
+    public boolean isValid(ProposalPayload proposalPayload, Tx tx, int chainHeight) {
+        try {
+            validateCorrectTxType(proposalPayload, tx);
+            validateCorrectTxOutputType(proposalPayload, tx);
+            validatePhase(tx.getBlockHeight());
+            validateCycle(tx.getBlockHeight(), chainHeight);
+            validateDataFields(proposalPayload);
+            validateHashOfOpReturnData(proposalPayload, tx);
+            return true;
+        } catch (ValidationException e) {
+            log.warn("ProposalPayload validation failed. txId={}, proposalPayload={}, validationException={}",
+                    tx.getId(), proposalPayload, e.toString());
+            return false;
+        }
+    }
+
     public void validate(ProposalPayload proposalPayload, Tx tx) throws ValidationException {
         validateCorrectTxType(proposalPayload, tx);
         validateCorrectTxOutputType(proposalPayload, tx);
@@ -125,9 +141,9 @@ public class ProposalPayloadValidator {
     }
 
 
-    public void validateCycle(int txBlockHeight, int currentChainHeight) throws ValidationException {
+    public void validateCycle(int txBlockHeight, int chainHeight) throws ValidationException {
         try {
-            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, currentChainHeight),
+            checkArgument(periodService.isTxInCorrectCycle(txBlockHeight, chainHeight),
                     "Tx is not in current cycle");
         } catch (Throwable e) {
             log.warn(e.toString());

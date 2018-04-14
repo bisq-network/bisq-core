@@ -83,10 +83,10 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     private Map<String, String> extraDataMap;
 
 
-    BlindVote(byte[] encryptedProposalList,
-              String txId,
-              long stake,
-              PublicKey ownerPubKey) {
+    public BlindVote(byte[] encryptedProposalList,
+                     String txId,
+                     long stake,
+                     PublicKey ownerPubKey) {
         this(encryptedProposalList, txId, stake, Sig.getPublicKeyBytes(ownerPubKey), null);
     }
 

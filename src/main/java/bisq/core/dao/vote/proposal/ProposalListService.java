@@ -136,7 +136,7 @@ public class ProposalListService {
     private void updateLists(int chainHeadHeight) {
         // We are on the parser thread, so we are in sync with proposalService and stateService
         // proposalService.isMine and  proposalService.isValid are not accessing any mutable state.
-        final List<Proposal> proposals = new ArrayList<>(proposalService.getProposals());
+        final List<Proposal> proposals = new ArrayList<>(proposalService.getOpenProposalList().getList());
         Map<String, Optional<Tx>> map = new HashMap<>();
         proposals.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
 
@@ -160,13 +160,27 @@ public class ProposalListService {
             activeOrMyUnconfirmedProposals.addAll(myUnconfirmedProposals);
 
             closedProposals.clear();
-            closedProposals.addAll(proposals.stream()
+
+            //TODO once we have the votes we will merge the proposalPayloads with vote to create a proposal
+           /* Set<ProposalPayload> proposalPayloads = stateService.getProposalPayloads();
+
+            final List<Proposal> proposalList1 = proposalPayloads.stream()
                     .filter(proposal -> {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
                         return optionalTx.isPresent() &&
                                 proposalService.isValid(optionalTx.get(), proposal.getProposalPayload()) &&
                                 periodService.isTxInPastCycle(optionalTx.get(), chainHeadHeight);
-                    }).collect(Collectors.toList()));
+                    }).collect(Collectors.toList());*/
+
+            //TODO we dont keep old proposals anymore
+            final List<Proposal> proposalList = proposals.stream()
+                    .filter(proposal -> {
+                        final Optional<Tx> optionalTx = map.get(proposal.getTxId());
+                        return optionalTx.isPresent() &&
+                                proposalService.isValid(optionalTx.get(), proposal.getProposalPayload()) &&
+                                periodService.isTxInPastCycle(optionalTx.get(), chainHeadHeight);
+                    }).collect(Collectors.toList());
+            closedProposals.addAll(proposalList);
         });
     }
 }
