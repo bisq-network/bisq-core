@@ -15,28 +15,20 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.events;
+package bisq.core.dao.vote;
 
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-
-import bisq.common.proto.persistable.PersistablePayload;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@Getter
-@EqualsAndHashCode
-public abstract class StateChangeEvent implements PersistablePayload {
-    private final ProtectedStoragePayload payload;
-    private final int height; //TODO needed? is part of block anyway
-
-    public StateChangeEvent(ProtectedStoragePayload payload, int height) {
-        this.payload = payload;
-        this.height = height;
-    }
-
-    //TODO add PB StateChangeEvent.builder
+/**
+ * We don't want to use a enum with the duration as field because the duration can change and enums are usually
+ * considered immutable.
+ */
+public enum Phase {
+    UNDEFINED,
+    PROPOSAL,
+    BREAK1,
+    BLIND_VOTE,
+    BREAK2,
+    VOTE_REVEAL,
+    BREAK3,
+    ISSUANCE,
+    BREAK4
 }

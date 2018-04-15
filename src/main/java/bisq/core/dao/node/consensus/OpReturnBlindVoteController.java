@@ -18,13 +18,14 @@
 package bisq.core.dao.node.consensus;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.vote.proposal.param.Param;
-import bisq.core.dao.vote.proposal.param.ParamService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.proposal.param.Param;
+import bisq.core.dao.vote.proposal.param.ParamService;
 
 import javax.inject.Inject;
 
@@ -55,7 +56,7 @@ public class OpReturnBlindVoteController {
         if (model.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 bsqFee == paramService.getDaoParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE)) {
+                periodService.isInPhase(blockHeight, Phase.BLIND_VOTE)) {
             stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
@@ -66,7 +67,7 @@ public class OpReturnBlindVoteController {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, PeriodService.Phase.BLIND_VOTE));
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, Phase.BLIND_VOTE));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output

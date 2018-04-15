@@ -22,6 +22,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -194,17 +195,17 @@ public class BlindVoteService implements PersistedDataHost {
         return stateService.getTx(blindVote.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
-                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), PeriodService.Phase.BLIND_VOTE))
+                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.BLIND_VOTE))
                 .filter(tx -> blindVoteValidator.isValid(blindVote))
                 .map(tx -> new AddBlindVoteEvent(blindVote, height));
     }
 
     private boolean isLastToleratedBlock(int height) {
-        return height == periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK2);
+        return height == periodService.getLastBlockOfPhase(height, Phase.BREAK2);
     }
 
     private boolean isInToleratedBlockRange(int height) {
-        return height < periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK2);
+        return height < periodService.getLastBlockOfPhase(height, Phase.BREAK2);
     }
 
     private void persist() {

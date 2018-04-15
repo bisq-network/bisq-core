@@ -30,7 +30,7 @@ import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.AddChangeParamEvent;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
-import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Cycle;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
@@ -96,6 +96,9 @@ public class StateService {
 
     public interface BlockListener extends ThreadContextAwareListener {
         void onBlockAdded(Block block);
+
+        default void onStartParsingBlock(int blockHeight) {
+        }
     }
 
 
@@ -152,6 +155,16 @@ public class StateService {
 
     public void registerStateChangeEventsProvider(Function<TxBlock, Set<StateChangeEvent>> stateChangeEventsProvider) {
         stateChangeEventsProviders.add(stateChangeEventsProvider);
+    }
+
+    // Notify listeners when we start parsing a block
+    public void onStartParsingBlock(int blockHeight) {
+        blockListeners.forEach(listener -> {
+            if (listener.executeOnUserThread())
+                UserThread.execute(() -> listener.onStartParsingBlock(blockHeight));
+            else
+                listener.onStartParsingBlock(blockHeight);
+        });
     }
 
 
@@ -272,6 +285,14 @@ public class StateService {
     // Read access: StateChangeEvent
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public LinkedList<Block> getBlocks() {
+        return state.getBlocks();
+    }
+
+    public Block getLastBlock() {
+        return state.getBlocks().getLast();
+    }
+
     public Set<StateChangeEvent> getStateChangeEvents() {
         return state.getBlocks().stream()
                 .flatMap(block -> block.getStateChangeEvents().stream())
@@ -317,13 +338,8 @@ public class StateService {
                 .collect(Collectors.toSet());
     }
 
-    public Map<PeriodService.Phase, Integer> getPhaseValueMap() {
-        return state.getPhaseValueMap();
-    }
-
-    public void setPhaseValueMap(Map<PeriodService.Phase, Integer> phases) {
-        state.getPhaseValueMap().clear();
-        state.getPhaseValueMap().putAll(phases);
+    public void addCycle(Cycle cycle) {
+        state.getCycles().add(cycle);
     }
 
 

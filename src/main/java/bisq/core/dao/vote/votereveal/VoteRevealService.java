@@ -29,6 +29,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
@@ -107,7 +108,7 @@ public class VoteRevealService {
         // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             final int chainHeight = txBlock.getHeight();
-            if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.VOTE_REVEAL) {
+            if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
                 // We map to user thread because we access other user thread domains like wallet and the only state
                 // relevant data we need is the chainHeight
                 UserThread.execute(() -> maybeRevealVotes(chainHeight));
@@ -140,7 +141,7 @@ public class VoteRevealService {
     private void maybeRevealVotes(int height) {
         myVoteService.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
-                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
                 .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), height))
                 .forEach(myVote -> {
                     // We handle the exception here inside the stream iteration as we have not get triggered from an

@@ -20,6 +20,7 @@ package bisq.core.dao.node;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 
@@ -50,6 +51,7 @@ public abstract class BsqParser {
     protected final BsqBlockController bsqBlockController;
     private final GenesisTxController genesisTxController;
     private final BsqTxController bsqTxController;
+    protected final StateService stateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -60,10 +62,12 @@ public abstract class BsqParser {
     @Inject
     public BsqParser(BsqBlockController bsqBlockController,
                      GenesisTxController genesisTxController,
-                     BsqTxController bsqTxController) {
+                     BsqTxController bsqTxController,
+                     StateService stateService) {
         this.bsqBlockController = bsqBlockController;
         this.genesisTxController = genesisTxController;
         this.bsqTxController = bsqTxController;
+        this.stateService = stateService;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

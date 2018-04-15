@@ -25,7 +25,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 
 import bisq.network.p2p.P2PService;
 
@@ -172,7 +172,7 @@ public class MyProposalService implements PersistedDataHost {
         // We allow removal which are not confirmed yet or if it we are in the right phase
         if (proposalService.isInPhaseOrUnconfirmed(stateService.getTx(proposalPayload.getTxId()),
                 proposalPayload.getTxId(),
-                PeriodService.Phase.PROPOSAL,
+                Phase.PROPOSAL,
                 stateService.getChainHeight())) {
             boolean success = p2PService.removeData(proposalPayload, true);
             if (success) {

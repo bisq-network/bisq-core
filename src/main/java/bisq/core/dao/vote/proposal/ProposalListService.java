@@ -21,6 +21,7 @@ import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -142,7 +143,7 @@ public class ProposalListService {
                         final ProposalPayload proposalPayload = proposal.getProposalPayload();
                         return (optionalTx.isPresent() &&
                                 proposalPayloadValidator.isValid(proposalPayload) &&
-                                periodService.isInPhase(optionalTx.get().getBlockHeight(), PeriodService.Phase.PROPOSAL) &&
+                                periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
                                 periodService.isTxInCorrectCycle(optionalTx.get().getBlockHeight(), chainHeadHeight));
                     }).collect(Collectors.toList()));
 
@@ -174,8 +175,8 @@ public class ProposalListService {
                         final ProposalPayload proposalPayload = proposal.getProposalPayload();
                         return optionalTx.isPresent() &&
                                 proposalPayloadValidator.isValid(proposalPayload) &&
-                                periodService.isInPhase(optionalTx.get().getBlockHeight(), PeriodService.Phase.PROPOSAL) &&
-                                periodService.isTxInPastCycle(optionalTx.get(), chainHeadHeight);
+                                periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
+                                periodService.isTxInPastCycle(optionalTx.get().getId(), chainHeadHeight);
                     }).collect(Collectors.toList());
             closedProposals.addAll(proposalList);
         });

@@ -22,7 +22,7 @@ import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Cycle;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -33,8 +33,10 @@ import com.google.protobuf.Message;
 
 import javax.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -81,7 +83,7 @@ public class State implements PersistableEnvelope {
     private final Map<String, ProposalPayload> proposalPayloadByTxIdMap = new HashMap<>();
     //TODO reveal votes
 
-    private Map<PeriodService.Phase, Integer> phaseValueMap = new HashMap<>();
+    private List<Cycle> cycles = new ArrayList<>();
 
 
 
@@ -120,7 +122,7 @@ public class State implements PersistableEnvelope {
                         .map(TxBlock::toProtoMessage)
                         .collect(Collectors.toList()))
                 .putAllTxMap(txMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey,
+                        .collect(Collectors.toMap(Map.Phase::getKey,
                                 v -> v.getValue().toProtoMessage())))
                 .putAllUnspentTxOutputsMap(unspentTxOutputs.entrySet().stream()
                         .collect(Collectors.toMap(k -> k.getKey().getAsString(),
@@ -141,7 +143,7 @@ public class State implements PersistableEnvelope {
                 .map(TxBlock::fromProto)
                 .collect(Collectors.toList())),
                 new HashMap<>(proto.getTxMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, v -> Tx.fromProto(v.getValue())))),
+                        .collect(Collectors.toMap(Map.Phase::getKey, v -> Tx.fromProto(v.getValue())))),
                 new HashMap<>(proto.getUnspentTxOutputsMapMap().entrySet().stream()
                         .collect(Collectors.toMap(k -> new Key(k.getKey()), v -> TxOutput.fromProto(v.getValue())))),
                 proto.getGenesisTxId(),

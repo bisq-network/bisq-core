@@ -22,6 +22,7 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.ThreadSafePeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.proposal.MyProposalService;
 import bisq.core.dao.vote.proposal.ProposalListService;
@@ -41,6 +42,7 @@ import com.google.inject.Inject;
 public class DaoSetup {
     private final NodeExecutor nodeExecutor;
     private final PeriodService periodService;
+    private final ThreadSafePeriodService threadSafePeriodService;
     private final MyProposalService myProposalService;
     private final BsqNode bsqNode;
     private final ParamService paramService;
@@ -59,6 +61,7 @@ public class DaoSetup {
     public DaoSetup(NodeExecutor nodeExecutor,
                     BsqNodeProvider bsqNodeProvider,
                     PeriodService periodService,
+                    ThreadSafePeriodService threadSafePeriodService,
                     MyProposalService myProposalService,
                     ProposalService proposalService,
                     ProposalListService proposalListService,
@@ -68,6 +71,7 @@ public class DaoSetup {
                     ParamService paramService) {
         this.nodeExecutor = nodeExecutor;
         this.periodService = periodService;
+        this.threadSafePeriodService = threadSafePeriodService;
         this.myProposalService = myProposalService;
         this.proposalService = proposalService;
         this.proposalListService = proposalListService;
@@ -82,6 +86,7 @@ public class DaoSetup {
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
             periodService.onAllServicesInitialized();
+            threadSafePeriodService.onAllServicesInitialized();
             myProposalService.onAllServicesInitialized();
             proposalListService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);

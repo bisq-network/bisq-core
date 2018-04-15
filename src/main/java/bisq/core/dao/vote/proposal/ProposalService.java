@@ -23,6 +23,7 @@ import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -161,7 +162,7 @@ public class ProposalService implements PersistedDataHost {
         return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
     }
 
-    public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, PeriodService.Phase phase,
+    public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, Phase phase,
                                           int blockHeight) {
         return isUnconfirmed(txId) ||
                 optionalProposalTx.filter(tx -> periodService.isTxInPhase(txId, phase))
@@ -219,7 +220,7 @@ public class ProposalService implements PersistedDataHost {
             findProposal(proposalPayload)
                     .ifPresent(payload -> {
                         if (isInPhaseOrUnconfirmed(stateService.getTx(payload.getTxId()), payload.getTxId(),
-                                PeriodService.Phase.PROPOSAL,
+                                Phase.PROPOSAL,
                                 stateService.getChainHeight())) {
                             removeProposalFromList(proposalPayload);
                         } else {
@@ -240,17 +241,17 @@ public class ProposalService implements PersistedDataHost {
         return stateService.getTx(proposalPayload.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
-                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), PeriodService.Phase.PROPOSAL))
+                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
                 .filter(tx -> proposalPayloadValidator.isValid(proposalPayload))
                 .map(tx -> new AddProposalPayloadEvent(proposalPayload, height));
     }
 
     private boolean isLastToleratedBlock(int height) {
-        return height == periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK1);
+        return height == periodService.getLastBlockOfPhase(height, Phase.BREAK1);
     }
 
     private boolean isInToleratedBlockRange(int height) {
-        return height < periodService.getAbsoluteEndBlockOfPhase(height, PeriodService.Phase.BREAK1);
+        return height < periodService.getLastBlockOfPhase(height, Phase.BREAK1);
     }
 
     private void removeProposalFromList(ProposalPayload proposalPayload) {

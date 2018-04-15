@@ -18,14 +18,15 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqParser;
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
 import bisq.core.dao.node.full.rpc.RpcService;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import com.neemre.btcdcli4j.core.domain.Block;
 
@@ -63,8 +64,9 @@ public class FullNodeParser extends BsqParser {
     public FullNodeParser(RpcService rpcService,
                           BsqBlockController bsqBlockController,
                           GenesisTxController genesisTxController,
-                          BsqTxController bsqTxController) {
-        super(bsqBlockController, genesisTxController, bsqTxController);
+                          BsqTxController bsqTxController,
+                          StateService stateService) {
+        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
         this.rpcService = rpcService;
     }
 
@@ -93,6 +95,8 @@ public class FullNodeParser extends BsqParser {
     }
 
     TxBlock parseBlock(Block btcdBlock) throws BsqBlockchainException, BlockNotConnectingException {
+        stateService.onStartParsingBlock(btcdBlock.getHeight());
+
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock);
         final TxBlock txBlock = new TxBlock(btcdBlock.getHeight(),
@@ -100,7 +104,9 @@ public class FullNodeParser extends BsqParser {
                 btcdBlock.getHash(),
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));
+
         bsqBlockController.addBlockIfValid(txBlock);
+
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
                 System.currentTimeMillis() - startTs, txBlock.getHeight(), bsqTxsInBlock.size());
         return txBlock;

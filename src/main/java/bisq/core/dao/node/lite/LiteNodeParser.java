@@ -18,12 +18,13 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.BsqParser;
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxBlock;
 
 import javax.inject.Inject;
 
@@ -44,8 +45,9 @@ public class LiteNodeParser extends BsqParser {
     @Inject
     public LiteNodeParser(BsqBlockController bsqBlockController,
                           GenesisTxController genesisTxController,
-                          BsqTxController bsqTxController) {
-        super(bsqBlockController, genesisTxController, bsqTxController);
+                          BsqTxController bsqTxController,
+                          StateService stateService) {
+        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
     }
 
     void parseBsqBlocks(List<TxBlock> txBlocks,
@@ -62,8 +64,12 @@ public class LiteNodeParser extends BsqParser {
         log.debug("Parse block at height={} ", blockHeight);
         List<Tx> txList = new ArrayList<>(txBlock.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
+
+        stateService.onStartParsingBlock(txBlock.getHeight());
+
         txBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
         recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
+
         bsqBlockController.addBlockIfValid(txBlock);
     }
 }

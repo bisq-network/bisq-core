@@ -29,6 +29,7 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.proposal.Proposal;
@@ -280,7 +281,7 @@ public class MyVoteService implements PersistedDataHost {
 
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
-                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), PeriodService.Phase.BLIND_VOTE))
+                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
                 .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), stateService.getChainHeight()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {

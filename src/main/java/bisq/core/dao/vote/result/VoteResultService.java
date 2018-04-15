@@ -22,6 +22,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.PeriodService;
+import bisq.core.dao.vote.Phase;
 import bisq.core.dao.vote.Vote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
@@ -113,7 +114,7 @@ public class VoteResultService {
         // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             final int chainHeight = txBlock.getHeight();
-            if (periodService.getPhaseForHeight(chainHeight) == PeriodService.Phase.ISSUANCE) {
+            if (periodService.getPhaseForHeight(chainHeight) == Phase.ISSUANCE) {
                 // We map to user thread because we access other user thread domains like wallet and the only state
                 // relevant data we need is the chainHeight
                 applyVoteResult(chainHeight);
