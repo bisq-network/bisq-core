@@ -30,6 +30,8 @@ import bisq.common.UserThread;
 
 import com.google.inject.Inject;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -57,7 +59,7 @@ public class PeriodState {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public interface Listener extends ThreadContextAwareListener {
-        void onNewCycle(List<Cycle> cycles, Cycle currentCycle);
+        void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
 
         void onChainHeightChanged(int chainHeight);
     }
@@ -96,18 +98,26 @@ public class PeriodState {
     // Can be called from user thread.
     public void addListenerAndGetNotified(Listener listener) {
         listeners.add(listener);
+        notifyListener(listener);
+    }
 
+    private void notifyListener(Listener listener) {
+        final Cycle finalCurrentCycle = currentCycle;
+        final int finalChainHeight = chainHeight;
         if (listener.executeOnUserThread()) {
             UserThread.execute(() -> {
-                listener.onNewCycle(getCloneOfCycles(), currentCycle);
-                listener.onChainHeightChanged(chainHeight);
+                listener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle);
+                listener.onChainHeightChanged(finalChainHeight);
             });
         } else {
-            listener.onNewCycle(getCloneOfCycles(), currentCycle);
-            listener.onChainHeightChanged(chainHeight);
+            listener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle);
+            listener.onChainHeightChanged(finalChainHeight);
         }
     }
 
+    private void notifyListeners() {
+        listeners.forEach(listener -> notifyListener(listener));
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
@@ -143,20 +153,9 @@ public class PeriodState {
                     cycles.add(cycle);
                     stateService.addCycle(cycle);
 
-                    listeners.forEach(listener -> {
-                        if (listener.executeOnUserThread())
-                            UserThread.execute(() -> listener.onNewCycle(getCloneOfCycles(), currentCycle));
-                        else
-                            listener.onNewCycle(getCloneOfCycles(), currentCycle);
-                    });
+                    notifyListeners();
                 }
-
-                listeners.forEach(listener -> {
-                    if (listener.executeOnUserThread())
-                        UserThread.execute(() -> listener.onChainHeightChanged(chainHeight));
-                    else
-                        listener.onChainHeightChanged(chainHeight);
-                });
+                notifyListeners();
             }
 
             @Override
@@ -199,12 +198,8 @@ public class PeriodState {
         currentCycle = cycle;
         cycles.add(currentCycle);
         stateService.addCycle(currentCycle);
-        listeners.forEach(listener -> {
-            if (listener.executeOnUserThread())
-                UserThread.execute(() -> listener.onNewCycle(cycles, currentCycle));
-            else
-                listener.onNewCycle(cycles, currentCycle);
-        });
+
+        notifyListeners();
     }
 
     private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
@@ -263,9 +258,5 @@ public class PeriodState {
                 .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();
-    }
-
-    private List<Cycle> getCloneOfCycles() {
-        return new ArrayList<>(cycles);
     }
 }

@@ -22,10 +22,11 @@ import bisq.core.dao.state.blockchain.Tx;
 
 import com.google.inject.Inject;
 
+import com.google.common.collect.ImmutableList;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,7 +46,7 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
     //TODO remove
     private final StateService stateService;
 
-    private List<Cycle> cycles = new ArrayList<>();
+    private ImmutableList<Cycle> cycles;
     private Cycle currentCycle;
     private int chainHeight;
 
@@ -70,7 +71,7 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
 
     // We get called on the user thread
     @Override
-    public void onNewCycle(List<Cycle> cycles, Cycle currentCycle) {
+    public void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle) {
         this.cycles = cycles;
         this.currentCycle = currentCycle;
         updatePhaseProperty();
@@ -95,7 +96,6 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
 
     @Override
     protected List<Cycle> provideCycles() {
-
         return cycles;
     }
 
