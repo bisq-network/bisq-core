@@ -28,13 +28,13 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
 import bisq.core.dao.vote.blindvote.BlindVote;
 import bisq.core.dao.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.myvote.MyVote;
 import bisq.core.dao.vote.myvote.MyVoteService;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;

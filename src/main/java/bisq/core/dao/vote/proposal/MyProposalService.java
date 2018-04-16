@@ -25,7 +25,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.Phase;
 
 import bisq.network.p2p.P2PService;
 

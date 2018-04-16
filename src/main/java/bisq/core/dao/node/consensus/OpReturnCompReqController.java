@@ -22,8 +22,8 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.vote.proposal.param.ParamService;
 
@@ -68,7 +68,7 @@ public class OpReturnCompReqController {
             log.info("We expected a compensation request op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, Phase.PROPOSAL));
+            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, Phase.PROPOSAL), blockHeight, periodService.getPhaseForHeight(blockHeight));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC

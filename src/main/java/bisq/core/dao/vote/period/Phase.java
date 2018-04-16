@@ -15,21 +15,22 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
-
-import lombok.Value;
+package bisq.core.dao.vote.period;
 
 /**
- * We don't want to use a enum with the duration as field because the duration can change and enums are usually
- * considered immutable.
+ * Enum for phase of a cycle.
+ *
+ * We don't want to use a enum with the duration as field because the duration can change by voting and enums
+ * should be considered immutable.
  */
-@Value
-public class PhaseItem {
-    private final Phase phase;
-    private final int duration;
-
-    public PhaseItem(Phase phase, int duration) {
-        this.phase = phase;
-        this.duration = duration;
-    }
+public enum Phase {
+    UNDEFINED,
+    PROPOSAL,
+    BREAK1,
+    BLIND_VOTE,
+    BREAK2,
+    VOTE_REVEAL,
+    BREAK3,
+    ISSUANCE,
+    BREAK4
 }

@@ -22,8 +22,8 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.vote.proposal.param.ParamService;
 

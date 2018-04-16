@@ -21,8 +21,8 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;

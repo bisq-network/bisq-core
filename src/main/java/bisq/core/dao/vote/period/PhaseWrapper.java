@@ -15,20 +15,24 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.period;
+
+import lombok.Value;
+
+import javax.annotation.concurrent.Immutable;
 
 /**
- * We don't want to use a enum with the duration as field because the duration can change and enums are usually
- * considered immutable.
+ * Encapsulated the phase enum with the duration.
+ * As the duration can change by voting we don't want to put the duration property in the enum but use that wrapper.
  */
-public enum Phase {
-    UNDEFINED,
-    PROPOSAL,
-    BREAK1,
-    BLIND_VOTE,
-    BREAK2,
-    VOTE_REVEAL,
-    BREAK3,
-    ISSUANCE,
-    BREAK4
+@Immutable
+@Value
+class PhaseWrapper {
+    private final Phase phase;
+    private final int duration;
+
+    PhaseWrapper(Phase phase, int duration) {
+        this.phase = phase;
+        this.duration = duration;
+    }
 }

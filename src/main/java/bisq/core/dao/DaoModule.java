@@ -44,11 +44,12 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.ThreadSafePeriodService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.blindvote.BlindVoteValidator;
 import bisq.core.dao.vote.myvote.MyVoteService;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.PeriodState;
+import bisq.core.dao.vote.period.UserThreadPeriodService;
 import bisq.core.dao.vote.proposal.MyProposalService;
 import bisq.core.dao.vote.proposal.ProposalListService;
 import bisq.core.dao.vote.proposal.ProposalPayloadValidator;
@@ -114,8 +115,9 @@ public class DaoModule extends AppModule {
         bind(OpReturnBlindVoteController.class).in(Singleton.class);
         bind(OpReturnVoteRevealController.class).in(Singleton.class);
 
+        bind(PeriodState.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
-        bind(ThreadSafePeriodService.class).in(Singleton.class);
+        bind(UserThreadPeriodService.class).in(Singleton.class);
 
         // proposals
         bind(ProposalService.class).in(Singleton.class);

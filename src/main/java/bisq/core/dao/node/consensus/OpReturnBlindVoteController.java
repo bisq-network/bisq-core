@@ -22,8 +22,8 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 import bisq.core.dao.vote.proposal.param.Param;
 import bisq.core.dao.vote.proposal.param.ParamService;
 
@@ -67,7 +67,7 @@ public class OpReturnBlindVoteController {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, Phase.BLIND_VOTE));
+            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, Phase.BLIND_VOTE), blockHeight, periodService.getPhaseForHeight(blockHeight));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output

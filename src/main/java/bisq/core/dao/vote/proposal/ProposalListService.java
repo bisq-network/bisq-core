@@ -20,8 +20,8 @@ package bisq.core.dao.vote.proposal;
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.Phase;
+import bisq.core.dao.vote.period.PeriodService;
+import bisq.core.dao.vote.period.Phase;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;

@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote;
+package bisq.core.dao.vote.period;
 
 import bisq.core.dao.state.Block;
 import bisq.core.dao.state.StateService;
@@ -25,6 +25,9 @@ import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
 import bisq.core.dao.vote.proposal.param.Param;
 
+import bisq.common.ThreadContextAwareListener;
+import bisq.common.UserThread;
+
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
@@ -33,26 +36,40 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provide information about the phase and cycle of the monthly dao cycle for proposals and voting.
+ * Provide state about the phase and cycle of the monthly proposals and voting cycle.
  * A cycle is the sequence of distinct phases. The first cycle and phase starts with the genesis block height.
- * All time events are measured in blocks.
  *
- * Executes in the parser thread.
+ * This class should be accessed by the PeriodService only as it is expected to run in the parser thread.
+ * Only exception is the listener which gets set at user thread and executed by mapping the data to user thread.
  */
 @Slf4j
-public class PeriodService {
+public class PeriodState {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public interface Listener extends ThreadContextAwareListener {
+        void onNewCycle(List<Cycle> cycles, Cycle currentCycle);
+
+        void onChainHeightChanged(int chainHeight);
+    }
 
     private final StateService stateService;
-    @Getter
-    private Cycle currentCycle;
-    @Getter
-    private int chainHeight;
+
+    // We need to have a threadsafe list here as we might get added a listener from user thread during iteration
+    // at parser thread.
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+
+    // Mutable state
     private final List<Cycle> cycles = new ArrayList<>();
+    private Cycle currentCycle;
+    private int chainHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -60,20 +77,30 @@ public class PeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(StateService stateService) {
+    public PeriodState(StateService stateService) {
         this.stateService = stateService;
 
-        // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
-        // as onAllServicesInitialized might get called after the parser has started.
-        // We add the default values from the Param enum to our StateChangeEvent list.
-        Cycle cycle = new Cycle(stateService.getGenesisBlockHeight());
-        Arrays.asList(Phase.values()).forEach(phase -> {
-            final Optional<AddChangeParamEvent> optionalEvent = initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight());
-            optionalEvent.ifPresent(event -> applyParamToPhasesInCycle(event.getChangeParamPayload(), cycle));
-        });
-        currentCycle = cycle;
-        cycles.add(currentCycle);
-        stateService.addCycle(currentCycle);
+        initFromGenesisBlock();
+
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Can be called from user thread.
+    public void addListenerAndGetNotified(Listener listener) {
+        listeners.add(listener);
+
+        if (listener.executeOnUserThread()) {
+            UserThread.execute(() -> {
+                listener.onNewCycle(getCloneOfCycles(), currentCycle);
+                listener.onChainHeightChanged(chainHeight);
+            });
+        } else {
+            listener.onNewCycle(getCloneOfCycles(), currentCycle);
+            listener.onChainHeightChanged(chainHeight);
+        }
     }
 
 
@@ -110,7 +137,21 @@ public class PeriodService {
                     currentCycle = cycle;
                     cycles.add(cycle);
                     stateService.addCycle(cycle);
+
+                    listeners.forEach(listener -> {
+                        if (listener.executeOnUserThread())
+                            UserThread.execute(() -> listener.onNewCycle(getCloneOfCycles(), currentCycle));
+                        else
+                            listener.onNewCycle(getCloneOfCycles(), currentCycle);
+                    });
                 }
+
+                listeners.forEach(listener -> {
+                    if (listener.executeOnUserThread())
+                        UserThread.execute(() -> listener.onChainHeightChanged(chainHeight));
+                    else
+                        listener.onChainHeightChanged(chainHeight);
+                });
             }
 
             @Override
@@ -121,16 +162,60 @@ public class PeriodService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // Package scope
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    List<Cycle> getCycles() {
+        return cycles;
+    }
+
+    Cycle getCurrentCycle() {
+        return currentCycle;
+    }
+
+    int getChainHeight() {
+        return chainHeight;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // Setup cycle
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private void initFromGenesisBlock() {
+        // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
+        // as onAllServicesInitialized might get called after the parser has started.
+        // We add the default values from the Param enum to our StateChangeEvent list.
+        Cycle cycle = new Cycle(stateService.getGenesisBlockHeight());
+        Arrays.asList(Phase.values()).forEach(phase -> {
+            final Optional<AddChangeParamEvent> optionalEvent = initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight());
+            optionalEvent.ifPresent(event -> applyParamToPhasesInCycle(event.getChangeParamPayload(), cycle));
+        });
+        currentCycle = cycle;
+        cycles.add(currentCycle);
+        stateService.addCycle(currentCycle);
+        listeners.forEach(listener -> {
+            if (listener.executeOnUserThread())
+                UserThread.execute(() -> listener.onNewCycle(cycles, currentCycle));
+            else
+                listener.onNewCycle(cycles, currentCycle);
+        });
+    }
+
     private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
-        Cycle cycle = new Cycle(blockHeight, currentCycle.getPhaseItems());
+        Cycle cycle = new Cycle(blockHeight, currentCycle.getPhaseWrappers());
         stateChangeEvents.stream()
                 .filter(event -> event instanceof AddChangeParamEvent)
                 .map(event -> (AddChangeParamEvent) event)
                 .forEach(event -> applyParamToPhasesInCycle(event.getChangeParamPayload(), cycle));
         return cycle;
+    }
+
+    private void applyParamToPhasesInCycle(ChangeParamPayload changeParamPayload, Cycle cycle) {
+        final String paramName = changeParamPayload.getParam().name();
+        final String phaseName = paramName.replace("PHASE_", "");
+        final Phase phase = Phase.valueOf(phaseName);
+        cycle.setPhaseWrapper(new PhaseWrapper(phase, (int) changeParamPayload.getValue()));
     }
 
     private boolean isFirstBlockAfterPreviousCycle(int height) {
@@ -168,101 +253,14 @@ public class PeriodService {
         return param.name().replace("PHASE_", "").equals(phase.name());
     }
 
-
-    private void applyParamToPhasesInCycle(ChangeParamPayload changeParamPayload, Cycle cycle) {
-        final String paramName = changeParamPayload.getParam().name();
-        final String phaseName = paramName.replace("PHASE_", "");
-        final Phase phase = Phase.valueOf(phaseName);
-        cycle.setPhaseObject(new PhaseItem(phase, (int) changeParamPayload.getValue()));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public Phase getCurrentPhase() {
-        return currentCycle.getPhaseForHeight(chainHeight).get();
-    }
-
-    public boolean isFirstBlockInCycle(int height) {
-        return getCycle(height)
-                .filter(cycle -> cycle.getHeightOfFirstBlock() == height)
-                .isPresent();
-    }
-
-    public boolean isLastBlockInCycle(int height) {
-        return getCycle(height)
-                .filter(cycle -> cycle.getHeightOfLastBlock() == height)
-                .isPresent();
-    }
-
-    public Optional<Cycle> getCycle(int height) {
+    private Optional<Cycle> getCycle(int height) {
         return cycles.stream()
                 .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();
     }
 
-    public boolean isInPhase(int height, Phase phase) {
-        return getCycle(height)
-                .filter(cycle -> cycle.isInPhase(height, phase))
-                .isPresent();
+    private List<Cycle> getCloneOfCycles() {
+        return new ArrayList<>(cycles);
     }
-
-    public boolean isTxInPhase(String txId, Phase phase) {
-        return stateService.getTx(txId)
-                .filter(tx -> isInPhase(tx.getBlockHeight(), phase))
-                .isPresent();
-    }
-
-    public Phase getPhaseForHeight(int height) {
-        return getCycle(height)
-                .flatMap(cycle -> cycle.getPhaseForHeight(height))
-                .orElse(Phase.UNDEFINED);
-    }
-
-    public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
-        return getCycle(txHeight)
-                .filter(cycle -> chainHeadHeight >= cycle.getHeightOfFirstBlock())
-                .filter(cycle -> chainHeadHeight <= cycle.getHeightOfLastBlock())
-                .isPresent();
-    }
-
-    public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
-        return stateService.getTx(txId)
-                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
-                .isPresent();
-    }
-
-    public boolean isTxInPastCycle(int txHeight, int chainHeadHeight) {
-        return getCycle(txHeight)
-                .filter(cycle -> chainHeadHeight > cycle.getHeightOfLastBlock())
-                .isPresent();
-    }
-
-    public int getDurationForPhase(Phase phase, int height) {
-        return getCycle(height)
-                .map(cycle -> cycle.getDurationOfPhase(phase))
-                .orElse(0);
-    }
-
-    public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
-        return stateService.getTx(txId)
-                .filter(tx -> isTxInPastCycle(tx.getBlockHeight(), chainHeadHeight))
-                .isPresent();
-    }
-
-    public int getFirstBlockOfPhase(int height, Phase phase) {
-        return getCycle(height)
-                .map(cycle -> cycle.getFirstBlockOfPhase(phase))
-                .orElse(0);
-    }
-
-    public int getLastBlockOfPhase(int height, Phase phase) {
-        return getCycle(height)
-                .map(cycle -> cycle.getLastBlockOfPhase(phase))
-                .orElse(0);
-    }
-
 }

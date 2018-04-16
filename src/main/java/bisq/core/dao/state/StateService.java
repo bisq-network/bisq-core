@@ -18,7 +18,6 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.NodeExecutor;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxBlock;
@@ -30,8 +29,8 @@ import bisq.core.dao.state.events.AddBlindVoteEvent;
 import bisq.core.dao.state.events.AddChangeParamEvent;
 import bisq.core.dao.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
-import bisq.core.dao.vote.Cycle;
 import bisq.core.dao.vote.blindvote.BlindVote;
+import bisq.core.dao.vote.period.Cycle;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
 
@@ -45,7 +44,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -62,7 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * Encapluslates the access to the State of the DAO.
+ * Encapsulates the access to the State of the DAO.
  * Write access is in the context of the nodeExecutor thread. Read access can be any thread.
  * <p>
  * TODO check if locks are required.
@@ -87,7 +85,6 @@ public class StateService {
     // BTC MAIN NET
     public static final String BTC_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
     public static final int BTC_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
-    private final ListeningExecutorService nodeExecutor;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +104,6 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final State state;
-
     private final String genesisTxId;
     private final int genesisBlockHeight;
 
@@ -129,14 +125,12 @@ public class StateService {
     @SuppressWarnings("WeakerAccess")
     @Inject
     public StateService(State state,
-                        NodeExecutor nodeExecutor,
                         @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.state = state;
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
 
-        this.nodeExecutor = nodeExecutor.get();
 
         lock = new FunctionalReadWriteLock(true);
     }
@@ -157,19 +151,9 @@ public class StateService {
         stateChangeEventsProviders.add(stateChangeEventsProvider);
     }
 
-    // Notify listeners when we start parsing a block
-    public void onStartParsingBlock(int blockHeight) {
-        blockListeners.forEach(listener -> {
-            if (listener.executeOnUserThread())
-                UserThread.execute(() -> listener.onStartParsingBlock(blockHeight));
-            else
-                listener.onStartParsingBlock(blockHeight);
-        });
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: StateService
+    // Snapshot
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void applySnapshot(State snapshot) {
@@ -186,8 +170,18 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: Block
+    // Block handlers
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Notify listeners when we start parsing a block
+    public void onStartParsingBlock(int blockHeight) {
+        blockListeners.forEach(listener -> {
+            if (listener.executeOnUserThread())
+                UserThread.execute(() -> listener.onStartParsingBlock(blockHeight));
+            else
+                listener.onStartParsingBlock(blockHeight);
+        });
+    }
 
     // After parsing of a new txBlock is complete we trigger the processing of any non blockchain data like
     // proposalPayloads or blindVotes and after we have collected all stateChangeEvents we create a Block and
@@ -221,6 +215,15 @@ public class StateService {
             });
             log.info("New block added at blockHeight " + block.getHeight());
         });
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Write access: Cycle
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addCycle(Cycle cycle) {
+        lock.write(() -> state.getCycles().add(cycle));
     }
 
 
@@ -273,73 +276,60 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Write access: Misc
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-
-    public void putProposalPayload(String txId, ProposalPayload proposalPayload) {
-        lock.write(() -> state.getProposalPayloadByTxIdMap().put(txId, proposalPayload));
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // Read access: StateChangeEvent
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public LinkedList<Block> getBlocks() {
-        return state.getBlocks();
+        return lock.read(state::getBlocks);
     }
 
     public Block getLastBlock() {
-        return state.getBlocks().getLast();
+        return lock.read(() -> state.getBlocks().getLast());
     }
 
     public Set<StateChangeEvent> getStateChangeEvents() {
-        return state.getBlocks().stream()
+        return lock.read(() -> state.getBlocks().stream()
                 .flatMap(block -> block.getStateChangeEvents().stream())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<AddChangeParamEvent> getAddChangeParamEvents() {
-        return getStateChangeEvents().stream()
+        return lock.read(() -> getStateChangeEvents().stream()
                 .filter(event -> event instanceof AddChangeParamEvent)
                 .map(event -> (AddChangeParamEvent) event)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<AddProposalPayloadEvent> getAddProposalPayloadEvents() {
-        return getStateChangeEvents().stream()
+        return lock.read(() -> getStateChangeEvents().stream()
                 .filter(event -> event instanceof AddProposalPayloadEvent)
                 .map(event -> (AddProposalPayloadEvent) event)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<AddBlindVoteEvent> getAddBlindVoteEvents() {
-        return getStateChangeEvents().stream()
+        return lock.read(() -> getStateChangeEvents().stream()
                 .filter(event -> event instanceof AddBlindVoteEvent)
                 .map(event -> (AddBlindVoteEvent) event)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<ProposalPayload> getProposalPayloads() {
-        return getAddProposalPayloadEvents().stream()
+        return lock.read(() -> getAddProposalPayloadEvents().stream()
                 .map(AddProposalPayloadEvent::getProposalPayload)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<BlindVote> getBlindVotes() {
-        return getAddBlindVoteEvents().stream()
+        return lock.read(() -> getAddBlindVoteEvents().stream()
                 .map(AddBlindVoteEvent::getBlindVote)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
     }
 
     public Set<ChangeParamPayload> getChangeParamPayloads() {
-        return getAddChangeParamEvents().stream()
+        return lock.read(() -> getAddChangeParamEvents().stream()
                 .map(AddChangeParamEvent::getChangeParamPayload)
-                .collect(Collectors.toSet());
-    }
-
-    public void addCycle(Cycle cycle) {
-        state.getCycles().add(cycle);
+                .collect(Collectors.toSet()));
     }
 
 
@@ -537,7 +527,7 @@ public class StateService {
 
     //TODO
     // for genesis we don't need it and for issuance we need more implemented first
-    private boolean isTxOutputMature(TxOutput spendingTxOutput) {
+    private boolean isTxOutputMature(TxOutput txOutput) {
         return lock.read(() -> true);
     }
 
