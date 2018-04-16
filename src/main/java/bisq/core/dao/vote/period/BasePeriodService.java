@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Provides access for phase, cycle and chainHeight related state.
  *
- * This class is thread safe as it does not hodl any state. Subclasses are expected to provide the
+ * This class is thread safe as it does not hold any state. Subclasses are expected to provide the
  * stateful data and are either designed for execution in parser thread or user thread.
  */
 //TODO add tests

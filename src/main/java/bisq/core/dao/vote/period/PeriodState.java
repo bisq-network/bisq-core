@@ -44,8 +44,10 @@ import lombok.extern.slf4j.Slf4j;
  * Provide state about the phase and cycle of the monthly proposals and voting cycle.
  * A cycle is the sequence of distinct phases. The first cycle and phase starts with the genesis block height.
  *
- * This class should be accessed by the PeriodService only as it is expected to run in the parser thread.
- * Only exception is the listener which gets set at user thread and executed by mapping the data to user thread.
+ * This class should be accessed by the PeriodService only as it is designed to run in the parser thread.
+ * Only exception is the listener which gets set from the UserThreadPeriodService/s user thread and is executed
+ * by mapping and the immutable data to user thread. The cycles list gets cloned as that list is not
+ * immutable (though Cycle is).
  */
 @Slf4j
 public class PeriodState {
@@ -80,6 +82,9 @@ public class PeriodState {
     public PeriodState(StateService stateService) {
         this.stateService = stateService;
 
+        // We create the initial state already in the constructor as we have no guaranteed order for calls of
+        // onAllServicesInitialized and we want to avoid that some client expect the initial state and gets executed
+        // before our onAllServicesInitialized is called.
         initFromGenesisBlock();
 
     }
@@ -203,7 +208,7 @@ public class PeriodState {
     }
 
     private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
-        Cycle cycle = new Cycle(blockHeight, currentCycle.getPhaseWrappers());
+        Cycle cycle = new Cycle(blockHeight, currentCycle.getPhaseWrapperList());
         stateChangeEvents.stream()
                 .filter(event -> event instanceof AddChangeParamEvent)
                 .map(event -> (AddChangeParamEvent) event)

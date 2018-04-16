@@ -27,29 +27,28 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Cycle represents the monthly period for proposals and voting.
- * It consists of a ordered list of phases represented in the phaseWrappers.
- *
+ * It consists of a ordered list of phases represented by the phaseWrappers.
  */
 //TODO add tests
 @Immutable
 @Value
 public class Cycle {
     // List is ordered according to the Phase enum.
-    private final List<PhaseWrapper> phaseWrappers;
+    private final List<PhaseWrapper> phaseWrapperList;
     private final int heightOfFirstBlock;
 
     Cycle(int heightOfFirstBlock) {
         this(heightOfFirstBlock, new ArrayList<>());
     }
 
-    Cycle(int heightOfFirstBlock, List<PhaseWrapper> phaseWrappers) {
+    Cycle(int heightOfFirstBlock, List<PhaseWrapper> phaseWrapperList) {
         this.heightOfFirstBlock = heightOfFirstBlock;
-        this.phaseWrappers = phaseWrappers;
+        this.phaseWrapperList = phaseWrapperList;
     }
 
     void setPhaseWrapper(PhaseWrapper phaseWrapper) {
-        getPhaseWrapper(phaseWrapper.getPhase()).ifPresent(phaseWrappers::remove);
-        phaseWrappers.add(phaseWrapper);
+        getPhaseWrapper(phaseWrapper.getPhase()).ifPresent(phaseWrapperList::remove);
+        phaseWrapperList.add(phaseWrapper);
     }
 
 
@@ -63,7 +62,7 @@ public class Cycle {
     }
 
     int getFirstBlockOfPhase(Phase phase) {
-        return heightOfFirstBlock + phaseWrappers.stream()
+        return heightOfFirstBlock + phaseWrapperList.stream()
                 .filter(item -> item.getPhase().ordinal() < phase.ordinal())
                 .mapToInt(PhaseWrapper::getDuration).sum();
     }
@@ -73,13 +72,13 @@ public class Cycle {
     }
 
     int getDurationOfPhase(Phase phase) {
-        return phaseWrappers.stream()
+        return phaseWrapperList.stream()
                 .filter(item -> item.getPhase() == phase)
                 .mapToInt(PhaseWrapper::getDuration).sum();
     }
 
     Optional<Phase> getPhaseForHeight(int height) {
-        return phaseWrappers.stream()
+        return phaseWrapperList.stream()
                 .filter(item -> isInPhase(height, item.getPhase()))
                 .map(PhaseWrapper::getPhase)
                 .findAny();
@@ -87,7 +86,7 @@ public class Cycle {
 
 
     private Optional<PhaseWrapper> getPhaseWrapper(Phase phase) {
-        return phaseWrappers.stream().filter(item -> item.getPhase() == phase).findAny();
+        return phaseWrapperList.stream().filter(item -> item.getPhase() == phase).findAny();
     }
 
     private int getDuration(Phase phase) {
@@ -95,13 +94,13 @@ public class Cycle {
     }
 
     private int getDuration() {
-        return phaseWrappers.stream().mapToInt(PhaseWrapper::getDuration).sum();
+        return phaseWrapperList.stream().mapToInt(PhaseWrapper::getDuration).sum();
     }
 
     @Override
     public String toString() {
         return "Cycle{" +
-                "\n     phaseWrappers=" + phaseWrappers +
+                "\n     phaseWrappers=" + phaseWrapperList +
                 ",\n     heightOfFirstBlock=" + heightOfFirstBlock +
                 "\n}";
     }

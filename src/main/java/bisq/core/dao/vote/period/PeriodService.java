@@ -28,12 +28,10 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Version of BasePeriodService which is expected to run in the parser thread.
+ * Subclass of BasePeriodService which is designed to run in the parser thread.
  * It provides the mutable data from the PeriodState and StateService. Both those data sources are as well
- * expected to run in the parser thread so we don't provide synchronisation support as we are inside a
+ * designed to run in the parser thread so we don't provide synchronisation support as we are inside a
  * single threaded model.
- *
- * We protect access requests with a check if the caller is really in the parser thread.
  */
 @Slf4j
 public final class PeriodService extends BasePeriodService {

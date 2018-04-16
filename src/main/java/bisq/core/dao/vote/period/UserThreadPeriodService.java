@@ -32,15 +32,13 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Version of BasePeriodService which is expected to run in the user thread.
+ * Subclass of BasePeriodService which is designed to run in the user thread.
  *
  * State from PeriodState and StateService gets mapped from the parser thread to the user thread in the StateService.
  * At the handlers we get the state fields either as immutable data or as cloned arrayList.
  *
  * The listeners are called delayed from the parser threads perspective so they must not be used for consensus
- * critical code but used for presentation only where exact timing is not crucial.
- *
- * We protect access requests with a check if the caller is really in the user thread.
+ * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
 public final class UserThreadPeriodService extends BasePeriodService implements PeriodState.Listener {
