@@ -18,7 +18,7 @@
 package bisq.core.app;
 
 import bisq.common.UserThread;
-import bisq.common.setup.ShutDownHandler;
+import bisq.common.setup.GracefulShutDownHandler;
 import bisq.common.util.Profiler;
 import bisq.common.util.RestartUtil;
 
@@ -87,7 +87,7 @@ public abstract class HeadlessExecutable extends BisqExecutable {
         }
     }
 
-    protected void checkMemory(BisqEnvironment environment, ShutDownHandler shutDownHandler) {
+    protected void checkMemory(BisqEnvironment environment, GracefulShutDownHandler gracefulShutDownHandler) {
         String maxMemoryOption = environment.getProperty(AppOptionKeys.MAX_MEMORY);
         if (maxMemoryOption != null && !maxMemoryOption.isEmpty()) {
             try {
@@ -112,15 +112,15 @@ public abstract class HeadlessExecutable extends BisqExecutable {
 
                 UserThread.runAfter(() -> {
                     if (Profiler.getUsedMemoryInMB() > maxMemory)
-                        restart(environment, shutDownHandler);
+                        restart(environment, gracefulShutDownHandler);
                 }, 5);
             }
         }, CHECK_MEMORY_PERIOD_SEC);
     }
 
-    protected void restart(BisqEnvironment bisqEnvironment, ShutDownHandler shutDownHandler) {
+    protected void restart(BisqEnvironment bisqEnvironment, GracefulShutDownHandler gracefulShutDownHandler) {
         stopped = true;
-        shutDownHandler.gracefulShutDown(() -> {
+        gracefulShutDownHandler.gracefulShutDown(() -> {
             //noinspection finally
             try {
                 final String[] tokens = bisqEnvironment.getAppDataDir().split("_");

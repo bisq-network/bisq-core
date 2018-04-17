@@ -17,17 +17,31 @@
 
 package bisq.core.app;
 
+import bisq.core.arbitration.ArbitratorManager;
 import bisq.core.btc.BtcOptionKeys;
 import bisq.core.btc.RegTestHost;
+import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.DaoSetup;
 import bisq.core.exceptions.BisqException;
+import bisq.core.offer.OpenOfferManager;
+import bisq.core.setup.CorePersistedDataHost;
 import bisq.core.setup.CoreSetup;
+import bisq.core.trade.TradeManager;
 import bisq.core.util.joptsimple.EnumValueConverter;
 
 import bisq.network.NetworkOptionKeys;
 import bisq.network.p2p.P2PService;
 
 import bisq.common.CommonOptionKeys;
+import bisq.common.UserThread;
+import bisq.common.app.AppModule;
+import bisq.common.app.DevEnv;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.persistable.PersistedDataHost;
+import bisq.common.setup.GracefulShutDownHandler;
 import bisq.common.util.Utilities;
 
 import org.springframework.core.env.JOptCommandLinePropertySource;
@@ -37,11 +51,16 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.io.IOException;
+
+import lombok.extern.slf4j.Slf4j;
 
 import static bisq.core.app.BisqEnvironment.DEFAULT_APP_NAME;
 import static bisq.core.app.BisqEnvironment.DEFAULT_USER_DATA_DIR;
@@ -49,10 +68,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.lang.String.join;
 
-public abstract class BisqExecutable {
+@Slf4j
+public abstract class BisqExecutable implements GracefulShutDownHandler {
     static {
         Utilities.removeCryptographyRestrictions();
     }
+
+    protected Injector injector;
+    private AppModule module;
 
     public static boolean setupInitialOptionParser(String[] args) throws IOException {
         // We don't want to do the full argument parsing here as that might easily change in update versions
@@ -110,6 +133,112 @@ public abstract class BisqExecutable {
 
         this.doExecute(options);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // First synchronous execution tasks
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void doExecute(OptionSet options) {
+        setupEnvironment(options);
+        configUserThread();
+        configCoreSetup(options);
+
+        // If application is JavaFX application we need to wait until it is initialized
+        launchApplication();
+    }
+
+    protected abstract void configUserThread();
+
+    protected abstract void setupEnvironment(OptionSet options);
+
+    protected void configCoreSetup(OptionSet options) {
+        CoreSetup.setup(getBisqEnvironment(options));
+    }
+
+    protected abstract void launchApplication();
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // If application is JavaFX application we need have waited for that handler
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void onApplicationLaunched() {
+        setupGuice();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // We continue with a series of synchronous execution tasks
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void setupGuice() {
+        module = getModule();
+        injector = getInjector();
+        applyInjector();
+    }
+
+    protected abstract AppModule getModule();
+
+    protected Injector getInjector() {
+        return Guice.createInjector(module);
+    }
+
+    protected void applyInjector() {
+        DevEnv.setup(injector);
+        setupPersistedDataHosts(injector);
+    }
+
+    protected void setupPersistedDataHosts(Injector injector) {
+        PersistedDataHost.apply(CorePersistedDataHost.getPersistedDataHosts(injector));
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // GracefulShutDownHandler implementation
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // This might need to be overwritten in case the application is not using all modules
+    @Override
+    public void gracefulShutDown(ResultHandler resultHandler) {
+        try {
+            if (injector != null) {
+                injector.getInstance(ArbitratorManager.class).shutDown();
+                injector.getInstance(TradeManager.class).shutDown();
+                injector.getInstance(DaoSetup.class).shutDown();
+                injector.getInstance(OpenOfferManager.class).shutDown(() -> {
+                    injector.getInstance(P2PService.class).shutDown(() -> {
+                        injector.getInstance(WalletsSetup.class).shutDownComplete.addListener((ov, o, n) -> {
+                            module.close(injector);
+                            log.debug("Graceful shutdown completed");
+                            resultHandler.handleResult();
+
+                            System.exit(0);
+                        });
+                        injector.getInstance(WalletsSetup.class).shutDown();
+                        injector.getInstance(BtcWalletService.class).shutDown();
+                        injector.getInstance(BsqWalletService.class).shutDown();
+                    });
+                });
+                // we wait max 20 sec.
+                UserThread.runAfter(() -> {
+                    log.warn("Timeout triggered resultHandler");
+                    resultHandler.handleResult();
+                }, 20);
+            } else {
+                log.warn("injector == null triggered resultHandler");
+                UserThread.runAfter(resultHandler::handleResult, 1);
+            }
+        } catch (Throwable t) {
+            log.error("App shutdown failed with exception");
+            t.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // customizeOptionParsing
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected void customizeOptionParsing(OptionParser parser) {
         //CommonOptionKeys
@@ -258,24 +387,6 @@ public abstract class BisqExecutable {
             description = join(" ", description, format("(default: %s)", defaultValue));
         return description;
     }
-
-    protected void doExecute(OptionSet options) {
-        setupEnvironment(options);
-        configUserThread();
-        configCoreSetup(options);
-        launchApplication();
-    }
-
-    protected abstract void configUserThread();
-
-    protected abstract void setupEnvironment(OptionSet options);
-
-    protected void configCoreSetup(OptionSet options) {
-        CoreSetup.setup(getBisqEnvironment(options));
-    }
-
-    protected abstract void launchApplication();
-
 
     public static void initAppDir(String appDir) {
         Path dir = Paths.get(appDir);
