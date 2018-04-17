@@ -29,6 +29,7 @@ import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.provider.price.PriceFeedService;
+import bisq.core.setup.CorePersistedDataHost;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.statistics.TradeStatisticsManager;
 
@@ -41,6 +42,7 @@ import bisq.network.p2p.network.ConnectionListener;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.KeyRing;
+import bisq.common.proto.persistable.PersistedDataHost;
 
 import com.google.inject.Injector;
 
@@ -60,9 +62,11 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CoreAppSetup extends AppSetup {
+public class CoreAppSetup {
 
-
+    private final EncryptionService encryptionService;
+    private final Injector injector;
+    protected final KeyRing keyRing;
     private final DisputeManager disputeManager;
     private final TradeManager tradeManager;
     private final OpenOfferManager openOfferManager;
@@ -78,6 +82,11 @@ public class CoreAppSetup extends AppSetup {
 
     private BooleanProperty walletInitialized;
     private ObjectProperty<Throwable> walletServiceException;
+
+    private CompletableFuture<Void> checkCryptoSetupResult;
+    private CompletableFuture<Void> initPersistedDataHostsResult;
+    private CompletableFuture<Void> initBasicServicesResult;
+    private CompletableFuture<Void> readFromResourcesResult;
 
     @Inject
     public CoreAppSetup(EncryptionService encryptionService,
@@ -96,8 +105,12 @@ public class CoreAppSetup extends AppSetup {
                         DisputeManager disputeManager,
                         WalletsSetup walletsSetup
     ) {
-        super(encryptionService, injector, keyRing, p2PService);
+        // we need to reference it so the seed node stores tradeStatistics
+        this.encryptionService = encryptionService;
+        this.injector = injector;
+        this.keyRing = keyRing;
         this.p2PService = p2PService;
+
         this.tradeStatisticsManager = tradeStatisticsManager;
         this.accountAgeWitnessService = accountAgeWitnessService;
         this.filterManager = filterManager;
@@ -112,10 +125,49 @@ public class CoreAppSetup extends AppSetup {
 
         walletInitialized = new SimpleBooleanProperty();
         walletServiceException = new SimpleObjectProperty<>();
+
+        Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
+        Version.printVersion();
     }
 
-    @Override
-    protected CompletableFuture<Void> doInitBasicServices() {
+    public CompletableFuture<Void> initPersistedDataHosts() {
+        if (null != initPersistedDataHostsResult)
+            return initPersistedDataHostsResult;
+        initPersistedDataHostsResult = checkCryptoSetup()
+                .thenRun(this::doInitPersistedDataHosts);
+        return initPersistedDataHostsResult;
+    }
+
+    public CompletableFuture<Void> initBasicServices() {
+        if (null == initBasicServicesResult)
+            initBasicServicesResult = initPersistedDataHosts()
+                    .thenCompose(r -> this.doInitBasicServices())
+                    .thenRun(this::onBasicServicesInitialized);
+        return initBasicServicesResult;
+    }
+
+    private CompletableFuture<Void> checkCryptoSetup() {
+        if (null != checkCryptoSetupResult)
+            return checkCryptoSetupResult;
+
+        checkCryptoSetupResult = new CompletableFuture<>();
+
+        SetupUtils.checkCryptoSetup(keyRing, encryptionService, () -> checkCryptoSetupResult.complete(null), throwable -> {
+            log.error(throwable.getMessage());
+            throwable.printStackTrace();
+            checkCryptoSetupResult.completeExceptionally(throwable);
+            System.exit(1);
+        });
+
+        return checkCryptoSetupResult;
+    }
+
+    private void doInitPersistedDataHosts() {
+        log.debug("doInitPersistedDataHosts");
+        PersistedDataHost.apply(CorePersistedDataHost.getPersistedDataHosts(injector));
+    }
+
+    private CompletableFuture<Void> doInitBasicServices() {
         return readFromResources().thenCompose(i -> {
             final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
             final BooleanProperty p2pNetWorkReady = initP2PNetwork();
@@ -137,6 +189,17 @@ public class CoreAppSetup extends AppSetup {
         });
     }
 
+    private CompletableFuture<Void> readFromResources() {
+        if (null != readFromResourcesResult)
+            return readFromResourcesResult;
+        readFromResourcesResult = new CompletableFuture<>();
+        SetupUtils.readFromResources(p2PService.getP2PDataStorage()).addListener((observable, oldValue, newValue) -> {
+            if (!newValue) return;
+            readFromResourcesResult.complete(null);
+        });
+        return readFromResourcesResult;
+    }
+
     private void initWalletService() {
         walletsSetup.initialize(null).thenRun(() -> {
             log.debug("walletsSetup.onInitialized");
@@ -147,8 +210,7 @@ public class CoreAppSetup extends AppSetup {
         });
     }
 
-    @Override
-    protected void onBasicServicesInitialized() {
+    private void onBasicServicesInitialized() {
         log.debug("onBasicServicesInitialized");
         PaymentMethod.onAllServicesInitialized();
         p2PService.onAllServicesInitialized();
