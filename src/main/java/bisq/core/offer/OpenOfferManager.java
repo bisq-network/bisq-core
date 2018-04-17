@@ -21,6 +21,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.exceptions.TradePriceOutOfToleranceException;
+import bisq.core.locale.Res;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
 import bisq.core.offer.messages.OfferAvailabilityResponse;
 import bisq.core.offer.placeoffer.PlaceOfferModel;
@@ -62,6 +63,7 @@ import javafx.collections.ObservableList;
 import java.io.File;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -96,6 +98,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     private final PriceFeedService priceFeedService;
     private final Preferences preferences;
     private final Storage<TradableList<OpenOffer>> openOfferTradableListStorage;
+    private final HashMap<String, OpenOffer> offersToBeEdited = new HashMap<>();
     private boolean stopped;
     private Timer periodicRepublishOffersTimer, periodicRefreshOffersTimer, retryRepublishOffersTimer;
     private TradableList<OpenOffer> openOffers;
@@ -328,7 +331,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
     // Remove from offerbook
     public void removeOffer(Offer offer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
-        Optional<OpenOffer> openOfferOptional = findOpenOffer(offer.getId());
+        Optional<OpenOffer> openOfferOptional = getOpenOfferById(offer.getId());
         if (openOfferOptional.isPresent()) {
             removeOpenOffer(openOfferOptional.get(), resultHandler, errorMessageHandler);
         } else {
@@ -342,6 +345,11 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     }
 
     public void activateOpenOffer(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            throw new IllegalStateException("You can't activate an offer that is currently edited.");
+        }
+
         Offer offer = openOffer.getOffer();
         openOffer.setStorage(openOfferTradableListStorage);
         offerBookService.activateOffer(offer,
@@ -366,6 +374,10 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     }
 
     public void removeOpenOffer(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            throw new IllegalStateException("You can't remove an offer that is currently edited.");
+        }
+
         Offer offer = openOffer.getOffer();
         if (openOffer.isDeactivated()) {
             openOffer.setStorage(openOfferTradableListStorage);
@@ -376,6 +388,71 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                         onRemoved(openOffer, resultHandler, offer);
                     },
                     errorMessageHandler);
+        }
+    }
+
+    public void editOpenOfferStart(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            resultHandler.handleResult();
+            return;
+        }
+
+        if (openOffer.isDeactivated()) {
+            offersToBeEdited.put(openOffer.getId(), openOffer);
+            resultHandler.handleResult();
+        } else {
+            deactivateOpenOffer(openOffer, () -> {
+                offersToBeEdited.put(openOffer.getId(), openOffer);
+                resultHandler.handleResult();
+            }, errorMessage -> {
+                offersToBeEdited.remove(openOffer.getId());
+                errorMessageHandler.handleErrorMessage(errorMessage);
+            });
+        }
+    }
+
+    public void editOpenOfferPublish(Offer editedOffer, OpenOffer.State originalState, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+
+        Optional<OpenOffer> openOfferOptional = getOpenOfferById(editedOffer.getId());
+
+        if (openOfferOptional.isPresent()) {
+
+            final OpenOffer openOffer = openOfferOptional.get();
+
+            openOffer.setStorage(openOfferTradableListStorage);
+
+            openOffer.getOffer().setState(Offer.State.REMOVED);
+            openOffer.setState(OpenOffer.State.CANCELED);
+            openOffers.remove(openOffer);
+
+            final OpenOffer editedOpenOffer = new OpenOffer(editedOffer, openOfferTradableListStorage);
+            editedOpenOffer.setState(originalState);
+
+            openOffers.add(editedOpenOffer);
+
+            republishOffer(editedOpenOffer);
+
+            offersToBeEdited.remove(openOffer.getId());
+
+            resultHandler.handleResult();
+
+        } else {
+            errorMessageHandler.handleErrorMessage("There is no offer with this id existing to be published.");
+        }
+    }
+
+    public void editOpenOfferCancel(OpenOffer openOffer, OpenOffer.State originalState, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            offersToBeEdited.remove(openOffer.getId());
+            if (originalState.equals(OpenOffer.State.AVAILABLE)) {
+                activateOpenOffer(openOffer, () -> {
+                    resultHandler.handleResult();
+                }, errorMessageHandler);
+            } else {
+                resultHandler.handleResult();
+            }
+        } else {
+            errorMessageHandler.handleErrorMessage("Editing of offer can't be canceled as it is not edited.");
         }
     }
 
@@ -391,7 +468,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
     // Close openOffer after deposit published
     public void closeOpenOffer(Offer offer) {
-        findOpenOffer(offer.getId()).ifPresent(openOffer -> {
+        getOpenOfferById(offer.getId()).ifPresent(openOffer -> {
             openOffers.remove(openOffer);
             openOffer.setState(OpenOffer.State.CLOSED);
             offerBookService.removeOffer(openOffer.getOffer().getOfferPayload(),
@@ -417,10 +494,6 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         return openOffers.getList();
     }
 
-    public Optional<OpenOffer> findOpenOffer(String offerId) {
-        return openOffers.stream().filter(openOffer -> openOffer.getId().equals(offerId)).findAny();
-    }
-
     public Optional<OpenOffer> getOpenOfferById(String offerId) {
         return openOffers.stream().filter(e -> e.getId().equals(offerId)).findFirst();
     }
@@ -442,7 +515,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                     return;
                 }
 
-                Optional<OpenOffer> openOfferOptional = findOpenOffer(message.offerId);
+                Optional<OpenOffer> openOfferOptional = getOpenOfferById(message.offerId);
                 AvailabilityResult availabilityResult;
                 if (openOfferOptional.isPresent()) {
                     if (openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
@@ -532,10 +605,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                         String id = openOffer.getId();
                         if (id != null && !openOffer.isDeactivated())
                             republishOffer(openOffer);
-                        else
-                            log.warn("You have an offer with an invalid offer ID: offerID=" + id);
                     }
-
 
                 }, minDelay, maxDelay, TimeUnit.MILLISECONDS);
             }

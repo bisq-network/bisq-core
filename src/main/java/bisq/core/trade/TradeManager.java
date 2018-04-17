@@ -286,7 +286,7 @@ public class TradeManager implements PersistedDataHost {
             return;
         }
 
-        Optional<OpenOffer> openOfferOptional = openOfferManager.findOpenOffer(message.getTradeId());
+        Optional<OpenOffer> openOfferOptional = openOfferManager.getOpenOfferById(message.getTradeId());
         if (openOfferOptional.isPresent() && openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
             Offer offer = openOfferOptional.get().getOffer();
             openOfferManager.reserveOpenOffer(openOfferOptional.get());
