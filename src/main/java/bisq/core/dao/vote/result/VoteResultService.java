@@ -18,14 +18,14 @@
 package bisq.core.dao.vote.result;
 
 import bisq.core.dao.node.NodeExecutor;
+import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.vote.BooleanVote;
 import bisq.core.dao.vote.LongVote;
 import bisq.core.dao.vote.Vote;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.period.PeriodService;
-import bisq.core.dao.vote.period.Phase;
 import bisq.core.dao.vote.proposal.ProposalPayload;
 import bisq.core.dao.vote.proposal.asset.RemoveAssetProposalPayload;
 import bisq.core.dao.vote.proposal.compensation.CompensationRequestPayload;

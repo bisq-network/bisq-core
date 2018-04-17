@@ -15,24 +15,14 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.period;
+package bisq.core.dao.period;
 
-import lombok.Value;
+import bisq.common.ThreadAwareListener;
 
-import javax.annotation.concurrent.Immutable;
+import com.google.common.collect.ImmutableList;
 
-/**
- * Encapsulated the phase enum with the duration.
- * As the duration can change by voting we don't want to put the duration property in the enum but use that wrapper.
- */
-@Immutable
-@Value
-class PhaseWrapper {
-    private final Phase phase;
-    private final int duration;
+interface PeriodStateChangeListener extends ThreadAwareListener {
+    void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
 
-    PhaseWrapper(Phase phase, int duration) {
-        this.phase = phase;
-        this.duration = duration;
-    }
+    void onChainHeightChanged(int chainHeight);
 }

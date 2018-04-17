@@ -17,13 +17,13 @@
 
 package bisq.core.dao.state;
 
+import bisq.core.dao.period.Cycle;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.events.StateChangeEvent;
-import bisq.core.dao.vote.period.Cycle;
 
 import org.bitcoinj.core.Coin;
 

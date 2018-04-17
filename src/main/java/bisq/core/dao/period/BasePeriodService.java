@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.period;
+package bisq.core.dao.period;
 
 import bisq.core.dao.state.blockchain.Tx;
 

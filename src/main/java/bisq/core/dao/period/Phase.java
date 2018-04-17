@@ -15,14 +15,22 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.period;
+package bisq.core.dao.period;
 
-import bisq.common.ThreadAwareListener;
-
-import com.google.common.collect.ImmutableList;
-
-interface PeriodStateChangeListener extends ThreadAwareListener {
-    void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
-
-    void onChainHeightChanged(int chainHeight);
+/**
+ * Enum for phase of a cycle.
+ *
+ * We don't want to use a enum with the duration as field because the duration can change by voting and enums
+ * should be considered immutable.
+ */
+public enum Phase {
+    UNDEFINED,
+    PROPOSAL,
+    BREAK1,
+    BLIND_VOTE,
+    BREAK2,
+    VOTE_REVEAL,
+    BREAK3,
+    ISSUANCE,
+    BREAK4
 }

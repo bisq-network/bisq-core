@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.vote.period;
+package bisq.core.dao.period;
 
 import java.util.ArrayList;
 import java.util.List;

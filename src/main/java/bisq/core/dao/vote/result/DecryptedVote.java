@@ -17,6 +17,7 @@
 
 package bisq.core.dao.vote.result;
 
+import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -24,7 +25,6 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.vote.blindvote.BlindVote;
-import bisq.core.dao.vote.period.PeriodService;
 import bisq.core.dao.vote.proposal.ProposalList;
 
 import javax.crypto.SecretKey;
