@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
-public final class UserThreadPeriodService extends BasePeriodService implements PeriodState.Listener {
+public final class UserThreadPeriodService extends BasePeriodService implements PeriodStateChangeListener {
     //TODO remove
     private final StateService stateService;
 
@@ -66,7 +66,7 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // PeriodState.Listener
+    // PeriodStateChangeListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called on the user thread
@@ -90,28 +90,29 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
     }
 
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BasePeriodService
+    // Implement BasePeriodService methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected List<Cycle> provideCycles() {
+    public List<Cycle> getCycles() {
         return cycles;
     }
 
     @Override
-    protected Cycle provideCurrentCycle() {
+    public Cycle getCurrentCycle() {
         return currentCycle;
     }
 
     //TODO
     @Override
-    protected Optional<Tx> provideTx(String txId) {
+    public Optional<Tx> getOptionalTx(String txId) {
         return stateService.getTx(txId);
     }
 
     @Override
-    protected int provideHeight() {
+    public int getChainHeight() {
         return chainHeight;
     }
 

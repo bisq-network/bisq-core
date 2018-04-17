@@ -46,25 +46,21 @@ abstract class BasePeriodService {
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    abstract protected List<Cycle> provideCycles();
+    abstract public List<Cycle> getCycles();
 
-    abstract protected Cycle provideCurrentCycle();
+    abstract public Cycle getCurrentCycle();
 
-    abstract protected Optional<Tx> provideTx(String txId);
+    abstract public Optional<Tx> getOptionalTx(String txId);
 
-    abstract protected int provideHeight();
+    abstract public int getChainHeight();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public int getChainHeight() {
-        return provideHeight();
-    }
-
     public Phase getCurrentPhase() {
-        return provideCurrentCycle().getPhaseForHeight(provideHeight()).get();
+        return getCurrentCycle().getPhaseForHeight(this.getChainHeight()).get();
     }
 
     public boolean isFirstBlockInCycle(int height) {
@@ -80,7 +76,7 @@ abstract class BasePeriodService {
     }
 
     public Optional<Cycle> getCycle(int height) {
-        return provideCycles().stream()
+        return getCycles().stream()
                 .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();
@@ -93,7 +89,7 @@ abstract class BasePeriodService {
     }
 
     public boolean isTxInPhase(String txId, Phase phase) {
-        return provideTx(txId)
+        return getOptionalTx(txId)
                 .filter(tx -> isInPhase(tx.getBlockHeight(), phase))
                 .isPresent();
     }
@@ -112,7 +108,7 @@ abstract class BasePeriodService {
     }
 
     public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
-        return provideTx(txId)
+        return getOptionalTx(txId)
                 .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
                 .isPresent();
     }
@@ -130,7 +126,7 @@ abstract class BasePeriodService {
     }
 
     public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
-        return provideTx(txId)
+        return getOptionalTx(txId)
                 .filter(tx -> isTxInPastCycle(tx.getBlockHeight(), chainHeadHeight))
                 .isPresent();
     }

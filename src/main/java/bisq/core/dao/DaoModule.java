@@ -44,6 +44,7 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.UserThreadStateService;
 import bisq.core.dao.vote.blindvote.BlindVoteService;
 import bisq.core.dao.vote.blindvote.BlindVoteValidator;
 import bisq.core.dao.vote.myvote.MyVoteService;
@@ -97,6 +98,7 @@ public class DaoModule extends AppModule {
         // chain state
         bind(State.class).in(Singleton.class);
         bind(StateService.class).in(Singleton.class);
+        bind(UserThreadStateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
         bind(ParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
@@ -137,10 +139,10 @@ public class DaoModule extends AppModule {
         bind(IssuanceService.class).in(Singleton.class);
 
         // constants
-        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, StateService.BTC_GENESIS_TX_ID);
+        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, State.DEFAULT_GENESIS_TX_ID);
         bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
 
-        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, StateService.BTC_GENESIS_BLOCK_HEIGHT);
+        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, State.DEFAULT_GENESIS_BLOCK_HEIGHT);
         bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
 
         // options

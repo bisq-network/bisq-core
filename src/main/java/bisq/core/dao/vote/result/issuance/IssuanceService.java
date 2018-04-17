@@ -49,7 +49,7 @@ public class IssuanceService {
 
     // Called from parser thread
     public void issueBsq(CompensationRequestPayload compensationRequestPayload, int chainHeight) {
-        final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getCompReqIssuanceTxOutputs();
+        final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getIssuanceCandidateTxOutputs();
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> txOutput.getTxId().equals(compensationRequestPayload.getTxId()))
                 .filter(txOutput -> compensationRequestPayload.getRequestedBsq().value == txOutput.getValue())
@@ -61,6 +61,7 @@ public class IssuanceService {
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .forEach(txOutput -> {
                     stateService.addIssuanceTxOutput(txOutput);
+
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
                     sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())

@@ -18,11 +18,11 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqNode;
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.P2PService;
@@ -140,7 +140,7 @@ public class FullNode extends BsqNode {
     }
 
     private void parseBlocksOnHeadHeight(int startBlockHeight, Integer chainHeadHeight) {
-        log.info("parseBlocks with from={} with chainHeadHeight={}", startBlockHeight, chainHeadHeight);
+        log.info("parseBlocks with startBlockHeight={} and chainHeadHeight={}", startBlockHeight, chainHeadHeight);
         if (chainHeadHeight != startBlockHeight) {
             if (startBlockHeight <= chainHeadHeight) {
                 bsqFullNodeExecutor.parseBlocks(startBlockHeight,

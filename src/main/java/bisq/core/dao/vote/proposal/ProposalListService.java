@@ -18,6 +18,7 @@
 package bisq.core.dao.vote.proposal;
 
 import bisq.core.dao.state.Block;
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.vote.period.PeriodService;
@@ -91,7 +92,7 @@ public class ProposalListService {
 
     public void onAllServicesInitialized() {
         //TODO
-        stateService.addBlockListener(new StateService.BlockListener() {
+        stateService.addBlockListener(new BlockListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;

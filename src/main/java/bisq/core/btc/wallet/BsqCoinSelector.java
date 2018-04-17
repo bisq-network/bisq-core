@@ -17,7 +17,7 @@
 
 package bisq.core.btc.wallet;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.UserThreadStateService;
 
 import org.bitcoinj.core.TransactionOutput;
 
@@ -31,10 +31,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BsqCoinSelector extends BisqDefaultCoinSelector {
-    private final StateService stateService;
+    private final UserThreadStateService stateService;
 
     @Inject
-    public BsqCoinSelector(StateService stateService) {
+    public BsqCoinSelector(UserThreadStateService stateService) {
         super(true);
         this.stateService = stateService;
     }

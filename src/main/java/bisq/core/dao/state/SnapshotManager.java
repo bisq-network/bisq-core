@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 //TODO add tests; check if current logic is correct.
 @Slf4j
-public class SnapshotManager implements StateService.BlockListener {
+public class SnapshotManager implements BlockListener {
     private static final int SNAPSHOT_GRID = 10000;
 
     private final State state;
@@ -54,14 +54,29 @@ public class SnapshotManager implements StateService.BlockListener {
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        stateService.addBlockListener(this);
+        stateService.addBlockListener(new BlockListener() {
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
+            }
+
+            @Override
+            public void onBlockAdded(Block block) {
+
+            }
+
+            @Override
+            public void onStartParsingBlock(int blockHeight) {
+
+            }
+        });
     }
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
         State persisted = storage.initAndGetPersisted(state, 100);
         if (persisted != null) {
-            log.info("applySnapshot persisted.chainHeadHeight=" + persisted.getTxBlocks().getLast().getHeight());
+            log.info("applySnapshot persisted.chainHeadHeight=" + stateService.getTxBlockFromState(persisted).getLast().getHeight());
             stateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");

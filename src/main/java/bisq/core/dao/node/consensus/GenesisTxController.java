@@ -51,7 +51,7 @@ public class GenesisTxController {
     }
 
     public void applyStateChange(Tx tx) {
-        Model model = new Model(stateService.getIssuedAmountAtGenesis().getValue());
+        Model model = new Model(stateService.getGenesisTotalSupply().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
             genesisTxOutputController.verify(tx.getOutputs().get(i), model);
         }

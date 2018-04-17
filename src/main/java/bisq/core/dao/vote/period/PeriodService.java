@@ -47,30 +47,32 @@ public final class PeriodService extends BasePeriodService {
     public PeriodService(StateService stateService, PeriodState periodState) {
         this.stateService = stateService;
         this.periodState = periodState;
+
+        periodState.initialize();
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BasePeriodService
+    // Implement BasePeriodService methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected List<Cycle> provideCycles() {
+    public List<Cycle> getCycles() {
         return periodState.getCycles();
     }
 
     @Override
-    protected Cycle provideCurrentCycle() {
+    public Cycle getCurrentCycle() {
         return periodState.getCurrentCycle();
     }
 
     @Override
-    protected Optional<Tx> provideTx(String txId) {
+    public Optional<Tx> getOptionalTx(String txId) {
         return stateService.getTx(txId);
     }
 
     @Override
-    protected int provideHeight() {
+    public int getChainHeight() {
         return periodState.getChainHeight();
     }
 }

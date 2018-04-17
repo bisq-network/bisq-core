@@ -18,12 +18,12 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.BsqNode;
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.P2PService;
@@ -152,7 +152,7 @@ public class LiteNode extends BsqNode {
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
         TxBlock clonedTxBlock = TxBlock.clone(txBlock);
-        if (!stateService.containsBsqBlock(clonedTxBlock)) {
+        if (!stateService.containsTxBlock(clonedTxBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
             bsqLiteNodeExecutor.parseBlock(clonedTxBlock, this::onNewBsqBlock, getErrorHandler());
         }

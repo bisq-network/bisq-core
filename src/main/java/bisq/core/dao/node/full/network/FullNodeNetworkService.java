@@ -19,7 +19,7 @@ package bisq.core.dao.node.full.network;
 
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.UserThreadStateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.network.Connection;
@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Responsible for handling requests for BSQ blocks from lite nodes and for broadcasting new blocks to the P2P network.
+ * We are in user thread!
  */
 @Slf4j
 public class FullNodeNetworkService implements MessageListener, PeerManager.Listener {
@@ -57,7 +58,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final StateService stateService;
+    private final UserThreadStateService stateService;
 
     // Key is connection UID
     private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
@@ -72,7 +73,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  StateService stateService) {
+                                  UserThreadStateService stateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;

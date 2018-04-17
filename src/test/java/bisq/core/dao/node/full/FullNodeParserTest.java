@@ -17,6 +17,8 @@
 
 package bisq.core.dao.node.full;
 
+import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
@@ -24,8 +26,6 @@ import bisq.core.dao.node.consensus.TxInputsController;
 import bisq.core.dao.node.consensus.TxOutputsController;
 import bisq.core.dao.node.full.rpc.RpcService;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -222,7 +222,7 @@ public class FullNodeParserTest {
 
         // Verify that the genesis tx has been added to the bsq blockchain with the correct issuance amount
         assertTrue(stateService.getGenesisTx().get() == genesisTx);
-        assertTrue(stateService.getIssuedAmountAtGenesis().getValue() == issuance.getValue());
+        assertTrue(stateService.getGenesisTotalSupply().getValue() == issuance.getValue());
 
         // And that other txs are not added
         assertFalse(stateService.containsTx(cbId199));

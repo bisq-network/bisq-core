@@ -18,6 +18,7 @@
 package bisq.core.dao.node.blockchain.json;
 
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.node.blockchain.btcd.PubKeyScript;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
@@ -119,7 +120,7 @@ public class JsonBlockChainExporter {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
                 final State stateClone = stateService.getClone();
-                Map<String, Tx> txMap = stateClone.getTxBlocks().stream()
+                Map<String, Tx> txMap = stateService.getTxBlockFromState(stateClone).stream()
                         .filter(Objects::nonNull)
                         .flatMap(bsqBlock -> bsqBlock.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));
@@ -131,8 +132,9 @@ public class JsonBlockChainExporter {
                                 JsonTxType.valueOf(optionalTxType.get().name()) : null;
                         List<JsonTxOutput> outputs = new ArrayList<>();
                         tx.getOutputs().forEach(txOutput -> {
-                            final SpentInfo spentInfo = stateService.getSpentInfo(txOutput);
+                            final Optional<SpentInfo> optionalSpentInfo = stateService.getSpentInfo(txOutput);
                             final boolean isBsqOutput = stateService.isBsqTxOutputType(txOutput);
+                            final PubKeyScript pubKeyScript = txOutput.getPubKeyScript();
                             final JsonTxOutput outputForJson = new JsonTxOutput(txId,
                                     txOutput.getIndex(),
                                     isBsqOutput ? txOutput.getValue() : 0,
@@ -141,9 +143,8 @@ public class JsonBlockChainExporter {
                                     isBsqOutput,
                                     stateService.getBurntFee(tx.getId()),
                                     txOutput.getAddress(),
-                                    new JsonScriptPubKey(txOutput.getPubKeyScript()),
-                                    spentInfo != null ?
-                                            new JsonSpentInfo(spentInfo) : null,
+                                    pubKeyScript != null ? new JsonScriptPubKey(pubKeyScript) : null,
+                                    optionalSpentInfo.map(JsonSpentInfo::new).orElse(null),
                                     tx.getTime(),
                                     txType,
                                     txType != null ? txType.getDisplayString() : "",

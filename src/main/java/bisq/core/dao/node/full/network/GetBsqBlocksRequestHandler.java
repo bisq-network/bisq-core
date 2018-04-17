@@ -19,7 +19,7 @@ package bisq.core.dao.node.full.network;
 
 import bisq.core.dao.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.UserThreadStateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.network.p2p.network.CloseConnectionReason;
@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Accepts a GetBsqBlocksRequest from a lite nodes and send back a corresponding GetBsqBlocksResponse.
+ * Wew are in user thread!
  */
 @Slf4j
 class GetBsqBlocksRequestHandler {
@@ -65,7 +66,7 @@ class GetBsqBlocksRequestHandler {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final NetworkNode networkNode;
-    private final StateService stateService;
+    private final UserThreadStateService stateService;
     private final Listener listener;
     private Timer timeoutTimer;
     private boolean stopped;
@@ -75,7 +76,7 @@ class GetBsqBlocksRequestHandler {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GetBsqBlocksRequestHandler(NetworkNode networkNode, StateService stateService, Listener listener) {
+    public GetBsqBlocksRequestHandler(NetworkNode networkNode, UserThreadStateService stateService, Listener listener) {
         this.networkNode = networkNode;
         this.stateService = stateService;
         this.listener = listener;

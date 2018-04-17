@@ -41,10 +41,10 @@ public class BsqBlockController {
     }
 
     public void addBlockIfValid(TxBlock txBlock) throws BlockNotConnectingException {
-        LinkedList<TxBlock> txBlocks = stateService.getBsqBlocks();
+        LinkedList<TxBlock> txBlocks = stateService.getTxBlocks();
         if (!txBlocks.contains(txBlock)) {
             if (isBlockConnecting(txBlock, txBlocks)) {
-                stateService.onNewTxBlock(txBlock);
+                stateService.applyTxBlock(txBlock);
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",

@@ -18,15 +18,13 @@
 package bisq.core.dao.vote.period;
 
 import bisq.core.dao.state.Block;
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.events.AddChangeParamEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.proposal.param.ChangeParamPayload;
 import bisq.core.dao.vote.proposal.param.Param;
-
-import bisq.common.ThreadContextAwareListener;
-import bisq.common.UserThread;
 
 import com.google.inject.Inject;
 
@@ -53,22 +51,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class PeriodState {
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public interface Listener extends ThreadContextAwareListener {
-        void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
-
-        void onChainHeightChanged(int chainHeight);
-    }
-
     private final StateService stateService;
 
     // We need to have a threadsafe list here as we might get added a listener from user thread during iteration
     // at parser thread.
-    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
 
     // Mutable state
     private final List<Cycle> cycles = new ArrayList<>();
@@ -83,53 +70,20 @@ public class PeriodState {
     @Inject
     public PeriodState(StateService stateService) {
         this.stateService = stateService;
+    }
 
+    void initialize() {
         // We create the initial state already in the constructor as we have no guaranteed order for calls of
         // onAllServicesInitialized and we want to avoid that some client expect the initial state and gets executed
         // before our onAllServicesInitialized is called.
         initFromGenesisBlock();
 
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // Can be called from user thread.
-    public void addListenerAndGetNotified(Listener listener) {
-        listeners.add(listener);
-        notifyListener(listener);
-    }
-
-    private void notifyListener(Listener listener) {
-        final Cycle finalCurrentCycle = currentCycle;
-        final int finalChainHeight = chainHeight;
-        if (listener.executeOnUserThread()) {
-            UserThread.execute(() -> {
-                listener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle);
-                listener.onChainHeightChanged(finalChainHeight);
-            });
-        } else {
-            listener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle);
-            listener.onChainHeightChanged(finalChainHeight);
-        }
-    }
-
-    private void notifyListeners() {
-        listeners.forEach(listener -> notifyListener(listener));
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void onAllServicesInitialized() {
         // Once the genesis block is parsed we add the stateChangeEvents with the initial values from the
         // default param values to the state.
         stateService.registerStateChangeEventsProvider(txBlock ->
                 provideStateChangeEvents(txBlock, stateService.getGenesisBlockHeight()));
 
-        stateService.addBlockListener(new StateService.BlockListener() {
+        stateService.addBlockListener(new BlockListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;
@@ -163,6 +117,32 @@ public class PeriodState {
             }
         });
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Can be called from user thread.
+    public void addListenerAndGetNotified(PeriodStateChangeListener periodStateChangeListener) {
+        periodStateChangeListeners.add(periodStateChangeListener);
+        notifyListener(periodStateChangeListener);
+    }
+
+    private void notifyListener(PeriodStateChangeListener periodStateChangeListener) {
+        final Cycle finalCurrentCycle = currentCycle;
+        final int finalChainHeight = chainHeight;
+        periodStateChangeListener.execute(() -> periodStateChangeListener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle));
+        periodStateChangeListener.execute(() -> periodStateChangeListener.onChainHeightChanged(finalChainHeight));
+    }
+
+    private void notifyListeners() {
+        periodStateChangeListeners.forEach(this::notifyListener);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

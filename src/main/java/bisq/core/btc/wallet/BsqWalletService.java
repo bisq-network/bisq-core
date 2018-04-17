@@ -22,7 +22,8 @@ import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.state.Block;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BlockListener;
+import bisq.core.dao.state.UserThreadStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.provider.fee.FeeService;
@@ -70,9 +71,9 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements StateService.BlockListener {
+public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final StateService stateService;
+    private final UserThreadStateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
@@ -92,7 +93,7 @@ public class BsqWalletService extends WalletService implements StateService.Bloc
     @Inject
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
-                            StateService stateService,
+                            UserThreadStateService stateService,
                             Preferences preferences,
                             FeeService feeService) {
         super(walletsSetup,
@@ -212,7 +213,7 @@ public class BsqWalletService extends WalletService implements StateService.Bloc
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        lockedInBondsBalance = Coin.valueOf(stateService.getLockedInBondsOutputs().stream()
+        lockedInBondsBalance = Coin.valueOf(stateService.getLockedInBondOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
