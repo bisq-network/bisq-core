@@ -393,17 +393,21 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
             return;
         }
 
-        deactivateOpenOffer(openOffer, () -> {
+        if (openOffer.isDeactivated()) {
             offersToBeEdited.put(openOffer.getId(), openOffer);
             resultHandler.handleResult();
-        }, errorMessage -> {
-            offersToBeEdited.remove(openOffer.getId());
-            errorMessageHandler.handleErrorMessage(errorMessage);
-        });
-
+        } else {
+            deactivateOpenOffer(openOffer, () -> {
+                offersToBeEdited.put(openOffer.getId(), openOffer);
+                resultHandler.handleResult();
+            }, errorMessage -> {
+                offersToBeEdited.remove(openOffer.getId());
+                errorMessageHandler.handleErrorMessage(errorMessage);
+            });
+        }
     }
 
-    public void editOpenOfferPublish(Offer editedOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+    public void editOpenOfferPublish(Offer editedOffer, OpenOffer.State originalState, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
 
         Optional<OpenOffer> openOfferOptional = getOpenOfferById(editedOffer.getId());
 
@@ -411,12 +415,14 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
             final OpenOffer openOffer = openOfferOptional.get();
 
+            openOffer.setStorage(openOfferTradableListStorage);
+
             openOffer.getOffer().setState(Offer.State.REMOVED);
             openOffer.setState(OpenOffer.State.CANCELED);
             openOffers.remove(openOffer);
 
             final OpenOffer editedOpenOffer = new OpenOffer(editedOffer, openOfferTradableListStorage);
-            editedOpenOffer.setState(OpenOffer.State.AVAILABLE);
+            editedOpenOffer.setState(originalState);
 
             openOffers.add(editedOpenOffer);
 
@@ -431,12 +437,16 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         }
     }
 
-    public void editOpenOfferCancel(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+    public void editOpenOfferCancel(OpenOffer openOffer, OpenOffer.State originalState, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
         if (offersToBeEdited.containsKey(openOffer.getId())) {
             offersToBeEdited.remove(openOffer.getId());
-            activateOpenOffer(openOffer, () -> {
+            if (originalState.equals(OpenOffer.State.AVAILABLE)) {
+                activateOpenOffer(openOffer, () -> {
+                    resultHandler.handleResult();
+                }, errorMessageHandler);
+            } else {
                 resultHandler.handleResult();
-            }, errorMessageHandler);
+            }
         } else {
             errorMessageHandler.handleErrorMessage("Editing of offer can't be canceled as it is not edited.");
         }
