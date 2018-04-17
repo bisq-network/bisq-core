@@ -21,12 +21,14 @@ import bisq.core.btc.BtcOptionKeys;
 import bisq.core.btc.RegTestHost;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.exceptions.BisqException;
+import bisq.core.setup.CoreSetup;
 import bisq.core.util.joptsimple.EnumValueConverter;
 
 import bisq.network.NetworkOptionKeys;
 import bisq.network.p2p.P2PService;
 
 import bisq.common.CommonOptionKeys;
+import bisq.common.util.Utilities;
 
 import org.springframework.core.env.JOptCommandLinePropertySource;
 import org.springframework.util.StringUtils;
@@ -41,11 +43,45 @@ import java.nio.file.Paths;
 
 import java.io.IOException;
 
+import static bisq.core.app.BisqEnvironment.DEFAULT_APP_NAME;
+import static bisq.core.app.BisqEnvironment.DEFAULT_USER_DATA_DIR;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.lang.String.join;
 
 public abstract class BisqExecutable {
+    static {
+        Utilities.removeCryptographyRestrictions();
+    }
+
+    public static boolean setupInitialOptionParser(String[] args) throws IOException {
+        // We don't want to do the full argument parsing here as that might easily change in update versions
+        // So we only handle the absolute minimum which is APP_NAME, APP_DATA_DIR_KEY and USER_DATA_DIR
+        OptionParser parser = new OptionParser();
+        parser.allowsUnrecognizedOptions();
+        parser.accepts(AppOptionKeys.USER_DATA_DIR_KEY, description("User data directory", DEFAULT_USER_DATA_DIR))
+                .withRequiredArg();
+        parser.accepts(AppOptionKeys.APP_NAME_KEY, description("Application name", DEFAULT_APP_NAME))
+                .withRequiredArg();
+
+        OptionSet options;
+        try {
+            options = parser.parse(args);
+        } catch (OptionException ex) {
+            System.out.println("error: " + ex.getMessage());
+            System.out.println();
+            parser.printHelpOn(System.out);
+            System.exit(EXIT_FAILURE);
+            return false;
+        }
+        BisqEnvironment bisqEnvironment = getBisqEnvironment(options);
+
+        // need to call that before BisqAppMain().execute(args)
+        BisqExecutable.initAppDir(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY));
+        return true;
+    }
+
+
     private static final int EXIT_SUCCESS = 0;
     public static final int EXIT_FAILURE = 1;
     private static final String HELP_KEY = "help";
@@ -223,7 +259,22 @@ public abstract class BisqExecutable {
         return description;
     }
 
-    protected abstract void doExecute(OptionSet options);
+    protected void doExecute(OptionSet options) {
+        setupEnvironment(options);
+        configUserThread();
+        configCoreSetup(options);
+        launchApplication();
+    }
+
+    protected abstract void configUserThread();
+
+    protected abstract void setupEnvironment(OptionSet options);
+
+    protected void configCoreSetup(OptionSet options) {
+        CoreSetup.setup(getBisqEnvironment(options));
+    }
+
+    protected abstract void launchApplication();
 
 
     public static void initAppDir(String appDir) {
