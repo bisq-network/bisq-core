@@ -25,8 +25,6 @@ import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.vote.period.Cycle;
 
-import bisq.common.UserThread;
-
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
@@ -89,13 +87,7 @@ public class StateService extends BaseStateService {
 
     // Notify listeners when we start parsing a block
     public void startParsingBlock(int blockHeight) {
-        blockListeners.forEach(listener -> {
-            final int finalBlockHeight = blockHeight;
-            if (listener.executeOnUserThread())
-                UserThread.execute(() -> listener.onStartParsingBlock(finalBlockHeight));
-            else
-                listener.onStartParsingBlock(finalBlockHeight);
-        });
+        blockListeners.forEach(listener -> listener.execute(() -> listener.onStartParsingBlock(blockHeight)));
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -124,12 +116,7 @@ public class StateService extends BaseStateService {
         // Using executor.execute() would not work as the parser thread can be busy for a long time when parsing
         // all the blocks and we want to get called our listener synchronously and not once the parsing task is
         // completed.
-        blockListeners.forEach(listener -> {
-            if (listener.executeOnUserThread())
-                UserThread.execute(() -> listener.onBlockAdded(block));
-            else
-                listener.onBlockAdded(block);
-        });
+        blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));
 
         log.info("New block added at blockHeight " + block.getHeight());
     }
