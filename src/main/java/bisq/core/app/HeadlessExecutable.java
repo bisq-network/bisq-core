@@ -18,6 +18,7 @@
 package bisq.core.app;
 
 import bisq.common.UserThread;
+import bisq.common.setup.ShutDownHandler;
 import bisq.common.util.Profiler;
 import bisq.common.util.RestartUtil;
 
@@ -46,8 +47,6 @@ public abstract class HeadlessExecutable extends BisqExecutable {
     @Override
     protected void doExecute(OptionSet options) {
         super.doExecute(options);
-
-        keepRunning();
 
         //TODO to be removed later
         Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
@@ -79,7 +78,7 @@ public abstract class HeadlessExecutable extends BisqExecutable {
     }
 
     @SuppressWarnings("InfiniteLoopStatement")
-    private void keepRunning() {
+    protected void keepRunning() {
         while (true) {
             try {
                 Thread.sleep(Long.MAX_VALUE);
