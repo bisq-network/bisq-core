@@ -328,7 +328,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
     // Remove from offerbook
     public void removeOffer(Offer offer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
-        Optional<OpenOffer> openOfferOptional = findOpenOffer(offer.getId());
+        Optional<OpenOffer> openOfferOptional = getOpenOfferById(offer.getId());
         if (openOfferOptional.isPresent()) {
             removeOpenOffer(openOfferOptional.get(), resultHandler, errorMessageHandler);
         } else {
@@ -391,7 +391,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
     // Close openOffer after deposit published
     public void closeOpenOffer(Offer offer) {
-        findOpenOffer(offer.getId()).ifPresent(openOffer -> {
+        getOpenOfferById(offer.getId()).ifPresent(openOffer -> {
             openOffers.remove(openOffer);
             openOffer.setState(OpenOffer.State.CLOSED);
             offerBookService.removeOffer(openOffer.getOffer().getOfferPayload(),
@@ -417,10 +417,6 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         return openOffers.getList();
     }
 
-    public Optional<OpenOffer> findOpenOffer(String offerId) {
-        return openOffers.stream().filter(openOffer -> openOffer.getId().equals(offerId)).findAny();
-    }
-
     public Optional<OpenOffer> getOpenOfferById(String offerId) {
         return openOffers.stream().filter(e -> e.getId().equals(offerId)).findFirst();
     }
@@ -442,7 +438,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                     return;
                 }
 
-                Optional<OpenOffer> openOfferOptional = findOpenOffer(message.offerId);
+                Optional<OpenOffer> openOfferOptional = getOpenOfferById(message.offerId);
                 AvailabilityResult availabilityResult;
                 if (openOfferOptional.isPresent()) {
                     if (openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
