@@ -55,7 +55,7 @@ public class PeriodState {
 
     // We need to have a threadsafe list here as we might get added a listener from user thread during iteration
     // at parser thread.
-    private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
+    private final List<PeriodStateListener> periodStateListeners = new CopyOnWriteArrayList<>();
 
     // Mutable state
     private final List<Cycle> cycles = new ArrayList<>();
@@ -123,20 +123,20 @@ public class PeriodState {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Can be called from user thread.
-    public void addListenerAndGetNotified(PeriodStateChangeListener periodStateChangeListener) {
-        periodStateChangeListeners.add(periodStateChangeListener);
-        notifyListener(periodStateChangeListener);
+    public void addListenerAndGetNotified(PeriodStateListener periodStateListener) {
+        periodStateListeners.add(periodStateListener);
+        notifyListener(periodStateListener);
     }
 
-    private void notifyListener(PeriodStateChangeListener periodStateChangeListener) {
+    private void notifyListener(PeriodStateListener listener) {
         final Cycle finalCurrentCycle = currentCycle;
         final int finalChainHeight = chainHeight;
-        periodStateChangeListener.execute(() -> periodStateChangeListener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle));
-        periodStateChangeListener.execute(() -> periodStateChangeListener.onChainHeightChanged(finalChainHeight));
+        listener.execute(() -> listener.onNewCycle(ImmutableList.copyOf(cycles), finalCurrentCycle));
+        listener.execute(() -> listener.onChainHeightChanged(finalChainHeight));
     }
 
     private void notifyListeners() {
-        periodStateChangeListeners.forEach(this::notifyListener);
+        periodStateListeners.forEach(this::notifyListener);
     }
 
 

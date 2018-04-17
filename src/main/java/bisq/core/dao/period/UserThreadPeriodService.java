@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
-public final class UserThreadPeriodService extends BasePeriodService implements PeriodStateChangeListener {
+public final class UserThreadPeriodService extends BasePeriodService implements PeriodStateListener {
     //TODO remove
     private final StateService stateService;
 
@@ -66,7 +66,7 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // PeriodStateChangeListener
+    // PeriodStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called on the user thread
