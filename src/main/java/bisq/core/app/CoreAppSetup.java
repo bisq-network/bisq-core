@@ -48,12 +48,8 @@ import com.google.inject.Injector;
 
 import javax.inject.Inject;
 
-import org.fxmisc.easybind.EasyBind;
-
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -79,9 +75,6 @@ public class CoreAppSetup {
     private final TradeStatisticsManager tradeStatisticsManager;
     private final AccountAgeWitnessService accountAgeWitnessService;
     private final FilterManager filterManager;
-
-    private BooleanProperty walletInitialized;
-    private ObjectProperty<Throwable> walletServiceException;
 
     private CompletableFuture<Void> checkCryptoSetupResult;
     private CompletableFuture<Void> initPersistedDataHostsResult;
@@ -122,9 +115,6 @@ public class CoreAppSetup {
         this.priceFeedService = priceFeedService;
         this.btcWalletService = btcWalletService;
         this.walletsSetup = walletsSetup;
-
-        walletInitialized = new SimpleBooleanProperty();
-        walletServiceException = new SimpleObjectProperty<>();
 
         Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
         Version.printVersion();
@@ -173,17 +163,13 @@ public class CoreAppSetup {
             final BooleanProperty p2pNetWorkReady = initP2PNetwork();
             p2pNetWorkReady.addListener((observable1, oldValue1, newValue1) -> {
                 if (!newValue1) return;
-                initWalletService();
-            });
-            EasyBind.combine(walletInitialized, p2pNetWorkReady,
-                    (a, b) -> {
-                        log.debug("\nwalletInitialized={}\n" +
-                                        "p2pNetWorkReady={}",
-                                a, b);
-                        return a && b;
-                    }).addListener((observable1, oldValue1, newValue1) -> {
-                if (newValue1)
+                walletsSetup.initialize(null).thenRun(() -> {
+                    log.debug("walletsSetup.onInitialized");
                     completableFuture.complete(null);
+                }).exceptionally(e -> {
+                    completableFuture.completeExceptionally(e);
+                    return null;
+                });
             });
             return completableFuture;
         });
@@ -198,16 +184,6 @@ public class CoreAppSetup {
             readFromResourcesResult.complete(null);
         });
         return readFromResourcesResult;
-    }
-
-    private void initWalletService() {
-        walletsSetup.initialize(null).thenRun(() -> {
-            log.debug("walletsSetup.onInitialized");
-            walletInitialized.set(true);
-        }).exceptionally(e -> {
-            walletServiceException.set(e);
-            return null;
-        });
     }
 
     private void onBasicServicesInitialized() {
