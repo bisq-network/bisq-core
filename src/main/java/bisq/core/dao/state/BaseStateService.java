@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
+ * Provides read access utility methods for state data.
  */
 @Slf4j
 public abstract class BaseStateService {

@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Root class for mutable state of the DAO.
  *
+ * When data gets changed we fire an event to update the state at the user thread based service.
  */
 @Slf4j
 public class State implements PersistableEnvelope {

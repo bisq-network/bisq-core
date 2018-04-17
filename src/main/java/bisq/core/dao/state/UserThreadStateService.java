@@ -40,10 +40,8 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * Encapsulates the access to the State of the DAO.
- * Write access is in the context of the nodeExecutor thread. Read access can be any thread.
- * <p>
- * TODO check if locks are required.
+ * Read access to state from the user thread.
+ * We get the listener called on the user thread and keep an independent copy of the state.
  */
 @Slf4j
 public class UserThreadStateService extends BaseStateService {
@@ -56,16 +54,19 @@ public class UserThreadStateService extends BaseStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public UserThreadStateService(State state, StateService stateService,
+    public UserThreadStateService(State state,
+                                  StateService stateService,
                                   @Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                                   @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         super();
 
-
-        stateService.addBlockListener(block -> blockListeners.forEach(l -> l.onBlockAdded(block)));
-
         userThreadState = new State(genesisTxId, genesisBlockHeight);
 
+        // We listen at stateService to forward events to our listeners.
+        stateService.addBlockListener(block -> blockListeners.forEach(l -> l.execute(() -> l.onBlockAdded(block))));
+
+        // We get the updates from the parser thread based state where on write access our listener gets executed on
+        // the user thread.
         state.addStateChangeListener(new StateChangeListener() {
             @Override
             public void onAddBlock(Block block) {
@@ -128,7 +129,7 @@ public class UserThreadStateService extends BaseStateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Protected provider methods
+    // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Genesis
