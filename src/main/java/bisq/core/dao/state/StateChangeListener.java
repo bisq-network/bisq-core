@@ -25,21 +25,21 @@ import bisq.core.dao.vote.period.Cycle;
 import bisq.common.ThreadAwareListener;
 
 public interface StateChangeListener extends ThreadAwareListener {
-    void addBlock(Block block);
+    void onAddBlock(Block block);
 
-    void putTxType(String txId, TxType txType);
+    void onPutTxType(String txId, TxType txType);
 
-    void putBurntFee(String txId, long burnedFee);
+    void onPutBurntFee(String txId, long burnedFee);
 
-    void addUnspentTxOutput(TxOutput txOutput);
+    void onAddUnspentTxOutput(TxOutput txOutput);
 
-    void removeUnspentTxOutput(TxOutput txOutput);
+    void onRemoveUnspentTxOutput(TxOutput txOutput);
 
-    void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight);
+    void onPutIssuanceBlockHeight(TxOutput txOutput, int chainHeight);
 
-    void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex);
+    void onPutSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex);
 
-    void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType);
+    void onPutTxOutputType(TxOutput txOutput, TxOutputType txOutputType);
 
-    void addCycle(Cycle cycle);
+    void onAddCycle(Cycle cycle);
 }

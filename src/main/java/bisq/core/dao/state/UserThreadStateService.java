@@ -68,47 +68,47 @@ public class UserThreadStateService extends BaseStateService {
 
         state.addStateChangeListener(new StateChangeListener() {
             @Override
-            public void addBlock(Block block) {
+            public void onAddBlock(Block block) {
                 userThreadState.addBlock(block);
             }
 
             @Override
-            public void putTxType(String txId, TxType txType) {
+            public void onPutTxType(String txId, TxType txType) {
                 userThreadState.putTxType(txId, txType);
             }
 
             @Override
-            public void putBurntFee(String txId, long burnedFee) {
+            public void onPutBurntFee(String txId, long burnedFee) {
                 userThreadState.putBurntFee(txId, burnedFee);
             }
 
             @Override
-            public void addUnspentTxOutput(TxOutput txOutput) {
+            public void onAddUnspentTxOutput(TxOutput txOutput) {
                 userThreadState.addUnspentTxOutput(txOutput);
             }
 
             @Override
-            public void removeUnspentTxOutput(TxOutput txOutput) {
+            public void onRemoveUnspentTxOutput(TxOutput txOutput) {
                 userThreadState.removeUnspentTxOutput(txOutput);
             }
 
             @Override
-            public void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
+            public void onPutIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
                 userThreadState.putIssuanceBlockHeight(txOutput, chainHeight);
             }
 
             @Override
-            public void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
+            public void onPutSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
                 userThreadState.putSpentInfo(txOutput, blockHeight, txId, inputIndex);
             }
 
             @Override
-            public void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
+            public void onPutTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
                 userThreadState.putTxOutputType(txOutput, txOutputType);
             }
 
             @Override
-            public void addCycle(Cycle cycle) {
+            public void onAddCycle(Cycle cycle) {
                 userThreadState.addCycle(cycle);
             }
         });
