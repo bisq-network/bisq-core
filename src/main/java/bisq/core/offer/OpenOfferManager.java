@@ -605,10 +605,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                         String id = openOffer.getId();
                         if (id != null && !openOffer.isDeactivated())
                             republishOffer(openOffer);
-                        else
-                            log.warn("You have an offer with an invalid offer ID: offerID=" + id);
                     }
-
 
                 }, minDelay, maxDelay, TimeUnit.MILLISECONDS);
             }
