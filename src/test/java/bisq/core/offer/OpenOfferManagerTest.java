@@ -34,7 +34,7 @@ public class OpenOfferManagerTest {
 
         final OpenOfferManager manager = new OpenOfferManager(null, null, p2PService,
                 null, null, null, offerBookService,
-                null, null,null,null,
+                null, null, null, null,
                 null);
 
         AtomicBoolean startEditOfferSuccessful = new AtomicBoolean(false);
@@ -47,7 +47,7 @@ public class OpenOfferManagerTest {
 
         final OpenOffer openOffer = new OpenOffer(make(btcUsdOffer), null);
 
-        ResultHandler resultHandler =  () -> {
+        ResultHandler resultHandler = () -> {
             startEditOfferSuccessful.set(true);
         };
 
@@ -69,12 +69,12 @@ public class OpenOfferManagerTest {
 
         final OpenOfferManager manager = new OpenOfferManager(null, null, p2PService,
                 null, null, null, offerBookService,
-                null, null,null,null,
+                null, null, null, null,
                 null);
 
         AtomicBoolean startEditOfferSuccessful = new AtomicBoolean(false);
 
-        ResultHandler resultHandler =  () -> {
+        ResultHandler resultHandler = () -> {
             startEditOfferSuccessful.set(true);
         };
 
@@ -87,7 +87,8 @@ public class OpenOfferManagerTest {
     }
 
     @Test
-    public void testStartEditOfferForOfferThatIsCurrentlyEdited() {    P2PService p2PService = mock(P2PService.class);
+    public void testStartEditOfferForOfferThatIsCurrentlyEdited() {
+        P2PService p2PService = mock(P2PService.class);
         OfferBookService offerBookService = mock(OfferBookService.class);
         Storage storage = mock(Storage.class);
 
@@ -95,12 +96,12 @@ public class OpenOfferManagerTest {
 
         final OpenOfferManager manager = new OpenOfferManager(null, null, p2PService,
                 null, null, null, offerBookService,
-                null, null,null,null,
+                null, null, null, null,
                 null);
 
         AtomicBoolean startEditOfferSuccessful = new AtomicBoolean(false);
 
-        ResultHandler resultHandler =  () -> {
+        ResultHandler resultHandler = () -> {
             startEditOfferSuccessful.set(true);
         };
 
