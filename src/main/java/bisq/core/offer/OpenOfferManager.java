@@ -21,6 +21,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.exceptions.TradePriceOutOfToleranceException;
+import bisq.core.locale.Res;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
 import bisq.core.offer.messages.OfferAvailabilityResponse;
 import bisq.core.offer.placeoffer.PlaceOfferModel;
@@ -62,6 +63,7 @@ import javafx.collections.ObservableList;
 import java.io.File;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -96,6 +98,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     private final PriceFeedService priceFeedService;
     private final Preferences preferences;
     private final Storage<TradableList<OpenOffer>> openOfferTradableListStorage;
+    private final HashMap<String, OpenOffer> offersToBeEdited = new HashMap<>();
     private boolean stopped;
     private Timer periodicRepublishOffersTimer, periodicRefreshOffersTimer, retryRepublishOffersTimer;
     private TradableList<OpenOffer> openOffers;
@@ -342,6 +345,11 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     }
 
     public void activateOpenOffer(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            throw new IllegalStateException("You can't activate an offer that is currently edited.");
+        }
+
         Offer offer = openOffer.getOffer();
         openOffer.setStorage(openOfferTradableListStorage);
         offerBookService.activateOffer(offer,
@@ -376,6 +384,61 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                         onRemoved(openOffer, resultHandler, offer);
                     },
                     errorMessageHandler);
+        }
+    }
+
+    public void editOpenOfferStart(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            resultHandler.handleResult();
+            return;
+        }
+
+        deactivateOpenOffer(openOffer, () -> {
+            offersToBeEdited.put(openOffer.getId(), openOffer);
+            resultHandler.handleResult();
+        }, errorMessage -> {
+            offersToBeEdited.remove(openOffer.getId());
+            errorMessageHandler.handleErrorMessage(errorMessage);
+        });
+
+    }
+
+    public void editOpenOfferPublish(Offer editedOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+
+        Optional<OpenOffer> openOfferOptional = getOpenOfferById(editedOffer.getId());
+
+        if (openOfferOptional.isPresent()) {
+
+            final OpenOffer openOffer = openOfferOptional.get();
+
+            openOffer.getOffer().setState(Offer.State.REMOVED);
+            openOffer.setState(OpenOffer.State.CANCELED);
+            openOffers.remove(openOffer);
+
+            final OpenOffer editedOpenOffer = new OpenOffer(editedOffer, openOfferTradableListStorage);
+            editedOpenOffer.setState(OpenOffer.State.AVAILABLE);
+
+            openOffers.add(editedOpenOffer);
+
+            republishOffer(editedOpenOffer);
+
+            offersToBeEdited.remove(openOffer.getId());
+
+            resultHandler.handleResult();
+
+        } else {
+            errorMessageHandler.handleErrorMessage("There is no offer with this id existing to be published.");
+        }
+    }
+
+    public void editOpenOfferCancel(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            offersToBeEdited.remove(openOffer.getId());
+            activateOpenOffer(openOffer, () -> {
+                resultHandler.handleResult();
+            }, errorMessageHandler);
+        } else {
+            errorMessageHandler.handleErrorMessage("Editing of offer can't be canceled as it is not edited.");
         }
     }
 
