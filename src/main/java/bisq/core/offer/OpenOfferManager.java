@@ -374,6 +374,10 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     }
 
     public void removeOpenOffer(OpenOffer openOffer, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+        if (offersToBeEdited.containsKey(openOffer.getId())) {
+            throw new IllegalStateException("You can't remove an offer that is currently edited.");
+        }
+
         Offer offer = openOffer.getOffer();
         if (openOffer.isDeactivated()) {
             openOffer.setStorage(openOfferTradableListStorage);
