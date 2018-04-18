@@ -17,18 +17,22 @@
 
 package bisq.core.app;
 
+import bisq.core.arbitration.ArbitratorManager;
+import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.WalletsSetup;
+import bisq.core.offer.OpenOfferManager;
+
+import bisq.network.p2p.P2PService;
+
 import bisq.common.UserThread;
+import bisq.common.handlers.ResultHandler;
 import bisq.common.setup.GracefulShutDownHandler;
+import bisq.common.setup.UncaughtExceptionHandler;
 import bisq.common.util.Profiler;
 import bisq.common.util.RestartUtil;
 
-import org.bitcoinj.store.BlockStoreException;
-
-import joptsimple.OptionSet;
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.IOException;
 
@@ -38,43 +42,60 @@ import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class HeadlessExecutable extends BisqExecutable {
+public abstract class ExecutableForAppWithP2p extends BisqExecutable implements UncaughtExceptionHandler {
     private static final long MAX_MEMORY_MB_DEFAULT = 500;
     private static final long CHECK_MEMORY_PERIOD_SEC = 2 * 60;
     private volatile boolean stopped;
     private static long maxMemory = MAX_MEMORY_MB_DEFAULT;
 
     @Override
-    protected void doExecute(OptionSet options) {
-        super.doExecute(options);
-
-        //TODO to be removed later
-        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
-            if (throwable.getCause() != null && throwable.getCause().getCause() != null &&
-                    throwable.getCause().getCause() instanceof BlockStoreException) {
-                log.error(throwable.getMessage());
-            } else {
-                log.error("Uncaught Exception from thread " + Thread.currentThread().getName());
-                log.error("throwableMessage= " + throwable.getMessage());
-                log.error("throwableClass= " + throwable.getClass());
-                log.error("Stack trace:\n" + ExceptionUtils.getStackTrace(throwable));
-                throwable.printStackTrace();
-                log.error("We shut down the app because an unhandled error occurred");
-                // We don't use the restart as in case of OutOfMemory errors the restart might fail as well
-                // The run loop will restart the node anyway...
-                System.exit(EXIT_FAILURE);
-            }
-        };
-        Thread.setDefaultUncaughtExceptionHandler(handler);
-        Thread.currentThread().setUncaughtExceptionHandler(handler);
-    }
-
     protected void configUserThread() {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat(this.getClass().getSimpleName())
                 .setDaemon(true)
                 .build();
         UserThread.setExecutor(Executors.newSingleThreadExecutor(threadFactory));
+    }
+
+    // We don't use the gracefulShutDown implementation of the super class as we have a limited set of modules
+    @Override
+    public void gracefulShutDown(ResultHandler resultHandler) {
+        log.debug("gracefulShutDown");
+        try {
+            if (injector != null) {
+                injector.getInstance(ArbitratorManager.class).shutDown();
+                injector.getInstance(OpenOfferManager.class).shutDown(() -> injector.getInstance(P2PService.class).shutDown(() -> {
+                    injector.getInstance(WalletsSetup.class).shutDownComplete.addListener((ov, o, n) -> {
+                        module.close(injector);
+                        log.debug("Graceful shutdown completed");
+                        resultHandler.handleResult();
+                    });
+                    injector.getInstance(WalletsSetup.class).shutDown();
+                    injector.getInstance(BtcWalletService.class).shutDown();
+                    injector.getInstance(BsqWalletService.class).shutDown();
+                }));
+                // we wait max 5 sec.
+                UserThread.runAfter(resultHandler::handleResult, 5);
+            } else {
+                UserThread.runAfter(resultHandler::handleResult, 1);
+            }
+        } catch (Throwable t) {
+            log.debug("App shutdown failed with exception");
+            t.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // UncaughtExceptionHandler implementation
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void handleUncaughtException(Throwable throwable, boolean doShutDown) {
+        log.error(throwable.toString());
+
+        if (doShutDown)
+            gracefulShutDown(() -> log.info("gracefulShutDown complete"));
     }
 
     @SuppressWarnings("InfiniteLoopStatement")

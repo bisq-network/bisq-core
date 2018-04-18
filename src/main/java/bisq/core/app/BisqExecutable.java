@@ -75,7 +75,8 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     }
 
     protected Injector injector;
-    private AppModule module;
+    protected AppModule module;
+    protected BisqEnvironment bisqEnvironment;
 
     public static boolean setupInitialOptionParser(String[] args) throws IOException {
         // We don't want to do the full argument parsing here as that might easily change in update versions
@@ -142,6 +143,7 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
         setupEnvironment(options);
         configUserThread();
         configCoreSetup(options);
+        addCapabilities();
 
         // If application is JavaFX application we need to wait until it is initialized
         launchApplication();
@@ -149,21 +151,28 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
 
     protected abstract void configUserThread();
 
-    protected abstract void setupEnvironment(OptionSet options);
+    protected void setupEnvironment(OptionSet options) {
+        bisqEnvironment = getBisqEnvironment(options);
+    }
 
     protected void configCoreSetup(OptionSet options) {
         CoreSetup.setup(getBisqEnvironment(options));
+    }
+
+    protected void addCapabilities() {
     }
 
     protected abstract void launchApplication();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // If application is JavaFX application we need have waited for that handler
+    // If application is a JavaFX application we need wait for onApplicationLaunched
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // Headless versions can call inside launchApplication the onApplicationLaunched() manually
     protected void onApplicationLaunched() {
         setupGuice();
+        startApplication();
     }
 
 
@@ -191,6 +200,8 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     protected void setupPersistedDataHosts(Injector injector) {
         PersistedDataHost.apply(CorePersistedDataHost.getPersistedDataHosts(injector));
     }
+
+    protected abstract void startApplication();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
