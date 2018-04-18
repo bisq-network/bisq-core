@@ -162,6 +162,8 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     protected void addCapabilities() {
     }
 
+    // The onApplicationLaunched call must map to UserThread, so that all following methods are running in the
+    // thread the application is running and we don't run into thread interference.
     protected abstract void launchApplication();
 
 
