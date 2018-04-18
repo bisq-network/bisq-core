@@ -84,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -127,6 +128,7 @@ public class WalletsSetup {
     public final BooleanProperty shutDownComplete = new SimpleBooleanProperty();
     private final boolean useAllProvidedNodes;
     private WalletConfig walletConfig;
+    private CompletableFuture<Void> walletInitializationResult;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -167,8 +169,10 @@ public class WalletsSetup {
     // Lifecycle
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void initialize(@Nullable DeterministicSeed seed, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
+    public CompletableFuture<Void> initialize(@Nullable DeterministicSeed seed) {
         Log.traceCall();
+        if (null == walletInitializationResult)
+            walletInitializationResult = new CompletableFuture<>();
 
         // Tell bitcoinj to execute event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
@@ -178,7 +182,7 @@ public class WalletsSetup {
         Threading.USER_THREAD = UserThread.getExecutor();
 
         Timer timeoutTimer = UserThread.runAfter(() ->
-                exceptionHandler.handleException(new TimeoutException("Wallet did not initialize in " +
+                walletInitializationResult.completeExceptionally(new TimeoutException("Wallet did not initialize in " +
                         STARTUP_TIMEOUT + " seconds.")), STARTUP_TIMEOUT);
 
         backupWallets();
@@ -225,7 +229,8 @@ public class WalletsSetup {
                 });
 
                 // onSetupCompleted in walletAppKit is not the called on the last invocations, so we add a bit of delay
-                UserThread.runAfter(resultHandler::handleResult, 100, TimeUnit.MILLISECONDS);
+//                TODO now since we're using CompletableFuture we probably do not need to embed with runAfter
+                UserThread.runAfter(() -> walletInitializationResult.complete(null), 100, TimeUnit.MILLISECONDS);
             }
         };
 
@@ -258,11 +263,19 @@ public class WalletsSetup {
                 walletConfig = null;
                 log.error("Service failure from state: {}; failure={}", from, failure);
                 timeoutTimer.stop();
-                UserThread.execute(() -> exceptionHandler.handleException(failure));
+//                TODO I think it's the consumer of initialize method who is responsible for making sure code that code is run in appropriate thread
+                UserThread.execute(() -> walletInitializationResult.completeExceptionally(failure));
             }
         }, Threading.USER_THREAD);
 
         walletConfig.startAsync();
+        return walletInitializationResult;
+    }
+
+    public CompletableFuture<Void> onInitialized() {
+        if (null == walletInitializationResult)
+            walletInitializationResult = new CompletableFuture<>();
+        return walletInitializationResult;
     }
 
     public void shutDown() {
@@ -371,7 +384,12 @@ public class WalletsSetup {
                 Context.propagate(ctx);
                 walletConfig.stopAsync();
                 walletConfig.awaitTerminated();
-                initialize(seed, resultHandler, exceptionHandler);
+                initialize(seed)
+                        .thenRun(resultHandler::handleResult)
+                        .exceptionally(e -> {
+                            exceptionHandler.handleException(e);
+                            return null;
+                        });
             } catch (Throwable t) {
                 t.printStackTrace();
                 log.error("Executing task failed. " + t.getMessage());
