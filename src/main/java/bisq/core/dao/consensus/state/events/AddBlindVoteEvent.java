@@ -32,8 +32,8 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class AddBlindVoteEvent extends StateChangeEvent {
 
-    public AddBlindVoteEvent(BlindVote payload, int height) {
-        super(payload, height);
+    public AddBlindVoteEvent(BlindVote blindVote, int height) {
+        super(blindVote, height);
     }
 
     //TODO
@@ -44,6 +44,6 @@ public class AddBlindVoteEvent extends StateChangeEvent {
 
 
     public BlindVote getBlindVote() {
-        return (BlindVote) getPayload();
+        return (BlindVote) getData();
     }
 }

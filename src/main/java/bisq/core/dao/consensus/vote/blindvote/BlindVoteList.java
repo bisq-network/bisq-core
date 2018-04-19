@@ -49,7 +49,7 @@ public class BlindVoteList extends PersistableList<BlindVote> implements VoteCon
         return PB.PersistableEnvelope.newBuilder()
                 .setBlindVoteList(PB.BlindVoteList.newBuilder()
                         .addAllBlindVote(getList().stream()
-                                .map(BlindVote::toBlindVote)
+                                .map(BlindVote::toProtoMessage)
                                 .collect(Collectors.toList())))
                 .build();
     }
@@ -62,7 +62,7 @@ public class BlindVoteList extends PersistableList<BlindVote> implements VoteCon
 
     @Override
     public String toString() {
-        return "List of TxId's in BlindVoteList: " + getList().stream()
+        return "BlindVoteList: " + getList().stream()
                 .map(BlindVote::getTxId)
                 .collect(Collectors.toList());
     }

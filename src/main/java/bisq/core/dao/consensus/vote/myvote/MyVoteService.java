@@ -32,6 +32,7 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
+import bisq.core.dao.consensus.vote.blindvote.BlindVotePayload;
 import bisq.core.dao.consensus.vote.proposal.Ballot;
 import bisq.core.dao.consensus.vote.proposal.BallotList;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
@@ -244,18 +245,19 @@ public class MyVoteService implements PersistedDataHost {
     private void onTxBroadcasted(byte[] encryptedProposalList, Transaction blindVoteTx, Coin stake,
                                  ResultHandler resultHandler, ExceptionHandler exceptionHandler,
                                  BallotList ballotList, SecretKey secretKey) {
-        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(),
-                stake.value, signaturePubKey);
+
+        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), stake.value);
+        BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
 
         // We map from user thread to parser thread as we will read the block height in the addBlindVoteToList method
         // and want to avoid inconsistency from threading issues.
-        // nodeExecutor.get().execute(() -> addBlindVoteToList(blindVote, true));
+        // nodeExecutor.get().execute(() -> addBlindVoteToList(blindVotePayload, true));
 
-        if (p2PService.addProtectedStorageEntry(blindVote, true)) {
-            log.info("Added blindVote to P2P network.\nblindVote={}", blindVote);
+        if (p2PService.addProtectedStorageEntry(blindVotePayload, true)) {
+            log.info("Added blindVotePayload to P2P network.\nblindVotePayload={}", blindVotePayload);
             resultHandler.handleResult();
         } else {
-            final String msg = "Adding of blindVote to P2P network failed.\nblindVote=" + blindVote;
+            final String msg = "Adding of blindVotePayload to P2P network failed.\nblindVotePayload=" + blindVotePayload;
             log.error(msg);
             //TODO define specific exception
             exceptionHandler.handleException(new Exception(msg));
@@ -285,10 +287,11 @@ public class MyVoteService implements PersistedDataHost {
                 .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), stateService.getChainHeight()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
-                        if (addBlindVoteToP2PNetwork(myVote.getBlindVote())) {
-                            log.info("Added BlindVote to P2P network.\nBlindVote={}", myVote.getBlindVote());
+                        BlindVotePayload blindVotePayload = new BlindVotePayload(myVote.getBlindVote(), signaturePubKey);
+                        if (addBlindVoteToP2PNetwork(blindVotePayload)) {
+                            log.info("Added BlindVotePayload to P2P network.\nBlindVotePayload={}", myVote.getBlindVote());
                         } else {
-                            log.warn("Adding of BlindVote to P2P network failed.\nBlindVote={}", myVote.getBlindVote());
+                            log.warn("Adding of BlindVotePayload to P2P network failed.\nBlindVotePayload={}", myVote.getBlindVote());
                         }
                     } else {
                         final String msg = "revealTxId must be null at publishMyBlindVotes.\nmyVote=" + myVote;
@@ -297,8 +300,8 @@ public class MyVoteService implements PersistedDataHost {
                 });
     }
 
-    private boolean addBlindVoteToP2PNetwork(BlindVote blindVote) {
-        return p2PService.addProtectedStorageEntry(blindVote, true);
+    private boolean addBlindVoteToP2PNetwork(BlindVotePayload blindVotePayload) {
+        return p2PService.addProtectedStorageEntry(blindVotePayload, true);
     }
 
     private void persist() {

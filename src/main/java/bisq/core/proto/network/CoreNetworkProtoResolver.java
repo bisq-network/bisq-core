@@ -29,7 +29,7 @@ import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.consensus.node.messages.NewBsqBlockBroadcastMessage;
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
+import bisq.core.dao.consensus.vote.blindvote.BlindVotePayload;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
@@ -198,8 +198,8 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return OfferPayload.fromProto(proto.getOfferPayload());
                 case PROPOSAL:
                     return Proposal.fromProto(proto.getProposal());
-                case BLIND_VOTE:
-                    return BlindVote.fromProto(proto.getBlindVote());
+                case BLIND_VOTE_PAYLOAD:
+                    return BlindVotePayload.fromProto(proto.getBlindVotePayload());
                 default:
                     throw new ProtobufferException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
             }

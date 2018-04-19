@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.result;
 
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
+import bisq.core.dao.consensus.vote.blindvote.BlindVotePayload;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -28,11 +28,11 @@ import javax.annotation.Nullable;
 public class VoteResultException extends Exception {
     @Getter
     @Nullable
-    private BlindVote blindVote;
+    private BlindVotePayload blindVotePayload;
 
-    public VoteResultException(String message, Exception cause, BlindVote blindVote) {
+    public VoteResultException(String message, Exception cause, BlindVotePayload blindVotePayload) {
         super(message, cause);
-        this.blindVote = blindVote;
+        this.blindVotePayload = blindVotePayload;
     }
 
     public VoteResultException(String message) {

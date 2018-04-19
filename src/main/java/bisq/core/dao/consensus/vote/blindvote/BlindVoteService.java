@@ -57,7 +57,7 @@ public class BlindVoteService implements PersistedDataHost {
     private final Storage<BlindVoteList> storage;
 
     @Getter
-    private final BlindVoteList openBlindVoteList = new BlindVoteList();
+    private final BlindVoteList blindVoteList = new BlindVoteList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -86,10 +86,10 @@ public class BlindVoteService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BlindVoteList persisted = storage.initAndGetPersisted(openBlindVoteList, 20);
+            BlindVoteList persisted = storage.initAndGetPersisted(blindVoteList, 20);
             if (persisted != null) {
-                openBlindVoteList.clear();
-                openBlindVoteList.addAll(persisted.getList());
+                blindVoteList.clear();
+                blindVoteList.addAll(persisted.getList());
             }
         }
     }
@@ -104,15 +104,15 @@ public class BlindVoteService implements PersistedDataHost {
         // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            Set<BlindVote> toRemove = new HashSet<>();
+            Set<BlindVotePayload> toRemove = new HashSet<>();
 
-            openBlindVoteList.stream()
+            blindVoteList.stream()
                     .map(blindVote -> {
                         final Optional<StateChangeEvent> optional = getAddBlindVoteEvent(blindVote, txBlock.getHeight());
 
                         // If we are in the correct block and we add a AddBlindVoteEvent to the state we remove
                         // the blindVote from our list after we have completed iteration.
-                        //TODO activate once we persist state
+                        //TODO remove after we added to state
                       /*  if (optional.isPresent())
                             toRemove.add(blindVote);*/
 
@@ -122,9 +122,10 @@ public class BlindVoteService implements PersistedDataHost {
                     .map(Optional::get)
                     .forEach(stateChangeEvents::add);
 
+
             // We remove those blindVotes we have just added as stateChangeEvent.
             toRemove.forEach(blindVote -> {
-                if (openBlindVoteList.remove(blindVote))
+                if (blindVoteList.remove(blindVote))
                     persist();
                 else
                     log.warn("We called removeBlindVoteFromList at a blindVote which was not in our list");
@@ -146,7 +147,7 @@ public class BlindVoteService implements PersistedDataHost {
 
             @Override
             public void onRemoved(ProtectedStorageEntry entry) {
-                if (entry.getProtectedStoragePayload() instanceof BlindVote)
+                if (entry.getProtectedStoragePayload() instanceof BlindVotePayload)
                     throw new UnsupportedOperationException("Removal of blind vote data is not supported");
             }
         });
@@ -163,34 +164,34 @@ public class BlindVoteService implements PersistedDataHost {
 
     private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof BlindVote) {
-            final BlindVote blindVote = (BlindVote) protectedStoragePayload;
-            if (openBlindVoteList.stream().noneMatch(e -> e.equals(blindVote))) {
-                // For adding a blindVote we need to be before the last block in BREAK2 as in the last block at BREAK2
+        if (protectedStoragePayload instanceof BlindVotePayload) {
+            final BlindVotePayload blindVotePayload = (BlindVotePayload) protectedStoragePayload;
+            if (blindVoteList.stream().noneMatch(e -> e.equals(blindVotePayload.getBlindVote()))) {
+                // For adding a blindVotePayload we need to be before the last block in BREAK2 as in the last block at BREAK2
                 // we write our blindVotes to the state.
                 final int height = stateService.getChainHeight();
                 if (isInToleratedBlockRange(height)) {
-                    log.info("We received a BlindVote from the P2P network. BlindVote=" + blindVote);
-                    openBlindVoteList.add(blindVote);
+                    log.info("We received a BlindVotePayload from the P2P network. BlindVotePayload=" + blindVotePayload);
+                    blindVoteList.add(blindVotePayload.getBlindVote());
 
                     if (storeLocally) {
                         persist();
                     }
                 } else {
                     log.warn("We are not in the tolerated phase anymore and ignore that " +
-                                    "blindVote. blindVote={}, height={}", blindVote,
+                                    "blindVotePayload. blindVotePayload={}, height={}", blindVotePayload,
                             height);
                 }
             } else {
-                log.debug("We have that blindVote already in our list. blindVote={}", blindVote);
+                log.debug("We have that blindVotePayload already in our list. blindVotePayload={}", blindVotePayload);
             }
         }
     }
 
-    // We add a AddBlindVoteEvent if the tx is already available and blindVote and tx are valid.
-    // We only add it after the blindVote phase.
-    // We use the last block in the BREAK2 phase to set all blindVote for that cycle.
-    // If a blindVote would arrive later it will be ignored.
+    // We add a AddBlindVoteEvent if the tx is already available and blindVotePayload and tx are valid.
+    // We only add it after the blindVotePayload phase.
+    // We use the last block in the BREAK2 phase to set all blindVotePayload for that cycle.
+    // If a blindVotePayload would arrive later it will be ignored.
     private Optional<StateChangeEvent> getAddBlindVoteEvent(BlindVote blindVote, int height) {
         return stateService.getTx(blindVote.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))

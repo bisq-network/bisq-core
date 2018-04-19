@@ -17,8 +17,6 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-
 import bisq.common.proto.persistable.PersistablePayload;
 
 import lombok.EqualsAndHashCode;
@@ -30,11 +28,11 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 public abstract class StateChangeEvent implements PersistablePayload {
-    private final ProtectedStoragePayload payload;
+    private final PersistablePayload data;
     private final int height; //TODO needed? is part of block anyway
 
-    public StateChangeEvent(ProtectedStoragePayload payload, int height) {
-        this.payload = payload;
+    public StateChangeEvent(PersistablePayload data, int height) {
+        this.data = data;
         this.height = height;
     }
 

@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @Data
 public class MyVote implements PersistablePayload {
-    // TODO do we need to store ballotList - it could be created by decrypting blindVote.encryptedProposalList
+    // TODO do we need to store ballotList - it could be created by decrypting blindVotePayload.encryptedProposalList
     // with secretKey
     private final BallotList ballotList;
     private final byte[] secretKeyEncoded;
@@ -125,7 +125,7 @@ public class MyVote implements PersistablePayload {
         return "MyVote{" +
                 "\n     ballotList=" + ballotList +
                 ",\n     secretKeyEncoded=" + Utilities.bytesAsHexString(secretKeyEncoded) +
-                ",\n     blindVote=" + blindVote +
+                ",\n     blindVotePayload=" + blindVote +
                 ",\n     date=" + new Date(date) +
                 ",\n     revealTxId='" + revealTxId + '\'' +
                 "\n}";

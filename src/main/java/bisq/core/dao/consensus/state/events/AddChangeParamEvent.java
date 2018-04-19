@@ -45,7 +45,7 @@ public class AddChangeParamEvent extends StateChangeEvent {
     }
 
     public ChangeParamItem getChangeParamPayload() {
-        return (ChangeParamItem) getPayload();
+        return (ChangeParamItem) getData();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

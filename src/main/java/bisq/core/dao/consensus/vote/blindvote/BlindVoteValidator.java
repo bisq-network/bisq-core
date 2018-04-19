@@ -48,8 +48,6 @@ public class BlindVoteValidator {
             checkArgument(blindVote.getEncryptedProposalList().length > 0, "encryptedProposalList must not be empty");
             checkNotNull(blindVote.getTxId(), "txId must not be null");
             checkArgument(blindVote.getTxId().length() > 0, "txId must not be empty");
-            checkNotNull(blindVote.getOwnerPubKeyEncoded(), "ownerPubKeyEncoded must not be null");
-            checkArgument(blindVote.getOwnerPubKeyEncoded().length > 0, "ownerPubKeyEncoded must not be empty");
             checkArgument(blindVote.getStake() > 0, "stake must be positive");
             //TODO check stake min/max
         } catch (Throwable e) {
