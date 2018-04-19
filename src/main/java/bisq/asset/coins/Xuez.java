@@ -20,6 +20,7 @@ package bisq.asset.coins;
 import bisq.asset.AddressValidationResult;
 import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
+import bisq.asset.NetworkParametersAdapter;
 
 public class Xuez extends Coin {
 
@@ -30,6 +31,10 @@ public class Xuez extends Coin {
 
     public static class XuezAddressValidator extends Base58BitcoinAddressValidator {
 
+    	 public XuezAddressValidator() {
+             super(new XuezParams());
+         }
+    	 
         @Override
         public AddressValidationResult validate(String address) {
             
@@ -37,6 +42,15 @@ public class Xuez extends Coin {
                 return AddressValidationResult.invalidStructure();
 
             return AddressValidationResult.validAddress();
+        }
+    }
+    
+    public static class XuezParams extends NetworkParametersAdapter {
+
+        public XuezParams() {
+            addressHeader = 48;
+            p2shHeader = 12;
+            acceptableAddressCodes = new int[]{addressHeader, p2shHeader};
         }
     }
 }
