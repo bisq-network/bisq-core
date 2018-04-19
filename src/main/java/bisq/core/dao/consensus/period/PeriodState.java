@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -170,12 +171,13 @@ public class PeriodState {
         // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
         // as onAllServicesInitialized might get called after the parser has started.
         // We add the default values from the Param enum to our StateChangeEvent list.
-        Cycle cycle = new Cycle(stateService.getGenesisBlockHeight());
-        Arrays.asList(Phase.values()).forEach(phase -> {
-            final Optional<AddChangeParamEvent> optionalEvent = initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight());
-            optionalEvent.ifPresent(event -> applyParamToPhasesInCycle(event.getChangeParamPayload(), cycle));
-        });
-        currentCycle = cycle;
+        List<PhaseWrapper> phaseWrapperList = Arrays.stream(Phase.values())
+                .map(phase -> initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight())
+                        .map(event -> getPhaseWrapper(event.getChangeParamPayload()))
+                        .get())
+                .collect(Collectors.toList());
+        currentCycle = new Cycle(stateService.getGenesisBlockHeight(), ImmutableList.copyOf(phaseWrapperList));
+
         cycles.add(currentCycle);
         stateService.addCycle(currentCycle);
         chainHeight = stateService.getGenesisBlockHeight();
@@ -184,19 +186,34 @@ public class PeriodState {
     }
 
     private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
-        Cycle cycle = new Cycle(blockHeight, currentCycle.getPhaseWrapperList());
-        stateChangeEvents.stream()
+        List<PhaseWrapper> phaseWrapperListFromChangeEvents = stateChangeEvents.stream()
                 .filter(event -> event instanceof AddChangeParamEvent)
                 .map(event -> (AddChangeParamEvent) event)
-                .forEach(event -> applyParamToPhasesInCycle(event.getChangeParamPayload(), cycle));
-        return cycle;
+                .map(event -> getPhaseWrapper(event.getChangeParamPayload()))
+                .collect(Collectors.toList());
+
+        List<PhaseWrapper> phaseWrapperList = new ArrayList<>();
+        for (int i = 0; i < currentCycle.getPhaseWrapperList().size(); i++) {
+            PhaseWrapper currentPhase = currentCycle.getPhaseWrapperList().get(i);
+            // If we have a change event for that phase we use the new wrapper. Otherwise we use the same as in the
+            // current cycle.
+            if (isPhaseInList(phaseWrapperListFromChangeEvents, currentPhase.getPhase()))
+                phaseWrapperList.add(phaseWrapperListFromChangeEvents.get(i));
+            else
+                phaseWrapperList.add(currentPhase);
+        }
+        return new Cycle(blockHeight, ImmutableList.copyOf(phaseWrapperList));
     }
 
-    private void applyParamToPhasesInCycle(ChangeParamItem changeParamItem, Cycle cycle) {
+    private boolean isPhaseInList(List<PhaseWrapper> list, Phase phase) {
+        return list.stream().anyMatch(phaseWrapper -> phaseWrapper.getPhase() == phase);
+    }
+
+    private PhaseWrapper getPhaseWrapper(ChangeParamItem changeParamItem) {
         final String paramName = changeParamItem.getParam().name();
         final String phaseName = paramName.replace("PHASE_", "");
         final Phase phase = Phase.valueOf(phaseName);
-        cycle.setPhaseWrapper(new PhaseWrapper(phase, (int) changeParamItem.getValue()));
+        return new PhaseWrapper(phase, (int) changeParamItem.getValue());
     }
 
     private boolean isFirstBlockAfterPreviousCycle(int height) {

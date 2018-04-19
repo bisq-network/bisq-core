@@ -17,8 +17,8 @@
 
 package bisq.core.dao.consensus.period;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
+
 import java.util.Optional;
 
 import lombok.Value;
@@ -34,23 +34,13 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class Cycle {
     // List is ordered according to the Phase enum.
-    private final List<PhaseWrapper> phaseWrapperList;
+    private final ImmutableList<PhaseWrapper> phaseWrapperList;
     private final int heightOfFirstBlock;
 
-    Cycle(int heightOfFirstBlock) {
-        this(heightOfFirstBlock, new ArrayList<>());
-    }
-
-    Cycle(int heightOfFirstBlock, List<PhaseWrapper> phaseWrapperList) {
+    Cycle(int heightOfFirstBlock, ImmutableList<PhaseWrapper> phaseWrapperList) {
         this.heightOfFirstBlock = heightOfFirstBlock;
         this.phaseWrapperList = phaseWrapperList;
     }
-
-    public void setPhaseWrapper(PhaseWrapper phaseWrapper) {
-        getPhaseWrapper(phaseWrapper.getPhase()).ifPresent(phaseWrapperList::remove);
-        phaseWrapperList.add(phaseWrapper);
-    }
-
 
     public int getHeightOfLastBlock() {
         return heightOfFirstBlock + getDuration() - 1;
@@ -74,7 +64,8 @@ public class Cycle {
     public int getDurationOfPhase(Phase phase) {
         return phaseWrapperList.stream()
                 .filter(item -> item.getPhase() == phase)
-                .mapToInt(PhaseWrapper::getDuration).sum();
+                .mapToInt(PhaseWrapper::getDuration)
+                .sum();
     }
 
     public Optional<Phase> getPhaseForHeight(int height) {
@@ -83,7 +74,6 @@ public class Cycle {
                 .map(PhaseWrapper::getPhase)
                 .findAny();
     }
-
 
     private Optional<PhaseWrapper> getPhaseWrapper(Phase phase) {
         return phaseWrapperList.stream().filter(item -> item.getPhase() == phase).findAny();
