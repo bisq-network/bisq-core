@@ -17,9 +17,10 @@
 
 package bisq.core.dao.consensus.vote.proposal.generic;
 
+import bisq.core.dao.consensus.state.events.payloads.GenericProposalPayload;
 import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
 
 import io.bisq.generated.protobuffer.PB;

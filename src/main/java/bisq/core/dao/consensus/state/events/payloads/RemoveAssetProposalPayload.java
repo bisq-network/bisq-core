@@ -15,10 +15,12 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.proposal.param;
+package bisq.core.dao.consensus.state.events.payloads;
 
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
+import bisq.core.dao.consensus.vote.proposal.param.Param;
+
+import bisq.network.p2p.NodeAddress;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;
@@ -30,8 +32,8 @@ import java.security.PublicKey;
 import java.util.Date;
 import java.util.Map;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -41,14 +43,15 @@ import javax.annotation.Nullable;
  */
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-@Value
-public final class ChangeParamProposalPayload extends ProposalPayload {
+@Data
+public final class RemoveAssetProposalPayload extends ProposalPayload {
 
-    public ChangeParamProposalPayload(String uid,
+    public RemoveAssetProposalPayload(String uid,
                                       String name,
                                       String title,
                                       String description,
                                       String link,
+                                      NodeAddress nodeAddress,
                                       PublicKey ownerPubKey,
                                       Date creationDate) {
         super(uid,
@@ -68,11 +71,12 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeParamProposalPayload(String uid,
+    private RemoveAssetProposalPayload(String uid,
                                        String name,
                                        String title,
                                        String description,
                                        String link,
+                                       String nodeAddress,
                                        byte[] ownerPubKeyEncoded,
                                        byte version,
                                        long creationDate,
@@ -96,7 +100,7 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
         return null;
     }
 
-    public static ChangeParamProposalPayload fromProto(PB.ProposalPayload proto) {
+    public static RemoveAssetProposalPayload fromProto(PB.ProposalPayload proto) {
         //TODO impl
         return null;
     }
@@ -115,16 +119,16 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.CHANGE_PARAM;
+        return ProposalType.REMOVE_ALTCOIN;
     }
 
     @Override
     public Param getQuorumDaoParam() {
-        return Param.QUORUM_CHANGE_PARAM;
+        return Param.QUORUM_REMOVE_ASSET;
     }
 
     @Override
     public Param getThresholdDaoParam() {
-        return Param.THRESHOLD_CHANGE_PARAM;
+        return Param.THRESHOLD_REMOVE_ASSET;
     }
 }

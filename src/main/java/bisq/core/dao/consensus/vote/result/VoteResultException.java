@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.result;
 
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
+import bisq.core.dao.consensus.state.events.payloads.BlindVote;
 
 import lombok.Getter;
 import lombok.ToString;

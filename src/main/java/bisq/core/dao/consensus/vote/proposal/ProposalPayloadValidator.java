@@ -17,6 +17,8 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;

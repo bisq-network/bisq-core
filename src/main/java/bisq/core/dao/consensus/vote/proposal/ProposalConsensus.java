@@ -18,6 +18,7 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.OpReturnType;
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 import bisq.core.dao.consensus.vote.proposal.param.ParamService;
 

@@ -30,12 +30,12 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
+import bisq.core.dao.consensus.state.events.payloads.BlindVote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.ProposalFactory;
 import bisq.core.dao.consensus.vote.proposal.ProposalList;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.consensus.vote.proposal.param.ParamService;
 

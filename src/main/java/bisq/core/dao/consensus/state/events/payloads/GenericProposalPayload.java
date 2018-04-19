@@ -15,9 +15,8 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.proposal.generic;
+package bisq.core.dao.consensus.state.events.payloads;
 
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 

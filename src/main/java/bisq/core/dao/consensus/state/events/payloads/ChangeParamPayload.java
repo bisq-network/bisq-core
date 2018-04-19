@@ -15,7 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.proposal.param;
+package bisq.core.dao.consensus.state.events.payloads;
+
+import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
@@ -28,7 +30,9 @@ import java.util.Map;
 import lombok.Value;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
+@Immutable
 @Value
 public class ChangeParamPayload implements ProtectedStoragePayload {
     private final Param param;

@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.state.blockchain.SpentInfo;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 

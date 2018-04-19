@@ -17,6 +17,7 @@
 
 package bisq.core.dao.consensus.vote.blindvote;
 
+import bisq.core.dao.consensus.state.events.payloads.BlindVote;
 import bisq.core.dao.consensus.vote.proposal.ValidationException;
 
 import javax.inject.Inject;

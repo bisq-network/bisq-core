@@ -23,6 +23,7 @@ import bisq.core.dao.consensus.state.Block;
 import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
