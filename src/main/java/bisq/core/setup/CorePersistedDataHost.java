@@ -19,11 +19,11 @@ package bisq.core.setup;
 
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.btc.AddressEntryList;
-import bisq.core.dao.vote.proposal.param.ParamService;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.myvote.MyVoteService;
-import bisq.core.dao.vote.proposal.MyProposalService;
-import bisq.core.dao.vote.proposal.ProposalService;
+import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
+import bisq.core.dao.consensus.vote.myvote.MyVoteService;
+import bisq.core.dao.consensus.vote.proposal.MyProposalService;
+import bisq.core.dao.consensus.vote.proposal.ProposalService;
+import bisq.core.dao.consensus.vote.proposal.param.ParamService;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.closed.ClosedTradableManager;

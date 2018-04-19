@@ -21,11 +21,11 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.state.Block;
-import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.UserThreadStateService;
-import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.consensus.state.Block;
+import bisq.core.dao.consensus.state.BlockListener;
+import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.state.blockchain.TxOutput;
+import bisq.core.dao.presentation.state.StateServiceFacade;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -73,7 +73,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 @Slf4j
 public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final UserThreadStateService stateService;
+    private final StateServiceFacade stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
@@ -93,7 +93,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     @Inject
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
-                            UserThreadStateService stateService,
+                            StateServiceFacade stateService,
                             Preferences preferences,
                             FeeService feeService) {
         super(walletsSetup,
