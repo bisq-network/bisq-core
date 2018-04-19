@@ -18,23 +18,23 @@
 package bisq.asset.coins;
 
 import bisq.asset.AddressValidationResult;
-import bisq.asset.AddressValidator;
+import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
 
 public class Xuez extends Coin {
 
     public Xuez() {
-        super("Xuez", "XUEZ", new ZcashAddressValidator());
+        super("Xuez", "XUEZ", new XuezAddressValidator());
     }
 
 
-    public static class ZcashAddressValidator implements AddressValidator {
+    public static class XuezAddressValidator extends Base58BitcoinAddressValidator {
 
         @Override
         public AddressValidationResult validate(String address) {
-            // We only support t addresses (transparent transactions)
-            if (!address.matches("^[X][a-km-zA-HJ-NP-Z1-9]{25,34}$"))
-                return AddressValidationResult.invalidAddress("", "validation.altcoin.zAddressesNotSupported");
+            
+        	if (!address.matches("^[X][a-km-zA-HJ-NP-Z1-9]{25,34}$"))
+                return AddressValidationResult.invalidStructure();
 
             return AddressValidationResult.validAddress();
         }
