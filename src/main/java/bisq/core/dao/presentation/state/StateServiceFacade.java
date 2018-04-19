@@ -44,8 +44,12 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
+ *
  * Read access to state from the user thread.
  * We get the listener called on the user thread and keep an independent copy of the state.
+ * Updates in state are reflected here with the delay caused by the thread mapping.
+ *
+ * This class must not be used for consensus critical aspects but only for presentation purposes.
  */
 @Slf4j
 public class StateServiceFacade extends BaseStateService {

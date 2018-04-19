@@ -43,17 +43,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
-@EqualsAndHashCode
+@Immutable
 @Slf4j
-@Data
+@Value
 public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload, VoteConsensusCritical {
 
@@ -68,13 +68,12 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     private final byte[] encryptedProposalList;
     private final String txId;
     // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.
-    private long stake;
+    private final long stake;
     private final byte[] ownerPubKeyEncoded;
 
-    // Used just for caching
+    // Used just for caching, not included in PB.
     @JsonExclude
-    @Nullable
-    private transient PublicKey ownerPubKey;
+    private final transient PublicKey ownerPubKey;
 
     // Should be only used in emergency case if we need to add data but do not want to break backward compatibility
     // at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
@@ -105,6 +104,8 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
         this.stake = stake;
         this.ownerPubKeyEncoded = ownerPubKeyEncoded;
         this.extraDataMap = extraDataMap;
+
+        ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
     // Used for sending over the network
@@ -145,8 +146,6 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
 
     @Override
     public PublicKey getOwnerPubKey() {
-        if (ownerPubKey == null)
-            ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
         return ownerPubKey;
     }
 
