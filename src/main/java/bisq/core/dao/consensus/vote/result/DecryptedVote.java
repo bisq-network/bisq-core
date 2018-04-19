@@ -24,7 +24,7 @@ import bisq.core.dao.consensus.state.blockchain.TxInput;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
-import bisq.core.dao.consensus.state.events.payloads.BlindVote;
+import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.proposal.BallotList;
 
 import javax.crypto.SecretKey;

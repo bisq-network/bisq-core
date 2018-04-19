@@ -15,10 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events.payloads;
+package bisq.core.dao.consensus.vote.proposal.param;
 
+import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
-import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Sig;

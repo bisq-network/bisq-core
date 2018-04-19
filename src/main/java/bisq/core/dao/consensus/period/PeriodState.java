@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamItem;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamItem;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import com.google.inject.Inject;

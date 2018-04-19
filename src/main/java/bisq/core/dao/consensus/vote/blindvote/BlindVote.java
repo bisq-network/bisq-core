@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events.payloads;
+package bisq.core.dao.consensus.vote.blindvote;
 
 import bisq.core.dao.consensus.vote.VoteConsensusCritical;
 

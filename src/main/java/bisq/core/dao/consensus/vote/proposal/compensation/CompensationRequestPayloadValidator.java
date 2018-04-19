@@ -17,8 +17,7 @@
 
 package bisq.core.dao.consensus.vote.proposal.compensation;
 
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
-import bisq.core.dao.consensus.state.events.payloads.Proposal;
+import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.ProposalPayloadValidator;
 import bisq.core.dao.consensus.vote.proposal.ValidationException;
 

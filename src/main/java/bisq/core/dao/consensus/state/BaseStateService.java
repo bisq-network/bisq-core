@@ -29,9 +29,9 @@ import bisq.core.dao.consensus.state.events.AddBlindVoteEvent;
 import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
 import bisq.core.dao.consensus.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamItem;
-import bisq.core.dao.consensus.state.events.payloads.Proposal;
+import bisq.core.dao.consensus.vote.blindvote.BlindVote;
+import bisq.core.dao.consensus.vote.proposal.Proposal;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamItem;
 
 import org.bitcoinj.core.Coin;
 

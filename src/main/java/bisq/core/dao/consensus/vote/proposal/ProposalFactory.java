@@ -17,7 +17,6 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestBallot;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 

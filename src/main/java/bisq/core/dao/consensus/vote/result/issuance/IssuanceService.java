@@ -20,7 +20,7 @@ package bisq.core.dao.consensus.vote.result.issuance;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestProposal;
 
 import javax.inject.Inject;
 

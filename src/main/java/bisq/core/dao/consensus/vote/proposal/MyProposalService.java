@@ -26,7 +26,6 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import bisq.network.p2p.P2PService;
 
