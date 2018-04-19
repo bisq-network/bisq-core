@@ -30,7 +30,7 @@ import bisq.core.dao.consensus.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.consensus.node.messages.NewBsqBlockBroadcastMessage;
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
@@ -196,8 +196,8 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return MailboxStoragePayload.fromProto(proto.getMailboxStoragePayload());
                 case OFFER_PAYLOAD:
                     return OfferPayload.fromProto(proto.getOfferPayload());
-                case PROPOSAL_PAYLOAD:
-                    return ProposalPayload.fromProto(proto.getProposalPayload());
+                case PROPOSAL:
+                    return Proposal.fromProto(proto.getProposal());
                 case BLIND_VOTE:
                     return BlindVote.fromProto(proto.getBlindVote());
                 default:

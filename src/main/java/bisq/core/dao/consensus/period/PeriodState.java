@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamPayload;
+import bisq.core.dao.consensus.state.events.payloads.ChangeParamItem;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import com.google.inject.Inject;
@@ -45,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * A cycle is the sequence of distinct phases. The first cycle and phase starts with the genesis block height.
  *
  * This class should be accessed by the PeriodService only as it is designed to run in the parser thread.
- * Only exception is the listener which gets set from the UserThreadPeriodService/s user thread and is executed
+ * Only exception is the listener which gets set from the PeriodServiceFacade/s user thread and is executed
  * by mapping and the immutable data to user thread. The cycles list gets cloned as that list is not
  * immutable (though Cycle is).
  */
@@ -178,6 +178,7 @@ public class PeriodState {
         currentCycle = cycle;
         cycles.add(currentCycle);
         stateService.addCycle(currentCycle);
+        chainHeight = stateService.getGenesisBlockHeight();
 
         notifyListeners();
     }
@@ -191,11 +192,11 @@ public class PeriodState {
         return cycle;
     }
 
-    private void applyParamToPhasesInCycle(ChangeParamPayload changeParamPayload, Cycle cycle) {
-        final String paramName = changeParamPayload.getParam().name();
+    private void applyParamToPhasesInCycle(ChangeParamItem changeParamItem, Cycle cycle) {
+        final String paramName = changeParamItem.getParam().name();
         final String phaseName = paramName.replace("PHASE_", "");
         final Phase phase = Phase.valueOf(phaseName);
-        cycle.setPhaseWrapper(new PhaseWrapper(phase, (int) changeParamPayload.getValue()));
+        cycle.setPhaseWrapper(new PhaseWrapper(phase, (int) changeParamItem.getValue()));
     }
 
     private boolean isFirstBlockAfterPreviousCycle(int height) {
@@ -224,8 +225,8 @@ public class PeriodState {
     private Optional<AddChangeParamEvent> initWithDefaultValueAtGenesisHeight(Phase phase, int height) {
         return Arrays.stream(Param.values())
                 .filter(param -> isParamMatchingPhase(param, phase))
-                .map(param -> new ChangeParamPayload(param, param.getDefaultValue()))
-                .map(changeParamPayload -> new AddChangeParamEvent(changeParamPayload, height))
+                .map(param -> new ChangeParamItem(param, param.getDefaultValue()))
+                .map(changeParamItem -> new AddChangeParamEvent(changeParamItem, height))
                 .findAny();
     }
 

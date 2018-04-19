@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  * BsqBlockchain gets changed due a re-org we will not suffer from a stale state.
  */
 @Slf4j
-public class ParamService implements PersistedDataHost {
+public class ChangeParamService implements PersistedDataHost {
     private final Storage<ChangeParamEventList> storage;
     @Getter
     private final ChangeParamEventList changeParamEventList = new ChangeParamEventList();
@@ -53,7 +53,7 @@ public class ParamService implements PersistedDataHost {
 
 
     @Inject
-    public ParamService(Storage<ChangeParamEventList> storage) {
+    public ChangeParamService(Storage<ChangeParamEventList> storage) {
         this.storage = storage;
     }
 

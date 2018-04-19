@@ -17,20 +17,20 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequest;
-import bisq.core.dao.consensus.vote.proposal.generic.GenericProposal;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestBallot;
+import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalFactory {
-    public static Proposal getProposalFromPayload(ProposalPayload proposalPayload) {
-        switch (proposalPayload.getType()) {
+    public static Ballot getProposalFromPayload(Proposal proposal) {
+        switch (proposal.getType()) {
             case COMPENSATION_REQUEST:
-                return new CompensationRequest(proposalPayload);
+                return new CompensationRequestBallot(proposal);
             case GENERIC:
-                return new GenericProposal(proposalPayload);
+                return new GenericBallot(proposal);
             case CHANGE_PARAM:
                 //TODO
                 throw new RuntimeException("Not implemented yet");
@@ -38,7 +38,7 @@ public class ProposalFactory {
                 //TODO
                 throw new RuntimeException("Not implemented yet");
             default:
-                final String msg = "Undefined ProposalType " + proposalPayload.getType();
+                final String msg = "Undefined ProposalType " + proposal.getType();
                 log.error(msg);
                 throw new RuntimeException(msg);
         }

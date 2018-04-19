@@ -18,9 +18,9 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.OpReturnType;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
@@ -36,11 +36,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalConsensus {
-    public static Coin getFee(ParamService paramService, int chainHeadHeight) {
-        return Coin.valueOf(paramService.getDaoParamValue(Param.PROPOSAL_FEE, chainHeadHeight));
+    public static Coin getFee(ChangeParamService changeParamService, int chainHeadHeight) {
+        return Coin.valueOf(changeParamService.getDaoParamValue(Param.PROPOSAL_FEE, chainHeadHeight));
     }
 
-    public static byte[] getHashOfPayload(ProposalPayload payload) {
+    public static byte[] getHashOfPayload(Proposal payload) {
         final byte[] bytes = payload.toProtoMessage().toByteArray();
         return Hash.getSha256Ripemd160hash(bytes);
     }

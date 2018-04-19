@@ -23,5 +23,5 @@ package bisq.core.dao.consensus.vote.proposal.asset;
  */
 
 // TODO implement
-public class RemoveAssetProposal/* extends Proposal*/ {
+public class RemoveAssetBallot/* extends Ballot*/ {
 }

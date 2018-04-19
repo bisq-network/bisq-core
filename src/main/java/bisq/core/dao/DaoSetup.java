@@ -25,7 +25,7 @@ import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.vote.proposal.MyProposalService;
 import bisq.core.dao.consensus.vote.proposal.ProposalListService;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.result.VoteResultService;
 import bisq.core.dao.consensus.vote.votereveal.VoteRevealService;
 
@@ -41,7 +41,7 @@ public class DaoSetup {
     private final NodeExecutor nodeExecutor;
     private final MyProposalService myProposalService;
     private final BsqNode bsqNode;
-    private final ParamService paramService;
+    private final ChangeParamService changeParamService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final ProposalService proposalService;
@@ -62,7 +62,7 @@ public class DaoSetup {
                     BlindVoteService blindVoteService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
-                    ParamService paramService) {
+                    ChangeParamService changeParamService) {
         this.nodeExecutor = nodeExecutor;
         this.myProposalService = myProposalService;
         this.proposalService = proposalService;
@@ -70,7 +70,7 @@ public class DaoSetup {
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.paramService = paramService;
+        this.changeParamService = changeParamService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
@@ -81,7 +81,7 @@ public class DaoSetup {
             proposalListService.onAllServicesInitialized();
             bsqNode.onAllServicesInitialized(errorMessageHandler);
             voteResultService.onAllServicesInitialized();
-            paramService.onAllServicesInitialized();
+            changeParamService.onAllServicesInitialized();
 
             nodeExecutor.get().execute(() -> {
                 proposalService.onAllServicesInitialized();

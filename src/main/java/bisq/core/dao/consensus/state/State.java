@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.state.blockchain.SpentInfo;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 
@@ -112,7 +112,7 @@ public class State implements PersistableEnvelope {
 
     // StateChangeEvents (non blockchain data)
     private final List<Cycle> cycles = new ArrayList<>();
-    private final Map<String, ProposalPayload> proposalPayloadMap = new HashMap<>();
+    private final Map<String, Proposal> proposalPayloadMap = new HashMap<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -302,7 +302,7 @@ public class State implements PersistableEnvelope {
         return spentInfoMap;
     }
 
-    public Map<String, ProposalPayload> getProposalPayloadMap() {
+    public Map<String, Proposal> getProposalPayloadMap() {
         return proposalPayloadMap;
     }
 

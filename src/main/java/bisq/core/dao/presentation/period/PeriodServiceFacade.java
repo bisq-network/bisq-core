@@ -15,8 +15,14 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.period;
+package bisq.core.dao.presentation.period;
 
+import bisq.core.dao.consensus.period.BasePeriodService;
+import bisq.core.dao.consensus.period.Cycle;
+import bisq.core.dao.consensus.period.PeriodState;
+import bisq.core.dao.consensus.period.PeriodStateListener;
+import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 
@@ -27,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
  * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
-public final class UserThreadPeriodService extends BasePeriodService implements PeriodStateListener {
+public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateListener {
     //TODO remove
     private final StateService stateService;
 
@@ -51,6 +58,7 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
     private int chainHeight;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    private List<BlockListener> blockListeners = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -58,10 +66,19 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public UserThreadPeriodService(PeriodState periodState, StateService stateService) {
+    public PeriodServiceFacade(PeriodState periodState, StateService stateService) {
         this.stateService = stateService;
 
         periodState.addListenerAndGetNotified(this);
+        stateService.addBlockListener(block -> blockListeners.forEach(l -> l.execute(() -> l.onBlockAdded(block))));
+    }
+
+    public void addBlockListener(BlockListener blockListener) {
+        blockListeners.add(blockListener);
+    }
+
+    public void removeBlockListener(BlockListener blockListener) {
+        blockListeners.remove(blockListener);
     }
 
 
@@ -88,7 +105,6 @@ public final class UserThreadPeriodService extends BasePeriodService implements 
         if (chainHeight > 0 && currentCycle != null)
             currentCycle.getPhaseForHeight(chainHeight).ifPresent(phaseProperty::set);
     }
-
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

@@ -36,21 +36,19 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-/**
- * Payload for generic proposals.
- */
+//TODO separate value object with p2p network data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Value
-public final class ChangeParamProposalPayload extends ProposalPayload {
+public final class ChangeParamProposal extends Proposal {
 
-    public ChangeParamProposalPayload(String uid,
-                                      String name,
-                                      String title,
-                                      String description,
-                                      String link,
-                                      PublicKey ownerPubKey,
-                                      Date creationDate) {
+    public ChangeParamProposal(String uid,
+                               String name,
+                               String title,
+                               String description,
+                               String link,
+                               PublicKey ownerPubKey,
+                               Date creationDate) {
         super(uid,
                 name,
                 title,
@@ -68,16 +66,16 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeParamProposalPayload(String uid,
-                                       String name,
-                                       String title,
-                                       String description,
-                                       String link,
-                                       byte[] ownerPubKeyEncoded,
-                                       byte version,
-                                       long creationDate,
-                                       String txId,
-                                       @Nullable Map<String, String> extraDataMap) {
+    private ChangeParamProposal(String uid,
+                                String name,
+                                String title,
+                                String description,
+                                String link,
+                                byte[] ownerPubKeyEncoded,
+                                byte version,
+                                long creationDate,
+                                String txId,
+                                @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -91,24 +89,24 @@ public final class ChangeParamProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public PB.ProposalPayload.Builder getPayloadBuilder() {
+    public PB.Proposal.Builder getProposalBuilder() {
         //TODO impl
         return null;
     }
 
-    public static ChangeParamProposalPayload fromProto(PB.ProposalPayload proto) {
-        //TODO impl
-        return null;
-    }
-
-    @Override
-    public ProposalPayload cloneWithoutTxId() {
+    public static ChangeParamProposal fromProto(PB.Proposal proto) {
         //TODO impl
         return null;
     }
 
     @Override
-    public ProposalPayload cloneWithTxId(String txId) {
+    public Proposal cloneWithoutTxId() {
+        //TODO impl
+        return null;
+    }
+
+    @Override
+    public Proposal cloneWithTxId(String txId) {
         //TODO impl
         return null;
     }

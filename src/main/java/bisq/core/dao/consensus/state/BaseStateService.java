@@ -30,8 +30,8 @@ import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
 import bisq.core.dao.consensus.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamPayload;
+import bisq.core.dao.consensus.state.events.payloads.ChangeParamItem;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import org.bitcoinj.core.Coin;
 
@@ -345,7 +345,7 @@ public abstract class BaseStateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<ProposalPayload> getProposalPayloads() {
+    public Set<Proposal> getProposalPayloads() {
         return getAddProposalPayloadEvents().stream()
                 .map(AddProposalPayloadEvent::getProposalPayload)
                 .collect(Collectors.toSet());
@@ -357,7 +357,7 @@ public abstract class BaseStateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<ChangeParamPayload> getChangeParamPayloads() {
+    public Set<ChangeParamItem> getChangeParamPayloads() {
         return getAddChangeParamEvents().stream()
                 .map(AddChangeParamEvent::getChangeParamPayload)
                 .collect(Collectors.toSet());

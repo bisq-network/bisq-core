@@ -17,10 +17,10 @@
 
 package bisq.core.dao.consensus.vote.proposal.generic;
 
-import bisq.core.dao.consensus.state.events.payloads.GenericProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.GenericProposal;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.Vote;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
 
 import io.bisq.generated.protobuffer.PB;
@@ -41,13 +41,13 @@ import javax.annotation.Nullable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class GenericProposal extends Proposal {
+public class GenericBallot extends Ballot {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GenericProposal(ProposalPayload payload) {
+    public GenericBallot(Proposal payload) {
         super(payload, null, null);
     }
 
@@ -56,22 +56,22 @@ public class GenericProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GenericProposal(ProposalPayload proposalPayload,
-                            @Nullable Vote vote,
-                            @Nullable Map<String, String> extraDataMap) {
-        super(proposalPayload,
+    private GenericBallot(Proposal proposal,
+                          @Nullable Vote vote,
+                          @Nullable Map<String, String> extraDataMap) {
+        super(proposal,
                 vote,
                 extraDataMap);
     }
 
     @Override
-    public PB.Proposal toProtoMessage() {
-        return getProposalBuilder().setGenericProposal(PB.GenericProposal.newBuilder())
+    public PB.Ballot toProtoMessage() {
+        return getBallotBuilder().setGenericBallot(PB.GenericBallot.newBuilder())
                 .build();
     }
 
-    public static GenericProposal fromProto(PB.Proposal proto) {
-        return new GenericProposal(ProposalPayload.fromProto(proto.getProposalPayload()),
+    public static GenericBallot fromProto(PB.Ballot proto) {
+        return new GenericBallot(Proposal.fromProto(proto.getProposal()),
                 proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
@@ -86,7 +86,7 @@ public class GenericProposal extends Proposal {
         return ProposalType.GENERIC;
     }
 
-    private GenericProposalPayload getGenericProposalPayload() {
-        return (GenericProposalPayload) proposalPayload;
+    private GenericProposal getGenericProposalPayload() {
+        return (GenericProposal) proposal;
     }
 }

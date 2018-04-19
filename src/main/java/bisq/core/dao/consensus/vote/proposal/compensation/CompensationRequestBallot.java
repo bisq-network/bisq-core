@@ -17,10 +17,10 @@
 
 package bisq.core.dao.consensus.vote.proposal.compensation;
 
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestPayload;
+import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.Vote;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
 import bisq.core.dao.consensus.vote.proposal.ProposalType;
 
 import io.bisq.generated.protobuffer.PB;
@@ -40,19 +40,19 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 /**
- * Locally persisted CompensationRequest data.
+ * Locally persisted CompensationRequestBallot data.
  */
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class CompensationRequest extends Proposal {
+public class CompensationRequestBallot extends Ballot {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationRequest(ProposalPayload proposalPayload) {
-        super(proposalPayload, null, null);
+    public CompensationRequestBallot(Proposal proposal) {
+        super(proposal, null, null);
     }
 
 
@@ -60,22 +60,22 @@ public class CompensationRequest extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationRequest(ProposalPayload proposalPayload,
-                                @Nullable Vote vote,
-                                @Nullable Map<String, String> extraDataMap) {
-        super(proposalPayload,
+    private CompensationRequestBallot(Proposal proposal,
+                                      @Nullable Vote vote,
+                                      @Nullable Map<String, String> extraDataMap) {
+        super(proposal,
                 vote,
                 extraDataMap);
     }
 
     @Override
-    public PB.Proposal toProtoMessage() {
-        return getProposalBuilder().setCompensationRequest(PB.CompensationRequest.newBuilder())
+    public PB.Ballot toProtoMessage() {
+        return getBallotBuilder().setCompensationRequestBallot(PB.CompensationRequestBallot.newBuilder())
                 .build();
     }
 
-    public static CompensationRequest fromProto(PB.Proposal proto) {
-        return new CompensationRequest(ProposalPayload.fromProto(proto.getProposalPayload()),
+    public static CompensationRequestBallot fromProto(PB.Ballot proto) {
+        return new CompensationRequestBallot(Proposal.fromProto(proto.getProposal()),
                 proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
@@ -93,8 +93,8 @@ public class CompensationRequest extends Proposal {
         return getCompensationRequestPayload().getAddress();
     }
 
-    private CompensationRequestPayload getCompensationRequestPayload() {
-        return (CompensationRequestPayload) proposalPayload;
+    private CompensationRequestProposal getCompensationRequestPayload() {
+        return (CompensationRequestProposal) proposal;
     }
 
     @Override
@@ -104,6 +104,6 @@ public class CompensationRequest extends Proposal {
 
     @Override
     public String toString() {
-        return "CompensationRequest{} " + super.toString();
+        return "CompensationRequestBallot{} " + super.toString();
     }
 }

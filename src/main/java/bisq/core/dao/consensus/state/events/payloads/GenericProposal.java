@@ -39,22 +39,20 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * Payload for generic proposals.
- */
+//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class GenericProposalPayload extends ProposalPayload {
+public final class GenericProposal extends Proposal {
 
-    public GenericProposalPayload(String uid,
-                                  String name,
-                                  String title,
-                                  String description,
-                                  String link,
-                                  PublicKey ownerPubKey,
-                                  Date creationDate) {
+    public GenericProposal(String uid,
+                           String name,
+                           String title,
+                           String description,
+                           String link,
+                           PublicKey ownerPubKey,
+                           Date creationDate) {
         super(uid,
                 name,
                 title,
@@ -72,16 +70,16 @@ public final class GenericProposalPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GenericProposalPayload(String uid,
-                                   String name,
-                                   String title,
-                                   String description,
-                                   String link,
-                                   byte[] ownerPubKeyEncoded,
-                                   byte version,
-                                   long creationDate,
-                                   String txId,
-                                   @Nullable Map<String, String> extraDataMap) {
+    private GenericProposal(String uid,
+                            String name,
+                            String title,
+                            String description,
+                            String link,
+                            byte[] ownerPubKeyEncoded,
+                            byte version,
+                            long creationDate,
+                            String txId,
+                            @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -95,12 +93,12 @@ public final class GenericProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public PB.ProposalPayload.Builder getPayloadBuilder() {
-        return super.getPayloadBuilder().setGenericProposalPayload(PB.GenericProposalPayload.newBuilder());
+    public PB.Proposal.Builder getProposalBuilder() {
+        return super.getProposalBuilder().setGenericProposal(PB.GenericProposal.newBuilder());
     }
 
-    public static GenericProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new GenericProposalPayload(proto.getUid(),
+    public static GenericProposal fromProto(PB.Proposal proto) {
+        return new GenericProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
@@ -128,8 +126,8 @@ public final class GenericProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public ProposalPayload cloneWithTxId(String txId) {
-        return new GenericProposalPayload(getUid(),
+    public Proposal cloneWithTxId(String txId) {
+        return new GenericProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -142,8 +140,8 @@ public final class GenericProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public ProposalPayload cloneWithoutTxId() {
-        return new GenericProposalPayload(getUid(),
+    public Proposal cloneWithoutTxId() {
+        return new GenericProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),

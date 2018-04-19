@@ -23,7 +23,7 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.consensus.state.State;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.vote.myvote.MyVoteList;
-import bisq.core.dao.consensus.vote.proposal.ProposalList;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
@@ -105,8 +105,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return State.fromProto(proto.getBsqBlockChain());   //TODO
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
-                case PROPOSAL_LIST:
-                    return ProposalList.fromProto(proto.getProposalList());
+                case BALLOT_LIST:
+                    return BallotList.fromProto(proto.getBallotList());
                 case MY_VOTE_LIST:
                     return MyVoteList.fromProto(proto.getMyVoteList());
                 case BLIND_VOTE_LIST:

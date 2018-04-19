@@ -46,38 +46,38 @@ public class Cycle {
         this.phaseWrapperList = phaseWrapperList;
     }
 
-    void setPhaseWrapper(PhaseWrapper phaseWrapper) {
+    public void setPhaseWrapper(PhaseWrapper phaseWrapper) {
         getPhaseWrapper(phaseWrapper.getPhase()).ifPresent(phaseWrapperList::remove);
         phaseWrapperList.add(phaseWrapper);
     }
 
 
-    int getHeightOfLastBlock() {
+    public int getHeightOfLastBlock() {
         return heightOfFirstBlock + getDuration() - 1;
     }
 
-    boolean isInPhase(int height, Phase phase) {
+    public boolean isInPhase(int height, Phase phase) {
         return height >= getFirstBlockOfPhase(phase) &&
                 height <= getLastBlockOfPhase(phase);
     }
 
-    int getFirstBlockOfPhase(Phase phase) {
+    public int getFirstBlockOfPhase(Phase phase) {
         return heightOfFirstBlock + phaseWrapperList.stream()
                 .filter(item -> item.getPhase().ordinal() < phase.ordinal())
                 .mapToInt(PhaseWrapper::getDuration).sum();
     }
 
-    int getLastBlockOfPhase(Phase phase) {
+    public int getLastBlockOfPhase(Phase phase) {
         return getFirstBlockOfPhase(phase) + getDuration(phase) - 1;
     }
 
-    int getDurationOfPhase(Phase phase) {
+    public int getDurationOfPhase(Phase phase) {
         return phaseWrapperList.stream()
                 .filter(item -> item.getPhase() == phase)
                 .mapToInt(PhaseWrapper::getDuration).sum();
     }
 
-    Optional<Phase> getPhaseForHeight(int height) {
+    public Optional<Phase> getPhaseForHeight(int height) {
         return phaseWrapperList.stream()
                 .filter(item -> isInPhase(height, item.getPhase()))
                 .map(PhaseWrapper::getPhase)

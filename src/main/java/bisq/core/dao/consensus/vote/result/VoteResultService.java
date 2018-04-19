@@ -21,17 +21,17 @@ import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.state.events.payloads.ChangeParamProposal;
+import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
+import bisq.core.dao.consensus.state.events.payloads.GenericProposal;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
+import bisq.core.dao.consensus.state.events.payloads.RemoveAssetProposalPayload;
 import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
-import bisq.core.dao.consensus.state.events.payloads.RemoveAssetProposalPayload;
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestPayload;
-import bisq.core.dao.consensus.state.events.payloads.GenericProposalPayload;
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamProposalPayload;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.result.issuance.IssuanceService;
 import bisq.core.dao.consensus.vote.votereveal.VoteRevealConsensus;
 import bisq.core.dao.consensus.vote.votereveal.VoteRevealService;
@@ -75,7 +75,7 @@ public class VoteResultService {
     private final BlindVoteService blindVoteService;
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
-    private final ParamService paramService;
+    private final ChangeParamService changeParamService;
     private final PeriodService periodService;
     private final IssuanceService issuanceService;
     @Getter
@@ -91,14 +91,14 @@ public class VoteResultService {
                              BlindVoteService blindVoteService,
                              VoteRevealService voteRevealService,
                              StateService stateService,
-                             ParamService paramService,
+                             ChangeParamService changeParamService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
         this.nodeExecutor = nodeExecutor;
         this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
-        this.paramService = paramService;
+        this.changeParamService = changeParamService;
         this.periodService = periodService;
         this.issuanceService = issuanceService;
     }
@@ -144,8 +144,8 @@ public class VoteResultService {
             byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(stakeByHashOfVoteListMap);
             if (majorityVoteListHash != null) {
                 if (isBlindVoteListMatchingMajority(majorityVoteListHash, chainHeight)) {
-                    Map<ProposalPayload, List<VoteWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(decryptedVoteByVoteRevealTxIdSet);
-                    processAllVoteResults(resultListByProposalPayloadMap, chainHeight, paramService);
+                    Map<Proposal, List<VoteWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(decryptedVoteByVoteRevealTxIdSet);
+                    processAllVoteResults(resultListByProposalPayloadMap, chainHeight, changeParamService);
                     log.info("processAllVoteResults completed");
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
@@ -207,31 +207,31 @@ public class VoteResultService {
     }
 
 
-    private Map<ProposalPayload, List<VoteWithStake>> getResultListByProposalPayloadMap(Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet) {
-        Map<ProposalPayload, List<VoteWithStake>> stakeByProposalMap = new HashMap<>();
+    private Map<Proposal, List<VoteWithStake>> getResultListByProposalPayloadMap(Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet) {
+        Map<Proposal, List<VoteWithStake>> stakeByProposalMap = new HashMap<>();
         decryptedVoteByVoteRevealTxIdSet.forEach(decryptedVote -> {
             iterateProposals(stakeByProposalMap, decryptedVote);
         });
         return stakeByProposalMap;
     }
 
-    private void iterateProposals(Map<ProposalPayload, List<VoteWithStake>> stakeByProposalMap, DecryptedVote decryptedVote) {
-        decryptedVote.getProposalListUsedForVoting().getList()
+    private void iterateProposals(Map<Proposal, List<VoteWithStake>> stakeByProposalMap, DecryptedVote decryptedVote) {
+        decryptedVote.getBallotListUsedForVoting().getList()
                 .forEach(proposal -> {
-                    final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                    final Proposal proposalPayload = proposal.getProposal();
                     stakeByProposalMap.putIfAbsent(proposalPayload, new ArrayList<>());
                     final List<VoteWithStake> voteWithStakeList = stakeByProposalMap.get(proposalPayload);
                     voteWithStakeList.add(new VoteWithStake(proposal.getVote(), decryptedVote.getStake()));
                 });
     }
 
-    private void processAllVoteResults(Map<ProposalPayload, List<VoteWithStake>> map,
+    private void processAllVoteResults(Map<Proposal, List<VoteWithStake>> map,
                                        int chainHeight,
-                                       ParamService paramService) {
+                                       ChangeParamService changeParamService) {
         map.forEach((payload, voteResultsWithStake) -> {
             ResultPerProposal resultPerProposal = getResultPerProposal(voteResultsWithStake);
             long totalStake = resultPerProposal.getStakeOfAcceptedVotes() + resultPerProposal.getStakeOfRejectedVotes();
-            long quorum = paramService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
+            long quorum = changeParamService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
             log.info("totalStake: {}", totalStake);
             log.info("required quorum: {}", quorum);
             if (totalStake >= quorum) {
@@ -239,7 +239,7 @@ public class VoteResultService {
                 // We multiply by 10000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 reachedThreshold *= 10_000;
-                long requiredVoteThreshold = paramService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
+                long requiredVoteThreshold = changeParamService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
                 log.info("reached threshold: {} %", reachedThreshold / 100D);
                 log.info("required threshold: {} %", requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold
@@ -279,14 +279,14 @@ public class VoteResultService {
         return new ResultPerProposal(stakeOfAcceptedVotes, stakeOfRejectedVotes);
     }
 
-    private void processCompletedVoteResult(ProposalPayload proposalPayload, int chainHeight) {
-        if (proposalPayload instanceof CompensationRequestPayload) {
-            issuanceService.issueBsq((CompensationRequestPayload) proposalPayload, chainHeight);
-        } else if (proposalPayload instanceof GenericProposalPayload) {
+    private void processCompletedVoteResult(Proposal proposal, int chainHeight) {
+        if (proposal instanceof CompensationRequestProposal) {
+            issuanceService.issueBsq((CompensationRequestProposal) proposal, chainHeight);
+        } else if (proposal instanceof GenericProposal) {
             //TODO impl
-        } else if (proposalPayload instanceof ChangeParamProposalPayload) {
+        } else if (proposal instanceof ChangeParamProposal) {
             //TODO impl
-        } else if (proposalPayload instanceof RemoveAssetProposalPayload) {
+        } else if (proposal instanceof RemoveAssetProposalPayload) {
             //TODO impl
         }
     }

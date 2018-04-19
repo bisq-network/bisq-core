@@ -22,6 +22,6 @@ package bisq.core.dao.consensus.vote.proposal.param;
  */
 
 // TODO implement
-public class ChangeParamProposal /*extends Proposal */ {
+public class ChangeParamBallot /*extends Ballot */ {
 
 }

@@ -19,10 +19,10 @@ package bisq.core.dao.consensus.vote.blindvote;
 
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalList;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.CryptoException;
@@ -49,10 +49,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlindVoteConsensus {
     // Sorted by TxId
-    public static void sortProposalList(List<Proposal> proposals) {
-        proposals.sort(Comparator.comparing(Proposal::getTxId));
-        log.info("Sorted proposalList for blind vote: " + proposals.stream()
-                .map(Proposal::getUid)
+    public static void sortProposalList(List<Ballot> ballots) {
+        ballots.sort(Comparator.comparing(Ballot::getTxId));
+        log.info("Sorted proposalList for blind vote: " + ballots.stream()
+                .map(Ballot::getUid)
                 .collect(Collectors.toList()));
     }
 
@@ -61,8 +61,8 @@ public class BlindVoteConsensus {
         return Encryption.generateSecretKey(128);
     }
 
-    public static byte[] getEncryptedProposalList(ProposalList proposalList, SecretKey secretKey) throws CryptoException {
-        final byte[] payload = proposalList.toProtoMessage().toByteArray();
+    public static byte[] getEncryptedProposalList(BallotList ballotList, SecretKey secretKey) throws CryptoException {
+        final byte[] payload = ballotList.toProtoMessage().toByteArray();
         final byte[] encryptedProposalList = Encryption.encrypt(payload, secretKey);
         log.info("encryptedProposalList: " + Utilities.bytesAsHexString(encryptedProposalList));
         return encryptedProposalList;
@@ -70,7 +70,7 @@ public class BlindVoteConsensus {
            /*  byte[] decryptedProposalList = Encryption.decrypt(encryptedProposalList, secretKey);
         try {
             PB.PersistableEnvelope proto = PB.PersistableEnvelope.parseFrom(decryptedProposalList);
-            PersistableEnvelope decrypted = ProposalList.fromProto(proto.getProposalList());
+            PersistableEnvelope decrypted = BallotList.fromProto(proto.getBallotList());
             log.error(decrypted.toString());
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
@@ -98,8 +98,8 @@ public class BlindVoteConsensus {
     }
 
 
-    public static Coin getFee(ParamService paramService, int chainHeadHeight) {
-        final Coin fee = Coin.valueOf(paramService.getDaoParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
+    public static Coin getFee(ChangeParamService changeParamService, int chainHeadHeight) {
+        final Coin fee = Coin.valueOf(changeParamService.getDaoParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
         log.info("Fee for blind vote: " + fee);
         return fee;
     }

@@ -17,8 +17,8 @@
 
 package bisq.core.dao.consensus.vote.proposal.compensation;
 
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestPayload;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.proposal.ProposalPayloadValidator;
 import bisq.core.dao.consensus.vote.proposal.ValidationException;
 
@@ -42,16 +42,16 @@ public class CompensationRequestPayloadValidator extends ProposalPayloadValidato
     }
 
     @Override
-    public void validateDataFields(ProposalPayload proposalPayload) throws ValidationException {
+    public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
-            super.validateDataFields(proposalPayload);
+            super.validateDataFields(proposal);
 
-            CompensationRequestPayload compensationRequestPayload = (CompensationRequestPayload) proposalPayload;
-            String bsqAddress = compensationRequestPayload.getBsqAddress();
+            CompensationRequestProposal compensationRequestProposal = (CompensationRequestProposal) proposal;
+            String bsqAddress = compensationRequestProposal.getBsqAddress();
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
-            compensationRequestPayload.getAddress(); // throws AddressFormatException if wrong address
-            final Coin requestedBsq = compensationRequestPayload.getRequestedBsq();
+            compensationRequestProposal.getAddress(); // throws AddressFormatException if wrong address
+            final Coin requestedBsq = compensationRequestProposal.getRequestedBsq();
             checkArgument(requestedBsq.compareTo(getMaxCompensationRequestAmount()) <= 0,
                     "Requested BSQ must not exceed MaxCompensationRequestAmount");
             checkArgument(requestedBsq.compareTo(getMinCompensationRequestAmount()) >= 0,

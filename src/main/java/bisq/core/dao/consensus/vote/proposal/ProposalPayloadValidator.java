@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import javax.inject.Inject;
 
@@ -33,23 +33,23 @@ public class ProposalPayloadValidator {
     public ProposalPayloadValidator() {
     }
 
-    public boolean isValid(ProposalPayload proposalPayload) {
+    public boolean isValid(Proposal proposal) {
         try {
-            validateDataFields(proposalPayload);
+            validateDataFields(proposal);
             return true;
         } catch (ValidationException e) {
             return false;
         }
     }
 
-    public void validateDataFields(ProposalPayload proposalPayload) throws ValidationException {
+    public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
-            notEmpty(proposalPayload.getName(), "name must not be empty");
-            notEmpty(proposalPayload.getTitle(), "title must not be empty");
-            notEmpty(proposalPayload.getDescription(), "description must not be empty");
-            notEmpty(proposalPayload.getLink(), "link must not be empty");
+            notEmpty(proposal.getName(), "name must not be empty");
+            notEmpty(proposal.getTitle(), "title must not be empty");
+            notEmpty(proposal.getDescription(), "description must not be empty");
+            notEmpty(proposal.getLink(), "link must not be empty");
 
-            checkArgument(ProposalConsensus.isDescriptionSizeValid(proposalPayload.getDescription()), "description is too long");
+            checkArgument(ProposalConsensus.isDescriptionSizeValid(proposal.getDescription()), "description is too long");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }

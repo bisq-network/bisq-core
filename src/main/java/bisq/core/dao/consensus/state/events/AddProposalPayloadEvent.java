@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import com.google.protobuf.Message;
 
@@ -31,7 +31,7 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class AddProposalPayloadEvent extends StateChangeEvent {
 
-    public AddProposalPayloadEvent(ProposalPayload payload, int height) {
+    public AddProposalPayloadEvent(Proposal payload, int height) {
         super(payload, height);
     }
 
@@ -41,7 +41,7 @@ public class AddProposalPayloadEvent extends StateChangeEvent {
         return null;
     }
 
-    public ProposalPayload getProposalPayload() {
-        return (ProposalPayload) getPayload();
+    public Proposal getProposalPayload() {
+        return (Proposal) getPayload();
     }
 }

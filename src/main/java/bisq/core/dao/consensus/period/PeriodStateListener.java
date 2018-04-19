@@ -21,7 +21,7 @@ import bisq.common.ThreadAwareListener;
 
 import com.google.common.collect.ImmutableList;
 
-interface PeriodStateListener extends ThreadAwareListener {
+public interface PeriodStateListener extends ThreadAwareListener {
     void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
 
     void onChainHeightChanged(int chainHeight);

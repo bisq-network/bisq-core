@@ -18,7 +18,7 @@
 package bisq.core.dao.consensus.vote.myvote;
 
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.vote.proposal.ProposalList;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
 
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;
@@ -44,9 +44,9 @@ import javax.annotation.Nullable;
 @Slf4j
 @Data
 public class MyVote implements PersistablePayload {
-    // TODO do we need to store proposalList - it could be created by decrypting blindVote.encryptedProposalList
+    // TODO do we need to store ballotList - it could be created by decrypting blindVote.encryptedProposalList
     // with secretKey
-    private final ProposalList proposalList;
+    private final BallotList ballotList;
     private final byte[] secretKeyEncoded;
     private final BlindVote blindVote;
     private final long date;
@@ -58,10 +58,10 @@ public class MyVote implements PersistablePayload {
     @Nullable
     private transient SecretKey secretKey;
 
-    public MyVote(ProposalList proposalList,
+    public MyVote(BallotList ballotList,
                   byte[] secretKeyEncoded,
                   BlindVote blindVote) {
-        this(proposalList,
+        this(ballotList,
                 secretKeyEncoded,
                 blindVote,
                 new Date().getTime(),
@@ -73,12 +73,12 @@ public class MyVote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private MyVote(ProposalList proposalList,
+    private MyVote(BallotList ballotList,
                    byte[] secretKeyEncoded,
                    BlindVote blindVote,
                    long date,
                    @Nullable String revealTxId) {
-        this.proposalList = proposalList;
+        this.ballotList = ballotList;
         this.secretKeyEncoded = secretKeyEncoded;
         this.blindVote = blindVote;
         this.date = date;
@@ -89,7 +89,7 @@ public class MyVote implements PersistablePayload {
     public PB.MyVote toProtoMessage() {
         final PB.MyVote.Builder builder = PB.MyVote.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
-                .setProposalList(proposalList.getBuilder())
+                .setBallotList(ballotList.getBuilder())
                 .setSecretKeyEncoded(ByteString.copyFrom(secretKeyEncoded))
                 .setDate(date);
         Optional.ofNullable(revealTxId).ifPresent(builder::setRevealTxId);
@@ -97,7 +97,7 @@ public class MyVote implements PersistablePayload {
     }
 
     public static MyVote fromProto(PB.MyVote proto) {
-        return new MyVote(ProposalList.fromProto(proto.getProposalList()),
+        return new MyVote(BallotList.fromProto(proto.getBallotList()),
                 proto.getSecretKeyEncoded().toByteArray(),
                 BlindVote.fromProto(proto.getBlindVote()),
                 proto.getDate(),
@@ -123,7 +123,7 @@ public class MyVote implements PersistablePayload {
     @Override
     public String toString() {
         return "MyVote{" +
-                "\n     proposalList=" + proposalList +
+                "\n     ballotList=" + ballotList +
                 ",\n     secretKeyEncoded=" + Utilities.bytesAsHexString(secretKeyEncoded) +
                 ",\n     blindVote=" + blindVote +
                 ",\n     date=" + new Date(date) +

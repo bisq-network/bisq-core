@@ -25,7 +25,7 @@ import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
-import bisq.core.dao.consensus.vote.proposal.ProposalList;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
 
 import javax.crypto.SecretKey;
 
@@ -47,7 +47,7 @@ public class DecryptedVote {
     private final String voteRevealTxId;
     private final String blindVoteTxId;
     private final long stake;
-    private final ProposalList proposalListUsedForVoting;
+    private final BallotList ballotListUsedForVoting;
 
     public DecryptedVote(byte[] opReturnData, String voteRevealTxId, StateService stateService,
                          PeriodService periodService, int chainHeight)
@@ -61,7 +61,7 @@ public class DecryptedVote {
         blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
         BlindVote blindVote = getBlindVote(stateService);
-        proposalListUsedForVoting = getProposalList(blindVote, secretKey);
+        ballotListUsedForVoting = getBallotList(blindVote, secretKey);
     }
 
     private Tx getVoteRevealTx(String voteRevealTxId, StateService stateService, PeriodService periodService,
@@ -138,11 +138,11 @@ public class DecryptedVote {
         }
     }
 
-    private ProposalList getProposalList(BlindVote blindVote, SecretKey secretKey) throws VoteResultException {
+    private BallotList getBallotList(BlindVote blindVote, SecretKey secretKey) throws VoteResultException {
         try {
             final byte[] encryptedProposalList = blindVote.getEncryptedProposalList();
             final byte[] decrypted = VoteResultConsensus.decryptProposalList(encryptedProposalList, secretKey);
-            return ProposalList.parseProposalList(decrypted);
+            return BallotList.parseBallotList(decrypted);
         } catch (Throwable t) {
             throw new VoteResultException(t);
         }

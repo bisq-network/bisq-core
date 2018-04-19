@@ -46,27 +46,25 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * Payload sent over wire as well as it gets persisted, containing all base data for a compensation request
- */
+//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class CompensationRequestPayload extends ProposalPayload {
+public final class CompensationRequestProposal extends Proposal {
 
     private final long requestedBsq;
     private final String bsqAddress;
 
-    CompensationRequestPayload(String uid,
-                               String name,
-                               String title,
-                               String description,
-                               String link,
-                               Coin requestedBsq,
-                               String bsqAddress,
-                               PublicKey ownerPubKey,
-                               Date creationDate) {
+    public CompensationRequestProposal(String uid,
+                                       String name,
+                                       String title,
+                                       String description,
+                                       String link,
+                                       Coin requestedBsq,
+                                       String bsqAddress,
+                                       PublicKey ownerPubKey,
+                                       Date creationDate) {
         super(uid,
                 name,
                 title,
@@ -86,18 +84,18 @@ public final class CompensationRequestPayload extends ProposalPayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationRequestPayload(String uid,
-                                      String name,
-                                      String title,
-                                      String description,
-                                      String link,
-                                      String bsqAddress,
-                                      long requestedBsq,
-                                      byte[] ownerPubKeyEncoded,
-                                      byte version,
-                                      long creationDate,
-                                      String txId,
-                                      @Nullable Map<String, String> extraDataMap) {
+    public CompensationRequestProposal(String uid,
+                                       String name,
+                                       String title,
+                                       String description,
+                                       String link,
+                                       String bsqAddress,
+                                       long requestedBsq,
+                                       byte[] ownerPubKeyEncoded,
+                                       byte version,
+                                       long creationDate,
+                                       String txId,
+                                       @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -114,22 +112,22 @@ public final class CompensationRequestPayload extends ProposalPayload {
     }
 
     @Override
-    public PB.ProposalPayload.Builder getPayloadBuilder() {
-        final PB.CompensationRequestPayload.Builder compensationRequestPayloadBuilder = PB.CompensationRequestPayload.newBuilder()
+    public PB.Proposal.Builder getProposalBuilder() {
+        final PB.CompensationRequestProposal.Builder compensationRequestProposalBuilder = PB.CompensationRequestProposal.newBuilder()
                 .setBsqAddress(bsqAddress)
                 .setRequestedBsq(requestedBsq);
-        return super.getPayloadBuilder().setCompensationRequestPayload(compensationRequestPayloadBuilder);
+        return super.getProposalBuilder().setCompensationRequestProposal(compensationRequestProposalBuilder);
     }
 
-    public static CompensationRequestPayload fromProto(PB.ProposalPayload proto) {
-        final PB.CompensationRequestPayload compensationRequestPayload = proto.getCompensationRequestPayload();
-        return new CompensationRequestPayload(proto.getUid(),
+    public static CompensationRequestProposal fromProto(PB.Proposal proto) {
+        final PB.CompensationRequestProposal compensationRequestProposa = proto.getCompensationRequestProposal();
+        return new CompensationRequestProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                compensationRequestPayload.getBsqAddress(),
-                compensationRequestPayload.getRequestedBsq(),
+                compensationRequestProposa.getBsqAddress(),
+                compensationRequestProposa.getRequestedBsq(),
                 proto.getOwnerPubKeyEncoded().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
@@ -176,8 +174,8 @@ public final class CompensationRequestPayload extends ProposalPayload {
     }
 
     @Override
-    public ProposalPayload cloneWithTxId(String txId) {
-        return new CompensationRequestPayload(getUid(),
+    public Proposal cloneWithTxId(String txId) {
+        return new CompensationRequestProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -192,8 +190,8 @@ public final class CompensationRequestPayload extends ProposalPayload {
     }
 
     @Override
-    public ProposalPayload cloneWithoutTxId() {
-        return new CompensationRequestPayload(getUid(),
+    public Proposal cloneWithoutTxId() {
+        return new CompensationRequestProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -209,7 +207,7 @@ public final class CompensationRequestPayload extends ProposalPayload {
 
     @Override
     public String toString() {
-        return "CompensationRequestPayload{" +
+        return "CompensationRequestProposal{" +
                 "\n     requestedBsq=" + requestedBsq +
                 ",\n     bsqAddress='" + bsqAddress + '\'' +
                 "\n} " + super.toString();

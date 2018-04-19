@@ -20,7 +20,7 @@ package bisq.core.dao.consensus.vote.result.issuance;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
-import bisq.core.dao.consensus.state.events.payloads.CompensationRequestPayload;
+import bisq.core.dao.consensus.state.events.payloads.CompensationRequestProposal;
 
 import javax.inject.Inject;
 
@@ -48,13 +48,13 @@ public class IssuanceService {
     }
 
     // Called from parser thread
-    public void issueBsq(CompensationRequestPayload compensationRequestPayload, int chainHeight) {
+    public void issueBsq(CompensationRequestProposal compensationRequestProposal, int chainHeight) {
         final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getIssuanceCandidateTxOutputs();
         compReqIssuanceTxOutputs.stream()
-                .filter(txOutput -> txOutput.getTxId().equals(compensationRequestPayload.getTxId()))
-                .filter(txOutput -> compensationRequestPayload.getRequestedBsq().value == txOutput.getValue())
+                .filter(txOutput -> txOutput.getTxId().equals(compensationRequestProposal.getTxId()))
+                .filter(txOutput -> compensationRequestProposal.getRequestedBsq().value == txOutput.getValue())
                 .filter(txOutput -> {
-                    final String bsqAddress = compensationRequestPayload.getBsqAddress();
+                    final String bsqAddress = compensationRequestProposal.getBsqAddress();
                     final String rawBsqAddress = bsqAddress.substring(1);
                     return rawBsqAddress.equals(txOutput.getAddress());
                 })
@@ -65,7 +65,7 @@ public class IssuanceService {
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
                     sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())
-                            .append("\nfor compensationRequestPayload with UID ").append(compensationRequestPayload.getUid())
+                            .append("\nfor compensationRequestProposal with UID ").append(compensationRequestProposal.getUid())
                             .append("\n################################################################################\n");
                     log.info(sb.toString());
                 });

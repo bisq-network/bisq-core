@@ -38,13 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-/**
- * Payload for generic proposals.
- */
+//TODO separate value object with p2p network data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Data
-public final class RemoveAssetProposalPayload extends ProposalPayload {
+public final class RemoveAssetProposalPayload extends Proposal {
 
     public RemoveAssetProposalPayload(String uid,
                                       String name,
@@ -95,24 +93,24 @@ public final class RemoveAssetProposalPayload extends ProposalPayload {
     }
 
     @Override
-    public PB.ProposalPayload.Builder getPayloadBuilder() {
+    public PB.Proposal.Builder getProposalBuilder() {
         //TODO impl
         return null;
     }
 
-    public static RemoveAssetProposalPayload fromProto(PB.ProposalPayload proto) {
-        //TODO impl
-        return null;
-    }
-
-    @Override
-    public ProposalPayload cloneWithoutTxId() {
+    public static RemoveAssetProposalPayload fromProto(PB.Proposal proto) {
         //TODO impl
         return null;
     }
 
     @Override
-    public ProposalPayload cloneWithTxId(String txId) {
+    public Proposal cloneWithoutTxId() {
+        //TODO impl
+        return null;
+    }
+
+    @Override
+    public Proposal cloneWithTxId(String txId) {
         //TODO impl
         return null;
     }

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.core.dao.consensus.state.events.payloads.ChangeParamPayload;
+import bisq.core.dao.consensus.state.events.payloads.ChangeParamItem;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import io.bisq.generated.protobuffer.PB;
@@ -32,8 +32,8 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class AddChangeParamEvent extends StateChangeEvent {
 
-    public AddChangeParamEvent(ChangeParamPayload changeParamPayload, int height) {
-        super(changeParamPayload, height);
+    public AddChangeParamEvent(ChangeParamItem changeParamItem, int height) {
+        super(changeParamItem, height);
     }
 
     public long getValue() {
@@ -44,8 +44,8 @@ public class AddChangeParamEvent extends StateChangeEvent {
         return (getChangeParamPayload()).getParam();
     }
 
-    public ChangeParamPayload getChangeParamPayload() {
-        return (ChangeParamPayload) getPayload();
+    public ChangeParamItem getChangeParamPayload() {
+        return (ChangeParamItem) getPayload();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ public class AddChangeParamEvent extends StateChangeEvent {
     }
 
     public static AddChangeParamEvent fromProto(PB.AddChangeParamEvent proto) {
-        return new AddChangeParamEvent(ChangeParamPayload.fromProto(proto.getChangeParamPayload()),
+        return new AddChangeParamEvent(ChangeParamItem.fromProto(proto.getChangeParamPayload()),
                 proto.getHeight());
     }
 }

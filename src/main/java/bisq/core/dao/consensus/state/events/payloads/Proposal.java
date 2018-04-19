@@ -46,25 +46,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * ProposalPayload is sent over wire as well as it gets persisted.
+ * Proposal is sent over wire as well as it gets persisted.
  * <p>
- * We persist all ProposalPayload data in the PersistedEntryMap.
+ * We persist all Proposal data in the PersistedEntryMap.
  * Data size on disk for one item is: about 743 bytes (443 bytes is for ownerPubKeyEncoded)
  * As Proposals gets persisted in the Blocks of the State as well we could consider pruning of old data.
  */
+//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public abstract class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+public abstract class Proposal implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload, VoteConsensusCritical {
 
     protected final String uid;
@@ -85,23 +89,23 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     // Used just for caching. Don't persist.
     @Nullable
-    private transient PublicKey ownerPubKey;
+    private final transient PublicKey ownerPubKey;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected ProposalPayload(String uid,
-                              String name,
-                              String title,
-                              String description,
-                              String link,
-                              byte[] ownerPubPubKeyEncoded,
-                              byte version,
-                              long creationDate,
-                              @Nullable String txId,
-                              @Nullable Map<String, String> extraDataMap) {
+    protected Proposal(String uid,
+                       String name,
+                       String title,
+                       String description,
+                       String link,
+                       byte[] ownerPubPubKeyEncoded,
+                       byte version,
+                       long creationDate,
+                       @Nullable String txId,
+                       @Nullable Map<String, String> extraDataMap) {
         this.uid = uid;
         this.name = name;
         this.title = title;
@@ -112,10 +116,12 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         this.creationDate = creationDate;
         this.txId = txId;
         this.extraDataMap = extraDataMap;
+
+        ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
-    public PB.ProposalPayload.Builder getPayloadBuilder() {
-        final PB.ProposalPayload.Builder builder = PB.ProposalPayload.newBuilder()
+    public PB.Proposal.Builder getProposalBuilder() {
+        final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
                 .setUid(uid)
                 .setName(name)
                 .setTitle(title)
@@ -131,16 +137,16 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     @Override
     public PB.StoragePayload toProtoMessage() {
-        return PB.StoragePayload.newBuilder().setProposalPayload(getPayloadBuilder()).build();
+        return PB.StoragePayload.newBuilder().setProposal(getProposalBuilder()).build();
     }
 
     //TODO add other proposal types
-    public static ProposalPayload fromProto(PB.ProposalPayload proto) {
+    public static Proposal fromProto(PB.Proposal proto) {
         switch (proto.getMessageCase()) {
-            case COMPENSATION_REQUEST_PAYLOAD:
-                return CompensationRequestPayload.fromProto(proto);
-            case GENERIC_PROPOSAL_PAYLOAD:
-                return GenericProposalPayload.fromProto(proto);
+            case COMPENSATION_REQUEST_PROPOSAL:
+                return CompensationRequestProposal.fromProto(proto);
+            case GENERIC_PROPOSAL:
+                return GenericProposal.fromProto(proto);
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }
@@ -153,9 +159,6 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     @Override
     public PublicKey getOwnerPubKey() {
-        if (ownerPubKey == null)
-            ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
-
         return ownerPubKey;
     }
 
@@ -167,9 +170,9 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
         ));
     }
 
-    abstract public ProposalPayload cloneWithoutTxId();
+    abstract public Proposal cloneWithoutTxId();
 
-    abstract public ProposalPayload cloneWithTxId(String txId);
+    abstract public Proposal cloneWithTxId(String txId);
 
     public Date getCreationDate() {
         return new Date(creationDate);
@@ -195,7 +198,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
 
     @Override
     public String toString() {
-        return "ProposalPayload{" +
+        return "Proposal{" +
                 "\n     uid='" + uid + '\'' +
                 ",\n     name='" + name + '\'' +
                 ",\n     title='" + title + '\'' +

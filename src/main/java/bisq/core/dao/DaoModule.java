@@ -43,7 +43,6 @@ import bisq.core.dao.consensus.node.lite.LiteNodeParser;
 import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
-import bisq.core.dao.consensus.period.UserThreadPeriodService;
 import bisq.core.dao.consensus.state.SnapshotManager;
 import bisq.core.dao.consensus.state.State;
 import bisq.core.dao.consensus.state.StateService;
@@ -57,10 +56,11 @@ import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestPayloadValidator;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestService;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericProposalService;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.result.VoteResultService;
 import bisq.core.dao.consensus.vote.result.issuance.IssuanceService;
 import bisq.core.dao.consensus.vote.votereveal.VoteRevealService;
+import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;
@@ -100,7 +100,7 @@ public class DaoModule extends AppModule {
         bind(StateService.class).in(Singleton.class);
         bind(StateServiceFacade.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
-        bind(ParamService.class).in(Singleton.class);
+        bind(ChangeParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 
         // blockchain parser
@@ -119,7 +119,7 @@ public class DaoModule extends AppModule {
 
         bind(PeriodState.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
-        bind(UserThreadPeriodService.class).in(Singleton.class);
+        bind(PeriodServiceFacade.class).in(Singleton.class);
 
         // proposals
         bind(ProposalService.class).in(Singleton.class);

@@ -32,13 +32,14 @@ import lombok.Value;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+//TODO separate value object with p2p network data
 @Immutable
 @Value
-public class ChangeParamPayload implements ProtectedStoragePayload {
+public class ChangeParamItem implements ProtectedStoragePayload {
     private final Param param;
     private final long value;
 
-    public ChangeParamPayload(Param param, long value) {
+    public ChangeParamItem(Param param, long value) {
         this.param = param;
         this.value = value;
     }
@@ -56,14 +57,14 @@ public class ChangeParamPayload implements ProtectedStoragePayload {
         return builder.build();
     }
 
-    public static ChangeParamPayload fromProto(PB.ChangeParamPayload proto) {
-        return new ChangeParamPayload(Param.values()[proto.getDaoParamOrdinal()],
+    public static ChangeParamItem fromProto(PB.ChangeParamPayload proto) {
+        return new ChangeParamItem(Param.values()[proto.getDaoParamOrdinal()],
                 proto.getValue());
     }
 
     @Override
     public String toString() {
-        return "ChangeParamPayload{" +
+        return "ChangeParamItem{" +
                 "\n     param=" + param +
                 ",\n     value=" + value +
                 "\n}";

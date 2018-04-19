@@ -17,10 +17,10 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.Vote;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequest;
-import bisq.core.dao.consensus.vote.proposal.generic.GenericProposal;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestBallot;
+import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
@@ -44,13 +44,13 @@ import javax.annotation.Nullable;
 /**
  * Base class for all proposals like compensation request, generic request, remove altcoin request,
  * change param request, etc.
- * It contains the ProposalPayload and the Vote. If a ProposalPayload is ignored for voting the vote object is null.
+ * It contains the Proposal and the Vote. If a Proposal is ignored for voting the vote object is null.
  */
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public abstract class Proposal implements PersistablePayload {
-    protected final ProposalPayload proposalPayload;
+public abstract class Ballot implements PersistablePayload {
+    protected final Proposal proposal;
     @Nullable
     protected Vote vote;
     @Nullable
@@ -64,8 +64,8 @@ public abstract class Proposal implements PersistablePayload {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Proposal(ProposalPayload proposalPayload) {
-        this(proposalPayload, null, null);
+    public Ballot(Proposal proposal) {
+        this(proposal, null, null);
     }
 
 
@@ -73,23 +73,23 @@ public abstract class Proposal implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected Proposal(ProposalPayload proposalPayload,
-                       @Nullable Vote vote,
-                       @Nullable Map<String, String> extraDataMap) {
-        this.proposalPayload = proposalPayload;
+    protected Ballot(Proposal proposal,
+                     @Nullable Vote vote,
+                     @Nullable Map<String, String> extraDataMap) {
+        this.proposal = proposal;
         this.vote = vote;
         this.extraDataMap = extraDataMap;
     }
 
     @Override
-    public PB.Proposal toProtoMessage() {
-        return getProposalBuilder().build();
+    public PB.Ballot toProtoMessage() {
+        return getBallotBuilder().build();
     }
 
     @NotNull
-    protected PB.Proposal.Builder getProposalBuilder() {
-        final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
-                .setProposalPayload(proposalPayload.getPayloadBuilder());
+    protected PB.Ballot.Builder getBallotBuilder() {
+        final PB.Ballot.Builder builder = PB.Ballot.newBuilder()
+                .setProposal(proposal.getProposalBuilder());
 
         Optional.ofNullable(vote).ifPresent(e -> builder.setVote((PB.Vote) e.toProtoMessage()));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
@@ -97,12 +97,12 @@ public abstract class Proposal implements PersistablePayload {
     }
 
     //TODO add other proposal types
-    public static Proposal fromProto(PB.Proposal proto) {
+    public static Ballot fromProto(PB.Ballot proto) {
         switch (proto.getMessageCase()) {
-            case COMPENSATION_REQUEST:
-                return CompensationRequest.fromProto(proto);
-            case GENERIC_PROPOSAL:
-                return GenericProposal.fromProto(proto);
+            case COMPENSATION_REQUEST_BALLOT:
+                return CompensationRequestBallot.fromProto(proto);
+            case GENERIC_BALLOT:
+                return GenericBallot.fromProto(proto);
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }
@@ -121,17 +121,17 @@ public abstract class Proposal implements PersistablePayload {
     abstract public ProposalType getType();
 
     public String getTxId() {
-        return proposalPayload.getTxId();
+        return proposal.getTxId();
     }
 
     public String getUid() {
-        return proposalPayload.getUid();
+        return proposal.getUid();
     }
 
     @Override
     public String toString() {
-        return "Proposal{" +
-                "\n     proposalPayload=" + proposalPayload +
+        return "Ballot{" +
+                "\n     proposal=" + proposal +
                 ",\n     vote=" + vote +
                 ",\n     extraDataMap=" + extraDataMap +
                 "\n}";

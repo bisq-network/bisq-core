@@ -26,7 +26,7 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import bisq.network.p2p.P2PService;
 
@@ -62,12 +62,12 @@ public class MyProposalService implements PersistedDataHost {
     private final BsqWalletService bsqWalletService;
     private final ProposalService proposalService;
     private final StateService stateService;
-    private final Storage<ProposalList> storage;
+    private final Storage<BallotList> storage;
     private ChangeListener<Number> numConnectedPeersListener;
 
     @Getter
-    private final ObservableList<Proposal> observableList = FXCollections.observableArrayList();
-    private final ProposalList proposalList = new ProposalList(observableList);
+    private final ObservableList<Ballot> observableList = FXCollections.observableArrayList();
+    private final BallotList ballotList = new BallotList(observableList);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +80,7 @@ public class MyProposalService implements PersistedDataHost {
                              BsqWalletService bsqWalletService,
                              ProposalService proposalService,
                              StateService stateService,
-                             Storage<ProposalList> storage) {
+                             Storage<BallotList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
@@ -109,7 +109,7 @@ public class MyProposalService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            ProposalList persisted = storage.initAndGetPersisted(proposalList, "MyProposals", 20);
+            BallotList persisted = storage.initAndGetPersisted(ballotList, "MyProposals", 20);
             if (persisted != null) {
                 observableList.clear();
                 observableList.addAll(persisted.getList());
@@ -122,27 +122,27 @@ public class MyProposalService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void publishProposal(Proposal proposal, Transaction transaction, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
+    public void publishProposal(Ballot ballot, Transaction transaction, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
                 final String txId = transaction.getHashAsString();
-                if (proposal.getTxId().equals(txId)) {
-                    final ProposalPayload proposalPayload = proposal.getProposalPayload();
-                    if (addToP2PNetwork(proposalPayload)) {
-                        log.info("We added a proposalPayload to the P2P network. ProposalPayload.uid=" + proposalPayload.getUid());
-                        if (!listContains(proposal.getProposalPayload()))
-                            observableList.add(proposal);
+                if (ballot.getTxId().equals(txId)) {
+                    final Proposal proposal = ballot.getProposal();
+                    if (addToP2PNetwork(proposal)) {
+                        log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
+                        if (!listContains(ballot.getProposal()))
+                            observableList.add(ballot);
                         resultHandler.handleResult();
                     } else {
-                        final String msg = "Adding of proposalPayload to P2P network failed.\n" +
-                                "proposalPayload=" + proposalPayload;
+                        final String msg = "Adding of proposal to P2P network failed.\n" +
+                                "proposal=" + proposal;
                         log.error(msg);
                         errorMessageHandler.handleErrorMessage(msg);
                     }
                 } else {
                     final String msg = "TxId of broadcasted transaction is different as the one in our " +
-                            "proposalPayload. TxId of broadcasted transaction=" + txId;
+                            "proposal. TxId of broadcasted transaction=" + txId;
                     log.error(msg);
                     errorMessageHandler.handleErrorMessage(msg);
                 }
@@ -168,25 +168,25 @@ public class MyProposalService implements PersistedDataHost {
         });
     }
 
-    public boolean removeProposal(Proposal proposal) {
-        final ProposalPayload proposalPayload = proposal.getProposalPayload();
+    public boolean removeProposal(Ballot ballot) {
+        final Proposal proposal = ballot.getProposal();
         // We allow removal which are not confirmed yet or if it we are in the right phase
-        if (proposalService.isInPhaseOrUnconfirmed(stateService.getTx(proposalPayload.getTxId()),
-                proposalPayload.getTxId(),
+        if (proposalService.isInPhaseOrUnconfirmed(stateService.getTx(proposal.getTxId()),
+                proposal.getTxId(),
                 Phase.PROPOSAL,
                 stateService.getChainHeight())) {
-            boolean success = p2PService.removeData(proposalPayload, true);
+            boolean success = p2PService.removeData(proposal, true);
             if (success) {
-                if (observableList.remove(proposal))
+                if (observableList.remove(ballot))
                     persist();
                 else
-                    log.warn("We called removeProposalFromList at a proposal which was not in our list");
+                    log.warn("We called removeProposalFromList at a ballot which was not in our list");
             } else {
-                log.warn("Removal of proposal from p2p network failed. proposal={}", proposal);
+                log.warn("Removal of ballot from p2p network failed. ballot={}", ballot);
             }
             return success;
         } else {
-            final String msg = "removeProposal called with a Proposal which is outside of the Proposal phase.";
+            final String msg = "removeProposal called with a Ballot which is outside of the Ballot phase.";
             DevEnv.logErrorAndThrowIfDevMode(msg);
             return false;
         }
@@ -196,13 +196,13 @@ public class MyProposalService implements PersistedDataHost {
         storage.queueUpForSave();
     }
 
-    private boolean listContains(ProposalPayload proposalPayload) {
-        return findProposal(proposalPayload).isPresent();
+    private boolean listContains(Proposal proposal) {
+        return findProposal(proposal).isPresent();
     }
 
-    private Optional<Proposal> findProposal(ProposalPayload proposalPayload) {
+    private Optional<Ballot> findProposal(Proposal proposalPayload) {
         return observableList.stream()
-                .filter(proposal -> proposal.getProposalPayload().equals(proposalPayload))
+                .filter(proposal -> proposal.getProposal().equals(proposalPayload))
                 .findAny();
     }
 
@@ -223,14 +223,14 @@ public class MyProposalService implements PersistedDataHost {
 
     private void rePublish() {
         observableList.stream()
-                .map(Proposal::getProposalPayload)
+                .map(Ballot::getProposal)
                 .forEach(proposalPayload -> {
                     if (!addToP2PNetwork(proposalPayload))
-                        log.warn("Adding of proposalPayload to P2P network failed.\nproposalPayload=" + proposalPayload);
+                        log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposalPayload);
                 });
     }
 
-    private boolean addToP2PNetwork(ProposalPayload proposalPayload) {
-        return p2PService.addProtectedStorageEntry(proposalPayload, true);
+    private boolean addToP2PNetwork(Proposal proposal) {
+        return p2PService.addProtectedStorageEntry(proposal, true);
     }
 }

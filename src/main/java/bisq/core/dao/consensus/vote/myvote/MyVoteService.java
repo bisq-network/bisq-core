@@ -31,13 +31,13 @@ import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.events.payloads.BlindVote;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
 import bisq.core.dao.consensus.vote.proposal.ProposalFactory;
-import bisq.core.dao.consensus.vote.proposal.ProposalList;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.param.ParamService;
+import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 
 import bisq.network.p2p.P2PService;
 
@@ -87,7 +87,7 @@ public class MyVoteService implements PersistedDataHost {
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final ParamService paramService;
+    private final ChangeParamService changeParamService;
     private final Storage<MyVoteList> storage;
     private final PublicKey signaturePubKey;
 
@@ -109,7 +109,7 @@ public class MyVoteService implements PersistedDataHost {
                          WalletsManager walletsManager,
                          BsqWalletService bsqWalletService,
                          BtcWalletService btcWalletService,
-                         ParamService paramService,
+                         ChangeParamService changeParamService,
                          KeyRing keyRing,
                          Storage<MyVoteList> storage) {
         this.periodService = periodService;
@@ -119,7 +119,7 @@ public class MyVoteService implements PersistedDataHost {
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.paramService = paramService;
+        this.changeParamService = changeParamService;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -162,23 +162,23 @@ public class MyVoteService implements PersistedDataHost {
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            ProposalList proposalList = getSortedProposalList();
-            log.info("ProposalList used in blind vote. proposalList={}", proposalList);
+            BallotList ballotList = getSortedProposalList();
+            log.info("BallotList used in blind vote. ballotList={}", ballotList);
 
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
+            byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(ballotList, secretKey);
 
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
             log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(paramService, stateService.getChainHeight());
+            final Coin fee = BlindVoteConsensus.getFee(changeParamService, stateService.getChainHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     onTxBroadcasted(encryptedProposalList, blindVoteTx, stake, resultHandler, exceptionHandler,
-                            proposalList, secretKey);
+                            ballotList, secretKey);
                 }
 
                 @Override
@@ -225,25 +225,25 @@ public class MyVoteService implements PersistedDataHost {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalList getSortedProposalList() {
-        List<ProposalPayload> proposalPayloadsFromStateService = stateService.getProposalPayloads().stream()
+    private BallotList getSortedProposalList() {
+        List<Proposal> proposalPayloadsFromStateService = stateService.getProposalPayloads().stream()
                 .map(ProposalFactory::getProposalFromPayload)
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
-                .map(Proposal::getProposalPayload)
+                .map(Ballot::getProposal)
                 .collect(Collectors.toList());
 
-        List<Proposal> proposals = proposalService.getOpenProposalList().stream()
+        List<Ballot> ballots = proposalService.getOpenBallotList().stream()
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
-                .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposalPayload()))
+                .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposal()))
                 .collect(Collectors.toList());
 
-        BlindVoteConsensus.sortProposalList(proposals);
-        return new ProposalList(proposals);
+        BlindVoteConsensus.sortProposalList(ballots);
+        return new BallotList(ballots);
     }
 
     private void onTxBroadcasted(byte[] encryptedProposalList, Transaction blindVoteTx, Coin stake,
                                  ResultHandler resultHandler, ExceptionHandler exceptionHandler,
-                                 ProposalList proposalList, SecretKey secretKey) {
+                                 BallotList ballotList, SecretKey secretKey) {
         BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(),
                 stake.value, signaturePubKey);
 
@@ -261,7 +261,7 @@ public class MyVoteService implements PersistedDataHost {
             exceptionHandler.handleException(new Exception(msg));
         }
 
-        MyVote myVote = new MyVote(proposalList, Encryption.getSecretKeyBytes(secretKey), blindVote);
+        MyVote myVote = new MyVote(ballotList, Encryption.getSecretKeyBytes(secretKey), blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
         myVoteList.add(myVote);
         persist();

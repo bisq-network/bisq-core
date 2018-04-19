@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @Value
@@ -123,7 +124,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     @NotNull
     public PB.BlindVote.Builder getBuilder() {
         final PB.BlindVote.Builder builder = PB.BlindVote.newBuilder()
-                .setEncryptedProposalList(ByteString.copyFrom(encryptedProposalList))
+                .setEncryptedBallotList(ByteString.copyFrom(encryptedProposalList))
                 .setTxId(txId)
                 .setStake(stake)
                 .setOwnerPubKeyAsEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
@@ -132,7 +133,7 @@ public class BlindVote implements LazyProcessedPayload, ProtectedStoragePayload,
     }
 
     public static BlindVote fromProto(PB.BlindVote proto) {
-        return new BlindVote(proto.getEncryptedProposalList().toByteArray(),
+        return new BlindVote(proto.getEncryptedBallotList().toByteArray(),
                 proto.getTxId(),
                 proto.getStake(),
                 proto.getOwnerPubKeyAsEncoded().toByteArray(),

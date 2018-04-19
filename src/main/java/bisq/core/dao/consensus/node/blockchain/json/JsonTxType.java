@@ -27,7 +27,7 @@ public enum JsonTxType {
     GENESIS("Genesis"),
     TRANSFER_BSQ("Transfer BSQ"),
     PAY_TRADE_FEE("Pay trade fee"),
-    PROPOSAL("Proposal"),
+    PROPOSAL("Ballot"),
     COMPENSATION_REQUEST("Compensation request"),
     VOTE("Vote"),
     BLIND_VOTE("Blind vote"),

@@ -24,7 +24,7 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.events.AddProposalPayloadEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -48,7 +48,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Listens on the StateService for new txBlocks and for ProposalPayload from the P2P network.
+ * Listens on the StateService for new txBlocks and for Proposal from the P2P network.
  * We configure the P2P network listener thread context aware so we get our listeners called in the parser
  * thread created by the single threaded executor created in the NodeExecutor.
  * <p>
@@ -56,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * from the P2P network to the stateChangeEvents and pass that back to the stateService where they get accumulated and be
  * included in that block's stateChangeEvents.
  * <p>
- * We maintain as well the openProposalList which gets persisted independently at the moment when the proposal arrives
+ * We maintain as well the openBallotList which gets persisted independently at the moment when the proposal arrives
  * and remove the proposal at the moment we put it to the stateChangeEvent.
  */
 @Slf4j
@@ -66,10 +66,10 @@ public class ProposalService implements PersistedDataHost {
     private final PublicKey signaturePubKey;
     private final StateService stateService;
     private final ProposalPayloadValidator proposalPayloadValidator;
-    private final Storage<ProposalList> storage;
+    private final Storage<BallotList> storage;
 
     @Getter
-    private final ProposalList openProposalList = new ProposalList();
+    private final BallotList openBallotList = new BallotList();
 
     @Inject
     public ProposalService(P2PDataStorage p2pDataStorage,
@@ -77,7 +77,7 @@ public class ProposalService implements PersistedDataHost {
                            StateService stateService,
                            ProposalPayloadValidator proposalPayloadValidator,
                            KeyRing keyRing,
-                           Storage<ProposalList> storage) {
+                           Storage<BallotList> storage) {
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
         this.stateService = stateService;
@@ -95,10 +95,10 @@ public class ProposalService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            ProposalList persisted = storage.initAndGetPersisted(openProposalList, 20);
+            BallotList persisted = storage.initAndGetPersisted(openBallotList, 20);
             if (persisted != null) {
-                this.openProposalList.clear();
-                this.openProposalList.addAll(persisted.getList());
+                this.openBallotList.clear();
+                this.openBallotList.addAll(persisted.getList());
             }
         }
     }
@@ -113,17 +113,17 @@ public class ProposalService implements PersistedDataHost {
         // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            Set<ProposalPayload> toRemove = new HashSet<>();
-            openProposalList.stream()
-                    .map(Proposal::getProposalPayload)
+            Set<Proposal> toRemove = new HashSet<>();
+            openBallotList.stream()
+                    .map(Ballot::getProposal)
                     .map(proposalPayload -> {
                         final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
 
                         // If we are in the correct block and we add a AddProposalPayloadEvent to the state we remove
-                        // the proposalPayload from our list after we have completed iteration.
+                        // the proposal from our list after we have completed iteration.
                         //TODO activate once we persist state
                        /* if (optional.isPresent())
-                            toRemove.add(proposalPayload);*/
+                            toRemove.add(proposal);*/
 
                         return optional;
                     })
@@ -188,27 +188,27 @@ public class ProposalService implements PersistedDataHost {
 
     private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload) {
-            final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
-            if (!listContains(proposalPayload)) {
+        if (protectedStoragePayload instanceof Proposal) {
+            final Proposal proposal = (Proposal) protectedStoragePayload;
+            if (!listContains(proposal)) {
                 // For adding a proposal we need to be before the last block in BREAK1 as in the last block at BREAK1
                 // we write our proposals to the state.
                 if (isInToleratedBlockRange(stateService.getChainHeight())) {
-                    log.info("We received a ProposalPayload from the P2P network. ProposalPayload.uid=" +
-                            proposalPayload.getUid());
-                    Proposal proposal = ProposalFactory.getProposalFromPayload(proposalPayload);
-                    openProposalList.add(proposal);
+                    log.info("We received a Proposal from the P2P network. Proposal.uid=" +
+                            proposal.getUid());
+                    Ballot ballot = ProposalFactory.getProposalFromPayload(proposal);
+                    openBallotList.add(ballot);
 
                     if (storeLocally)
                         persist();
                 } else {
                     log.warn("We are not in the tolerated phase anymore and ignore that " +
-                                    "proposalPayload. proposalPayload={}, height={}", proposalPayload,
+                                    "proposal. proposal={}, height={}", proposal,
                             stateService.getChainHeight());
                 }
             } else {
-                if (storeLocally && !isMine(proposalPayload))
-                    log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
+                if (storeLocally && !isMine(proposal))
+                    log.debug("We have that proposal already in our list. proposal={}", proposal);
             }
         }
     }
@@ -216,16 +216,16 @@ public class ProposalService implements PersistedDataHost {
     // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
     private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload) {
-            final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
-            findProposal(proposalPayload)
+        if (protectedStoragePayload instanceof Proposal) {
+            final Proposal proposal = (Proposal) protectedStoragePayload;
+            findProposal(proposal)
                     .ifPresent(payload -> {
                         if (isInPhaseOrUnconfirmed(stateService.getTx(payload.getTxId()), payload.getTxId(),
                                 Phase.PROPOSAL,
                                 stateService.getChainHeight())) {
-                            removeProposalFromList(proposalPayload);
+                            removeProposalFromList(proposal);
                         } else {
-                            final String msg = "onRemoved called of a Proposal which is outside of the Request phase " +
+                            final String msg = "onRemoved called of a Ballot which is outside of the Request phase " +
                                     "is invalid and we ignore it.";
                             DevEnv.logErrorAndThrowIfDevMode(msg);
                         }
@@ -238,13 +238,13 @@ public class ProposalService implements PersistedDataHost {
     // during the proposal phase).
     // We use the last block in the BREAK1 phase to set all proposals for that cycle.
     // If a proposal would arrive later it will be ignored.
-    private Optional<StateChangeEvent> getAddProposalPayloadEvent(ProposalPayload proposalPayload, int height) {
-        return stateService.getTx(proposalPayload.getTxId())
+    private Optional<StateChangeEvent> getAddProposalPayloadEvent(Proposal proposal, int height) {
+        return stateService.getTx(proposal.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
                 .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
-                .filter(tx -> proposalPayloadValidator.isValid(proposalPayload))
-                .map(tx -> new AddProposalPayloadEvent(proposalPayload, height));
+                .filter(tx -> proposalPayloadValidator.isValid(proposal))
+                .map(tx -> new AddProposalPayloadEvent(proposal, height));
     }
 
     private boolean isLastToleratedBlock(int height) {
@@ -255,20 +255,20 @@ public class ProposalService implements PersistedDataHost {
         return height < periodService.getLastBlockOfPhase(height, Phase.BREAK1);
     }
 
-    private void removeProposalFromList(ProposalPayload proposalPayload) {
-        if (openProposalList.remove(proposalPayload))
+    private void removeProposalFromList(Proposal proposal) {
+        if (openBallotList.remove(proposal))
             persist();
         else
-            log.warn("We called removeProposalFromList at a proposalPayload which was not in our list");
+            log.warn("We called removeProposalFromList at a proposal which was not in our list");
     }
 
-    private boolean listContains(ProposalPayload proposalPayload) {
-        return findProposal(proposalPayload).isPresent();
+    private boolean listContains(Proposal proposal) {
+        return findProposal(proposal).isPresent();
     }
 
-    private Optional<Proposal> findProposal(ProposalPayload proposalPayload) {
-        return openProposalList.stream()
-                .filter(proposal -> proposal.getProposalPayload().equals(proposalPayload))
+    private Optional<Ballot> findProposal(Proposal proposalPayload) {
+        return openBallotList.stream()
+                .filter(proposal -> proposal.getProposal().equals(proposalPayload))
                 .findAny();
     }
 }

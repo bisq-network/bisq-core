@@ -34,11 +34,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 //TODO add tests
 @Slf4j
-abstract class BasePeriodService {
-
+public abstract class BasePeriodService {
 
     @Inject
-    BasePeriodService() {
+    public BasePeriodService() {
     }
 
 

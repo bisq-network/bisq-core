@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.state.Block;
 import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.consensus.state.events.payloads.ProposalPayload;
+import bisq.core.dao.consensus.state.events.payloads.Proposal;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -63,9 +63,9 @@ public class ProposalListService {
     private final StateService stateService;
 
     @Getter
-    private final ObservableList<Proposal> activeOrMyUnconfirmedProposals = FXCollections.observableArrayList();
+    private final ObservableList<Ballot> activeOrMyUnconfirmedBallots = FXCollections.observableArrayList();
     @Getter
-    private final ObservableList<Proposal> closedProposals = FXCollections.observableArrayList();
+    private final ObservableList<Ballot> closedBallots = FXCollections.observableArrayList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -126,23 +126,23 @@ public class ProposalListService {
 
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload)
+        if (protectedStoragePayload instanceof Proposal)
             updateLists(stateService.getChainHeight());
     }
 
     private void updateLists(int chainHeadHeight) {
         // We are on the parser thread, so we are in sync with proposalService and stateService
         // proposalService.isMine and  proposalService.isValid are not accessing any mutable state.
-        final List<Proposal> proposals = new ArrayList<>(proposalService.getOpenProposalList().getList());
+        final List<Ballot> ballots = new ArrayList<>(proposalService.getOpenBallotList().getList());
         Map<String, Optional<Tx>> map = new HashMap<>();
-        proposals.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
+        ballots.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
 
         UserThread.execute(() -> {
-            activeOrMyUnconfirmedProposals.clear();
-            activeOrMyUnconfirmedProposals.addAll(proposals.stream()
+            activeOrMyUnconfirmedBallots.clear();
+            activeOrMyUnconfirmedBallots.addAll(ballots.stream()
                     .filter(proposal -> {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
-                        final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                        final Proposal proposalPayload = proposal.getProposal();
                         return (optionalTx.isPresent() &&
                                 proposalPayloadValidator.isValid(proposalPayload) &&
                                 periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
@@ -150,37 +150,37 @@ public class ProposalListService {
                     }).collect(Collectors.toList()));
 
             // We access myProposalService from user thread!
-            final List<Proposal> myUnconfirmedProposals = myProposalService.getObservableList().stream()
+            final List<Ballot> myUnconfirmedBallots = myProposalService.getObservableList().stream()
                     .filter(proposal -> {
                         return (proposalService.isUnconfirmed(proposal.getTxId()));
                     }).collect(Collectors.toList());
 
-            activeOrMyUnconfirmedProposals.addAll(myUnconfirmedProposals);
+            activeOrMyUnconfirmedBallots.addAll(myUnconfirmedBallots);
 
-            closedProposals.clear();
+            closedBallots.clear();
 
             //TODO once we have the votes we will merge the proposalPayloads with vote to create a proposal
-           /* Set<ProposalPayload> proposalPayloads = stateService.getProposalPayloads();
+           /* Set<Proposal> proposalPayloads = stateService.getProposalPayloads();
 
-            final List<Proposal> proposalList1 = proposalPayloads.stream()
+            final List<Ballot> proposalList1 = proposalPayloads.stream()
                     .filter(proposal -> {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
                         return optionalTx.isPresent() &&
-                                proposalService.isValid(optionalTx.get(), proposal.getProposalPayload()) &&
+                                proposalService.isValid(optionalTx.get(), proposal.getProposal()) &&
                                 periodService.isTxInPastCycle(optionalTx.get(), chainHeadHeight);
                     }).collect(Collectors.toList());*/
 
-            //TODO we dont keep old proposals anymore
-            final List<Proposal> proposalList = proposals.stream()
+            //TODO we dont keep old ballots anymore
+            final List<Ballot> ballotList = ballots.stream()
                     .filter(proposal -> {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
-                        final ProposalPayload proposalPayload = proposal.getProposalPayload();
+                        final Proposal proposalPayload = proposal.getProposal();
                         return optionalTx.isPresent() &&
                                 proposalPayloadValidator.isValid(proposalPayload) &&
                                 periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
                                 periodService.isTxInPastCycle(optionalTx.get().getId(), chainHeadHeight);
                     }).collect(Collectors.toList());
-            closedProposals.addAll(proposalList);
+            closedBallots.addAll(ballotList);
         });
     }
 }
