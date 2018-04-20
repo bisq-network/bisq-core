@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.myvote;
+package bisq.core.dao.presentation.myvote;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.exceptions.TransactionVerificationException;
@@ -167,10 +167,10 @@ public class MyVoteService implements PersistedDataHost {
             log.info("BallotList used in blind vote. ballotList={}", ballotList);
 
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            byte[] encryptedProposalList = BlindVoteConsensus.getEncryptedProposalList(ballotList, secretKey);
+            byte[] encryptedBallotList = BlindVoteConsensus.getEncryptedBallotList(ballotList, secretKey);
 
-            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedProposalList);
-            log.info("Sha256Ripemd160 hash of encryptedProposalList: " + Utilities.bytesAsHexString(hash));
+            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedBallotList);
+            log.info("Sha256Ripemd160 hash of encryptedBallotList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
             final Coin fee = BlindVoteConsensus.getFee(changeParamService, stateService.getChainHeight());
             final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
@@ -178,7 +178,7 @@ public class MyVoteService implements PersistedDataHost {
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {
-                    onTxBroadcasted(encryptedProposalList, blindVoteTx, stake, resultHandler, exceptionHandler,
+                    onTxBroadcasted(encryptedBallotList, blindVoteTx, stake, resultHandler, exceptionHandler,
                             ballotList, secretKey);
                 }
 
@@ -242,11 +242,11 @@ public class MyVoteService implements PersistedDataHost {
         return new BallotList(ballots);
     }
 
-    private void onTxBroadcasted(byte[] encryptedProposalList, Transaction blindVoteTx, Coin stake,
+    private void onTxBroadcasted(byte[] encryptedBallotList, Transaction blindVoteTx, Coin stake,
                                  ResultHandler resultHandler, ExceptionHandler exceptionHandler,
                                  BallotList ballotList, SecretKey secretKey) {
 
-        BlindVote blindVote = new BlindVote(encryptedProposalList, blindVoteTx.getHashAsString(), stake.value);
+        BlindVote blindVote = new BlindVote(encryptedBallotList, blindVoteTx.getHashAsString(), stake.value);
         BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
 
         // We map from user thread to parser thread as we will read the block height in the addBlindVoteToList method

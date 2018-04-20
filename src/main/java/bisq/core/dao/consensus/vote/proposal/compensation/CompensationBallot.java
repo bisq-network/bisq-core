@@ -28,10 +28,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 
-import org.springframework.util.CollectionUtils;
-
-import java.util.Map;
-
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +47,7 @@ public class CompensationBallot extends Ballot {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public CompensationBallot(Proposal proposal) {
-        super(proposal, null, null);
+        super(proposal, null);
     }
 
 
@@ -60,11 +56,8 @@ public class CompensationBallot extends Ballot {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private CompensationBallot(Proposal proposal,
-                               @Nullable Vote vote,
-                               @Nullable Map<String, String> extraDataMap) {
-        super(proposal,
-                vote,
-                extraDataMap);
+                               @Nullable Vote vote) {
+        super(proposal, vote);
     }
 
     @Override
@@ -75,8 +68,7 @@ public class CompensationBallot extends Ballot {
 
     public static CompensationBallot fromProto(PB.Ballot proto) {
         return new CompensationBallot(Proposal.fromProto(proto.getProposal()),
-                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null);
     }
 
 

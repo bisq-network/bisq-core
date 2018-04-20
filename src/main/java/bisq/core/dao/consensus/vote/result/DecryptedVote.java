@@ -140,7 +140,7 @@ public class DecryptedVote {
 
     private BallotList getBallotList(BlindVote blindVote, SecretKey secretKey) throws VoteResultException {
         try {
-            final byte[] encryptedProposalList = blindVote.getEncryptedProposalList();
+            final byte[] encryptedProposalList = blindVote.getEncryptedBallotList();
             final byte[] decrypted = VoteResultConsensus.decryptProposalList(encryptedProposalList, secretKey);
             return BallotList.parseBallotList(decrypted);
         } catch (Throwable t) {

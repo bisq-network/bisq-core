@@ -57,7 +57,7 @@ public class ProposalListService {
     private final MyProposalService myProposalService;
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
-    private final ProposalPayloadValidator proposalPayloadValidator;
+    private final ProposalValidator proposalValidator;
     private final StateService stateService;
 
     @Getter
@@ -75,13 +75,13 @@ public class ProposalListService {
                                MyProposalService myProposalService,
                                P2PDataStorage p2pDataStorage,
                                PeriodService periodService,
-                               ProposalPayloadValidator proposalPayloadValidator,
+                               ProposalValidator proposalValidator,
                                StateService stateService) {
         this.proposalService = proposalService;
         this.myProposalService = myProposalService;
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
-        this.proposalPayloadValidator = proposalPayloadValidator;
+        this.proposalValidator = proposalValidator;
         this.stateService = stateService;
     }
 
@@ -142,7 +142,7 @@ public class ProposalListService {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
                         final Proposal proposalPayload = proposal.getProposal();
                         return (optionalTx.isPresent() &&
-                                proposalPayloadValidator.isValid(proposalPayload) &&
+                                proposalValidator.isValid(proposalPayload) &&
                                 periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
                                 periodService.isTxInCorrectCycle(optionalTx.get().getBlockHeight(), chainHeadHeight));
                     }).collect(Collectors.toList()));
@@ -174,7 +174,7 @@ public class ProposalListService {
                         final Optional<Tx> optionalTx = map.get(proposal.getTxId());
                         final Proposal proposalPayload = proposal.getProposal();
                         return optionalTx.isPresent() &&
-                                proposalPayloadValidator.isValid(proposalPayload) &&
+                                proposalValidator.isValid(proposalPayload) &&
                                 periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
                                 periodService.isTxInPastCycle(optionalTx.get().getId(), chainHeadHeight);
                     }).collect(Collectors.toList());

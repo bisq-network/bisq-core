@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.blindvote;
 
-import bisq.core.dao.consensus.vote.proposal.ValidationException;
+import bisq.core.dao.ValidationException;
 
 import javax.inject.Inject;
 
@@ -44,8 +44,8 @@ public class BlindVoteValidator {
 
     private void validateDataFields(BlindVote blindVote) throws ValidationException {
         try {
-            checkNotNull(blindVote.getEncryptedProposalList(), "encryptedProposalList must not be null");
-            checkArgument(blindVote.getEncryptedProposalList().length > 0, "encryptedProposalList must not be empty");
+            checkNotNull(blindVote.getEncryptedBallotList(), "encryptedProposalList must not be null");
+            checkArgument(blindVote.getEncryptedBallotList().length > 0, "encryptedProposalList must not be empty");
             checkNotNull(blindVote.getTxId(), "txId must not be null");
             checkArgument(blindVote.getTxId().length() > 0, "txId must not be empty");
             checkArgument(blindVote.getStake() > 0, "stake must be positive");

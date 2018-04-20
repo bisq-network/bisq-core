@@ -17,6 +17,8 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
+import bisq.core.dao.ValidationException;
+
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +27,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
-public class ProposalPayloadValidator {
+public class ProposalValidator {
 
     @Inject
-    public ProposalPayloadValidator() {
+    public ProposalValidator() {
     }
 
     public boolean isValid(Proposal proposal) {

@@ -39,20 +39,20 @@ import javax.annotation.concurrent.Immutable;
 public final class BlindVote implements PersistablePayload, StateChangeData {
 
     public static BlindVote clone(BlindVote blindVote) {
-        return new BlindVote(blindVote.encryptedProposalList,
+        return new BlindVote(blindVote.encryptedBallotList,
                 blindVote.getTxId(),
                 blindVote.getStake());
     }
 
-    private final byte[] encryptedProposalList;
+    private final byte[] encryptedBallotList;
     private final String txId;
     // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.
     private final long stake;
 
-    public BlindVote(byte[] encryptedProposalList,
+    public BlindVote(byte[] encryptedBallotList,
                      String txId,
                      long stake) {
-        this.encryptedProposalList = encryptedProposalList;
+        this.encryptedBallotList = encryptedBallotList;
         this.txId = txId;
         this.stake = stake;
     }
@@ -71,7 +71,7 @@ public final class BlindVote implements PersistablePayload, StateChangeData {
     @NotNull
     public PB.BlindVote.Builder getBuilder() {
         return PB.BlindVote.newBuilder()
-                .setEncryptedBallotList(ByteString.copyFrom(encryptedProposalList))
+                .setEncryptedBallotList(ByteString.copyFrom(encryptedBallotList))
                 .setTxId(txId)
                 .setStake(stake);
     }
@@ -89,7 +89,7 @@ public final class BlindVote implements PersistablePayload, StateChangeData {
 
     public String toString() {
         return "BlindVotePayload{" +
-                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedProposalList) +
+                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedBallotList) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +
                 "\n}";

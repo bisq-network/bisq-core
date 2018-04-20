@@ -60,7 +60,7 @@ public class BlindVoteConsensus {
         return Encryption.generateSecretKey(128);
     }
 
-    public static byte[] getEncryptedProposalList(BallotList ballotList, SecretKey secretKey) throws CryptoException {
+    public static byte[] getEncryptedBallotList(BallotList ballotList, SecretKey secretKey) throws CryptoException {
         final byte[] payload = ballotList.toProtoMessage().toByteArray();
         final byte[] encryptedProposalList = Encryption.encrypt(payload, secretKey);
         log.info("encryptedProposalList: " + Utilities.bytesAsHexString(encryptedProposalList));

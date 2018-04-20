@@ -64,7 +64,7 @@ public class ProposalService implements PersistedDataHost {
     private final PeriodService periodService;
     private final PublicKey signaturePubKey;
     private final StateService stateService;
-    private final ProposalPayloadValidator proposalPayloadValidator;
+    private final ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
 
     @Getter
@@ -74,13 +74,13 @@ public class ProposalService implements PersistedDataHost {
     public ProposalService(P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
                            StateService stateService,
-                           ProposalPayloadValidator proposalPayloadValidator,
+                           ProposalValidator proposalValidator,
                            KeyRing keyRing,
                            Storage<BallotList> storage) {
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
         this.stateService = stateService;
-        this.proposalPayloadValidator = proposalPayloadValidator;
+        this.proposalValidator = proposalValidator;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -238,7 +238,7 @@ public class ProposalService implements PersistedDataHost {
                 .filter(tx -> isLastToleratedBlock(height))
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
                 .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
-                .filter(tx -> proposalPayloadValidator.isValid(proposal))
+                .filter(tx -> proposalValidator.isValid(proposal))
                 .map(tx -> new ProposalEvent(proposal, height));
     }
 

@@ -17,8 +17,6 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.vote.VoteConsensusCritical;
-
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
@@ -64,7 +62,7 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload, VoteConsensusCritical {
+        CapabilityRequiringPayload {
 
     protected final Proposal proposal;
     protected final byte[] ownerPubKeyEncoded;

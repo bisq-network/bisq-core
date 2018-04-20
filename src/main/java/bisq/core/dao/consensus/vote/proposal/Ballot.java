@@ -28,7 +28,6 @@ import io.bisq.generated.protobuffer.PB;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-import java.util.Map;
 import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
@@ -51,8 +50,6 @@ public abstract class Ballot implements PersistablePayload {
     protected final Proposal proposal;
     @Nullable
     protected Vote vote;
-    @Nullable
-    protected Map<String, String> extraDataMap;
 
     // Not persisted!
     protected transient ObjectProperty<Vote> voteResultProperty = new SimpleObjectProperty<>();
@@ -63,7 +60,7 @@ public abstract class Ballot implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Ballot(Proposal proposal) {
-        this(proposal, null, null);
+        this(proposal, null);
     }
 
 
@@ -72,11 +69,9 @@ public abstract class Ballot implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected Ballot(Proposal proposal,
-                     @Nullable Vote vote,
-                     @Nullable Map<String, String> extraDataMap) {
+                     @Nullable Vote vote) {
         this.proposal = proposal;
         this.vote = vote;
-        this.extraDataMap = extraDataMap;
     }
 
     @Override
@@ -88,9 +83,7 @@ public abstract class Ballot implements PersistablePayload {
     protected PB.Ballot.Builder getBallotBuilder() {
         final PB.Ballot.Builder builder = PB.Ballot.newBuilder()
                 .setProposal(proposal.getProposalBuilder());
-
         Optional.ofNullable(vote).ifPresent(e -> builder.setVote((PB.Vote) e.toProtoMessage()));
-        Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
         return builder;
     }
 
@@ -131,7 +124,6 @@ public abstract class Ballot implements PersistablePayload {
         return "Ballot{" +
                 "\n     proposal=" + proposal +
                 ",\n     vote=" + vote +
-                ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }
 }

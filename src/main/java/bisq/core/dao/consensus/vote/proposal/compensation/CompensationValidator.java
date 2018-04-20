@@ -17,9 +17,9 @@
 
 package bisq.core.dao.consensus.vote.proposal.compensation;
 
+import bisq.core.dao.ValidationException;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayloadValidator;
-import bisq.core.dao.consensus.vote.proposal.ValidationException;
+import bisq.core.dao.consensus.vote.proposal.ProposalValidator;
 
 import org.bitcoinj.core.Coin;
 
@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
-public class CompensationValidator extends ProposalPayloadValidator {
+public class CompensationValidator extends ProposalValidator {
 
     @Inject
     public CompensationValidator() {

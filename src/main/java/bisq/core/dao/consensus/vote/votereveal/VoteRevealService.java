@@ -33,8 +33,8 @@ import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
-import bisq.core.dao.consensus.vote.myvote.MyVote;
-import bisq.core.dao.consensus.vote.myvote.MyVoteService;
+import bisq.core.dao.presentation.myvote.MyVote;
+import bisq.core.dao.presentation.myvote.MyVoteService;
 
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;

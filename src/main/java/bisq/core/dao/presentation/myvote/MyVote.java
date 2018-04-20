@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.myvote;
+package bisq.core.dao.presentation.myvote;
 
 import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.proposal.BallotList;

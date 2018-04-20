@@ -1,4 +1,4 @@
-package bisq.core.dao.consensus.vote.proposal;
+package bisq.core.dao;
 
 import bisq.core.dao.consensus.state.blockchain.Tx;
 

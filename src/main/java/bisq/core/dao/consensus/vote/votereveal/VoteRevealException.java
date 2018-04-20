@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.votereveal;
 
-import bisq.core.dao.consensus.vote.myvote.MyVote;
+import bisq.core.dao.presentation.myvote.MyVote;
 
 import org.bitcoinj.core.Transaction;
 
