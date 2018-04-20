@@ -20,7 +20,7 @@ package bisq.core.dao.presentation.period;
 import bisq.core.dao.consensus.period.BasePeriodService;
 import bisq.core.dao.consensus.period.Cycle;
 import bisq.core.dao.consensus.period.PeriodState;
-import bisq.core.dao.consensus.period.PeriodStateListener;
+import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.presentation.state.StateServiceFacade;
@@ -45,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
-public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateListener {
+public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateChangeListener {
     private final StateServiceFacade stateServiceFacade;
 
     // We maintain a local version of the period state which gets updated when the main PeriodState gets changed.
@@ -72,7 +72,7 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // PeriodStateListener
+    // PeriodStateChangeListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We get called on the user thread
@@ -80,26 +80,30 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
     public void onChainHeightChanged(int chainHeight) {
         userThreadPeriodState.setChainHeight(chainHeight);
         updatePhaseProperty();
+        periodStateChangeListeners.forEach(l -> l.onChainHeightChanged(chainHeight));
     }
 
     @Override
     public void onCurrentCycleChanged(Cycle currentCycle) {
         userThreadPeriodState.setCurrentCycle(currentCycle);
         updatePhaseProperty();
+        periodStateChangeListeners.forEach(l -> l.onCurrentCycleChanged(currentCycle));
     }
 
     @Override
     public void onCycleAdded(Cycle cycle) {
         userThreadPeriodState.addCycle(cycle);
         updatePhaseProperty();
+        periodStateChangeListeners.forEach(l -> l.onCycleAdded(cycle));
     }
 
     @Override
-    public void onGetInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
+    public void onInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
         userThreadPeriodState.setChainHeight(chainHeight);
         userThreadPeriodState.setCurrentCycle(currentCycle);
         userThreadPeriodState.setCycles(cycles);
         updatePhaseProperty();
+        periodStateChangeListeners.forEach(l -> l.onInitialState(cycles, currentCycle, chainHeight));
     }
 
 

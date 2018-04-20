@@ -21,7 +21,4 @@ import bisq.common.ThreadAwareListener;
 
 public interface BlockListener extends ThreadAwareListener {
     void onBlockAdded(Block block);
-
-    default void onStartParsingBlock(int blockHeight) {
-    }
 }

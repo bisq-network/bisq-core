@@ -18,9 +18,8 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.period.PeriodService;
+import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
-import bisq.core.dao.consensus.state.Block;
-import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 
@@ -92,15 +91,15 @@ public class ProposalListService {
 
     public void onAllServicesInitialized() {
         //TODO
-        stateService.addBlockListener(new BlockListener() {
+        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;
             }
 
             @Override
-            public void onBlockAdded(Block block) {
-                updateLists(block.getHeight());
+            public void onChainHeightChanged(int chainHeight) {
+                updateLists(chainHeight);
             }
         });
 
@@ -126,7 +125,7 @@ public class ProposalListService {
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof Proposal)
-            updateLists(stateService.getChainHeight());
+            updateLists(periodService.getChainHeight());
     }
 
     private void updateLists(int chainHeadHeight) {

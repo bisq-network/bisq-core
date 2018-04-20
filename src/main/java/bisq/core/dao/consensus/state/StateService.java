@@ -86,12 +86,6 @@ public class StateService extends BaseStateService {
         getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
     }
 
-    // Notify listeners when we start parsing a block
-    public void startParsingBlock(int blockHeight) {
-        blockListeners.forEach(listener -> listener.execute(() -> listener.onStartParsingBlock(blockHeight)));
-    }
-
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Modify state
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -112,13 +106,6 @@ public class StateService extends BaseStateService {
         // We now add the immutable Block containing both data.
         final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
         state.addBlock(block);
-
-        // If the listener has not implemented the executeOnUserThread method and overwritten with a return
-        // value of false we map to user thread. Otherwise we run the code directly from our current thread.
-        // Using executor.execute() would not work as the parser thread can be busy for a long time when parsing
-        // all the blocks and we want to get called our listener synchronously and not once the parsing task is
-        // completed.
-        blockListeners.forEach(listener -> listener.execute(() -> listener.onBlockAdded(block)));
 
         log.info("New block added at blockHeight " + block.getHeight());
     }

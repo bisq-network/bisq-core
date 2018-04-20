@@ -17,8 +17,6 @@
 
 package bisq.core.dao.consensus.period;
 
-import bisq.core.dao.consensus.state.Block;
-import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
@@ -68,43 +66,32 @@ public class PeriodStateMutator {
         // default param values to the state.
         stateService.registerStateChangeEventsProvider(txBlock ->
                 provideStateChangeEvents(txBlock, stateService.getGenesisBlockHeight()));
-
-        stateService.addBlockListener(new BlockListener() {
-            @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
-            @Override
-            public void onStartParsingBlock(int blockHeight) {
-                periodState.setChainHeight(blockHeight);
-
-                // We want to set the correct phase and cycle before we start parsing a new block.
-                // For Genesis block we did it already in the constructor
-                // We copy over the phases from the current block as we get the phase only set in
-                // applyParamToPhasesInCycle if there was a changeEvent.
-                // The isFirstBlockInCycle methods returns from the previous cycle the first block as we have not
-                // applied the new cycle yet. But the first block of the old cycle will always be the same as the
-                // first block of the new cycle.
-                if (blockHeight != stateService.getGenesisBlockHeight() && isFirstBlockAfterPreviousCycle(blockHeight)) {
-                    Set<StateChangeEvent> stateChangeEvents = stateService.getLastBlock().getStateChangeEvents();
-                    Cycle cycle = getNewCycle(blockHeight, periodState.getCurrentCycle(), stateChangeEvents);
-                    periodState.setCurrentCycle(cycle);
-                    periodState.addCycle(cycle);
-                    stateService.addCycle(cycle);
-                }
-            }
-
-            @Override
-            public void onBlockAdded(Block block) {
-            }
-        });
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // TODO change with listener
+    public void onStartParsingNewBlock(int blockHeight) {
+        periodState.setChainHeight(blockHeight);
+
+        // We want to set the correct phase and cycle before we start parsing a new block.
+        // For Genesis block we did it already in the constructor
+        // We copy over the phases from the current block as we get the phase only set in
+        // applyParamToPhasesInCycle if there was a changeEvent.
+        // The isFirstBlockInCycle methods returns from the previous cycle the first block as we have not
+        // applied the new cycle yet. But the first block of the old cycle will always be the same as the
+        // first block of the new cycle.
+        if (blockHeight != stateService.getGenesisBlockHeight() && isFirstBlockAfterPreviousCycle(blockHeight)) {
+            Set<StateChangeEvent> stateChangeEvents = stateService.getLastBlock().getStateChangeEvents();
+            Cycle cycle = getNewCycle(blockHeight, periodState.getCurrentCycle(), stateChangeEvents);
+            periodState.setCurrentCycle(cycle);
+            periodState.addCycle(cycle);
+            stateService.addCycle(cycle);
+        }
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

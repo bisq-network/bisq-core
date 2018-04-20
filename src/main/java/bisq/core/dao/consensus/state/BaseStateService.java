@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -53,29 +52,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class BaseStateService {
 
-    // BlockListeners can be added and removed from the user thread but iterated at the parser thread, which would
-    // lead to a ConcurrentModificationException
-    protected final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
-
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public BaseStateService() {
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addBlockListener(BlockListener blockListener) {
-        blockListeners.add(blockListener);
-    }
-
-    public void removeBlockListener(BlockListener blockListener) {
-        blockListeners.remove(blockListener);
     }
 
 

@@ -17,6 +17,9 @@
 
 package bisq.core.dao.consensus.state;
 
+import bisq.core.dao.consensus.period.PeriodService;
+import bisq.core.dao.consensus.period.PeriodStateChangeListener;
+
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
 
@@ -36,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 //TODO add tests; check if current logic is correct.
 @Slf4j
-public class SnapshotManager implements BlockListener {
+public class SnapshotManager {
     private static final int SNAPSHOT_GRID = 10000;
 
     private final State state;
@@ -48,26 +51,38 @@ public class SnapshotManager implements BlockListener {
     @Inject
     public SnapshotManager(State state,
                            StateService stateService,
+                           PeriodService periodService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
         this.state = state;
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        stateService.addBlockListener(new BlockListener() {
+        //TODO
+        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;
             }
 
             @Override
-            public void onBlockAdded(Block block) {
-
-            }
-
-            @Override
-            public void onStartParsingBlock(int blockHeight) {
-
+            public void onChainHeightChanged(int chainHeight) {
+                final int chainHeadHeight = stateService.getChainHeight();
+                if (isSnapshotHeight(chainHeadHeight) &&
+                        (snapshotCandidate == null ||
+                                snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
+                    // At trigger event we store the latest snapshotCandidate to disc
+                    if (snapshotCandidate != null) {
+                        // We clone because storage is in a threaded context
+                        final State cloned = state.getClone(snapshotCandidate);
+                        storage.queueUpForSave(cloned);
+                        log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
+                    }
+                    // Now we clone and keep it in memory for the next trigger
+                    snapshotCandidate = state.getClone();
+                    // don't access cloned anymore with methods as locks are transient!
+                    log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
+                }
             }
         });
     }
@@ -80,26 +95,6 @@ public class SnapshotManager implements BlockListener {
             stateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
-        }
-    }
-
-    @Override
-    public void onBlockAdded(Block block) {
-        final int chainHeadHeight = stateService.getChainHeight();
-        if (isSnapshotHeight(chainHeadHeight) &&
-                (snapshotCandidate == null ||
-                        snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
-            // At trigger event we store the latest snapshotCandidate to disc
-            if (snapshotCandidate != null) {
-                // We clone because storage is in a threaded context
-                final State cloned = state.getClone(snapshotCandidate);
-                storage.queueUpForSave(cloned);
-                log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
-            }
-            // Now we clone and keep it in memory for the next trigger
-            snapshotCandidate = state.getClone();
-            // don't access cloned anymore with methods as locks are transient!
-            log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
         }
     }
 
@@ -116,5 +111,4 @@ public class SnapshotManager implements BlockListener {
     private boolean isSnapshotHeight(int height) {
         return isSnapshotHeight(stateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
     }
-
 }

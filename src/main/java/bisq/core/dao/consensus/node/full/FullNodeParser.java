@@ -24,6 +24,7 @@ import bisq.core.dao.consensus.node.consensus.BsqBlockController;
 import bisq.core.dao.consensus.node.consensus.BsqTxController;
 import bisq.core.dao.consensus.node.consensus.GenesisTxController;
 import bisq.core.dao.consensus.node.full.rpc.RpcService;
+import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
@@ -65,8 +66,9 @@ public class FullNodeParser extends BsqParser {
                           BsqBlockController bsqBlockController,
                           GenesisTxController genesisTxController,
                           BsqTxController bsqTxController,
-                          StateService stateService) {
-        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
+                          StateService stateService,
+                          PeriodStateMutator periodStateMutator) {
+        super(bsqBlockController, genesisTxController, bsqTxController, stateService, periodStateMutator);
         this.rpcService = rpcService;
     }
 
@@ -95,7 +97,7 @@ public class FullNodeParser extends BsqParser {
     }
 
     TxBlock parseBlock(Block btcdBlock) throws BsqBlockchainException, BlockNotConnectingException {
-        stateService.startParsingBlock(btcdBlock.getHeight());
+        periodStateMutator.onStartParsingNewBlock(btcdBlock.getHeight());
 
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock);

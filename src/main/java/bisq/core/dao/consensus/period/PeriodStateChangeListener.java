@@ -21,12 +21,15 @@ import bisq.common.ThreadAwareListener;
 
 import java.util.List;
 
-public interface PeriodStateListener extends ThreadAwareListener {
+public interface PeriodStateChangeListener extends ThreadAwareListener {
     void onChainHeightChanged(int chainHeight);
 
-    void onCurrentCycleChanged(Cycle currentCycle);
+    default void onCurrentCycleChanged(Cycle currentCycle) {
+    }
 
-    void onCycleAdded(Cycle cycle);
+    default void onCycleAdded(Cycle cycle) {
+    }
 
-    void onGetInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight);
+    default void onInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
+    }
 }

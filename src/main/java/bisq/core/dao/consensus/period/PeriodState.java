@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PeriodState {
     // We need to have a threadsafe list here as we might get added a listener from user thread during iteration
     // at parser thread.
-    private final List<PeriodStateListener> periodStateListeners = new CopyOnWriteArrayList<>();
+    private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
 
     // Mutable state
     private final List<Cycle> cycles = new ArrayList<>();
@@ -59,10 +59,10 @@ public class PeriodState {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Can be called from user thread.
-    public void addListenerAndGetNotified(PeriodStateListener periodStateListener) {
-        periodStateListeners.add(periodStateListener);
+    public void addListenerAndGetNotified(PeriodStateChangeListener periodStateChangeListener) {
+        periodStateChangeListeners.add(periodStateChangeListener);
 
-        periodStateListeners.forEach(l -> l.execute(() -> l.onGetInitialState(cycles, currentCycle, chainHeight)));
+        periodStateChangeListeners.forEach(l -> l.execute(() -> l.onInitialState(cycles, currentCycle, chainHeight)));
     }
 
 
@@ -72,17 +72,17 @@ public class PeriodState {
 
     public void setChainHeight(int chainHeight) {
         this.chainHeight = chainHeight;
-        periodStateListeners.forEach(listener -> listener.execute(() -> listener.onChainHeightChanged(chainHeight)));
+        periodStateChangeListeners.forEach(listener -> listener.execute(() -> listener.onChainHeightChanged(chainHeight)));
     }
 
     public void setCurrentCycle(Cycle currentCycle) {
         this.currentCycle = currentCycle;
-        periodStateListeners.forEach(listener -> listener.execute(() -> listener.onCurrentCycleChanged(currentCycle)));
+        periodStateChangeListeners.forEach(listener -> listener.execute(() -> listener.onCurrentCycleChanged(currentCycle)));
     }
 
     public void addCycle(Cycle cycle) {
         this.cycles.add(cycle);
-        periodStateListeners.forEach(listener -> listener.execute(() -> listener.onCycleAdded(cycle)));
+        periodStateChangeListeners.forEach(listener -> listener.execute(() -> listener.onCycleAdded(cycle)));
     }
 
 

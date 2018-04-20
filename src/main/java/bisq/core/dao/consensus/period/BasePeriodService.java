@@ -21,6 +21,7 @@ import bisq.core.dao.consensus.state.blockchain.Tx;
 
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,9 +36,23 @@ import lombok.extern.slf4j.Slf4j;
 //TODO add tests
 @Slf4j
 public abstract class BasePeriodService {
+    protected final List<PeriodStateChangeListener> periodStateChangeListeners = new ArrayList<>();
 
     @Inject
     public BasePeriodService() {
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.add(listener);
+    }
+
+    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.remove(listener);
     }
 
 

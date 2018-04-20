@@ -49,6 +49,33 @@ public final class PeriodService extends BasePeriodService {
         this.periodState = periodState;
 
         periodStateMutator.initialize();
+
+        periodState.addListenerAndGetNotified(new PeriodStateChangeListener() {
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
+            }
+
+            @Override
+            public void onChainHeightChanged(int chainHeight) {
+                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onChainHeightChanged(chainHeight)));
+            }
+
+            @Override
+            public void onCurrentCycleChanged(Cycle currentCycle) {
+                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onCurrentCycleChanged(currentCycle)));
+            }
+
+            @Override
+            public void onCycleAdded(Cycle cycle) {
+                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onCycleAdded(cycle)));
+            }
+
+            @Override
+            public void onInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
+                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onInitialState(cycles, currentCycle, chainHeight)));
+            }
+        });
     }
 
 

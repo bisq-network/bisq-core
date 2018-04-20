@@ -69,9 +69,6 @@ public class StateServiceFacade extends BaseStateService {
 
         userThreadState = new State(genesisTxId, genesisBlockHeight);
 
-        // We listen at stateService to forward events to our listeners.
-        stateService.addBlockListener(block -> blockListeners.forEach(l -> l.execute(() -> l.onBlockAdded(block))));
-
         // We get the updates from the parser thread based state where on write access our listener gets executed on
         // the user thread.
         state.addStateChangeListener(new StateChangeListener() {
