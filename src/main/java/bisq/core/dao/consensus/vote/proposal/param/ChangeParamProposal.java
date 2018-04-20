@@ -17,31 +17,14 @@
 
 package bisq.core.dao.consensus.vote.proposal.param;
 
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalType;
-
-import bisq.common.app.Version;
-import bisq.common.crypto.Sig;
-
-import io.bisq.generated.protobuffer.PB;
-
-import java.security.PublicKey;
-
-import java.util.Date;
-import java.util.Map;
-
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
-
-//TODO separate value object with p2p network data
-@EqualsAndHashCode(callSuper = true)
+//TODO impl
 @Slf4j
 @Value
-public final class ChangeParamProposal extends Proposal {
-
+public final class ChangeParamProposal /*extends Proposal*/ {
+/*
     public ChangeParamProposal(String uid,
                                String name,
                                String title,
@@ -124,5 +107,5 @@ public final class ChangeParamProposal extends Proposal {
     @Override
     public Param getThresholdDaoParam() {
         return Param.THRESHOLD_CHANGE_PARAM;
-    }
+    }*/
 }

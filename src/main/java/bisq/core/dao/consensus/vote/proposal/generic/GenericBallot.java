@@ -17,31 +17,17 @@
 
 package bisq.core.dao.consensus.vote.proposal.generic;
 
-import bisq.core.dao.consensus.vote.Vote;
-import bisq.core.dao.consensus.vote.proposal.Ballot;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalType;
-
-import io.bisq.generated.protobuffer.PB;
-
-import org.springframework.util.CollectionUtils;
-
-import java.util.Map;
-
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nullable;
 
 /**
  * Generic proposal for anything not covered by specific proposals.
  */
+//TODO impl
 @Slf4j
-@EqualsAndHashCode(callSuper = true)
 @Value
-public class GenericBallot extends Ballot {
-
+public class GenericBallot {
+/*
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -87,5 +73,6 @@ public class GenericBallot extends Ballot {
 
     private GenericProposal getGenericProposalPayload() {
         return (GenericProposal) proposal;
-    }
+    }*/
 }
+

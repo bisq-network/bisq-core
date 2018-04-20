@@ -17,38 +17,12 @@
 
 package bisq.core.dao.consensus.vote.proposal.generic;
 
-import bisq.core.btc.exceptions.TransactionVerificationException;
-import bisq.core.btc.exceptions.WalletException;
-import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.vote.proposal.Ballot;
-import bisq.core.dao.consensus.vote.proposal.ProposalConsensus;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayloadValidator;
-import bisq.core.dao.consensus.vote.proposal.ValidationException;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
-
-import bisq.common.crypto.KeyRing;
-import bisq.common.util.Tuple2;
-
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.Transaction;
-
-import javax.inject.Inject;
-
-import java.security.PublicKey;
-
-import java.io.IOException;
-
-import java.util.Date;
-import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 
+//TODO impl
 @Slf4j
 public class GenericProposalService {
-    private final BsqWalletService bsqWalletService;
+    /*private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;
     private final ProposalPayloadValidator proposalPayloadValidator;
@@ -128,5 +102,5 @@ public class GenericProposalService {
         final String txId = transaction.getHashAsString();
         GenericProposal compensationRequestPayload = (GenericProposal) tempPayload.cloneWithTxId(txId);
         return new GenericBallot(compensationRequestPayload);
-    }
+    }*/
 }

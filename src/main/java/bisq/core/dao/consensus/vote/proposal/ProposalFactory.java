@@ -18,7 +18,6 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationBallot;
-import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,7 +28,8 @@ public class ProposalFactory {
             case COMPENSATION_REQUEST:
                 return new CompensationBallot(proposal);
             case GENERIC:
-                return new GenericBallot(proposal);
+                //TODO
+                throw new RuntimeException("Not implemented yet");
             case CHANGE_PARAM:
                 //TODO
                 throw new RuntimeException("Not implemented yet");

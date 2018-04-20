@@ -17,36 +17,17 @@
 
 package bisq.core.dao.consensus.vote.proposal.generic;
 
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalType;
-import bisq.core.dao.consensus.vote.proposal.param.Param;
-
-import bisq.common.app.Version;
-import bisq.common.crypto.Sig;
-
-import io.bisq.generated.protobuffer.PB;
-
-import org.springframework.util.CollectionUtils;
-
-import java.security.PublicKey;
-
-import java.util.Date;
-import java.util.Map;
-
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-//TODO separate value object with p2p network data
+//TODO impl
 @Immutable
 @Slf4j
-@EqualsAndHashCode(callSuper = true)
 @Value
-public final class GenericProposal extends Proposal {
-
+public final class GenericProposal {
+/*
     public GenericProposal(String uid,
                            String name,
                            String title,
@@ -152,5 +133,5 @@ public final class GenericProposal extends Proposal {
                 getCreationDate().getTime(),
                 null,
                 getExtraDataMap());
-    }
+    }*/
 }

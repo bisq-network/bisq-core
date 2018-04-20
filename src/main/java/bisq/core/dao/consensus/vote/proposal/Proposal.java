@@ -21,7 +21,6 @@ import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
 import bisq.core.dao.consensus.vote.VoteConsensusCritical;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
-import bisq.core.dao.consensus.vote.proposal.generic.GenericProposal;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
@@ -146,8 +145,8 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
         switch (proto.getMessageCase()) {
             case COMPENSATION_PROPOSAL:
                 return CompensationProposal.fromProto(proto);
-            case GENERIC_PROPOSAL:
-                return GenericProposal.fromProto(proto);
+           /* case GENERIC_PROPOSAL:
+                return GenericProposal.fromProto(proto);*/
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }

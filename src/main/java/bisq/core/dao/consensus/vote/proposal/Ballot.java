@@ -19,7 +19,6 @@ package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationBallot;
-import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
@@ -100,8 +99,8 @@ public abstract class Ballot implements PersistablePayload {
         switch (proto.getMessageCase()) {
             case COMPENSATION_BALLOT:
                 return CompensationBallot.fromProto(proto);
-            case GENERIC_BALLOT:
-                return GenericBallot.fromProto(proto);
+            /*case GENERIC_BALLOT:
+                return GenericBallot.fromProto(proto);*/
             default:
                 throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
         }
