@@ -17,12 +17,12 @@
 
 package bisq.core.dao.consensus;
 
+import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.node.BsqNode;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
-import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
-import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
+import bisq.core.dao.consensus.proposal.ProposalService;
+import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 

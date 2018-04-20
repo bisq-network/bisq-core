@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.core.dao.consensus.vote.proposal.Proposal;
+import bisq.core.dao.consensus.proposal.Proposal;
 
 import com.google.protobuf.Message;
 

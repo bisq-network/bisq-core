@@ -18,13 +18,13 @@
 package bisq.core.dao.presentation.proposal;
 
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.proposal.Ballot;
+import bisq.core.dao.consensus.proposal.Proposal;
+import bisq.core.dao.consensus.proposal.ProposalService;
+import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.state.Block;
 import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.consensus.vote.proposal.Ballot;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.ProposalValidator;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 

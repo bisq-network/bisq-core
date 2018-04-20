@@ -15,35 +15,31 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events;
+package bisq.core.dao.consensus.result;
 
+import bisq.core.dao.consensus.blindvote.BlindVotePayload;
 
-import bisq.core.dao.consensus.blindvote.BlindVote;
+import lombok.Getter;
+import lombok.ToString;
 
-import com.google.protobuf.Message;
+import javax.annotation.Nullable;
 
-import lombok.EqualsAndHashCode;
-import lombok.Value;
+@ToString
+public class VoteResultException extends Exception {
+    @Getter
+    @Nullable
+    private BlindVotePayload blindVotePayload;
 
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@EqualsAndHashCode(callSuper = true)
-@Value
-public class BlindVoteEvent extends StateChangeEvent {
-
-    public BlindVoteEvent(BlindVote blindVote, int height) {
-        super(blindVote, height);
+    public VoteResultException(String message, Exception cause, BlindVotePayload blindVotePayload) {
+        super(message, cause);
+        this.blindVotePayload = blindVotePayload;
     }
 
-    //TODO
-    @Override
-    public Message toProtoMessage() {
-        return null;
+    public VoteResultException(String message) {
+        super(message);
     }
 
-
-    public BlindVote getBlindVote() {
-        return (BlindVote) getData();
+    public VoteResultException(Throwable cause) {
+        super(cause);
     }
 }

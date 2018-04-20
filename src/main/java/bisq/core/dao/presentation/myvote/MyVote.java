@@ -17,8 +17,8 @@
 
 package bisq.core.dao.presentation.myvote;
 
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
-import bisq.core.dao.consensus.vote.proposal.BallotList;
+import bisq.core.dao.consensus.blindvote.BlindVote;
+import bisq.core.dao.consensus.proposal.BallotList;
 
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;

@@ -19,11 +19,11 @@ package bisq.core.dao.consensus.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.consensus.period.Cycle;
+import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.state.blockchain.SpentInfo;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 

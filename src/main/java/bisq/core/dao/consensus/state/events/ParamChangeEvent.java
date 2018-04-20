@@ -17,8 +17,8 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.core.dao.consensus.vote.proposal.param.Param;
-import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
+import bisq.core.dao.consensus.proposal.param.Param;
+import bisq.core.dao.consensus.proposal.param.ParamChange;
 
 import io.bisq.generated.protobuffer.PB;
 

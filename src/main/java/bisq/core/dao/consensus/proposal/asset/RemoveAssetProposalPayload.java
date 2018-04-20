@@ -15,35 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events;
+package bisq.core.dao.consensus.proposal.asset;
 
+import lombok.extern.slf4j.Slf4j;
 
-import bisq.core.dao.consensus.blindvote.BlindVote;
-
-import com.google.protobuf.Message;
-
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@EqualsAndHashCode(callSuper = true)
-@Value
-public class BlindVoteEvent extends StateChangeEvent {
-
-    public BlindVoteEvent(BlindVote blindVote, int height) {
-        super(blindVote, height);
-    }
-
-    //TODO
-    @Override
-    public Message toProtoMessage() {
-        return null;
-    }
-
-
-    public BlindVote getBlindVote() {
-        return (BlindVote) getData();
-    }
+// TODO implement
+@Slf4j
+public final class RemoveAssetProposalPayload {
 }

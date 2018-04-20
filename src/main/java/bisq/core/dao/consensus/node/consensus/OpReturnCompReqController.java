@@ -20,12 +20,12 @@ package bisq.core.dao.consensus.node.consensus;
 import bisq.core.dao.consensus.OpReturnType;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.proposal.param.ChangeParamService;
+import bisq.core.dao.consensus.proposal.param.Param;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
-import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import javax.inject.Inject;
 

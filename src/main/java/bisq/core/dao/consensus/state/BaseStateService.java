@@ -17,7 +17,10 @@
 
 package bisq.core.dao.consensus.state;
 
+import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.period.Cycle;
+import bisq.core.dao.consensus.proposal.Proposal;
+import bisq.core.dao.consensus.proposal.param.ParamChange;
 import bisq.core.dao.consensus.state.blockchain.SpentInfo;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
@@ -29,9 +32,6 @@ import bisq.core.dao.consensus.state.events.BlindVoteEvent;
 import bisq.core.dao.consensus.state.events.ParamChangeEvent;
 import bisq.core.dao.consensus.state.events.ProposalEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import org.bitcoinj.core.Coin;
 

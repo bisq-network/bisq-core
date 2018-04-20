@@ -24,12 +24,12 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.proposal.Ballot;
+import bisq.core.dao.consensus.proposal.BallotList;
+import bisq.core.dao.consensus.proposal.Proposal;
+import bisq.core.dao.consensus.proposal.ProposalPayload;
+import bisq.core.dao.consensus.proposal.ProposalService;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.vote.proposal.Ballot;
-import bisq.core.dao.consensus.vote.proposal.BallotList;
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
-import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.presentation.PresentationService;
 
 import bisq.network.p2p.P2PService;

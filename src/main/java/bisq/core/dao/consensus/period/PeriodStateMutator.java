@@ -17,13 +17,13 @@
 
 package bisq.core.dao.consensus.period;
 
+import bisq.core.dao.consensus.proposal.param.Param;
+import bisq.core.dao.consensus.proposal.param.ParamChange;
 import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.ParamChangeEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.vote.proposal.param.Param;
-import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import com.google.inject.Inject;
 
