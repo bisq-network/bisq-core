@@ -18,8 +18,9 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.Block;
+import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 
@@ -90,16 +91,15 @@ public class ProposalListService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        //TODO
-        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
+        stateService.addBlockListener(new BlockListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;
             }
 
             @Override
-            public void onChainHeightChanged(int chainHeight) {
-                updateLists(chainHeight);
+            public void onBlockAdded(Block block) {
+                updateLists(block.getHeight());
             }
         });
 

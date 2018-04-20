@@ -17,9 +17,6 @@
 
 package bisq.core.dao.consensus.state;
 
-import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.period.PeriodStateChangeListener;
-
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
 
@@ -51,23 +48,16 @@ public class SnapshotManager {
     @Inject
     public SnapshotManager(State state,
                            StateService stateService,
-                           PeriodService periodService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
         this.state = state;
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        //TODO
-        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
+        stateService.addBlockListener(new BlockListener() {
             @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
-            @Override
-            public void onChainHeightChanged(int chainHeight) {
-                final int chainHeadHeight = stateService.getChainHeight();
+            public void onBlockAdded(Block block) {
+                final int chainHeadHeight = block.getHeight();
                 if (isSnapshotHeight(chainHeadHeight) &&
                         (snapshotCandidate == null ||
                                 snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
@@ -83,6 +73,11 @@ public class SnapshotManager {
                     // don't access cloned anymore with methods as locks are transient!
                     log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
                 }
+            }
+
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
             }
         });
     }

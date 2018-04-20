@@ -57,8 +57,8 @@ public final class PeriodService extends BasePeriodService {
             }
 
             @Override
-            public void onChainHeightChanged(int chainHeight) {
-                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onChainHeightChanged(chainHeight)));
+            public void onPreParserChainHeightChanged(int chainHeight) {
+                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onPreParserChainHeightChanged(chainHeight)));
             }
 
             @Override

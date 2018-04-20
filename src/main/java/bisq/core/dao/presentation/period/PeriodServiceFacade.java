@@ -77,10 +77,10 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     // We get called on the user thread
     @Override
-    public void onChainHeightChanged(int chainHeight) {
+    public void onPreParserChainHeightChanged(int chainHeight) {
         userThreadPeriodState.setChainHeight(chainHeight);
         updatePhaseProperty();
-        periodStateChangeListeners.forEach(l -> l.onChainHeightChanged(chainHeight));
+        periodStateChangeListeners.forEach(l -> l.onPreParserChainHeightChanged(chainHeight));
     }
 
     @Override

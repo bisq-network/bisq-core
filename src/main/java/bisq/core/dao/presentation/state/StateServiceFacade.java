@@ -53,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class StateServiceFacade extends BaseStateService {
+
     private final State userThreadState;
 
 
@@ -75,6 +76,8 @@ public class StateServiceFacade extends BaseStateService {
             @Override
             public void onAddBlock(Block block) {
                 userThreadState.addBlock(block);
+
+                blockListeners.forEach(l -> l.onBlockAdded(block));
             }
 
             @Override

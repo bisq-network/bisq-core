@@ -22,7 +22,7 @@ import bisq.common.ThreadAwareListener;
 import java.util.List;
 
 public interface PeriodStateChangeListener extends ThreadAwareListener {
-    void onChainHeightChanged(int chainHeight);
+    void onPreParserChainHeightChanged(int chainHeight);
 
     default void onCurrentCycleChanged(Cycle currentCycle) {
     }

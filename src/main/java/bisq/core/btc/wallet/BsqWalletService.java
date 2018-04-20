@@ -21,7 +21,8 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.consensus.period.PeriodStateChangeListener;
+import bisq.core.dao.consensus.state.Block;
+import bisq.core.dao.consensus.state.BlockListener;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
@@ -71,7 +72,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements PeriodStateChangeListener {
+public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
     private final StateServiceFacade stateServiceFacade;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
@@ -161,16 +162,16 @@ public class BsqWalletService extends WalletService implements PeriodStateChange
             });
         }
 
-        periodServiceFacade.addPeriodStateChangeListener(this);
+        stateServiceFacade.addBlockListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // PeriodStateChangeListener
+    // StateServiceFacade.Listener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onChainHeightChanged(int chainHeight) {
+    public void onBlockAdded(Block block) {
         if (isWalletReady())
             updateBsqWalletTransactions();
     }

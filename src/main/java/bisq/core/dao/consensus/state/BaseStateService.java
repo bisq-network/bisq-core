@@ -35,6 +35,7 @@ import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import org.bitcoinj.core.Coin;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,11 +53,27 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class BaseStateService {
 
+    protected List<BlockListener> blockListeners = new ArrayList<>();
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public BaseStateService() {
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addBlockListener(BlockListener listener) {
+        blockListeners.add(listener);
+    }
+
+    public void removeBlockListener(BlockListener listener) {
+        blockListeners.remove(listener);
     }
 
 
