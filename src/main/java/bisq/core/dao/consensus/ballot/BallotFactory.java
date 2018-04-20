@@ -15,9 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.proposal;
+package bisq.core.dao.consensus.ballot;
 
-import bisq.core.dao.consensus.proposal.compensation.CompensationBallot;
+import bisq.core.dao.consensus.proposal.Proposal;
+import bisq.core.dao.consensus.ballot.compensation.CompensationBallot;
 
 import lombok.extern.slf4j.Slf4j;
 

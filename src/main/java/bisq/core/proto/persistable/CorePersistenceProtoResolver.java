@@ -21,7 +21,7 @@ import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
-import bisq.core.dao.consensus.proposal.BallotList;
+import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.state.State;
 import bisq.core.dao.presentation.myvote.MyVoteList;
 import bisq.core.payment.PaymentAccountList;

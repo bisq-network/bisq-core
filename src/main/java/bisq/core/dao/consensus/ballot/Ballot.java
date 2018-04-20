@@ -15,9 +15,11 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.proposal;
+package bisq.core.dao.consensus.ballot;
 
-import bisq.core.dao.consensus.proposal.compensation.CompensationBallot;
+import bisq.core.dao.consensus.proposal.Proposal;
+import bisq.core.dao.consensus.proposal.ProposalType;
+import bisq.core.dao.consensus.ballot.compensation.CompensationBallot;
 import bisq.core.dao.consensus.vote.Vote;
 
 import bisq.common.proto.ProtobufferException;

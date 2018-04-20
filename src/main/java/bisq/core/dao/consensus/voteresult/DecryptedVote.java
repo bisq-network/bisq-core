@@ -19,7 +19,7 @@ package bisq.core.dao.consensus.voteresult;
 
 import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.proposal.BallotList;
+import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxInput;

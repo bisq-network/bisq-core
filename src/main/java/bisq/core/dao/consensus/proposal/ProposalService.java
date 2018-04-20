@@ -18,6 +18,9 @@
 package bisq.core.dao.consensus.proposal;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.consensus.ballot.Ballot;
+import bisq.core.dao.consensus.ballot.BallotFactory;
+import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateChangeEventsProvider;
