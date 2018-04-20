@@ -158,10 +158,6 @@ public class ProposalService implements PersistedDataHost {
                 .forEach(entry -> onAddedProtectedStorageEntry(entry, false));
     }
 
-    public boolean isMine(ProtectedStoragePayload protectedStoragePayload) {
-        return signaturePubKey.equals(protectedStoragePayload.getOwnerPubKey());
-    }
-
     public boolean isInPhaseOrUnconfirmed(Optional<Tx> optionalProposalTx, String txId, Phase phase,
                                           int blockHeight) {
         return isUnconfirmed(txId) ||
@@ -187,27 +183,27 @@ public class ProposalService implements PersistedDataHost {
 
     private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof Proposal) {
-            final Proposal proposal = (Proposal) protectedStoragePayload;
-            if (!listContains(proposal)) {
-                // For adding a proposal we need to be before the last block in BREAK1 as in the last block at BREAK1
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final ProposalPayload proposalPayload = (ProposalPayload) protectedStoragePayload;
+            if (!listContains(proposalPayload.getProposal())) {
+                // For adding a proposalPayload we need to be before the last block in BREAK1 as in the last block at BREAK1
                 // we write our proposals to the state.
                 if (isInToleratedBlockRange(stateService.getChainHeight())) {
                     log.info("We received a Proposal from the P2P network. Proposal.uid=" +
-                            proposal.getUid());
-                    Ballot ballot = ProposalFactory.getProposalFromPayload(proposal);
+                            proposalPayload.getProposal().getUid());
+                    Ballot ballot = BallotFactory.getBallotFromProposal(proposalPayload.getProposal());
                     openBallotList.add(ballot);
 
                     if (storeLocally)
                         persist();
                 } else {
                     log.warn("We are not in the tolerated phase anymore and ignore that " +
-                                    "proposal. proposal={}, height={}", proposal,
+                                    "proposalPayload. proposalPayload={}, height={}", proposalPayload,
                             stateService.getChainHeight());
                 }
             } else {
-                if (storeLocally && !isMine(proposal))
-                    log.debug("We have that proposal already in our list. proposal={}", proposal);
+                if (storeLocally)
+                    log.debug("We have that proposalPayload already in our list. proposalPayload={}", proposalPayload);
             }
         }
     }
@@ -265,9 +261,9 @@ public class ProposalService implements PersistedDataHost {
         return findProposal(proposal).isPresent();
     }
 
-    private Optional<Ballot> findProposal(Proposal proposalPayload) {
+    private Optional<Ballot> findProposal(Proposal proposal) {
         return openBallotList.stream()
-                .filter(proposal -> proposal.getProposal().equals(proposalPayload))
+                .filter(proposal::equals)
                 .findAny();
     }
 }

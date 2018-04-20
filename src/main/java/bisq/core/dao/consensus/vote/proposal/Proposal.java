@@ -23,27 +23,12 @@ import bisq.core.dao.consensus.vote.VoteConsensusCritical;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
-import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
-import bisq.network.p2p.storage.payload.LazyProcessedPayload;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
-
-import bisq.common.app.Capabilities;
-import bisq.common.crypto.Sig;
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.ByteString;
-
-import java.security.PublicKey;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import lombok.AccessLevel;
@@ -55,41 +40,20 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * Proposal is sent over wire as well as it gets persisted.
- * <p>
- * We persist all Proposal data in the PersistedEntryMap.
- * Data size on disk for one item is: about 743 bytes (443 bytes is for ownerPubKeyEncoded)
- * As Proposals gets persisted in the Blocks of the State as well we could consider pruning of old data.
- */
-//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public abstract class Proposal implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload, VoteConsensusCritical {
-
+public abstract class Proposal implements PersistablePayload, VoteConsensusCritical {
     protected final String uid;
     protected final String name;
     protected final String title;
     protected final String description;
     protected final String link;
-    protected final byte[] ownerPubKeyEncoded;
     protected final String txId;
     protected final byte version;
     protected final long creationDate;
-
-    // Should be only used in emergency case if we need to add data but do not want to break backward compatibility
-    // at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
-    // field in a class would break that hash and therefore break the storage mechanism.
-    @Nullable
-    protected final Map<String, String> extraDataMap;
-
-    // Used just for caching. Don't persist.
-    @Nullable
-    private final transient PublicKey ownerPubKey;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -101,23 +65,17 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
                        String title,
                        String description,
                        String link,
-                       byte[] ownerPubPubKeyEncoded,
                        byte version,
                        long creationDate,
-                       @Nullable String txId,
-                       @Nullable Map<String, String> extraDataMap) {
+                       @Nullable String txId) {
         this.uid = uid;
         this.name = name;
         this.title = title;
         this.description = description;
         this.link = link;
-        this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.version = version;
         this.creationDate = creationDate;
         this.txId = txId;
-        this.extraDataMap = extraDataMap;
-
-        ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
     public PB.Proposal.Builder getProposalBuilder() {
@@ -127,17 +85,15 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
                 .setTitle(title)
                 .setDescription(description)
                 .setLink(link)
-                .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded))
                 .setVersion(version)
                 .setCreationDate(creationDate);
         Optional.ofNullable(txId).ifPresent(builder::setTxId);
-        Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
         return builder;
     }
 
     @Override
-    public PB.StoragePayload toProtoMessage() {
-        return PB.StoragePayload.newBuilder().setProposal(getProposalBuilder()).build();
+    public PB.Proposal toProtoMessage() {
+        return getProposalBuilder().build();
     }
 
     //TODO add other proposal types
@@ -156,19 +112,6 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public PublicKey getOwnerPubKey() {
-        return ownerPubKey;
-    }
-
-    // Pre 0.6 version don't know the new message type and throw an error which leads to disconnecting the peer.
-    @Override
-    public List<Integer> getRequiredCapabilities() {
-        return new ArrayList<>(Collections.singletonList(
-                Capabilities.Capability.PROPOSAL.ordinal()
-        ));
-    }
 
     abstract public Proposal cloneWithoutTxId();
 
@@ -204,11 +147,9 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
                 ",\n     title='" + title + '\'' +
                 ",\n     description='" + description + '\'' +
                 ",\n     link='" + link + '\'' +
-                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     version=" + version +
                 ",\n     creationDate=" + new Date(creationDate) +
-                ",\n     extraDataMap=" + extraDataMap +
                 "\n}";
     }
 }

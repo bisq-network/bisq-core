@@ -22,8 +22,8 @@ import bisq.core.dao.consensus.vote.proposal.compensation.CompensationBallot;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProposalFactory {
-    public static Ballot getProposalFromPayload(Proposal proposal) {
+public class BallotFactory {
+    public static Ballot getBallotFromProposal(Proposal proposal) {
         switch (proposal.getType()) {
             case COMPENSATION_REQUEST:
                 return new CompensationBallot(proposal);

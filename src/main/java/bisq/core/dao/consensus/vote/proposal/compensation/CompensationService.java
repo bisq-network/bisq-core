@@ -40,9 +40,6 @@ import java.security.PublicKey;
 
 import java.io.IOException;
 
-import java.util.Date;
-import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -85,28 +82,29 @@ public class CompensationService {
             WalletException {
 
         // As we don't know the txId we create a temp object with TxId set to null.
-        final CompensationProposal tempPayload = new CompensationProposal(
-                UUID.randomUUID().toString(),
+        final CompensationProposal proposal = new CompensationProposal(
                 name,
                 title,
                 description,
                 link,
                 requestedBsq,
-                bsqAddress,
-                signaturePubKey,
-                new Date()
+                bsqAddress
         );
-        compensationValidator.validateDataFields(tempPayload);
+        validate(proposal);
 
-        Transaction transaction = createCompensationRequestTx(tempPayload);
+        Transaction transaction = getTransaction(proposal);
 
-        return new Tuple2<>(createCompensationRequest(tempPayload, transaction), transaction);
+        return new Tuple2<>(getCompensationBallot(proposal, transaction), transaction);
+    }
+
+    private void validate(CompensationProposal proposal) throws ValidationException {
+        compensationValidator.validateDataFields(proposal);
     }
 
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction createCompensationRequestTx(CompensationProposal tempPayload)
+    private Transaction getTransaction(CompensationProposal tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(changeParamService, stateService.getChainHeight());
@@ -129,7 +127,7 @@ public class CompensationService {
 
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
-    private CompensationBallot createCompensationRequest(CompensationProposal tempPayload, Transaction transaction) {
+    private CompensationBallot getCompensationBallot(CompensationProposal tempPayload, Transaction transaction) {
         final String txId = transaction.getHashAsString();
         CompensationProposal compensationProposal = (CompensationProposal) tempPayload.cloneWithTxId(txId);
         return new CompensationBallot(compensationProposal);

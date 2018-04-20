@@ -34,9 +34,9 @@ import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.vote.blindvote.BlindVotePayload;
 import bisq.core.dao.consensus.vote.proposal.Ballot;
+import bisq.core.dao.consensus.vote.proposal.BallotFactory;
 import bisq.core.dao.consensus.vote.proposal.BallotList;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.ProposalFactory;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 
@@ -228,7 +228,7 @@ public class MyVoteService implements PersistedDataHost {
 
     private BallotList getSortedProposalList() {
         List<Proposal> proposalPayloadsFromStateService = stateService.getProposalPayloads().stream()
-                .map(ProposalFactory::getProposalFromPayload)
+                .map(BallotFactory::getBallotFromProposal)
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
                 .map(Ballot::getProposal)
                 .collect(Collectors.toList());

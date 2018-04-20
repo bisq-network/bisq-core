@@ -18,7 +18,6 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
 import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
@@ -31,6 +30,7 @@ import bisq.network.p2p.P2PService;
 
 import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
+import bisq.common.crypto.KeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.persistable.PersistedDataHost;
@@ -45,6 +45,8 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.security.PublicKey;
+
 import java.util.Optional;
 
 import lombok.Getter;
@@ -58,10 +60,10 @@ import lombok.extern.slf4j.Slf4j;
 public class MyProposalService implements PersistedDataHost {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
-    private final BsqWalletService bsqWalletService;
     private final ProposalService proposalService;
     private final StateService stateService;
     private final Storage<BallotList> storage;
+    private final PublicKey signaturePubKey;
     private ChangeListener<Number> numConnectedPeersListener;
 
     @Getter
@@ -76,16 +78,15 @@ public class MyProposalService implements PersistedDataHost {
     @Inject
     public MyProposalService(P2PService p2PService,
                              WalletsManager walletsManager,
-                             BsqWalletService bsqWalletService,
                              ProposalService proposalService,
                              StateService stateService,
+                             KeyRing keyRing,
                              Storage<BallotList> storage) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
-        this.bsqWalletService = bsqWalletService;
         this.proposalService = proposalService;
         this.stateService = stateService;
-
+        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
         this.storage = storage;
     }
 
@@ -130,7 +131,7 @@ public class MyProposalService implements PersistedDataHost {
                     final Proposal proposal = ballot.getProposal();
                     if (addToP2PNetwork(proposal)) {
                         log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
-                        if (!listContains(ballot.getProposal()))
+                        if (!listContainsProposal(ballot.getProposal()))
                             observableList.add(ballot);
                         resultHandler.handleResult();
                     } else {
@@ -174,7 +175,7 @@ public class MyProposalService implements PersistedDataHost {
                 proposal.getTxId(),
                 Phase.PROPOSAL,
                 stateService.getChainHeight())) {
-            boolean success = p2PService.removeData(proposal, true);
+            boolean success = p2PService.removeData(getProposalPayload(proposal), true);
             if (success) {
                 if (observableList.remove(ballot))
                     persist();
@@ -191,19 +192,18 @@ public class MyProposalService implements PersistedDataHost {
         }
     }
 
+    public boolean isMine(Proposal proposal) {
+        return listContainsProposal(proposal);
+    }
+
     public void persist() {
         storage.queueUpForSave();
     }
 
-    private boolean listContains(Proposal proposal) {
-        return findProposal(proposal).isPresent();
+    public ProposalPayload getProposalPayload(Proposal proposal) {
+        return new ProposalPayload(proposal, signaturePubKey);
     }
 
-    private Optional<Ballot> findProposal(Proposal proposalPayload) {
-        return observableList.stream()
-                .filter(proposal -> proposal.getProposal().equals(proposalPayload))
-                .findAny();
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -230,6 +230,18 @@ public class MyProposalService implements PersistedDataHost {
     }
 
     private boolean addToP2PNetwork(Proposal proposal) {
-        return p2PService.addProtectedStorageEntry(proposal, true);
+        return p2PService.addProtectedStorageEntry(getProposalPayload(proposal), true);
     }
+
+    private boolean listContainsProposal(Proposal proposal) {
+        return findProposal(proposal).isPresent();
+    }
+
+    private Optional<Ballot> findProposal(Proposal proposal) {
+        return observableList.stream()
+                .filter(ballot -> ballot.getProposal().equals(proposal))
+                .findAny();
+    }
+
+
 }

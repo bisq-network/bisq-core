@@ -25,7 +25,6 @@ import bisq.core.dao.consensus.vote.proposal.ProposalType;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
 import bisq.common.app.Version;
-import bisq.common.crypto.Sig;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -33,21 +32,15 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 
-import org.springframework.util.CollectionUtils;
-
-import java.security.PublicKey;
-
 import java.util.Date;
-import java.util.Map;
+import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
@@ -57,25 +50,20 @@ public final class CompensationProposal extends Proposal {
     private final long requestedBsq;
     private final String bsqAddress;
 
-    public CompensationProposal(String uid,
-                                String name,
+    public CompensationProposal(String name,
                                 String title,
                                 String description,
                                 String link,
                                 Coin requestedBsq,
-                                String bsqAddress,
-                                PublicKey ownerPubKey,
-                                Date creationDate) {
-        super(uid,
+                                String bsqAddress) {
+        super(UUID.randomUUID().toString(),
                 name,
                 title,
                 description,
                 link,
-                Sig.getPublicKeyBytes(ownerPubKey),
                 Version.COMPENSATION_REQUEST_VERSION,
-                creationDate.getTime(),
-                null,
-                null);
+                new Date().getTime(),
+                "");
         this.requestedBsq = requestedBsq.value;
         this.bsqAddress = bsqAddress;
     }
@@ -92,21 +80,17 @@ public final class CompensationProposal extends Proposal {
                                 String link,
                                 String bsqAddress,
                                 long requestedBsq,
-                                byte[] ownerPubKeyEncoded,
                                 byte version,
                                 long creationDate,
-                                String txId,
-                                @Nullable Map<String, String> extraDataMap) {
+                                String txId) {
         super(uid,
                 name,
                 title,
                 description,
                 link,
-                ownerPubKeyEncoded,
                 version,
                 creationDate,
-                txId,
-                extraDataMap);
+                txId);
 
         this.requestedBsq = requestedBsq;
         this.bsqAddress = bsqAddress;
@@ -129,11 +113,9 @@ public final class CompensationProposal extends Proposal {
                 proto.getLink(),
                 compensationRequestProposa.getBsqAddress(),
                 compensationRequestProposa.getRequestedBsq(),
-                proto.getOwnerPubKeyEncoded().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
-                proto.getTxId(),
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+                proto.getTxId());
     }
 
 
@@ -183,11 +165,9 @@ public final class CompensationProposal extends Proposal {
                 getLink(),
                 getBsqAddress(),
                 getRequestedBsq().value,
-                getOwnerPubKeyEncoded(),
                 getVersion(),
                 getCreationDate().getTime(),
-                txId,
-                getExtraDataMap());
+                txId);
     }
 
     @Override
@@ -199,11 +179,9 @@ public final class CompensationProposal extends Proposal {
                 getLink(),
                 getBsqAddress(),
                 getRequestedBsq().value,
-                getOwnerPubKeyEncoded(),
                 getVersion(),
                 getCreationDate().getTime(),
-                null,
-                getExtraDataMap());
+                "");
     }
 
     @Override
