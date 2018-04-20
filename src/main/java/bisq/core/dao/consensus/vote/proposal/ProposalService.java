@@ -31,13 +31,10 @@ import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.DevEnv;
-import bisq.common.crypto.KeyRing;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
-
-import java.security.PublicKey;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -62,27 +59,24 @@ import lombok.extern.slf4j.Slf4j;
 public class ProposalService implements PersistedDataHost {
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
-    private final PublicKey signaturePubKey;
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
 
     @Getter
-    private final BallotList openBallotList = new BallotList();
+    private final BallotList ballotList = new BallotList();
 
     @Inject
     public ProposalService(P2PDataStorage p2pDataStorage,
                            PeriodService periodService,
                            StateService stateService,
                            ProposalValidator proposalValidator,
-                           KeyRing keyRing,
                            Storage<BallotList> storage) {
         this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
         this.storage = storage;
-        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
 
@@ -94,10 +88,10 @@ public class ProposalService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BallotList persisted = storage.initAndGetPersisted(openBallotList, 20);
+            BallotList persisted = storage.initAndGetPersisted(ballotList, 20);
             if (persisted != null) {
-                this.openBallotList.clear();
-                this.openBallotList.addAll(persisted.getList());
+                this.ballotList.clear();
+                this.ballotList.addAll(persisted.getList());
             }
         }
     }
@@ -113,7 +107,7 @@ public class ProposalService implements PersistedDataHost {
         stateService.registerStateChangeEventsProvider(txBlock -> {
             Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
             Set<Proposal> toRemove = new HashSet<>();
-            openBallotList.stream()
+            ballotList.stream()
                     .map(Ballot::getProposal)
                     .map(proposalPayload -> {
                         final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
@@ -192,7 +186,7 @@ public class ProposalService implements PersistedDataHost {
                     log.info("We received a Proposal from the P2P network. Proposal.uid=" +
                             proposalPayload.getProposal().getUid());
                     Ballot ballot = BallotFactory.getBallotFromProposal(proposalPayload.getProposal());
-                    openBallotList.add(ballot);
+                    ballotList.add(ballot);
 
                     if (storeLocally)
                         persist();
@@ -251,7 +245,7 @@ public class ProposalService implements PersistedDataHost {
     }
 
     private void removeProposalFromList(Proposal proposal) {
-        if (openBallotList.remove(proposal))
+        if (ballotList.remove(proposal))
             persist();
         else
             log.warn("We called removeProposalFromList at a proposal which was not in our list");
@@ -262,7 +256,7 @@ public class ProposalService implements PersistedDataHost {
     }
 
     private Optional<Ballot> findProposal(Proposal proposal) {
-        return openBallotList.stream()
+        return ballotList.stream()
                 .filter(proposal::equals)
                 .findAny();
     }

@@ -111,7 +111,7 @@ public class VoteResultService {
         // We get called from stateService in the parser thread
         stateService.registerStateChangeEventsProvider(txBlock -> {
             final int chainHeight = txBlock.getHeight();
-            if (periodService.getPhaseForHeight(chainHeight) == Phase.ISSUANCE) {
+            if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_RESULT) {
                 // We map to user thread because we access other user thread domains like wallet and the only state
                 // relevant data we need is the chainHeight
                 applyVoteResult(chainHeight);

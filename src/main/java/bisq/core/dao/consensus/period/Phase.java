@@ -31,6 +31,6 @@ public enum Phase {
     BREAK2,
     VOTE_REVEAL,
     BREAK3,
-    ISSUANCE,
+    VOTE_RESULT,
     BREAK4
 }

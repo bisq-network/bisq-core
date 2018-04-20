@@ -131,7 +131,7 @@ public class ProposalListService {
     private void updateLists(int chainHeadHeight) {
         // We are on the parser thread, so we are in sync with proposalService and stateService
         // proposalService.isMine and  proposalService.isValid are not accessing any mutable state.
-        final List<Ballot> ballots = new ArrayList<>(proposalService.getOpenBallotList().getList());
+        final List<Ballot> ballots = new ArrayList<>(proposalService.getBallotList().getList());
         Map<String, Optional<Tx>> map = new HashMap<>();
         ballots.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
 

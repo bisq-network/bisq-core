@@ -233,7 +233,7 @@ public class MyVoteService implements PersistedDataHost {
                 .map(Ballot::getProposal)
                 .collect(Collectors.toList());
 
-        List<Ballot> ballots = proposalService.getOpenBallotList().stream()
+        List<Ballot> ballots = proposalService.getBallotList().stream()
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
                 .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposal()))
                 .collect(Collectors.toList());
