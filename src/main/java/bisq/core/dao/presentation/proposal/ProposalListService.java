@@ -17,8 +17,8 @@
 
 package bisq.core.dao.presentation.proposal;
 
-import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.ballot.Ballot;
+import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalService;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
@@ -183,5 +183,10 @@ public class ProposalListService {
                     }).collect(Collectors.toList());
             closedBallots.addAll(ballotList);
         });
+    }
+
+    // TODO maintain list
+    public void persist() {
+        proposalService.persist();
     }
 }
