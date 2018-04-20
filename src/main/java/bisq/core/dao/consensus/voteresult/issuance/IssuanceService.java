@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.result.issuance;
+package bisq.core.dao.consensus.voteresult.issuance;
 
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;

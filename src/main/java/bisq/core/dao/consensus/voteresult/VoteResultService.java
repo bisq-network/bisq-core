@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.result;
+package bisq.core.dao.consensus.voteresult;
 
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.period.PeriodService;
@@ -23,7 +23,6 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
-import bisq.core.dao.consensus.result.issuance.IssuanceService;
 import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
@@ -31,6 +30,7 @@ import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
+import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealConsensus;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
 

@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.result;
+package bisq.core.dao.consensus.voteresult;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
