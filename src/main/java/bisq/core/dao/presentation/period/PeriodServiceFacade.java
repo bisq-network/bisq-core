@@ -22,18 +22,14 @@ import bisq.core.dao.consensus.period.Cycle;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateListener;
 import bisq.core.dao.consensus.period.Phase;
-import bisq.core.dao.consensus.state.BlockListener;
-import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import com.google.inject.Inject;
-
-import com.google.common.collect.ImmutableList;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,15 +46,15 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateListener {
-    //TODO remove
-    private final StateService stateService;
+    private final StateServiceFacade stateServiceFacade;
 
-    private ImmutableList<Cycle> cycles;
-    private Cycle currentCycle;
-    private int chainHeight;
+    // We maintain a local version of the period state which gets updated when the main PeriodState gets changed.
+    // We get the update mapped to the user thread as the PeriodState is written via the parser thread.
+    // By keeping the model separated from another thread context the client classed do not need to worry about
+    // threading issues.
+    private final PeriodState userThreadPeriodState;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
-    private List<BlockListener> blockListeners = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -66,19 +62,12 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodServiceFacade(PeriodState periodState, StateService stateService) {
-        this.stateService = stateService;
+    public PeriodServiceFacade(PeriodState periodState, StateServiceFacade stateServiceFacade) {
+        this.stateServiceFacade = stateServiceFacade;
+
+        userThreadPeriodState = new PeriodState();
 
         periodState.addListenerAndGetNotified(this);
-        stateService.addBlockListener(block -> blockListeners.forEach(l -> l.execute(() -> l.onBlockAdded(block))));
-    }
-
-    public void addBlockListener(BlockListener blockListener) {
-        blockListeners.add(blockListener);
-    }
-
-    public void removeBlockListener(BlockListener blockListener) {
-        blockListeners.remove(blockListener);
     }
 
 
@@ -88,22 +77,29 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     // We get called on the user thread
     @Override
-    public void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle) {
-        this.cycles = cycles;
-        this.currentCycle = currentCycle;
-        updatePhaseProperty();
-    }
-
-    // We get called on the user thread
-    @Override
     public void onChainHeightChanged(int chainHeight) {
-        this.chainHeight = chainHeight;
+        userThreadPeriodState.setChainHeight(chainHeight);
         updatePhaseProperty();
     }
 
-    private void updatePhaseProperty() {
-        if (chainHeight > 0 && currentCycle != null)
-            currentCycle.getPhaseForHeight(chainHeight).ifPresent(phaseProperty::set);
+    @Override
+    public void onCurrentCycleChanged(Cycle currentCycle) {
+        userThreadPeriodState.setCurrentCycle(currentCycle);
+        updatePhaseProperty();
+    }
+
+    @Override
+    public void onCycleAdded(Cycle cycle) {
+        userThreadPeriodState.addCycle(cycle);
+        updatePhaseProperty();
+    }
+
+    @Override
+    public void onGetInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
+        userThreadPeriodState.setChainHeight(chainHeight);
+        userThreadPeriodState.setCurrentCycle(currentCycle);
+        userThreadPeriodState.setCycles(cycles);
+        updatePhaseProperty();
     }
 
 
@@ -113,23 +109,23 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     @Override
     public List<Cycle> getCycles() {
-        return cycles;
+        return userThreadPeriodState.getCycles();
     }
 
     @Override
     public Cycle getCurrentCycle() {
-        return currentCycle;
+        return userThreadPeriodState.getCurrentCycle();
+    }
+
+    @Override
+    public int getChainHeight() {
+        return userThreadPeriodState.getChainHeight();
     }
 
     //TODO
     @Override
     public Optional<Tx> getOptionalTx(String txId) {
-        return stateService.getTx(txId);
-    }
-
-    @Override
-    public int getChainHeight() {
-        return chainHeight;
+        return stateServiceFacade.getTx(txId);
     }
 
 
@@ -143,5 +139,11 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     public ObjectProperty<Phase> phaseProperty() {
         return phaseProperty;
+    }
+
+
+    private void updatePhaseProperty() {
+        if (getChainHeight() > 0 && getCurrentCycle() != null)
+            getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
     }
 }

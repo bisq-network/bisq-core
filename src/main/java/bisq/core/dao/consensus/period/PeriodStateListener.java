@@ -19,10 +19,14 @@ package bisq.core.dao.consensus.period;
 
 import bisq.common.ThreadAwareListener;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 public interface PeriodStateListener extends ThreadAwareListener {
-    void onNewCycle(ImmutableList<Cycle> cycles, Cycle currentCycle);
-
     void onChainHeightChanged(int chainHeight);
+
+    void onCurrentCycleChanged(Cycle currentCycle);
+
+    void onCycleAdded(Cycle cycle);
+
+    void onGetInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight);
 }

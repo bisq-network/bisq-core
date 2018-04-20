@@ -44,11 +44,11 @@ public final class PeriodService extends BasePeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(StateService stateService, PeriodState periodState) {
+    public PeriodService(PeriodStateMutator periodStateMutator, StateService stateService, PeriodState periodState) {
         this.stateService = stateService;
         this.periodState = periodState;
 
-        periodState.initialize();
+        periodStateMutator.initialize();
     }
 
 
@@ -67,12 +67,13 @@ public final class PeriodService extends BasePeriodService {
     }
 
     @Override
+    public int getChainHeight() {
+        return periodState.getChainHeight();
+    }
+
+    @Override
     public Optional<Tx> getOptionalTx(String txId) {
         return stateService.getTx(txId);
     }
 
-    @Override
-    public int getChainHeight() {
-        return periodState.getChainHeight();
-    }
 }
