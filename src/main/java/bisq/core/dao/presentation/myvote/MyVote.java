@@ -50,13 +50,14 @@ public class MyVote implements PersistablePayload {
     private final byte[] secretKeyEncoded;
     private final BlindVote blindVote;
     private final long date;
+
+    //TODO consider to make class immutable
     @Nullable
     private String revealTxId;
 
     // Used just for caching
     @JsonExclude
-    @Nullable
-    private transient SecretKey secretKey;
+    private final transient SecretKey secretKey;
 
     public MyVote(BallotList ballotList,
                   byte[] secretKeyEncoded,
@@ -83,6 +84,8 @@ public class MyVote implements PersistablePayload {
         this.blindVote = blindVote;
         this.date = date;
         this.revealTxId = revealTxId;
+
+        secretKey = Encryption.getSecretKeyFromBytes(secretKeyEncoded);
     }
 
     @Override
@@ -108,12 +111,6 @@ public class MyVote implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public SecretKey getSecretKey() {
-        if (secretKey == null)
-            secretKey = Encryption.getSecretKeyFromBytes(secretKeyEncoded);
-        return secretKey;
-    }
 
     public String getTxId() {
         return blindVote.getTxId();

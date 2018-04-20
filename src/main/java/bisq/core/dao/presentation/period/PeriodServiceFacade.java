@@ -23,6 +23,7 @@ import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.presentation.PresentationService;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import com.google.inject.Inject;
@@ -45,7 +46,8 @@ import lombok.extern.slf4j.Slf4j;
  * critical code but should be used for presentation only where exact timing is not crucial.
  */
 @Slf4j
-public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateChangeListener {
+public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateChangeListener, PresentationService {
+    private final PeriodState periodState;
     private final StateServiceFacade stateServiceFacade;
 
     // We maintain a local version of the period state which gets updated when the main PeriodState gets changed.
@@ -54,7 +56,7 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
     // threading issues.
     private final PeriodState userThreadPeriodState;
 
-    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -63,11 +65,24 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     @Inject
     public PeriodServiceFacade(PeriodState periodState, StateServiceFacade stateServiceFacade) {
+        this.periodState = periodState;
         this.stateServiceFacade = stateServiceFacade;
-
         userThreadPeriodState = new PeriodState();
 
-        periodState.addListenerAndGetNotified(this);
+        periodState.addPeriodStateChangeListener(this);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void start() {
+        userThreadPeriodState.getCloneOnUserThread(clonedPeriodState -> {
+            userThreadPeriodState.setCycles(clonedPeriodState.getCycles());
+            userThreadPeriodState.setCurrentCycle(clonedPeriodState.getCurrentCycle());
+            userThreadPeriodState.setChainHeight(clonedPeriodState.getChainHeight());
+            updatePhaseProperty();
+        });
     }
 
 
@@ -97,15 +112,6 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
         periodStateChangeListeners.forEach(l -> l.onCycleAdded(cycle));
     }
 
-    @Override
-    public void onInitialState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
-        userThreadPeriodState.setChainHeight(chainHeight);
-        userThreadPeriodState.setCurrentCycle(currentCycle);
-        userThreadPeriodState.setCycles(cycles);
-        updatePhaseProperty();
-        periodStateChangeListeners.forEach(l -> l.onInitialState(cycles, currentCycle, chainHeight));
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Implement BasePeriodService methods
@@ -133,8 +139,14 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
     }
 
 
+    private void updatePhaseProperty() {
+        if (getChainHeight() > 0 && getCurrentCycle() != null)
+            getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
+    }
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Phase getPhase() {
@@ -145,9 +157,4 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
         return phaseProperty;
     }
 
-
-    private void updatePhaseProperty() {
-        if (getChainHeight() > 0 && getCurrentCycle() != null)
-            getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
-    }
 }

@@ -17,6 +17,7 @@
 
 package bisq.core.dao;
 
+import bisq.core.dao.consensus.ConsensusServicesSetup;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.node.blockchain.json.JsonBlockChainExporter;
@@ -43,13 +44,12 @@ import bisq.core.dao.consensus.node.lite.LiteNodeParser;
 import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
+import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.state.SnapshotManager;
 import bisq.core.dao.consensus.state.State;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteValidator;
-import bisq.core.dao.consensus.vote.proposal.MyProposalService;
-import bisq.core.dao.consensus.vote.proposal.ProposalListService;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.consensus.vote.proposal.ProposalValidator;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationService;
@@ -59,8 +59,11 @@ import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.result.VoteResultService;
 import bisq.core.dao.consensus.vote.result.issuance.IssuanceService;
 import bisq.core.dao.consensus.vote.votereveal.VoteRevealService;
+import bisq.core.dao.presentation.PresentationServicesSetup;
 import bisq.core.dao.presentation.myvote.MyVoteService;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
+import bisq.core.dao.presentation.proposal.MyProposalService;
+import bisq.core.dao.presentation.proposal.ProposalListService;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;
@@ -81,6 +84,8 @@ public class DaoModule extends AppModule {
     @Override
     protected void configure() {
         bind(DaoSetup.class).in(Singleton.class);
+        bind(ConsensusServicesSetup.class).in(Singleton.class);
+        bind(PresentationServicesSetup.class).in(Singleton.class);
 
         // node
         bind(BsqNodeProvider.class).in(Singleton.class);
@@ -118,6 +123,7 @@ public class DaoModule extends AppModule {
         bind(OpReturnVoteRevealController.class).in(Singleton.class);
 
         bind(PeriodState.class).in(Singleton.class);
+        bind(PeriodStateMutator.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
         bind(PeriodServiceFacade.class).in(Singleton.class);
 

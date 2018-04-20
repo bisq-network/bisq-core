@@ -15,16 +15,13 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.period;
+package bisq.core.dao.consensus.state;
 
-import bisq.common.ThreadAwareListener;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
+import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
-public interface PeriodStateChangeListener extends ThreadAwareListener {
-    void onPreParserChainHeightChanged(int chainHeight);
+import java.util.Set;
 
-    default void onCurrentCycleChanged(Cycle currentCycle) {
-    }
-
-    default void onCycleAdded(Cycle cycle) {
-    }
+public interface StateChangeEventsProvider {
+    Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock);
 }

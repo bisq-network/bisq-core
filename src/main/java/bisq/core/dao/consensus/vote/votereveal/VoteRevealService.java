@@ -28,8 +28,11 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
+import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
@@ -61,7 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 //TODO case that user misses reveal phase not impl. yet
 
 @Slf4j
-public class VoteRevealService {
+public class VoteRevealService implements StateChangeEventsProvider {
     private final StateService stateService;
     private final MyVoteService myVoteService;
     private final PeriodService periodService;
@@ -96,28 +99,13 @@ public class VoteRevealService {
             if (c.wasAdded())
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
+        stateService.registerStateChangeEventsProvider(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // We get called from DaoSetup in the parser thread
-    public void onAllServicesInitialized() {
-        // We get called from stateService in the parser thread
-        stateService.registerStateChangeEventsProvider(txBlock -> {
-            final int chainHeight = txBlock.getHeight();
-            if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
-                // We map to user thread because we access other user thread domains like wallet and the only state
-                // relevant data we need is the chainHeight
-                UserThread.execute(() -> maybeRevealVotes(chainHeight));
-            }
-
-            // We have nothing to return as there are no p2p network data for vote reveal.
-            return new HashSet<>();
-        });
-    }
 
     public BlindVoteList getSortedBlindVoteListOfCycle(int chainHeight) {
         final List<BlindVote> list = getBlindVoteListOfCycle(chainHeight);
@@ -126,6 +114,24 @@ public class VoteRevealService {
         BlindVoteConsensus.sortBlindVoteList(list);
         log.info("getSortedBlindVoteListForCurrentCycle list={}", list);
         return new BlindVoteList(list);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // StateChangeEventsProvider
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+        final int chainHeight = txBlock.getHeight();
+        if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
+            // We map to user thread because we access other user thread domains like wallet and the only state
+            // relevant data we need is the chainHeight
+            UserThread.execute(() -> maybeRevealVotes(chainHeight));
+        }
+
+        // We have nothing to return as there are no p2p network data for vote reveal.
+        return new HashSet<>();
     }
 
 

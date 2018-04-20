@@ -18,17 +18,11 @@
 package bisq.core.dao;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.consensus.node.BsqNode;
-import bisq.core.dao.consensus.node.BsqNodeProvider;
+import bisq.core.dao.consensus.ConsensusServicesSetup;
 import bisq.core.dao.consensus.node.NodeExecutor;
-import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
-import bisq.core.dao.consensus.vote.proposal.MyProposalService;
-import bisq.core.dao.consensus.vote.proposal.ProposalListService;
-import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
-import bisq.core.dao.consensus.vote.result.VoteResultService;
-import bisq.core.dao.consensus.vote.votereveal.VoteRevealService;
+import bisq.core.dao.presentation.PresentationServicesSetup;
 
+import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -38,62 +32,34 @@ import com.google.inject.Inject;
  * High level entry point for Dao domain
  */
 public class DaoSetup {
+    private final ConsensusServicesSetup consensusServicesSetup;
+    private final PresentationServicesSetup presentationServicesSetup;
     private final NodeExecutor nodeExecutor;
-    private final MyProposalService myProposalService;
-    private final BsqNode bsqNode;
-    private final ChangeParamService changeParamService;
-    private final VoteRevealService voteRevealService;
-    private final VoteResultService voteResultService;
-    private final ProposalService proposalService;
-    private final ProposalListService proposalListService;
-    private final BlindVoteService blindVoteService;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public DaoSetup(NodeExecutor nodeExecutor,
-                    BsqNodeProvider bsqNodeProvider,
-                    MyProposalService myProposalService,
-                    ProposalService proposalService,
-                    ProposalListService proposalListService,
-                    BlindVoteService blindVoteService,
-                    VoteRevealService voteRevealService,
-                    VoteResultService voteResultService,
-                    ChangeParamService changeParamService) {
+    public DaoSetup(ConsensusServicesSetup consensusServicesSetup,
+                    PresentationServicesSetup presentationServicesSetup,
+                    NodeExecutor nodeExecutor) {
+        this.consensusServicesSetup = consensusServicesSetup;
+        this.presentationServicesSetup = presentationServicesSetup;
         this.nodeExecutor = nodeExecutor;
-        this.myProposalService = myProposalService;
-        this.proposalService = proposalService;
-        this.proposalListService = proposalListService;
-        this.blindVoteService = blindVoteService;
-        this.voteRevealService = voteRevealService;
-        this.voteResultService = voteResultService;
-        this.changeParamService = changeParamService;
 
-        bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
-            myProposalService.onAllServicesInitialized();
-            proposalListService.onAllServicesInitialized();
-            bsqNode.onAllServicesInitialized(errorMessageHandler);
-            voteResultService.onAllServicesInitialized();
-            changeParamService.onAllServicesInitialized();
+            // For consensus critical code we map to parser thread and delegate to consensusServicesSetup
+            // ErrorMessages get mapped back to userThread.
+            nodeExecutor.get().execute(() -> consensusServicesSetup.start(errorMessage ->
+                    UserThread.execute(() -> errorMessageHandler.handleErrorMessage(errorMessage))));
 
-            nodeExecutor.get().execute(() -> {
-                proposalService.onAllServicesInitialized();
-                blindVoteService.onAllServicesInitialized();
-                voteRevealService.onAllServicesInitialized();
-            });
+            presentationServicesSetup.start();
         }
     }
 
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
-            bsqNode.shutDown();
+            nodeExecutor.get().execute(consensusServicesSetup::shutDown);
         }
     }
 }

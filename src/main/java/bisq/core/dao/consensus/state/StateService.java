@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 public class StateService extends BaseStateService {
     private State state;
 
-    private List<Function<TxBlock, Set<StateChangeEvent>>> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
+    private List<StateChangeEventsProvider> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +67,7 @@ public class StateService extends BaseStateService {
     // StateChangeEventsProvider
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void registerStateChangeEventsProvider(Function<TxBlock, Set<StateChangeEvent>> stateChangeEventsProvider) {
+    public void registerStateChangeEventsProvider(StateChangeEventsProvider stateChangeEventsProvider) {
         stateChangeEventsProviders.add(stateChangeEventsProvider);
     }
 
@@ -99,7 +98,7 @@ public class StateService extends BaseStateService {
         // The providers are called in the parser thread, so we have a single threaded execution model here.
         Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
         stateChangeEventsProviders.forEach(stateChangeEventsProvider -> {
-            stateChangeEvents.addAll(stateChangeEventsProvider.apply(txBlock));
+            stateChangeEvents.addAll(stateChangeEventsProvider.provideStateChangeEvents(txBlock));
         });
 
         // Now we have both the immutable txBlock and the collected stateChangeEvents.

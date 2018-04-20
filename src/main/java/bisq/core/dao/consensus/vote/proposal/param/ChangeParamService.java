@@ -76,7 +76,7 @@ public class ChangeParamService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void onAllServicesInitialized() {
+    public void start() {
         persist();
     }
 

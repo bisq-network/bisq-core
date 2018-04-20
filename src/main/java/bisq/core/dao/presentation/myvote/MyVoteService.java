@@ -39,6 +39,7 @@ import bisq.core.dao.consensus.vote.proposal.BallotList;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
+import bisq.core.dao.presentation.PresentationService;
 
 import bisq.network.p2p.P2PService;
 
@@ -80,7 +81,7 @@ import lombok.extern.slf4j.Slf4j;
  * Executed from the user tread.
  */
 @Slf4j
-public class MyVoteService implements PersistedDataHost {
+public class MyVoteService implements PersistedDataHost, PresentationService {
     private final PeriodService periodService;
     private final ProposalService proposalService;
     private final StateService stateService;
@@ -123,6 +124,9 @@ public class MyVoteService implements PersistedDataHost {
         this.changeParamService = changeParamService;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
+
+        numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyBlindVotesIfWellConnected();
+        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
     }
 
 
@@ -146,10 +150,8 @@ public class MyVoteService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void onAllServicesInitialized() {
+    public void start() {
         // Republish own active blindVotes once we are well connected
-        numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyBlindVotesIfWellConnected();
-        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
         publishMyBlindVotesIfWellConnected();
     }
 

@@ -17,11 +17,14 @@
 
 package bisq.core.dao.consensus.period;
 
+import bisq.common.UserThread;
+
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,7 +44,7 @@ public class PeriodState {
     private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
 
     // Mutable state
-    private final List<Cycle> cycles = new ArrayList<>();
+    private final List<Cycle> cycles;
     private Cycle currentCycle;
     private int chainHeight;
 
@@ -52,17 +55,29 @@ public class PeriodState {
 
     @Inject
     public PeriodState() {
+        this(new ArrayList<>(), null, 0);
     }
+
+    private PeriodState(List<Cycle> cycles, Cycle currentCycle, int chainHeight) {
+        this.cycles = cycles;
+        this.currentCycle = currentCycle;
+        this.chainHeight = chainHeight;
+    }
+
+    public void getCloneOnUserThread(Consumer<PeriodState> consumer) {
+        UserThread.execute(() -> {
+            consumer.accept(new PeriodState(cycles, currentCycle, chainHeight));
+        });
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Can be called from user thread.
-    public void addListenerAndGetNotified(PeriodStateChangeListener periodStateChangeListener) {
+    public void addPeriodStateChangeListener(PeriodStateChangeListener periodStateChangeListener) {
         periodStateChangeListeners.add(periodStateChangeListener);
-
-        periodStateChangeListeners.forEach(l -> l.execute(() -> l.onInitialState(cycles, currentCycle, chainHeight)));
     }
 
 

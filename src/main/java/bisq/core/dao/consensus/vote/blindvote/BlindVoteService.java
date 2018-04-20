@@ -20,7 +20,9 @@ package bisq.core.dao.consensus.vote.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.BlindVoteEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
@@ -49,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
  * All methods in that class are executed on the parser thread.
  */
 @Slf4j
-public class BlindVoteService implements PersistedDataHost {
+public class BlindVoteService implements PersistedDataHost, StateChangeEventsProvider {
     private final P2PService p2PService;
     private final PeriodService periodService;
     private final StateService stateService;
@@ -75,6 +77,26 @@ public class BlindVoteService implements PersistedDataHost {
         this.stateService = stateService;
         this.blindVoteValidator = blindVoteValidator;
         this.storage = storage;
+
+        stateService.registerStateChangeEventsProvider(this);
+
+        p2PService.getP2PDataStorage().addHashMapChangedListener(new HashMapChangedListener() {
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
+            }
+
+            @Override
+            public void onAdded(ProtectedStorageEntry entry) {
+                onAddedProtectedStorageEntry(entry, true);
+            }
+
+            @Override
+            public void onRemoved(ProtectedStorageEntry entry) {
+                if (entry.getProtectedStoragePayload() instanceof BlindVotePayload)
+                    throw new UnsupportedOperationException("Removal of blind vote data is not supported");
+            }
+        });
     }
 
 
@@ -96,62 +118,48 @@ public class BlindVoteService implements PersistedDataHost {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // StateChangeEventsProvider
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from DaoSetup in the parser thread
-    public void onAllServicesInitialized() {
-        // We get called from stateService in the parser thread
-        stateService.registerStateChangeEventsProvider(txBlock -> {
-            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            Set<BlindVotePayload> toRemove = new HashSet<>();
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+        Set<BlindVotePayload> toRemove = new HashSet<>();
 
-            blindVoteList.stream()
-                    .map(blindVote -> {
-                        final Optional<StateChangeEvent> optional = getAddBlindVoteEvent(blindVote, txBlock.getHeight());
+        blindVoteList.stream()
+                .map(blindVote -> {
+                    final Optional<StateChangeEvent> optional = getAddBlindVoteEvent(blindVote, txBlock.getHeight());
 
-                        // If we are in the correct block and we add a BlindVoteEvent to the state we remove
-                        // the blindVote from our list after we have completed iteration.
-                        //TODO remove after we added to state
+                    // If we are in the correct block and we add a BlindVoteEvent to the state we remove
+                    // the blindVote from our list after we have completed iteration.
+                    //TODO remove after we added to state
                       /*  if (optional.isPresent())
                             toRemove.add(blindVote);*/
 
-                        return optional;
-                    })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(stateChangeEvents::add);
+                    return optional;
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(stateChangeEvents::add);
 
 
-            // We remove those blindVotes we have just added as stateChangeEvent.
-            toRemove.forEach(blindVote -> {
-                if (blindVoteList.remove(blindVote))
-                    persist();
-                else
-                    log.warn("We called removeBlindVoteFromList at a blindVote which was not in our list");
-            });
-
-            return stateChangeEvents;
+        // We remove those blindVotes we have just added as stateChangeEvent.
+        toRemove.forEach(blindVote -> {
+            if (blindVoteList.remove(blindVote))
+                persist();
+            else
+                log.warn("We called removeBlindVoteFromList at a blindVote which was not in our list");
         });
 
-        p2PService.getP2PDataStorage().addHashMapChangedListener(new HashMapChangedListener() {
-            @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
+        return stateChangeEvents;
+    }
 
-            @Override
-            public void onAdded(ProtectedStorageEntry entry) {
-                onAddedProtectedStorageEntry(entry, true);
-            }
 
-            @Override
-            public void onRemoved(ProtectedStorageEntry entry) {
-                if (entry.getProtectedStoragePayload() instanceof BlindVotePayload)
-                    throw new UnsupportedOperationException("Removal of blind vote data is not supported");
-            }
-        });
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public void start() {
         // We apply already existing protectedStorageEntries
         p2PService.getP2PDataStorage().getMap().values()
                 .forEach(entry -> onAddedProtectedStorageEntry(entry, false));

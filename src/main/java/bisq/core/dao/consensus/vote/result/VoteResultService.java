@@ -17,15 +17,16 @@
 
 package bisq.core.dao.consensus.vote.result;
 
-import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
+import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
-import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
@@ -67,9 +68,7 @@ import javax.annotation.Nullable;
  */
 
 @Slf4j
-public class VoteResultService {
-    private final NodeExecutor nodeExecutor;
-    private final BlindVoteService blindVoteService;
+public class VoteResultService implements StateChangeEventsProvider {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final ChangeParamService changeParamService;
@@ -84,42 +83,35 @@ public class VoteResultService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public VoteResultService(NodeExecutor nodeExecutor,
-                             BlindVoteService blindVoteService,
-                             VoteRevealService voteRevealService,
+    public VoteResultService(VoteRevealService voteRevealService,
                              StateService stateService,
                              ChangeParamService changeParamService,
                              PeriodService periodService,
                              IssuanceService issuanceService) {
-        this.nodeExecutor = nodeExecutor;
-        this.blindVoteService = blindVoteService;
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
         this.periodService = periodService;
         this.issuanceService = issuanceService;
+
+        stateService.registerStateChangeEventsProvider(this);
     }
 
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // StateChangeEventsProvider
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+        final int chainHeight = txBlock.getHeight();
+        if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_RESULT) {
+            applyVoteResult(chainHeight);
+        }
 
-    // We get called from DaoSetup in the parser thread
-    public void onAllServicesInitialized() {
-        // We get called from stateService in the parser thread
-        stateService.registerStateChangeEventsProvider(txBlock -> {
-            final int chainHeight = txBlock.getHeight();
-            if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_RESULT) {
-                // We map to user thread because we access other user thread domains like wallet and the only state
-                // relevant data we need is the chainHeight
-                applyVoteResult(chainHeight);
-            }
-
-            // We have nothing to return as there are no p2p network data for vote reveal.
-            return new HashSet<>();
-        });
+        // We have nothing to return as there are no p2p network data for vote reveal.
+        return new HashSet<>();
     }
 
 

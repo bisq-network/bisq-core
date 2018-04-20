@@ -20,8 +20,10 @@ package bisq.core.dao.consensus.vote.proposal;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.ProposalEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
@@ -56,7 +58,7 @@ import lombok.extern.slf4j.Slf4j;
  * and remove the proposal at the moment we put it to the stateChangeEvent.
  */
 @Slf4j
-public class ProposalService implements PersistedDataHost {
+public class ProposalService implements PersistedDataHost, StateChangeEventsProvider {
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final StateService stateService;
@@ -77,6 +79,25 @@ public class ProposalService implements PersistedDataHost {
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
         this.storage = storage;
+
+        stateService.registerStateChangeEventsProvider(this);
+
+        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
+            }
+
+            @Override
+            public void onAdded(ProtectedStorageEntry entry) {
+                onAddedProtectedStorageEntry(entry, true);
+            }
+
+            @Override
+            public void onRemoved(ProtectedStorageEntry entry) {
+                onRemovedProtectedStorageEntry(entry);
+            }
+        });
     }
 
 
@@ -101,52 +122,7 @@ public class ProposalService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from DaoSetup in the parser thread
-    public void onAllServicesInitialized() {
-        // We get called from stateService in the parser thread
-        stateService.registerStateChangeEventsProvider(txBlock -> {
-            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            Set<Proposal> toRemove = new HashSet<>();
-            ballotList.stream()
-                    .map(Ballot::getProposal)
-                    .map(proposalPayload -> {
-                        final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
-
-                        // If we are in the correct block and we add a ProposalEvent to the state we remove
-                        // the proposal from our list after we have completed iteration.
-                        //TODO activate once we persist state
-                       /* if (optional.isPresent())
-                            toRemove.add(proposal);*/
-
-                        return optional;
-                    })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .forEach(stateChangeEvents::add);
-
-            // We remove those proposals we have just added to the state.
-            toRemove.forEach(this::removeProposalFromList);
-
-            return stateChangeEvents;
-        });
-
-        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
-            @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
-            @Override
-            public void onAdded(ProtectedStorageEntry entry) {
-                onAddedProtectedStorageEntry(entry, true);
-            }
-
-            @Override
-            public void onRemoved(ProtectedStorageEntry entry) {
-                onRemovedProtectedStorageEntry(entry);
-            }
-        });
-
+    public void start() {
         // We apply already existing protectedStorageEntries
         p2pDataStorage.getMap().values()
                 .forEach(entry -> onAddedProtectedStorageEntry(entry, false));
@@ -168,6 +144,40 @@ public class ProposalService implements PersistedDataHost {
 
     public void persist() {
         storage.queueUpForSave();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // StateChangeEventsProvider
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+
+        // TODO remove
+        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+        Set<Proposal> toRemove = new HashSet<>();
+        ballotList.stream()
+                .map(Ballot::getProposal)
+                .map(proposalPayload -> {
+                    final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
+
+                    // If we are in the correct block and we add a ProposalEvent to the state we remove
+                    // the proposal from our list after we have completed iteration.
+                    //TODO activate once we persist state
+                       /* if (optional.isPresent())
+                            toRemove.add(proposal);*/
+
+                    return optional;
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(stateChangeEvents::add);
+
+        // We remove those proposals we have just added to the state.
+        toRemove.forEach(this::removeProposalFromList);
+
+        return stateChangeEvents;
     }
 
 

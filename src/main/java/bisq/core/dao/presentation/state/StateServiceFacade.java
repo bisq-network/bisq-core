@@ -29,6 +29,7 @@ import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
+import bisq.core.dao.presentation.PresentationService;
 
 import org.bitcoinj.core.Coin;
 
@@ -52,8 +53,7 @@ import lombok.extern.slf4j.Slf4j;
  * This class must not be used for consensus critical aspects but only for presentation purposes.
  */
 @Slf4j
-public class StateServiceFacade extends BaseStateService {
-
+public class StateServiceFacade extends BaseStateService implements PresentationService {
     private final State userThreadState;
 
 

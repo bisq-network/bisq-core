@@ -72,7 +72,7 @@ public class FullNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
+    public void start(ErrorMessageHandler errorMessageHandler) {
         bsqFullNodeExecutor.setup(() -> {
                     super.onInitialized();
                     startParseBlocks();

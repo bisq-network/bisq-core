@@ -17,6 +17,7 @@
 
 package bisq.core.dao.consensus.period;
 
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.events.ParamChangeEvent;
@@ -42,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  * Writes data to the PeriodState.
  */
 @Slf4j
-public class PeriodStateMutator {
+public class PeriodStateMutator implements StateChangeEventsProvider {
     private final PeriodState periodState;
     private final StateService stateService;
 
@@ -54,18 +55,20 @@ public class PeriodStateMutator {
     public PeriodStateMutator(PeriodState periodState, StateService stateService) {
         this.periodState = periodState;
         this.stateService = stateService;
-    }
-
-    void initialize() {
-        // We create the initial state already in the constructor as we have no guaranteed order for calls of
-        // onAllServicesInitialized and we want to avoid that some client expect the initial state and gets executed
-        // before our onAllServicesInitialized is called.
-        initFromGenesisBlock();
 
         // Once the genesis block is parsed we add the stateChangeEvents with the initial values from the
         // default param values to the state.
-        stateService.registerStateChangeEventsProvider(txBlock ->
-                provideStateChangeEvents(txBlock, stateService.getGenesisBlockHeight()));
+        stateService.registerStateChangeEventsProvider(this);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // StateChangeEventsProvider
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+        return provideStateChangeEvents(txBlock, stateService.getGenesisBlockHeight());
     }
 
 
@@ -73,10 +76,15 @@ public class PeriodStateMutator {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public void start() {
+        // We create the initial state already in the constructor as we have no guaranteed order for calls of
+        // onAllServicesInitialized and we want to avoid that some client expect the initial state and gets executed
+        // before our onAllServicesInitialized is called.
+        initFromGenesisBlock();
+    }
+
     // TODO change with listener
     public void onStartParsingNewBlock(int blockHeight) {
-        periodState.setChainHeight(blockHeight);
-
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the constructor
         // We copy over the phases from the current block as we get the phase only set in
@@ -91,6 +99,8 @@ public class PeriodStateMutator {
             periodState.addCycle(cycle);
             stateService.addCycle(cycle);
         }
+
+        periodState.setChainHeight(blockHeight);
     }
 
 

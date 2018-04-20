@@ -79,7 +79,7 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
+    public void start(ErrorMessageHandler errorMessageHandler) {
         super.onInitialized();
     }
 

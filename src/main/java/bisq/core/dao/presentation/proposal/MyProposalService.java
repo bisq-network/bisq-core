@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.proposal;
+package bisq.core.dao.presentation.proposal;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.TxBroadcastException;
@@ -25,6 +25,12 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
+import bisq.core.dao.consensus.vote.proposal.BallotList;
+import bisq.core.dao.consensus.vote.proposal.Proposal;
+import bisq.core.dao.consensus.vote.proposal.ProposalPayload;
+import bisq.core.dao.consensus.vote.proposal.ProposalService;
+import bisq.core.dao.presentation.PresentationService;
 
 import bisq.network.p2p.P2PService;
 
@@ -57,7 +63,7 @@ import lombok.extern.slf4j.Slf4j;
  * Is accessed in user thread.
  */
 @Slf4j
-public class MyProposalService implements PersistedDataHost {
+public class MyProposalService implements PersistedDataHost, PresentationService {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final ProposalService proposalService;
@@ -88,16 +94,16 @@ public class MyProposalService implements PersistedDataHost {
         this.stateService = stateService;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
         this.storage = storage;
+
+        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
+        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void onAllServicesInitialized() {
-        // Republish my proposals once we are well connected
-        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
-        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
+    public void start() {
         maybeRePublish();
     }
 

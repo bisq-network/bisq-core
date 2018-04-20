@@ -15,14 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.vote.proposal;
+package bisq.core.dao.presentation.proposal;
 
-import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.Block;
 import bisq.core.dao.consensus.state.BlockListener;
-import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.vote.proposal.Ballot;
+import bisq.core.dao.consensus.vote.proposal.Proposal;
+import bisq.core.dao.consensus.vote.proposal.ProposalService;
+import bisq.core.dao.consensus.vote.proposal.ProposalValidator;
+import bisq.core.dao.presentation.period.PeriodServiceFacade;
+import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -56,10 +60,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ProposalListService {
     private final ProposalService proposalService;
     private final MyProposalService myProposalService;
-    private final P2PDataStorage p2pDataStorage;
-    private final PeriodService periodService;
+    private final PeriodServiceFacade periodServiceFacade;
     private final ProposalValidator proposalValidator;
-    private final StateService stateService;
+    private final StateServiceFacade stateServiceFacade;
 
     @Getter
     private final ObservableList<Ballot> activeOrMyUnconfirmedBallots = FXCollections.observableArrayList();
@@ -75,23 +78,16 @@ public class ProposalListService {
     public ProposalListService(ProposalService proposalService,
                                MyProposalService myProposalService,
                                P2PDataStorage p2pDataStorage,
-                               PeriodService periodService,
+                               PeriodServiceFacade periodServiceFacade,
                                ProposalValidator proposalValidator,
-                               StateService stateService) {
+                               StateServiceFacade stateServiceFacade) {
         this.proposalService = proposalService;
         this.myProposalService = myProposalService;
-        this.p2pDataStorage = p2pDataStorage;
-        this.periodService = periodService;
+        this.periodServiceFacade = periodServiceFacade;
         this.proposalValidator = proposalValidator;
-        this.stateService = stateService;
-    }
+        this.stateServiceFacade = stateServiceFacade;
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void onAllServicesInitialized() {
-        stateService.addBlockListener(new BlockListener() {
+        stateServiceFacade.addBlockListener(new BlockListener() {
             @Override
             public boolean executeOnUserThread() {
                 return false;
@@ -121,11 +117,18 @@ public class ProposalListService {
         });
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void start() {
+        updateLists(stateServiceFacade.getChainHeight());
+    }
 
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof Proposal)
-            updateLists(periodService.getChainHeight());
+            updateLists(periodServiceFacade.getChainHeight());
     }
 
     private void updateLists(int chainHeadHeight) {
@@ -133,7 +136,7 @@ public class ProposalListService {
         // proposalService.isMine and  proposalService.isValid are not accessing any mutable state.
         final List<Ballot> ballots = new ArrayList<>(proposalService.getBallotList().getList());
         Map<String, Optional<Tx>> map = new HashMap<>();
-        ballots.forEach(proposal -> map.put(proposal.getTxId(), stateService.getTx(proposal.getTxId())));
+        ballots.forEach(proposal -> map.put(proposal.getTxId(), stateServiceFacade.getTx(proposal.getTxId())));
 
         UserThread.execute(() -> {
             activeOrMyUnconfirmedBallots.clear();
@@ -143,8 +146,8 @@ public class ProposalListService {
                         final Proposal proposalPayload = proposal.getProposal();
                         return (optionalTx.isPresent() &&
                                 proposalValidator.isValid(proposalPayload) &&
-                                periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
-                                periodService.isTxInCorrectCycle(optionalTx.get().getBlockHeight(), chainHeadHeight));
+                                periodServiceFacade.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
+                                periodServiceFacade.isTxInCorrectCycle(optionalTx.get().getBlockHeight(), chainHeadHeight));
                     }).collect(Collectors.toList()));
 
             // We access myProposalService from user thread!
@@ -175,8 +178,8 @@ public class ProposalListService {
                         final Proposal proposalPayload = proposal.getProposal();
                         return optionalTx.isPresent() &&
                                 proposalValidator.isValid(proposalPayload) &&
-                                periodService.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
-                                periodService.isTxInPastCycle(optionalTx.get().getId(), chainHeadHeight);
+                                periodServiceFacade.isInPhase(optionalTx.get().getBlockHeight(), Phase.PROPOSAL) &&
+                                periodServiceFacade.isTxInPastCycle(optionalTx.get().getId(), chainHeadHeight);
                     }).collect(Collectors.toList());
             closedBallots.addAll(ballotList);
         });

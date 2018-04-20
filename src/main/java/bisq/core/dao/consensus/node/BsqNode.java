@@ -74,7 +74,7 @@ public abstract class BsqNode {
     // Public methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler);
+    public abstract void start(ErrorMessageHandler errorMessageHandler);
 
     public abstract void shutDown();
 
