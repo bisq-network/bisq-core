@@ -15,35 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events;
+/**
+ * Contains classes which are not consensus critical and be called from the user thread.
+ * All data presentation clients should use the classes from that package only.
+ */
 
-
-import bisq.core.dao.consensus.vote.blindvote.BlindVote;
-
-import com.google.protobuf.Message;
-
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@EqualsAndHashCode(callSuper = true)
-@Value
-public class AddBlindVoteEvent extends StateChangeEvent {
-
-    public AddBlindVoteEvent(BlindVote blindVote, int height) {
-        super(blindVote, height);
-    }
-
-    //TODO
-    @Override
-    public Message toProtoMessage() {
-        return null;
-    }
-
-
-    public BlindVote getBlindVote() {
-        return (BlindVote) getData();
-    }
-}
+package bisq.core.dao.presentation;

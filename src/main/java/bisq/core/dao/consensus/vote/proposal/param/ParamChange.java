@@ -35,11 +35,11 @@ import javax.annotation.concurrent.Immutable;
 //TODO separate value object with p2p network data
 @Immutable
 @Value
-public class ChangeParamItem implements ProtectedStoragePayload, PersistablePayload {
+public class ParamChange implements ProtectedStoragePayload, PersistablePayload {
     private final Param param;
     private final long value;
 
-    public ChangeParamItem(Param param, long value) {
+    public ParamChange(Param param, long value) {
         this.param = param;
         this.value = value;
     }
@@ -50,21 +50,21 @@ public class ChangeParamItem implements ProtectedStoragePayload, PersistablePayl
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.ChangeParamPayload toProtoMessage() {
-        final PB.ChangeParamPayload.Builder builder = PB.ChangeParamPayload.newBuilder()
-                .setDaoParamOrdinal(param.ordinal())
+    public PB.ParamChange toProtoMessage() {
+        final PB.ParamChange.Builder builder = PB.ParamChange.newBuilder()
+                .setParamOrdinal(param.ordinal())
                 .setValue(value);
         return builder.build();
     }
 
-    public static ChangeParamItem fromProto(PB.ChangeParamPayload proto) {
-        return new ChangeParamItem(Param.values()[proto.getDaoParamOrdinal()],
+    public static ParamChange fromProto(PB.ParamChange proto) {
+        return new ParamChange(Param.values()[proto.getParamOrdinal()],
                 proto.getValue());
     }
 
     @Override
     public String toString() {
-        return "ChangeParamItem{" +
+        return "ParamChange{" +
                 "\n     param=" + param +
                 ",\n     value=" + value +
                 "\n}";

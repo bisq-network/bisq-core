@@ -19,10 +19,10 @@ package bisq.core.dao.consensus.period;
 
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
-import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
+import bisq.core.dao.consensus.state.events.ParamChangeEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamItem;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
+import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import com.google.inject.Inject;
 
@@ -104,7 +104,7 @@ public class PeriodStateMutator {
         // We add the default values from the Param enum to our StateChangeEvent list.
         List<PhaseWrapper> phaseWrapperList = Arrays.stream(Phase.values())
                 .map(phase -> initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight())
-                        .map(event -> getPhaseWrapper(event.getChangeParamPayload()))
+                        .map(event -> getPhaseWrapper(event.getParamChange()))
                         .get())
                 .collect(Collectors.toList());
         Cycle currentCycle = new Cycle(stateService.getGenesisBlockHeight(), ImmutableList.copyOf(phaseWrapperList));
@@ -118,9 +118,9 @@ public class PeriodStateMutator {
 
     private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
         List<PhaseWrapper> phaseWrapperListFromChangeEvents = stateChangeEvents.stream()
-                .filter(event -> event instanceof AddChangeParamEvent)
-                .map(event -> (AddChangeParamEvent) event)
-                .map(event -> getPhaseWrapper(event.getChangeParamPayload()))
+                .filter(event -> event instanceof ParamChangeEvent)
+                .map(event -> (ParamChangeEvent) event)
+                .map(event -> getPhaseWrapper(event.getParamChange()))
                 .collect(Collectors.toList());
 
         List<PhaseWrapper> phaseWrapperList = new ArrayList<>();
@@ -140,11 +140,11 @@ public class PeriodStateMutator {
         return list.stream().anyMatch(phaseWrapper -> phaseWrapper.getPhase() == phase);
     }
 
-    private PhaseWrapper getPhaseWrapper(ChangeParamItem changeParamItem) {
-        final String paramName = changeParamItem.getParam().name();
+    private PhaseWrapper getPhaseWrapper(ParamChange paramChange) {
+        final String paramName = paramChange.getParam().name();
         final String phaseName = paramName.replace("PHASE_", "");
         final Phase phase = Phase.valueOf(phaseName);
-        return new PhaseWrapper(phase, (int) changeParamItem.getValue());
+        return new PhaseWrapper(phase, (int) paramChange.getValue());
     }
 
     private boolean isFirstBlockAfterPreviousCycle(int height) {
@@ -170,11 +170,11 @@ public class PeriodStateMutator {
         return stateChangeEvents;
     }
 
-    private Optional<AddChangeParamEvent> initWithDefaultValueAtGenesisHeight(Phase phase, int height) {
+    private Optional<ParamChangeEvent> initWithDefaultValueAtGenesisHeight(Phase phase, int height) {
         return Arrays.stream(Param.values())
                 .filter(param -> isParamMatchingPhase(param, phase))
-                .map(param -> new ChangeParamItem(param, param.getDefaultValue()))
-                .map(changeParamItem -> new AddChangeParamEvent(changeParamItem, height))
+                .map(param -> new ParamChange(param, param.getDefaultValue()))
+                .map(paramChange -> new ParamChangeEvent(paramChange, height))
                 .findAny();
     }
 

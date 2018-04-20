@@ -21,7 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.events.AddBlindVoteEvent;
+import bisq.core.dao.consensus.state.events.BlindVoteEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
 import bisq.network.p2p.P2PService;
@@ -110,7 +110,7 @@ public class BlindVoteService implements PersistedDataHost {
                     .map(blindVote -> {
                         final Optional<StateChangeEvent> optional = getAddBlindVoteEvent(blindVote, txBlock.getHeight());
 
-                        // If we are in the correct block and we add a AddBlindVoteEvent to the state we remove
+                        // If we are in the correct block and we add a BlindVoteEvent to the state we remove
                         // the blindVote from our list after we have completed iteration.
                         //TODO remove after we added to state
                       /*  if (optional.isPresent())
@@ -188,7 +188,7 @@ public class BlindVoteService implements PersistedDataHost {
         }
     }
 
-    // We add a AddBlindVoteEvent if the tx is already available and blindVotePayload and tx are valid.
+    // We add a BlindVoteEvent if the tx is already available and blindVotePayload and tx are valid.
     // We only add it after the blindVotePayload phase.
     // We use the last block in the BREAK2 phase to set all blindVotePayload for that cycle.
     // If a blindVotePayload would arrive later it will be ignored.
@@ -198,7 +198,7 @@ public class BlindVoteService implements PersistedDataHost {
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
                 .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.BLIND_VOTE))
                 .filter(tx -> blindVoteValidator.isValid(blindVote))
-                .map(tx -> new AddBlindVoteEvent(blindVote, height));
+                .map(tx -> new BlindVoteEvent(blindVote, height));
     }
 
     private boolean isLastToleratedBlock(int height) {

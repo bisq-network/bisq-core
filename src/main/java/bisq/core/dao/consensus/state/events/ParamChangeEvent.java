@@ -17,8 +17,8 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamItem;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
+import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -30,23 +30,24 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class AddChangeParamEvent extends StateChangeEvent {
+public class ParamChangeEvent extends StateChangeEvent {
 
-    public AddChangeParamEvent(ChangeParamItem changeParamItem, int height) {
-        super(changeParamItem, height);
+    public ParamChangeEvent(ParamChange paramChange, int height) {
+        super(paramChange, height);
     }
 
     public long getValue() {
-        return getChangeParamPayload().getValue();
+        return getParamChange().getValue();
     }
 
     public Param getDaoParam() {
-        return (getChangeParamPayload()).getParam();
+        return (getParamChange()).getParam();
     }
 
-    public ChangeParamItem getChangeParamPayload() {
-        return (ChangeParamItem) getData();
+    public ParamChange getParamChange() {
+        return (ParamChange) getData();
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
@@ -54,15 +55,15 @@ public class AddChangeParamEvent extends StateChangeEvent {
 
     //TODO add StateChangeEvent.builder
     @Override
-    public PB.AddChangeParamEvent toProtoMessage() {
-        final PB.AddChangeParamEvent.Builder builder = PB.AddChangeParamEvent.newBuilder()
-                .setChangeParamPayload(getChangeParamPayload().toProtoMessage())
+    public PB.ParamChangeEvent toProtoMessage() {
+        final PB.ParamChangeEvent.Builder builder = PB.ParamChangeEvent.newBuilder()
+                .setParamChange(getParamChange().toProtoMessage())
                 .setHeight(getHeight());
         return builder.build();
     }
 
-    public static AddChangeParamEvent fromProto(PB.AddChangeParamEvent proto) {
-        return new AddChangeParamEvent(ChangeParamItem.fromProto(proto.getChangeParamPayload()),
+    public static ParamChangeEvent fromProto(PB.ParamChangeEvent proto) {
+        return new ParamChangeEvent(ParamChange.fromProto(proto.getParamChange()),
                 proto.getHeight());
     }
 }

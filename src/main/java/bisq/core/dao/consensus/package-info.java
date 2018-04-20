@@ -15,33 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.state.events;
+/**
+ * That package groups all consensus critical classes. The main thread in those classes is the parser thread and
+ * they should not be accessed from user thread clients.
+ */
 
-import bisq.core.dao.consensus.vote.proposal.Proposal;
-
-import com.google.protobuf.Message;
-
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@EqualsAndHashCode(callSuper = true)
-@Value
-public class AddProposalPayloadEvent extends StateChangeEvent {
-
-    public AddProposalPayloadEvent(Proposal payload, int height) {
-        super(payload, height);
-    }
-
-    //TODO
-    @Override
-    public Message toProtoMessage() {
-        return null;
-    }
-
-    public Proposal getProposalPayload() {
-        return (Proposal) getData();
-    }
-}
+package bisq.core.dao.consensus;

@@ -22,7 +22,7 @@ import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.consensus.state.events.AddProposalPayloadEvent;
+import bisq.core.dao.consensus.state.events.ProposalEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -118,7 +118,7 @@ public class ProposalService implements PersistedDataHost {
                     .map(proposalPayload -> {
                         final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
 
-                        // If we are in the correct block and we add a AddProposalPayloadEvent to the state we remove
+                        // If we are in the correct block and we add a ProposalEvent to the state we remove
                         // the proposal from our list after we have completed iteration.
                         //TODO activate once we persist state
                        /* if (optional.isPresent())
@@ -228,7 +228,7 @@ public class ProposalService implements PersistedDataHost {
         }
     }
 
-    // We add a AddProposalPayloadEvent if the tx is already available and proposal and tx are valid.
+    // We add a ProposalEvent if the tx is already available and proposal and tx are valid.
     // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
     // during the proposal phase).
     // We use the last block in the BREAK1 phase to set all proposals for that cycle.
@@ -239,7 +239,7 @@ public class ProposalService implements PersistedDataHost {
                 .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
                 .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
                 .filter(tx -> proposalPayloadValidator.isValid(proposal))
-                .map(tx -> new AddProposalPayloadEvent(proposal, height));
+                .map(tx -> new ProposalEvent(proposal, height));
     }
 
     private boolean isLastToleratedBlock(int height) {

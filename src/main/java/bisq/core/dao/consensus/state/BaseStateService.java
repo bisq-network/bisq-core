@@ -25,13 +25,13 @@ import bisq.core.dao.consensus.state.blockchain.TxInput;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
-import bisq.core.dao.consensus.state.events.AddBlindVoteEvent;
-import bisq.core.dao.consensus.state.events.AddChangeParamEvent;
-import bisq.core.dao.consensus.state.events.AddProposalPayloadEvent;
+import bisq.core.dao.consensus.state.events.BlindVoteEvent;
+import bisq.core.dao.consensus.state.events.ParamChangeEvent;
+import bisq.core.dao.consensus.state.events.ProposalEvent;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.vote.blindvote.BlindVote;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
-import bisq.core.dao.consensus.vote.proposal.param.ChangeParamItem;
+import bisq.core.dao.consensus.vote.proposal.param.ParamChange;
 
 import org.bitcoinj.core.Coin;
 
@@ -305,42 +305,42 @@ public abstract class BaseStateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<AddChangeParamEvent> getAddChangeParamEvents() {
+    public Set<ParamChangeEvent> getAddChangeParamEvents() {
         return getStateChangeEvents().stream()
-                .filter(event -> event instanceof AddChangeParamEvent)
-                .map(event -> (AddChangeParamEvent) event)
+                .filter(event -> event instanceof ParamChangeEvent)
+                .map(event -> (ParamChangeEvent) event)
                 .collect(Collectors.toSet());
     }
 
-    public Set<AddProposalPayloadEvent> getAddProposalPayloadEvents() {
+    public Set<ProposalEvent> getAddProposalPayloadEvents() {
         return getStateChangeEvents().stream()
-                .filter(event -> event instanceof AddProposalPayloadEvent)
-                .map(event -> (AddProposalPayloadEvent) event)
+                .filter(event -> event instanceof ProposalEvent)
+                .map(event -> (ProposalEvent) event)
                 .collect(Collectors.toSet());
     }
 
-    public Set<AddBlindVoteEvent> getAddBlindVoteEvents() {
+    public Set<BlindVoteEvent> getAddBlindVoteEvents() {
         return getStateChangeEvents().stream()
-                .filter(event -> event instanceof AddBlindVoteEvent)
-                .map(event -> (AddBlindVoteEvent) event)
+                .filter(event -> event instanceof BlindVoteEvent)
+                .map(event -> (BlindVoteEvent) event)
                 .collect(Collectors.toSet());
     }
 
     public Set<Proposal> getProposalPayloads() {
         return getAddProposalPayloadEvents().stream()
-                .map(AddProposalPayloadEvent::getProposalPayload)
+                .map(ProposalEvent::getProposalPayload)
                 .collect(Collectors.toSet());
     }
 
     public Set<BlindVote> getBlindVotes() {
         return getAddBlindVoteEvents().stream()
-                .map(AddBlindVoteEvent::getBlindVote)
+                .map(BlindVoteEvent::getBlindVote)
                 .collect(Collectors.toSet());
     }
 
-    public Set<ChangeParamItem> getChangeParamPayloads() {
+    public Set<ParamChange> getParamChanges() {
         return getAddChangeParamEvents().stream()
-                .map(AddChangeParamEvent::getChangeParamPayload)
+                .map(ParamChangeEvent::getParamChange)
                 .collect(Collectors.toSet());
     }
 }
