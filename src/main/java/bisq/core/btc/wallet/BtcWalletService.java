@@ -147,7 +147,7 @@ public class BtcWalletService extends WalletService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // CompensationRequestBallot tx
+    // CompensationBallot tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction completePreparedCompensationRequestTx(Coin issuanceAmount, Address issuanceAddress, Transaction feeTx, byte[] opReturnData) throws
@@ -534,7 +534,7 @@ public class BtcWalletService extends WalletService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Send funds to a CompensationRequestBallot
+    // Send funds to a CompensationBallot
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void fundCompensationRequest(Coin amount, String btcAddress, Address squAddressForCompensationRequestFunding, FutureCallback<Transaction> callback) {

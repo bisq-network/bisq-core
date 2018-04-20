@@ -39,18 +39,18 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 /**
- * Locally persisted CompensationRequestBallot data.
+ * Locally persisted CompensationBallot data.
  */
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class CompensationRequestBallot extends Ballot {
+public class CompensationBallot extends Ballot {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationRequestBallot(Proposal proposal) {
+    public CompensationBallot(Proposal proposal) {
         super(proposal, null, null);
     }
 
@@ -59,9 +59,9 @@ public class CompensationRequestBallot extends Ballot {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationRequestBallot(Proposal proposal,
-                                      @Nullable Vote vote,
-                                      @Nullable Map<String, String> extraDataMap) {
+    private CompensationBallot(Proposal proposal,
+                               @Nullable Vote vote,
+                               @Nullable Map<String, String> extraDataMap) {
         super(proposal,
                 vote,
                 extraDataMap);
@@ -69,12 +69,12 @@ public class CompensationRequestBallot extends Ballot {
 
     @Override
     public PB.Ballot toProtoMessage() {
-        return getBallotBuilder().setCompensationRequestBallot(PB.CompensationRequestBallot.newBuilder())
+        return getBallotBuilder().setCompensationBallot(PB.CompensationBallot.newBuilder())
                 .build();
     }
 
-    public static CompensationRequestBallot fromProto(PB.Ballot proto) {
-        return new CompensationRequestBallot(Proposal.fromProto(proto.getProposal()),
+    public static CompensationBallot fromProto(PB.Ballot proto) {
+        return new CompensationBallot(Proposal.fromProto(proto.getProposal()),
                 proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
@@ -85,15 +85,15 @@ public class CompensationRequestBallot extends Ballot {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Coin getRequestedBsq() {
-        return getCompensationRequestPayload().getRequestedBsq();
+        return getCompensationPayload().getRequestedBsq();
     }
 
     public Address getAddress() throws AddressFormatException {
-        return getCompensationRequestPayload().getAddress();
+        return getCompensationPayload().getAddress();
     }
 
-    private CompensationRequestProposal getCompensationRequestPayload() {
-        return (CompensationRequestProposal) proposal;
+    private CompensationProposal getCompensationPayload() {
+        return (CompensationProposal) proposal;
     }
 
     @Override
@@ -103,6 +103,6 @@ public class CompensationRequestBallot extends Ballot {
 
     @Override
     public String toString() {
-        return "CompensationRequestBallot{} " + super.toString();
+        return "CompensationBallot{} " + super.toString();
     }
 }

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.consensus.vote.proposal;
 
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestBallot;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationBallot;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class ProposalFactory {
     public static Ballot getProposalFromPayload(Proposal proposal) {
         switch (proposal.getType()) {
             case COMPENSATION_REQUEST:
-                return new CompensationRequestBallot(proposal);
+                return new CompensationBallot(proposal);
             case GENERIC:
                 return new GenericBallot(proposal);
             case CHANGE_PARAM:

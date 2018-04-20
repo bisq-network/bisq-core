@@ -46,11 +46,11 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CompensationRequestService {
+public class CompensationService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;
-    private final CompensationRequestPayloadValidator compensationRequestPayloadValidator;
+    private final CompensationValidator compensationValidator;
     private final PublicKey signaturePubKey;
     private final StateService stateService;
 
@@ -60,17 +60,17 @@ public class CompensationRequestService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CompensationRequestService(BsqWalletService bsqWalletService,
-                                      BtcWalletService btcWalletService,
-                                      StateService stateService,
-                                      ChangeParamService changeParamService,
-                                      CompensationRequestPayloadValidator compensationRequestPayloadValidator,
-                                      KeyRing keyRing) {
+    public CompensationService(BsqWalletService bsqWalletService,
+                               BtcWalletService btcWalletService,
+                               StateService stateService,
+                               ChangeParamService changeParamService,
+                               CompensationValidator compensationValidator,
+                               KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
-        this.compensationRequestPayloadValidator = compensationRequestPayloadValidator;
+        this.compensationValidator = compensationValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
@@ -85,7 +85,7 @@ public class CompensationRequestService {
             WalletException {
 
         // As we don't know the txId we create a temp object with TxId set to null.
-        final CompensationRequestProposal tempPayload = new CompensationRequestProposal(
+        final CompensationProposal tempPayload = new CompensationProposal(
                 UUID.randomUUID().toString(),
                 name,
                 title,
@@ -96,7 +96,7 @@ public class CompensationRequestService {
                 signaturePubKey,
                 new Date()
         );
-        compensationRequestPayloadValidator.validateDataFields(tempPayload);
+        compensationValidator.validateDataFields(tempPayload);
 
         Transaction transaction = createCompensationRequestTx(tempPayload);
 
@@ -106,7 +106,7 @@ public class CompensationRequestService {
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction createCompensationRequestTx(CompensationRequestProposal tempPayload)
+    private Transaction createCompensationRequestTx(CompensationProposal tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(changeParamService, stateService.getChainHeight());
@@ -114,7 +114,7 @@ public class CompensationRequestService {
 
         // payload does not have txId at that moment
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(tempPayload);
-        byte[] opReturnData = CompensationRequestConsensus.getOpReturnData(hashOfPayload);
+        byte[] opReturnData = CompensationConsensus.getOpReturnData(hashOfPayload);
 
         final Transaction txWithBtcFee = btcWalletService.completePreparedCompensationRequestTx(
                 tempPayload.getRequestedBsq(),
@@ -123,15 +123,15 @@ public class CompensationRequestService {
                 opReturnData);
 
         final Transaction completedTx = bsqWalletService.signTx(txWithBtcFee);
-        log.info("CompensationRequestBallot tx: " + completedTx);
+        log.info("CompensationBallot tx: " + completedTx);
         return completedTx;
     }
 
     // We have txId set to null in tempPayload as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
-    private CompensationRequestBallot createCompensationRequest(CompensationRequestProposal tempPayload, Transaction transaction) {
+    private CompensationBallot createCompensationRequest(CompensationProposal tempPayload, Transaction transaction) {
         final String txId = transaction.getHashAsString();
-        CompensationRequestProposal compensationRequestProposal = (CompensationRequestProposal) tempPayload.cloneWithTxId(txId);
-        return new CompensationRequestBallot(compensationRequestProposal);
+        CompensationProposal compensationProposal = (CompensationProposal) tempPayload.cloneWithTxId(txId);
+        return new CompensationBallot(compensationProposal);
     }
 }

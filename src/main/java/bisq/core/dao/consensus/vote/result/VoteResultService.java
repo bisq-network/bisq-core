@@ -28,7 +28,7 @@ import bisq.core.dao.consensus.vote.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.vote.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.vote.proposal.Proposal;
 import bisq.core.dao.consensus.vote.proposal.asset.RemoveAssetProposalPayload;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestProposal;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericProposal;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamProposal;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
@@ -280,8 +280,8 @@ public class VoteResultService {
     }
 
     private void processCompletedVoteResult(Proposal proposal, int chainHeight) {
-        if (proposal instanceof CompensationRequestProposal) {
-            issuanceService.issueBsq((CompensationRequestProposal) proposal, chainHeight);
+        if (proposal instanceof CompensationProposal) {
+            issuanceService.issueBsq((CompensationProposal) proposal, chainHeight);
         } else if (proposal instanceof GenericProposal) {
             //TODO impl
         } else if (proposal instanceof ChangeParamProposal) {

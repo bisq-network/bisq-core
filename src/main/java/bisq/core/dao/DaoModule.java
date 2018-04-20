@@ -53,8 +53,8 @@ import bisq.core.dao.consensus.vote.proposal.MyProposalService;
 import bisq.core.dao.consensus.vote.proposal.ProposalListService;
 import bisq.core.dao.consensus.vote.proposal.ProposalPayloadValidator;
 import bisq.core.dao.consensus.vote.proposal.ProposalService;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestPayloadValidator;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestService;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationService;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericProposalService;
 import bisq.core.dao.consensus.vote.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.vote.result.VoteResultService;
@@ -126,8 +126,8 @@ public class DaoModule extends AppModule {
         bind(ProposalListService.class).in(Singleton.class);
         bind(MyProposalService.class).in(Singleton.class);
         bind(ProposalPayloadValidator.class).in(Singleton.class);
-        bind(CompensationRequestService.class).in(Singleton.class);
-        bind(CompensationRequestPayloadValidator.class).in(Singleton.class);
+        bind(CompensationService.class).in(Singleton.class);
+        bind(CompensationValidator.class).in(Singleton.class);
         bind(GenericProposalService.class).in(Singleton.class);
 
         // vote

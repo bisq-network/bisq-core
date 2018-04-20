@@ -18,7 +18,7 @@
 package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.vote.Vote;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestBallot;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationBallot;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericBallot;
 
 import bisq.common.proto.ProtobufferException;
@@ -98,8 +98,8 @@ public abstract class Ballot implements PersistablePayload {
     //TODO add other proposal types
     public static Ballot fromProto(PB.Ballot proto) {
         switch (proto.getMessageCase()) {
-            case COMPENSATION_REQUEST_BALLOT:
-                return CompensationRequestBallot.fromProto(proto);
+            case COMPENSATION_BALLOT:
+                return CompensationBallot.fromProto(proto);
             case GENERIC_BALLOT:
                 return GenericBallot.fromProto(proto);
             default:

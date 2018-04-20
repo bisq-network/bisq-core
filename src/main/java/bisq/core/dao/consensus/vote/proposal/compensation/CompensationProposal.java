@@ -52,20 +52,20 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class CompensationRequestProposal extends Proposal {
+public final class CompensationProposal extends Proposal {
 
     private final long requestedBsq;
     private final String bsqAddress;
 
-    public CompensationRequestProposal(String uid,
-                                       String name,
-                                       String title,
-                                       String description,
-                                       String link,
-                                       Coin requestedBsq,
-                                       String bsqAddress,
-                                       PublicKey ownerPubKey,
-                                       Date creationDate) {
+    public CompensationProposal(String uid,
+                                String name,
+                                String title,
+                                String description,
+                                String link,
+                                Coin requestedBsq,
+                                String bsqAddress,
+                                PublicKey ownerPubKey,
+                                Date creationDate) {
         super(uid,
                 name,
                 title,
@@ -85,18 +85,18 @@ public final class CompensationRequestProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationRequestProposal(String uid,
-                                       String name,
-                                       String title,
-                                       String description,
-                                       String link,
-                                       String bsqAddress,
-                                       long requestedBsq,
-                                       byte[] ownerPubKeyEncoded,
-                                       byte version,
-                                       long creationDate,
-                                       String txId,
-                                       @Nullable Map<String, String> extraDataMap) {
+    public CompensationProposal(String uid,
+                                String name,
+                                String title,
+                                String description,
+                                String link,
+                                String bsqAddress,
+                                long requestedBsq,
+                                byte[] ownerPubKeyEncoded,
+                                byte version,
+                                long creationDate,
+                                String txId,
+                                @Nullable Map<String, String> extraDataMap) {
         super(uid,
                 name,
                 title,
@@ -114,15 +114,15 @@ public final class CompensationRequestProposal extends Proposal {
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        final PB.CompensationRequestProposal.Builder compensationRequestProposalBuilder = PB.CompensationRequestProposal.newBuilder()
+        final PB.CompensationProposal.Builder compensationRequestProposalBuilder = PB.CompensationProposal.newBuilder()
                 .setBsqAddress(bsqAddress)
                 .setRequestedBsq(requestedBsq);
-        return super.getProposalBuilder().setCompensationRequestProposal(compensationRequestProposalBuilder);
+        return super.getProposalBuilder().setCompensationProposal(compensationRequestProposalBuilder);
     }
 
-    public static CompensationRequestProposal fromProto(PB.Proposal proto) {
-        final PB.CompensationRequestProposal compensationRequestProposa = proto.getCompensationRequestProposal();
-        return new CompensationRequestProposal(proto.getUid(),
+    public static CompensationProposal fromProto(PB.Proposal proto) {
+        final PB.CompensationProposal compensationRequestProposa = proto.getCompensationProposal();
+        return new CompensationProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
@@ -176,7 +176,7 @@ public final class CompensationRequestProposal extends Proposal {
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new CompensationRequestProposal(getUid(),
+        return new CompensationProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -192,7 +192,7 @@ public final class CompensationRequestProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new CompensationRequestProposal(getUid(),
+        return new CompensationProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -208,7 +208,7 @@ public final class CompensationRequestProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "CompensationRequestProposal{" +
+        return "CompensationProposal{" +
                 "\n     requestedBsq=" + requestedBsq +
                 ",\n     bsqAddress='" + bsqAddress + '\'' +
                 "\n} " + super.toString();

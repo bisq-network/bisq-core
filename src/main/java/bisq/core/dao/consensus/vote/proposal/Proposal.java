@@ -20,7 +20,7 @@ package bisq.core.dao.consensus.vote.proposal;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
 import bisq.core.dao.consensus.vote.VoteConsensusCritical;
-import bisq.core.dao.consensus.vote.proposal.compensation.CompensationRequestProposal;
+import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.vote.proposal.generic.GenericProposal;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
 
@@ -144,8 +144,8 @@ public abstract class Proposal implements LazyProcessedPayload, ProtectedStorage
     //TODO add other proposal types
     public static Proposal fromProto(PB.Proposal proto) {
         switch (proto.getMessageCase()) {
-            case COMPENSATION_REQUEST_PROPOSAL:
-                return CompensationRequestProposal.fromProto(proto);
+            case COMPENSATION_PROPOSAL:
+                return CompensationProposal.fromProto(proto);
             case GENERIC_PROPOSAL:
                 return GenericProposal.fromProto(proto);
             default:
