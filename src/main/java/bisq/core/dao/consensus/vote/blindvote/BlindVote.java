@@ -17,6 +17,8 @@
 
 package bisq.core.dao.consensus.vote.blindvote;
 
+import bisq.core.dao.consensus.state.events.StateChangeData;
+
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.Utilities;
 
@@ -34,7 +36,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Slf4j
 @Value
-public final class BlindVote implements PersistablePayload {
+public final class BlindVote implements PersistablePayload, StateChangeData {
 
     public static BlindVote clone(BlindVote blindVote) {
         return new BlindVote(blindVote.encryptedProposalList,

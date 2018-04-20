@@ -17,24 +17,5 @@
 
 package bisq.core.dao.consensus.state.events;
 
-import bisq.common.proto.persistable.PersistablePayload;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@Getter
-@EqualsAndHashCode
-public abstract class StateChangeEvent implements PersistablePayload {
-    private final StateChangeData data;
-    private final int height; //TODO needed? is part of block anyway
-
-    public StateChangeEvent(StateChangeData data, int height) {
-        this.data = data;
-        this.height = height;
-    }
-
-    //TODO add PB StateChangeEvent.builder
+public interface StateChangeData {
 }

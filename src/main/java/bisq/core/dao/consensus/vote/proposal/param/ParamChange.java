@@ -17,6 +17,8 @@
 
 package bisq.core.dao.consensus.vote.proposal.param;
 
+import bisq.core.dao.consensus.state.events.StateChangeData;
+
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.proto.persistable.PersistablePayload;
@@ -35,7 +37,7 @@ import javax.annotation.concurrent.Immutable;
 //TODO separate value object with p2p network data
 @Immutable
 @Value
-public class ParamChange implements ProtectedStoragePayload, PersistablePayload {
+public class ParamChange implements ProtectedStoragePayload, PersistablePayload, StateChangeData {
     private final Param param;
     private final long value;
 

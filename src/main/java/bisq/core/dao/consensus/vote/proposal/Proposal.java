@@ -19,6 +19,7 @@ package bisq.core.dao.consensus.vote.proposal;
 
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
+import bisq.core.dao.consensus.state.events.StateChangeData;
 import bisq.core.dao.consensus.vote.VoteConsensusCritical;
 import bisq.core.dao.consensus.vote.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.vote.proposal.param.Param;
@@ -45,7 +46,7 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public abstract class Proposal implements PersistablePayload, VoteConsensusCritical {
+public abstract class Proposal implements PersistablePayload, VoteConsensusCritical, StateChangeData {
     protected final String uid;
     protected final String name;
     protected final String title;
