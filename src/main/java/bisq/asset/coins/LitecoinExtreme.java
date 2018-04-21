@@ -20,9 +20,11 @@ package bisq.asset.coins;
 import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
 
+import org.libdohj.params.LitecoinExtremeMainNetParams;
+
 public class LitecoinExtreme extends Coin {
 
     public LitecoinExtreme() {
-        super("LitecoinExtreme", "LCE", new Base58BitcoinAddressValidator());
+        super("LitecoinExtreme", "LCE", new Base58BitcoinAddressValidator(LitecoinExtremeMainNetParams.get()));
     }
 }
