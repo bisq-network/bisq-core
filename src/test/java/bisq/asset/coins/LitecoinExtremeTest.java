@@ -17,27 +17,11 @@
 
 package bisq.asset.coins;
 
-import bisq.asset.AbstractAssetTest;
+import bisq.asset.AbstractAssetWithDefaultValidatorTest;
 
-import org.junit.Test;
-
-public class LitecoinExtremeTest extends AbstractAssetTest {
+public class LitecoinExtremeTest extends AbstractAssetWithDefaultValidatorTest {
 
     public LitecoinExtremeTest() {
-        super(new LitecoinExtreme.Mainnet());
-    }
-
-    @Test
-    public void testValidAddresses() {
-        assertValidAddress("EMaYcKYVEBQ4tePFP46hWvPpYqyaReSERf");
-        assertValidAddress("ET9wsr5KB49naNLPEhp3HyRGt4VELjUzfm");
-        assertValidAddress("EK4xxy7FfAMWJDBxbsEAVJW2trQFuPRbD9");
-    }
-
-    @Test
-    public void testInvalidAddresses() {
-        assertInvalidAddress("GEHqJ7ts38huhGEke4phbVVb2JPsEYyMJHU");
-        assertInvalidAddress("1EPzCCWzCo3q5fkM3VXMgm4TsRQcmksirkm");
-        assertInvalidAddress("EXtCPaVtVsi9nTyRoVQZNv6FAm3B43tiYN#");
+        super(new LitecoinExtreme());
     }
 }
