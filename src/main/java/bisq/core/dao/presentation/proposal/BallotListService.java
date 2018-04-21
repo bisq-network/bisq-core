@@ -41,16 +41,18 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 import java.util.Optional;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens on the P2P network for new proposals and add valid proposals as new ballots to the list.
  *
  * Designed for user thread.
+ * BallotList is accessed from parser thread so we add synchronized to any method using it.
  */
 @Slf4j
 public class BallotListService implements PersistedDataHost, PresentationService /*, StateChangeEventsProvider*/ {
@@ -59,8 +61,6 @@ public class BallotListService implements PersistedDataHost, PresentationService
     private final StateServiceFacade stateServiceFacade;
     private final ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
-
-    @Getter
     private final BallotList ballotList = new BallotList();
 
     @Inject
@@ -103,12 +103,12 @@ public class BallotListService implements PersistedDataHost, PresentationService
 
     // We get called from the user thread at startup.
     @Override
-    public void readPersisted() {
+    public synchronized void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BallotList persisted = storage.initAndGetPersisted(ballotList, 20);
+            BallotList persisted = storage.initAndGetPersisted(getBallotList(), 20);
             if (persisted != null) {
-                this.ballotList.clear();
-                this.ballotList.addAll(persisted.getList());
+                getBallotList().clear();
+                getBallotList().addAll(persisted.getList());
             }
         }
     }
@@ -131,8 +131,22 @@ public class BallotListService implements PersistedDataHost, PresentationService
         return !stateServiceFacade.getTx(txId).isPresent();
     }
 
+    public boolean isTxInPhaseAndCycle(Tx tx) {
+        return periodServiceFacade.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
+                periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), periodServiceFacade.getChainHeight());
+    }
+
     public void persist() {
         storage.queueUpForSave();
+    }
+
+    public synchronized BallotList getBallotList() {
+        return ballotList;
+    }
+
+    // Parser thread is accessing the ballotList.
+    public synchronized ImmutableList<Ballot> getImmutableBallotList() {
+        return ImmutableList.copyOf(getBallotList().getList());
     }
 
 
@@ -178,25 +192,25 @@ public class BallotListService implements PersistedDataHost, PresentationService
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
+    private synchronized void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload) {
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
             if (isProposalValidToAddToList(proposal)) {
                 log.info("We received a Proposal from the P2P network. Proposal.uid={}", proposal.getUid());
                 Ballot ballot = BallotFactory.getBallotFromProposal(proposal);
-                ballotList.add(ballot);
+                getBallotList().add(ballot);
                 if (storeLocally) persist();
             }
         }
     }
 
     // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
-    private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
+    private synchronized void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof Proposal) {
             final Proposal proposal = (Proposal) protectedStoragePayload;
-            findProposalInBallotList(proposal, ballotList.getList())
+            findProposalInBallotList(proposal, getBallotList().getList())
                     .filter(ballot -> {
                         if (canRemoveProposal(proposal)) {
                             return true;
@@ -238,8 +252,8 @@ public class BallotListService implements PersistedDataHost, PresentationService
     }
 
 
-    private void removeProposalFromList(Proposal proposal) {
-        if (ballotList.remove(proposal))
+    private synchronized void removeProposalFromList(Proposal proposal) {
+        if (getBallotList().remove(proposal))
             persist();
         else
             log.warn("We called removeProposalFromList at a proposal which was not in our list");
@@ -255,17 +269,8 @@ public class BallotListService implements PersistedDataHost, PresentationService
                 .findAny();
     }
 
-    boolean isTxInPhaseAndCycle(Tx tx) {
-        log.error("txid={}, isInPhase={}, isTxInCorrectCycle={}", tx.getId(),
-                periodServiceFacade.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL),
-                periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), periodServiceFacade.getChainHeight()));
-
-        return periodServiceFacade.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
-                periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), periodServiceFacade.getChainHeight());
-    }
-
-    private boolean isProposalValidToAddToList(Proposal proposal) {
-        if (ballotListContainsProposal(proposal, ballotList.getList())) {
+    private synchronized boolean isProposalValidToAddToList(Proposal proposal) {
+        if (ballotListContainsProposal(proposal, getBallotList().getList())) {
             log.warn("We have that proposalPayload already in our list. proposal={}", proposal);
             return false;
         }

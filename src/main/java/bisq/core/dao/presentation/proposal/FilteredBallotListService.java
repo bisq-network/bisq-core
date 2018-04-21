@@ -33,8 +33,6 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -113,10 +111,6 @@ public class FilteredBallotListService {
     }
 
     private void updateLists() {
-        final List<Ballot> ballots = ballotListService.getBallotList().getList();
-        Map<String, Optional<Tx>> map = ballots.stream()
-                .collect(Collectors.toMap(Ballot::getTxId, ballot -> stateServiceFacade.getTx(ballot.getTxId())));
-
         activeOrMyUnconfirmedBallots.clear();
         activeOrMyUnconfirmedBallots.addAll(ballotListService.getBallotList().stream()
                 .filter(this::isUnconfirmedOrInPhaseAndCycle)

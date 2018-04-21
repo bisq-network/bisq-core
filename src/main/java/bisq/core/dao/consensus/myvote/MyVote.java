@@ -15,10 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.presentation.myvote;
+package bisq.core.dao.consensus.myvote;
 
-import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.ballot.BallotList;
+import bisq.core.dao.consensus.blindvote.BlindVote;
 
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;

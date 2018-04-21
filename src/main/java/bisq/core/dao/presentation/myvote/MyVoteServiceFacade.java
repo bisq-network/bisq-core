@@ -27,17 +27,15 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.blindvote.BlindVotePayload;
+import bisq.core.dao.consensus.myvote.MyVote;
+import bisq.core.dao.consensus.myvote.MyVoteList;
+import bisq.core.dao.consensus.myvote.MyVoteService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
-import bisq.core.dao.consensus.ballot.Ballot;
-import bisq.core.dao.consensus.ballot.BallotFactory;
-import bisq.core.dao.consensus.ballot.BallotList;
-import bisq.core.dao.consensus.proposal.Proposal;
-import bisq.core.dao.presentation.proposal.BallotListService;
-import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.presentation.PresentationService;
 
@@ -60,6 +58,8 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.ImmutableList;
+
 import javafx.beans.value.ChangeListener;
 
 import javax.crypto.SecretKey;
@@ -69,34 +69,35 @@ import java.security.PublicKey;
 import java.io.IOException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and published blind vote and blind vote tx. After broadcast it creates myVote which gets persisted and holds
- * all proposals with the votes.
+ * all ballots.
  * Republished all my active myVotes at startup and applies the revealTxId to myVote once the reveal tx is published.
  * <p>
  * Executed from the user tread.
  */
 @Slf4j
-public class MyVoteService implements PersistedDataHost, PresentationService {
+public class MyVoteServiceFacade implements PersistedDataHost, PresentationService {
     private final PeriodService periodService;
-    private final BallotListService ballotListService;
     private final StateService stateService;
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final ChangeParamService changeParamService;
     private final Storage<MyVoteList> storage;
     private final PublicKey signaturePubKey;
 
-    // MyVoteList is wrapper for persistence. From outside we access only list inside of wrapper.
     private final MyVoteList myVoteList = new MyVoteList();
 
     private ChangeListener<Number> numConnectedPeersListener;
+
+    private BallotList sortedBallotList;
+    @Getter
+    private Coin blindVoteFee;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,29 +105,41 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteService(PeriodService periodService,
-                         BallotListService ballotListService,
-                         StateService stateService,
-                         P2PService p2PService,
-                         WalletsManager walletsManager,
-                         BsqWalletService bsqWalletService,
-                         BtcWalletService btcWalletService,
-                         ChangeParamService changeParamService,
-                         KeyRing keyRing,
-                         Storage<MyVoteList> storage) {
+    public MyVoteServiceFacade(PeriodService periodService,
+                               StateService stateService,
+                               P2PService p2PService,
+                               WalletsManager walletsManager,
+                               BsqWalletService bsqWalletService,
+                               BtcWalletService btcWalletService,
+                               KeyRing keyRing,
+                               MyVoteService myVoteService,
+                               Storage<MyVoteList> storage) {
         this.periodService = periodService;
-        this.ballotListService = ballotListService;
         this.stateService = stateService;
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.changeParamService = changeParamService;
         this.storage = storage;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
 
         numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyBlindVotesIfWellConnected();
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
+
+        // We get sortedBallotList and blindVoteFee set from the myVoteService which runs in parser thread.
+        // It get mapped to userThread and we keep a
+        myVoteService.addListener(new MyVoteService.Listener() {
+            @Override
+            public void onSortedBallotList(BallotList sortedBallotList) {
+                // We clone an immutable list
+                MyVoteServiceFacade.this.sortedBallotList = new BallotList(ImmutableList.copyOf(sortedBallotList.getList()));
+            }
+
+            @Override
+            public void onBlindVoteFee(Coin blindVoteFee) {
+                MyVoteServiceFacade.this.blindVoteFee = Coin.valueOf(blindVoteFee.value);
+            }
+        });
     }
 
 
@@ -155,33 +168,44 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
         publishMyBlindVotesIfWellConnected();
     }
 
-    // Useful for showing fee estimation in confirmation popup so we expose it publicly
-    public Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
+    // Called from user thread
+    // For showing fee estimation in confirmation popup
+    public Transaction getDummyBlindVoteTx(Coin stake, Coin fee)
+            throws InsufficientMoneyException, WalletException, TransactionVerificationException {
+        // We set dummy opReturn data
+        return getBlindVoteTx(stake, fee, new byte[22]);
+    }
+
+    // Called from user thread
+    private Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
         Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(fee, stake);
         Transaction txWithBtcFee = btcWalletService.completePreparedBlindVoteTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
+    // Called from user thread
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            BallotList ballotList = getSortedProposalList();
-            log.info("BallotList used in blind vote. ballotList={}", ballotList);
+            log.info("BallotList used in blind vote. sortedBallotList={}", sortedBallotList);
+
+            // SortedBallotList and blindVoteFee got copied and mapped to user thread.
+            // They other data for opReturn is state independent.
 
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            byte[] encryptedBallotList = BlindVoteConsensus.getEncryptedBallotList(ballotList, secretKey);
+            byte[] encryptedBallotList = BlindVoteConsensus.getEncryptedBallotList(sortedBallotList, secretKey);
 
             final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedBallotList);
             log.info("Sha256Ripemd160 hash of encryptedBallotList: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-            final Coin fee = BlindVoteConsensus.getFee(changeParamService, stateService.getChainHeight());
-            final Transaction blindVoteTx = getBlindVoteTx(stake, fee, opReturnData);
+
+            final Transaction blindVoteTx = getBlindVoteTx(stake, blindVoteFee, opReturnData);
             log.info("blindVoteTx={}", blindVoteTx);
             walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     onTxBroadcasted(encryptedBallotList, blindVoteTx, stake, resultHandler, exceptionHandler,
-                            ballotList, secretKey);
+                            sortedBallotList, secretKey);
                 }
 
                 @Override
@@ -228,26 +252,10 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BallotList getSortedProposalList() {
-        List<Proposal> proposalPayloadsFromStateService = stateService.getProposalPayloads().stream()
-                .map(BallotFactory::getBallotFromProposal)
-                .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
-                .map(Ballot::getProposal)
-                .collect(Collectors.toList());
-
-        List<Ballot> ballots = ballotListService.getBallotList().stream()
-                .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
-                .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposal()))
-                .collect(Collectors.toList());
-
-        BlindVoteConsensus.sortProposalList(ballots);
-        return new BallotList(ballots);
-    }
 
     private void onTxBroadcasted(byte[] encryptedBallotList, Transaction blindVoteTx, Coin stake,
                                  ResultHandler resultHandler, ExceptionHandler exceptionHandler,
                                  BallotList ballotList, SecretKey secretKey) {
-
         BlindVote blindVote = new BlindVote(encryptedBallotList, blindVoteTx.getHashAsString(), stake.value);
         BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
 

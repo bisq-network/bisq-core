@@ -20,9 +20,9 @@ package bisq.core.setup;
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
-import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
-import bisq.core.dao.presentation.myvote.MyVoteService;
+import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
+import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.presentation.proposal.MyBallotListService;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.TradeManager;
@@ -60,7 +60,7 @@ public class CorePersistedDataHost {
         persistedDataHosts.add(injector.getInstance(BallotListService.class));
         persistedDataHosts.add(injector.getInstance(MyBallotListService.class));
         persistedDataHosts.add(injector.getInstance(BlindVoteService.class));
-        persistedDataHosts.add(injector.getInstance(MyVoteService.class));
+        persistedDataHosts.add(injector.getInstance(MyVoteServiceFacade.class));
         persistedDataHosts.add(injector.getInstance(ChangeParamService.class));
         return persistedDataHosts;
     }

@@ -29,6 +29,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
+import bisq.core.dao.consensus.myvote.MyVote;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateChangeEventsProvider;
@@ -36,8 +37,7 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.presentation.myvote.MyVote;
-import bisq.core.dao.presentation.myvote.MyVoteService;
+import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
 
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;
@@ -66,7 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealService implements StateChangeEventsProvider {
     private final StateService stateService;
-    private final MyVoteService myVoteService;
+    private final MyVoteServiceFacade myVoteServiceFacade;
     private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -82,13 +82,13 @@ public class VoteRevealService implements StateChangeEventsProvider {
 
     @Inject
     public VoteRevealService(StateService stateService,
-                             MyVoteService myVoteService,
+                             MyVoteServiceFacade myVoteServiceFacade,
                              PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
-        this.myVoteService = myVoteService;
+        this.myVoteServiceFacade = myVoteServiceFacade;
         this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
@@ -145,7 +145,8 @@ public class VoteRevealService implements StateChangeEventsProvider {
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes(int height) {
-        myVoteService.getMyVoteList().stream()
+        // TODO dont use myVoteServiceFacade
+        myVoteServiceFacade.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
                 .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), height))
@@ -195,7 +196,8 @@ public class VoteRevealService implements StateChangeEventsProvider {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
-                    myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
+                    //TODO dont use myVoteServiceFacade
+                    myVoteServiceFacade.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
                 }
 
                 @Override

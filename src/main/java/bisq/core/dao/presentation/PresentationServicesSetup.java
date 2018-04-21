@@ -17,10 +17,10 @@
 
 package bisq.core.dao.presentation;
 
-import bisq.core.dao.presentation.myvote.MyVoteService;
+import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
-import bisq.core.dao.presentation.proposal.MyBallotListService;
 import bisq.core.dao.presentation.proposal.FilteredBallotListService;
+import bisq.core.dao.presentation.proposal.MyBallotListService;
 
 import com.google.inject.Inject;
 
@@ -28,24 +28,24 @@ import com.google.inject.Inject;
  * Manages startup of non consensus critical services (presentationServices).
  */
 public class PresentationServicesSetup {
-    private PeriodServiceFacade periodServiceFacade;
+    private final PeriodServiceFacade periodServiceFacade;
     private final FilteredBallotListService filteredBallotListService;
     private final MyBallotListService myBallotListService;
-    private MyVoteService myVoteService;
+    private final MyVoteServiceFacade myVoteServiceFacade;
 
     @Inject
     public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade, FilteredBallotListService filteredBallotListService,
-                                     MyBallotListService myBallotListService, MyVoteService myVoteService) {
+                                     MyBallotListService myBallotListService, MyVoteServiceFacade myVoteServiceFacade) {
         this.periodServiceFacade = periodServiceFacade;
         this.filteredBallotListService = filteredBallotListService;
         this.myBallotListService = myBallotListService;
-        this.myVoteService = myVoteService;
+        this.myVoteServiceFacade = myVoteServiceFacade;
     }
 
     public void start() {
         periodServiceFacade.start();
         myBallotListService.start();
-        myVoteService.start();
+        myVoteServiceFacade.start();
         filteredBallotListService.start();
     }
 }

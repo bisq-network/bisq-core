@@ -51,7 +51,7 @@ public class BlindVoteConsensus {
     public static void sortProposalList(List<Ballot> ballots) {
         ballots.sort(Comparator.comparing(Ballot::getTxId));
         log.info("Sorted proposalList for blind vote: " + ballots.stream()
-                .map(Ballot::getUid)
+                .map(Ballot::getTxId)
                 .collect(Collectors.toList()));
     }
 

@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.dao.consensus.ConsensusServicesSetup;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.blindvote.BlindVoteValidator;
+import bisq.core.dao.consensus.myvote.MyVoteService;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.node.blockchain.json.JsonBlockChainExporter;
@@ -47,10 +48,7 @@ import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
-import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
-import bisq.core.dao.presentation.ballot.GenericBallotFactory;
-import bisq.core.dao.presentation.ballot.CompensationBallotFactory;
 import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.SnapshotManager;
@@ -60,10 +58,13 @@ import bisq.core.dao.consensus.voteresult.VoteResultService;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
 import bisq.core.dao.presentation.PresentationServicesSetup;
-import bisq.core.dao.presentation.myvote.MyVoteService;
+import bisq.core.dao.presentation.ballot.CompensationBallotFactory;
+import bisq.core.dao.presentation.ballot.GenericBallotFactory;
+import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
-import bisq.core.dao.presentation.proposal.MyBallotListService;
+import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.presentation.proposal.FilteredBallotListService;
+import bisq.core.dao.presentation.proposal.MyBallotListService;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;
@@ -137,6 +138,7 @@ public class DaoModule extends AppModule {
         bind(GenericBallotFactory.class).in(Singleton.class);
 
         // vote
+        bind(MyVoteServiceFacade.class).in(Singleton.class);
         bind(MyVoteService.class).in(Singleton.class);
         bind(BlindVoteService.class).in(Singleton.class);
         bind(BlindVoteValidator.class).in(Singleton.class);

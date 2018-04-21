@@ -41,7 +41,7 @@ public class ProposalEvent extends StateChangeEvent {
         return null;
     }
 
-    public Proposal getProposalPayload() {
+    public Proposal getProposal() {
         return (Proposal) getData();
     }
 }

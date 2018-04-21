@@ -18,11 +18,12 @@
 package bisq.core.dao.consensus;
 
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
+import bisq.core.dao.consensus.myvote.MyVoteService;
 import bisq.core.dao.consensus.node.BsqNode;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
-import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
+import bisq.core.dao.presentation.proposal.BallotListService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -34,6 +35,7 @@ import com.google.inject.Inject;
 public class ConsensusServicesSetup {
     private final BsqNode bsqNode;
     private final PeriodStateMutator periodStateMutator;
+    private final MyVoteService myVoteService;
     private final ChangeParamService changeParamService;
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
@@ -43,11 +45,12 @@ public class ConsensusServicesSetup {
                                   BallotListService ballotListService,
                                   BlindVoteService blindVoteService,
                                   PeriodStateMutator periodStateMutator,
-
+                                  MyVoteService myVoteService,
                                   ChangeParamService changeParamService) {
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.periodStateMutator = periodStateMutator;
+        this.myVoteService = myVoteService;
 
         this.changeParamService = changeParamService;
 
@@ -59,6 +62,7 @@ public class ConsensusServicesSetup {
         ballotListService.start();
         blindVoteService.start();
         changeParamService.start();
+        myVoteService.start();
         bsqNode.start(errorMessageHandler);
     }
 

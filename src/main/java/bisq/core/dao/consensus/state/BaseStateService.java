@@ -329,7 +329,7 @@ public abstract class BaseStateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<ProposalEvent> getAddProposalPayloadEvents() {
+    public Set<ProposalEvent> getAddProposalEvents() {
         return getStateChangeEvents().stream()
                 .filter(event -> event instanceof ProposalEvent)
                 .map(event -> (ProposalEvent) event)
@@ -343,9 +343,9 @@ public abstract class BaseStateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<Proposal> getProposalPayloads() {
-        return getAddProposalPayloadEvents().stream()
-                .map(ProposalEvent::getProposalPayload)
+    public Set<Proposal> getProposals() {
+        return getAddProposalEvents().stream()
+                .map(ProposalEvent::getProposal)
                 .collect(Collectors.toSet());
     }
 
