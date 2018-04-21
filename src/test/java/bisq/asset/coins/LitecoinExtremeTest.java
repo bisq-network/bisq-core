@@ -29,16 +29,16 @@ public class LitecoinExtremeTest extends AbstractAssetTest {
 
     @Test
     public void testValidAddresses() {
-        assertValidAddress("EPQoqfEwpQn9NzrxrBfW1wN2tLQ1WvgfYs");
-        assertValidAddress("EWWWXsn83DEaiyKiWQM9PPwuBccd26SyFz");
-        assertValidAddress("EM4F4p2ZCiHh1dQCbqy15ZaQFaPPJkTUv3");
-        assertValidAddress("EdZxv4MpLurXyRyysvH756zKBAr5ujretk");
+        assertValidAddress("ERqtZ59nx6VHFmS2haJb4ZbCwfWwBLQnfH");
+        assertValidAddress("ES8ctKPznojkkJ9bzakSZgfyxrvqGPS7PV");
+        assertValidAddress("EabRC9NJNhybs3bEK5kZWbG5pTwAdcuo9H");
+        assertValidAddress("EcLEQvpiowww84JPXFv5MHBe7Eza9zohQd");
     }
 
     @Test
     public void testInvalidAddresses() {
-        assertInvalidAddress("1EVVviyVkgWy1rzQ9i35iRp9C2nyCP1W9Ji");
-        assertInvalidAddress("GKSdsTcVKMVUtAnR2szzh8ABqyMrngNMZ7");
-        assertInvalidAddress("TbPH5VvRRWxxwAKy4oQw3tU5EPPMBZmVkY");
+        assertInvalidAddress("0EeEKXUi87uAtkVa131ERLMZwQ79AQBi9hp");
+        assertInvalidAddress("3EYo8cKi4zqCq2vV1EjnGF4WrxaSjNUdiih");
+        assertInvalidAddress("1Ee6q9hzjW75Y69ytGVnBTfU4tjTJuppwfe");
     }
 }
