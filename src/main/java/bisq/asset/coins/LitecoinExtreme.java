@@ -17,12 +17,12 @@
 
 package bisq.asset.coins;
 
+import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
-import bisq.asset.DefaultAddressValidator;
 
 public class LitecoinExtreme extends Coin {
 
     public LitecoinExtreme() {
-        super("LitecoinExtreme", "LCE", new DefaultAddressValidator());
+        super("LitecoinExtreme", "LCE", new Base58BitcoinAddressValidator());
     }
 }
