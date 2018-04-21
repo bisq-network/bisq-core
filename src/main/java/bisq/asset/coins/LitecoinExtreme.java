@@ -17,42 +17,12 @@
 
 package bisq.asset.coins;
 
-import bisq.asset.Base58BitcoinAddressValidator;
 import bisq.asset.Coin;
+import bisq.asset.DefaultAddressValidator;
 
-import org.libdohj.params.LitecoinExtremeMainNetParams;
-import org.libdohj.params.LitecoinExtremeRegTestParams;
-import org.libdohj.params.LitecoinExtremeTestNet3Params;
+public class LitecoinExtreme extends Coin {
 
-import org.bitcoinj.core.NetworkParameters;
-
-public abstract class LitecoinExtreme extends Coin {
-
-    public LitecoinExtreme(Network network, NetworkParameters networkParameters) {
-        super("LitecoinExtreme", "LTC", new Base58BitcoinAddressValidator(networkParameters), network);
-    }
-
-
-    public static class Mainnet extends LitecoinExtreme {
-
-        public Mainnet() {
-            super(Network.MAINNET, LitecoinExtremeMainNetParams.get());
-        }
-    }
-
-
-    public static class Testnet extends LitecoinExtreme {
-
-        public Testnet() {
-            super(Network.TESTNET, LitecoinExtremeTestNet3Params.get());
-        }
-    }
-
-
-    public static class Regtest extends LitecoinExtreme {
-
-        public Regtest() {
-            super(Network.REGTEST, LitecoinExtremeRegTestParams.get());
-        }
+    public LitecoinExtreme() {
+        super("LitecoinExtreme", "LCE", new DefaultAddressValidator());
     }
 }
