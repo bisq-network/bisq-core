@@ -33,6 +33,7 @@ import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealConsensus;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 
 import bisq.common.util.Utilities;
 
@@ -73,6 +74,8 @@ public class VoteResultService implements StateChangeEventsProvider {
     private final StateService stateService;
     private final ChangeParamService changeParamService;
     private final PeriodService periodService;
+    //TODO dont use BlindVoteServiceFacade
+    private final BlindVoteServiceFacade blindVoteServiceFacade;
     private final IssuanceService issuanceService;
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
@@ -87,16 +90,17 @@ public class VoteResultService implements StateChangeEventsProvider {
                              StateService stateService,
                              ChangeParamService changeParamService,
                              PeriodService periodService,
+                             BlindVoteServiceFacade blindVoteServiceFacade,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
         this.periodService = periodService;
+        this.blindVoteServiceFacade = blindVoteServiceFacade;
         this.issuanceService = issuanceService;
 
         stateService.registerStateChangeEventsProvider(this);
     }
-
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +110,9 @@ public class VoteResultService implements StateChangeEventsProvider {
     @Override
     public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
         final int chainHeight = txBlock.getHeight();
+        if (chainHeight == 549) {
+            log.error("asdf");
+        }
         if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_RESULT) {
             applyVoteResult(chainHeight);
         }
@@ -157,7 +164,8 @@ public class VoteResultService implements StateChangeEventsProvider {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
                     try {
-                        return new DecryptedVote(opReturnData, voteRevealTxId, stateService, periodService, chainHeight);
+                        return new DecryptedVote(opReturnData, voteRevealTxId, stateService, periodService,
+                                blindVoteServiceFacade, chainHeight);
                     } catch (VoteResultException e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;

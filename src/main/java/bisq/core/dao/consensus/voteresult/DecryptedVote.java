@@ -17,15 +17,16 @@
 
 package bisq.core.dao.consensus.voteresult;
 
+import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxInput;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 
 import javax.crypto.SecretKey;
 
@@ -49,8 +50,9 @@ public class DecryptedVote {
     private final long stake;
     private final BallotList ballotListUsedForVoting;
 
+    //TODO dont use BlindVoteServiceFacade
     public DecryptedVote(byte[] opReturnData, String voteRevealTxId, StateService stateService,
-                         PeriodService periodService, int chainHeight)
+                         PeriodService periodService, BlindVoteServiceFacade blindVoteServiceFacade, int chainHeight)
             throws VoteResultException {
         hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
         this.voteRevealTxId = voteRevealTxId;
@@ -60,7 +62,7 @@ public class DecryptedVote {
         TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, stateService);
         blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
         stake = getStake(blindVoteStakeOutput);
-        BlindVote blindVote = getBlindVote(stateService);
+        BlindVote blindVote = getBlindVote(stateService, blindVoteServiceFacade);
         ballotListUsedForVoting = getBallotList(blindVote, secretKey);
     }
 
@@ -125,11 +127,16 @@ public class DecryptedVote {
         return blindVoteStakeOutput.getValue();
     }
 
-    private BlindVote getBlindVote(StateService stateService) throws VoteResultException {
+    private BlindVote getBlindVote(StateService stateService, BlindVoteServiceFacade blindVoteService) throws VoteResultException {
         try {
-            Optional<BlindVote> optionalBlindVote = stateService.getBlindVotes().stream()
+          /*  Optional<BlindVote> optionalBlindVote = stateService.getBlindVotes().stream()
+                    .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
+                    .findAny();*/
+
+            Optional<BlindVote> optionalBlindVote = blindVoteService.getBlindVoteList().stream()
                     .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                     .findAny();
+
             checkArgument(optionalBlindVote.isPresent(), "blindVote with txId " + blindVoteTxId +
                     "not found in stateService.");
             return optionalBlindVote.get();
