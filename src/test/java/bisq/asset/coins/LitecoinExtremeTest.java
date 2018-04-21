@@ -37,9 +37,8 @@ public class LitecoinExtremeTest extends AbstractAssetTest {
 
     @Test
     public void testInvalidAddresses() {
-        assertInvalidAddress("SxPZMBgDxBVDRisdDZGD1XQwyAz8RBbo3R");
-        assertInvalidAddress("miswBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn");
-        assertInvalidAddress("davvLuwjUrz2kf5gghEmUPFE3vFvwfEiL");
-        assertInvalidAddress(""); 
+        assertInvalidAddress("1EVVviyVkgWy1rzQ9i35iRp9C2nyCP1W9Ji");
+        assertInvalidAddress("GKSdsTcVKMVUtAnR2szzh8ABqyMrngNMZ7");
+        assertInvalidAddress("TbPH5VvRRWxxwAKy4oQw3tU5EPPMBZmVkY");
     }
 }
