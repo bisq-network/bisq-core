@@ -31,9 +31,9 @@ import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.blindvote.BlindVotePayload;
+import bisq.core.dao.consensus.myvote.MyBlindVoteService;
 import bisq.core.dao.consensus.myvote.MyVote;
 import bisq.core.dao.consensus.myvote.MyVoteList;
-import bisq.core.dao.consensus.myvote.MyVoteService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
@@ -81,7 +81,7 @@ import lombok.extern.slf4j.Slf4j;
  * Executed from the user tread.
  */
 @Slf4j
-public class MyVoteServiceFacade implements PersistedDataHost, PresentationService {
+public class MyBlindVoteServiceFacade implements PersistedDataHost, PresentationService {
     private final PeriodService periodService;
     private final StateService stateService;
     private final P2PService p2PService;
@@ -105,15 +105,15 @@ public class MyVoteServiceFacade implements PersistedDataHost, PresentationServi
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteServiceFacade(PeriodService periodService,
-                               StateService stateService,
-                               P2PService p2PService,
-                               WalletsManager walletsManager,
-                               BsqWalletService bsqWalletService,
-                               BtcWalletService btcWalletService,
-                               KeyRing keyRing,
-                               MyVoteService myVoteService,
-                               Storage<MyVoteList> storage) {
+    public MyBlindVoteServiceFacade(PeriodService periodService,
+                                    StateService stateService,
+                                    P2PService p2PService,
+                                    WalletsManager walletsManager,
+                                    BsqWalletService bsqWalletService,
+                                    BtcWalletService btcWalletService,
+                                    KeyRing keyRing,
+                                    MyBlindVoteService myBlindVoteService,
+                                    Storage<MyVoteList> storage) {
         this.periodService = periodService;
         this.stateService = stateService;
         this.p2PService = p2PService;
@@ -126,18 +126,18 @@ public class MyVoteServiceFacade implements PersistedDataHost, PresentationServi
         numConnectedPeersListener = (observable, oldValue, newValue) -> publishMyBlindVotesIfWellConnected();
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
 
-        // We get sortedBallotList and blindVoteFee set from the myVoteService which runs in parser thread.
+        // We get sortedBallotList and blindVoteFee set from the myBlindVoteService which runs in parser thread.
         // It get mapped to userThread and we keep a
-        myVoteService.addListener(new MyVoteService.Listener() {
+        myBlindVoteService.addListener(new MyBlindVoteService.Listener() {
             @Override
             public void onSortedBallotList(BallotList sortedBallotList) {
                 // We clone an immutable list
-                MyVoteServiceFacade.this.sortedBallotList = new BallotList(ImmutableList.copyOf(sortedBallotList.getList()));
+                MyBlindVoteServiceFacade.this.sortedBallotList = new BallotList(ImmutableList.copyOf(sortedBallotList.getList()));
             }
 
             @Override
             public void onBlindVoteFee(Coin blindVoteFee) {
-                MyVoteServiceFacade.this.blindVoteFee = Coin.valueOf(blindVoteFee.value);
+                MyBlindVoteServiceFacade.this.blindVoteFee = Coin.valueOf(blindVoteFee.value);
             }
         });
     }

@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
  * Executed from the user tread.
  */
 @Slf4j
-public class MyVoteService {
+public class MyBlindVoteService {
 
     public interface Listener extends ThreadAwareListener {
         void onSortedBallotList(BallotList sortedBallotList);
@@ -76,10 +76,10 @@ public class MyVoteService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteService(PeriodService periodService,
-                         BallotListService ballotListService,
-                         StateService stateService,
-                         ChangeParamService changeParamService) {
+    public MyBlindVoteService(PeriodService periodService,
+                              BallotListService ballotListService,
+                              StateService stateService,
+                              ChangeParamService changeParamService) {
         this.periodService = periodService;
         this.ballotListService = ballotListService;
         this.stateService = stateService;

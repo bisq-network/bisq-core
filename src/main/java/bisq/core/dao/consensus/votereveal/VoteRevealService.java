@@ -37,7 +37,7 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.events.StateChangeEvent;
-import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
+import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;
@@ -66,7 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealService implements StateChangeEventsProvider {
     private final StateService stateService;
-    private final MyVoteServiceFacade myVoteServiceFacade;
+    private final MyBlindVoteServiceFacade myBlindVoteServiceFacade;
     private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -82,13 +82,13 @@ public class VoteRevealService implements StateChangeEventsProvider {
 
     @Inject
     public VoteRevealService(StateService stateService,
-                             MyVoteServiceFacade myVoteServiceFacade,
+                             MyBlindVoteServiceFacade myBlindVoteServiceFacade,
                              PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
-        this.myVoteServiceFacade = myVoteServiceFacade;
+        this.myBlindVoteServiceFacade = myBlindVoteServiceFacade;
         this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
@@ -145,8 +145,8 @@ public class VoteRevealService implements StateChangeEventsProvider {
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes(int height) {
-        // TODO dont use myVoteServiceFacade
-        myVoteServiceFacade.getMyVoteList().stream()
+        // TODO dont use myBlindVoteServiceFacade
+        myBlindVoteServiceFacade.getMyVoteList().stream()
                 .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
                 .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
                 .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), height))
@@ -196,8 +196,8 @@ public class VoteRevealService implements StateChangeEventsProvider {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
-                    //TODO dont use myVoteServiceFacade
-                    myVoteServiceFacade.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
+                    //TODO dont use myBlindVoteServiceFacade
+                    myBlindVoteServiceFacade.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
                 }
 
                 @Override

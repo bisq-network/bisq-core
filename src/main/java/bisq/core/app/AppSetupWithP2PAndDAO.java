@@ -18,7 +18,7 @@
 package bisq.core.app;
 
 import bisq.core.dao.DaoSetup;
-import bisq.core.dao.consensus.blindvote.BlindVoteService;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.presentation.proposal.MyBallotListService;
 import bisq.core.filter.FilterManager;
@@ -48,7 +48,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  DaoSetup daoSetup,
                                  MyBallotListService myBallotListService,
                                  BallotListService ballotListService,
-                                 BlindVoteService blindVoteService) {
+                                 BlindVoteServiceFacade blindVoteServiceFacade) {
         super(encryptionService,
                 keyRing,
                 p2PService,
@@ -58,7 +58,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
         this.daoSetup = daoSetup;
         this.persistedDataHosts.add(myBallotListService);
         this.persistedDataHosts.add(ballotListService);
-        persistedDataHosts.add(blindVoteService);
+        persistedDataHosts.add(blindVoteServiceFacade);
     }
 
     @Override

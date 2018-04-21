@@ -17,7 +17,8 @@
 
 package bisq.core.dao.presentation;
 
-import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
+import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.proposal.FilteredBallotListService;
 import bisq.core.dao.presentation.proposal.MyBallotListService;
@@ -31,21 +32,25 @@ public class PresentationServicesSetup {
     private final PeriodServiceFacade periodServiceFacade;
     private final FilteredBallotListService filteredBallotListService;
     private final MyBallotListService myBallotListService;
-    private final MyVoteServiceFacade myVoteServiceFacade;
+    private final MyBlindVoteServiceFacade myBlindVoteServiceFacade;
+    private final BlindVoteServiceFacade blindVoteServiceFacade;
 
     @Inject
     public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade, FilteredBallotListService filteredBallotListService,
-                                     MyBallotListService myBallotListService, MyVoteServiceFacade myVoteServiceFacade) {
+                                     MyBallotListService myBallotListService, MyBlindVoteServiceFacade myBlindVoteServiceFacade,
+                                     BlindVoteServiceFacade blindVoteServiceFacade) {
         this.periodServiceFacade = periodServiceFacade;
         this.filteredBallotListService = filteredBallotListService;
         this.myBallotListService = myBallotListService;
-        this.myVoteServiceFacade = myVoteServiceFacade;
+        this.myBlindVoteServiceFacade = myBlindVoteServiceFacade;
+        this.blindVoteServiceFacade = blindVoteServiceFacade;
     }
 
     public void start() {
         periodServiceFacade.start();
         myBallotListService.start();
-        myVoteServiceFacade.start();
+        myBlindVoteServiceFacade.start();
         filteredBallotListService.start();
+        blindVoteServiceFacade.start();
     }
 }

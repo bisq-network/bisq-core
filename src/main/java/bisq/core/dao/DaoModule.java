@@ -20,7 +20,7 @@ package bisq.core.dao;
 import bisq.core.dao.consensus.ConsensusServicesSetup;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.blindvote.BlindVoteValidator;
-import bisq.core.dao.consensus.myvote.MyVoteService;
+import bisq.core.dao.consensus.myvote.MyBlindVoteService;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.node.blockchain.json.JsonBlockChainExporter;
@@ -60,7 +60,8 @@ import bisq.core.dao.consensus.votereveal.VoteRevealService;
 import bisq.core.dao.presentation.PresentationServicesSetup;
 import bisq.core.dao.presentation.ballot.CompensationBallotFactory;
 import bisq.core.dao.presentation.ballot.GenericBallotFactory;
-import bisq.core.dao.presentation.myvote.MyVoteServiceFacade;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
+import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.presentation.proposal.FilteredBallotListService;
@@ -138,8 +139,9 @@ public class DaoModule extends AppModule {
         bind(GenericBallotFactory.class).in(Singleton.class);
 
         // vote
-        bind(MyVoteServiceFacade.class).in(Singleton.class);
-        bind(MyVoteService.class).in(Singleton.class);
+        bind(MyBlindVoteServiceFacade.class).in(Singleton.class);
+        bind(MyBlindVoteService.class).in(Singleton.class);
+        bind(BlindVoteServiceFacade.class).in(Singleton.class);
         bind(BlindVoteService.class).in(Singleton.class);
         bind(BlindVoteValidator.class).in(Singleton.class);
         bind(VoteRevealService.class).in(Singleton.class);
