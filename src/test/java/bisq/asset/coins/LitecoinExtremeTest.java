@@ -24,20 +24,20 @@ import org.junit.Test;
 public class LitecoinExtremeTest extends AbstractAssetTest {
 
     public LitecoinExtremeTest() {
-        super(new BitcoinCash());
+        super(new Dogecoin());
     }
 
     @Test
     public void testValidAddresses() {
-        assertValidAddress("EX54wDfRkEmhtRhnNvva429UK4W8JAL98j");
-        assertValidAddress("EgH65NLAKfCWZ2CAp7YgzLvEjuZ3nbZrpr");
-        assertValidAddress("ERPmTwvCkQggQm8gxhu2fELwoRCzZcpnL6");
+        assertValidAddress("EfQcUN2FUVwuV3aeSnyqbkVMEu2Zfc7zsA");
+        assertValidAddress("EfQcUN2FUVwuV3aeSnyqbkVMEu2Zfc7zsA");
+        assertValidAddress("ELYV82RoBd6jRZg6GD5ATjnJ24cdAqawQM");
     }
 
     @Test
     public void testInvalidAddresses() {
-        assertInvalidAddress("2EHQQgsvLTgN9xD9hNmAgAreakzVzQUSLSHa");
-        assertInvalidAddress("1EQQgsvLTgN9xD9hNmAgAreakzVzQUSLSHs");
-        assertInvalidAddress("EMaYcKYVEBQ4tePFP46hWvPpYqyaReSERf#");
+        assertInvalidAddress("DEJoC4Pwnsqn98NHphdYjw8FRcNyeNjoXHu");
+        assertInvalidAddress("FELYV82RoBd6jRZg6GD5ATjnJ24cdAqawQM");
+        assertInvalidAddress("EfsnAs8Dqvtykm2JKn8pXRWJBi3etbg9th#");
     }
 }
