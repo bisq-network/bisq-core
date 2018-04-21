@@ -24,20 +24,20 @@ import org.junit.Test;
 public class LitecoinExtremeTest extends AbstractAssetTest {
 
     public LitecoinExtremeTest() {
-        super(new LitecoinExtreme());
+        super(new LitecoinExtreme.Mainnet());
     }
 
     @Test
     public void testValidAddresses() {
-        assertValidAddress("ETzxRKVgGyRFBaCBHeFvCngND4ExfMGpr9");
-        assertValidAddress("EKmKU1a16qGxA5AAyH6u84ngVuPnbLZnno");
-        assertValidAddress("EWzk3QbP71TSZRQn5VCDP8aHYbtb8je6QL");
+        assertValidAddress("EMaYcKYVEBQ4tePFP46hWvPpYqyaReSERf");
+        assertValidAddress("ET9wsr5KB49naNLPEhp3HyRGt4VELjUzfm");
+        assertValidAddress("EK4xxy7FfAMWJDBxbsEAVJW2trQFuPRbD9");
     }
 
     @Test
     public void testInvalidAddresses() {
-        assertInvalidAddress("1ERCzw5j5u8rzYZAafGCgbeFL7NEX95AMmy");
-        assertInvalidAddress("GEdrFRoZiMKfVy7Tpb4MhhM7u4vaJJBDffb");
-        assertInvalidAddress("hEHjsXcL1EccbDd51vtpNauTGBK7zeNg6Dr");
+        assertInvalidAddress("GEHqJ7ts38huhGEke4phbVVb2JPsEYyMJHU");
+        assertInvalidAddress("1EPzCCWzCo3q5fkM3VXMgm4TsRQcmksirkm");
+        assertInvalidAddress("EXtCPaVtVsi9nTyRoVQZNv6FAm3B43tiYN#");
     }
 }
