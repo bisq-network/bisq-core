@@ -36,7 +36,7 @@ import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.ballot.BallotFactory;
 import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.proposal.Proposal;
-import bisq.core.dao.consensus.proposal.ProposalService;
+import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.presentation.PresentationService;
@@ -83,7 +83,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MyVoteService implements PersistedDataHost, PresentationService {
     private final PeriodService periodService;
-    private final ProposalService proposalService;
+    private final BallotListService ballotListService;
     private final StateService stateService;
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
@@ -105,7 +105,7 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
 
     @Inject
     public MyVoteService(PeriodService periodService,
-                         ProposalService proposalService,
+                         BallotListService ballotListService,
                          StateService stateService,
                          P2PService p2PService,
                          WalletsManager walletsManager,
@@ -115,7 +115,7 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
                          KeyRing keyRing,
                          Storage<MyVoteList> storage) {
         this.periodService = periodService;
-        this.proposalService = proposalService;
+        this.ballotListService = ballotListService;
         this.stateService = stateService;
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
@@ -235,7 +235,7 @@ public class MyVoteService implements PersistedDataHost, PresentationService {
                 .map(Ballot::getProposal)
                 .collect(Collectors.toList());
 
-        List<Ballot> ballots = proposalService.getBallotList().stream()
+        List<Ballot> ballots = ballotListService.getBallotList().stream()
                 .filter(proposal -> periodService.isTxInCorrectCycle(proposal.getTxId(), stateService.getChainHeight()))
                 .filter(proposal -> proposalPayloadsFromStateService.contains(proposal.getProposal()))
                 .collect(Collectors.toList());

@@ -35,13 +35,13 @@ import bisq.core.dao.consensus.state.events.StateChangeEvent;
 
 import org.bitcoinj.core.Coin;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class BaseStateService {
 
-    protected List<BlockListener> blockListeners = new ArrayList<>();
+    protected List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

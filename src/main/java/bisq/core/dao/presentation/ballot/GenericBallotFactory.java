@@ -15,13 +15,15 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.proposal.generic;
+package bisq.core.dao.presentation.ballot;
+
+import bisq.core.dao.presentation.PresentationService;
 
 import lombok.extern.slf4j.Slf4j;
 
 //TODO impl
 @Slf4j
-public class GenericProposalService {
+public class GenericBallotFactory implements PresentationService {
     /*private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;
@@ -35,7 +37,7 @@ public class GenericProposalService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public GenericProposalService(BsqWalletService bsqWalletService,
+    public GenericBallotFactory(BsqWalletService bsqWalletService,
                                   BtcWalletService btcWalletService,
                                   StateService stateService,
                                   ChangeParamService changeParamService,

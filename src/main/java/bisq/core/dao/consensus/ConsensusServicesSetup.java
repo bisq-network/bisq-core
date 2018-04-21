@@ -21,7 +21,7 @@ import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.node.BsqNode;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
-import bisq.core.dao.consensus.proposal.ProposalService;
+import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 
 import bisq.common.handlers.ErrorMessageHandler;
@@ -35,17 +35,17 @@ public class ConsensusServicesSetup {
     private final BsqNode bsqNode;
     private final PeriodStateMutator periodStateMutator;
     private final ChangeParamService changeParamService;
-    private final ProposalService proposalService;
+    private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
 
     @Inject
     public ConsensusServicesSetup(BsqNodeProvider bsqNodeProvider,
-                                  ProposalService proposalService,
+                                  BallotListService ballotListService,
                                   BlindVoteService blindVoteService,
                                   PeriodStateMutator periodStateMutator,
 
                                   ChangeParamService changeParamService) {
-        this.proposalService = proposalService;
+        this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.periodStateMutator = periodStateMutator;
 
@@ -56,7 +56,7 @@ public class ConsensusServicesSetup {
 
     public void start(ErrorMessageHandler errorMessageHandler) {
         periodStateMutator.start();
-        proposalService.start();
+        ballotListService.start();
         blindVoteService.start();
         changeParamService.start();
         bsqNode.start(errorMessageHandler);

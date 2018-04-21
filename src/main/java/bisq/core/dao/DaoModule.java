@@ -47,11 +47,11 @@ import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
-import bisq.core.dao.consensus.proposal.ProposalService;
+import bisq.core.dao.presentation.proposal.BallotListService;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
-import bisq.core.dao.consensus.proposal.compensation.CompensationService;
+import bisq.core.dao.presentation.ballot.GenericBallotFactory;
+import bisq.core.dao.presentation.ballot.CompensationBallotFactory;
 import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
-import bisq.core.dao.consensus.proposal.generic.GenericProposalService;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.SnapshotManager;
 import bisq.core.dao.consensus.state.State;
@@ -62,8 +62,8 @@ import bisq.core.dao.consensus.votereveal.VoteRevealService;
 import bisq.core.dao.presentation.PresentationServicesSetup;
 import bisq.core.dao.presentation.myvote.MyVoteService;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
-import bisq.core.dao.presentation.proposal.MyProposalService;
-import bisq.core.dao.presentation.proposal.ProposalListService;
+import bisq.core.dao.presentation.proposal.MyBallotListService;
+import bisq.core.dao.presentation.proposal.FilteredBallotListService;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;
@@ -128,13 +128,13 @@ public class DaoModule extends AppModule {
         bind(PeriodServiceFacade.class).in(Singleton.class);
 
         // proposals
-        bind(ProposalService.class).in(Singleton.class);
-        bind(ProposalListService.class).in(Singleton.class);
-        bind(MyProposalService.class).in(Singleton.class);
+        bind(BallotListService.class).in(Singleton.class);
+        bind(FilteredBallotListService.class).in(Singleton.class);
+        bind(MyBallotListService.class).in(Singleton.class);
         bind(ProposalValidator.class).in(Singleton.class);
-        bind(CompensationService.class).in(Singleton.class);
+        bind(CompensationBallotFactory.class).in(Singleton.class);
         bind(CompensationValidator.class).in(Singleton.class);
-        bind(GenericProposalService.class).in(Singleton.class);
+        bind(GenericBallotFactory.class).in(Singleton.class);
 
         // vote
         bind(MyVoteService.class).in(Singleton.class);

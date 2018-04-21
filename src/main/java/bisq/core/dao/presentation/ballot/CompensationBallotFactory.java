@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.proposal.compensation;
+package bisq.core.dao.presentation.ballot;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
@@ -25,10 +25,13 @@ import bisq.core.dao.ValidationException;
 import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.ballot.compensation.CompensationBallot;
 import bisq.core.dao.consensus.proposal.ProposalConsensus;
+import bisq.core.dao.consensus.proposal.compensation.CompensationConsensus;
+import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
+import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.presentation.PresentationService;
 
-import bisq.common.crypto.KeyRing;
 import bisq.common.util.Tuple2;
 
 import org.bitcoinj.core.Coin;
@@ -37,19 +40,16 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import java.security.PublicKey;
-
 import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CompensationService {
+public class CompensationBallotFactory implements PresentationService{
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;
     private final CompensationValidator compensationValidator;
-    private final PublicKey signaturePubKey;
     private final StateService stateService;
 
 
@@ -58,31 +58,28 @@ public class CompensationService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CompensationService(BsqWalletService bsqWalletService,
-                               BtcWalletService btcWalletService,
-                               StateService stateService,
-                               ChangeParamService changeParamService,
-                               CompensationValidator compensationValidator,
-                               KeyRing keyRing) {
+    public CompensationBallotFactory(BsqWalletService bsqWalletService,
+                                     BtcWalletService btcWalletService,
+                                     StateService stateService,
+                                     ChangeParamService changeParamService,
+                                     CompensationValidator compensationValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
         this.compensationValidator = compensationValidator;
-
-        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
-    public Tuple2<Ballot, Transaction> makeTxAndGetCompensationRequest(String name,
-                                                                       String title,
-                                                                       String description,
-                                                                       String link,
-                                                                       Coin requestedBsq,
-                                                                       String bsqAddress)
+    public Tuple2<Ballot, Transaction> getTuple(String name,
+                                                String title,
+                                                String description,
+                                                String link,
+                                                Coin requestedBsq,
+                                                String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
-        // As we don't know the txId we create a temp object with TxId set to null.
+        // As we don't know the txId we create a temp object with TxId set to an empty string.
         final CompensationProposal proposal = new CompensationProposal(
                 name,
                 title,
@@ -126,11 +123,11 @@ public class CompensationService {
         return completedTx;
     }
 
-    // We have txId set to null in tempPayload as we cannot know it before the tx is created.
+    // We have txId set to null in proposal as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
-    private CompensationBallot getCompensationBallot(CompensationProposal tempPayload, Transaction transaction) {
+    private CompensationBallot getCompensationBallot(CompensationProposal proposal, Transaction transaction) {
         final String txId = transaction.getHashAsString();
-        CompensationProposal compensationProposal = (CompensationProposal) tempPayload.cloneWithTxId(txId);
+        CompensationProposal compensationProposal = (CompensationProposal) proposal.cloneWithTxId(txId);
         return new CompensationBallot(compensationProposal);
     }
 }

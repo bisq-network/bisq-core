@@ -19,8 +19,8 @@ package bisq.core.dao.presentation;
 
 import bisq.core.dao.presentation.myvote.MyVoteService;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
-import bisq.core.dao.presentation.proposal.MyProposalService;
-import bisq.core.dao.presentation.proposal.ProposalListService;
+import bisq.core.dao.presentation.proposal.MyBallotListService;
+import bisq.core.dao.presentation.proposal.FilteredBallotListService;
 
 import com.google.inject.Inject;
 
@@ -29,23 +29,23 @@ import com.google.inject.Inject;
  */
 public class PresentationServicesSetup {
     private PeriodServiceFacade periodServiceFacade;
-    private final ProposalListService proposalListService;
-    private final MyProposalService myProposalService;
+    private final FilteredBallotListService filteredBallotListService;
+    private final MyBallotListService myBallotListService;
     private MyVoteService myVoteService;
 
     @Inject
-    public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade, ProposalListService proposalListService,
-                                     MyProposalService myProposalService, MyVoteService myVoteService) {
+    public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade, FilteredBallotListService filteredBallotListService,
+                                     MyBallotListService myBallotListService, MyVoteService myVoteService) {
         this.periodServiceFacade = periodServiceFacade;
-        this.proposalListService = proposalListService;
-        this.myProposalService = myProposalService;
+        this.filteredBallotListService = filteredBallotListService;
+        this.myBallotListService = myBallotListService;
         this.myVoteService = myVoteService;
     }
 
     public void start() {
         periodServiceFacade.start();
-        myProposalService.start();
+        myBallotListService.start();
         myVoteService.start();
-        proposalListService.start();
+        filteredBallotListService.start();
     }
 }
