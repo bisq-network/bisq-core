@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.presentation.proposal;
+package bisq.core.dao.presentation.ballot;
 
 import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
@@ -137,7 +137,7 @@ public class FilteredBallotListService {
 
     private boolean isUnconfirmedOrInPhaseAndCycle(Ballot ballot) {
         final Optional<Tx> optionalTx = stateServiceFacade.getTx(ballot.getTxId());
-        return !optionalTx.isPresent() ||optionalTx
+        return !optionalTx.isPresent() || optionalTx
                 .filter(ballotListService::isTxInPhaseAndCycle)
                 .isPresent();
     }

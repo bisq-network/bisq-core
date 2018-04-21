@@ -31,15 +31,13 @@ import bisq.core.dao.consensus.blindvote.BlindVoteConsensus;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.myvote.MyVote;
 import bisq.core.dao.consensus.period.PeriodService;
+import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
-import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
-import bisq.core.dao.consensus.state.events.StateChangeEvent;
+import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 
-import bisq.common.UserThread;
 import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -53,7 +51,6 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -64,8 +61,9 @@ import lombok.extern.slf4j.Slf4j;
 //TODO case that user misses reveal phase not impl. yet
 
 @Slf4j
-public class VoteRevealService implements StateChangeEventsProvider {
+public class VoteRevealService /*implements StateChangeEventsProvider */ {
     private final StateService stateService;
+    private final BlindVoteServiceFacade blindVoteServiceFacade;
     private final MyBlindVoteServiceFacade myBlindVoteServiceFacade;
     private final PeriodService periodService;
     private final BsqWalletService bsqWalletService;
@@ -82,12 +80,14 @@ public class VoteRevealService implements StateChangeEventsProvider {
 
     @Inject
     public VoteRevealService(StateService stateService,
+                             BlindVoteServiceFacade blindVoteServiceFacade,
                              MyBlindVoteServiceFacade myBlindVoteServiceFacade,
                              PeriodService periodService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
+        this.blindVoteServiceFacade = blindVoteServiceFacade;
         this.myBlindVoteServiceFacade = myBlindVoteServiceFacade;
         this.periodService = periodService;
         this.bsqWalletService = bsqWalletService;
@@ -99,13 +99,30 @@ public class VoteRevealService implements StateChangeEventsProvider {
             if (c.wasAdded())
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
-        stateService.registerStateChangeEventsProvider(this);
+        //stateService.registerStateChangeEventsProvider(this);
+
+        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
+            @Override
+            public boolean executeOnUserThread() {
+                return false;
+            }
+
+            @Override
+            public void onPreParserChainHeightChanged(int chainHeight) {
+                // do we want call before parser?
+                maybeRevealVotes(chainHeight);
+            }
+        });
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void start() {
+        maybeRevealVotes(periodService.getChainHeight());
+    }
 
     public BlindVoteList getSortedBlindVoteListOfCycle(int chainHeight) {
         final List<BlindVote> list = getBlindVoteListOfCycle(chainHeight);
@@ -121,7 +138,7 @@ public class VoteRevealService implements StateChangeEventsProvider {
     // StateChangeEventsProvider
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
+   /* @Override
     public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
         final int chainHeight = txBlock.getHeight();
         if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
@@ -132,7 +149,7 @@ public class VoteRevealService implements StateChangeEventsProvider {
 
         // We have nothing to return as there are no p2p network data for vote reveal.
         return new HashSet<>();
-    }
+    }*/
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -144,26 +161,28 @@ public class VoteRevealService implements StateChangeEventsProvider {
     // the blind vote was created in case we have not done it already.
     // The voter need to be at least once online in the reveal phase when he has a blind vote created,
     // otherwise his vote becomes invalid and his locked stake will get unlocked
-    private void maybeRevealVotes(int height) {
-        // TODO dont use myBlindVoteServiceFacade
-        myBlindVoteServiceFacade.getMyVoteList().stream()
-                .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
-                .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
-                .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), height))
-                .forEach(myVote -> {
-                    // We handle the exception here inside the stream iteration as we have not get triggered from an
-                    // outside user intent anyway. We keep errors in a observable list so clients can observe that to
-                    // get notified if anything went wrong.
-                    try {
-                        revealVote(myVote, height);
-                    } catch (IOException | WalletException | TransactionVerificationException
-                            | InsufficientMoneyException e) {
-                        voteRevealExceptions.add(new VoteRevealException("Exception at calling revealVote.",
-                                e, myVote.getTxId()));
-                    } catch (VoteRevealException e) {
-                        voteRevealExceptions.add(e);
-                    }
-                });
+    private void maybeRevealVotes(int chainHeight) {
+        if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
+            // TODO dont use myBlindVoteServiceFacade
+            myBlindVoteServiceFacade.getMyVoteList().stream()
+                    .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
+                    .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
+                    .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), chainHeight))
+                    .forEach(myVote -> {
+                        // We handle the exception here inside the stream iteration as we have not get triggered from an
+                        // outside user intent anyway. We keep errors in a observable list so clients can observe that to
+                        // get notified if anything went wrong.
+                        try {
+                            revealVote(myVote, chainHeight);
+                        } catch (IOException | WalletException | TransactionVerificationException
+                                | InsufficientMoneyException e) {
+                            voteRevealExceptions.add(new VoteRevealException("Exception at calling revealVote.",
+                                    e, myVote.getTxId()));
+                        } catch (VoteRevealException e) {
+                            voteRevealExceptions.add(e);
+                        }
+                    });
+        }
     }
 
     private void revealVote(MyVote myVote, int chainHeight) throws IOException, WalletException,
@@ -233,9 +252,13 @@ public class VoteRevealService implements StateChangeEventsProvider {
     }
 
     private List<BlindVote> getBlindVoteListOfCycle(int chainHeight) {
-        return stateService.getBlindVotes().stream()
+        return blindVoteServiceFacade.getBlindVoteList().stream()
                 .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
                 .collect(Collectors.toList());
+
+     /*   return stateService.getBlindVotes().stream()
+                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
+                .collect(Collectors.toList());*/
     }
 
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)

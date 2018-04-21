@@ -304,8 +304,8 @@ public class MyBlindVoteServiceFacade implements PersistedDataHost, Presentation
                             log.warn("Adding of BlindVotePayload to P2P network failed.\nBlindVotePayload={}", myVote.getBlindVote());
                         }
                     } else {
-                        final String msg = "revealTxId must be null at publishMyBlindVotes.\nmyVote=" + myVote;
-                        DevEnv.logErrorAndThrowIfDevMode(msg);
+                        final String msg = "revealTxId have to be null at publishMyBlindVotes.\nmyVote=" + myVote;
+                        //DevEnv.logErrorAndThrowIfDevMode(msg);
                     }
                 });
     }

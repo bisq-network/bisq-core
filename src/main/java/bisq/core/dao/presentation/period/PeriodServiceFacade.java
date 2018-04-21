@@ -47,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class PeriodServiceFacade extends BasePeriodService implements PeriodStateChangeListener, PresentationService {
-    private final PeriodState periodState;
     private final StateServiceFacade stateServiceFacade;
 
     // We maintain a local version of the period state which gets updated when the main PeriodState gets changed.
@@ -56,7 +55,7 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
     // threading issues.
     private final PeriodState userThreadPeriodState;
 
-    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +64,6 @@ public final class PeriodServiceFacade extends BasePeriodService implements Peri
 
     @Inject
     public PeriodServiceFacade(PeriodState periodState, StateServiceFacade stateServiceFacade) {
-        this.periodState = periodState;
         this.stateServiceFacade = stateServiceFacade;
         userThreadPeriodState = new PeriodState();
 

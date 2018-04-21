@@ -26,7 +26,7 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.presentation.proposal.BallotListService;
+import bisq.core.dao.presentation.ballot.BallotListService;
 
 import bisq.common.ThreadAwareListener;
 
@@ -143,7 +143,7 @@ public class MyBlindVoteService {
             final ImmutableList<Ballot> immutableList = ballotListService.getImmutableBallotList();
             final List<Ballot> ballots = immutableList.stream()
                     .filter(ballot -> stateService.getTx(ballot.getTxId()).isPresent())
-                    .filter(ballot -> isTxInPhaseAndCycle(stateService.getTx(ballot.getTxId()).get()))
+                    .filter(ballot -> isTxInProposalPhaseAndCycle(stateService.getTx(ballot.getTxId()).get(), chainHeight))
                     .collect(Collectors.toList());
             BlindVoteConsensus.sortProposalList(ballots);
             sortedBallotList.addAll(ballots);
@@ -153,9 +153,9 @@ public class MyBlindVoteService {
         }
     }
 
-    public boolean isTxInPhaseAndCycle(Tx tx) {
+    private boolean isTxInProposalPhaseAndCycle(Tx tx, int chainHeight) {
         return periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
-                periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight());
+                periodService.isTxInCorrectCycle(tx.getBlockHeight(), chainHeight);
     }
 
 }

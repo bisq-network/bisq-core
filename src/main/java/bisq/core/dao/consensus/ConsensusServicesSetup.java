@@ -23,7 +23,7 @@ import bisq.core.dao.consensus.node.BsqNode;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
-import bisq.core.dao.presentation.proposal.BallotListService;
+import bisq.core.dao.consensus.votereveal.VoteRevealService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -36,21 +36,21 @@ public class ConsensusServicesSetup {
     private final BsqNode bsqNode;
     private final PeriodStateMutator periodStateMutator;
     private final MyBlindVoteService myBlindVoteService;
+    private final VoteRevealService voteRevealService;
     private final ChangeParamService changeParamService;
-    private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
 
     @Inject
     public ConsensusServicesSetup(BsqNodeProvider bsqNodeProvider,
-                                  BallotListService ballotListService,
                                   BlindVoteService blindVoteService,
                                   PeriodStateMutator periodStateMutator,
                                   MyBlindVoteService myBlindVoteService,
+                                  VoteRevealService voteRevealService,
                                   ChangeParamService changeParamService) {
-        this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.periodStateMutator = periodStateMutator;
         this.myBlindVoteService = myBlindVoteService;
+        this.voteRevealService = voteRevealService;
 
         this.changeParamService = changeParamService;
 
@@ -59,10 +59,10 @@ public class ConsensusServicesSetup {
 
     public void start(ErrorMessageHandler errorMessageHandler) {
         periodStateMutator.start();
-        ballotListService.start();
         blindVoteService.start();
         changeParamService.start();
         myBlindVoteService.start();
+        voteRevealService.start();
         bsqNode.start(errorMessageHandler);
     }
 

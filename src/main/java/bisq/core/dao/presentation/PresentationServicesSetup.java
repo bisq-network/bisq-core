@@ -17,11 +17,12 @@
 
 package bisq.core.dao.presentation;
 
+import bisq.core.dao.presentation.ballot.BallotListService;
+import bisq.core.dao.presentation.ballot.FilteredBallotListService;
+import bisq.core.dao.presentation.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 import bisq.core.dao.presentation.period.PeriodServiceFacade;
-import bisq.core.dao.presentation.proposal.FilteredBallotListService;
-import bisq.core.dao.presentation.proposal.MyBallotListService;
 
 import com.google.inject.Inject;
 
@@ -31,16 +32,21 @@ import com.google.inject.Inject;
 public class PresentationServicesSetup {
     private final PeriodServiceFacade periodServiceFacade;
     private final FilteredBallotListService filteredBallotListService;
+    private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
     private final MyBlindVoteServiceFacade myBlindVoteServiceFacade;
     private final BlindVoteServiceFacade blindVoteServiceFacade;
 
     @Inject
-    public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade, FilteredBallotListService filteredBallotListService,
-                                     MyBallotListService myBallotListService, MyBlindVoteServiceFacade myBlindVoteServiceFacade,
+    public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade,
+                                     FilteredBallotListService filteredBallotListService,
+                                     BallotListService ballotListService,
+                                     MyBallotListService myBallotListService,
+                                     MyBlindVoteServiceFacade myBlindVoteServiceFacade,
                                      BlindVoteServiceFacade blindVoteServiceFacade) {
         this.periodServiceFacade = periodServiceFacade;
         this.filteredBallotListService = filteredBallotListService;
+        this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
         this.myBlindVoteServiceFacade = myBlindVoteServiceFacade;
         this.blindVoteServiceFacade = blindVoteServiceFacade;
@@ -48,6 +54,7 @@ public class PresentationServicesSetup {
 
     public void start() {
         periodServiceFacade.start();
+        ballotListService.start();
         myBallotListService.start();
         myBlindVoteServiceFacade.start();
         filteredBallotListService.start();
