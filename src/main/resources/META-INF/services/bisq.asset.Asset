@@ -49,6 +49,9 @@ bisq.asset.coins.Koto
 bisq.asset.coins.Kumacoin
 bisq.asset.coins.LBRY
 bisq.asset.coins.Lisk
+bisq.asset.coins.LitecoinExtreme$Mainnet
+bisq.asset.coins.LitecoinExtreme$Regtest
+bisq.asset.coins.LitecoinExtreme$Testnet
 bisq.asset.coins.Litecoin$Mainnet
 bisq.asset.coins.Litecoin$Regtest
 bisq.asset.coins.Litecoin$Testnet
