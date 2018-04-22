@@ -25,22 +25,33 @@ import com.google.inject.Inject;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Subclass of BasePeriodService which is designed to run in the parser thread.
- * It provides the mutable data from the PeriodState and StateService. Both those data sources are as well
- * designed to run in the parser thread so we don't provide synchronisation support as we are inside a
- * single threaded model.
- */
 @Slf4j
-public final class PeriodService extends BasePeriodService {
+public final class PeriodService {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.add(listener);
+    }
+
+    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.remove(listener);
+    }
+
+
     private final StateService stateService;
     private final PeriodState periodState;
+
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    private final List<PeriodStateChangeListener> periodStateChangeListeners = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +62,7 @@ public final class PeriodService extends BasePeriodService {
     public PeriodService(StateService stateService, PeriodState periodState) {
         this.stateService = stateService;
         this.periodState = periodState;
+
         periodState.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
             public void onPreParserChainHeightChanged(int chainHeight) {
@@ -74,33 +86,24 @@ public final class PeriodService extends BasePeriodService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Implement BasePeriodService methods
+    // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
     public List<Cycle> getCycles() {
         return periodState.getCycles();
     }
 
-    @Override
     public Cycle getCurrentCycle() {
         return periodState.getCurrentCycle();
     }
 
-    @Override
     public int getChainHeight() {
         return periodState.getChainHeight();
     }
 
-    @Override
     public Optional<Tx> getOptionalTx(String txId) {
         return stateService.getTx(txId);
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Getters
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Phase getPhase() {
         return phaseProperty.get();
@@ -113,5 +116,89 @@ public final class PeriodService extends BasePeriodService {
     private void updatePhaseProperty() {
         if (getChainHeight() > 0 && getCurrentCycle() != null)
             getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
+    }
+
+    public Phase getCurrentPhase() {
+        return getCurrentCycle().getPhaseForHeight(this.getChainHeight()).get();
+    }
+
+    public boolean isFirstBlockInCycle(int height) {
+        return getCycle(height)
+                .filter(cycle -> cycle.getHeightOfFirstBlock() == height)
+                .isPresent();
+    }
+
+    public boolean isLastBlockInCycle(int height) {
+        return getCycle(height)
+                .filter(cycle -> cycle.getHeightOfLastBlock() == height)
+                .isPresent();
+    }
+
+    public Optional<Cycle> getCycle(int height) {
+        return getCycles().stream()
+                .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
+                .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
+                .findAny();
+    }
+
+    public boolean isInPhase(int height, Phase phase) {
+        return getCycle(height)
+                .filter(cycle -> cycle.isInPhase(height, phase))
+                .isPresent();
+    }
+
+    public boolean isTxInPhase(String txId, Phase phase) {
+        return getOptionalTx(txId)
+                .filter(tx -> isInPhase(tx.getBlockHeight(), phase))
+                .isPresent();
+    }
+
+    public Phase getPhaseForHeight(int height) {
+        return getCycle(height)
+                .flatMap(cycle -> cycle.getPhaseForHeight(height))
+                .orElse(Phase.UNDEFINED);
+    }
+
+    public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
+        return getCycle(txHeight)
+                .filter(cycle -> chainHeadHeight >= cycle.getHeightOfFirstBlock())
+                .filter(cycle -> chainHeadHeight <= cycle.getHeightOfLastBlock())
+                .isPresent();
+    }
+
+    public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
+        return getOptionalTx(txId)
+                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
+                .isPresent();
+    }
+
+    public boolean isTxInPastCycle(int txHeight, int chainHeadHeight) {
+        return getCycle(txHeight)
+                .filter(cycle -> chainHeadHeight > cycle.getHeightOfLastBlock())
+                .isPresent();
+    }
+
+    public int getDurationForPhase(Phase phase, int height) {
+        return getCycle(height)
+                .map(cycle -> cycle.getDurationOfPhase(phase))
+                .orElse(0);
+    }
+
+    public boolean isTxInPastCycle(String txId, int chainHeadHeight) {
+        return getOptionalTx(txId)
+                .filter(tx -> isTxInPastCycle(tx.getBlockHeight(), chainHeadHeight))
+                .isPresent();
+    }
+
+    public int getFirstBlockOfPhase(int height, Phase phase) {
+        return getCycle(height)
+                .map(cycle -> cycle.getFirstBlockOfPhase(phase))
+                .orElse(0);
+    }
+
+    public int getLastBlockOfPhase(int height, Phase phase) {
+        return getCycle(height)
+                .map(cycle -> cycle.getLastBlockOfPhase(phase))
+                .orElse(0);
     }
 }
