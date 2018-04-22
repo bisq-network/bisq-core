@@ -19,6 +19,7 @@ package bisq.core.dao.consensus.voteresult;
 
 import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.blindvote.BlindVote;
+import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
@@ -35,6 +36,7 @@ import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
+import bisq.core.dao.consensus.votereveal.VoteRevealConsensus;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
 
 import bisq.common.util.Utilities;
@@ -63,6 +65,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+/**
+ * Calculates the result of the voting at the VoteResult period.
+ * We  take all data from the bitcoin domain and additionally the blindVote list which we received from the p2p network.
+ * Due eventually consistency we use the hash of the data view of the voters (majority by stake). If our local
+ * blindVote list contains the blindVotes used by the voters we can calculate the result, otherwise we need to request
+ * the missing blindVotes from the network.
+ */
 @Slf4j
 public class VoteResultService implements StateChangeEventsProvider {
     private final VoteRevealService voteRevealService;
@@ -242,13 +251,48 @@ public class VoteResultService implements StateChangeEventsProvider {
         byte[] myBlindVoteListHash = voteRevealService.getHashOfBlindVoteList();
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("myBlindVoteListHash " + Utilities.bytesAsHexString(myBlindVoteListHash));
-        final boolean matches = Arrays.equals(majorityVoteListHash, myBlindVoteListHash);
+        boolean matches = Arrays.equals(majorityVoteListHash, myBlindVoteListHash);
         if (!matches) {
-            log.warn("myBlindVoteListHash does not match with majorityVoteListHash.");
-            // TODO we could try to permute the list to maybe get a matching version in case we have additional
-            // items missing in the majority list. Otherwise we need to request from the peers the winning data list.
+            log.warn("myBlindVoteListHash does not match with majorityVoteListHash. We try permutating our list to " +
+                    "find a matching variant");
+            // Each voter has re-published his blind vote list when broadcasting the reveal tx so it should have a very
+            // high change that we have received all blind votes which have been used by the majority of the
+            // voters (e.g. its stake not nr. of voters).
+            // It still could be that we have additional blind votes so our hash does not match. We can try to permute
+            // our list with excluding items to see if we get a matching list. If not last resort is to request the
+            // missing items from the network.
+            BlindVoteList permutatedListMatchingMajority = findPermutatedListMatchingMajority(majorityVoteListHash);
+            if (!permutatedListMatchingMajority.isEmpty()) {
+                log.info("We found a permutation of our blindVote list which matches the majority view. " +
+                        "permutatedListMatchingMajority={}", permutatedListMatchingMajority);
+                //TODO do we need to apply/store it for later use?
+            } else {
+                log.info("We did not find a permutation of our blindVote list which matches the majority view. " +
+                        "We will request the blindVote data from the peers.");
+                // This is async operation. We will restart the whole verification process once we received the data.
+                requestBlindVoteListFromNetwork(majorityVoteListHash);
+            }
         }
         return matches;
+    }
+
+    private BlindVoteList findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
+        final BlindVoteList clonedBlindVoteList = new BlindVoteList(blindVoteService.getBlindVoteList().getList());
+        BlindVoteList list = voteRevealService.getSortedBlindVoteListOfCycle(clonedBlindVoteList);
+        while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
+            // We remove first item as it will be sorted anyway...
+            list.remove(0);
+        }
+        return list;
+    }
+
+    private boolean isListMatchingMajority(byte[] majorityVoteListHash, BlindVoteList list) {
+        byte[] myBlindVoteListHash = VoteRevealConsensus.getHashOfBlindVoteList(list);
+        return Arrays.equals(majorityVoteListHash, myBlindVoteListHash);
+    }
+
+    private void requestBlindVoteListFromNetwork(byte[] majorityVoteListHash) {
+        //TODO impl
     }
 
     private List<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedVote> decryptedVotes,

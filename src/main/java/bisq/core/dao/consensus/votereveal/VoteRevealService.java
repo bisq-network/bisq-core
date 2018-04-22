@@ -121,8 +121,12 @@ public class VoteRevealService {
     }
 
     public BlindVoteList getSortedBlindVoteListOfCycle() {
-        final List<BlindVote> list = blindVoteService.getBlindVoteList().stream()
-                .filter(blindVoteService::isBlindVoteValid)
+        return getSortedBlindVoteListOfCycle(blindVoteService.getBlindVoteList());
+    }
+
+    public BlindVoteList getSortedBlindVoteListOfCycle(BlindVoteList blindVoteList) {
+        final List<BlindVote> list = blindVoteList.stream()
+                .filter(blindVote -> blindVoteService.isBlindVoteValid(blindVote, blindVoteList.getList()))
                 .collect(Collectors.toList());
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
@@ -200,7 +204,8 @@ public class VoteRevealService {
                     log.info("voteRevealTx successfully broadcasted.");
                     myBlindVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
-                    //TODO republish list of blind votes for more resilience
+                    //Republish list of blind votes to gain more resilience
+                    blindVoteService.republishAllBlindVotesOfCycle();
                 }
 
                 @Override

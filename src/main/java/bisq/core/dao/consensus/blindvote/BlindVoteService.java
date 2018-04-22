@@ -126,6 +126,21 @@ public class BlindVoteService implements PersistedDataHost {
                 .findAny();
     }
 
+    // For additional resilience we re-publish our list of blindVotes a the moment we publish the revealVote tx.
+    public void republishAllBlindVotesOfCycle() {
+        p2PService.getDataMap().values().stream()
+                .filter(entry -> entry.getProtectedStoragePayload() instanceof BlindVotePayload)
+                .filter(entry -> {
+                    final BlindVotePayload blindVotePayload = (BlindVotePayload) entry.getProtectedStoragePayload();
+                    final String txId = blindVotePayload.getBlindVote().getTxId();
+                    final int chainHeight = periodService.getChainHeight();
+                    return periodService.isTxInCorrectCycle(txId, chainHeight) &&
+                            periodService.isTxInPhase(txId, Phase.BLIND_VOTE);
+                })
+                .forEach(entry -> p2PService.getP2PDataStorage().broadcastProtectedStorageEntry(
+                        entry, p2PService.getNetworkNode().getNodeAddress(), null, false));
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -162,7 +177,11 @@ public class BlindVoteService implements PersistedDataHost {
     }
 
     public boolean isBlindVoteValid(BlindVote blindVote) {
-        if (blindVoteListContains(blindVote, blindVoteList.getList())) {
+        return isBlindVoteValid(blindVote, blindVoteList.getList());
+    }
+
+    public boolean isBlindVoteValid(BlindVote blindVote, List<BlindVote> blindVotes) {
+        if (blindVoteListContains(blindVote, blindVotes)) {
             log.debug("We have that blindVote already in our list. blindVote={}", blindVote);
             return false;
         }
