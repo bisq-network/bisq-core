@@ -17,9 +17,9 @@
 
 package bisq.core.dao.presentation;
 
-import bisq.core.dao.presentation.ballot.BallotListService;
-import bisq.core.dao.presentation.ballot.FilteredBallotListService;
-import bisq.core.dao.presentation.ballot.MyBallotListService;
+import bisq.core.dao.consensus.ballot.BallotListService;
+import bisq.core.dao.consensus.ballot.FilteredBallotListService;
+import bisq.core.dao.consensus.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 

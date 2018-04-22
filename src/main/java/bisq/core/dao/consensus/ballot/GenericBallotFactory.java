@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.presentation.ballot;
+package bisq.core.dao.consensus.ballot;
 
 import bisq.core.dao.presentation.PresentationService;
 

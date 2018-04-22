@@ -57,11 +57,11 @@ import bisq.core.dao.consensus.voteresult.VoteResultService;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
 import bisq.core.dao.presentation.PresentationServicesSetup;
-import bisq.core.dao.presentation.ballot.BallotListService;
-import bisq.core.dao.presentation.ballot.CompensationBallotFactory;
-import bisq.core.dao.presentation.ballot.FilteredBallotListService;
-import bisq.core.dao.presentation.ballot.GenericBallotFactory;
-import bisq.core.dao.presentation.ballot.MyBallotListService;
+import bisq.core.dao.consensus.ballot.BallotListService;
+import bisq.core.dao.consensus.ballot.CompensationBallotFactory;
+import bisq.core.dao.consensus.ballot.FilteredBallotListService;
+import bisq.core.dao.consensus.ballot.GenericBallotFactory;
+import bisq.core.dao.consensus.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 

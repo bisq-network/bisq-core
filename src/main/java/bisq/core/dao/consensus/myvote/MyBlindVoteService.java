@@ -26,7 +26,7 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.presentation.ballot.BallotListService;
+import bisq.core.dao.consensus.ballot.BallotListService;
 
 import org.bitcoinj.core.Coin;
 

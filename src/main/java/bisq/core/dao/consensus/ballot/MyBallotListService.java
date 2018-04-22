@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.presentation.ballot;
+package bisq.core.dao.consensus.ballot;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.TxBroadcastException;
@@ -23,8 +23,6 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.consensus.ballot.Ballot;
-import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.presentation.PresentationService;

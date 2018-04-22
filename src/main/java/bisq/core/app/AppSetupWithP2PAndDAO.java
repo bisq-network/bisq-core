@@ -18,8 +18,8 @@
 package bisq.core.app;
 
 import bisq.core.dao.DaoSetup;
-import bisq.core.dao.presentation.ballot.BallotListService;
-import bisq.core.dao.presentation.ballot.MyBallotListService;
+import bisq.core.dao.consensus.ballot.BallotListService;
+import bisq.core.dao.consensus.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
