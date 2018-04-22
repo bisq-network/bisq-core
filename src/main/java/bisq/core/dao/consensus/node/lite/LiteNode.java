@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Slf4j
 public class LiteNode extends BsqNode {
-    private final LiteNodeExecutor bsqLiteNodeExecutor;
+    private final LiteNodeParserFacade liteNodeParserFacade;
     private final LiteNodeNetworkService liteNodeNetworkService;
 
 
@@ -64,12 +64,12 @@ public class LiteNode extends BsqNode {
     public LiteNode(StateService stateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    LiteNodeExecutor bsqLiteNodeExecutor,
+                    LiteNodeParserFacade liteNodeParserFacade,
                     LiteNodeNetworkService liteNodeNetworkService) {
         super(stateService,
                 snapshotManager,
                 p2PService);
-        this.bsqLiteNodeExecutor = bsqLiteNodeExecutor;
+        this.liteNodeParserFacade = liteNodeParserFacade;
         this.liteNodeNetworkService = liteNodeNetworkService;
     }
 
@@ -140,7 +140,7 @@ public class LiteNode extends BsqNode {
         List<TxBlock> clonedTxBlockList = txBlockList.stream()
                 .map(bsqBlock -> TxBlock.clone(bsqBlock))
                 .collect(Collectors.toList());
-        bsqLiteNodeExecutor.parseBlocks(clonedTxBlockList,
+        liteNodeParserFacade.parseBlocks(clonedTxBlockList,
                 this::onNewBsqBlock,
                 this::onParseBlockChainComplete,
                 getErrorHandler());
@@ -154,7 +154,7 @@ public class LiteNode extends BsqNode {
         TxBlock clonedTxBlock = TxBlock.clone(txBlock);
         if (!stateService.containsTxBlock(clonedTxBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
-            bsqLiteNodeExecutor.parseBlock(clonedTxBlock, this::onNewBsqBlock, getErrorHandler());
+            liteNodeParserFacade.parseBlock(clonedTxBlock, this::onNewBsqBlock, getErrorHandler());
         }
     }
 

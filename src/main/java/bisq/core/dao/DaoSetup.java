@@ -19,10 +19,8 @@ package bisq.core.dao;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.ConsensusServicesSetup;
-import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.presentation.PresentationServicesSetup;
 
-import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
@@ -34,15 +32,12 @@ import com.google.inject.Inject;
 public class DaoSetup {
     private final ConsensusServicesSetup consensusServicesSetup;
     private final PresentationServicesSetup presentationServicesSetup;
-    private final NodeExecutor nodeExecutor;
 
     @Inject
     public DaoSetup(ConsensusServicesSetup consensusServicesSetup,
-                    PresentationServicesSetup presentationServicesSetup,
-                    NodeExecutor nodeExecutor) {
+                    PresentationServicesSetup presentationServicesSetup) {
         this.consensusServicesSetup = consensusServicesSetup;
         this.presentationServicesSetup = presentationServicesSetup;
-        this.nodeExecutor = nodeExecutor;
 
     }
 
@@ -50,8 +45,7 @@ public class DaoSetup {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
             // For consensus critical code we map to parser thread and delegate to consensusServicesSetup
             // ErrorMessages get mapped back to userThread.
-            nodeExecutor.get().execute(() -> consensusServicesSetup.start(errorMessage ->
-                    UserThread.execute(() -> errorMessageHandler.handleErrorMessage(errorMessage))));
+            consensusServicesSetup.start(errorMessageHandler::handleErrorMessage);
 
             presentationServicesSetup.start();
         }
@@ -59,7 +53,7 @@ public class DaoSetup {
 
     public void shutDown() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
-            nodeExecutor.get().execute(consensusServicesSetup::shutDown);
+            consensusServicesSetup.shutDown();
         }
     }
 }

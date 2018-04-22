@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.consensus.node.full.rpc;
+package bisq.core.dao.consensus.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.consensus.node.blockchain.btcd.PubKeyScript;
@@ -23,6 +23,11 @@ import bisq.core.dao.consensus.node.blockchain.exceptions.BsqBlockchainException
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxInput;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
+
+import bisq.common.UserThread;
+import bisq.common.handlers.ResultHandler;
+import bisq.common.util.Tuple2;
+import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Utils;
@@ -48,26 +53,31 @@ import com.google.inject.Inject;
 import javax.inject.Named;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.math.BigDecimal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Request blockchain data vai via RPC from Bitcoin Core.
- * Running in custom threads.
+ * Request blockchain data via RPC from Bitcoin Core.
+ * Runs in a custom thread.
  * See the rpc.md file in the doc directory for more info about the setup.
  */
+@Slf4j
 public class RpcService {
-    private static final Logger log = LoggerFactory.getLogger(RpcService.class);
-
     private final String rpcUser;
     private final String rpcPassword;
     private final String rpcPort;
@@ -76,6 +86,7 @@ public class RpcService {
 
     private BtcdClient client;
     private BtcdDaemon daemon;
+    private final ListeningExecutorService executor = Utilities.getListeningExecutorService("RpcService", 15, 30, 60);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -94,40 +105,54 @@ public class RpcService {
         this.rpcPort = rpcPort;
         this.rpcBlockPort = rpcBlockPort;
         this.dumpBlockchainData = dumpBlockchainData;
+
     }
 
-    public void setup() throws BsqBlockchainException {
-        try {
-            long startTs = System.currentTimeMillis();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-            CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(cm).build();
-            Properties nodeConfig = new Properties();
-            nodeConfig.setProperty("node.bitcoind.rpc.protocol", "http");
-            nodeConfig.setProperty("node.bitcoind.rpc.host", "127.0.0.1");
-            nodeConfig.setProperty("node.bitcoind.rpc.auth_scheme", "Basic");
-            nodeConfig.setProperty("node.bitcoind.rpc.user", rpcUser);
-            nodeConfig.setProperty("node.bitcoind.rpc.password", rpcPassword);
-            nodeConfig.setProperty("node.bitcoind.rpc.port", rpcPort);
-            nodeConfig.setProperty("node.bitcoind.notification.block.port", rpcBlockPort);
-            nodeConfig.setProperty("node.bitcoind.notification.alert.port", "64647");
-            nodeConfig.setProperty("node.bitcoind.notification.wallet.port", "64648");
-            nodeConfig.setProperty("node.bitcoind.http.auth_scheme", "Basic");
-            BtcdClientImpl client = new BtcdClientImpl(httpProvider, nodeConfig);
-            daemon = new BtcdDaemonImpl(client);
-            log.info("Setup took {} ms", System.currentTimeMillis() - startTs);
-            this.client = client;
-        } catch (BitcoindException | CommunicationException e) {
-            if (e instanceof CommunicationException)
-                log.error("Probably Bitcoin core is not running or the rpc port is not set correctly. rpcPort=" + rpcPort);
-            log.error(e.toString());
-            e.printStackTrace();
-            log.error(e.getCause() != null ? e.getCause().toString() : "e.getCause()=null");
-            throw new BsqBlockchainException(e.getMessage(), e);
-        } catch (Throwable e) {
-            log.error(e.toString());
-            e.printStackTrace();
-            throw new BsqBlockchainException(e.toString(), e);
-        }
+    public void setup(ResultHandler resultHandler, Consumer<Throwable> errorHandler) {
+        ListenableFuture<Void> future = executor.submit(() -> {
+            try {
+                long startTs = System.currentTimeMillis();
+                PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+                CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(cm).build();
+                Properties nodeConfig = new Properties();
+                nodeConfig.setProperty("node.bitcoind.rpc.protocol", "http");
+                nodeConfig.setProperty("node.bitcoind.rpc.host", "127.0.0.1");
+                nodeConfig.setProperty("node.bitcoind.rpc.auth_scheme", "Basic");
+                nodeConfig.setProperty("node.bitcoind.rpc.user", rpcUser);
+                nodeConfig.setProperty("node.bitcoind.rpc.password", rpcPassword);
+                nodeConfig.setProperty("node.bitcoind.rpc.port", rpcPort);
+                nodeConfig.setProperty("node.bitcoind.notification.block.port", rpcBlockPort);
+                nodeConfig.setProperty("node.bitcoind.notification.alert.port", "64647");
+                nodeConfig.setProperty("node.bitcoind.notification.wallet.port", "64648");
+                nodeConfig.setProperty("node.bitcoind.http.auth_scheme", "Basic");
+                BtcdClientImpl client = new BtcdClientImpl(httpProvider, nodeConfig);
+                daemon = new BtcdDaemonImpl(client);
+                log.info("Setup took {} ms", System.currentTimeMillis() - startTs);
+                this.client = client;
+            } catch (BitcoindException | CommunicationException e) {
+                if (e instanceof CommunicationException)
+                    log.error("Probably Bitcoin core is not running or the rpc port is not set correctly. rpcPort=" + rpcPort);
+                log.error(e.toString());
+                e.printStackTrace();
+                log.error(e.getCause() != null ? e.getCause().toString() : "e.getCause()=null");
+                throw new BsqBlockchainException(e.getMessage(), e);
+            } catch (Throwable e) {
+                log.error(e.toString());
+                e.printStackTrace();
+                throw new BsqBlockchainException(e.toString(), e);
+            }
+            return null;
+        });
+
+        Futures.addCallback(future, new FutureCallback<Void>() {
+            public void onSuccess(Void ignore) {
+                UserThread.execute(resultHandler::handleResult);
+            }
+
+            public void onFailure(@NotNull Throwable throwable) {
+                UserThread.execute(() -> errorHandler.accept(throwable));
+            }
+        });
     }
 
     public void registerBlockHandler(Consumer<Block> blockHandler) {
@@ -137,7 +162,7 @@ public class RpcService {
                 if (block != null) {
                     log.info("New block received: height={}, id={}", block.getHeight(), block.getHash());
                     if (block.getHeight() != null && block.getHash() != null) {
-                        blockHandler.accept(block);
+                        UserThread.execute(() -> blockHandler.accept(block));
                     } else {
                         log.warn("We received a block with block.getHeight()=null or block.getHash()=null. That should not happen.");
                     }
@@ -148,13 +173,94 @@ public class RpcService {
         });
     }
 
-    public int requestChainHeadHeight() throws BitcoindException, CommunicationException {
-        return client.getBlockCount();
+    public void requestChainHeadHeight(Consumer<Integer> resultHandler, Consumer<Throwable> errorHandler) {
+        ListenableFuture<Integer> future = executor.submit(client::getBlockCount);
+        Futures.addCallback(future, new FutureCallback<Integer>() {
+            public void onSuccess(Integer chainHeadHeight) {
+                UserThread.execute(() -> resultHandler.accept(chainHeadHeight));
+            }
+
+            public void onFailure(@NotNull Throwable throwable) {
+                UserThread.execute(() -> errorHandler.accept(throwable));
+            }
+        });
+
+        // return client.getBlockCount();
     }
 
-    public Block requestBlock(int blockHeight) throws BitcoindException, CommunicationException {
-        final String blockHash = client.getBlockHash(blockHeight);
-        return client.getBlock(blockHash);
+    public void requestBlockWithAllTransactions(int blockHeight, Consumer<Tuple2<Block, List<Tx>>> resultHandler, Consumer<Throwable> errorHandler) {
+        ListenableFuture<Tuple2<Block, List<Tx>>> future = executor.submit(() -> {
+            final String blockHash = client.getBlockHash(blockHeight);
+            final Block block = client.getBlock(blockHash);
+            List<Tx> txList = getTxList(block);
+            return new Tuple2<>(block, txList);
+        });
+
+        Futures.addCallback(future, new FutureCallback<Tuple2<Block, List<Tx>>>() {
+            @Override
+            public void onSuccess(Tuple2<Block, List<Tx>> result) {
+                UserThread.execute(() -> resultHandler.accept(result));
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable throwable) {
+                UserThread.execute(() -> errorHandler.accept(throwable));
+            }
+        });
+    }
+
+    public void requestAllTransactionsOfBlock(Block block, Consumer<List<Tx>> resultHandler, Consumer<Throwable> errorHandler) {
+        ListenableFuture<List<Tx>> future = executor.submit(() -> getTxList(block));
+
+        Futures.addCallback(future, new FutureCallback<List<Tx>>() {
+            @Override
+            public void onSuccess(List<Tx> result) {
+                UserThread.execute(() -> resultHandler.accept(result));
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable throwable) {
+                UserThread.execute(() -> errorHandler.accept(throwable));
+            }
+        });
+    }
+
+    @NotNull
+    private List<Tx> getTxList(Block block) throws BsqBlockchainException {
+        long startTs = System.currentTimeMillis();
+        List<Tx> txList = new ArrayList<>();
+        final int height = block.getHeight();
+        for (String txId : block.getTx()) {
+           /* // TODO if we use requestFee move code to later point once we found our bsq txs, so we only request it for bsq txs
+            if (requestFee)
+                rpcService.requestFees(txId, blockHeight, feesByBlock);*/
+
+            final Tx tx = requestTx(txId, height);
+            txList.add(tx);
+        }
+        log.debug("getTxList via RPC took {} ms.", (System.currentTimeMillis() - startTs));
+        return txList;
+    }
+
+
+    // TODO only used in tests
+    public void requestBlock(int blockHeight, Consumer<Block> resultHandler, Consumer<Throwable> errorHandler) {
+        ListenableFuture<Block> future = executor.submit(() -> {
+            final String blockHash = client.getBlockHash(blockHeight);
+            return client.getBlock(blockHash);
+        });
+
+        Futures.addCallback(future, new FutureCallback<Block>() {
+            @Override
+            public void onSuccess(Block block) {
+                UserThread.execute(() -> resultHandler.accept(block));
+            }
+
+            @Override
+            public void onFailure(@NotNull Throwable throwable) {
+                UserThread.execute(() -> errorHandler.accept(throwable));
+            }
+        });
     }
 
     public void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws BsqBlockchainException {

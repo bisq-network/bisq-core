@@ -22,7 +22,6 @@ import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.blindvote.BlindVoteValidator;
 import bisq.core.dao.consensus.myvote.MyBlindVoteService;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
-import bisq.core.dao.consensus.node.NodeExecutor;
 import bisq.core.dao.consensus.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.consensus.node.consensus.BsqTxController;
 import bisq.core.dao.consensus.node.consensus.GenesisTxController;
@@ -37,13 +36,13 @@ import bisq.core.dao.consensus.node.consensus.TxInputsController;
 import bisq.core.dao.consensus.node.consensus.TxOutputController;
 import bisq.core.dao.consensus.node.consensus.TxOutputsController;
 import bisq.core.dao.consensus.node.full.FullNode;
-import bisq.core.dao.consensus.node.full.FullNodeExecutor;
 import bisq.core.dao.consensus.node.full.FullNodeParser;
+import bisq.core.dao.consensus.node.full.FullNodeParserFacade;
+import bisq.core.dao.consensus.node.full.RpcService;
 import bisq.core.dao.consensus.node.full.network.FullNodeNetworkService;
-import bisq.core.dao.consensus.node.full.rpc.RpcService;
 import bisq.core.dao.consensus.node.lite.LiteNode;
-import bisq.core.dao.consensus.node.lite.LiteNodeExecutor;
 import bisq.core.dao.consensus.node.lite.LiteNodeParser;
+import bisq.core.dao.consensus.node.lite.LiteNodeParserFacade;
 import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
@@ -91,15 +90,14 @@ public class DaoModule extends AppModule {
 
         // node
         bind(BsqNodeProvider.class).in(Singleton.class);
-        bind(NodeExecutor.class).in(Singleton.class);
         bind(RpcService.class).in(Singleton.class);
         bind(FullNode.class).in(Singleton.class);
-        bind(FullNodeExecutor.class).in(Singleton.class);
+        bind(FullNodeParserFacade.class).in(Singleton.class);
         bind(FullNodeNetworkService.class).in(Singleton.class);
         bind(FullNodeParser.class).in(Singleton.class);
         bind(LiteNode.class).in(Singleton.class);
         bind(LiteNodeNetworkService.class).in(Singleton.class);
-        bind(LiteNodeExecutor.class).in(Singleton.class);
+        bind(LiteNodeParserFacade.class).in(Singleton.class);
         bind(LiteNodeParser.class).in(Singleton.class);
 
         // chain state

@@ -19,11 +19,9 @@ package bisq.core.dao.consensus.node.full;
 
 import bisq.core.dao.consensus.node.BsqParser;
 import bisq.core.dao.consensus.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.consensus.node.blockchain.exceptions.BsqBlockchainException;
 import bisq.core.dao.consensus.node.consensus.BsqBlockController;
 import bisq.core.dao.consensus.node.consensus.BsqTxController;
 import bisq.core.dao.consensus.node.consensus.GenesisTxController;
-import bisq.core.dao.consensus.node.full.rpc.RpcService;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
@@ -33,14 +31,10 @@ import com.neemre.btcdcli4j.core.domain.Block;
 
 import javax.inject.Inject;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,24 +46,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FullNodeParser extends BsqParser {
 
-    private final RpcService rpcService;
-    // Maybe we want to request fee at some point, leave it for now and disable it
-    private final boolean requestFee = false;
-    private final Map<Integer, Long> feesByBlock = new HashMap<>();
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FullNodeParser(RpcService rpcService,
-                          BsqBlockController bsqBlockController,
+    public FullNodeParser(BsqBlockController bsqBlockController,
                           GenesisTxController genesisTxController,
                           BsqTxController bsqTxController,
                           StateService stateService,
                           PeriodStateMutator periodStateMutator) {
         super(bsqBlockController, genesisTxController, bsqTxController, stateService, periodStateMutator);
-        this.rpcService = rpcService;
     }
 
 
@@ -77,30 +64,12 @@ public class FullNodeParser extends BsqParser {
     // Package private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @VisibleForTesting
-    void parseBlocks(int startBlockHeight,
-                     int chainHeadHeight,
-                     Consumer<TxBlock> newBlockHandler) throws BsqBlockchainException, BlockNotConnectingException {
-        try {
-            for (int blockHeight = startBlockHeight; blockHeight <= chainHeadHeight; blockHeight++) {
-                Block btcdBlock = rpcService.requestBlock(blockHeight);
-                final TxBlock txBlock = parseBlock(btcdBlock);
-                newBlockHandler.accept(txBlock);
-            }
-        } catch (BlockNotConnectingException e) {
-            throw e;
-        } catch (Throwable t) {
-            log.error(t.toString());
-            t.printStackTrace();
-            throw new BsqBlockchainException(t);
-        }
-    }
-
-    TxBlock parseBlock(Block btcdBlock) throws BsqBlockchainException, BlockNotConnectingException {
+    TxBlock parseBlock(Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
         periodStateMutator.onStartParsingNewBlock(btcdBlock.getHeight());
 
         long startTs = System.currentTimeMillis();
-        List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock);
+        List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock, txList);
+
         final TxBlock txBlock = new TxBlock(btcdBlock.getHeight(),
                 btcdBlock.getTime(),
                 btcdBlock.getHash(),
@@ -119,26 +88,18 @@ public class FullNodeParser extends BsqParser {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private List<Tx> findBsqTxsInBlock(Block btcdBlock) throws BsqBlockchainException {
+    private List<Tx> findBsqTxsInBlock(Block btcdBlock, List<Tx> txList) {
         int blockHeight = btcdBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 
         // Check if the new block is the same chain we have built on.
-        List<Tx> txList = new ArrayList<>();
         // We use a list as we want to maintain sorting of tx intra-block dependency
         List<Tx> bsqTxsInBlock = new ArrayList<>();
         // We add all transactions to the block
         long startTs = System.currentTimeMillis();
 
-        // We don't user foreach because scope for exception would not be in method body...
-        for (String txId : btcdBlock.getTx()) {
-
-            // TODO if we use requestFee move code to later point once we found our bsq txs, so we only request it for bsq txs
-            if (requestFee)
-                rpcService.requestFees(txId, blockHeight, feesByBlock);
-
-            final Tx tx = rpcService.requestTx(txId, blockHeight);
-            txList.add(tx);
+        // We check first for genesis tx
+        for (Tx tx : txList) {
             checkForGenesisTx(blockHeight, bsqTxsInBlock, tx);
         }
         log.debug("Requesting {} transactions took {} ms",

@@ -31,7 +31,6 @@ import javax.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,15 +49,6 @@ public class LiteNodeParser extends BsqParser {
                           StateService stateService,
                           PeriodStateMutator periodStateMutator) {
         super(bsqBlockController, genesisTxController, bsqTxController, stateService, periodStateMutator);
-    }
-
-    void parseBsqBlocks(List<TxBlock> txBlocks,
-                        Consumer<TxBlock> newBlockHandler)
-            throws BlockNotConnectingException {
-        for (TxBlock txBlock : txBlocks) {
-            parseBsqBlock(txBlock);
-            newBlockHandler.accept(txBlock);
-        }
     }
 
     void parseBsqBlock(TxBlock txBlock) throws BlockNotConnectingException {

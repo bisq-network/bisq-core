@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FullNode extends BsqNode {
 
-    private final FullNodeExecutor bsqFullNodeExecutor;
+    private final FullNodeParserFacade fullNodeParserFacade;
     private final FullNodeNetworkService fullNodeNetworkService;
     private final JsonBlockChainExporter jsonBlockChainExporter;
 
@@ -55,13 +55,13 @@ public class FullNode extends BsqNode {
     public FullNode(StateService stateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    FullNodeExecutor bsqFullNodeExecutor,
+                    FullNodeParserFacade fullNodeParserFacade,
                     JsonBlockChainExporter jsonBlockChainExporter,
                     FullNodeNetworkService fullNodeNetworkService) {
         super(stateService,
                 snapshotManager,
                 p2PService);
-        this.bsqFullNodeExecutor = bsqFullNodeExecutor;
+        this.fullNodeParserFacade = fullNodeParserFacade;
         this.jsonBlockChainExporter = jsonBlockChainExporter;
         this.fullNodeNetworkService = fullNodeNetworkService;
     }
@@ -73,7 +73,7 @@ public class FullNode extends BsqNode {
 
     @Override
     public void start(ErrorMessageHandler errorMessageHandler) {
-        bsqFullNodeExecutor.setup(() -> {
+        fullNodeParserFacade.setupAsync(() -> {
                     super.onInitialized();
                     startParseBlocks();
                 },
@@ -118,7 +118,7 @@ public class FullNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addBlockHandler() {
-        bsqFullNodeExecutor.addBlockHandler(btcdBlock -> bsqFullNodeExecutor.parseBtcdBlock(btcdBlock,
+        fullNodeParserFacade.addBlockHandler(btcdBlock -> fullNodeParserFacade.parseBtcdBlockAsync(btcdBlock,
                 this::onNewBsqBlock,
                 throwable -> {
                     if (throwable instanceof BlockNotConnectingException) {
@@ -132,7 +132,7 @@ public class FullNode extends BsqNode {
 
     private void requestChainHeadHeightAndParseBlocks(int startBlockHeight) {
         log.info("parseBlocks startBlockHeight={}", startBlockHeight);
-        bsqFullNodeExecutor.requestChainHeadHeight(chainHeadHeight -> parseBlocksOnHeadHeight(startBlockHeight, chainHeadHeight),
+        fullNodeParserFacade.requestChainHeadHeightAsync(chainHeadHeight -> parseBlocksOnHeadHeight(startBlockHeight, chainHeadHeight),
                 throwable -> {
                     log.error(throwable.toString());
                     throwable.printStackTrace();
@@ -143,7 +143,7 @@ public class FullNode extends BsqNode {
         log.info("parseBlocks with startBlockHeight={} and chainHeadHeight={}", startBlockHeight, chainHeadHeight);
         if (chainHeadHeight != startBlockHeight) {
             if (startBlockHeight <= chainHeadHeight) {
-                bsqFullNodeExecutor.parseBlocks(startBlockHeight,
+                fullNodeParserFacade.parseBlocksAsync(startBlockHeight,
                         chainHeadHeight,
                         this::onNewBsqBlock,
                         () -> {
