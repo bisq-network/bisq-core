@@ -72,21 +72,27 @@ public class FullNodeParserFacade {
                           Consumer<TxBlock> newBlockHandler,
                           ResultHandler resultHandler,
                           Consumer<Throwable> errorHandler) {
-        for (int blockHeight = startBlockHeight; blockHeight <= chainHeadHeight; blockHeight++) {
-            rpcService.requestBlockWithAllTransactions(blockHeight,
-                    resultTuple -> {
-                        try {
-                            Block block = resultTuple.first;
-                            List<Tx> txList = resultTuple.second;
-                            TxBlock txBlock = fullNodeParser.parseBlock(block, txList);
-                            newBlockHandler.accept(txBlock);
-                        } catch (BlockNotConnectingException e) {
-                            errorHandler.accept(e);
-                        }
-                    },
-                    errorHandler);
-        }
+        parseBlockAsync(startBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
         resultHandler.handleResult();
+    }
+
+    private void parseBlockAsync(int blockHeight, int chainHeadHeight, Consumer<TxBlock> newBlockHandler, Consumer<Throwable> errorHandler) {
+        rpcService.requestBlockWithAllTransactions(blockHeight,
+                resultTuple -> {
+                    try {
+                        Block block = resultTuple.first;
+                        List<Tx> txList = resultTuple.second;
+                        TxBlock txBlock = fullNodeParser.parseBlock(block, txList);
+                        newBlockHandler.accept(txBlock);
+                        if (blockHeight < chainHeadHeight) {
+                            final int newBlockHeight = blockHeight + 1;
+                            parseBlockAsync(newBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
+                        }
+                    } catch (BlockNotConnectingException e) {
+                        errorHandler.accept(e);
+                    }
+                },
+                errorHandler);
     }
 
     void parseBtcdBlockAsync(Block btcdBlock,

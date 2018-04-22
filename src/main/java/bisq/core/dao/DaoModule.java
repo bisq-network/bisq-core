@@ -17,7 +17,11 @@
 
 package bisq.core.dao;
 
-import bisq.core.dao.consensus.ConsensusServicesSetup;
+import bisq.core.dao.consensus.ballot.BallotListService;
+import bisq.core.dao.consensus.ballot.CompensationBallotFactory;
+import bisq.core.dao.consensus.ballot.FilteredBallotListService;
+import bisq.core.dao.consensus.ballot.GenericBallotFactory;
+import bisq.core.dao.consensus.ballot.MyBallotListService;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.blindvote.BlindVoteValidator;
 import bisq.core.dao.consensus.myvote.MyBlindVoteService;
@@ -56,14 +60,6 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.voteresult.VoteResultService;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
-import bisq.core.dao.presentation.PresentationServicesSetup;
-import bisq.core.dao.consensus.ballot.BallotListService;
-import bisq.core.dao.consensus.ballot.CompensationBallotFactory;
-import bisq.core.dao.consensus.ballot.FilteredBallotListService;
-import bisq.core.dao.consensus.ballot.GenericBallotFactory;
-import bisq.core.dao.consensus.ballot.MyBallotListService;
-import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
-import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
 
 import bisq.common.app.AppModule;
 
@@ -83,8 +79,6 @@ public class DaoModule extends AppModule {
     @Override
     protected void configure() {
         bind(DaoSetup.class).in(Singleton.class);
-        bind(ConsensusServicesSetup.class).in(Singleton.class);
-        bind(PresentationServicesSetup.class).in(Singleton.class);
 
         // node
         bind(BsqNodeProvider.class).in(Singleton.class);
@@ -134,9 +128,7 @@ public class DaoModule extends AppModule {
         bind(GenericBallotFactory.class).in(Singleton.class);
 
         // vote
-        bind(MyBlindVoteServiceFacade.class).in(Singleton.class);
         bind(MyBlindVoteService.class).in(Singleton.class);
-        bind(BlindVoteServiceFacade.class).in(Singleton.class);
         bind(BlindVoteService.class).in(Singleton.class);
         bind(BlindVoteValidator.class).in(Singleton.class);
         bind(VoteRevealService.class).in(Singleton.class);

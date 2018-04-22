@@ -22,7 +22,6 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.ValidationException;
-import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.ballot.compensation.CompensationBallot;
 import bisq.core.dao.consensus.proposal.ProposalConsensus;
 import bisq.core.dao.consensus.proposal.compensation.CompensationConsensus;
@@ -30,7 +29,6 @@ import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.presentation.PresentationService;
 
 import bisq.common.util.Tuple2;
 
@@ -45,7 +43,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CompensationBallotFactory implements PresentationService{
+public class CompensationBallotFactory {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;

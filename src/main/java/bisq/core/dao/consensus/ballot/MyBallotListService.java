@@ -25,7 +25,6 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
-import bisq.core.dao.presentation.PresentationService;
 
 import bisq.network.p2p.P2PService;
 
@@ -57,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  * Designed for user thread.
  */
 @Slf4j
-public class MyBallotListService implements PersistedDataHost, PresentationService {
+public class MyBallotListService implements PersistedDataHost {
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final BallotListService ballotListService;

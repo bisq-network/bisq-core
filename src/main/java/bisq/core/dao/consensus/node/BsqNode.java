@@ -138,7 +138,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeight() + 1);
+        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeight());
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +

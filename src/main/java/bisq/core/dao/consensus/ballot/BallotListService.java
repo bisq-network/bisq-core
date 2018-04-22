@@ -18,9 +18,6 @@
 package bisq.core.dao.consensus.ballot;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.consensus.ballot.Ballot;
-import bisq.core.dao.consensus.ballot.BallotFactory;
-import bisq.core.dao.consensus.ballot.BallotList;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
@@ -28,7 +25,6 @@ import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.presentation.PresentationService;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -55,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
  * BallotList is accessed from parser thread so we add synchronized to any method using it.
  */
 @Slf4j
-public class BallotListService implements PersistedDataHost, PresentationService /*, StateChangeEventsProvider*/ {
+public class BallotListService implements PersistedDataHost /*, StateChangeEventsProvider*/ {
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final StateService stateService;

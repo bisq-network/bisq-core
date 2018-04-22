@@ -17,13 +17,11 @@
 
 package bisq.core.dao.consensus.ballot;
 
-import bisq.core.dao.presentation.PresentationService;
-
 import lombok.extern.slf4j.Slf4j;
 
 //TODO impl
 @Slf4j
-public class GenericBallotFactory implements PresentationService {
+public class GenericBallotFactory {
     /*private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;

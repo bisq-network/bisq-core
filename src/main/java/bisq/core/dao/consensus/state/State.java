@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,19 +71,10 @@ public class State implements PersistableEnvelope {
     public static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
     public static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
 
-    // We need to have a threadsafe list here as we might get added a listener from user thread during iteration
-    // at parser thread.
-    private final List<StateChangeListener> stateChangeListeners = new CopyOnWriteArrayList<>();
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // Called from user thread.
-    public void addStateChangeListener(StateChangeListener stateChangeListener) {
-        stateChangeListeners.add(stateChangeListener);
-    }
 
 
     private final String genesisTxId;
@@ -210,47 +200,38 @@ public class State implements PersistableEnvelope {
 
     public void addBlock(Block block) {
         blocks.add(block);
-        stateChangeListeners.forEach(listener -> listener.onAddBlock(block));
     }
 
     public void putTxType(String txId, TxType txType) {
         txTypeMap.put(txId, txType);
-        stateChangeListeners.forEach(listener -> listener.onPutTxType(txId, txType));
     }
 
     public void putBurntFee(String txId, long burnedFee) {
         burntFeeMap.put(txId, burnedFee);
-        stateChangeListeners.forEach(listener -> listener.onPutBurntFee(txId, burnedFee));
     }
 
     public void addUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.put(txOutput.getKey(), txOutput);
-        stateChangeListeners.forEach(listener -> listener.onAddUnspentTxOutput(txOutput));
     }
 
     public void removeUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.remove(txOutput.getKey());
-        stateChangeListeners.forEach(listener -> listener.onRemoveUnspentTxOutput(txOutput));
     }
 
     public void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
         issuanceBlockHeightMap.put(txOutput.getTxId(), chainHeight);
-        stateChangeListeners.forEach(listener -> listener.onPutIssuanceBlockHeight(txOutput, chainHeight));
     }
 
     public void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
-        stateChangeListeners.forEach(listener -> listener.onPutSpentInfo(txOutput, blockHeight, txId, inputIndex));
     }
 
     public void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
         txOutputTypeMap.put(txOutput.getKey(), txOutputType);
-        stateChangeListeners.forEach(listener -> listener.onPutTxOutputType(txOutput, txOutputType));
     }
 
     public void addCycle(Cycle cycle) {
         cycles.add(cycle);
-        stateChangeListeners.forEach(listener -> listener.onAddCycle(cycle));
     }
 
 
