@@ -17,8 +17,6 @@
 
 package bisq.core.dao.consensus.state;
 
-import bisq.common.ThreadAwareListener;
-
-public interface BlockListener extends ThreadAwareListener {
+public interface BlockListener {
     void onBlockAdded(Block block);
 }

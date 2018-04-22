@@ -21,13 +21,13 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.ballot.BallotFactory;
 import bisq.core.dao.consensus.ballot.BallotList;
+import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.presentation.PresentationService;
-import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -79,11 +79,6 @@ public class BallotListService implements PersistedDataHost, PresentationService
         //stateServiceFacade.registerStateChangeEventsProvider(this);
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
-           /* @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }*/
-
             @Override
             public void onAdded(ProtectedStorageEntry entry) {
                 onAddedProtectedStorageEntry(entry, true);

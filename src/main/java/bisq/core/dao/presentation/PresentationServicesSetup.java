@@ -17,12 +17,12 @@
 
 package bisq.core.dao.presentation;
 
+import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.ballot.BallotListService;
 import bisq.core.dao.presentation.ballot.FilteredBallotListService;
 import bisq.core.dao.presentation.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
-import bisq.core.dao.presentation.period.PeriodServiceFacade;
 
 import com.google.inject.Inject;
 

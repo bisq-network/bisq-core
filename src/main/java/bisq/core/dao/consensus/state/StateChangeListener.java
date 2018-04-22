@@ -22,9 +22,7 @@ import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.state.blockchain.TxOutputType;
 import bisq.core.dao.consensus.state.blockchain.TxType;
 
-import bisq.common.ThreadAwareListener;
-
-public interface StateChangeListener extends ThreadAwareListener {
+public interface StateChangeListener {
     void onAddBlock(Block block);
 
     void onPutTxType(String txId, TxType txType);

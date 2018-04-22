@@ -17,9 +17,7 @@
 
 package bisq.core.dao.consensus.period;
 
-import bisq.common.ThreadAwareListener;
-
-public interface PeriodStateChangeListener extends ThreadAwareListener {
+public interface PeriodStateChangeListener {
     void onPreParserChainHeightChanged(int chainHeight);
 
     default void onCurrentCycleChanged(Cycle currentCycle) {

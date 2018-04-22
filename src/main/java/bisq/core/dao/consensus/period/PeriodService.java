@@ -22,6 +22,9 @@ import bisq.core.dao.consensus.state.blockchain.Tx;
 
 import com.google.inject.Inject;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class PeriodService extends BasePeriodService {
     private final StateService stateService;
     private final PeriodState periodState;
+    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -49,23 +53,21 @@ public final class PeriodService extends BasePeriodService {
         this.periodState = periodState;
         periodState.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
-            @Override
             public void onPreParserChainHeightChanged(int chainHeight) {
-                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onPreParserChainHeightChanged(chainHeight)));
+                periodStateChangeListeners.forEach(l -> l.onPreParserChainHeightChanged(chainHeight));
+                updatePhaseProperty();
             }
 
             @Override
             public void onCurrentCycleChanged(Cycle currentCycle) {
-                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onCurrentCycleChanged(currentCycle)));
+                periodStateChangeListeners.forEach(l -> l.onCurrentCycleChanged(currentCycle));
+                updatePhaseProperty();
             }
 
             @Override
             public void onCycleAdded(Cycle cycle) {
-                periodStateChangeListeners.forEach(l -> l.execute(() -> l.onCycleAdded(cycle)));
+                periodStateChangeListeners.forEach(l -> l.onCycleAdded(cycle));
+                updatePhaseProperty();
             }
         });
     }
@@ -95,4 +97,21 @@ public final class PeriodService extends BasePeriodService {
         return stateService.getTx(txId);
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Getters
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Phase getPhase() {
+        return phaseProperty.get();
+    }
+
+    public ObjectProperty<Phase> phaseProperty() {
+        return phaseProperty;
+    }
+
+    private void updatePhaseProperty() {
+        if (getChainHeight() > 0 && getCurrentCycle() != null)
+            getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
+    }
 }

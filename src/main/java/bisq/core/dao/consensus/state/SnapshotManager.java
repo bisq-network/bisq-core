@@ -74,11 +74,6 @@ public class SnapshotManager {
                     log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
                 }
             }
-
-            @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
         });
     }
 

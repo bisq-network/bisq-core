@@ -28,8 +28,6 @@ import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.presentation.ballot.BallotListService;
 
-import bisq.common.ThreadAwareListener;
-
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
@@ -53,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MyBlindVoteService {
 
-    public interface Listener extends ThreadAwareListener {
+    public interface Listener {
         void onSortedBallotList(BallotList sortedBallotList);
 
         void onBlindVoteFee(Coin blindVoteFee);
@@ -86,11 +84,6 @@ public class MyBlindVoteService {
         this.changeParamService = changeParamService;
 
         periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
-            @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
             @Override
             public void onPreParserChainHeightChanged(int chainHeight) {
                 makeSortedBallotListSnapshot();
@@ -130,7 +123,7 @@ public class MyBlindVoteService {
             blindVoteFee = BlindVoteConsensus.getFee(changeParamService, stateService.getChainHeight());
 
             // map to user thread
-            listeners.forEach(l -> l.execute(() -> l.onBlindVoteFee(blindVoteFee)));
+            listeners.forEach(l -> l.onBlindVoteFee(blindVoteFee));
         }
     }
 
@@ -149,7 +142,7 @@ public class MyBlindVoteService {
             sortedBallotList.addAll(ballots);
 
             // map to user thread
-            listeners.forEach(l -> l.execute(() -> l.onSortedBallotList(sortedBallotList)));
+            listeners.forEach(l -> l.onSortedBallotList(sortedBallotList));
         }
     }
 

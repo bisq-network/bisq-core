@@ -160,7 +160,7 @@ public class State implements PersistableEnvelope {
                 .setGenesisBlockHeight(genesisBlockHeight)
                 .setChainHeadHeight(chainHeadHeight);
 
-        Optional.ofNullable(genesisTx).ifPresent(e -> builder.setGenesisTx(genesisTx.toProtoMessage()));*/
+        Optional.ofNullable(genesisTx).ifPresent(e -> builder.setGenesisTx(genesisTx.toProtoMessage());*/
 
         return builder;
     }
@@ -195,7 +195,7 @@ public class State implements PersistableEnvelope {
     public State getClone() {
         //TODO
         return this;
-        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getBsqBlockChainBuilder().build()));
+        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getBsqBlockChainBuilder().build());
     }
 
     //TODO
@@ -210,47 +210,47 @@ public class State implements PersistableEnvelope {
 
     public void addBlock(Block block) {
         blocks.add(block);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onAddBlock(block)));
+        stateChangeListeners.forEach(listener -> listener.onAddBlock(block));
     }
 
     public void putTxType(String txId, TxType txType) {
         txTypeMap.put(txId, txType);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onPutTxType(txId, txType)));
+        stateChangeListeners.forEach(listener -> listener.onPutTxType(txId, txType));
     }
 
     public void putBurntFee(String txId, long burnedFee) {
         burntFeeMap.put(txId, burnedFee);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onPutBurntFee(txId, burnedFee)));
+        stateChangeListeners.forEach(listener -> listener.onPutBurntFee(txId, burnedFee));
     }
 
     public void addUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.put(txOutput.getKey(), txOutput);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onAddUnspentTxOutput(txOutput)));
+        stateChangeListeners.forEach(listener -> listener.onAddUnspentTxOutput(txOutput));
     }
 
     public void removeUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.remove(txOutput.getKey());
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onRemoveUnspentTxOutput(txOutput)));
+        stateChangeListeners.forEach(listener -> listener.onRemoveUnspentTxOutput(txOutput));
     }
 
     public void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
         issuanceBlockHeightMap.put(txOutput.getTxId(), chainHeight);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onPutIssuanceBlockHeight(txOutput, chainHeight)));
+        stateChangeListeners.forEach(listener -> listener.onPutIssuanceBlockHeight(txOutput, chainHeight));
     }
 
     public void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onPutSpentInfo(txOutput, blockHeight, txId, inputIndex)));
+        stateChangeListeners.forEach(listener -> listener.onPutSpentInfo(txOutput, blockHeight, txId, inputIndex));
     }
 
     public void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
         txOutputTypeMap.put(txOutput.getKey(), txOutputType);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onPutTxOutputType(txOutput, txOutputType)));
+        stateChangeListeners.forEach(listener -> listener.onPutTxOutputType(txOutput, txOutputType));
     }
 
     public void addCycle(Cycle cycle) {
         cycles.add(cycle);
-        stateChangeListeners.forEach(listener -> listener.execute(() -> listener.onAddCycle(cycle)));
+        stateChangeListeners.forEach(listener -> listener.onAddCycle(cycle));
     }
 
 

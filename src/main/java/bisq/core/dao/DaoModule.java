@@ -45,6 +45,7 @@ import bisq.core.dao.consensus.node.lite.LiteNodeParser;
 import bisq.core.dao.consensus.node.lite.LiteNodeParserFacade;
 import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
+import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
@@ -64,7 +65,6 @@ import bisq.core.dao.presentation.ballot.GenericBallotFactory;
 import bisq.core.dao.presentation.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
-import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;

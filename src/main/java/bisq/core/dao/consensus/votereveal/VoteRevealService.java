@@ -103,11 +103,6 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
 
         periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
-            public boolean executeOnUserThread() {
-                return false;
-            }
-
-            @Override
             public void onPreParserChainHeightChanged(int chainHeight) {
                 // do we want call before parser?
                 maybeRevealVotes(chainHeight);

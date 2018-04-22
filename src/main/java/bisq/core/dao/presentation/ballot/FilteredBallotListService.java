@@ -18,9 +18,9 @@
 package bisq.core.dao.presentation.ballot;
 
 import bisq.core.dao.consensus.ballot.Ballot;
+import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.presentation.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.storage.HashMapChangedListener;

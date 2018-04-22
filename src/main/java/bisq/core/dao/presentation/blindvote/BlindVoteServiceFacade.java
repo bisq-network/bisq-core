@@ -20,8 +20,8 @@ package bisq.core.dao.presentation.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.blindvote.BlindVotePayload;
+import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.consensus.period.Phase;
-import bisq.core.dao.presentation.period.PeriodServiceFacade;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;

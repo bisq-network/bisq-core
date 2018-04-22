@@ -15,13 +15,8 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.presentation.period;
+package bisq.core.dao.consensus.period;
 
-import bisq.core.dao.consensus.period.BasePeriodService;
-import bisq.core.dao.consensus.period.Cycle;
-import bisq.core.dao.consensus.period.PeriodState;
-import bisq.core.dao.consensus.period.PeriodStateChangeListener;
-import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.presentation.PresentationService;
 import bisq.core.dao.presentation.state.StateServiceFacade;
