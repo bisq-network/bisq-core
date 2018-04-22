@@ -47,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Root class for mutable state of the DAO.
- *
- * When data gets changed we fire an event to update the state at the user thread based service.
  */
 @Slf4j
 public class State implements PersistableEnvelope {
@@ -178,18 +176,18 @@ public class State implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     //TODO remove
-    public int getChainHeadHeight() {
+    int getChainHeadHeight() {
         return !getBlocks().isEmpty() ? getBlocks().getLast().getHeight() : 0;
     }
 
-    public State getClone() {
+    State getClone() {
         //TODO
         return this;
         // return lock.read(() -> (StateService) StateService.fromProto(stateService.getBsqBlockChainBuilder().build());
     }
 
     //TODO
-    public State getClone(State snapshotCandidate) {
+    State getClone(State snapshotCandidate) {
         return this;
     }
 
@@ -198,39 +196,39 @@ public class State implements PersistableEnvelope {
     // Changing map state package scope
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addBlock(Block block) {
+    void addBlock(Block block) {
         blocks.add(block);
     }
 
-    public void putTxType(String txId, TxType txType) {
+    void putTxType(String txId, TxType txType) {
         txTypeMap.put(txId, txType);
     }
 
-    public void putBurntFee(String txId, long burnedFee) {
+    void putBurntFee(String txId, long burnedFee) {
         burntFeeMap.put(txId, burnedFee);
     }
 
-    public void addUnspentTxOutput(TxOutput txOutput) {
+    void addUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.put(txOutput.getKey(), txOutput);
     }
 
-    public void removeUnspentTxOutput(TxOutput txOutput) {
+    void removeUnspentTxOutput(TxOutput txOutput) {
         unspentTxOutputMap.remove(txOutput.getKey());
     }
 
-    public void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
+    void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
         issuanceBlockHeightMap.put(txOutput.getTxId(), chainHeight);
     }
 
-    public void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
+    void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
     }
 
-    public void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
+    void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
         txOutputTypeMap.put(txOutput.getKey(), txOutputType);
     }
 
-    public void addCycle(Cycle cycle) {
+    void addCycle(Cycle cycle) {
         cycles.add(cycle);
     }
 
@@ -239,56 +237,55 @@ public class State implements PersistableEnvelope {
     // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public String getGenesisTxId() {
+    String getGenesisTxId() {
         return genesisTxId;
     }
 
-    public int getGenesisBlockHeight() {
+    int getGenesisBlockHeight() {
         return genesisBlockHeight;
     }
 
-    public int getIssuanceMaturity() {
+    int getIssuanceMaturity() {
         return ISSUANCE_MATURITY;
     }
 
-    public Coin getGenesisTotalSupply() {
+    Coin getGenesisTotalSupply() {
         return GENESIS_TOTAL_SUPPLY;
     }
 
-    public LinkedList<Block> getBlocks() {
+    LinkedList<Block> getBlocks() {
         return blocks;
     }
 
-    public Map<String, TxType> getTxTypeMap() {
+    Map<String, TxType> getTxTypeMap() {
         return txTypeMap;
     }
 
-    public Map<String, Long> getBurntFeeMap() {
+    Map<String, Long> getBurntFeeMap() {
         return burntFeeMap;
     }
 
-    public Map<String, Integer> getIssuanceBlockHeightMap() {
+    Map<String, Integer> getIssuanceBlockHeightMap() {
         return issuanceBlockHeightMap;
     }
 
-    public Map<TxOutput.Key, TxOutput> getUnspentTxOutputMap() {
+    Map<TxOutput.Key, TxOutput> getUnspentTxOutputMap() {
         return unspentTxOutputMap;
     }
 
-    public Map<TxOutput.Key, TxOutputType> getTxOutputTypeMap() {
+    Map<TxOutput.Key, TxOutputType> getTxOutputTypeMap() {
         return txOutputTypeMap;
     }
 
-    public Map<TxOutput.Key, SpentInfo> getSpentInfoMap() {
+    Map<TxOutput.Key, SpentInfo> getSpentInfoMap() {
         return spentInfoMap;
     }
 
-    public Map<String, Proposal> getProposalPayloadMap() {
+    Map<String, Proposal> getProposalPayloadMap() {
         return proposalPayloadMap;
     }
 
-    public List<Cycle> getCycles() {
+    List<Cycle> getCycles() {
         return cycles;
     }
 }
-

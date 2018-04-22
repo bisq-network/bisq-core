@@ -80,7 +80,6 @@ public class BlindVoteService implements PersistedDataHost {
     // PersistedDataHost
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from the user thread at startup.
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {

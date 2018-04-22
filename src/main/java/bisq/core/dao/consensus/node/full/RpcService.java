@@ -190,8 +190,8 @@ public class RpcService {
 
     public void requestBlockWithAllTransactions(int blockHeight, Consumer<Tuple2<Block, List<Tx>>> resultHandler, Consumer<Throwable> errorHandler) {
         ListenableFuture<Tuple2<Block, List<Tx>>> future = executor.submit(() -> {
-            final String blockHash = client.getBlockHash(blockHeight);
-            final Block block = client.getBlock(blockHash);
+            String blockHash = client.getBlockHash(blockHeight);
+            Block block = client.getBlock(blockHash);
             List<Tx> txList = getTxList(block);
             return new Tuple2<>(block, txList);
         });
@@ -229,13 +229,11 @@ public class RpcService {
     private List<Tx> getTxList(Block block) throws BsqBlockchainException {
         long startTs = System.currentTimeMillis();
         List<Tx> txList = new ArrayList<>();
-        final int height = block.getHeight();
+        int height = block.getHeight();
+        // Ordering of the tx is essential! So we do not use multiple threads for requesting the txs.
+        // Might be optimized in future but then we need to make sure order is correct.
         for (String txId : block.getTx()) {
-           /* // TODO if we use requestFee move code to later point once we found our bsq txs, so we only request it for bsq txs
-            if (requestFee)
-                rpcService.requestFees(txId, blockHeight, feesByBlock);*/
-
-            final Tx tx = requestTx(txId, height);
+            Tx tx = requestTx(txId, height);
             txList.add(tx);
         }
         log.debug("getTxList via RPC took {} ms.", (System.currentTimeMillis() - startTs));

@@ -137,9 +137,8 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
     public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
         final int chainHeight = txBlock.getHeight();
         if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
-            // We map to user thread because we access other user thread domains like wallet and the only state
             // relevant data we need is the chainHeight
-            UserThread.execute(() -> maybeRevealVotes(chainHeight));
+          maybeRevealVotes(chainHeight);
         }
 
         // We have nothing to return as there are no p2p network data for vote reveal.

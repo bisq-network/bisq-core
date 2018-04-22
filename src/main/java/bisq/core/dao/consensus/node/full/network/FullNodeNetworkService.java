@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Responsible for handling requests for BSQ blocks from lite nodes and for broadcasting new blocks to the P2P network.
- * We are in user thread!
  */
 @Slf4j
 public class FullNodeNetworkService implements MessageListener, PeerManager.Listener {

@@ -50,9 +50,6 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Write and read access to state for client running in parser thread.
- */
 @Slf4j
 public class StateService {
     private State state;
@@ -128,6 +125,8 @@ public class StateService {
         // We now add the immutable Block containing both data.
         final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
         state.addBlock(block);
+
+        blockListeners.forEach(l -> l.onBlockAdded(block));
 
         log.info("New block added at blockHeight " + block.getHeight());
     }

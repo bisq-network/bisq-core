@@ -52,8 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Persists, publishes and republishes own proposals.
- *
- * Designed for user thread.
  */
 @Slf4j
 public class MyBallotListService implements PersistedDataHost {

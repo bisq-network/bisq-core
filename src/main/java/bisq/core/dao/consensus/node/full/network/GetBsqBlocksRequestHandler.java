@@ -43,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Accepts a GetBsqBlocksRequest from a lite nodes and send back a corresponding GetBsqBlocksResponse.
- * Wew are in user thread!
  */
 @Slf4j
 class GetBsqBlocksRequestHandler {

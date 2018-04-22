@@ -24,7 +24,7 @@ import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.myvote.MyBlindVoteService;
 import bisq.core.dao.consensus.node.BsqNode;
 import bisq.core.dao.consensus.node.BsqNodeProvider;
-import bisq.core.dao.consensus.period.PeriodStateMutator;
+import bisq.core.dao.consensus.period.PeriodStateUpdater;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.voteresult.VoteResultService;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
@@ -38,7 +38,7 @@ import com.google.inject.Inject;
  */
 public class DaoSetup {
     private final BsqNode bsqNode;
-    private final PeriodStateMutator periodStateMutator;
+    private final PeriodStateUpdater periodStateUpdater;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final ChangeParamService changeParamService;
@@ -50,7 +50,7 @@ public class DaoSetup {
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
-                    PeriodStateMutator periodStateMutator,
+                    PeriodStateUpdater periodStateUpdater,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
                     ChangeParamService changeParamService,
@@ -59,7 +59,7 @@ public class DaoSetup {
                     MyBallotListService myBallotListService,
                     MyBlindVoteService myBlindVoteService,
                     BlindVoteService blindVoteService) {
-        this.periodStateMutator = periodStateMutator;
+        this.periodStateUpdater = periodStateUpdater;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
         this.changeParamService = changeParamService;
@@ -73,7 +73,7 @@ public class DaoSetup {
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        periodStateMutator.start();
+        periodStateUpdater.start();
         changeParamService.start();
         voteRevealService.start();
         bsqNode.start(errorMessageHandler);

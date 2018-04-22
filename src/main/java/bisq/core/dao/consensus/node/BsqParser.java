@@ -20,7 +20,7 @@ package bisq.core.dao.consensus.node;
 import bisq.core.dao.consensus.node.consensus.BsqBlockController;
 import bisq.core.dao.consensus.node.consensus.BsqTxController;
 import bisq.core.dao.consensus.node.consensus.GenesisTxController;
-import bisq.core.dao.consensus.period.PeriodStateMutator;
+import bisq.core.dao.consensus.period.PeriodStateUpdater;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.consensus.state.blockchain.TxInput;
@@ -53,7 +53,7 @@ public abstract class BsqParser {
     private final GenesisTxController genesisTxController;
     private final BsqTxController bsqTxController;
     protected final StateService stateService;
-    protected final PeriodStateMutator periodStateMutator;
+    protected final PeriodStateUpdater periodStateUpdater;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -66,12 +66,12 @@ public abstract class BsqParser {
                      GenesisTxController genesisTxController,
                      BsqTxController bsqTxController,
                      StateService stateService,
-                     PeriodStateMutator periodStateMutator) {
+                     PeriodStateUpdater periodStateUpdater) {
         this.bsqBlockController = bsqBlockController;
         this.genesisTxController = genesisTxController;
         this.bsqTxController = bsqTxController;
         this.stateService = stateService;
-        this.periodStateMutator = periodStateMutator;
+        this.periodStateUpdater = periodStateUpdater;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

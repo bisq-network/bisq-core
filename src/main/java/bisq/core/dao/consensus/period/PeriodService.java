@@ -25,9 +25,9 @@ import com.google.inject.Inject;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,7 +51,7 @@ public final class PeriodService {
     private final PeriodState periodState;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
-    private final List<PeriodStateChangeListener> periodStateChangeListeners = new ArrayList<>();
+    private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

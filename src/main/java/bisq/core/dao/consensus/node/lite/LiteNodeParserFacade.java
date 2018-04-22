@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Hides implementation details how we access parser. For lite node there are just synchronous calls to parser.
- * The parser runs in user thread.
  */
 @Slf4j
 public class LiteNodeParserFacade {

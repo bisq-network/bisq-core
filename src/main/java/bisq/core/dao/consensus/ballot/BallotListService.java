@@ -47,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Listens on the P2P network for new proposals and add valid proposals as new ballots to the list.
  *
- * Designed for user thread.
- * BallotList is accessed from parser thread so we add synchronized to any method using it.
  */
 @Slf4j
 public class BallotListService implements PersistedDataHost /*, StateChangeEventsProvider*/ {
@@ -92,9 +90,8 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     // PersistedDataHost
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We get called from the user thread at startup.
     @Override
-    public synchronized void readPersisted() {
+    public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
             BallotList persisted = storage.initAndGetPersisted(getBallotList(), 20);
             if (persisted != null) {
@@ -131,12 +128,12 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
         storage.queueUpForSave();
     }
 
-    public synchronized BallotList getBallotList() {
+    public BallotList getBallotList() {
         return ballotList;
     }
 
     // Parser thread is accessing the ballotList.
-    public synchronized ImmutableList<Ballot> getImmutableBallotList() {
+    public ImmutableList<Ballot> getImmutableBallotList() {
         return ImmutableList.copyOf(getBallotList().getList());
     }
 
@@ -183,7 +180,7 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private synchronized void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
+    private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload) {
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
@@ -197,7 +194,7 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     }
 
     // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
-    private synchronized void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
+    private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof Proposal) {
             final Proposal proposal = (Proposal) protectedStoragePayload;
@@ -243,7 +240,7 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     }
 
 
-    private synchronized void removeProposalFromList(Proposal proposal) {
+    private void removeProposalFromList(Proposal proposal) {
         if (getBallotList().remove(proposal))
             persist();
         else
@@ -260,9 +257,9 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
                 .findAny();
     }
 
-    private synchronized boolean isProposalValidToAddToList(Proposal proposal) {
+    private boolean isProposalValidToAddToList(Proposal proposal) {
         if (ballotListContainsProposal(proposal, getBallotList().getList())) {
-            log.warn("We have that proposalPayload already in our list. proposal={}", proposal);
+            log.debug("We have that proposalPayload already in our list. proposal={}", proposal);
             return false;
         }
 

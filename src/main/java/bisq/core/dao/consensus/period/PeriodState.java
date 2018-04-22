@@ -58,7 +58,6 @@ public class PeriodState {
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Can be called from user thread.
     void addPeriodStateChangeListener(PeriodStateChangeListener periodStateChangeListener) {
         periodStateChangeListeners.add(periodStateChangeListener);
     }

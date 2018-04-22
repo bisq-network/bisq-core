@@ -165,7 +165,6 @@ public class MyBlindVoteService implements PersistedDataHost {
         makeBlindVoteFeeSnapshot();
     }
 
-    // Called from user thread
     // For showing fee estimation in confirmation popup
     public Transaction getDummyBlindVoteTx(Coin stake, Coin fee)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
@@ -173,7 +172,6 @@ public class MyBlindVoteService implements PersistedDataHost {
         return getBlindVoteTx(stake, fee, new byte[22]);
     }
 
-    // Called from user thread
     private Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
         Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(fee, stake);
@@ -181,13 +179,9 @@ public class MyBlindVoteService implements PersistedDataHost {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    // Called from user thread
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
             log.info("BallotList used in blind vote. sortedBallotList={}", sortedBallotList);
-
-            // SortedBallotList and blindVoteFee got copied and mapped to user thread.
-            // They other data for opReturn is state independent.
 
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
             byte[] encryptedBallotList = BlindVoteConsensus.getEncryptedBallotList(sortedBallotList, secretKey);
@@ -256,9 +250,7 @@ public class MyBlindVoteService implements PersistedDataHost {
         BlindVote blindVote = new BlindVote(encryptedBallotList, blindVoteTx.getHashAsString(), stake.value);
         BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
 
-        // We map from user thread to parser thread as we will read the block height in the addBlindVoteToList method
-        // and want to avoid inconsistency from threading issues.
-        // nodeExecutor.get().execute(() -> addBlindVoteToList(blindVotePayload, true));
+        // addBlindVoteToList(blindVotePayload, true);
 
         if (p2PService.addProtectedStorageEntry(blindVotePayload, true)) {
             log.info("Added blindVotePayload to P2P network.\nblindVotePayload={}", blindVotePayload);
@@ -323,8 +315,6 @@ public class MyBlindVoteService implements PersistedDataHost {
     }
 
     private void makeSortedBallotListSnapshot() {
-        // If we enter the blind vote phase before actual parsing we copy the ballots for that vote phase
-        // from the user thread domain to a local copy.
         int chainHeight = periodService.getChainHeight();
         if (periodService.getFirstBlockOfPhase(chainHeight, Phase.BLIND_VOTE) == chainHeight) {
             sortedBallotList.clear();

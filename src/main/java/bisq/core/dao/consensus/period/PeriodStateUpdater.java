@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  * Writes data to the PeriodState.
  */
 @Slf4j
-public class PeriodStateMutator implements StateChangeEventsProvider {
+public class PeriodStateUpdater implements StateChangeEventsProvider {
     private final PeriodState periodState;
     private final StateService stateService;
 
@@ -52,7 +52,7 @@ public class PeriodStateMutator implements StateChangeEventsProvider {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodStateMutator(PeriodState periodState, StateService stateService) {
+    public PeriodStateUpdater(PeriodState periodState, StateService stateService) {
         this.periodState = periodState;
         this.stateService = stateService;
 
@@ -83,7 +83,6 @@ public class PeriodStateMutator implements StateChangeEventsProvider {
         initFromGenesisBlock();
     }
 
-    // TODO change with listener
     public void onStartParsingNewBlock(int blockHeight) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the constructor

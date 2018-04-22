@@ -39,7 +39,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered Ballot collections to user thread clients.
+ * Provides filtered Ballot collections.
  */
 @Slf4j
 public class FilteredBallotListService {
