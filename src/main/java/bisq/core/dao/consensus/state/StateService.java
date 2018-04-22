@@ -119,6 +119,13 @@ public class StateService extends BaseStateService {
     }
 
 
+    public List<TxBlock> getClonedBlocksFrom(int fromBlockHeight) {
+        final LinkedList<Block> clonedBlocks = new LinkedList<>(getBlocks());
+        return getTxBlocks(clonedBlocks).stream()
+                .filter(block -> block.getHeight() >= fromBlockHeight)
+                .collect(Collectors.toList());
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Tx
     ///////////////////////////////////////////////////////////////////////////////////////////

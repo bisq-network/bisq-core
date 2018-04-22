@@ -45,7 +45,6 @@ import bisq.core.dao.consensus.node.lite.LiteNodeParser;
 import bisq.core.dao.consensus.node.lite.LiteNodeParserFacade;
 import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateMutator;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
@@ -65,7 +64,6 @@ import bisq.core.dao.presentation.ballot.GenericBallotFactory;
 import bisq.core.dao.presentation.ballot.MyBallotListService;
 import bisq.core.dao.presentation.blindvote.BlindVoteServiceFacade;
 import bisq.core.dao.presentation.myvote.MyBlindVoteServiceFacade;
-import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.common.app.AppModule;
 
@@ -103,7 +101,7 @@ public class DaoModule extends AppModule {
         // chain state
         bind(State.class).in(Singleton.class);
         bind(StateService.class).in(Singleton.class);
-        bind(StateServiceFacade.class).in(Singleton.class);
+        bind(StateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
         bind(ChangeParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
@@ -125,7 +123,6 @@ public class DaoModule extends AppModule {
         bind(PeriodState.class).in(Singleton.class);
         bind(PeriodStateMutator.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
-        bind(PeriodServiceFacade.class).in(Singleton.class);
 
         // proposals
         bind(BallotListService.class).in(Singleton.class);

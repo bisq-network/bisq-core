@@ -20,7 +20,7 @@ package bisq.core.dao.presentation.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.blindvote.BlindVotePayload;
-import bisq.core.dao.consensus.period.PeriodServiceFacade;
+import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 
 import bisq.network.p2p.P2PService;
@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlindVoteServiceFacade implements PersistedDataHost {
     private final P2PService p2PService;
-    private final PeriodServiceFacade periodServiceFacade;
+    private final PeriodService periodService;
     private final Storage<BlindVoteList> storage;
 
     @Getter
@@ -57,10 +57,10 @@ public class BlindVoteServiceFacade implements PersistedDataHost {
 
     @Inject
     public BlindVoteServiceFacade(P2PService p2PService,
-                                  PeriodServiceFacade periodServiceFacade,
+                                  PeriodService periodService,
                                   Storage<BlindVoteList> storage) {
         this.p2PService = p2PService;
-        this.periodServiceFacade = periodServiceFacade;
+        this.periodService = periodService;
         this.storage = storage;
 
         p2PService.getP2PDataStorage().addHashMapChangedListener(new HashMapChangedListener() {
@@ -117,7 +117,7 @@ public class BlindVoteServiceFacade implements PersistedDataHost {
             if (blindVoteList.stream().noneMatch(e -> e.equals(blindVotePayload.getBlindVote()))) {
                 // For adding a blindVotePayload we need to be before the last block in BREAK2 as in the last block at BREAK2
                 // we write our blindVotes to the state.
-                final int height = periodServiceFacade.getChainHeight();
+                final int height = periodService.getChainHeight();
                 if (isInToleratedBlockRange(height)) {
                     log.info("We received a BlindVotePayload from the P2P network. BlindVotePayload=" + blindVotePayload);
                     blindVoteList.add(blindVotePayload.getBlindVote());
@@ -137,7 +137,7 @@ public class BlindVoteServiceFacade implements PersistedDataHost {
     }
 
     private boolean isInToleratedBlockRange(int height) {
-        return height < periodServiceFacade.getLastBlockOfPhase(height, Phase.BREAK2);
+        return height < periodService.getLastBlockOfPhase(height, Phase.BREAK2);
     }
 
     private void persist() {

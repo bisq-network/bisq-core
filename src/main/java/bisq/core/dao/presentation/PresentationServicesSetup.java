@@ -17,7 +17,6 @@
 
 package bisq.core.dao.presentation;
 
-import bisq.core.dao.consensus.period.PeriodServiceFacade;
 import bisq.core.dao.presentation.ballot.BallotListService;
 import bisq.core.dao.presentation.ballot.FilteredBallotListService;
 import bisq.core.dao.presentation.ballot.MyBallotListService;
@@ -30,7 +29,6 @@ import com.google.inject.Inject;
  * Manages startup of non consensus critical services (presentationServices).
  */
 public class PresentationServicesSetup {
-    private final PeriodServiceFacade periodServiceFacade;
     private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
@@ -38,13 +36,11 @@ public class PresentationServicesSetup {
     private final BlindVoteServiceFacade blindVoteServiceFacade;
 
     @Inject
-    public PresentationServicesSetup(PeriodServiceFacade periodServiceFacade,
-                                     FilteredBallotListService filteredBallotListService,
+    public PresentationServicesSetup(FilteredBallotListService filteredBallotListService,
                                      BallotListService ballotListService,
                                      MyBallotListService myBallotListService,
                                      MyBlindVoteServiceFacade myBlindVoteServiceFacade,
                                      BlindVoteServiceFacade blindVoteServiceFacade) {
-        this.periodServiceFacade = periodServiceFacade;
         this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
@@ -53,7 +49,6 @@ public class PresentationServicesSetup {
     }
 
     public void start() {
-        periodServiceFacade.start();
         ballotListService.start();
         myBallotListService.start();
         myBlindVoteServiceFacade.start();

@@ -19,8 +19,8 @@ package bisq.core.dao.consensus.node.full.network;
 
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.consensus.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
-import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -58,7 +58,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final StateServiceFacade stateService;
+    private final StateService stateService;
 
     // Key is connection UID
     private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
@@ -73,7 +73,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  StateServiceFacade stateService) {
+                                  StateService stateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;

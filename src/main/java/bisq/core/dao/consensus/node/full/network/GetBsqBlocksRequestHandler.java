@@ -19,8 +19,8 @@ package bisq.core.dao.consensus.node.full.network;
 
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksRequest;
 import bisq.core.dao.consensus.node.messages.GetBsqBlocksResponse;
+import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxBlock;
-import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
@@ -66,7 +66,7 @@ class GetBsqBlocksRequestHandler {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private final NetworkNode networkNode;
-    private final StateServiceFacade stateService;
+    private final StateService stateService;
     private final Listener listener;
     private Timer timeoutTimer;
     private boolean stopped;
@@ -76,7 +76,7 @@ class GetBsqBlocksRequestHandler {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GetBsqBlocksRequestHandler(NetworkNode networkNode, StateServiceFacade stateService, Listener listener) {
+    public GetBsqBlocksRequestHandler(NetworkNode networkNode, StateService stateService, Listener listener) {
         this.networkNode = networkNode;
         this.stateService = stateService;
         this.listener = listener;

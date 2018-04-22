@@ -18,10 +18,10 @@
 package bisq.core.dao.presentation.ballot;
 
 import bisq.core.dao.consensus.ballot.Ballot;
-import bisq.core.dao.consensus.period.PeriodServiceFacade;
+import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
+import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -46,8 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 public class FilteredBallotListService {
     private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
-    private final PeriodServiceFacade periodServiceFacade;
-    private final StateServiceFacade stateServiceFacade;
+    private final PeriodService periodService;
+    private final StateService stateService;
 
     @Getter
     private final ObservableList<Ballot> activeOrMyUnconfirmedBallots = FXCollections.observableArrayList();
@@ -63,14 +63,14 @@ public class FilteredBallotListService {
     public FilteredBallotListService(BallotListService ballotListService,
                                      MyBallotListService myBallotListService,
                                      P2PDataStorage p2pDataStorage,
-                                     PeriodServiceFacade periodServiceFacade,
-                                     StateServiceFacade stateServiceFacade) {
+                                     PeriodService periodService,
+                                     StateService stateService) {
         this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
-        this.periodServiceFacade = periodServiceFacade;
-        this.stateServiceFacade = stateServiceFacade;
+        this.periodService = periodService;
+        this.stateService = stateService;
 
-        stateServiceFacade.addBlockListener(block -> updateLists());
+        stateService.addBlockListener(block -> updateLists());
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
@@ -128,15 +128,15 @@ public class FilteredBallotListService {
 
 
         closedBallots.addAll(ballotListService.getBallotList().getList().stream()
-                .filter(ballot -> stateServiceFacade.getTx(ballot.getTxId()).isPresent())
-                .filter(ballot -> stateServiceFacade.getTx(ballot.getTxId())
-                        .filter(tx -> !periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), periodServiceFacade.getChainHeight()))
+                .filter(ballot -> stateService.getTx(ballot.getTxId()).isPresent())
+                .filter(ballot -> stateService.getTx(ballot.getTxId())
+                        .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight()))
                         .isPresent())
                 .collect(Collectors.toList()));
     }
 
     private boolean isUnconfirmedOrInPhaseAndCycle(Ballot ballot) {
-        final Optional<Tx> optionalTx = stateServiceFacade.getTx(ballot.getTxId());
+        final Optional<Tx> optionalTx = stateService.getTx(ballot.getTxId());
         return !optionalTx.isPresent() || optionalTx
                 .filter(ballotListService::isTxInPhaseAndCycle)
                 .isPresent();

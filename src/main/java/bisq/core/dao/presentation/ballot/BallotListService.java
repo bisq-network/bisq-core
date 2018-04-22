@@ -21,14 +21,14 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.ballot.Ballot;
 import bisq.core.dao.consensus.ballot.BallotFactory;
 import bisq.core.dao.consensus.ballot.BallotList;
-import bisq.core.dao.consensus.period.PeriodServiceFacade;
+import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
+import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
 import bisq.core.dao.presentation.PresentationService;
-import bisq.core.dao.presentation.state.StateServiceFacade;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -57,26 +57,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BallotListService implements PersistedDataHost, PresentationService /*, StateChangeEventsProvider*/ {
     private final P2PDataStorage p2pDataStorage;
-    private final PeriodServiceFacade periodServiceFacade;
-    private final StateServiceFacade stateServiceFacade;
+    private final PeriodService periodService;
+    private final StateService stateService;
     private final ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
     private final BallotList ballotList = new BallotList();
 
     @Inject
     public BallotListService(P2PDataStorage p2pDataStorage,
-                             PeriodServiceFacade periodServiceFacade,
-                             StateServiceFacade stateServiceFacade,
+                             PeriodService periodService,
+                             StateService stateService,
                              ProposalValidator proposalValidator,
                              Storage<BallotList> storage) {
         this.p2pDataStorage = p2pDataStorage;
-        this.periodServiceFacade = periodServiceFacade;
-        this.stateServiceFacade = stateServiceFacade;
+        this.periodService = periodService;
+        this.stateService = stateService;
         this.proposalValidator = proposalValidator;
         this.storage = storage;
 
         // TODO remove
-        //stateServiceFacade.registerStateChangeEventsProvider(this);
+        //stateService.registerStateChangeEventsProvider(this);
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
@@ -123,12 +123,12 @@ public class BallotListService implements PersistedDataHost, PresentationService
     // We use the StateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
     // out of sync data sources.
     public boolean isUnconfirmed(String txId) {
-        return !stateServiceFacade.getTx(txId).isPresent();
+        return !stateService.getTx(txId).isPresent();
     }
 
     public boolean isTxInPhaseAndCycle(Tx tx) {
-        return periodServiceFacade.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
-                periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), periodServiceFacade.getChainHeight());
+        return periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
+                periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight());
     }
 
     public void persist() {
@@ -222,7 +222,7 @@ public class BallotListService implements PersistedDataHost, PresentationService
 
     // If unconfirmed or in correct phase/cycle we remove it
     boolean canRemoveProposal(Proposal proposal) {
-        final Optional<Tx> optionalProposalTx = stateServiceFacade.getTx(proposal.getTxId());
+        final Optional<Tx> optionalProposalTx = stateService.getTx(proposal.getTxId());
         return !optionalProposalTx.isPresent() || isTxInPhaseAndCycle(optionalProposalTx.get());
     }
 /*
@@ -233,17 +233,17 @@ public class BallotListService implements PersistedDataHost, PresentationService
     // We use the last block in the BREAK1 phase to set all proposals for that cycle.
     // If a proposal would arrive later it will be ignored.
     private Optional<StateChangeEvent> getAddProposalPayloadEvent(Proposal proposal, int height) {
-        return stateServiceFacade.getTx(proposal.getTxId())
+        return stateService.getTx(proposal.getTxId())
                 .filter(tx -> isLastToleratedBlock(height))
-                .filter(tx -> periodServiceFacade.isTxInCorrectCycle(tx.getBlockHeight(), height))
-                .filter(tx -> periodServiceFacade.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
+                .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
+                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
                 .filter(tx -> proposalValidator.isValid(proposal))
                 .map(tx -> new ProposalEvent(proposal, height));
     }
 */
 
     private boolean isLastToleratedBlock(int height) {
-        return height == periodServiceFacade.getLastBlockOfPhase(height, Phase.BREAK1);
+        return height == periodService.getLastBlockOfPhase(height, Phase.BREAK1);
     }
 
 
@@ -276,21 +276,21 @@ public class BallotListService implements PersistedDataHost, PresentationService
         }
 
         final String txId = proposal.getTxId();
-        Optional<Tx> optionalTx = stateServiceFacade.getTx(txId);
-        int chainHeight = stateServiceFacade.getChainHeight();
+        Optional<Tx> optionalTx = stateService.getTx(txId);
+        int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
-            if (!periodServiceFacade.isTxInCorrectCycle(txHeight, chainHeight)) {
+            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
                 log.warn("Tx is not in current cycle. proposal={}", proposal);
                 return false;
             }
-            if (!periodServiceFacade.isInPhase(txHeight, Phase.PROPOSAL)) {
+            if (!periodService.isInPhase(txHeight, Phase.PROPOSAL)) {
                 log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
                 return false;
             }
         } else {
-            if (!periodServiceFacade.isInPhase(chainHeight, Phase.PROPOSAL)) {
+            if (!periodService.isInPhase(chainHeight, Phase.PROPOSAL)) {
                 log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
                 return false;
             }
