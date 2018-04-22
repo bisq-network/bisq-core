@@ -26,9 +26,12 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
+import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.state.blockchain.TxBlock;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
+import bisq.core.dao.consensus.state.events.StateChangeEvent;
 import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
@@ -48,6 +51,7 @@ import javax.crypto.SecretKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,7 +65,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 @Slf4j
-public class VoteResultService {
+public class VoteResultService implements StateChangeEventsProvider {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final ChangeParamService changeParamService;
@@ -103,6 +107,24 @@ public class VoteResultService {
 
     public void start() {
         maybeCalculateVoteResult(periodService.getChainHeight());
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // StateChangeEventsProvider
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
+        final int height = txBlock.getHeight();
+        if (periodService.getFirstBlockOfPhase(height, Phase.VOTE_RESULT) == height) {
+            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+            // TODO in case of para change we add it to state
+            // data for issuance is required earlier in the parsing so it does not make sense to add it here
+            return stateChangeEvents;
+        } else {
+            return new HashSet<>();
+        }
     }
 
 
@@ -277,7 +299,7 @@ public class VoteResultService {
         } /*else if (proposal instanceof GenericProposal) {
             //TODO impl
         } else if (proposal instanceof ChangeParamProposal) {
-            //TODO impl
+            //TODO impl -> add to state
         } else if (proposal instanceof RemoveAssetProposalPayload) {
             //TODO impl
         }*/
