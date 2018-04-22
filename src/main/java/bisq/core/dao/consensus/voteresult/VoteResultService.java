@@ -17,6 +17,8 @@
 
 package bisq.core.dao.consensus.voteresult;
 
+import bisq.core.dao.consensus.ballot.BallotList;
+import bisq.core.dao.consensus.blindvote.BlindVote;
 import bisq.core.dao.consensus.blindvote.BlindVoteList;
 import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.period.PeriodService;
@@ -24,10 +26,9 @@ import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
-import bisq.core.dao.consensus.state.StateChangeEventsProvider;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.blockchain.TxBlock;
-import bisq.core.dao.consensus.state.events.StateChangeEvent;
+import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.consensus.state.blockchain.TxOutput;
 import bisq.core.dao.consensus.vote.BooleanVote;
 import bisq.core.dao.consensus.vote.LongVote;
 import bisq.core.dao.consensus.vote.Vote;
@@ -42,10 +43,11 @@ import javax.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import javax.crypto.SecretKey;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,24 +60,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-//TODO case that user misses reveal phase not impl. yet
-
-/**
- * Processes the vote results in the issuance phase.
- * <p>
- * // TODO we might process the preliminary results as soon the voteReveal txs arrive to show preliminary results?
- * // TODO we should store the DecryptedVote list to disk. Either as db file or as extension data structure to the
- * blockchain.
- */
-
 @Slf4j
-public class VoteResultService implements StateChangeEventsProvider {
+public class VoteResultService {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final ChangeParamService changeParamService;
     private final PeriodService periodService;
-    //TODO dont use BlindVoteService
     private final BlindVoteService blindVoteService;
+    private final DecryptedVoteHelper decryptedVoteHelper;
     private final IssuanceService issuanceService;
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
@@ -91,34 +83,26 @@ public class VoteResultService implements StateChangeEventsProvider {
                              ChangeParamService changeParamService,
                              PeriodService periodService,
                              BlindVoteService blindVoteService,
+                             DecryptedVoteHelper decryptedVoteHelper,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
         this.periodService = periodService;
         this.blindVoteService = blindVoteService;
+        this.decryptedVoteHelper = decryptedVoteHelper;
         this.issuanceService = issuanceService;
 
-        stateService.registerStateChangeEventsProvider(this);
+        periodService.addPeriodStateChangeListener(this::maybeCalculateVoteResult);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
+    // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
-        final int chainHeight = txBlock.getHeight();
-        if (chainHeight == 549) {
-            log.error("asdf");
-        }
-        if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_RESULT) {
-            applyVoteResult(chainHeight);
-        }
-
-        // We have nothing to return as there are no p2p network data for vote reveal.
-        return new HashSet<>();
+    public void start() {
+        maybeCalculateVoteResult(periodService.getChainHeight());
     }
 
 
@@ -126,37 +110,39 @@ public class VoteResultService implements StateChangeEventsProvider {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void applyVoteResult(int chainHeight) {
-        Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet = getDecryptedVoteByVoteRevealTxIdSet(chainHeight);
-        if (!decryptedVoteByVoteRevealTxIdSet.isEmpty()) {
-            // From the decryptedVoteByVoteRevealTxIdSet we create a map with the hash of the blind vote list as key and the
-            // aggregated stake as value. That map is used for calculating the majority of the blind vote lists.
-            // If there are conflicting versions due the eventually consistency of the P2P network (it might be
-            // that some blind votes do not arrive at all voters which would lead to conflicts in the result calculation).
-            // To solve that problem we will only consider the majority data view as valid.
-            // In case multiple data views would have the same stake we sort additionally by the hex value of the
-            // blind vote hash and use the first one in the sorted list as winner.
-            Map<byte[], Long> stakeByHashOfVoteListMap = getStakeByHashOfVoteListMap(decryptedVoteByVoteRevealTxIdSet);
-            byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(stakeByHashOfVoteListMap);
-            if (majorityVoteListHash != null) {
-                if (isBlindVoteListMatchingMajority(majorityVoteListHash, chainHeight)) {
-                    Map<Proposal, List<VoteWithStake>> resultListByProposalPayloadMap = getResultListByProposalPayloadMap(decryptedVoteByVoteRevealTxIdSet);
-                    processAllVoteResults(resultListByProposalPayloadMap, chainHeight, changeParamService);
-                    log.info("processAllVoteResults completed");
+    private void maybeCalculateVoteResult(int chainHeight) {
+        if (periodService.getFirstBlockOfPhase(chainHeight, Phase.VOTE_RESULT) == chainHeight) {
+            Set<DecryptedVote> decryptedVotes = getDecryptedVotes(chainHeight);
+            if (!decryptedVotes.isEmpty()) {
+                // From the decryptedVotes we create a map with the hash of the blind vote list as key and the
+                // aggregated stake as value. That map is used for calculating the majority of the blind vote lists.
+                // If there are conflicting versions due the eventually consistency of the P2P network (it might be
+                // that some blind votes do not arrive at all voters which would lead to conflicts in the result calculation).
+                // To solve that problem we will only consider the majority data view as valid.
+                // In case multiple data views would have the same stake we sort additionally by the hex value of the
+                // blind vote hash and use the first one in the sorted list as winner.
+                Map<byte[], Long> stakeByHashOfVoteListMap = getStakeByHashOfVoteListMap(decryptedVotes);
+                byte[] majorityVoteListHash = getMajorityVoteListHashByTxIdMap(stakeByHashOfVoteListMap);
+                if (majorityVoteListHash != null) {
+                    if (isBlindVoteListMatchingMajority(majorityVoteListHash)) {
+                        Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
+                        processAllVoteResults(resultListByProposalMap, chainHeight, changeParamService);
+                        log.info("processAllVoteResults completed");
+                    } else {
+                        log.warn("Our list of received blind votes do not match the list from the majority of voters.");
+                        // TODO request missing blind votes
+                    }
                 } else {
-                    log.warn("Our list of received blind votes do not match the list from the majority of voters.");
-                    // TODO request missing blind votes
+                    //TODO throw exception as it is likely not a valid option
+                    log.warn("majorityVoteListHash is null");
                 }
             } else {
-                //TODO throw exception as it is likely not a valid option
-                log.warn("majorityVoteListHash is null");
+                log.info("There have not been any votes in that cycle. chainHeight={}", chainHeight);
             }
-        } else {
-            log.info("There have not been any votes in that cycle. chainHeight={}", chainHeight);
         }
     }
 
-    private Set<DecryptedVote> getDecryptedVoteByVoteRevealTxIdSet(int chainHeight) {
+    private Set<DecryptedVote> getDecryptedVotes(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
         return stateService.getVoteRevealOpReturnTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
@@ -164,8 +150,15 @@ public class VoteResultService implements StateChangeEventsProvider {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
                     try {
-                        return new DecryptedVote(opReturnData, voteRevealTxId, stateService, periodService,
-                                blindVoteService, chainHeight);
+                        byte[] hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
+                        SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
+                        Tx voteRevealTx = decryptedVoteHelper.getVoteRevealTx(voteRevealTxId, stateService, periodService, chainHeight);
+                        TxOutput blindVoteStakeOutput = decryptedVoteHelper.getBlindVoteStakeOutput(voteRevealTx, stateService);
+                        String blindVoteTxId = decryptedVoteHelper.getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
+                        long stake = decryptedVoteHelper.getStake(blindVoteStakeOutput);
+                        BlindVote blindVote = decryptedVoteHelper.getBlindVote(blindVoteTxId, blindVoteService);
+                        BallotList ballotList = decryptedVoteHelper.getBallotList(blindVote, secretKey);
+                        return new DecryptedVote(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, stake, ballotList);
                     } catch (VoteResultException e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;
@@ -175,9 +168,9 @@ public class VoteResultService implements StateChangeEventsProvider {
                 .collect(Collectors.toSet());
     }
 
-    private Map<byte[], Long> getStakeByHashOfVoteListMap(Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet) {
+    private Map<byte[], Long> getStakeByHashOfVoteListMap(Set<DecryptedVote> decryptedVotes) {
         Map<byte[], Long> map = new HashMap<>();
-        decryptedVoteByVoteRevealTxIdSet.forEach(decryptedVote -> {
+        decryptedVotes.forEach(decryptedVote -> {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
             map.computeIfAbsent(hash, e -> 0L);
             long aggregatedStake = map.get(hash);
@@ -189,14 +182,15 @@ public class VoteResultService implements StateChangeEventsProvider {
 
     @Nullable
     private byte[] getMajorityVoteListHashByTxIdMap(Map<byte[], Long> stakeByHashOfVoteListMap) {
-        List<HashWithStake> list = new ArrayList<>();
-        stakeByHashOfVoteListMap.forEach((key, value) -> list.add(new HashWithStake(key, value)));
+        List<HashWithStake> list = stakeByHashOfVoteListMap.entrySet().stream()
+                .map(entry -> new HashWithStake(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
         return VoteResultConsensus.getMajorityHash(list);
     }
 
-    private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash, int chainHeight) {
+    private boolean isBlindVoteListMatchingMajority(byte[] majorityVoteListHash) {
         // We reuse the methods at voteReveal domain used when creating the hash
-        final BlindVoteList blindVoteList = voteRevealService.getSortedBlindVoteListOfCycle(chainHeight);
+        final BlindVoteList blindVoteList = voteRevealService.getSortedBlindVoteListOfCycle();
         byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
         log.info("majorityVoteListHash " + Utilities.bytesAsHexString(majorityVoteListHash));
         log.info("Sha256Ripemd160 hash of my blindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
@@ -204,31 +198,31 @@ public class VoteResultService implements StateChangeEventsProvider {
     }
 
 
-    private Map<Proposal, List<VoteWithStake>> getResultListByProposalPayloadMap(Set<DecryptedVote> decryptedVoteByVoteRevealTxIdSet) {
-        Map<Proposal, List<VoteWithStake>> stakeByProposalMap = new HashMap<>();
-        decryptedVoteByVoteRevealTxIdSet.forEach(decryptedVote -> {
-            iterateProposals(stakeByProposalMap, decryptedVote);
+    private Map<Proposal, List<VoteWithStake>> getVoteWithStakeListByProposalMap(Set<DecryptedVote> decryptedVotes) {
+        Map<Proposal, List<VoteWithStake>> voteWithStakeByProposalMap = new HashMap<>();
+        decryptedVotes.forEach(decryptedVote -> {
+            iterateProposals(voteWithStakeByProposalMap, decryptedVote);
         });
-        return stakeByProposalMap;
+        return voteWithStakeByProposalMap;
     }
 
-    private void iterateProposals(Map<Proposal, List<VoteWithStake>> stakeByProposalMap, DecryptedVote decryptedVote) {
-        decryptedVote.getBallotListUsedForVoting().getList()
-                .forEach(proposal -> {
-                    final Proposal proposalPayload = proposal.getProposal();
-                    stakeByProposalMap.putIfAbsent(proposalPayload, new ArrayList<>());
-                    final List<VoteWithStake> voteWithStakeList = stakeByProposalMap.get(proposalPayload);
-                    voteWithStakeList.add(new VoteWithStake(proposal.getVote(), decryptedVote.getStake()));
+    private void iterateProposals(Map<Proposal, List<VoteWithStake>> voteWithStakeByProposalMap, DecryptedVote decryptedVote) {
+        decryptedVote.getBallotList()
+                .forEach(ballot -> {
+                    final Proposal proposal = ballot.getProposal();
+                    voteWithStakeByProposalMap.putIfAbsent(proposal, new ArrayList<>());
+                    final List<VoteWithStake> voteWithStakeList = voteWithStakeByProposalMap.get(proposal);
+                    voteWithStakeList.add(new VoteWithStake(ballot.getVote(), decryptedVote.getStake()));
                 });
     }
 
     private void processAllVoteResults(Map<Proposal, List<VoteWithStake>> map,
                                        int chainHeight,
                                        ChangeParamService changeParamService) {
-        map.forEach((payload, voteResultsWithStake) -> {
-            ResultPerProposal resultPerProposal = getResultPerProposal(voteResultsWithStake);
+        map.forEach((proposal, voteWithStakeList) -> {
+            ResultPerProposal resultPerProposal = getResultPerProposal(voteWithStakeList);
             long totalStake = resultPerProposal.getStakeOfAcceptedVotes() + resultPerProposal.getStakeOfRejectedVotes();
-            long quorum = changeParamService.getDaoParamValue(payload.getQuorumDaoParam(), chainHeight);
+            long quorum = changeParamService.getDaoParamValue(proposal.getQuorumDaoParam(), chainHeight);
             log.info("totalStake: {}", totalStake);
             log.info("required quorum: {}", quorum);
             if (totalStake >= quorum) {
@@ -236,12 +230,12 @@ public class VoteResultService implements StateChangeEventsProvider {
                 // We multiply by 10000 as we use a long for requiredVoteThreshold and that got added precision, so
                 // 50% is 50.00. As we use 100% for 1 we get another multiplied by 100, resulting in 10 000.
                 reachedThreshold *= 10_000;
-                long requiredVoteThreshold = changeParamService.getDaoParamValue(payload.getThresholdDaoParam(), chainHeight);
+                long requiredVoteThreshold = changeParamService.getDaoParamValue(proposal.getThresholdDaoParam(), chainHeight);
                 log.info("reached threshold: {} %", reachedThreshold / 100D);
                 log.info("required threshold: {} %", requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold
                 if (reachedThreshold > requiredVoteThreshold) {
-                    processCompletedVoteResult(payload, chainHeight);
+                    processCompletedVoteResult(proposal, chainHeight);
                 } else {
                     log.warn("We did not reach the quorum. reachedThreshold={} %, requiredVoteThreshold={} %",
                             reachedThreshold / 100D, requiredVoteThreshold / 100D);
@@ -275,6 +269,7 @@ public class VoteResultService implements StateChangeEventsProvider {
         }
         return new ResultPerProposal(stakeOfAcceptedVotes, stakeOfRejectedVotes);
     }
+
 
     private void processCompletedVoteResult(Proposal proposal, int chainHeight) {
         if (proposal instanceof CompensationProposal) {

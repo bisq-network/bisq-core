@@ -65,8 +65,8 @@ public final class PeriodService {
 
         periodState.addPeriodStateChangeListener(new PeriodStateChangeListener() {
             @Override
-            public void onPreParserChainHeightChanged(int chainHeight) {
-                periodStateChangeListeners.forEach(l -> l.onPreParserChainHeightChanged(chainHeight));
+            public void onChainHeightChanged(int chainHeight) {
+                periodStateChangeListeners.forEach(l -> l.onChainHeightChanged(chainHeight));
                 updatePhaseProperty();
             }
 

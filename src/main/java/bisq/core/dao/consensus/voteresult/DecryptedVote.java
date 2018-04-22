@@ -18,24 +18,9 @@
 package bisq.core.dao.consensus.voteresult;
 
 import bisq.core.dao.consensus.ballot.BallotList;
-import bisq.core.dao.consensus.blindvote.BlindVote;
-import bisq.core.dao.consensus.blindvote.BlindVoteService;
-import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.blockchain.Tx;
-import bisq.core.dao.consensus.state.blockchain.TxInput;
-import bisq.core.dao.consensus.state.blockchain.TxOutput;
-import bisq.core.dao.consensus.state.blockchain.TxOutputType;
-import bisq.core.dao.consensus.state.blockchain.TxType;
-
-import javax.crypto.SecretKey;
-
-import java.util.Optional;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Holds all data from a decrypted vote item.
@@ -43,115 +28,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
 @Value
-public class DecryptedVote {
+class DecryptedVote {
     private final byte[] hashOfBlindVoteList;
     private final String voteRevealTxId;
     private final String blindVoteTxId;
     private final long stake;
-    private final BallotList ballotListUsedForVoting;
+    private final BallotList ballotList;
 
-    //TODO dont use BlindVoteService
-    public DecryptedVote(byte[] opReturnData, String voteRevealTxId, StateService stateService,
-                         PeriodService periodService, BlindVoteService blindVoteService, int chainHeight)
-            throws VoteResultException {
-        hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
+    DecryptedVote(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake, BallotList ballotList) {
+        this.hashOfBlindVoteList = hashOfBlindVoteList;
         this.voteRevealTxId = voteRevealTxId;
-
-        SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
-        Tx voteRevealTx = getVoteRevealTx(voteRevealTxId, stateService, periodService, chainHeight);
-        TxOutput blindVoteStakeOutput = getBlindVoteStakeOutput(voteRevealTx, stateService);
-        blindVoteTxId = getBlindVoteTxId(blindVoteStakeOutput, stateService, periodService, chainHeight);
-        stake = getStake(blindVoteStakeOutput);
-        BlindVote blindVote = getBlindVote(stateService, blindVoteService);
-        ballotListUsedForVoting = getBallotList(blindVote, secretKey);
-    }
-
-    private Tx getVoteRevealTx(String voteRevealTxId, StateService stateService, PeriodService periodService,
-                               int chainHeight)
-            throws VoteResultException {
-        Optional<Tx> optionalVoteRevealTx = stateService.getTx(voteRevealTxId);
-        try {
-            checkArgument(optionalVoteRevealTx.isPresent(), "voteRevealTx with txId " +
-                    voteRevealTxId + "not found.");
-            Tx voteRevealTx = optionalVoteRevealTx.get();
-            Optional<TxType> optionalTxType = stateService.getTxType(voteRevealTx.getId());
-            checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
-            checkArgument(optionalTxType.get() == TxType.VOTE_REVEAL,
-                    "voteRevealTx must have type VOTE_REVEAL");
-            checkArgument(periodService.isTxInCorrectCycle(voteRevealTx.getBlockHeight(), chainHeight),
-                    "voteRevealTx is not in correct cycle. chainHeight=" + chainHeight);
-            return voteRevealTx;
-        } catch (Throwable t) {
-            throw new VoteResultException(t);
-        }
-    }
-
-    private TxOutput getBlindVoteStakeOutput(Tx voteRevealTx, StateService stateService)
-            throws VoteResultException {
-        try {
-            // We use the stake output of the blind vote tx as first input
-            final TxInput stakeIxInput = voteRevealTx.getInputs().get(0);
-            Optional<TxOutput> optionalTxOutput = stateService.getConnectedTxOutput(stakeIxInput);
-            checkArgument(optionalTxOutput.isPresent(), "blindVoteStakeOutput must not be present");
-            final TxOutput txOutput = optionalTxOutput.get();
-            checkArgument(stateService.getTxOutputType(txOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
-                    "blindVoteStakeOutput must have type BLIND_VOTE_LOCK_STAKE_OUTPUT");
-            return txOutput;
-        } catch (Throwable t) {
-            throw new VoteResultException(t);
-        }
-    }
-
-    private String getBlindVoteTxId(TxOutput blindVoteStakeOutput, StateService stateService,
-                                    PeriodService periodService, int chainHeight)
-            throws VoteResultException {
-        try {
-            String blindVoteTxId = blindVoteStakeOutput.getTxId();
-            Optional<Tx> optionalBlindVoteTx = stateService.getTx(blindVoteTxId);
-            checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
-                    blindVoteTxId + "not found.");
-            Tx blindVoteTx = optionalBlindVoteTx.get();
-            Optional<TxType> optionalTxType = stateService.getTxType(blindVoteTx.getId());
-            checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
-            checkArgument(optionalTxType.get() == TxType.BLIND_VOTE,
-                    "blindVoteTx must have type BLIND_VOTE");
-            checkArgument(periodService.isTxInCorrectCycle(blindVoteTx.getBlockHeight(), chainHeight),
-                    "blindVoteTx is not in correct cycle. chainHeight=" + chainHeight);
-            return blindVoteTxId;
-        } catch (Throwable t) {
-            throw new VoteResultException(t);
-        }
-    }
-
-    private long getStake(TxOutput blindVoteStakeOutput) {
-        return blindVoteStakeOutput.getValue();
-    }
-
-    private BlindVote getBlindVote(StateService stateService, BlindVoteService blindVoteService) throws VoteResultException {
-        try {
-          /*  Optional<BlindVote> optionalBlindVote = stateService.getBlindVotes().stream()
-                    .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
-                    .findAny();*/
-
-            Optional<BlindVote> optionalBlindVote = blindVoteService.getBlindVoteList().stream()
-                    .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
-                    .findAny();
-
-            checkArgument(optionalBlindVote.isPresent(), "blindVote with txId " + blindVoteTxId +
-                    "not found in stateService.");
-            return optionalBlindVote.get();
-        } catch (Throwable t) {
-            throw new VoteResultException(t);
-        }
-    }
-
-    private BallotList getBallotList(BlindVote blindVote, SecretKey secretKey) throws VoteResultException {
-        try {
-            final byte[] encryptedProposalList = blindVote.getEncryptedBallotList();
-            final byte[] decrypted = VoteResultConsensus.decryptProposalList(encryptedProposalList, secretKey);
-            return BallotList.parseBallotList(decrypted);
-        } catch (Throwable t) {
-            throw new VoteResultException(t);
-        }
+        this.blindVoteTxId = blindVoteTxId;
+        this.stake = stake;
+        this.ballotList = ballotList;
     }
 }

@@ -69,7 +69,7 @@ public class PeriodState {
 
     void setChainHeight(int chainHeight) {
         this.chainHeight = chainHeight;
-        periodStateChangeListeners.forEach(listener -> listener.onPreParserChainHeightChanged(chainHeight));
+        periodStateChangeListeners.forEach(listener -> listener.onChainHeightChanged(chainHeight));
     }
 
     void setCurrentCycle(Cycle currentCycle) {

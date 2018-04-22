@@ -18,7 +18,7 @@
 package bisq.core.dao.consensus.period;
 
 public interface PeriodStateChangeListener {
-    void onPreParserChainHeightChanged(int chainHeight);
+    void onChainHeightChanged(int chainHeight);
 
     default void onCurrentCycleChanged(Cycle currentCycle) {
     }

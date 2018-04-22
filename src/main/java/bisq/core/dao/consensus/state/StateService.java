@@ -115,7 +115,6 @@ public class StateService {
     public void applyTxBlock(TxBlock txBlock) {
         // Those who registered to process a txBlock might return a list of StateChangeEvents.
         // We collect all from all providers and then go on.
-        // The providers are called in the parser thread, so we have a single threaded execution model here.
         Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
         stateChangeEventsProviders.forEach(stateChangeEventsProvider -> {
             stateChangeEvents.addAll(stateChangeEventsProvider.provideStateChangeEvents(txBlock));

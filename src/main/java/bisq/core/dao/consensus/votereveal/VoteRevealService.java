@@ -33,7 +33,6 @@ import bisq.core.dao.consensus.blindvote.BlindVoteService;
 import bisq.core.dao.consensus.myvote.MyBlindVoteService;
 import bisq.core.dao.consensus.myvote.MyVote;
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.period.PeriodStateChangeListener;
 import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
@@ -101,12 +100,9 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
         });
         //stateService.registerStateChangeEventsProvider(this);
 
-        periodService.addPeriodStateChangeListener(new PeriodStateChangeListener() {
-            @Override
-            public void onPreParserChainHeightChanged(int chainHeight) {
-                // do we want call before parser?
-                maybeRevealVotes(chainHeight);
-            }
+        periodService.addPeriodStateChangeListener(chainHeight -> {
+            // do we want call before parser?
+            maybeRevealVotes(chainHeight);
         });
     }
 
@@ -119,8 +115,10 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
         maybeRevealVotes(periodService.getChainHeight());
     }
 
-    public BlindVoteList getSortedBlindVoteListOfCycle(int chainHeight) {
-        final List<BlindVote> list = getBlindVoteListOfCycle(chainHeight);
+    public BlindVoteList getSortedBlindVoteListOfCycle() {
+        final List<BlindVote> list = blindVoteService.getBlindVoteList().stream()
+                .filter(blindVoteService::isBlindVoteValid)
+                .collect(Collectors.toList());
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
         BlindVoteConsensus.sortBlindVoteList(list);
@@ -157,7 +155,6 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes(int chainHeight) {
         if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
-            // TODO dont use myBlindVoteService
             myBlindVoteService.getMyVoteList().stream()
                     .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
                     .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
@@ -186,8 +183,8 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
         // To ensure we get a consensus of the data for later calculating the result we will put a hash of each
         // voters  blind vote collection into the opReturn data and check for a majority at issuance time.
         // The voters "vote" with their stake at the reveal tx for their version of the blind vote collection.
-        final BlindVoteList blindVoteList = getSortedBlindVoteListOfCycle(chainHeight);
-        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(blindVoteList);
+        BlindVoteList list = getSortedBlindVoteListOfCycle();
+        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(list);
 
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
@@ -209,7 +206,6 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
-                    //TODO dont use myBlindVoteService
                     myBlindVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
                 }
 
@@ -243,16 +239,6 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
             voteRevealExceptions.add(new VoteRevealException(msg,
                     stakeTxOutput.getTxId()));
         }
-    }
-
-    private List<BlindVote> getBlindVoteListOfCycle(int chainHeight) {
-        return blindVoteService.getBlindVoteList().stream()
-                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
-                .collect(Collectors.toList());
-
-     /*   return stateService.getBlindVotes().stream()
-                .filter(blindVote -> periodService.isTxInCorrectCycle(blindVote.getTxId(), chainHeight))
-                .collect(Collectors.toList());*/
     }
 
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)

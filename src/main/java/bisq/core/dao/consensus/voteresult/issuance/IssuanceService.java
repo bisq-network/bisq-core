@@ -18,6 +18,7 @@
 package bisq.core.dao.consensus.voteresult.issuance;
 
 import bisq.core.dao.consensus.period.PeriodService;
+import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.compensation.CompensationProposal;
 import bisq.core.dao.consensus.state.StateService;
 import bisq.core.dao.consensus.state.blockchain.TxOutput;
@@ -47,7 +48,6 @@ public class IssuanceService {
         this.periodService = periodService;
     }
 
-    // Called from parser thread
     public void issueBsq(CompensationProposal compensationProposal, int chainHeight) {
         final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getIssuanceCandidateTxOutputs();
         compReqIssuanceTxOutputs.stream()
@@ -59,6 +59,7 @@ public class IssuanceService {
                     return rawBsqAddress.equals(txOutput.getAddress());
                 })
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
+                .filter(txOutput -> periodService.isTxInPhase(txOutput.getTxId(), Phase.PROPOSAL))
                 .forEach(txOutput -> {
                     stateService.addIssuanceTxOutput(txOutput);
 

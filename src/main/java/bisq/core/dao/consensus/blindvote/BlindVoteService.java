@@ -20,6 +20,8 @@ package bisq.core.dao.consensus.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.Phase;
+import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.state.blockchain.Tx;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -30,6 +32,9 @@ import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
+
+import java.util.List;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 public class BlindVoteService implements PersistedDataHost {
     private final P2PService p2PService;
     private final PeriodService periodService;
+    private final BlindVoteValidator blindVoteValidator;
+    private final StateService stateService;
     private final Storage<BlindVoteList> storage;
 
     @Getter
@@ -56,9 +63,13 @@ public class BlindVoteService implements PersistedDataHost {
     @Inject
     public BlindVoteService(P2PService p2PService,
                             PeriodService periodService,
+                            BlindVoteValidator blindVoteValidator,
+                            StateService stateService,
                             Storage<BlindVoteList> storage) {
         this.p2PService = p2PService;
         this.periodService = periodService;
+        this.blindVoteValidator = blindVoteValidator;
+        this.stateService = stateService;
         this.storage = storage;
 
         p2PService.getP2PDataStorage().addHashMapChangedListener(new HashMapChangedListener() {
@@ -102,6 +113,13 @@ public class BlindVoteService implements PersistedDataHost {
                 .forEach(entry -> onAddedProtectedStorageEntry(entry, false));
     }
 
+    public void addMyBlindVote(BlindVote blindVote) {
+        if (isBlindVoteValid(blindVote)) {
+            blindVoteList.add(blindVote);
+            persist();
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -111,13 +129,13 @@ public class BlindVoteService implements PersistedDataHost {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof BlindVotePayload) {
             final BlindVotePayload blindVotePayload = (BlindVotePayload) protectedStoragePayload;
-            if (blindVoteList.stream().noneMatch(e -> e.equals(blindVotePayload.getBlindVote()))) {
-                // For adding a blindVotePayload we need to be before the last block in BREAK2 as in the last block at BREAK2
-                // we write our blindVotes to the state.
+            final BlindVote blindVote = blindVotePayload.getBlindVote();
+            if (blindVoteList.stream().noneMatch(e -> e.equals(blindVote))) {
                 final int height = periodService.getChainHeight();
-                if (isInToleratedBlockRange(height)) {
+
+                if (isBlindVoteValid(blindVote)) {
                     log.info("We received a BlindVotePayload from the P2P network. BlindVotePayload=" + blindVotePayload);
-                    blindVoteList.add(blindVotePayload.getBlindVote());
+                    blindVoteList.add(blindVote);
 
                     if (storeLocally) {
                         persist();
@@ -133,11 +151,51 @@ public class BlindVoteService implements PersistedDataHost {
         }
     }
 
-    private boolean isInToleratedBlockRange(int height) {
-        return height < periodService.getLastBlockOfPhase(height, Phase.BREAK2);
-    }
-
     private void persist() {
         storage.queueUpForSave();
+    }
+
+    public boolean isBlindVoteValid(BlindVote blindVote) {
+        if (blindVoteListContains(blindVote, blindVoteList.getList())) {
+            log.debug("We have that blindVote already in our list. blindVote={}", blindVote);
+            return false;
+        }
+
+        if (!blindVoteValidator.isValid(blindVote)) {
+            log.warn("blindVote is invalid. blindVote={}", blindVote);
+            return false;
+        }
+
+        final String txId = blindVote.getTxId();
+        Optional<Tx> optionalTx = stateService.getTx(txId);
+        int chainHeight = stateService.getChainHeight();
+        final boolean isTxConfirmed = optionalTx.isPresent();
+        if (isTxConfirmed) {
+            final int txHeight = optionalTx.get().getBlockHeight();
+            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
+                log.warn("Tx is not in current cycle. blindVote={}", blindVote);
+                return false;
+            }
+            if (!periodService.isInPhase(txHeight, Phase.BLIND_VOTE)) {
+                log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
+                return false;
+            }
+        } else {
+            if (!periodService.isInPhase(chainHeight, Phase.BLIND_VOTE)) {
+                log.warn("We received an unconfirmed tx and are not in BLIND_VOTE phase anymore. blindVote={}", blindVote);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean blindVoteListContains(BlindVote blindVote, List<BlindVote> blindVoteList) {
+        return findProposalInBlindVoteList(blindVote, blindVoteList).isPresent();
+    }
+
+    private Optional<BlindVote> findProposalInBlindVoteList(BlindVote blindVote, List<BlindVote> blindVoteList) {
+        return blindVoteList.stream()
+                .filter(vote -> vote.equals(blindVote))
+                .findAny();
     }
 }

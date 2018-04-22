@@ -37,11 +37,10 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.List;
 import java.util.Optional;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -49,12 +48,13 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class BallotListService implements PersistedDataHost /*, StateChangeEventsProvider*/ {
+public class BallotListService implements PersistedDataHost {
     private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
+    @Getter
     private final BallotList ballotList = new BallotList();
 
     @Inject
@@ -68,9 +68,6 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
         this.storage = storage;
-
-        // TODO remove
-        //stateService.registerStateChangeEventsProvider(this);
 
         p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
             @Override
@@ -93,10 +90,10 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            BallotList persisted = storage.initAndGetPersisted(getBallotList(), 20);
+            BallotList persisted = storage.initAndGetPersisted(ballotList, 20);
             if (persisted != null) {
-                getBallotList().clear();
-                getBallotList().addAll(persisted.getList());
+                ballotList.clear();
+                ballotList.addAll(persisted.getList());
             }
         }
     }
@@ -128,53 +125,6 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
         storage.queueUpForSave();
     }
 
-    public BallotList getBallotList() {
-        return ballotList;
-    }
-
-    // Parser thread is accessing the ballotList.
-    public ImmutableList<Ballot> getImmutableBallotList() {
-        return ImmutableList.copyOf(getBallotList().getList());
-    }
-
-
-/*
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
-
-        // TODO remove
-        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-        Set<Proposal> toRemove = new HashSet<>();
-        ballotList.stream()
-                .map(Ballot::getProposal)
-                .map(proposalPayload -> {
-                    final Optional<StateChangeEvent> optional = getAddProposalPayloadEvent(proposalPayload, txBlock.getHeight());
-
-                    // If we are in the correct block and we add a ProposalEvent to the state we remove
-                    // the proposal from our list after we have completed iteration.
-                    //TODO activate once we persist state
-                       */
-/* if (optional.isPresent())
-                            toRemove.add(proposal);*//*
-
-
-                    return optional;
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .forEach(stateChangeEvents::add);
-
-        // We remove those proposals we have just added to the state.
-        toRemove.forEach(this::removeProposalFromList);
-
-        return stateChangeEvents;
-    }
-*/
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -187,7 +137,7 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
             if (isProposalValidToAddToList(proposal)) {
                 log.info("We received a Proposal from the P2P network. Proposal.uid={}", proposal.getUid());
                 Ballot ballot = BallotFactory.getBallotFromProposal(proposal);
-                getBallotList().add(ballot);
+                ballotList.add(ballot);
                 if (storeLocally) persist();
             }
         }
@@ -196,9 +146,9 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
     private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof Proposal) {
-            final Proposal proposal = (Proposal) protectedStoragePayload;
-            findProposalInBallotList(proposal, getBallotList().getList())
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
+            findProposalInBallotList(proposal, ballotList.getList())
                     .filter(ballot -> {
                         if (canRemoveProposal(proposal)) {
                             return true;
@@ -241,10 +191,16 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
 
 
     private void removeProposalFromList(Proposal proposal) {
-        if (getBallotList().remove(proposal))
-            persist();
-        else
-            log.warn("We called removeProposalFromList at a proposal which was not in our list");
+        Optional<Ballot> optionalBallot = findProposalInBallotList(proposal, ballotList.getList());
+        if (optionalBallot.isPresent()) {
+            if (ballotList.remove(optionalBallot.get())) {
+                persist();
+            } else {
+                log.warn("Removal of ballot failed");
+            }
+        } else {
+            log.warn("We called removeProposalFromList at a ballot which was not in our list");
+        }
     }
 
     boolean ballotListContainsProposal(Proposal proposal, List<Ballot> ballotList) {
@@ -258,7 +214,7 @@ public class BallotListService implements PersistedDataHost /*, StateChangeEvent
     }
 
     private boolean isProposalValidToAddToList(Proposal proposal) {
-        if (ballotListContainsProposal(proposal, getBallotList().getList())) {
+        if (ballotListContainsProposal(proposal, ballotList.getList())) {
             log.debug("We have that proposalPayload already in our list. proposal={}", proposal);
             return false;
         }

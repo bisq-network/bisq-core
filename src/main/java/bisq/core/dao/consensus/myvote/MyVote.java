@@ -58,15 +58,19 @@ public class MyVote implements PersistablePayload {
     // Used just for caching
     @JsonExclude
     private final transient SecretKey secretKey;
+    private int height;
 
-    public MyVote(BallotList ballotList,
+    public MyVote(int height,
+                  BallotList ballotList,
                   byte[] secretKeyEncoded,
                   BlindVote blindVote) {
-        this(ballotList,
+        this(height,
+                ballotList,
                 secretKeyEncoded,
                 blindVote,
                 new Date().getTime(),
                 null);
+
     }
 
 
@@ -74,11 +78,13 @@ public class MyVote implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private MyVote(BallotList ballotList,
+    private MyVote(int height,
+                   BallotList ballotList,
                    byte[] secretKeyEncoded,
                    BlindVote blindVote,
                    long date,
                    @Nullable String revealTxId) {
+        this.height = height;
         this.ballotList = ballotList;
         this.secretKeyEncoded = secretKeyEncoded;
         this.blindVote = blindVote;
@@ -91,6 +97,7 @@ public class MyVote implements PersistablePayload {
     @Override
     public PB.MyVote toProtoMessage() {
         final PB.MyVote.Builder builder = PB.MyVote.newBuilder()
+                .setHeight(height)
                 .setBlindVote(blindVote.getBuilder())
                 .setBallotList(ballotList.getBuilder())
                 .setSecretKeyEncoded(ByteString.copyFrom(secretKeyEncoded))
@@ -100,7 +107,8 @@ public class MyVote implements PersistablePayload {
     }
 
     public static MyVote fromProto(PB.MyVote proto) {
-        return new MyVote(BallotList.fromProto(proto.getBallotList()),
+        return new MyVote(proto.getHeight(),
+                BallotList.fromProto(proto.getBallotList()),
                 proto.getSecretKeyEncoded().toByteArray(),
                 BlindVote.fromProto(proto.getBlindVote()),
                 proto.getDate(),

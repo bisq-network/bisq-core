@@ -82,6 +82,7 @@ public class DaoSetup {
         myBlindVoteService.start();
         filteredBallotListService.start();
         blindVoteService.start();
+        voteResultService.start();
     }
 
     public void shutDown() {

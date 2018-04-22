@@ -27,12 +27,15 @@ import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
+import bisq.common.UserThread;
+
 import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -105,8 +108,10 @@ public class FilteredBallotListService {
 
     private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        // Need a bit of delay as otherwise the handler might get called before the item got removed from the
+        // lists (at least at  localhost/regtest there are race conditions, over real network it will be much slower anyway)
         if (protectedStoragePayload instanceof ProposalPayload)
-            updateLists();
+            UserThread.runAfter(this::updateLists, 100, TimeUnit.MILLISECONDS);
     }
 
     private void updateLists() {

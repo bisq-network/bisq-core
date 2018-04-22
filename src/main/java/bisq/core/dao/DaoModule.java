@@ -57,6 +57,7 @@ import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.SnapshotManager;
 import bisq.core.dao.consensus.state.State;
 import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.consensus.voteresult.DecryptedVoteHelper;
 import bisq.core.dao.consensus.voteresult.VoteResultService;
 import bisq.core.dao.consensus.voteresult.issuance.IssuanceService;
 import bisq.core.dao.consensus.votereveal.VoteRevealService;
@@ -133,6 +134,7 @@ public class DaoModule extends AppModule {
         bind(BlindVoteValidator.class).in(Singleton.class);
         bind(VoteRevealService.class).in(Singleton.class);
         bind(VoteResultService.class).in(Singleton.class);
+        bind(DecryptedVoteHelper.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);
 
         // constants
