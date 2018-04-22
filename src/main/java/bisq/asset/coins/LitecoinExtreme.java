@@ -22,6 +22,6 @@
 +public class LitecoinExtreme extends Coin {
 +
 +    public LitecoinExtreme(){
-+        super("LitecoinExtreme", "LCE", new RegexAddressValidator("^[EM3][a-km-zA-HJ-NP-Z1-9]{26,33}$"));
++        super("LitecoinExtreme", "LCE", new RegexAddressValidator("^[E][a-km-zA-HJ-NP-Z1-9]{33}$"));
 +    }
 +}
