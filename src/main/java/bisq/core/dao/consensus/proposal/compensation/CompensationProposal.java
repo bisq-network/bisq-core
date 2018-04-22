@@ -129,12 +129,12 @@ public final class CompensationProposal extends Proposal {
     }
 
     @Override
-    public Param getQuorumDaoParam() {
+    public Param getQuorumParam() {
         return Param.QUORUM_COMP_REQUEST;
     }
 
     @Override
-    public Param getThresholdDaoParam() {
+    public Param getThresholdParam() {
         return Param.THRESHOLD_COMP_REQUEST;
     }
 

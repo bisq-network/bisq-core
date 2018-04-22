@@ -136,9 +136,9 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
         return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
     }
 
-    public abstract Param getQuorumDaoParam();
+    public abstract Param getQuorumParam();
 
-    public abstract Param getThresholdDaoParam();
+    public abstract Param getThresholdParam();
 
     @Override
     public String toString() {

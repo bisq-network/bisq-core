@@ -120,6 +120,12 @@ public class BlindVoteService implements PersistedDataHost {
         }
     }
 
+    public Optional<BlindVote> findBlindVote(String blindVoteTxId) {
+        return blindVoteList.stream()
+                .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
+                .findAny();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -190,10 +196,10 @@ public class BlindVoteService implements PersistedDataHost {
     }
 
     private boolean blindVoteListContains(BlindVote blindVote, List<BlindVote> blindVoteList) {
-        return findProposalInBlindVoteList(blindVote, blindVoteList).isPresent();
+        return findBlindVoteInList(blindVote, blindVoteList).isPresent();
     }
 
-    private Optional<BlindVote> findProposalInBlindVoteList(BlindVote blindVote, List<BlindVote> blindVoteList) {
+    private Optional<BlindVote> findBlindVoteInList(BlindVote blindVote, List<BlindVote> blindVoteList) {
         return blindVoteList.stream()
                 .filter(vote -> vote.equals(blindVote))
                 .findAny();

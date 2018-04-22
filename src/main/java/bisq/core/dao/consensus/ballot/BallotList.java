@@ -49,10 +49,10 @@ public class BallotList extends PersistableList<Ballot> implements VoteConsensus
 
     public static BallotList clone(BallotList ballotList) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope proto = ballotList.toProtoMessage();
-        return BallotList.parseBallotList(proto.toByteArray());
+        return BallotList.getBallotListFromBytes(proto.toByteArray());
     }
 
-    public static BallotList parseBallotList(byte[] bytes) throws InvalidProtocolBufferException {
+    public static BallotList getBallotListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
         final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(bytes);
         return BallotList.fromProto(envelope.getBallotList());
     }

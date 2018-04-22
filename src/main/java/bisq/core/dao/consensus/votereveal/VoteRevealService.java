@@ -59,8 +59,14 @@ import lombok.extern.slf4j.Slf4j;
 
 //TODO case that user misses reveal phase not impl. yet
 
+
+// TODO We could also broadcast the winning list at the moment the reveal period is over and have the break
+// interval as time buffer for all nodes to receive that winning list. All nodes which are in sync with the
+// majority data view can broadcast. That way it will become a very unlikely case that a node is missing
+// data.
+
 @Slf4j
-public class VoteRevealService /*implements StateChangeEventsProvider */ {
+public class VoteRevealService {
     private final StateService stateService;
     private final BlindVoteService blindVoteService;
     private final MyBlindVoteService myBlindVoteService;
@@ -98,7 +104,6 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
             if (c.wasAdded())
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
-        //stateService.registerStateChangeEventsProvider(this);
 
         periodService.addPeriodStateChangeListener(chainHeight -> {
             // do we want call before parser?
@@ -126,22 +131,10 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
         return new BlindVoteList(list);
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-   /* @Override
-    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
-        final int chainHeight = txBlock.getHeight();
-        if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
-            // relevant data we need is the chainHeight
-          maybeRevealVotes(chainHeight);
-        }
-
-        // We have nothing to return as there are no p2p network data for vote reveal.
-        return new HashSet<>();
-    }*/
+    public byte[] getHashOfBlindVoteList() {
+        BlindVoteList list = getSortedBlindVoteListOfCycle();
+        return VoteRevealConsensus.getHashOfBlindVoteList(list);
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -183,8 +176,7 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
         // To ensure we get a consensus of the data for later calculating the result we will put a hash of each
         // voters  blind vote collection into the opReturn data and check for a majority at issuance time.
         // The voters "vote" with their stake at the reveal tx for their version of the blind vote collection.
-        BlindVoteList list = getSortedBlindVoteListOfCycle();
-        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(list);
+        byte[] hashOfBlindVoteList = getHashOfBlindVoteList();
 
         log.info("Sha256Ripemd160 hash of hashOfBlindVoteList " + Utilities.bytesAsHexString(hashOfBlindVoteList));
         byte[] opReturnData = VoteRevealConsensus.getOpReturnData(hashOfBlindVoteList, myVote.getSecretKey());
@@ -207,6 +199,8 @@ public class VoteRevealService /*implements StateChangeEventsProvider */ {
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
                     myBlindVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
+
+                    //TODO republish list of blind votes for more resilience
                 }
 
                 @Override

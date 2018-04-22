@@ -30,8 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @Value
 class DecryptedVote {
     private final byte[] hashOfBlindVoteList;
-    private final String voteRevealTxId;
-    private final String blindVoteTxId;
+    private final String voteRevealTxId; // not used yet but keep it for now
+    private final String blindVoteTxId; // not used yet but keep it for now
     private final long stake;
     private final BallotList ballotList;
 

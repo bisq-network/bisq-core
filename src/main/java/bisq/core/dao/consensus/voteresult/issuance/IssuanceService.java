@@ -51,24 +51,24 @@ public class IssuanceService {
     public void issueBsq(CompensationProposal compensationProposal, int chainHeight) {
         final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getIssuanceCandidateTxOutputs();
         compReqIssuanceTxOutputs.stream()
-                .filter(txOutput -> txOutput.getTxId().equals(compensationProposal.getTxId()))
-                .filter(txOutput -> compensationProposal.getRequestedBsq().value == txOutput.getValue())
-                .filter(txOutput -> {
-                    final String bsqAddress = compensationProposal.getBsqAddress();
-                    final String rawBsqAddress = bsqAddress.substring(1);
-                    return rawBsqAddress.equals(txOutput.getAddress());
-                })
-                .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
-                .filter(txOutput -> periodService.isTxInPhase(txOutput.getTxId(), Phase.PROPOSAL))
+                .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
                     stateService.addIssuanceTxOutput(txOutput);
 
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");
-                    sb.append("We issued new BSQ to txId ").append(txOutput.getTxId())
+                    sb.append("We issued new BSQ to tx with ID ").append(txOutput.getTxId())
                             .append("\nfor compensationProposal with UID ").append(compensationProposal.getUid())
                             .append("\n################################################################################\n");
                     log.info(sb.toString());
                 });
+    }
+
+    private boolean isValid(TxOutput txOutput, CompensationProposal compensationProposal, PeriodService periodService, int chainHeight) {
+        return txOutput.getTxId().equals(compensationProposal.getTxId())
+                && compensationProposal.getRequestedBsq().value == txOutput.getValue()
+                && compensationProposal.getBsqAddress().substring(1).equals(txOutput.getAddress())
+                && periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight)
+                && periodService.isTxInPhase(txOutput.getTxId(), Phase.PROPOSAL);
     }
 }
