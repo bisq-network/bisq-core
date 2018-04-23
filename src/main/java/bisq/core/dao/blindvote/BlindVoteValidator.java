@@ -18,8 +18,14 @@
 package bisq.core.dao.blindvote;
 
 import bisq.core.dao.ValidationException;
+import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.period.Phase;
+import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
+
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,11 +35,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class BlindVoteValidator {
 
+    private final StateService stateService;
+    private final PeriodService periodService;
+
     @Inject
-    public BlindVoteValidator() {
+    public BlindVoteValidator(StateService stateService, PeriodService periodService) {
+        this.stateService = stateService;
+        this.periodService = periodService;
     }
 
-    public boolean isValid(BlindVote blindVote) {
+    public boolean areDataFieldsValid(BlindVote blindVote) {
         try {
             validateDataFields(blindVote);
             return true;
@@ -54,5 +65,34 @@ public class BlindVoteValidator {
             log.warn(e.toString());
             throw new ValidationException(e);
         }
+    }
+
+    public boolean isValid(BlindVote blindVote) {
+        if (!areDataFieldsValid(blindVote)) {
+            log.warn("blindVote is invalid. blindVote={}", blindVote);
+            return false;
+        }
+
+        final String txId = blindVote.getTxId();
+        Optional<Tx> optionalTx = stateService.getTx(txId);
+        int chainHeight = periodService.getChainHeight();
+        final boolean isTxConfirmed = optionalTx.isPresent();
+        if (isTxConfirmed) {
+            final int txHeight = optionalTx.get().getBlockHeight();
+            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
+                log.warn("Tx is not in current cycle. blindVote={}", blindVote);
+                return false;
+            }
+            if (!periodService.isInPhase(txHeight, Phase.BLIND_VOTE)) {
+                log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
+                return false;
+            }
+        } else {
+            if (!periodService.isInPhase(chainHeight, Phase.BLIND_VOTE)) {
+                log.warn("We received an unconfirmed tx and are not in BLIND_VOTE phase anymore. blindVote={}", blindVote);
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -33,6 +33,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * Holds encryptedBallotList, txId of blindVote tx and stake.
+ */
 @Immutable
 @Slf4j
 @Value

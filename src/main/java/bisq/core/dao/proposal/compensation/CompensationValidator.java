@@ -18,8 +18,10 @@
 package bisq.core.dao.proposal.compensation;
 
 import bisq.core.dao.ValidationException;
+import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalValidator;
+import bisq.core.dao.state.StateService;
 
 import org.bitcoinj.core.Coin;
 
@@ -36,8 +38,8 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 public class CompensationValidator extends ProposalValidator {
 
     @Inject
-    public CompensationValidator() {
-        super();
+    public CompensationValidator(StateService stateService, PeriodService periodService) {
+        super(stateService, periodService);
     }
 
     @Override

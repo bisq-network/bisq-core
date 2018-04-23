@@ -41,6 +41,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+/**
+ * Holds all my vote related data. Is not immutable as revealTxId is set later. Only used for local persistence and not
+ * in consensus critical operations.
+ */
 @EqualsAndHashCode
 @Slf4j
 @Getter

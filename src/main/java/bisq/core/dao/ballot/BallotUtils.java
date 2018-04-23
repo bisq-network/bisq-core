@@ -20,7 +20,6 @@ package bisq.core.dao.ballot;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.proposal.Proposal;
-import bisq.core.dao.proposal.ProposalValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -50,35 +49,5 @@ public class BallotUtils {
     public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService) {
         return periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
                 periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight());
-    }
-
-    public static boolean isProposalValid(Proposal proposal, ProposalValidator proposalValidator,
-                                          StateService stateService, PeriodService periodService) {
-        if (!proposalValidator.isValid(proposal)) {
-            log.warn("proposal is invalid. proposal={}", proposal);
-            return false;
-        }
-
-        final String txId = proposal.getTxId();
-        Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = stateService.getChainHeight();
-        final boolean isTxConfirmed = optionalTx.isPresent();
-        if (isTxConfirmed) {
-            final int txHeight = optionalTx.get().getBlockHeight();
-            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.warn("Tx is not in current cycle. proposal={}", proposal);
-                return false;
-            }
-            if (!periodService.isInPhase(txHeight, Phase.PROPOSAL)) {
-                log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
-                return false;
-            }
-        } else {
-            if (!periodService.isInPhase(chainHeight, Phase.PROPOSAL)) {
-                log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
-                return false;
-            }
-        }
-        return true;
     }
 }

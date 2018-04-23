@@ -20,8 +20,8 @@ package bisq.core.dao;
 import bisq.core.dao.ballot.BallotListService;
 import bisq.core.dao.ballot.FilteredBallotListService;
 import bisq.core.dao.ballot.MyBallotListService;
+import bisq.core.dao.blindvote.BlindVoteListService;
 import bisq.core.dao.blindvote.BlindVoteService;
-import bisq.core.dao.myvote.MyBlindVoteService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.period.PeriodStateUpdater;
@@ -47,8 +47,8 @@ public class DaoSetup {
     private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
-    private final MyBlindVoteService myBlindVoteService;
     private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
@@ -59,8 +59,8 @@ public class DaoSetup {
                     FilteredBallotListService filteredBallotListService,
                     BallotListService ballotListService,
                     MyBallotListService myBallotListService,
-                    MyBlindVoteService myBlindVoteService,
                     BlindVoteService blindVoteService,
+                    BlindVoteListService blindVoteListService,
                     ProposalService proposalService) {
         this.periodStateUpdater = periodStateUpdater;
         this.voteRevealService = voteRevealService;
@@ -69,8 +69,8 @@ public class DaoSetup {
         this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
-        this.myBlindVoteService = myBlindVoteService;
         this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.proposalService = proposalService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
@@ -83,9 +83,9 @@ public class DaoSetup {
         voteRevealService.start();
         ballotListService.start();
         myBallotListService.start();
-        myBlindVoteService.start();
-        filteredBallotListService.start();
         blindVoteService.start();
+        filteredBallotListService.start();
+        blindVoteListService.start();
         voteResultService.start();
         bsqNode.start(errorMessageHandler);
     }

@@ -25,8 +25,9 @@ import bisq.core.dao.ballot.BallotWithTransaction;
 import bisq.core.dao.ballot.FilteredBallotListService;
 import bisq.core.dao.ballot.MyBallotListService;
 import bisq.core.dao.ballot.compensation.CompensationBallotService;
-import bisq.core.dao.myvote.MyBlindVoteService;
+import bisq.core.dao.blindvote.BlindVoteService;
 import bisq.core.dao.myvote.MyVote;
+import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.PeriodStateChangeListener;
 import bisq.core.dao.period.Phase;
@@ -72,13 +73,14 @@ import javax.annotation.Nullable;
 public class DaoFacade {
     private final BallotListService ballotListService;
     private final FilteredBallotListService filteredBallotListService;
-    private MyBallotListService myBallotListService;
+    private final MyBallotListService myBallotListService;
     private final ProposalService proposalService;
     private final StateService stateService;
     private final PeriodService periodService;
-    private MyBlindVoteService myBlindVoteService;
-    private ChangeParamService changeParamService;
-    private CompensationBallotService compensationBallotService;
+    private final BlindVoteService blindVoteService;
+    private final MyVoteListService myVoteListService;
+    private final ChangeParamService changeParamService;
+    private final CompensationBallotService compensationBallotService;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
 
@@ -89,7 +91,8 @@ public class DaoFacade {
                      ProposalService proposalService,
                      StateService stateService,
                      PeriodService periodService,
-                     MyBlindVoteService myBlindVoteService,
+                     BlindVoteService blindVoteService,
+                     MyVoteListService myVoteListService,
                      ChangeParamService changeParamService,
                      CompensationBallotService compensationBallotService) {
         this.ballotListService = ballotListService;
@@ -98,7 +101,8 @@ public class DaoFacade {
         this.proposalService = proposalService;
         this.stateService = stateService;
         this.periodService = periodService;
-        this.myBlindVoteService = myBlindVoteService;
+        this.blindVoteService = blindVoteService;
+        this.myVoteListService = myVoteListService;
         this.changeParamService = changeParamService;
         this.compensationBallotService = compensationBallotService;
 
@@ -145,19 +149,13 @@ public class DaoFacade {
 
     // Present fee
     public Coin getProposalFee() {
-        return ProposalConsensus.getFee(changeParamService, stateService.getChainHeight());
+        return ProposalConsensus.getFee(changeParamService, periodService.getChainHeight());
     }
 
     // Publish proposal, store ballot
     public void publishBallot(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
                               ErrorMessageHandler errorMessageHandler) {
-        proposalService.publishBallot(ballot,
-                transaction,
-                () -> {
-                    myBallotListService.storeBallot(ballot);
-                    resultHandler.handleResult();
-                },
-                errorMessageHandler);
+        proposalService.publishBallot(ballot, transaction, resultHandler, errorMessageHandler);
     }
 
     // Allow remove if it is my proposal
@@ -184,7 +182,7 @@ public class DaoFacade {
 
     // Present myVotes
     public List<MyVote> getMyVoteList() {
-        return myBlindVoteService.getMyVoteList();
+        return myVoteListService.getMyVoteList().getList();
     }
 
 
@@ -194,17 +192,17 @@ public class DaoFacade {
 
     // When creating blind vote we present fee
     public Coin getBlindVoteFeeForCycle() {
-        return myBlindVoteService.getBlindVoteFeeForCycle();
+        return blindVoteService.getBlindVoteFee();
     }
 
     // Used for mining fee estimation
     public Transaction getDummyBlindVoteTx(Coin stake, Coin blindVoteFee) throws WalletException, InsufficientMoneyException, TransactionVerificationException {
-        return myBlindVoteService.getDummyBlindVoteTx(stake, blindVoteFee);
+        return blindVoteService.getDummyBlindVoteTx(stake, blindVoteFee);
     }
 
     // Publish blindVote tx and broadcast blindVote to p2p network and store to blindVoteList.
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-        myBlindVoteService.publishBlindVote(stake, resultHandler, exceptionHandler);
+        blindVoteService.publishBlindVote(stake, resultHandler, exceptionHandler);
     }
 
 
@@ -229,7 +227,7 @@ public class DaoFacade {
     }
 
     public int getDurationForPhase(Phase phase) {
-        return periodService.getDurationForPhase(phase, stateService.getChainHeight());
+        return periodService.getDurationForPhase(phase, periodService.getChainHeight());
     }
 
     // listeners for phase change

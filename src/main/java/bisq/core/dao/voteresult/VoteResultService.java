@@ -20,7 +20,8 @@ package bisq.core.dao.voteresult;
 import bisq.core.dao.ballot.BallotList;
 import bisq.core.dao.blindvote.BlindVote;
 import bisq.core.dao.blindvote.BlindVoteList;
-import bisq.core.dao.blindvote.BlindVoteService;
+import bisq.core.dao.blindvote.BlindVoteListService;
+import bisq.core.dao.blindvote.BlindVoteUtils;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.proposal.Proposal;
@@ -78,7 +79,7 @@ public class VoteResultService implements StateChangeEventsProvider {
     private final StateService stateService;
     private final ChangeParamService changeParamService;
     private final PeriodService periodService;
-    private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
     private final IssuanceService issuanceService;
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
@@ -95,13 +96,13 @@ public class VoteResultService implements StateChangeEventsProvider {
                              StateService stateService,
                              ChangeParamService changeParamService,
                              PeriodService periodService,
-                             BlindVoteService blindVoteService,
+                             BlindVoteListService blindVoteListService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.changeParamService = changeParamService;
         this.periodService = periodService;
-        this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.issuanceService = issuanceService;
 
         periodService.addPeriodStateChangeListener(this::maybeCalculateVoteResult);
@@ -204,7 +205,7 @@ public class VoteResultService implements StateChangeEventsProvider {
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
-                        Optional<BlindVote> optionalBlindVote = blindVoteService.findBlindVote(blindVoteTxId);
+                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteListService.getBlindVoteList());
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             BallotList ballotList = VoteResultConsensus.getDecryptedBallotList(blindVote.getEncryptedBallotList(), secretKey);
@@ -277,7 +278,7 @@ public class VoteResultService implements StateChangeEventsProvider {
     }
 
     private BlindVoteList findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        final BlindVoteList clonedBlindVoteList = new BlindVoteList(blindVoteService.getBlindVoteList().getList());
+        final BlindVoteList clonedBlindVoteList = new BlindVoteList(blindVoteListService.getBlindVoteList().getList());
         BlindVoteList list = voteRevealService.getSortedBlindVoteListOfCycle(clonedBlindVoteList);
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...

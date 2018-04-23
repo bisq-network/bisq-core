@@ -18,8 +18,14 @@
 package bisq.core.dao.proposal;
 
 import bisq.core.dao.ValidationException;
+import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.period.Phase;
+import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
+
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,11 +35,16 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Slf4j
 public class ProposalValidator {
 
+    private final StateService stateService;
+    private final PeriodService periodService;
+
     @Inject
-    public ProposalValidator() {
+    public ProposalValidator(StateService stateService, PeriodService periodService) {
+        this.stateService = stateService;
+        this.periodService = periodService;
     }
 
-    public boolean isValid(Proposal proposal) {
+    public boolean areDataFieldsValid(Proposal proposal) {
         try {
             validateDataFields(proposal);
             return true;
@@ -53,5 +64,34 @@ public class ProposalValidator {
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }
+    }
+
+    public boolean isValid(Proposal proposal) {
+        if (!areDataFieldsValid(proposal)) {
+            log.warn("proposal data fields are invalid. proposal={}", proposal);
+            return false;
+        }
+
+        final String txId = proposal.getTxId();
+        Optional<Tx> optionalTx = stateService.getTx(txId);
+        int chainHeight = periodService.getChainHeight();
+        final boolean isTxConfirmed = optionalTx.isPresent();
+        if (isTxConfirmed) {
+            final int txHeight = optionalTx.get().getBlockHeight();
+            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
+                log.warn("Tx is not in current cycle. proposal={}", proposal);
+                return false;
+            }
+            if (!periodService.isInPhase(txHeight, Phase.PROPOSAL)) {
+                log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
+                return false;
+            }
+        } else {
+            if (!periodService.isInPhase(chainHeight, Phase.PROPOSAL)) {
+                log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -73,16 +73,16 @@ public final class CompensationProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public CompensationProposal(String uid,
-                                String name,
-                                String title,
-                                String description,
-                                String link,
-                                String bsqAddress,
-                                long requestedBsq,
-                                byte version,
-                                long creationDate,
-                                String txId) {
+    private CompensationProposal(String uid,
+                                 String name,
+                                 String title,
+                                 String description,
+                                 String link,
+                                 String bsqAddress,
+                                 long requestedBsq,
+                                 byte version,
+                                 long creationDate,
+                                 String txId) {
         super(uid,
                 name,
                 title,

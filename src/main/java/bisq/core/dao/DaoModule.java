@@ -22,9 +22,10 @@ import bisq.core.dao.ballot.FilteredBallotListService;
 import bisq.core.dao.ballot.MyBallotListService;
 import bisq.core.dao.ballot.compensation.CompensationBallotService;
 import bisq.core.dao.ballot.generic.GenericBallotFactory;
+import bisq.core.dao.blindvote.BlindVoteListService;
 import bisq.core.dao.blindvote.BlindVoteService;
 import bisq.core.dao.blindvote.BlindVoteValidator;
-import bisq.core.dao.myvote.MyBlindVoteService;
+import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.node.consensus.BsqTxController;
@@ -82,7 +83,7 @@ public class DaoModule extends AppModule {
         bind(DaoSetup.class).in(Singleton.class);
         bind(DaoFacade.class).in(Singleton.class);
 
-        // node
+        // Node, parser
         bind(BsqNodeProvider.class).in(Singleton.class);
         bind(RpcService.class).in(Singleton.class);
         bind(FullNode.class).in(Singleton.class);
@@ -94,13 +95,16 @@ public class DaoModule extends AppModule {
         bind(LiteNodeParserFacade.class).in(Singleton.class);
         bind(LiteNodeParser.class).in(Singleton.class);
 
-        // chain state
+        // State
         bind(State.class).in(Singleton.class);
         bind(StateService.class).in(Singleton.class);
-        bind(StateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
-        bind(ChangeParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
+
+        // Period
+        bind(PeriodState.class).in(Singleton.class);
+        bind(PeriodStateUpdater.class).in(Singleton.class);
+        bind(PeriodService.class).in(Singleton.class);
 
         // blockchain parser
         bind(GenesisTxController.class).in(Singleton.class);
@@ -116,41 +120,42 @@ public class DaoModule extends AppModule {
         bind(OpReturnBlindVoteController.class).in(Singleton.class);
         bind(OpReturnVoteRevealController.class).in(Singleton.class);
 
-        bind(PeriodState.class).in(Singleton.class);
-        bind(PeriodStateUpdater.class).in(Singleton.class);
-        bind(PeriodService.class).in(Singleton.class);
-
         // Proposal
         bind(ProposalService.class).in(Singleton.class);
         bind(ProposalValidator.class).in(Singleton.class);
+        bind(CompensationValidator.class).in(Singleton.class);
+        bind(ChangeParamService.class).in(Singleton.class);
 
         // Ballot
-        bind(BallotListService.class).in(Singleton.class);
-        bind(FilteredBallotListService.class).in(Singleton.class);
-        bind(MyBallotListService.class).in(Singleton.class);
-        bind(CompensationBallotService.class).in(Singleton.class);
-        bind(CompensationValidator.class).in(Singleton.class);
         bind(GenericBallotFactory.class).in(Singleton.class);
+        bind(BallotListService.class).in(Singleton.class);
+        bind(MyBallotListService.class).in(Singleton.class);
+        bind(FilteredBallotListService.class).in(Singleton.class);
+        bind(CompensationBallotService.class).in(Singleton.class);
 
-        // vote
-        bind(MyBlindVoteService.class).in(Singleton.class);
+        // MyVote
+        bind(MyVoteListService.class).in(Singleton.class);
+
+        // BlindVote
         bind(BlindVoteService.class).in(Singleton.class);
+        bind(BlindVoteListService.class).in(Singleton.class);
         bind(BlindVoteValidator.class).in(Singleton.class);
+
+        // VoteReveal
         bind(VoteRevealService.class).in(Singleton.class);
+
+        // VoteResult
         bind(VoteResultService.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);
 
-        // constants
+        // Genesis
         String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, State.DEFAULT_GENESIS_TX_ID);
         bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
 
         Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, State.DEFAULT_GENESIS_BLOCK_HEIGHT);
         bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
 
-        Boolean daoActivated = environment.getProperty(DaoOptionKeys.DAO_ACTIVATED, Boolean.class, false);
-        bind(Boolean.class).annotatedWith(Names.named(DaoOptionKeys.DAO_ACTIVATED)).toInstance(daoActivated);
-
-        // options
+        // Options
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PASSWORD)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PASSWORD));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PORT)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PORT));
@@ -160,6 +165,8 @@ public class DaoModule extends AppModule {
                 .to(environment.getRequiredProperty(DaoOptionKeys.DUMP_BLOCKCHAIN_DATA));
         bindConstant().annotatedWith(named(DaoOptionKeys.FULL_DAO_NODE))
                 .to(environment.getRequiredProperty(DaoOptionKeys.FULL_DAO_NODE));
+        Boolean daoActivated = environment.getProperty(DaoOptionKeys.DAO_ACTIVATED, Boolean.class, false);
+        bind(Boolean.class).annotatedWith(Names.named(DaoOptionKeys.DAO_ACTIVATED)).toInstance(daoActivated);
     }
 }
 

@@ -101,16 +101,7 @@ public class ProposalService {
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
-                final boolean success = addToP2PNetwork(proposal);
-                if (success) {
-                    log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
-
-                    resultHandler.handleResult();
-                } else {
-                    final String msg = "Adding of proposal to P2P network failed. proposal=" + proposal;
-                    log.error(msg);
-                    errorMessageHandler.handleErrorMessage(msg);
-                }
+                resultHandler.handleResult();
             }
 
             @Override
@@ -131,6 +122,21 @@ public class ProposalService {
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
         });
+
+        // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
+        // proposal stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
+        // in worst case if it does not succeed the proposal will be ignored anyway.
+        // Inconsistently propagated proposals in the p2p network could have potentially worse effects.
+        final boolean success = addToP2PNetwork(proposal);
+        if (success) {
+            log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
+        } else {
+            final String msg = "Adding of proposal to P2P network failed. proposal=" + proposal;
+            log.error(msg);
+            errorMessageHandler.handleErrorMessage(msg);
+        }
+
+        myBallotListService.storeBallot(ballot);
     }
 
     public boolean removeMyProposal(Ballot ballot) {

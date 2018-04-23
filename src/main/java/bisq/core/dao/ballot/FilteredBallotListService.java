@@ -116,7 +116,7 @@ public class FilteredBallotListService {
     private void updateLists() {
         activeOrMyUnconfirmedBallots.clear();
         activeOrMyUnconfirmedBallots.addAll(ballotListService.getBallotList().stream()
-                .filter(ballot -> BallotUtils.isProposalValid(ballot.getProposal(), proposalValidator, stateService, periodService))
+                .filter(ballot -> proposalValidator.isValid(ballot.getProposal()))
                 .collect(Collectors.toList()));
 
         closedBallots.clear();

@@ -29,9 +29,11 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.blindvote.BlindVote;
 import bisq.core.dao.blindvote.BlindVoteConsensus;
 import bisq.core.dao.blindvote.BlindVoteList;
+import bisq.core.dao.blindvote.BlindVoteListService;
 import bisq.core.dao.blindvote.BlindVoteService;
-import bisq.core.dao.myvote.MyBlindVoteService;
+import bisq.core.dao.blindvote.BlindVoteValidator;
 import bisq.core.dao.myvote.MyVote;
+import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
@@ -68,9 +70,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealService {
     private final StateService stateService;
+    private final BlindVoteListService blindVoteListService;
     private final BlindVoteService blindVoteService;
-    private final MyBlindVoteService myBlindVoteService;
+    private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
+    private MyVoteListService myVoteListService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final WalletsManager walletsManager;
@@ -85,16 +89,20 @@ public class VoteRevealService {
 
     @Inject
     public VoteRevealService(StateService stateService,
+                             BlindVoteListService blindVoteListService,
                              BlindVoteService blindVoteService,
-                             MyBlindVoteService myBlindVoteService,
+                             BlindVoteValidator blindVoteValidator,
                              PeriodService periodService,
+                             MyVoteListService myVoteListService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
+        this.blindVoteListService = blindVoteListService;
         this.blindVoteService = blindVoteService;
-        this.myBlindVoteService = myBlindVoteService;
+        this.blindVoteValidator = blindVoteValidator;
         this.periodService = periodService;
+        this.myVoteListService = myVoteListService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.walletsManager = walletsManager;
@@ -121,12 +129,12 @@ public class VoteRevealService {
     }
 
     public BlindVoteList getSortedBlindVoteListOfCycle() {
-        return getSortedBlindVoteListOfCycle(blindVoteService.getBlindVoteList());
+        return getSortedBlindVoteListOfCycle(blindVoteListService.getBlindVoteList());
     }
 
     public BlindVoteList getSortedBlindVoteListOfCycle(BlindVoteList blindVoteList) {
         final List<BlindVote> list = blindVoteList.stream()
-                .filter(blindVote -> blindVoteService.isBlindVoteValid(blindVote, blindVoteList.getList()))
+                .filter(blindVoteValidator::isValid)
                 .collect(Collectors.toList());
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
@@ -152,10 +160,9 @@ public class VoteRevealService {
     // otherwise his vote becomes invalid and his locked stake will get unlocked
     private void maybeRevealVotes(int chainHeight) {
         if (periodService.getPhaseForHeight(chainHeight) == Phase.VOTE_REVEAL) {
-            myBlindVoteService.getMyVoteList().stream()
+            myVoteListService.getMyVoteList().stream()
                     .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
-                    .filter(myVote -> periodService.isTxInPhase(myVote.getTxId(), Phase.BLIND_VOTE))
-                    .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), chainHeight))
+                    .filter(myVote -> blindVoteValidator.isValid(myVote.getBlindVote()))
                     .forEach(myVote -> {
                         // We handle the exception here inside the stream iteration as we have not get triggered from an
                         // outside user intent anyway. We keep errors in a observable list so clients can observe that to
@@ -202,10 +209,10 @@ public class VoteRevealService {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
-                    myBlindVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
+                    myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
                     //Republish list of blind votes to gain more resilience
-                    blindVoteService.republishAllBlindVotesOfCycle();
+                    blindVoteListService.republishAllBlindVotesOfCycle();
                 }
 
                 @Override

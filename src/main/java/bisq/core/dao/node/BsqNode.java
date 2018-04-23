@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node;
 
+import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 
@@ -38,16 +39,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class BsqNode {
 
-    @SuppressWarnings("WeakerAccess")
+    private final PeriodService periodService;
     protected final P2PService p2PService;
     protected final StateService stateService;
-    @SuppressWarnings("WeakerAccess")
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
     @Getter
     protected boolean parseBlockchainComplete;
-    @SuppressWarnings("WeakerAccess")
     protected boolean p2pNetworkReady;
 
 
@@ -58,8 +57,10 @@ public abstract class BsqNode {
     @SuppressWarnings("WeakerAccess")
     @Inject
     public BsqNode(StateService stateService,
+                   PeriodService periodService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
+        this.periodService = periodService;
 
         this.p2PService = p2PService;
         this.stateService = stateService;
@@ -138,7 +139,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeight());
+        final int startBlockHeight = Math.max(genesisBlockHeight, periodService.getChainHeight());
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -147,7 +148,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                stateService.getChainHeight());
+                periodService.getChainHeight());
 
         return startBlockHeight;
     }

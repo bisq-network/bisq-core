@@ -23,12 +23,12 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.ValidationException;
 import bisq.core.dao.ballot.BallotWithTransaction;
+import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.proposal.ProposalConsensus;
 import bisq.core.dao.proposal.compensation.CompensationConsensus;
 import bisq.core.dao.proposal.compensation.CompensationProposal;
 import bisq.core.dao.proposal.compensation.CompensationValidator;
 import bisq.core.dao.proposal.param.ChangeParamService;
-import bisq.core.dao.state.StateService;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -44,9 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 public class CompensationBallotService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
+    private final PeriodService periodService;
     private final ChangeParamService changeParamService;
     private final CompensationValidator compensationValidator;
-    private final StateService stateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -56,12 +56,12 @@ public class CompensationBallotService {
     @Inject
     public CompensationBallotService(BsqWalletService bsqWalletService,
                                      BtcWalletService btcWalletService,
-                                     StateService stateService,
+                                     PeriodService periodService,
                                      ChangeParamService changeParamService,
                                      CompensationValidator compensationValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.stateService = stateService;
+        this.periodService = periodService;
         this.changeParamService = changeParamService;
         this.compensationValidator = compensationValidator;
     }
@@ -101,7 +101,7 @@ public class CompensationBallotService {
     private Transaction getTransaction(CompensationProposal tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
-        final Coin fee = ProposalConsensus.getFee(changeParamService, stateService.getChainHeight());
+        final Coin fee = ProposalConsensus.getFee(changeParamService, periodService.getChainHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment
