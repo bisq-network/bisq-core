@@ -41,8 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 /**
- * Base class for all proposals like compensation request, generic request, remove altcoin request,
- * change param request, etc.
+ * Base class for all ballots like compensation request, generic request, remove asset ballots and
+ * change param ballots.
  * It contains the Proposal and the Vote. If a Proposal is ignored for voting the vote object is null.
  */
 @Slf4j

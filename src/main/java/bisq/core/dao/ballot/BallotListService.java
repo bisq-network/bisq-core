@@ -42,7 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens on the P2P network for new proposals and add valid proposals as new ballots to the list.
- *
  */
 @Slf4j
 public class BallotListService implements PersistedDataHost {

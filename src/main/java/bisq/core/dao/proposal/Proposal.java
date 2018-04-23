@@ -41,6 +41,9 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * Base class for proposals.
+ */
 @Immutable
 @Slf4j
 @Getter

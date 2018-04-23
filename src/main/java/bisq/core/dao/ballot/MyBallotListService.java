@@ -19,18 +19,11 @@ package bisq.core.dao.ballot;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.proposal.Proposal;
-import bisq.core.dao.proposal.ProposalService;
 
-import bisq.network.p2p.P2PService;
-
-import bisq.common.UserThread;
-import bisq.common.app.DevEnv;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
 
 import com.google.inject.Inject;
-
-import javafx.beans.value.ChangeListener;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,14 +32,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Maintains persistable BallotList. Triggers republishing of proposals of myBallotList at startup.
+ * Maintains myBallotList. Triggers republishing of proposals from myBallotList at startup.
  */
 @Slf4j
 public class MyBallotListService implements PersistedDataHost {
-    private final P2PService p2PService;
-    private final ProposalService proposalService;
     private final Storage<BallotList> storage;
-    private ChangeListener<Number> numConnectedPeersListener;
 
     @Getter
     private final BallotList myBallotList = new BallotList();
@@ -57,15 +47,8 @@ public class MyBallotListService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyBallotListService(P2PService p2PService,
-                               ProposalService proposalService,
-                               Storage<BallotList> storage) {
-        this.p2PService = p2PService;
-        this.proposalService = proposalService;
+    public MyBallotListService(Storage<BallotList> storage) {
         this.storage = storage;
-
-        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
-        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +56,6 @@ public class MyBallotListService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRePublish();
     }
 
 
@@ -119,23 +101,7 @@ public class MyBallotListService implements PersistedDataHost {
         storage.queueUpForSave();
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Private
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void maybeRePublish() {
-        // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
-        // to avoid activity peaks at startup
-        UserThread.runAfter(() -> {
-            if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                proposalService.rePublishProposals(getProposals());
-            }
-        }, 2);
-    }
-
-    private List<Proposal> getProposals() {
+    public List<Proposal> getProposals() {
         return myBallotList.stream()
                 .map(Ballot::getProposal)
                 .collect(Collectors.toList());

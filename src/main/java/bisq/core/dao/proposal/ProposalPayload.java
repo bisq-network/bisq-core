@@ -49,13 +49,11 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Proposal is sent over wire as well as it gets persisted.
+ * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
  * <p>
- * We persist all Proposal data in the PersistedEntryMap.
+ * We persist all ProposalPayload data in the PersistedEntryMap.
  * Data size on disk for one item is: about 743 bytes (443 bytes is for ownerPubKeyEncoded)
- * As Proposals gets persisted in the Blocks of the State as well we could consider pruning of old data.
  */
-//TODO separate value object with p2p network data
 @Immutable
 @Slf4j
 @Getter

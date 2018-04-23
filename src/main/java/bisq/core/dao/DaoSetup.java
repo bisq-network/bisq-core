@@ -25,6 +25,7 @@ import bisq.core.dao.myvote.MyBlindVoteService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.period.PeriodStateUpdater;
+import bisq.core.dao.proposal.ProposalService;
 import bisq.core.dao.proposal.param.ChangeParamService;
 import bisq.core.dao.voteresult.VoteResultService;
 import bisq.core.dao.votereveal.VoteRevealService;
@@ -38,6 +39,7 @@ import com.google.inject.Inject;
  */
 public class DaoSetup {
     private final BsqNode bsqNode;
+    private final ProposalService proposalService;
     private final PeriodStateUpdater periodStateUpdater;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
@@ -58,7 +60,8 @@ public class DaoSetup {
                     BallotListService ballotListService,
                     MyBallotListService myBallotListService,
                     MyBlindVoteService myBlindVoteService,
-                    BlindVoteService blindVoteService) {
+                    BlindVoteService blindVoteService,
+                    ProposalService proposalService) {
         this.periodStateUpdater = periodStateUpdater;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
@@ -68,6 +71,7 @@ public class DaoSetup {
         this.myBallotListService = myBallotListService;
         this.myBlindVoteService = myBlindVoteService;
         this.blindVoteService = blindVoteService;
+        this.proposalService = proposalService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
@@ -75,14 +79,15 @@ public class DaoSetup {
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         periodStateUpdater.start();
         changeParamService.start();
+        proposalService.start();
         voteRevealService.start();
-        bsqNode.start(errorMessageHandler);
         ballotListService.start();
         myBallotListService.start();
         myBlindVoteService.start();
         filteredBallotListService.start();
         blindVoteService.start();
         voteResultService.start();
+        bsqNode.start(errorMessageHandler);
     }
 
     public void shutDown() {

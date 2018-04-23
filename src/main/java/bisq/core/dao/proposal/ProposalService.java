@@ -24,11 +24,13 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.ballot.Ballot;
 import bisq.core.dao.ballot.BallotUtils;
+import bisq.core.dao.ballot.MyBallotListService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;
 
+import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.KeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
@@ -38,6 +40,8 @@ import org.bitcoinj.core.Transaction;
 
 import com.google.inject.Inject;
 
+import javafx.beans.value.ChangeListener;
+
 import java.security.PublicKey;
 
 import java.util.List;
@@ -45,7 +49,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates proposal tx and broadcasts proposal to network. Republishes own proposals at startup.
+ * Creates proposal tx and broadcasts proposal to network. Republish own proposals at startup.
  */
 @Slf4j
 public class ProposalService {
@@ -53,7 +57,10 @@ public class ProposalService {
     private final WalletsManager walletsManager;
     private final PeriodService periodService;
     private final StateService stateService;
+    private final MyBallotListService myBallotListService;
     private final PublicKey signaturePubKey;
+
+    private ChangeListener<Number> numConnectedPeersListener;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -65,12 +72,17 @@ public class ProposalService {
                            WalletsManager walletsManager,
                            PeriodService periodService,
                            StateService stateService,
+                           MyBallotListService myBallotListService,
                            KeyRing keyRing) {
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.periodService = periodService;
         this.stateService = stateService;
+        this.myBallotListService = myBallotListService;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
+
+        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
+        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
     }
 
 
@@ -78,7 +90,11 @@ public class ProposalService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Broadcast ProposalTx and publish proposal to P2P network
+    public void start() {
+        maybeRePublish();
+    }
+
+    // Broadcast proposalTx and publish proposal to P2P network
     public void publishBallot(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
                               ErrorMessageHandler errorMessageHandler) {
         Proposal proposal = ballot.getProposal();
@@ -132,17 +148,28 @@ public class ProposalService {
         }
     }
 
-    public void rePublishProposals(List<Proposal> proposals) {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private void maybeRePublish() {
+        // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
+        // to avoid activity peaks at startup
+        UserThread.runAfter(() -> {
+            if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
+                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+                rePublishProposals(myBallotListService.getProposals());
+            }
+        }, 2);
+    }
+
+    private void rePublishProposals(List<Proposal> proposals) {
         proposals.forEach(proposal -> {
             if (!addToP2PNetwork(proposal))
                 log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
         });
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Private
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     private boolean addToP2PNetwork(Proposal proposal) {
         return p2PService.addProtectedStorageEntry(createProposalPayload(proposal), true);
