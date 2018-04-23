@@ -41,7 +41,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered collections of the ballots from BallotListService.
+ * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
 public class FilteredBallotListService {

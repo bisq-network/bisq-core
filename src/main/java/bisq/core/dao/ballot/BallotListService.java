@@ -121,7 +121,7 @@ public class BallotListService implements PersistedDataHost {
             if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList()) &&
                     BallotUtils.isProposalValid(proposal, proposalValidator, stateService, periodService)) {
                 log.info("We received a new proposal from the P2P network. Proposal.uid={}", proposal.getUid());
-                Ballot ballot = BallotFactory.getBallotFromProposal(proposal);
+                Ballot ballot = Ballot.createBallotFromProposal(proposal);
                 ballotList.add(ballot);
                 if (storeLocally) persist();
             }

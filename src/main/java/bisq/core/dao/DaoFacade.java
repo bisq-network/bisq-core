@@ -22,9 +22,9 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.ballot.Ballot;
 import bisq.core.dao.ballot.BallotListService;
 import bisq.core.dao.ballot.BallotWithTransaction;
-import bisq.core.dao.ballot.CompensationBallotFactory;
 import bisq.core.dao.ballot.FilteredBallotListService;
 import bisq.core.dao.ballot.MyBallotListService;
+import bisq.core.dao.ballot.compensation.CompensationBallotService;
 import bisq.core.dao.myvote.MyBlindVoteService;
 import bisq.core.dao.myvote.MyVote;
 import bisq.core.dao.period.PeriodService;
@@ -78,7 +78,7 @@ public class DaoFacade {
     private final PeriodService periodService;
     private MyBlindVoteService myBlindVoteService;
     private ChangeParamService changeParamService;
-    private CompensationBallotFactory compensationBallotFactory;
+    private CompensationBallotService compensationBallotService;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
 
@@ -91,7 +91,7 @@ public class DaoFacade {
                      PeriodService periodService,
                      MyBlindVoteService myBlindVoteService,
                      ChangeParamService changeParamService,
-                     CompensationBallotFactory compensationBallotFactory) {
+                     CompensationBallotService compensationBallotService) {
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
         this.myBallotListService = myBallotListService;
@@ -100,7 +100,7 @@ public class DaoFacade {
         this.periodService = periodService;
         this.myBlindVoteService = myBlindVoteService;
         this.changeParamService = changeParamService;
-        this.compensationBallotFactory = compensationBallotFactory;
+        this.compensationBallotService = compensationBallotService;
 
         periodService.addPeriodStateChangeListener(chainHeight -> {
             if (chainHeight > 0 && periodService.getCurrentCycle() != null)
@@ -135,7 +135,7 @@ public class DaoFacade {
                                                                       String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
-        return compensationBallotFactory.getBallotWithTransaction(name,
+        return compensationBallotService.createBallotWithTransaction(name,
                 title,
                 description,
                 link,

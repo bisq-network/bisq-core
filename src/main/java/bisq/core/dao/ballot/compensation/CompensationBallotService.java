@@ -15,14 +15,14 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.ballot;
+package bisq.core.dao.ballot.compensation;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.ValidationException;
-import bisq.core.dao.ballot.compensation.CompensationBallot;
+import bisq.core.dao.ballot.BallotWithTransaction;
 import bisq.core.dao.proposal.ProposalConsensus;
 import bisq.core.dao.proposal.compensation.CompensationConsensus;
 import bisq.core.dao.proposal.compensation.CompensationProposal;
@@ -41,7 +41,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CompensationBallotFactory {
+public class CompensationBallotService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final ChangeParamService changeParamService;
@@ -54,7 +54,7 @@ public class CompensationBallotFactory {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CompensationBallotFactory(BsqWalletService bsqWalletService,
+    public CompensationBallotService(BsqWalletService bsqWalletService,
                                      BtcWalletService btcWalletService,
                                      StateService stateService,
                                      ChangeParamService changeParamService,
@@ -66,12 +66,12 @@ public class CompensationBallotFactory {
         this.compensationValidator = compensationValidator;
     }
 
-    public BallotWithTransaction getBallotWithTransaction(String name,
-                                                          String title,
-                                                          String description,
-                                                          String link,
-                                                          Coin requestedBsq,
-                                                          String bsqAddress)
+    public BallotWithTransaction createBallotWithTransaction(String name,
+                                                             String title,
+                                                             String description,
+                                                             String link,
+                                                             Coin requestedBsq,
+                                                             String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
@@ -126,6 +126,4 @@ public class CompensationBallotFactory {
         CompensationProposal compensationProposal = (CompensationProposal) proposal.cloneWithTxId(txId);
         return new CompensationBallot(compensationProposal);
     }
-
-
 }

@@ -49,6 +49,27 @@ import javax.annotation.Nullable;
 @Getter
 @EqualsAndHashCode
 public abstract class Ballot implements PersistablePayload {
+
+    public static Ballot createBallotFromProposal(Proposal proposal) {
+        switch (proposal.getType()) {
+            case COMPENSATION_REQUEST:
+                return new CompensationBallot(proposal);
+            case GENERIC:
+                //TODO
+                throw new RuntimeException("Not implemented yet");
+            case CHANGE_PARAM:
+                //TODO
+                throw new RuntimeException("Not implemented yet");
+            case REMOVE_ALTCOIN:
+                //TODO
+                throw new RuntimeException("Not implemented yet");
+            default:
+                final String msg = "Undefined ProposalType " + proposal.getType();
+                log.error(msg);
+                throw new RuntimeException(msg);
+        }
+    }
+
     protected final Proposal proposal;
     @Nullable
     protected Vote vote;

@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.ballot;
+package bisq.core.dao.ballot.generic;
 
 import lombok.extern.slf4j.Slf4j;
 

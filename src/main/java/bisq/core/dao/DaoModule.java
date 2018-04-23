@@ -18,10 +18,10 @@
 package bisq.core.dao;
 
 import bisq.core.dao.ballot.BallotListService;
-import bisq.core.dao.ballot.CompensationBallotFactory;
 import bisq.core.dao.ballot.FilteredBallotListService;
-import bisq.core.dao.ballot.GenericBallotFactory;
 import bisq.core.dao.ballot.MyBallotListService;
+import bisq.core.dao.ballot.compensation.CompensationBallotService;
+import bisq.core.dao.ballot.generic.GenericBallotFactory;
 import bisq.core.dao.blindvote.BlindVoteService;
 import bisq.core.dao.blindvote.BlindVoteValidator;
 import bisq.core.dao.myvote.MyBlindVoteService;
@@ -128,7 +128,7 @@ public class DaoModule extends AppModule {
         bind(BallotListService.class).in(Singleton.class);
         bind(FilteredBallotListService.class).in(Singleton.class);
         bind(MyBallotListService.class).in(Singleton.class);
-        bind(CompensationBallotFactory.class).in(Singleton.class);
+        bind(CompensationBallotService.class).in(Singleton.class);
         bind(CompensationValidator.class).in(Singleton.class);
         bind(GenericBallotFactory.class).in(Singleton.class);
 
