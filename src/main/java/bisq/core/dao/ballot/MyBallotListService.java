@@ -97,7 +97,7 @@ public class MyBallotListService implements PersistedDataHost {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean isMine(Proposal proposal) {
+    public boolean isMyProposal(Proposal proposal) {
         return BallotUtils.ballotListContainsProposal(proposal, myBallotList.getList());
     }
 

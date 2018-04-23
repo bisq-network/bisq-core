@@ -117,7 +117,7 @@ public class ProposalService {
         });
     }
 
-    public boolean removeProposal(Ballot ballot) {
+    public boolean removeMyProposal(Ballot ballot) {
         final Proposal proposal = ballot.getProposal();
         if (BallotUtils.canRemoveProposal(proposal, stateService, periodService)) {
             boolean success = p2PService.removeData(createProposalPayload(proposal), true);

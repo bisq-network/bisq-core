@@ -106,7 +106,7 @@ public abstract class Ballot implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setVote(Vote vote) {
+    public void setVote(@Nullable Vote vote) {
         this.vote = vote;
         voteResultProperty.set(vote);
     }

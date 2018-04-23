@@ -23,6 +23,9 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.lang3.Validate.notEmpty;
+
 @Slf4j
 public class ProposalValidator {
 

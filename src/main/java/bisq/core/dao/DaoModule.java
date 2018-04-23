@@ -80,6 +80,7 @@ public class DaoModule extends AppModule {
     @Override
     protected void configure() {
         bind(DaoSetup.class).in(Singleton.class);
+        bind(DaoFacade.class).in(Singleton.class);
 
         // node
         bind(BsqNodeProvider.class).in(Singleton.class);
