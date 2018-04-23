@@ -19,8 +19,8 @@ package bisq.core.dao.consensus.ballot;
 
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
+import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.blockchain.Tx;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -34,7 +34,6 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -42,14 +41,14 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered Ballot collections.
+ * Provides filtered collections of the ballots from BallotListService.
  */
 @Slf4j
 public class FilteredBallotListService {
     private final BallotListService ballotListService;
-    private final MyBallotListService myBallotListService;
     private final PeriodService periodService;
     private final StateService stateService;
+    private final ProposalValidator proposalValidator;
 
     @Getter
     private final ObservableList<Ballot> activeOrMyUnconfirmedBallots = FXCollections.observableArrayList();
@@ -63,14 +62,14 @@ public class FilteredBallotListService {
 
     @Inject
     public FilteredBallotListService(BallotListService ballotListService,
-                                     MyBallotListService myBallotListService,
                                      P2PDataStorage p2pDataStorage,
                                      PeriodService periodService,
-                                     StateService stateService) {
+                                     StateService stateService,
+                                     ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
-        this.myBallotListService = myBallotListService;
         this.periodService = periodService;
         this.stateService = stateService;
+        this.proposalValidator = proposalValidator;
 
         stateService.addBlockListener(block -> updateLists());
 
@@ -96,7 +95,7 @@ public class FilteredBallotListService {
         updateLists();
     }
 
-    // TODO maintain list
+    // We delegate to ballotListService
     public void persist() {
         ballotListService.persist();
     }
@@ -117,32 +116,15 @@ public class FilteredBallotListService {
     private void updateLists() {
         activeOrMyUnconfirmedBallots.clear();
         activeOrMyUnconfirmedBallots.addAll(ballotListService.getBallotList().stream()
-                .filter(this::isUnconfirmedOrInPhaseAndCycle)
-                .collect(Collectors.toList()));
-
-
-        // We add our own proposals in case it was not already added to ballotListService.getBallotList()
-        // Afterwards we check phases and cycle again to filter for active proposals
-        activeOrMyUnconfirmedBallots.addAll(myBallotListService.getMyObservableBallotList().stream()
-                .filter(ballot -> !ballotListService.findProposalInBallotList(ballot.getProposal(), activeOrMyUnconfirmedBallots).isPresent())
-                .filter(this::isUnconfirmedOrInPhaseAndCycle)
+                .filter(ballot -> BallotUtils.isProposalValid(ballot.getProposal(), proposalValidator, stateService, periodService))
                 .collect(Collectors.toList()));
 
         closedBallots.clear();
-
-
         closedBallots.addAll(ballotListService.getBallotList().getList().stream()
                 .filter(ballot -> stateService.getTx(ballot.getTxId()).isPresent())
                 .filter(ballot -> stateService.getTx(ballot.getTxId())
                         .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight()))
                         .isPresent())
                 .collect(Collectors.toList()));
-    }
-
-    private boolean isUnconfirmedOrInPhaseAndCycle(Ballot ballot) {
-        final Optional<Tx> optionalTx = stateService.getTx(ballot.getTxId());
-        return !optionalTx.isPresent() || optionalTx
-                .filter(ballotListService::isTxInPhaseAndCycle)
-                .isPresent();
     }
 }

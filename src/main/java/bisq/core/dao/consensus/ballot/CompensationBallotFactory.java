@@ -30,8 +30,6 @@ import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
 import bisq.core.dao.consensus.state.StateService;
 
-import bisq.common.util.Tuple2;
-
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
@@ -68,17 +66,17 @@ public class CompensationBallotFactory {
         this.compensationValidator = compensationValidator;
     }
 
-    public Tuple2<Ballot, Transaction> getTuple(String name,
-                                                String title,
-                                                String description,
-                                                String link,
-                                                Coin requestedBsq,
-                                                String bsqAddress)
+    public BallotWithTransaction getBallotWithTransaction(String name,
+                                                          String title,
+                                                          String description,
+                                                          String link,
+                                                          Coin requestedBsq,
+                                                          String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
         // As we don't know the txId we create a temp object with TxId set to an empty string.
-        final CompensationProposal proposal = new CompensationProposal(
+        CompensationProposal proposal = new CompensationProposal(
                 name,
                 title,
                 description,
@@ -89,8 +87,8 @@ public class CompensationBallotFactory {
         validate(proposal);
 
         Transaction transaction = getTransaction(proposal);
-
-        return new Tuple2<>(getCompensationBallot(proposal, transaction), transaction);
+        CompensationBallot compensationBallot = getCompensationBallot(proposal, transaction);
+        return new BallotWithTransaction(compensationBallot, transaction);
     }
 
     private void validate(CompensationProposal proposal) throws ValidationException {
@@ -128,4 +126,6 @@ public class CompensationBallotFactory {
         CompensationProposal compensationProposal = (CompensationProposal) proposal.cloneWithTxId(txId);
         return new CompensationBallot(compensationProposal);
     }
+
+
 }

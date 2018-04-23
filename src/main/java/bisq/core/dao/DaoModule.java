@@ -51,6 +51,7 @@ import bisq.core.dao.consensus.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.consensus.period.PeriodService;
 import bisq.core.dao.consensus.period.PeriodState;
 import bisq.core.dao.consensus.period.PeriodStateUpdater;
+import bisq.core.dao.consensus.proposal.ProposalService;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.proposal.compensation.CompensationValidator;
 import bisq.core.dao.consensus.proposal.param.ChangeParamService;
@@ -118,11 +119,14 @@ public class DaoModule extends AppModule {
         bind(PeriodStateUpdater.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
 
-        // proposals
+        // Proposal
+        bind(ProposalService.class).in(Singleton.class);
+        bind(ProposalValidator.class).in(Singleton.class);
+
+        // Ballot
         bind(BallotListService.class).in(Singleton.class);
         bind(FilteredBallotListService.class).in(Singleton.class);
         bind(MyBallotListService.class).in(Singleton.class);
-        bind(ProposalValidator.class).in(Singleton.class);
         bind(CompensationBallotFactory.class).in(Singleton.class);
         bind(CompensationValidator.class).in(Singleton.class);
         bind(GenericBallotFactory.class).in(Singleton.class);

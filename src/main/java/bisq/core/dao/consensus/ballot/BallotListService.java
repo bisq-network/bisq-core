@@ -19,12 +19,10 @@ package bisq.core.dao.consensus.ballot;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.consensus.period.PeriodService;
-import bisq.core.dao.consensus.period.Phase;
 import bisq.core.dao.consensus.proposal.Proposal;
 import bisq.core.dao.consensus.proposal.ProposalPayload;
 import bisq.core.dao.consensus.proposal.ProposalValidator;
 import bisq.core.dao.consensus.state.StateService;
-import bisq.core.dao.consensus.state.blockchain.Tx;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -37,7 +35,6 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
-import java.util.List;
 import java.util.Optional;
 
 import lombok.Getter;
@@ -105,20 +102,7 @@ public class BallotListService implements PersistedDataHost {
 
     public void start() {
         // We apply already existing protectedStorageEntries
-        p2pDataStorage.getMap().values()
-                .forEach(entry -> onAddedProtectedStorageEntry(entry, false));
-    }
-
-
-    // We use the StateService not the TransactionConfidence from the wallet to not mix 2 different and possibly
-    // out of sync data sources.
-    public boolean isUnconfirmed(String txId) {
-        return !stateService.getTx(txId).isPresent();
-    }
-
-    public boolean isTxInPhaseAndCycle(Tx tx) {
-        return periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
-                periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight());
+        p2pDataStorage.getMap().values().forEach(entry -> onAddedProtectedStorageEntry(entry, false));
     }
 
     public void persist() {
@@ -134,8 +118,9 @@ public class BallotListService implements PersistedDataHost {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload) {
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
-            if (isProposalValidToAddToList(proposal)) {
-                log.info("We received a Proposal from the P2P network. Proposal.uid={}", proposal.getUid());
+            if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList()) &&
+                    BallotUtils.isProposalValid(proposal, proposalValidator, stateService, periodService)) {
+                log.info("We received a new proposal from the P2P network. Proposal.uid={}", proposal.getUid());
                 Ballot ballot = BallotFactory.getBallotFromProposal(proposal);
                 ballotList.add(ballot);
                 if (storeLocally) persist();
@@ -148,9 +133,9 @@ public class BallotListService implements PersistedDataHost {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof ProposalPayload) {
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
-            findProposalInBallotList(proposal, ballotList.getList())
+            BallotUtils.findProposalInBallotList(proposal, ballotList.getList())
                     .filter(ballot -> {
-                        if (canRemoveProposal(proposal)) {
+                        if (BallotUtils.canRemoveProposal(proposal, stateService, periodService)) {
                             return true;
                         } else {
                             final String msg = "onRemoved called of a Ballot which is outside of the proposal phase " +
@@ -163,35 +148,8 @@ public class BallotListService implements PersistedDataHost {
         }
     }
 
-    // If unconfirmed or in correct phase/cycle we remove it
-    boolean canRemoveProposal(Proposal proposal) {
-        final Optional<Tx> optionalProposalTx = stateService.getTx(proposal.getTxId());
-        return !optionalProposalTx.isPresent() || isTxInPhaseAndCycle(optionalProposalTx.get());
-    }
-/*
-
-    // We add a ProposalEvent if the tx is already available and proposal and tx are valid.
-    // We only add it after the proposal phase to avoid handling of remove operation (user can remove a proposal
-    // during the proposal phase).
-    // We use the last block in the BREAK1 phase to set all proposals for that cycle.
-    // If a proposal would arrive later it will be ignored.
-    private Optional<StateChangeEvent> getAddProposalPayloadEvent(Proposal proposal, int height) {
-        return stateService.getTx(proposal.getTxId())
-                .filter(tx -> isLastToleratedBlock(height))
-                .filter(tx -> periodService.isTxInCorrectCycle(tx.getBlockHeight(), height))
-                .filter(tx -> periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL))
-                .filter(tx -> proposalValidator.isValid(proposal))
-                .map(tx -> new ProposalEvent(proposal, height));
-    }
-*/
-
-    private boolean isLastToleratedBlock(int height) {
-        return height == periodService.getLastBlockOfPhase(height, Phase.BREAK1);
-    }
-
-
     private void removeProposalFromList(Proposal proposal) {
-        Optional<Ballot> optionalBallot = findProposalInBallotList(proposal, ballotList.getList());
+        Optional<Ballot> optionalBallot = BallotUtils.findProposalInBallotList(proposal, ballotList.getList());
         if (optionalBallot.isPresent()) {
             if (ballotList.remove(optionalBallot.get())) {
                 persist();
@@ -201,49 +159,5 @@ public class BallotListService implements PersistedDataHost {
         } else {
             log.warn("We called removeProposalFromList at a ballot which was not in our list");
         }
-    }
-
-    boolean ballotListContainsProposal(Proposal proposal, List<Ballot> ballotList) {
-        return findProposalInBallotList(proposal, ballotList).isPresent();
-    }
-
-    Optional<Ballot> findProposalInBallotList(Proposal proposal, List<Ballot> ballotList) {
-        return ballotList.stream()
-                .filter(ballot -> ballot.getProposal().equals(proposal))
-                .findAny();
-    }
-
-    private boolean isProposalValidToAddToList(Proposal proposal) {
-        if (ballotListContainsProposal(proposal, ballotList.getList())) {
-            log.debug("We have that proposalPayload already in our list. proposal={}", proposal);
-            return false;
-        }
-
-        if (!proposalValidator.isValid(proposal)) {
-            log.warn("proposal is invalid. proposal={}", proposal);
-            return false;
-        }
-
-        final String txId = proposal.getTxId();
-        Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = stateService.getChainHeight();
-        final boolean isTxConfirmed = optionalTx.isPresent();
-        if (isTxConfirmed) {
-            final int txHeight = optionalTx.get().getBlockHeight();
-            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.warn("Tx is not in current cycle. proposal={}", proposal);
-                return false;
-            }
-            if (!periodService.isInPhase(txHeight, Phase.PROPOSAL)) {
-                log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
-                return false;
-            }
-        } else {
-            if (!periodService.isInPhase(chainHeight, Phase.PROPOSAL)) {
-                log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
-                return false;
-            }
-        }
-        return true;
     }
 }
