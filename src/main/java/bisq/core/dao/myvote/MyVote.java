@@ -34,36 +34,34 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Optional;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 @EqualsAndHashCode
 @Slf4j
-@Data
+@Getter
 public class MyVote implements PersistablePayload {
-    // TODO do we need to store ballotList - it could be created by decrypting blindVotePayload.encryptedProposalList
-    // with secretKey
+    private int height;
     private final BallotList ballotList;
     private final byte[] secretKeyEncoded;
     private final BlindVote blindVote;
     private final long date;
-
-    //TODO consider to make class immutable
+    @Setter
     @Nullable
     private String revealTxId;
 
     // Used just for caching
     @JsonExclude
     private final transient SecretKey secretKey;
-    private int height;
 
-    public MyVote(int height,
-                  BallotList ballotList,
-                  byte[] secretKeyEncoded,
-                  BlindVote blindVote) {
+    MyVote(int height,
+           BallotList ballotList,
+           byte[] secretKeyEncoded,
+           BlindVote blindVote) {
         this(height,
                 ballotList,
                 secretKeyEncoded,

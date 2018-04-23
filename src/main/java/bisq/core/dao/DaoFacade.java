@@ -51,7 +51,9 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 import javafx.collections.ObservableList;
 
@@ -78,6 +80,8 @@ public class DaoFacade {
     private ChangeParamService changeParamService;
     private CompensationBallotFactory compensationBallotFactory;
 
+    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+
     @Inject
     public DaoFacade(BallotListService ballotListService,
                      FilteredBallotListService filteredBallotListService,
@@ -97,6 +101,11 @@ public class DaoFacade {
         this.myBlindVoteService = myBlindVoteService;
         this.changeParamService = changeParamService;
         this.compensationBallotFactory = compensationBallotFactory;
+
+        periodService.addPeriodStateChangeListener(chainHeight -> {
+            if (chainHeight > 0 && periodService.getCurrentCycle() != null)
+                periodService.getCurrentCycle().getPhaseForHeight(chainHeight).ifPresent(phaseProperty::set);
+        });
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -225,7 +234,7 @@ public class DaoFacade {
 
     // listeners for phase change
     public ReadOnlyObjectProperty<Phase> phaseProperty() {
-        return periodService.phaseProperty();
+        return phaseProperty;
     }
 
     public int getChainHeight() {

@@ -22,9 +22,6 @@ import bisq.core.dao.state.blockchain.Tx;
 
 import com.google.inject.Inject;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,24 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class PeriodService {
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
-        periodStateChangeListeners.add(listener);
-    }
-
-    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
-        periodStateChangeListeners.remove(listener);
-    }
-
-
     private final StateService stateService;
     private final PeriodState periodState;
 
-    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
     private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
 
 
@@ -67,21 +49,31 @@ public final class PeriodService {
             @Override
             public void onChainHeightChanged(int chainHeight) {
                 periodStateChangeListeners.forEach(l -> l.onChainHeightChanged(chainHeight));
-                updatePhaseProperty();
             }
 
             @Override
             public void onCurrentCycleChanged(Cycle currentCycle) {
                 periodStateChangeListeners.forEach(l -> l.onCurrentCycleChanged(currentCycle));
-                updatePhaseProperty();
             }
 
             @Override
             public void onCycleAdded(Cycle cycle) {
                 periodStateChangeListeners.forEach(l -> l.onCycleAdded(cycle));
-                updatePhaseProperty();
             }
         });
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.add(listener);
+    }
+
+    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
+        periodStateChangeListeners.remove(listener);
     }
 
 
@@ -103,19 +95,6 @@ public final class PeriodService {
 
     public Optional<Tx> getOptionalTx(String txId) {
         return stateService.getTx(txId);
-    }
-
-    public Phase getPhase() {
-        return phaseProperty.get();
-    }
-
-    public ObjectProperty<Phase> phaseProperty() {
-        return phaseProperty;
-    }
-
-    private void updatePhaseProperty() {
-        if (getChainHeight() > 0 && getCurrentCycle() != null)
-            getCurrentCycle().getPhaseForHeight(getChainHeight()).ifPresent(phaseProperty::set);
     }
 
     public Phase getCurrentPhase() {
