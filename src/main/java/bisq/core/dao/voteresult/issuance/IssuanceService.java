@@ -53,7 +53,7 @@ public class IssuanceService {
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
-                    stateService.addIssuanceTxOutput(txOutput);
+                    stateService.addIssuanceTxOutput(txOutput, chainHeight);
 
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n################################################################################\n");

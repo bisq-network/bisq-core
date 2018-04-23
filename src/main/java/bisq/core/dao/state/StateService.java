@@ -173,8 +173,8 @@ public class StateService {
         state.removeUnspentTxOutput(txOutput);
     }
 
-    public void addIssuanceTxOutput(TxOutput txOutput) {
-        state.putIssuanceBlockHeight(txOutput, getChainHeight());
+    public void addIssuanceTxOutput(TxOutput txOutput, int chainHeight) {
+        state.putIssuanceBlockHeight(txOutput, chainHeight);
         addUnspentTxOutput(txOutput);
     }
 
@@ -275,10 +275,6 @@ public class StateService {
 
     public boolean containsTxBlock(TxBlock txBlock) {
         return getTxBlocks().contains(txBlock);
-    }
-
-    public int getChainHeight() {
-        return !getBlocks().isEmpty() ? getBlocks().getLast().getHeight() : 0;
     }
 
     public long getBlockTime(int height) {
