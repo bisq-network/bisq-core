@@ -1,6 +1,6 @@
 package bisq.core.dao;
 
-import bisq.core.dao.consensus.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.Tx;
 
 import org.bitcoinj.core.Coin;
 

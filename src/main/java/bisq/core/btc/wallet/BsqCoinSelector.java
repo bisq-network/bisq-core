@@ -17,7 +17,7 @@
 
 package bisq.core.btc.wallet;
 
-import bisq.core.dao.consensus.state.StateService;
+import bisq.core.dao.state.StateService;
 
 import org.bitcoinj.core.TransactionOutput;
 
