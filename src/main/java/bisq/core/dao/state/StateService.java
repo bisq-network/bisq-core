@@ -19,7 +19,6 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.blindvote.BlindVote;
 import bisq.core.dao.period.Cycle;
-import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.param.ParamChange;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
@@ -30,7 +29,6 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.events.BlindVoteEvent;
 import bisq.core.dao.state.events.ParamChangeEvent;
-import bisq.core.dao.state.events.ProposalEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 
 import org.bitcoinj.core.Coin;
@@ -467,23 +465,10 @@ public class StateService {
                 .collect(Collectors.toSet());
     }
 
-    public Set<ProposalEvent> getAddProposalEvents() {
-        return getStateChangeEvents().stream()
-                .filter(event -> event instanceof ProposalEvent)
-                .map(event -> (ProposalEvent) event)
-                .collect(Collectors.toSet());
-    }
-
     public Set<BlindVoteEvent> getAddBlindVoteEvents() {
         return getStateChangeEvents().stream()
                 .filter(event -> event instanceof BlindVoteEvent)
                 .map(event -> (BlindVoteEvent) event)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<Proposal> getProposals() {
-        return getAddProposalEvents().stream()
-                .map(ProposalEvent::getProposal)
                 .collect(Collectors.toSet());
     }
 
