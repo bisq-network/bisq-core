@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao;
+package bisq.core.dao.state.blockchain;
 
 import java.util.Optional;
 

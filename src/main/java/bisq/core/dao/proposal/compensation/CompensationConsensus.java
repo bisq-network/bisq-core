@@ -17,7 +17,7 @@
 
 package bisq.core.dao.proposal.compensation;
 
-import bisq.core.dao.OpReturnType;
+import bisq.core.dao.state.blockchain.OpReturnType;
 
 import bisq.common.app.Version;
 

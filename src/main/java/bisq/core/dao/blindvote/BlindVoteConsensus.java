@@ -17,11 +17,11 @@
 
 package bisq.core.dao.blindvote;
 
-import bisq.core.dao.OpReturnType;
 import bisq.core.dao.ballot.Ballot;
 import bisq.core.dao.ballot.BallotList;
 import bisq.core.dao.proposal.param.ChangeParamService;
 import bisq.core.dao.proposal.param.Param;
+import bisq.core.dao.state.blockchain.OpReturnType;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.CryptoException;

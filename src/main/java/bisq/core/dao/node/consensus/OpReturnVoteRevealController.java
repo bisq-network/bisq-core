@@ -17,10 +17,10 @@
 
 package bisq.core.dao.node.consensus;
 
-import bisq.core.dao.OpReturnType;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;

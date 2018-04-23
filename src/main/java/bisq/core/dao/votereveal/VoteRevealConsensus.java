@@ -17,8 +17,8 @@
 
 package bisq.core.dao.votereveal;
 
-import bisq.core.dao.OpReturnType;
 import bisq.core.dao.blindvote.BlindVoteList;
+import bisq.core.dao.state.blockchain.OpReturnType;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;

@@ -17,9 +17,9 @@
 
 package bisq.core.dao.proposal;
 
-import bisq.core.dao.OpReturnType;
 import bisq.core.dao.proposal.param.ChangeParamService;
 import bisq.core.dao.proposal.param.Param;
+import bisq.core.dao.state.blockchain.OpReturnType;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
