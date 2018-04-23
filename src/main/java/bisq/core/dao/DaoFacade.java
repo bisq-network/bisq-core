@@ -35,7 +35,7 @@ import bisq.core.dao.period.Phase;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.ProposalConsensus;
 import bisq.core.dao.proposal.ProposalService;
-import bisq.core.dao.proposal.param.ChangeParamService;
+import bisq.core.dao.proposal.param.ChangeParamListService;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -80,7 +80,7 @@ public class DaoFacade {
     private final PeriodService periodService;
     private final BlindVoteService blindVoteService;
     private final MyVoteListService myVoteListService;
-    private final ChangeParamService changeParamService;
+    private final ChangeParamListService changeParamListService;
     private final CompensationBallotService compensationBallotService;
 
     private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
@@ -94,7 +94,7 @@ public class DaoFacade {
                      PeriodService periodService,
                      BlindVoteService blindVoteService,
                      MyVoteListService myVoteListService,
-                     ChangeParamService changeParamService,
+                     ChangeParamListService changeParamListService,
                      CompensationBallotService compensationBallotService) {
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
@@ -104,7 +104,7 @@ public class DaoFacade {
         this.periodService = periodService;
         this.blindVoteService = blindVoteService;
         this.myVoteListService = myVoteListService;
-        this.changeParamService = changeParamService;
+        this.changeParamListService = changeParamListService;
         this.compensationBallotService = compensationBallotService;
 
         periodService.addPeriodStateChangeListener(chainHeight -> {
@@ -150,7 +150,7 @@ public class DaoFacade {
 
     // Present fee
     public Coin getProposalFee() {
-        return ProposalConsensus.getFee(changeParamService, periodService.getChainHeight());
+        return ProposalConsensus.getFee(changeParamListService, periodService.getChainHeight());
     }
 
     // Publish proposal, store ballot

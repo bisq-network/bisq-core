@@ -26,7 +26,7 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.period.PeriodStateUpdater;
 import bisq.core.dao.proposal.ProposalService;
-import bisq.core.dao.proposal.param.ChangeParamService;
+import bisq.core.dao.proposal.param.ChangeParamListService;
 import bisq.core.dao.voteresult.VoteResultService;
 import bisq.core.dao.votereveal.VoteRevealService;
 
@@ -43,7 +43,7 @@ public class DaoSetup {
     private final PeriodStateUpdater periodStateUpdater;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
-    private final ChangeParamService changeParamService;
+    private final ChangeParamListService changeParamListService;
     private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
@@ -55,7 +55,7 @@ public class DaoSetup {
                     PeriodStateUpdater periodStateUpdater,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
-                    ChangeParamService changeParamService,
+                    ChangeParamListService changeParamListService,
                     FilteredBallotListService filteredBallotListService,
                     BallotListService ballotListService,
                     MyBallotListService myBallotListService,
@@ -65,7 +65,7 @@ public class DaoSetup {
         this.periodStateUpdater = periodStateUpdater;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.changeParamService = changeParamService;
+        this.changeParamListService = changeParamListService;
         this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
@@ -78,7 +78,7 @@ public class DaoSetup {
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         periodStateUpdater.start();
-        changeParamService.start();
+        changeParamListService.start();
         proposalService.start();
         voteRevealService.start();
         ballotListService.start();

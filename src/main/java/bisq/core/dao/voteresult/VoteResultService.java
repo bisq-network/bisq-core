@@ -26,7 +26,7 @@ import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.proposal.compensation.CompensationProposal;
-import bisq.core.dao.proposal.param.ChangeParamService;
+import bisq.core.dao.proposal.param.ChangeParamListService;
 import bisq.core.dao.state.StateChangeEventsProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -77,7 +77,7 @@ import javax.annotation.Nullable;
 public class VoteResultService implements StateChangeEventsProvider {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
-    private final ChangeParamService changeParamService;
+    private final ChangeParamListService changeParamListService;
     private final PeriodService periodService;
     private final BlindVoteListService blindVoteListService;
     private final IssuanceService issuanceService;
@@ -94,13 +94,13 @@ public class VoteResultService implements StateChangeEventsProvider {
     @Inject
     public VoteResultService(VoteRevealService voteRevealService,
                              StateService stateService,
-                             ChangeParamService changeParamService,
+                             ChangeParamListService changeParamListService,
                              PeriodService periodService,
                              BlindVoteListService blindVoteListService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
-        this.changeParamService = changeParamService;
+        this.changeParamListService = changeParamListService;
         this.periodService = periodService;
         this.blindVoteListService = blindVoteListService;
         this.issuanceService = issuanceService;
@@ -172,7 +172,7 @@ public class VoteResultService implements StateChangeEventsProvider {
                 if (isBlindVoteListMatchingMajority) {
                     //TODO should we write the decryptedVotes here into the state?
 
-                    List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight, changeParamService);
+                    List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight, changeParamListService);
 
                     applyAcceptedProposals(getAcceptedEvaluatedProposals(evaluatedProposals), chainHeight);
 
@@ -298,13 +298,13 @@ public class VoteResultService implements StateChangeEventsProvider {
 
     private List<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedVote> decryptedVotes,
                                                           int chainHeight,
-                                                          ChangeParamService changeParamService) {
+                                                          ChangeParamListService changeParamListService) {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
         List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
-            long requiredQuorum = changeParamService.getDaoParamValue(proposal.getQuorumParam(), chainHeight);
-            long requiredVoteThreshold = changeParamService.getDaoParamValue(proposal.getThresholdParam(), chainHeight);
+            long requiredQuorum = changeParamListService.getDaoParamValue(proposal.getQuorumParam(), chainHeight);
+            long requiredVoteThreshold = changeParamListService.getDaoParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
             long totalStake = proposalVoteResult.getStakeOfAcceptedVotes() + proposalVoteResult.getStakeOfRejectedVotes();

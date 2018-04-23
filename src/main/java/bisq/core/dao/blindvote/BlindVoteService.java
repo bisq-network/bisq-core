@@ -32,7 +32,7 @@ import bisq.core.dao.ballot.BallotListService;
 import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.proposal.ProposalValidator;
-import bisq.core.dao.proposal.param.ChangeParamService;
+import bisq.core.dao.proposal.param.ChangeParamListService;
 
 import bisq.network.p2p.P2PService;
 
@@ -72,7 +72,7 @@ public class BlindVoteService {
     private final BallotListService ballotListService;
     private final BlindVoteListService blindVoteListService;
     private final MyVoteListService myVoteListService;
-    private final ChangeParamService changeParamService;
+    private final ChangeParamListService changeParamListService;
     private final ProposalValidator proposalValidator;
     private final PublicKey signaturePubKey;
 
@@ -90,7 +90,7 @@ public class BlindVoteService {
                             BallotListService ballotListService,
                             BlindVoteListService blindVoteListService,
                             MyVoteListService myVoteListService,
-                            ChangeParamService changeParamService,
+                            ChangeParamListService changeParamListService,
                             ProposalValidator proposalValidator,
                             KeyRing keyRing) {
         this.periodService = periodService;
@@ -101,7 +101,7 @@ public class BlindVoteService {
         this.ballotListService = ballotListService;
         this.blindVoteListService = blindVoteListService;
         this.myVoteListService = myVoteListService;
-        this.changeParamService = changeParamService;
+        this.changeParamListService = changeParamListService;
         this.proposalValidator = proposalValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
@@ -196,7 +196,7 @@ public class BlindVoteService {
     }
 
     public Coin getBlindVoteFee() {
-        return BlindVoteConsensus.getFee(changeParamService, periodService.getChainHeight());
+        return BlindVoteConsensus.getFee(changeParamListService, periodService.getChainHeight());
     }
 
     public BallotList getSortedBallotList() {

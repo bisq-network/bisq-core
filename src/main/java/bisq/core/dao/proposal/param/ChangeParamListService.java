@@ -29,7 +29,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,10 +40,10 @@ import lombok.extern.slf4j.Slf4j;
  * voting are safe against blockchain re-orgs as we use sufficient breaks between the phases. So even in case the
  * BsqBlockchain gets changed due a re-org we will not suffer from a stale state.
  */
+//TODO WIP
 @Slf4j
-public class ChangeParamService implements PersistedDataHost {
+public class ChangeParamListService implements PersistedDataHost {
     private final Storage<ChangeParamEventList> storage;
-    @Getter
     private final ChangeParamEventList changeParamEventList = new ChangeParamEventList();
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +52,7 @@ public class ChangeParamService implements PersistedDataHost {
 
 
     @Inject
-    public ChangeParamService(Storage<ChangeParamEventList> storage) {
+    public ChangeParamListService(Storage<ChangeParamEventList> storage) {
         this.storage = storage;
     }
 

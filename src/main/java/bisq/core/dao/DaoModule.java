@@ -55,7 +55,7 @@ import bisq.core.dao.period.PeriodStateUpdater;
 import bisq.core.dao.proposal.ProposalService;
 import bisq.core.dao.proposal.ProposalValidator;
 import bisq.core.dao.proposal.compensation.CompensationValidator;
-import bisq.core.dao.proposal.param.ChangeParamService;
+import bisq.core.dao.proposal.param.ChangeParamListService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
@@ -124,7 +124,7 @@ public class DaoModule extends AppModule {
         bind(ProposalService.class).in(Singleton.class);
         bind(ProposalValidator.class).in(Singleton.class);
         bind(CompensationValidator.class).in(Singleton.class);
-        bind(ChangeParamService.class).in(Singleton.class);
+        bind(ChangeParamListService.class).in(Singleton.class);
 
         // Ballot
         bind(GenericBallotFactory.class).in(Singleton.class);

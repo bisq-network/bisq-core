@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GenericBallotFactory {
     /*private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final ChangeParamService changeParamService;
+    private final ChangeParamListService changeParamService;
     private final ProposalValidator proposalPayloadValidator;
     private final PublicKey signaturePubKey;
     private final StateService stateService;
@@ -38,7 +38,7 @@ public class GenericBallotFactory {
     public GenericBallotFactory(BsqWalletService bsqWalletService,
                                   BtcWalletService btcWalletService,
                                   StateService stateService,
-                                  ChangeParamService changeParamService,
+                                  ChangeParamListService changeParamService,
                                   ProposalValidator proposalPayloadValidator,
                                   KeyRing keyRing) {
         this.bsqWalletService = bsqWalletService;
