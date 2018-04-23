@@ -26,6 +26,7 @@ import bisq.core.dao.ballot.FilteredBallotListService;
 import bisq.core.dao.ballot.MyBallotListService;
 import bisq.core.dao.ballot.compensation.CompensationBallotService;
 import bisq.core.dao.blindvote.BlindVoteService;
+import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.myvote.MyVote;
 import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.period.PeriodService;

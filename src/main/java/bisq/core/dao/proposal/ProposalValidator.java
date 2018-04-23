@@ -17,7 +17,7 @@
 
 package bisq.core.dao.proposal;
 
-import bisq.core.dao.ValidationException;
+import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;

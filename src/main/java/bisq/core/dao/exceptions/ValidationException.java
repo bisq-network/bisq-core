@@ -1,4 +1,4 @@
-package bisq.core.dao;
+package bisq.core.dao.exceptions;
 
 import bisq.core.dao.state.blockchain.Tx;
 
