@@ -21,9 +21,16 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Value;
 
-@Getter
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@EqualsAndHashCode(callSuper = true)
+@ToString
+@Value
 public class LongVote extends Vote {
 
     private long value;

@@ -21,13 +21,17 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.Value;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@EqualsAndHashCode(callSuper = true)
 @ToString
-@Getter
+@Value
 public class BooleanVote extends Vote {
-
     private boolean accepted;
 
     public BooleanVote(boolean accepted) {
