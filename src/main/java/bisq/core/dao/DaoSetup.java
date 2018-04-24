@@ -17,18 +17,18 @@
 
 package bisq.core.dao;
 
-import bisq.core.dao.ballot.BallotListService;
-import bisq.core.dao.ballot.FilteredBallotListService;
-import bisq.core.dao.ballot.MyBallotListService;
-import bisq.core.dao.blindvote.BlindVoteListService;
-import bisq.core.dao.blindvote.BlindVoteService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.period.PeriodStateUpdater;
-import bisq.core.dao.proposal.ProposalService;
-import bisq.core.dao.proposal.param.ChangeParamListService;
-import bisq.core.dao.voteresult.VoteResultService;
-import bisq.core.dao.votereveal.VoteRevealService;
+import bisq.core.dao.voting.ballot.BallotListService;
+import bisq.core.dao.voting.ballot.FilteredBallotListService;
+import bisq.core.dao.voting.ballot.MyBallotListService;
+import bisq.core.dao.voting.blindvote.BlindVoteListService;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.proposal.ProposalService;
+import bisq.core.dao.voting.proposal.param.ChangeParamListService;
+import bisq.core.dao.voting.voteresult.VoteResultService;
+import bisq.core.dao.voting.votereveal.VoteRevealService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 

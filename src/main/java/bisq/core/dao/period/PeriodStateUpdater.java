@@ -17,13 +17,13 @@
 
 package bisq.core.dao.period;
 
-import bisq.core.dao.proposal.param.Param;
-import bisq.core.dao.proposal.param.ParamChange;
 import bisq.core.dao.state.StateChangeEventsProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.events.ParamChangeEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
+import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.voting.proposal.param.ParamChange;
 
 import com.google.inject.Inject;
 

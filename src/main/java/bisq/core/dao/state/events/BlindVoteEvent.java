@@ -18,7 +18,7 @@
 package bisq.core.dao.state.events;
 
 
-import bisq.core.dao.blindvote.BlindVote;
+import bisq.core.dao.voting.blindvote.BlindVote;
 
 import com.google.protobuf.Message;
 

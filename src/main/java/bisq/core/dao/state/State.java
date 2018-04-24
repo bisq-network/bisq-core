@@ -19,11 +19,11 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.period.Cycle;
-import bisq.core.dao.proposal.Proposal;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.voting.proposal.Proposal;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 

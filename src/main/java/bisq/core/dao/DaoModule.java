@@ -17,15 +17,6 @@
 
 package bisq.core.dao;
 
-import bisq.core.dao.ballot.BallotListService;
-import bisq.core.dao.ballot.FilteredBallotListService;
-import bisq.core.dao.ballot.MyBallotListService;
-import bisq.core.dao.ballot.compensation.CompensationBallotService;
-import bisq.core.dao.ballot.generic.GenericBallotFactory;
-import bisq.core.dao.blindvote.BlindVoteListService;
-import bisq.core.dao.blindvote.BlindVoteService;
-import bisq.core.dao.blindvote.BlindVoteValidator;
-import bisq.core.dao.myvote.MyVoteListService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.node.consensus.BsqTxController;
@@ -52,16 +43,25 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.PeriodState;
 import bisq.core.dao.period.PeriodStateUpdater;
-import bisq.core.dao.proposal.ProposalService;
-import bisq.core.dao.proposal.ProposalValidator;
-import bisq.core.dao.proposal.compensation.CompensationValidator;
-import bisq.core.dao.proposal.param.ChangeParamListService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.voteresult.VoteResultService;
-import bisq.core.dao.voteresult.issuance.IssuanceService;
-import bisq.core.dao.votereveal.VoteRevealService;
+import bisq.core.dao.voting.ballot.BallotListService;
+import bisq.core.dao.voting.ballot.FilteredBallotListService;
+import bisq.core.dao.voting.ballot.MyBallotListService;
+import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
+import bisq.core.dao.voting.ballot.generic.GenericBallotFactory;
+import bisq.core.dao.voting.blindvote.BlindVoteListService;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.myvote.MyVoteListService;
+import bisq.core.dao.voting.proposal.ProposalService;
+import bisq.core.dao.voting.proposal.ProposalValidator;
+import bisq.core.dao.voting.proposal.compensation.CompensationValidator;
+import bisq.core.dao.voting.proposal.param.ChangeParamListService;
+import bisq.core.dao.voting.voteresult.VoteResultService;
+import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
+import bisq.core.dao.voting.votereveal.VoteRevealService;
 
 import bisq.common.app.AppModule;
 

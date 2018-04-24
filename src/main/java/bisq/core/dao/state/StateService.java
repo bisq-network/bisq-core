@@ -17,9 +17,7 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.blindvote.BlindVote;
 import bisq.core.dao.period.Cycle;
-import bisq.core.dao.proposal.param.ParamChange;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxBlock;
@@ -30,6 +28,8 @@ import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.events.BlindVoteEvent;
 import bisq.core.dao.state.events.ParamChangeEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
+import bisq.core.dao.voting.blindvote.BlindVote;
+import bisq.core.dao.voting.proposal.param.ParamChange;
 
 import org.bitcoinj.core.Coin;
 
