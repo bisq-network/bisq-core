@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.storage.messages.BroadcastMessage;
 
@@ -31,11 +31,11 @@ import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public final class NewTxBlockBroadcastMessage extends BroadcastMessage {
-    private final TxBlock txBlock;
+public final class NewBlockBroadcastMessage extends BroadcastMessage {
+    private final Block block;
 
-    public NewTxBlockBroadcastMessage(TxBlock txBlock) {
-        this(txBlock, Version.getP2PMessageVersion());
+    public NewBlockBroadcastMessage(Block block) {
+        this(block, Version.getP2PMessageVersion());
     }
 
 
@@ -43,21 +43,21 @@ public final class NewTxBlockBroadcastMessage extends BroadcastMessage {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private NewTxBlockBroadcastMessage(TxBlock txBlock, int messageVersion) {
+    private NewBlockBroadcastMessage(Block block, int messageVersion) {
         super(messageVersion);
-        this.txBlock = txBlock;
+        this.block = block;
     }
 
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
-                .setNewTxBlockBroadcastMessage(PB.NewTxBlockBroadcastMessage.newBuilder()
-                        .setTxBlock(txBlock.toProtoMessage()))
+                .setNewBlockBroadcastMessage(PB.NewBlockBroadcastMessage.newBuilder()
+                        .setBlock(block.toProtoMessage()))
                 .build();
     }
 
-    public static NetworkEnvelope fromProto(PB.NewTxBlockBroadcastMessage proto, int messageVersion) {
-        return new NewTxBlockBroadcastMessage(TxBlock.fromProto(proto.getTxBlock()),
+    public static NetworkEnvelope fromProto(PB.NewBlockBroadcastMessage proto, int messageVersion) {
+        return new NewBlockBroadcastMessage(Block.fromProto(proto.getBlock()),
                 messageVersion);
     }
 }

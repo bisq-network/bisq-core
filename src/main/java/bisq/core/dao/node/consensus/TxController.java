@@ -40,16 +40,16 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Verifies if a given transaction is a BSQ transaction.
  */
 @Slf4j
-public class BsqTxController {
+public class TxController {
 
     private final StateService stateService;
     private final TxInputsController txInputsController;
     private final TxOutputsController txOutputsController;
 
     @Inject
-    public BsqTxController(StateService stateService,
-                           TxInputsController txInputsController,
-                           TxOutputsController txOutputsController) {
+    public TxController(StateService stateService,
+                        TxInputsController txInputsController,
+                        TxOutputsController txOutputsController) {
         this.stateService = stateService;
         this.txInputsController = txInputsController;
         this.txOutputsController = txOutputsController;

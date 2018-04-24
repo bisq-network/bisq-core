@@ -19,9 +19,9 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.period.Cycle;
 import bisq.core.dao.period.CycleService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
@@ -35,8 +35,6 @@ import bisq.core.dao.voting.proposal.param.ParamChange;
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
-
-import com.google.common.collect.ImmutableSet;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -54,8 +52,6 @@ public class StateService {
     private final State state;
     private final CycleService cycleService;
 
-    private final List<StateChangeEventsProvider> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
-
     // TODO used only by snapshot manager
     private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
     private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
@@ -71,15 +67,6 @@ public class StateService {
 
         this.state = state;
         this.cycleService = cycleService;
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void registerStateChangeEventsProvider(StateChangeEventsProvider stateChangeEventsProvider) {
-        stateChangeEventsProviders.add(stateChangeEventsProvider);
     }
 
 
@@ -135,32 +122,17 @@ public class StateService {
 
     public void setNewBlockHeight(int blockHeight) {
         if (blockHeight != state.getGenesisBlockHeight())
-            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), getLastBlock().getStateChangeEvents())
+            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), state.getStateChangeEvents())
                     .ifPresent(state::addCycle);
 
         state.setChainHeight(blockHeight);
         chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
     }
 
-    // After parsing of a new txBlock is complete we trigger the processing of any non blockchain data like
-    // proposalPayloads or blindVotes and after we have collected all stateChangeEvents we create a Block and
-    // notify the listeners.
-    public void parseBlockComplete(TxBlock txBlock) {
-        // Those who registered to process a txBlock might return a list of StateChangeEvents.
-        // We collect all from all providers and then go on.
-        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-        stateChangeEventsProviders.forEach(stateChangeEventsProvider -> {
-            stateChangeEvents.addAll(stateChangeEventsProvider.provideStateChangeEvents(txBlock));
-        });
-
-        // Now we have both the immutable txBlock and the collected stateChangeEvents.
-        // We now add the immutable Block containing both data.
-        final Block block = new Block(txBlock, ImmutableSet.copyOf(stateChangeEvents));
+    public void parseBlockComplete(Block block) {
         state.addBlock(block);
-
         blockListeners.forEach(l -> l.onBlockAdded(block));
-
-        log.info("New block added at blockHeight " + block.getHeight());
+        log.info("New Block added at blockHeight " + block.getHeight());
     }
 
 
@@ -169,9 +141,9 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-    public List<TxBlock> getClonedTxBlocksFrom(int fromBlockHeight) {
-        final LinkedList<TxBlock> clonedTxBlocks = new LinkedList<>(getTxBlocks());
-        return clonedTxBlocks.stream()
+    public List<Block> getClonedBlocksFrom(int fromBlockHeight) {
+        final LinkedList<Block> clonedBlocks = new LinkedList<>(getBlocks());
+        return clonedBlocks.stream()
                 .filter(block -> block.getHeight() >= fromBlockHeight)
                 .collect(Collectors.toList());
     }
@@ -243,10 +215,8 @@ public class StateService {
         return state.getBlocks();
     }
 
-    public LinkedList<TxBlock> getTxBlockFromState(State state) {
-        return new LinkedList<>(state.getBlocks()).stream()
-                .map(Block::getTxBlock)
-                .collect(Collectors.toCollection(LinkedList::new));
+    public LinkedList<Block> getBlockFromState(State state) {
+        return new LinkedList<>(state.getBlocks());
     }
 
     // Tx
@@ -299,19 +269,8 @@ public class StateService {
                 .findAny();
     }
 
-
-    public LinkedList<TxBlock> getTxBlocks(LinkedList<Block> blocks) {
-        return new LinkedList<>(blocks).stream()
-                .map(Block::getTxBlock)
-                .collect(Collectors.toCollection(LinkedList::new));
-    }
-
-    public LinkedList<TxBlock> getTxBlocks() {
-        return getTxBlocks(this.getBlocks());
-    }
-
-    public boolean containsTxBlock(TxBlock txBlock) {
-        return getTxBlocks().contains(txBlock);
+    public boolean containsBlock(Block block) {
+        return getBlocks().contains(block);
     }
 
     public long getBlockTime(int height) {
@@ -340,20 +299,20 @@ public class StateService {
     }
 
     public Map<String, Tx> getTxMap() {
-        return getTxBlocks().stream()
-                .flatMap(txBlock -> txBlock.getTxs().stream())
+        return getBlocks().stream()
+                .flatMap(block -> block.getTxs().stream())
                 .collect(Collectors.toMap(Tx::getId, tx -> tx));
     }
 
     public Set<Tx> getTxs() {
-        return getTxBlocks().stream()
-                .flatMap(txBlock -> txBlock.getTxs().stream())
+        return getBlocks().stream()
+                .flatMap(block -> block.getTxs().stream())
                 .collect(Collectors.toSet());
     }
 
     public Set<Tx> getFeeTxs() {
-        return getTxBlocks().stream()
-                .flatMap(txBlock -> txBlock.getTxs().stream())
+        return getBlocks().stream()
+                .flatMap(block -> block.getTxs().stream())
                 .filter(tx -> hasTxBurntFee(tx.getId()))
                 .collect(Collectors.toSet());
     }
@@ -493,7 +452,7 @@ public class StateService {
 
     public Set<StateChangeEvent> getStateChangeEvents() {
         return this.getBlocks().stream()
-                .flatMap(block -> block.getStateChangeEvents().stream())
+                .flatMap(block -> state.getStateChangeEvents().stream())
                 .collect(Collectors.toSet());
     }
 

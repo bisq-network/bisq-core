@@ -17,10 +17,10 @@
 
 package bisq.core.dao.node.full.network;
 
-import bisq.core.dao.node.messages.GetTxBlocksRequest;
-import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksRequest;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -60,7 +60,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final StateService stateService;
 
     // Key is connection UID
-    private final Map<String, GetTxBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
+    private final Map<String, GetBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
     private boolean stopped;
 
 
@@ -94,10 +94,10 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
         peerManager.removeListener(this);
     }
 
-    public void publishNewBlock(TxBlock txBlock) {
-        log.info("Publish new block at height={} and block hash={}", txBlock.getHeight(), txBlock.getHash());
-        final NewTxBlockBroadcastMessage newTxBlockBroadcastMessage = new NewTxBlockBroadcastMessage(txBlock);
-        broadcaster.broadcast(newTxBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
+    public void publishNewBlock(Block block) {
+        log.info("Publish new block at height={} and block hash={}", block.getHeight(), block.getHash());
+        final NewBlockBroadcastMessage newBlockBroadcastMessage = new NewBlockBroadcastMessage(block);
+        broadcaster.broadcast(newBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
     }
 
 
@@ -127,15 +127,15 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof GetTxBlocksRequest) {
-            // We received a GetTxBlocksRequest from a liteNode
+        if (networkEnvelop instanceof GetBlocksRequest) {
+            // We received a GetBlocksRequest from a liteNode
             Log.traceCall(networkEnvelop.toString() + "\n\tconnection=" + connection);
             if (!stopped) {
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
-                    GetTxBlocksRequestHandler requestHandler = new GetTxBlocksRequestHandler(networkNode,
+                    GetBlocksRequestHandler requestHandler = new GetBlocksRequestHandler(networkNode,
                             stateService,
-                            new GetTxBlocksRequestHandler.Listener() {
+                            new GetBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {
                                     getBlocksRequestHandlers.remove(uid);
@@ -155,14 +155,14 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                                 }
                             });
                     getBlocksRequestHandlers.put(uid, requestHandler);
-                    requestHandler.onGetTxBlocksRequest((GetTxBlocksRequest) networkEnvelop, connection);
+                    requestHandler.onGetBlocksRequest((GetBlocksRequest) networkEnvelop, connection);
                 } else {
                     log.warn("We have already a GetDataRequestHandler for that connection started. " +
                             "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");
 
                     UserThread.runAfter(() -> {
                         if (getBlocksRequestHandlers.containsKey(uid)) {
-                            GetTxBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
+                            GetBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
                             handler.stop();
                             getBlocksRequestHandlers.remove(uid);
                         }

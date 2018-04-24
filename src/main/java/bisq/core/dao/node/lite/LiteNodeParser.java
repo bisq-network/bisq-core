@@ -19,12 +19,12 @@ package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.consensus.BsqBlockController;
-import bisq.core.dao.node.consensus.BsqTxController;
+import bisq.core.dao.node.consensus.BlockController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.node.consensus.TxController;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxBlock;
 
 import javax.inject.Inject;
 
@@ -42,25 +42,25 @@ import lombok.extern.slf4j.Slf4j;
 public class LiteNodeParser extends BsqParser {
 
     @Inject
-    public LiteNodeParser(BsqBlockController bsqBlockController,
+    public LiteNodeParser(BlockController blockController,
                           GenesisTxController genesisTxController,
-                          BsqTxController bsqTxController,
+                          TxController txController,
                           StateService stateService) {
-        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
+        super(blockController, genesisTxController, txController, stateService);
     }
 
-    void parseBsqBlock(TxBlock txBlock) throws BlockNotConnectingException {
-        int blockHeight = txBlock.getHeight();
+    void parseBlock(Block block) throws BlockNotConnectingException {
+        int blockHeight = block.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
-        List<Tx> txList = new ArrayList<>(txBlock.getTxs());
+        List<Tx> txList = new ArrayList<>(block.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
 
-        stateService.setNewBlockHeight(txBlock.getHeight());
+        stateService.setNewBlockHeight(block.getHeight());
 
-        txBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
+        block.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
         recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
 
-        if (bsqBlockController.isBlockValid(txBlock))
-            stateService.parseBlockComplete(txBlock);
+        if (blockController.isBlockValid(block))
+            stateService.parseBlockComplete(block);
     }
 }

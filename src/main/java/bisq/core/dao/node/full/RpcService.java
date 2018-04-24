@@ -19,7 +19,7 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.node.blockchain.btcd.PubKeyScript;
-import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
+import bisq.core.dao.node.blockchain.exceptions.RpcException;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -135,11 +135,11 @@ public class RpcService {
                 log.error(e.toString());
                 e.printStackTrace();
                 log.error(e.getCause() != null ? e.getCause().toString() : "e.getCause()=null");
-                throw new BsqBlockchainException(e.getMessage(), e);
+                throw new RpcException(e.getMessage(), e);
             } catch (Throwable e) {
                 log.error(e.toString());
                 e.printStackTrace();
-                throw new BsqBlockchainException(e.toString(), e);
+                throw new RpcException(e.toString(), e);
             }
             return null;
         });
@@ -226,7 +226,7 @@ public class RpcService {
     }
 
     @NotNull
-    private List<Tx> getTxList(Block block) throws BsqBlockchainException {
+    private List<Tx> getTxList(Block block) throws RpcException {
         long startTs = System.currentTimeMillis();
         List<Tx> txList = new ArrayList<>();
         int height = block.getHeight();
@@ -261,7 +261,7 @@ public class RpcService {
         });
     }
 
-    public void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws BsqBlockchainException {
+    public void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
         try {
             Transaction transaction = requestTx(txId);
             final BigDecimal fee = transaction.getFee();
@@ -269,11 +269,11 @@ public class RpcService {
                 feesByBlock.put(blockHeight, Math.abs(fee.multiply(BigDecimal.valueOf(Coin.COIN.value)).longValue()));
         } catch (BitcoindException | CommunicationException e) {
             log.error("error at requestFees with txId={}, blockHeight={}", txId, blockHeight);
-            throw new BsqBlockchainException(e.getMessage(), e);
+            throw new RpcException(e.getMessage(), e);
         }
     }
 
-    public Tx requestTx(String txId, int blockHeight) throws BsqBlockchainException {
+    public Tx requestTx(String txId, int blockHeight) throws RpcException {
         try {
             RawTransaction rawTransaction = requestRawTransaction(txId);
             // rawTransaction.getTime() is in seconds but we keep it in ms internally
@@ -329,7 +329,7 @@ public class RpcService {
                     ImmutableList.copyOf(txOutputs));
         } catch (BitcoindException | CommunicationException e) {
             log.error("error at requestTx with txId={}, blockHeight={}", txId, blockHeight);
-            throw new BsqBlockchainException(e.getMessage(), e);
+            throw new RpcException(e.getMessage(), e);
         }
     }
 

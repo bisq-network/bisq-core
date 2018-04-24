@@ -35,16 +35,16 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 @Value
-public class TxBlock implements PersistablePayload {
+public class Block implements PersistablePayload {
 
-    public static TxBlock clone(TxBlock txBlock) {
-        final ImmutableList<Tx> txs = ImmutableList.copyOf(txBlock.getTxs().stream()
+    public static Block clone(Block block) {
+        final ImmutableList<Tx> txs = ImmutableList.copyOf(block.getTxs().stream()
                 .map(Tx::clone)
                 .collect(Collectors.toList()));
-        return new TxBlock(txBlock.getHeight(),
-                txBlock.getTime(),
-                txBlock.getHash(),
-                txBlock.getPreviousBlockHash(),
+        return new Block(block.getHeight(),
+                block.getTime(),
+                block.getHash(),
+                block.getPreviousBlockHash(),
                 txs);
     }
 
@@ -54,7 +54,7 @@ public class TxBlock implements PersistablePayload {
     private final String previousBlockHash;
     private final ImmutableList<Tx> txs;
 
-    public TxBlock(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
+    public Block(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
         this.height = height;
         this.time = time;
         this.hash = hash;
@@ -67,8 +67,8 @@ public class TxBlock implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.TxBlock toProtoMessage() {
-        return PB.TxBlock.newBuilder()
+    public PB.Block toProtoMessage() {
+        return PB.Block.newBuilder()
                 .setHeight(height)
                 .setTime(time)
                 .setHash(hash)
@@ -79,8 +79,8 @@ public class TxBlock implements PersistablePayload {
                 .build();
     }
 
-    public static TxBlock fromProto(PB.TxBlock proto) {
-        return new TxBlock(proto.getHeight(),
+    public static Block fromProto(PB.Block proto) {
+        return new Block(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
@@ -98,7 +98,7 @@ public class TxBlock implements PersistablePayload {
 
     @Override
     public String toString() {
-        return "TxBlock{" +
+        return "Block{" +
                 "\n     height=" + height +
                 ",\n     time=" + time +
                 ",\n     hash='" + hash + '\'' +

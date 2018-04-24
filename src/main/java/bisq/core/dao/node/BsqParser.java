@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.node.consensus.BsqBlockController;
-import bisq.core.dao.node.consensus.BsqTxController;
+import bisq.core.dao.node.consensus.BlockController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.node.consensus.TxController;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -48,9 +48,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 @Immutable
 public abstract class BsqParser {
-    protected final BsqBlockController bsqBlockController;
+    protected final BlockController blockController;
     private final GenesisTxController genesisTxController;
-    private final BsqTxController bsqTxController;
+    private final TxController txController;
     protected final StateService stateService;
 
 
@@ -60,13 +60,13 @@ public abstract class BsqParser {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqParser(BsqBlockController bsqBlockController,
+    public BsqParser(BlockController blockController,
                      GenesisTxController genesisTxController,
-                     BsqTxController bsqTxController,
+                     TxController txController,
                      StateService stateService) {
-        this.bsqBlockController = bsqBlockController;
+        this.blockController = blockController;
         this.genesisTxController = genesisTxController;
-        this.bsqTxController = bsqTxController;
+        this.txController = txController;
         this.stateService = stateService;
     }
 
@@ -129,7 +129,7 @@ public abstract class BsqParser {
 
         // we check if we have any valid BSQ from that tx set
         bsqTxsInBlock.addAll(txsWithoutInputsFromSameBlock.stream()
-                .filter(tx -> bsqTxController.isBsqTx(blockHeight, tx))
+                .filter(tx -> txController.isBsqTx(blockHeight, tx))
                 .collect(Collectors.toList()));
 
         log.debug("Parsing of all txsWithoutInputsFromSameBlock is done.");

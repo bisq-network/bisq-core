@@ -19,10 +19,12 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.period.Cycle;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.events.StateChangeEvent;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 
@@ -35,11 +37,14 @@ import org.bitcoinj.core.Coin;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -80,6 +85,10 @@ public class State implements PersistableEnvelope {
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
 
     private final LinkedList<Cycle> cycles;
+
+    //TODO
+    @Getter
+    private final List<StateChangeEvent> stateChangeEvents = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

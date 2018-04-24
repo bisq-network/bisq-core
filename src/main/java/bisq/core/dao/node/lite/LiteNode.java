@@ -20,12 +20,12 @@ package bisq.core.dao.node.lite;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
-import bisq.core.dao.node.messages.GetTxBlocksResponse;
-import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.network.Connection;
@@ -98,13 +98,13 @@ public class LiteNode extends BsqNode {
 
         liteNodeNetworkService.addListener(new LiteNodeNetworkService.Listener() {
             @Override
-            public void onRequestedTxBlocksReceived(GetTxBlocksResponse getTxBlocksResponse) {
-                LiteNode.this.onRequestedTxBlocksReceived(new ArrayList<>(getTxBlocksResponse.getTxBlocks()));
+            public void onRequestedBlocksReceived(GetBlocksResponse getBlocksResponse) {
+                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBlocksResponse.getBlocks()));
             }
 
             @Override
-            public void onNewTxBlockReceived(NewTxBlockBroadcastMessage newTxBlockBroadcastMessage) {
-                LiteNode.this.onNewTxBlockReceived(newTxBlockBroadcastMessage.getTxBlock());
+            public void onNewBlockReceived(NewBlockBroadcastMessage newBlockBroadcastMessage) {
+                LiteNode.this.onNewBlockReceived(newBlockBroadcastMessage.getBlock());
             }
 
             @Override
@@ -123,7 +123,7 @@ public class LiteNode extends BsqNode {
     // First we request the blocks from a full node
     @Override
     protected void startParseBlocks() {
-        liteNodeNetworkService.requestTxBlocks(getStartBlockHeight());
+        liteNodeNetworkService.requestBlocks(getStartBlockHeight());
     }
 
 
@@ -132,34 +132,34 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We received the missing blocks
-    private void onRequestedTxBlocksReceived(List<TxBlock> txBlockList) {
-        log.info("onRequestedTxBlocksReceived: blocks with {} items", txBlockList.size());
-        if (txBlockList.size() > 0)
-            log.info("block height of last item: {}", txBlockList.get(txBlockList.size() - 1).getHeight());
+    private void onRequestedBlocksReceived(List<Block> blockList) {
+        log.info("onRequestedBlocksReceived: blocks with {} items", blockList.size());
+        if (blockList.size() > 0)
+            log.info("block height of last item: {}", blockList.get(blockList.size() - 1).getHeight());
         // We clone with a reset of all mutable data in case the provider would not have done it.
-        List<TxBlock> clonedTxBlockList = txBlockList.stream()
-                .map(TxBlock::clone)
+        List<Block> clonedBlockList = blockList.stream()
+                .map(Block::clone)
                 .collect(Collectors.toList());
-        liteNodeParserFacade.parseBlocks(clonedTxBlockList,
-                this::onNewTxBlock,
+        liteNodeParserFacade.parseBlocks(clonedBlockList,
+                this::onNewBlock,
                 this::onParseBlockChainComplete,
                 getErrorHandler());
     }
 
-    // We received a new txBlock
-    private void onNewTxBlockReceived(TxBlock txBlock) {
-        log.info("onNewBlockReceived: txBlock={}", txBlock.getHeight());
+    // We received a new block
+    private void onNewBlockReceived(Block block) {
+        log.info("onNewBlockReceived: block={}", block.getHeight());
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
-        TxBlock clonedTxBlock = TxBlock.clone(txBlock);
-        if (!stateService.containsTxBlock(clonedTxBlock)) {
-            //TODO check txBlock height and prev txBlock it it connects to existing blocks
-            liteNodeParserFacade.parseBlock(clonedTxBlock, this::onNewTxBlock, getErrorHandler());
+        Block clonedBlock = Block.clone(block);
+        if (!stateService.containsBlock(clonedBlock)) {
+            //TODO check block height and prev block it it connects to existing blocks
+            liteNodeParserFacade.parseBlock(clonedBlock, this::onNewBlock, getErrorHandler());
         }
     }
 
-    private void onNewTxBlock(TxBlock txBlock) {
-        log.debug("new txBlock parsed: " + txBlock);
+    private void onNewBlock(Block block) {
+        log.debug("new block parsed: " + block);
     }
 
     @NotNull

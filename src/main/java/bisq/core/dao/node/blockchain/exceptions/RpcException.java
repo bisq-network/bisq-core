@@ -17,16 +17,16 @@
 
 package bisq.core.dao.node.blockchain.exceptions;
 
-public class BsqBlockchainException extends Exception {
-    public BsqBlockchainException(String message) {
+public class RpcException extends Exception {
+    public RpcException(String message) {
         super(message);
     }
 
-    public BsqBlockchainException(String message, Throwable cause) {
+    public RpcException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public BsqBlockchainException(Throwable cause) {
+    public RpcException(Throwable cause) {
         super(cause);
     }
 }

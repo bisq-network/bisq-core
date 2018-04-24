@@ -19,14 +19,12 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.consensus.BsqBlockController;
-import bisq.core.dao.node.consensus.BsqTxController;
+import bisq.core.dao.node.consensus.BlockController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.node.consensus.TxController;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxBlock;
-
-import com.neemre.btcdcli4j.core.domain.Block;
 
 import javax.inject.Inject;
 
@@ -50,11 +48,11 @@ public class FullNodeParser extends BsqParser {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FullNodeParser(BsqBlockController bsqBlockController,
+    public FullNodeParser(BlockController blockController,
                           GenesisTxController genesisTxController,
-                          BsqTxController bsqTxController,
+                          TxController txController,
                           StateService stateService) {
-        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
+        super(blockController, genesisTxController, txController, stateService);
     }
 
 
@@ -62,24 +60,24 @@ public class FullNodeParser extends BsqParser {
     // Package private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    TxBlock parseBlock(Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
+    Block parseBlock(com.neemre.btcdcli4j.core.domain.Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
         stateService.setNewBlockHeight(btcdBlock.getHeight());
 
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock, txList);
 
-        final TxBlock txBlock = new TxBlock(btcdBlock.getHeight(),
+        final Block block = new Block(btcdBlock.getHeight(),
                 btcdBlock.getTime(),
                 btcdBlock.getHash(),
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));
 
-        if (bsqBlockController.isBlockValid(txBlock))
-            stateService.parseBlockComplete(txBlock);
+        if (blockController.isBlockValid(block))
+            stateService.parseBlockComplete(block);
 
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
-                System.currentTimeMillis() - startTs, txBlock.getHeight(), bsqTxsInBlock.size());
-        return txBlock;
+                System.currentTimeMillis() - startTs, block.getHeight(), bsqTxsInBlock.size());
+        return block;
     }
 
 
@@ -87,7 +85,7 @@ public class FullNodeParser extends BsqParser {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private List<Tx> findBsqTxsInBlock(Block btcdBlock, List<Tx> txList) {
+    private List<Tx> findBsqTxsInBlock(com.neemre.btcdcli4j.core.domain.Block btcdBlock, List<Tx> txList) {
         int blockHeight = btcdBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 

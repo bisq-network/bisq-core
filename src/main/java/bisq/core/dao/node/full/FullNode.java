@@ -24,7 +24,7 @@ import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.P2PService;
 
@@ -106,10 +106,10 @@ public class FullNode extends BsqNode {
             addBlockHandler();
     }
 
-    private void onNewBsqBlock(TxBlock txBlock) {
+    private void onNewBlock(Block block) {
         jsonBlockChainExporter.maybeExport();
         if (parseBlockchainComplete && p2pNetworkReady)
-            fullNodeNetworkService.publishNewBlock(txBlock);
+            fullNodeNetworkService.publishNewBlock(block);
     }
 
 
@@ -119,7 +119,7 @@ public class FullNode extends BsqNode {
 
     private void addBlockHandler() {
         fullNodeParserFacade.addBlockHandler(btcdBlock -> fullNodeParserFacade.parseBtcdBlockAsync(btcdBlock,
-                this::onNewBsqBlock,
+                this::onNewBlock,
                 throwable -> {
                     if (throwable instanceof BlockNotConnectingException) {
                         startReOrgFromLastSnapshot();
@@ -145,7 +145,7 @@ public class FullNode extends BsqNode {
             if (startBlockHeight <= chainHeadHeight) {
                 fullNodeParserFacade.parseBlocksAsync(startBlockHeight,
                         chainHeadHeight,
-                        this::onNewBsqBlock,
+                        this::onNewBlock,
                         () -> {
                             // We are done but it might be that new blocks have arrived in the meantime,
                             // so we try again with startBlockHeight set to current chainHeadHeight

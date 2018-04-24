@@ -18,7 +18,7 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import bisq.common.handlers.ResultHandler;
 
@@ -53,15 +53,15 @@ public class LiteNodeParserFacade {
     // Package private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    void parseBlocks(List<TxBlock> txBlockList,
-                     Consumer<TxBlock> newBlockHandler,
+    void parseBlocks(List<Block> blockList,
+                     Consumer<Block> newBlockHandler,
                      ResultHandler resultHandler,
                      Consumer<Throwable> errorHandler) {
 
-        for (TxBlock txBlock : txBlockList) {
+        for (Block block : blockList) {
             try {
-                liteNodeParser.parseBsqBlock(txBlock);
-                newBlockHandler.accept(txBlock);
+                liteNodeParser.parseBlock(block);
+                newBlockHandler.accept(block);
             } catch (BlockNotConnectingException e) {
                 errorHandler.accept(e);
             }
@@ -69,12 +69,12 @@ public class LiteNodeParserFacade {
         resultHandler.handleResult();
     }
 
-    void parseBlock(TxBlock txBlock,
-                    Consumer<TxBlock> newBlockHandler,
+    void parseBlock(Block block,
+                    Consumer<Block> newBlockHandler,
                     Consumer<Throwable> errorHandler) {
         try {
-            liteNodeParser.parseBsqBlock(txBlock);
-            newBlockHandler.accept(txBlock);
+            liteNodeParser.parseBlock(block);
+            newBlockHandler.accept(block);
         } catch (BlockNotConnectingException e) {
             errorHandler.accept(e);
         }

@@ -37,11 +37,11 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
-public final class GetTxBlocksRequest extends NetworkEnvelope implements DirectMessage, CapabilityRequiringPayload {
+public final class GetBlocksRequest extends NetworkEnvelope implements DirectMessage, CapabilityRequiringPayload {
     private final int fromBlockHeight;
     private final int nonce;
 
-    public GetTxBlocksRequest(int fromBlockHeight, int nonce) {
+    public GetBlocksRequest(int fromBlockHeight, int nonce) {
         this(fromBlockHeight, nonce, Version.getP2PMessageVersion());
     }
 
@@ -50,7 +50,7 @@ public final class GetTxBlocksRequest extends NetworkEnvelope implements DirectM
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GetTxBlocksRequest(int fromBlockHeight, int nonce, int messageVersion) {
+    private GetBlocksRequest(int fromBlockHeight, int nonce, int messageVersion) {
         super(messageVersion);
         this.fromBlockHeight = fromBlockHeight;
         this.nonce = nonce;
@@ -59,14 +59,14 @@ public final class GetTxBlocksRequest extends NetworkEnvelope implements DirectM
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
-                .setGetTxBlocksRequest(PB.GetTxBlocksRequest.newBuilder()
+                .setGetBlocksRequest(PB.GetBlocksRequest.newBuilder()
                         .setFromBlockHeight(fromBlockHeight)
                         .setNonce(nonce))
                 .build();
     }
 
-    public static NetworkEnvelope fromProto(PB.GetTxBlocksRequest proto, int messageVersion) {
-        return new GetTxBlocksRequest(proto.getFromBlockHeight(), proto.getNonce(), messageVersion);
+    public static NetworkEnvelope fromProto(PB.GetBlocksRequest proto, int messageVersion) {
+        return new GetBlocksRequest(proto.getFromBlockHeight(), proto.getNonce(), messageVersion);
     }
 
     @Override

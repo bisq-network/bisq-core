@@ -17,6 +17,8 @@
 
 package bisq.core.dao.state;
 
+import bisq.core.dao.state.blockchain.Block;
+
 public interface BlockListener {
     void onBlockAdded(Block block);
 }

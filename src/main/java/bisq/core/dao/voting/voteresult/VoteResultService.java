@@ -19,12 +19,9 @@ package bisq.core.dao.voting.voteresult;
 
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
-import bisq.core.dao.state.StateChangeEventsProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
@@ -52,7 +49,6 @@ import javax.crypto.SecretKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,7 +70,7 @@ import javax.annotation.Nullable;
  * the missing blindVotes from the network.
  */
 @Slf4j
-public class VoteResultService implements StateChangeEventsProvider {
+public class VoteResultService {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final ChangeParamListService changeParamListService;
@@ -123,24 +119,6 @@ public class VoteResultService implements StateChangeEventsProvider {
 
     public List<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
         return getRejectedEvaluatedProposals(allEvaluatedProposals);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
-        final int height = txBlock.getHeight();
-        if (isInVoteResultPhase(height)) {
-            Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-            // TODO in case of para change we add it to state
-            // data for issuance is required earlier in the parsing so it does not make sense to add it here
-            return stateChangeEvents;
-        } else {
-            return new HashSet<>();
-        }
     }
 
 

@@ -17,16 +17,16 @@
 
 package bisq.core.dao.node.blockchain.exceptions;
 
-import bisq.core.dao.state.blockchain.TxBlock;
+import bisq.core.dao.state.blockchain.Block;
 
 import lombok.Getter;
 
 @Getter
 public class BlockNotConnectingException extends Exception {
 
-    private TxBlock block;
+    private Block block;
 
-    public BlockNotConnectingException(TxBlock block) {
+    public BlockNotConnectingException(Block block) {
         this.block = block;
     }
 }

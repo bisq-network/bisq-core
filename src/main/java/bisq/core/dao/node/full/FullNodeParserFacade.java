@@ -18,12 +18,10 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxBlock;
 
 import bisq.common.handlers.ResultHandler;
-
-import com.neemre.btcdcli4j.core.domain.Block;
 
 import javax.inject.Inject;
 
@@ -69,21 +67,20 @@ public class FullNodeParserFacade {
 
     void parseBlocksAsync(int startBlockHeight,
                           int chainHeadHeight,
-                          Consumer<TxBlock> newBlockHandler,
+                          Consumer<Block> newBlockHandler,
                           ResultHandler resultHandler,
                           Consumer<Throwable> errorHandler) {
         parseBlockAsync(startBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
         resultHandler.handleResult();
     }
 
-    private void parseBlockAsync(int blockHeight, int chainHeadHeight, Consumer<TxBlock> newBlockHandler, Consumer<Throwable> errorHandler) {
+    private void parseBlockAsync(int blockHeight, int chainHeadHeight, Consumer<Block> newBlockHandler, Consumer<Throwable> errorHandler) {
         rpcService.requestBlockWithAllTransactions(blockHeight,
                 resultTuple -> {
                     try {
-                        Block block = resultTuple.first;
                         List<Tx> txList = resultTuple.second;
-                        TxBlock txBlock = fullNodeParser.parseBlock(block, txList);
-                        newBlockHandler.accept(txBlock);
+                        Block block = fullNodeParser.parseBlock(resultTuple.first, txList);
+                        newBlockHandler.accept(block);
                         if (blockHeight < chainHeadHeight) {
                             final int newBlockHeight = blockHeight + 1;
                             parseBlockAsync(newBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
@@ -95,14 +92,14 @@ public class FullNodeParserFacade {
                 errorHandler);
     }
 
-    void parseBtcdBlockAsync(Block btcdBlock,
-                             Consumer<TxBlock> resultHandler,
+    void parseBtcdBlockAsync(com.neemre.btcdcli4j.core.domain.Block btcdBlock,
+                             Consumer<Block> resultHandler,
                              Consumer<Throwable> errorHandler) {
         rpcService.requestAllTransactionsOfBlock(btcdBlock,
                 txList -> {
                     try {
-                        TxBlock txBlock = fullNodeParser.parseBlock(btcdBlock, txList);
-                        resultHandler.accept(txBlock);
+                        Block block = fullNodeParser.parseBlock(btcdBlock, txList);
+                        resultHandler.accept(block);
                     } catch (BlockNotConnectingException e) {
                         errorHandler.accept(e);
                     }
@@ -110,7 +107,7 @@ public class FullNodeParserFacade {
                 errorHandler);
     }
 
-    void addBlockHandler(Consumer<Block> blockHandler) {
+    void addBlockHandler(Consumer<com.neemre.btcdcli4j.core.domain.Block> blockHandler) {
         rpcService.registerBlockHandler(blockHandler);
     }
 }

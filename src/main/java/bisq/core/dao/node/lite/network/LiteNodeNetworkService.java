@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.lite.network;
 
-import bisq.core.dao.node.messages.GetTxBlocksResponse;
-import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.network.CloseConnectionReason;
@@ -74,9 +74,9 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     public interface Listener {
         void onNoSeedNodeAvailable();
 
-        void onRequestedTxBlocksReceived(GetTxBlocksResponse getTxBlocksResponse);
+        void onRequestedBlocksReceived(GetBlocksResponse getBlocksResponse);
 
-        void onNewTxBlockReceived(NewTxBlockBroadcastMessage newTxBlockBroadcastMessage);
+        void onNewBlockReceived(NewBlockBroadcastMessage newBlockBroadcastMessage);
 
         void onFault(String errorMessage, @Nullable Connection connection);
     }
@@ -93,7 +93,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     private final List<Listener> listeners = new ArrayList<>();
 
     // Key is tuple of seedNode address and requested blockHeight
-    private final Map<Tuple2<NodeAddress, Integer>, RequestTxBlocksHandler> requestBlocksHandlerMap = new HashMap<>();
+    private final Map<Tuple2<NodeAddress, Integer>, RequestBlocksHandler> requestBlocksHandlerMap = new HashMap<>();
     private Timer retryTimer;
     private boolean stopped;
 
@@ -135,7 +135,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
         listeners.add(listener);
     }
 
-    public void requestTxBlocks(int startBlockHeight) {
+    public void requestBlocks(int startBlockHeight) {
         Log.traceCall();
         lastRequestedBlockHeight = startBlockHeight;
         Optional<Connection> connectionToSeedNodeOptional = networkNode.getConfirmedConnections().stream()
@@ -143,7 +143,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                 .findAny();
         if (connectionToSeedNodeOptional.isPresent() &&
                 connectionToSeedNodeOptional.get().getPeersNodeAddressOptional().isPresent()) {
-            requestTxBlocks(connectionToSeedNodeOptional.get().getPeersNodeAddressOptional().get(), startBlockHeight);
+            requestBlocks(connectionToSeedNodeOptional.get().getPeersNodeAddressOptional().get(), startBlockHeight);
         } else {
             tryWithNewSeedNode(startBlockHeight);
         }
@@ -215,8 +215,8 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof NewTxBlockBroadcastMessage) {
-            listeners.forEach(listener -> listener.onNewTxBlockReceived((NewTxBlockBroadcastMessage) networkEnvelop));
+        if (networkEnvelop instanceof NewBlockBroadcastMessage) {
+            listeners.forEach(listener -> listener.onNewBlockReceived((NewBlockBroadcastMessage) networkEnvelop));
         }
     }
 
@@ -224,19 +224,19 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     // RequestData
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void requestTxBlocks(NodeAddress peersNodeAddress, int startBlockHeight) {
+    private void requestBlocks(NodeAddress peersNodeAddress, int startBlockHeight) {
         if (!stopped) {
             final Tuple2<NodeAddress, Integer> key = new Tuple2<>(peersNodeAddress, startBlockHeight);
             if (!requestBlocksHandlerMap.containsKey(key)) {
                 if (startBlockHeight >= lastReceivedBlockHeight) {
-                    RequestTxBlocksHandler requestTxBlocksHandler = new RequestTxBlocksHandler(networkNode,
+                    RequestBlocksHandler requestBlocksHandler = new RequestBlocksHandler(networkNode,
                             peerManager,
                             peersNodeAddress,
                             startBlockHeight,
-                            new RequestTxBlocksHandler.Listener() {
+                            new RequestBlocksHandler.Listener() {
                                 @Override
-                                public void onComplete(GetTxBlocksResponse getBsqBlocksResponse) {
-                                    log.trace("requestTxBlocksHandler of outbound connection complete. nodeAddress={}",
+                                public void onComplete(GetBlocksResponse getBlocksResponse) {
+                                    log.trace("requestBlocksHandler of outbound connection complete. nodeAddress={}",
                                             peersNodeAddress);
                                     stopRetryTimer();
 
@@ -245,7 +245,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                                     // we only notify if our request was latest
                                     if (startBlockHeight >= lastReceivedBlockHeight) {
                                         lastReceivedBlockHeight = startBlockHeight;
-                                        listeners.forEach(listener -> listener.onRequestedTxBlocksReceived(getBsqBlocksResponse));
+                                        listeners.forEach(listener -> listener.onRequestedBlocksReceived(getBlocksResponse));
                                     } else {
                                         log.warn("We got a response which is already obsolete because we receive a " +
                                                 "response from a request with a higher block height. " +
@@ -255,7 +255,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
 
                                 @Override
                                 public void onFault(String errorMessage, @Nullable Connection connection) {
-                                    log.warn("requestTxBlocksHandler with outbound connection failed.\n\tnodeAddress={}\n\t" +
+                                    log.warn("requestBlocksHandler with outbound connection failed.\n\tnodeAddress={}\n\t" +
                                             "ErrorMessage={}", peersNodeAddress, errorMessage);
 
                                     peerManager.handleConnectionFault(peersNodeAddress);
@@ -266,8 +266,8 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                                     tryWithNewSeedNode(startBlockHeight);
                                 }
                             });
-                    requestBlocksHandlerMap.put(key, requestTxBlocksHandler);
-                    requestTxBlocksHandler.requestTxBlocks();
+                    requestBlocksHandlerMap.put(key, requestBlocksHandler);
+                    requestBlocksHandler.requestBlocks();
                 } else {
                     //TODO check with re-orgs
                     // FIXME when a lot of blocks are created we get caught here. Seems to be a threading issue...
@@ -283,7 +283,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
 
                 UserThread.runAfter(() -> {
                     if (requestBlocksHandlerMap.containsKey(key)) {
-                        RequestTxBlocksHandler handler = requestBlocksHandlerMap.get(key);
+                        RequestBlocksHandler handler = requestBlocksHandlerMap.get(key);
                         handler.stop();
                         requestBlocksHandlerMap.remove(key);
                     }
@@ -319,7 +319,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                                 NodeAddress nextCandidate = list.get(0);
                                 seedNodeAddresses.remove(nextCandidate);
                                 log.info("We try requestBlocks with {}", nextCandidate);
-                                requestTxBlocks(nextCandidate, startBlockHeight);
+                                requestBlocks(nextCandidate, startBlockHeight);
                             } else {
                                 log.warn("No more seed nodes available we could try.");
                                 listeners.forEach(Listener::onNoSeedNodeAvailable);
@@ -366,7 +366,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
 
 
     private void closeAllHandlers() {
-        requestBlocksHandlerMap.values().forEach(RequestTxBlocksHandler::cancel);
+        requestBlocksHandlerMap.values().forEach(RequestBlocksHandler::cancel);
         requestBlocksHandlerMap.clear();
     }
 }

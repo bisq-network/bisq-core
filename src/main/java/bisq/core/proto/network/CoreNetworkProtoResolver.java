@@ -26,9 +26,9 @@ import bisq.core.arbitration.messages.DisputeResultMessage;
 import bisq.core.arbitration.messages.OpenNewDisputeMessage;
 import bisq.core.arbitration.messages.PeerOpenedDisputeMessage;
 import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
-import bisq.core.dao.node.messages.GetTxBlocksRequest;
-import bisq.core.dao.node.messages.GetTxBlocksResponse;
-import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksRequest;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.voting.blindvote.BlindVotePayload;
 import bisq.core.dao.voting.proposal.ProposalPayload;
 import bisq.core.filter.Filter;
@@ -144,12 +144,12 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case PRIVATE_NOTIFICATION_MESSAGE:
                     return PrivateNotificationMessage.fromProto(proto.getPrivateNotificationMessage(), messageVersion);
 
-                case GET_TX_BLOCKS_REQUEST:
-                    return GetTxBlocksRequest.fromProto(proto.getGetTxBlocksRequest(), messageVersion);
-                case GET_TX_BLOCKS_RESPONSE:
-                    return GetTxBlocksResponse.fromProto(proto.getGetTxBlocksResponse(), messageVersion);
-                case NEW_TX_BLOCK_BROADCAST_MESSAGE:
-                    return NewTxBlockBroadcastMessage.fromProto(proto.getNewTxBlockBroadcastMessage(), messageVersion);
+                case GET_BLOCKS_REQUEST:
+                    return GetBlocksRequest.fromProto(proto.getGetBlocksRequest(), messageVersion);
+                case GET_BLOCKS_RESPONSE:
+                    return GetBlocksResponse.fromProto(proto.getGetBlocksResponse(), messageVersion);
+                case NEW_BLOCK_BROADCAST_MESSAGE:
+                    return NewBlockBroadcastMessage.fromProto(proto.getNewBlockBroadcastMessage(), messageVersion);
 
                 case ADD_PERSISTABLE_NETWORK_PAYLOAD_MESSAGE:
                     return AddPersistableNetworkPayloadMessage.fromProto(proto.getAddPersistableNetworkPayloadMessage(), this, messageVersion);

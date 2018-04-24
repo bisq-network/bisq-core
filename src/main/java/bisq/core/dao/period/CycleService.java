@@ -25,14 +25,12 @@ import bisq.core.dao.voting.proposal.param.ParamChange;
 import com.google.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +53,7 @@ public class CycleService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles,
-                                               ImmutableSet<StateChangeEvent> stateChangeEvents) {
+                                               List<StateChangeEvent> stateChangeEvents) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
@@ -93,7 +91,7 @@ public class CycleService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Set<StateChangeEvent> stateChangeEvents) {
+    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, List<StateChangeEvent> stateChangeEvents) {
         List<PhaseWrapper> phaseWrapperListFromChangeEvents = stateChangeEvents.stream()
                 .filter(event -> event instanceof ParamChangeEvent)
                 .map(event -> (ParamChangeEvent) event)
@@ -150,23 +148,4 @@ public class CycleService {
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();
     }
-
-
-
-
-   /* private Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock, int genesisBlockHeight) {
-        final int height = txBlock.getHeight();
-        if (height == genesisBlockHeight)
-            return getStateChangeEventsFromParamDefaultValues(height);
-        else
-            return new HashSet<>();
-    }*/
-
-   /* private Set<StateChangeEvent> getStateChangeEventsFromParamDefaultValues(int height) {
-        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-        Arrays.asList(Phase.values())
-                .forEach(phase -> initWithDefaultValueAtGenesisHeight(phase, height)
-                        .ifPresent(stateChangeEvents::add));
-        return stateChangeEvents;
-    }*/
 }

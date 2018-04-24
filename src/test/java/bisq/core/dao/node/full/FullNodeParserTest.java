@@ -18,10 +18,10 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.blockchain.exceptions.BsqBlockchainException;
-import bisq.core.dao.node.consensus.BsqBlockController;
-import bisq.core.dao.node.consensus.BsqTxController;
+import bisq.core.dao.node.blockchain.exceptions.RpcException;
+import bisq.core.dao.node.consensus.BlockController;
 import bisq.core.dao.node.consensus.GenesisTxController;
+import bisq.core.dao.node.consensus.TxController;
 import bisq.core.dao.node.consensus.TxInputsController;
 import bisq.core.dao.node.consensus.TxOutputsController;
 import bisq.core.dao.state.StateService;
@@ -74,7 +74,7 @@ public class FullNodeParserTest {
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     StateService stateService;
 
-    // Used by bsqTxController
+    // Used by txController
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     TxInputsController txInputsController;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
@@ -101,9 +101,9 @@ public class FullNodeParserTest {
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     GenesisTxController genesisTxController;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    BsqTxController bsqTxController;
+    TxController txController;
     @Injectable
-    BsqBlockController bsqBlockController;
+    BlockController blockController;
 
     @Test
     public void testIsBsqTx() {
@@ -140,15 +140,15 @@ public class FullNodeParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(bsqTxController.isBsqTx(height, tx));
+        assertFalse(txController.isBsqTx(height, tx));
         // Second time there is BSQ in the first txout
-        assertTrue(bsqTxController.isBsqTx(height, tx));
+        assertTrue(txController.isBsqTx(height, tx));
         // Third time there is BSQ in the second txout
-        assertTrue(bsqTxController.isBsqTx(height, tx));
+        assertTrue(txController.isBsqTx(height, tx));
     }
 
     @Test
-    public void testParseBlocks() throws BitcoindException, CommunicationException, BlockNotConnectingException, BsqBlockchainException {
+    public void testParseBlocks() throws BitcoindException, CommunicationException, BlockNotConnectingException, RpcException {
         // Setup blocks to test, starting before genesis
         // Only the transactions related to bsq are relevant, no checks are done on correctness of blocks or other txs
         // so hashes and most other data don't matter
