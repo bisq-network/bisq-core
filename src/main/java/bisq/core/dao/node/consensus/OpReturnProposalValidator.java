@@ -24,54 +24,43 @@ import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
+import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 /**
- * Verifies if OP_RETURN data matches rules for a vote reveal tx and applies state change.
+ * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
 @Slf4j
-public class OpReturnVoteRevealController {
+public class OpReturnProposalValidator {
     private final PeriodService periodService;
     private final StateService stateService;
 
 
     @Inject
-    public OpReturnVoteRevealController(PeriodService periodService,
-                                        StateService stateService) {
+    public OpReturnProposalValidator(PeriodService periodService,
+                                     StateService stateService) {
         this.periodService = periodService;
         this.stateService = stateService;
     }
 
-    // opReturnData: 2 bytes version and type, 20 bytes hash, 16 bytes key
-
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, int blockHeight, Model model) {
-        if (model.isVoteStakeSpentAtInputs() &&
-                opReturnData.length == 38 &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL)) {
-            stateService.setTxOutputType(txOutput, TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-            model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
-            checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
-                    "model.getVoteRevealUnlockStakeOutput() must not be null");
-            stateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
-
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, TxState txState) {
+        if (opReturnData.length == 22 &&
+                bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL)) {
+            stateService.setTxOutputType(txOutput, TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
+            txState.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
         } else {
-            log.info("We expected a vote reveal op_return data but it did not " +
+            log.info("We expected a proposal op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL));
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
-            // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration
-            // that it is valid BSQ.
-            if (model.getVoteRevealUnlockStakeOutput() != null)
-                stateService.setTxOutputType(model.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
         }
     }
 }

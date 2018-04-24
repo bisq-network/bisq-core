@@ -33,73 +33,73 @@ import javax.annotation.Nullable;
  * Checks if an output is a BSQ output and apply state change.
  */
 @Slf4j
-public class TxOutputController {
+public class TxOutputValidator {
     private final StateService stateService;
-    private final OpReturnController opReturnController;
+    private final OpReturnValidator opReturnController;
 
     @Inject
-    public TxOutputController(StateService stateService, OpReturnController opReturnController) {
+    public TxOutputValidator(StateService stateService, OpReturnValidator opReturnController) {
         this.stateService = stateService;
         this.opReturnController = opReturnController;
     }
 
-    void processOpReturnCandidate(TxOutput txOutput, Model model) {
-        opReturnController.processOpReturnCandidate(txOutput, model);
+    void processOpReturnCandidate(TxOutput txOutput, TxState txState) {
+        opReturnController.processOpReturnCandidate(txOutput, txState);
     }
 
-    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, Model model) {
-        final long bsqInputBalanceValue = model.getAvailableInputValue();
+    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, TxState txState) {
+        final long bsqInputBalanceValue = txState.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
             if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
-                handleBsqOutput(txOutput, index, model, txOutputValue);
+                handleBsqOutput(txOutput, index, txState, txOutputValue);
             } else {
-                handleBtcOutput(txOutput, index, model);
+                handleBtcOutput(txOutput, index, txState);
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnController.processTxOutput(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, model);
+            opReturnController.processTxOutput(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, txState);
         }
     }
 
-    private void handleBsqOutput(TxOutput txOutput, int index, Model model, long txOutputValue) {
+    private void handleBsqOutput(TxOutput txOutput, int index, TxState txState, long txOutputValue) {
         // Update the input balance.
-        model.subtractFromInputValue(txOutputValue);
+        txState.subtractFromInputValue(txOutputValue);
 
         // At a blind vote tx we get the stake at output 0.
-        if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
+        if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
             // First output might be vote stake output.
-            model.setBlindVoteLockStakeOutput(txOutput);
+            txState.setBlindVoteLockStakeOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the model.
+            // in the txState.
             applyStateChangeForBsqOutput(txOutput, null);
-        } else if (index == 0 && model.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
+        } else if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
             // At a vote reveal tx we get the released stake at output 0.
             // First output might be stake release output.
-            model.setVoteRevealUnlockStakeOutput(txOutput);
+            txState.setVoteRevealUnlockStakeOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the model.
+            // in the txState.
             applyStateChangeForBsqOutput(txOutput, null);
         } else {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }
 
-        model.setBsqOutputFound(true);
+        txState.setBsqOutputFound(true);
     }
 
-    private void handleBtcOutput(TxOutput txOutput, int index, Model model) {
+    private void handleBtcOutput(TxOutput txOutput, int index, TxState txState) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
-        // candidate to the model and we don't apply the TxOutputType as we do that later as the OpReturn check.
-        if (model.isInputValuePositive() &&
+        // candidate to the txState and we don't apply the TxOutputType as we do that later as the OpReturn check.
+        if (txState.isInputValuePositive() &&
                 index == 1 &&
-                model.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
+                txState.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
             // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
-            // into our model.
-            model.setIssuanceCandidate(txOutput);
+            // into our txState.
+            txState.setIssuanceCandidate(txOutput);
         } else {
             applyStateChangeForBtcOutput(txOutput);
         }

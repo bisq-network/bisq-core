@@ -19,9 +19,9 @@ package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.consensus.BlockController;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.TxController;
+import bisq.core.dao.node.consensus.BlockValidator;
+import bisq.core.dao.node.consensus.GenesisTxValidator;
+import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
@@ -42,11 +42,11 @@ import lombok.extern.slf4j.Slf4j;
 public class LiteNodeParser extends BsqParser {
 
     @Inject
-    public LiteNodeParser(BlockController blockController,
-                          GenesisTxController genesisTxController,
-                          TxController txController,
+    public LiteNodeParser(BlockValidator blockValidator,
+                          GenesisTxValidator genesisTxValidator,
+                          TxValidator txValidator,
                           StateService stateService) {
-        super(blockController, genesisTxController, txController, stateService);
+        super(blockValidator, genesisTxValidator, txValidator, stateService);
     }
 
     void parseBlock(Block block) throws BlockNotConnectingException {
@@ -60,7 +60,7 @@ public class LiteNodeParser extends BsqParser {
         block.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
         recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
 
-        if (blockController.isBlockValid(block))
-            stateService.parseBlockComplete(block);
+        if (blockValidator.validate(block))
+            stateService.addNewBlock(block);
     }
 }

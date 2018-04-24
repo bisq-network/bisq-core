@@ -34,18 +34,18 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Iterates all outputs for verification for BSQ outputs and sets the txType.
  */
 @Slf4j
-public class TxOutputsController {
+public class TxOutputsIterator {
 
-    private final TxOutputController txOutputController;
+    private final TxOutputValidator txOutputValidator;
     private final StateService stateService;
 
     @Inject
-    public TxOutputsController(TxOutputController txOutputController, StateService stateService) {
-        this.txOutputController = txOutputController;
+    public TxOutputsIterator(TxOutputValidator txOutputValidator, StateService stateService) {
+        this.txOutputValidator = txOutputValidator;
         this.stateService = stateService;
     }
 
-    void processOpReturnCandidate(Tx tx, Model model) {
+    void processOpReturnCandidate(Tx tx, TxState txState) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
 
@@ -53,25 +53,25 @@ public class TxOutputsController {
         // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
         // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
         // BSQ inputs are not verified yet.
-        // We keep the temporary opReturn type in the model object.
+        // We keep the temporary opReturn type in the txState object.
         checkArgument(!outputs.isEmpty(), "outputs must not be empty");
         int lastIndex = outputs.size() - 1;
-        txOutputController.processOpReturnCandidate(outputs.get(lastIndex), model);
+        txOutputValidator.processOpReturnCandidate(outputs.get(lastIndex), txState);
     }
 
-    void iterateOutputs(Tx tx, int blockHeight, Model model) {
+    void iterate(Tx tx, int blockHeight, TxState txState) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
         // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
         for (int index = 0; index < outputs.size(); index++) {
-            txOutputController.processTxOutput(tx, outputs.get(index), index, blockHeight, model);
+            txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, txState);
         }
 
         // If we have an issuanceCandidate and the type was not applied in the opReturnController we set
         // it now to an BTC_OUTPUT.
-        if (model.getIssuanceCandidate() != null &&
-                stateService.getTxOutputType(model.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
-            stateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
+        if (txState.getIssuanceCandidate() != null &&
+                stateService.getTxOutputType(txState.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
+            stateService.setTxOutputType(txState.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
         }
     }
 

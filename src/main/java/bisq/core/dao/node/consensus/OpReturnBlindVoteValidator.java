@@ -33,44 +33,44 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
+ * Verifies if OP_RETURN data matches rules for a blind vote tx and applies state change.
  */
 @Slf4j
-public class OpReturnCompReqController {
+public class OpReturnBlindVoteValidator {
     private final PeriodService periodService;
     private final StateService stateService;
 
-
     @Inject
-    public OpReturnCompReqController(PeriodService periodService,
-                                     StateService stateService) {
+    public OpReturnBlindVoteValidator(PeriodService periodService,
+                                      StateService stateService) {
         this.periodService = periodService;
         this.stateService = stateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
-        if (model.getIssuanceCandidate() != null &&
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, TxState txState) {
+        if (txState.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
-                bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL)) {
-            stateService.setTxOutputType(txOutput, TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
-            model.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+                bsqFee == stateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE)) {
+            stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
+            txState.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
-            checkArgument(model.getIssuanceCandidate() != null,
-                    "model.getCompRequestIssuanceOutputCandidate() must not be null");
-            stateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+            checkArgument(txState.getBlindVoteLockStakeOutput() != null,
+                    "txState.getBlindVoteLockStakeOutput() must not be null");
+            stateService.setTxOutputType(txState.getBlindVoteLockStakeOutput(), TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
         } else {
-            log.info("We expected a compensation request op_return data but it did not " +
+            log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL), blockHeight, periodService.getPhaseForHeight(blockHeight));
+            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE), blockHeight, periodService.getPhaseForHeight(blockHeight));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
-            // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
-            if (model.getIssuanceCandidate() != null)
-                stateService.setTxOutputType(model.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
+            // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output
+            // iteration that it is valid BSQ.
+            if (txState.getBlindVoteLockStakeOutput() != null)
+                stateService.setTxOutputType(txState.getBlindVoteLockStakeOutput(), TxOutputType.BSQ_OUTPUT);
         }
     }
 }

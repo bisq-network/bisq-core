@@ -126,7 +126,7 @@ public class StateService {
         chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
     }
 
-    public void parseBlockComplete(Block block) {
+    public void addNewBlock(Block block) {
         state.addBlock(block);
         blockListeners.forEach(l -> l.onBlockAdded(block));
         log.info("New Block added at blockHeight " + block.getHeight());

@@ -19,11 +19,11 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.blockchain.exceptions.RpcException;
-import bisq.core.dao.node.consensus.BlockController;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.TxController;
-import bisq.core.dao.node.consensus.TxInputsController;
-import bisq.core.dao.node.consensus.TxOutputsController;
+import bisq.core.dao.node.consensus.BlockValidator;
+import bisq.core.dao.node.consensus.GenesisTxValidator;
+import bisq.core.dao.node.consensus.TxInputsIterator;
+import bisq.core.dao.node.consensus.TxOutputsIterator;
+import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -74,11 +74,11 @@ public class FullNodeParserTest {
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     StateService stateService;
 
-    // Used by txController
+    // Used by txValidator
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxInputsController txInputsController;
+    TxInputsIterator txInputsIterator;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxOutputsController txOutputsController;
+    TxOutputsIterator txOutputsIterator;
 
     // @Injectable are mocked resources used to for injecting into @Tested classes
     // The naming of these resources doesn't matter, any resource that fits will be used for injection
@@ -99,11 +99,11 @@ public class FullNodeParserTest {
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     StateService writeModel;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    GenesisTxController genesisTxController;
+    GenesisTxValidator genesisTxValidator;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxController txController;
+    TxValidator txValidator;
     @Injectable
-    BlockController blockController;
+    BlockValidator blockValidator;
 
     @Test
     public void testIsBsqTx() {
@@ -140,11 +140,11 @@ public class FullNodeParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txController.isBsqTx(height, tx));
+        assertFalse(txValidator.validate(height, tx));
         // Second time there is BSQ in the first txout
-        assertTrue(txController.isBsqTx(height, tx));
+        assertTrue(txValidator.validate(height, tx));
         // Third time there is BSQ in the second txout
-        assertTrue(txController.isBsqTx(height, tx));
+        assertTrue(txValidator.validate(height, tx));
     }
 
     @Test

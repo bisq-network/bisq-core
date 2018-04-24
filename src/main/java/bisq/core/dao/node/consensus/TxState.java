@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
  */
 @Getter
 @Setter
-class Model {
+class TxState {
     private long availableInputValue = 0;
     @Nullable
     private TxOutput issuanceCandidate;
@@ -53,10 +53,10 @@ class Model {
     @Nullable
     private OpReturnType verifiedOpReturnType;
 
-    Model() {
+    TxState() {
     }
 
-    Model(long availableInputValue) {
+    TxState(long availableInputValue) {
         this.availableInputValue = availableInputValue;
     }
 

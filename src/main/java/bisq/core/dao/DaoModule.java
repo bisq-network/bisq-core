@@ -19,18 +19,19 @@ package bisq.core.dao;
 
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.GenesisTxOutputController;
-import bisq.core.dao.node.consensus.OpReturnBlindVoteController;
-import bisq.core.dao.node.consensus.OpReturnCompReqController;
-import bisq.core.dao.node.consensus.OpReturnController;
-import bisq.core.dao.node.consensus.OpReturnProposalController;
-import bisq.core.dao.node.consensus.OpReturnVoteRevealController;
-import bisq.core.dao.node.consensus.TxController;
-import bisq.core.dao.node.consensus.TxInputController;
-import bisq.core.dao.node.consensus.TxInputsController;
-import bisq.core.dao.node.consensus.TxOutputController;
-import bisq.core.dao.node.consensus.TxOutputsController;
+import bisq.core.dao.node.consensus.GenesisTxOutputIterator;
+import bisq.core.dao.node.consensus.GenesisTxOutputValidator;
+import bisq.core.dao.node.consensus.GenesisTxValidator;
+import bisq.core.dao.node.consensus.OpReturnBlindVoteValidator;
+import bisq.core.dao.node.consensus.OpReturnCompReqValidator;
+import bisq.core.dao.node.consensus.OpReturnProposalValidator;
+import bisq.core.dao.node.consensus.OpReturnValidator;
+import bisq.core.dao.node.consensus.OpReturnVoteRevealValidator;
+import bisq.core.dao.node.consensus.TxInputProcessor;
+import bisq.core.dao.node.consensus.TxInputsIterator;
+import bisq.core.dao.node.consensus.TxOutputValidator;
+import bisq.core.dao.node.consensus.TxOutputsIterator;
+import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.full.FullNodeParser;
 import bisq.core.dao.node.full.FullNodeParserFacade;
@@ -104,18 +105,19 @@ public class DaoModule extends AppModule {
         bind(PeriodService.class).in(Singleton.class);
 
         // blockchain parser
-        bind(GenesisTxController.class).in(Singleton.class);
-        bind(GenesisTxOutputController.class).in(Singleton.class);
-        bind(TxController.class).in(Singleton.class);
-        bind(TxInputsController.class).in(Singleton.class);
-        bind(TxInputController.class).in(Singleton.class);
-        bind(TxOutputsController.class).in(Singleton.class);
-        bind(TxOutputController.class).in(Singleton.class);
-        bind(OpReturnController.class).in(Singleton.class);
-        bind(OpReturnProposalController.class).in(Singleton.class);
-        bind(OpReturnCompReqController.class).in(Singleton.class);
-        bind(OpReturnBlindVoteController.class).in(Singleton.class);
-        bind(OpReturnVoteRevealController.class).in(Singleton.class);
+        bind(GenesisTxValidator.class).in(Singleton.class);
+        bind(GenesisTxOutputIterator.class).in(Singleton.class);
+        bind(GenesisTxOutputValidator.class).in(Singleton.class);
+        bind(TxValidator.class).in(Singleton.class);
+        bind(TxInputsIterator.class).in(Singleton.class);
+        bind(TxInputProcessor.class).in(Singleton.class);
+        bind(TxOutputsIterator.class).in(Singleton.class);
+        bind(TxOutputValidator.class).in(Singleton.class);
+        bind(OpReturnValidator.class).in(Singleton.class);
+        bind(OpReturnProposalValidator.class).in(Singleton.class);
+        bind(OpReturnCompReqValidator.class).in(Singleton.class);
+        bind(OpReturnBlindVoteValidator.class).in(Singleton.class);
+        bind(OpReturnVoteRevealValidator.class).in(Singleton.class);
 
         // Proposal
         bind(ProposalService.class).in(Singleton.class);

@@ -31,16 +31,16 @@ import lombok.extern.slf4j.Slf4j;
  * Checks if a block is valid and if so adds it to the StateService.
  */
 @Slf4j
-public class BlockController {
+public class BlockValidator {
 
     private final StateService stateService;
 
     @Inject
-    public BlockController(StateService stateService) {
+    public BlockValidator(StateService stateService) {
         this.stateService = stateService;
     }
 
-    public boolean isBlockValid(Block block) throws BlockNotConnectingException {
+    public boolean validate(Block block) throws BlockNotConnectingException {
         LinkedList<Block> blocks = stateService.getBlocks();
         if (!blocks.contains(block)) {
             if (isBlockConnecting(block, blocks)) {

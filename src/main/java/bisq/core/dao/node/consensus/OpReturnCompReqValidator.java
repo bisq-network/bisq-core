@@ -33,44 +33,44 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Verifies if OP_RETURN data matches rules for a blind vote tx and applies state change.
+ * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
 @Slf4j
-public class OpReturnBlindVoteController {
+public class OpReturnCompReqValidator {
     private final PeriodService periodService;
     private final StateService stateService;
 
+
     @Inject
-    public OpReturnBlindVoteController(PeriodService periodService,
-                                       StateService stateService) {
+    public OpReturnCompReqValidator(PeriodService periodService,
+                                    StateService stateService) {
         this.periodService = periodService;
         this.stateService = stateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
-        if (model.getBlindVoteLockStakeOutput() != null &&
+    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, TxState txState) {
+        if (txState.getIssuanceCandidate() != null &&
                 opReturnData.length == 22 &&
-                bsqFee == stateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE)) {
-            stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
-            model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+                bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL)) {
+            stateService.setTxOutputType(txOutput, TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+            txState.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
 
-            checkArgument(model.getBlindVoteLockStakeOutput() != null,
-                    "model.getBlindVoteLockStakeOutput() must not be null");
-            stateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
+            checkArgument(txState.getIssuanceCandidate() != null,
+                    "txState.getCompRequestIssuanceOutputCandidate() must not be null");
+            stateService.setTxOutputType(txState.getIssuanceCandidate(), TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
         } else {
-            log.info("We expected a blind vote op_return data but it did not " +
+            log.info("We expected a compensation request op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE), blockHeight, periodService.getPhaseForHeight(blockHeight));
+            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL), blockHeight, periodService.getPhaseForHeight(blockHeight));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
-            // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output
-            // iteration that it is valid BSQ.
-            if (model.getBlindVoteLockStakeOutput() != null)
-                stateService.setTxOutputType(model.getBlindVoteLockStakeOutput(), TxOutputType.BSQ_OUTPUT);
+            // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
+            if (txState.getIssuanceCandidate() != null)
+                stateService.setTxOutputType(txState.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
         }
     }
 }

@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.node.consensus.BlockController;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.TxController;
+import bisq.core.dao.node.consensus.BlockValidator;
+import bisq.core.dao.node.consensus.GenesisTxValidator;
+import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -48,9 +48,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 @Immutable
 public abstract class BsqParser {
-    protected final BlockController blockController;
-    private final GenesisTxController genesisTxController;
-    private final TxController txController;
+    protected final BlockValidator blockValidator;
+    private final GenesisTxValidator genesisTxValidator;
+    private final TxValidator txValidator;
     protected final StateService stateService;
 
 
@@ -60,13 +60,13 @@ public abstract class BsqParser {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqParser(BlockController blockController,
-                     GenesisTxController genesisTxController,
-                     TxController txController,
+    public BsqParser(BlockValidator blockValidator,
+                     GenesisTxValidator genesisTxValidator,
+                     TxValidator txValidator,
                      StateService stateService) {
-        this.blockController = blockController;
-        this.genesisTxController = genesisTxController;
-        this.txController = txController;
+        this.blockValidator = blockValidator;
+        this.genesisTxValidator = genesisTxValidator;
+        this.txValidator = txValidator;
         this.stateService = stateService;
     }
 
@@ -77,10 +77,8 @@ public abstract class BsqParser {
     protected void checkForGenesisTx(int blockHeight,
                                      List<Tx> bsqTxsInBlock,
                                      Tx tx) {
-        if (genesisTxController.isGenesisTx(tx, blockHeight)) {
-            genesisTxController.applyStateChange(tx);
+        if (genesisTxValidator.validate(tx, blockHeight))
             bsqTxsInBlock.add(tx);
-        }
     }
 
     // Performance-wise the recursion does not hurt (e.g. 5-20 ms).
@@ -129,7 +127,7 @@ public abstract class BsqParser {
 
         // we check if we have any valid BSQ from that tx set
         bsqTxsInBlock.addAll(txsWithoutInputsFromSameBlock.stream()
-                .filter(tx -> txController.isBsqTx(blockHeight, tx))
+                .filter(tx -> txValidator.validate(blockHeight, tx))
                 .collect(Collectors.toList()));
 
         log.debug("Parsing of all txsWithoutInputsFromSameBlock is done.");

@@ -40,19 +40,19 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Verifies if a given transaction is a BSQ transaction.
  */
 @Slf4j
-public class TxController {
+public class TxValidator {
 
     private final StateService stateService;
-    private final TxInputsController txInputsController;
-    private final TxOutputsController txOutputsController;
+    private final TxInputsIterator txInputsIterator;
+    private final TxOutputsIterator txOutputsIterator;
 
     @Inject
-    public TxController(StateService stateService,
-                        TxInputsController txInputsController,
-                        TxOutputsController txOutputsController) {
+    public TxValidator(StateService stateService,
+                       TxInputsIterator txInputsIterator,
+                       TxOutputsIterator txOutputsIterator) {
         this.stateService = stateService;
-        this.txInputsController = txInputsController;
-        this.txOutputsController = txOutputsController;
+        this.txInputsIterator = txInputsIterator;
+        this.txOutputsIterator = txOutputsIterator;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -61,18 +61,17 @@ public class TxController {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public boolean isBsqTx(int blockHeight, Tx tx) {
-        Model model = new Model();
-        txInputsController.iterateInputs(tx, blockHeight, model);
-        final boolean bsqInputBalancePositive = model.isInputValuePositive();
+    public boolean validate(int blockHeight, Tx tx) {
+        TxState txState = txInputsIterator.iterate(tx, blockHeight);
+        final boolean bsqInputBalancePositive = txState.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txOutputsController.processOpReturnCandidate(tx, model);
-            txOutputsController.iterateOutputs(tx, blockHeight, model);
-            if (!txOutputsController.isAnyTxOutputTypeUndefined(tx)) {
-                final TxType txType = getTxType(tx, model);
+            txOutputsIterator.processOpReturnCandidate(tx, txState);
+            txOutputsIterator.iterate(tx, blockHeight, txState);
+            if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
+                final TxType txType = getTxType(tx, txState);
                 final String txId = tx.getId();
                 stateService.setTxType(txId, txType);
-                final long burnedFee = model.getAvailableInputValue();
+                final long burnedFee = txState.getAvailableInputValue();
                 stateService.setBurntFee(txId, burnedFee);
             } else {
                 String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
@@ -86,16 +85,16 @@ public class TxController {
     // TODO add tests
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    TxType getTxType(Tx tx, Model model) {
+    TxType getTxType(Tx tx, TxState txState) {
         TxType txType;
         // We need to have at least one BSQ output
 
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, model);
-        final boolean bsqFeesBurnt = model.isInputValuePositive();
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, txState);
+        final boolean bsqFeesBurnt = txState.isInputValuePositive();
         //noinspection OptionalIsPresent
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
-        } else if (model.getOpReturnTypeCandidate() == null) {
+        } else if (txState.getOpReturnTypeCandidate() == null) {
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -144,17 +143,17 @@ public class TxController {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, Model model) {
-        if (model.isBsqOutputFound()) {
+    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, TxState txState) {
+        if (txState.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
-            if (model.getOpReturnTypeCandidate() == model.getVerifiedOpReturnType()) {
-                final OpReturnType verifiedOpReturnType = model.getVerifiedOpReturnType();
+            if (txState.getOpReturnTypeCandidate() == txState.getVerifiedOpReturnType()) {
+                final OpReturnType verifiedOpReturnType = txState.getVerifiedOpReturnType();
                 return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
             } else {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
-                        "opReturnTypeCandidate=" + model.getOpReturnTypeCandidate() +
-                        " / verifiedOpReturnType=" + model.getVerifiedOpReturnType();
+                        "opReturnTypeCandidate=" + txState.getOpReturnTypeCandidate() +
+                        " / verifiedOpReturnType=" + txState.getVerifiedOpReturnType();
                 log.error(msg);
             }
         } else {

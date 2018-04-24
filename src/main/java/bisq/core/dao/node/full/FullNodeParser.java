@@ -19,9 +19,9 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.consensus.BlockController;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.TxController;
+import bisq.core.dao.node.consensus.BlockValidator;
+import bisq.core.dao.node.consensus.GenesisTxValidator;
+import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
@@ -48,11 +48,11 @@ public class FullNodeParser extends BsqParser {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FullNodeParser(BlockController blockController,
-                          GenesisTxController genesisTxController,
-                          TxController txController,
+    public FullNodeParser(BlockValidator blockValidator,
+                          GenesisTxValidator genesisTxValidator,
+                          TxValidator txValidator,
                           StateService stateService) {
-        super(blockController, genesisTxController, txController, stateService);
+        super(blockValidator, genesisTxValidator, txValidator, stateService);
     }
 
 
@@ -72,8 +72,8 @@ public class FullNodeParser extends BsqParser {
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));
 
-        if (blockController.isBlockValid(block))
-            stateService.parseBlockComplete(block);
+        if (blockValidator.validate(block))
+            stateService.addNewBlock(block);
 
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
                 System.currentTimeMillis() - startTs, block.getHeight(), bsqTxsInBlock.size());

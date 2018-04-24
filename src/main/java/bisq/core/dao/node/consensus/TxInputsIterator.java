@@ -29,20 +29,22 @@ import lombok.extern.slf4j.Slf4j;
  * Iterates all inputs to calculate the available BSQ balance from all inputs and apply state change.
  */
 @Slf4j
-public class TxInputsController {
+public class TxInputsIterator {
     private final StateService stateService;
-    private final TxInputController txInputController;
+    private final TxInputProcessor txInputProcessor;
 
     @Inject
-    public TxInputsController(StateService stateService, TxInputController txInputController) {
+    public TxInputsIterator(StateService stateService, TxInputProcessor txInputProcessor) {
         this.stateService = stateService;
-        this.txInputController = txInputController;
+        this.txInputProcessor = txInputProcessor;
     }
 
-    void iterateInputs(Tx tx, int blockHeight, Model model) {
+    TxState iterate(Tx tx, int blockHeight) {
+        TxState txState = new TxState();
         for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
             TxInput input = tx.getInputs().get(inputIndex);
-            txInputController.processInput(input, blockHeight, tx.getId(), inputIndex, model, stateService);
+            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, txState, stateService);
         }
+        return txState;
     }
 }

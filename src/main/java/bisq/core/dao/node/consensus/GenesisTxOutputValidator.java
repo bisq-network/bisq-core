@@ -29,15 +29,15 @@ import lombok.extern.slf4j.Slf4j;
  * Checks if an output is a BSQ output and apply state change.
  */
 @Slf4j
-public class GenesisTxOutputController extends TxOutputController {
+public class GenesisTxOutputValidator extends TxOutputValidator {
     @Inject
-    public GenesisTxOutputController(StateService stateService, OpReturnController opReturnController) {
+    public GenesisTxOutputValidator(StateService stateService, OpReturnValidator opReturnController) {
         super(stateService, opReturnController);
     }
 
-    void verify(TxOutput txOutput, Model model) {
-        if (txOutput.getValue() <= model.getAvailableInputValue()) {
-            model.subtractFromInputValue(txOutput.getValue());
+    void validate(TxOutput txOutput, TxState txState) {
+        if (txOutput.getValue() <= txState.getAvailableInputValue()) {
+            txState.subtractFromInputValue(txOutput.getValue());
             applyStateChangeForBsqOutput(txOutput, TxOutputType.GENESIS_OUTPUT);
         } else {
             // If we get one output which is not funded sufficiently by the available
@@ -46,9 +46,10 @@ public class GenesisTxOutputController extends TxOutputController {
             // outputs might get interpreted as BSQ outputs.
             // In fact that cannot happen as the genesis tx is constructed carefully, so
             // it matches exactly the outputs.
-            model.setAvailableInputValue(0);
+            txState.setAvailableInputValue(0);
 
             applyStateChangeForBtcOutput(txOutput);
+            log.warn("BTC output remains in genesis tx.");
         }
     }
 }

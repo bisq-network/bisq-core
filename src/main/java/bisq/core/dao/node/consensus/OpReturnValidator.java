@@ -37,52 +37,52 @@ import lombok.extern.slf4j.Slf4j;
  * Verifies if a given transaction is a BSQ OP_RETURN transaction.
  */
 @Slf4j
-public class OpReturnController {
-    private final OpReturnProposalController opReturnProposalController;
-    private final OpReturnCompReqController opReturnCompReqController;
-    private final OpReturnBlindVoteController opReturnBlindVoteController;
-    private final OpReturnVoteRevealController opReturnVoteRevealController;
+public class OpReturnValidator {
+    private final OpReturnProposalValidator opReturnProposalValidator;
+    private final OpReturnCompReqValidator opReturnCompReqValidator;
+    private final OpReturnBlindVoteValidator opReturnBlindVoteValidator;
+    private final OpReturnVoteRevealValidator opReturnVoteRevealValidator;
     private final StateService stateService;
 
     @Inject
-    public OpReturnController(OpReturnProposalController opReturnProposalController,
-                              OpReturnCompReqController opReturnCompReqController,
-                              OpReturnBlindVoteController opReturnBlindVoteController,
-                              OpReturnVoteRevealController opReturnVoteRevealController,
-                              StateService stateService) {
-        this.opReturnProposalController = opReturnProposalController;
-        this.opReturnCompReqController = opReturnCompReqController;
-        this.opReturnBlindVoteController = opReturnBlindVoteController;
-        this.opReturnVoteRevealController = opReturnVoteRevealController;
+    public OpReturnValidator(OpReturnProposalValidator opReturnProposalValidator,
+                             OpReturnCompReqValidator opReturnCompReqValidator,
+                             OpReturnBlindVoteValidator opReturnBlindVoteValidator,
+                             OpReturnVoteRevealValidator opReturnVoteRevealValidator,
+                             StateService stateService) {
+        this.opReturnProposalValidator = opReturnProposalValidator;
+        this.opReturnCompReqValidator = opReturnCompReqValidator;
+        this.opReturnBlindVoteValidator = opReturnBlindVoteValidator;
+        this.opReturnVoteRevealValidator = opReturnVoteRevealValidator;
         this.stateService = stateService;
     }
 
     // We only check partially the rules here as we do not know the BSQ fee at that moment which is always used when
     // we have OP_RETURN data.
-    public void processOpReturnCandidate(TxOutput txOutput, Model model) {
+    public void processOpReturnCandidate(TxOutput txOutput, TxState txState) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1) {
-            OpReturnType.getOpReturnType(opReturnData[0]).ifPresent(model::setOpReturnTypeCandidate);
+            OpReturnType.getOpReturnType(opReturnData[0]).ifPresent(txState::setOpReturnTypeCandidate);
         }
     }
 
     public void processTxOutput(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
-                                int blockHeight, Model model) {
+                                int blockHeight, TxState txState) {
         getOptionalOpReturnType(opReturnData, txOutput, tx, index)
                 .ifPresent(opReturnType -> {
                     switch (opReturnType) {
                         case COMPENSATION_REQUEST:
-                            opReturnCompReqController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
+                            opReturnCompReqValidator.process(opReturnData, txOutput, tx, bsqFee, blockHeight, txState);
                             break;
                         case PROPOSAL:
-                            opReturnProposalController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
+                            opReturnProposalValidator.process(opReturnData, txOutput, tx, bsqFee, blockHeight, txState);
                             break;
                         case BLIND_VOTE:
-                            opReturnBlindVoteController.process(opReturnData, txOutput, tx, bsqFee, blockHeight, model);
+                            opReturnBlindVoteValidator.process(opReturnData, txOutput, tx, bsqFee, blockHeight, txState);
                             break;
                         case VOTE_REVEAL:
-                            opReturnVoteRevealController.process(opReturnData, txOutput, tx, blockHeight, model);
+                            opReturnVoteRevealValidator.process(opReturnData, txOutput, tx, blockHeight, txState);
                             break;
                         case LOCK_UP:
                             // TODO
