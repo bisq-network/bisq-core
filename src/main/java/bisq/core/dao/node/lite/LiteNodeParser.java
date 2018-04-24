@@ -55,7 +55,7 @@ public class LiteNodeParser extends BsqParser {
         List<Tx> txList = new ArrayList<>(txBlock.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
 
-        stateService.startParseBlock(txBlock.getHeight());
+        stateService.setNewBlockHeight(txBlock.getHeight());
 
         txBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
         recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);

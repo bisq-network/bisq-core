@@ -18,6 +18,7 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.period.Cycle;
+import bisq.core.dao.period.CycleService;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxBlock;
@@ -50,14 +51,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StateService {
-    private State state;
+    private final State state;
+    private final CycleService cycleService;
 
     private final List<StateChangeEventsProvider> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
 
     // TODO used only by snapshot manager
     private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
     private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
-    private final List<StartParsingListener> startParsingListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -65,10 +66,11 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public StateService(State state) {
+    public StateService(State state, CycleService cycleService) {
         super();
 
         this.state = state;
+        this.cycleService = cycleService;
     }
 
 
@@ -101,10 +103,6 @@ public class StateService {
         chainHeightListeners.remove(listener);
     }
 
-    public void addStartParsingListener(StartParsingListener listener) {
-        startParsingListeners.add(listener);
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Snapshot
@@ -119,12 +117,29 @@ public class StateService {
         getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Parsing start and complete
+    // Initialize
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void startParseBlock(int blockHeight) {
-        startParsingListeners.forEach(l -> l.onStartParsing(blockHeight));
+    public void start() {
+        final int genesisBlockHeight = state.getGenesisBlockHeight();
+        state.addCycle(cycleService.getFirstCycle(genesisBlockHeight));
+        state.setChainHeight(genesisBlockHeight);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Parser sets blockHeight of new block to be parsed
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void setNewBlockHeight(int blockHeight) {
+        if (blockHeight != state.getGenesisBlockHeight())
+            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), getLastBlock().getStateChangeEvents())
+                    .ifPresent(state::addCycle);
+
+        state.setChainHeight(blockHeight);
+        chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
     }
 
     // After parsing of a new txBlock is complete we trigger the processing of any non blockchain data like
@@ -153,19 +168,6 @@ public class StateService {
     // Modify state
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setChainHeight(int chainHeight) {
-        this.state.setChainHeight(chainHeight);
-        chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(chainHeight));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Cycle
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addCycle(Cycle cycle) {
-        state.addCycle(cycle);
-    }
 
     public List<TxBlock> getClonedTxBlocksFrom(int fromBlockHeight) {
         final LinkedList<TxBlock> clonedTxBlocks = new LinkedList<>(getTxBlocks());

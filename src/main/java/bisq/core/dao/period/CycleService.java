@@ -17,8 +17,6 @@
 
 package bisq.core.dao.period;
 
-import bisq.core.dao.state.StartParsingListener;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.events.ParamChangeEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.voting.proposal.param.Param;
@@ -27,9 +25,11 @@ import bisq.core.dao.voting.proposal.param.ParamChange;
 import com.google.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,33 +38,19 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CycleService implements StartParsingListener {
-    private final StateService stateService;
+public class CycleService {
+    private int genesisBlockHeight;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CycleService(StateService stateService) {
-        this.stateService = stateService;
-        stateService.addStartParsingListener(this);
+    public CycleService() {
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        // We create the initial state already in the constructor as we have no guaranteed order for calls of
-        // onAllServicesInitialized and we want to avoid that some client expect the initial state and gets executed
-        // before our onAllServicesInitialized is called.
-        initFromGenesisBlock();
-    }
-
-    @Override
-    public void onStartParsing(int blockHeight) {
+    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles,
+                                               ImmutableSet<StateChangeEvent> stateChangeEvents) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
@@ -72,42 +58,35 @@ public class CycleService implements StartParsingListener {
         // The isFirstBlockInCycle methods returns from the previous cycle the first block as we have not
         // applied the new cycle yet. But the first block of the old cycle will always be the same as the
         // first block of the new cycle.
-        if (blockHeight != stateService.getGenesisBlockHeight() && isFirstBlockAfterPreviousCycle(blockHeight)) {
-            // We take stateChangeEvents from last block of previous cycle
-            Set<StateChangeEvent> stateChangeEvents = stateService.getLastBlock().getStateChangeEvents();
-
+        Cycle cycle = null;
+        if (blockHeight != genesisBlockHeight && isFirstBlockAfterPreviousCycle(blockHeight, cycles)) {
             // We have the not update stateService.getCurrentCycle() so we grab here the previousCycle
-            final Cycle previousCycle = stateService.getCurrentCycle();
+            final Cycle previousCycle = cycles.getLast();
             // We create the new cycle as clone of the previous cycle and only if there have been change events we use
             // the new values from the change event.
-            Cycle cycle = createNewCycle(blockHeight, previousCycle, stateChangeEvents);
-
-            // We add the cycle to the state
-            stateService.addCycle(cycle);
+            cycle = createNewCycle(blockHeight, previousCycle, stateChangeEvents);
         }
-
-        stateService.setChainHeight(blockHeight);
+        return Optional.ofNullable(cycle);
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PeriodSetup cycle
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void initFromGenesisBlock() {
+    public Cycle getFirstCycle(int genesisBlockHeight) {
+        this.genesisBlockHeight = genesisBlockHeight;
         // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
         // as onAllServicesInitialized might get called after the parser has started.
         // We add the default values from the Param enum to our StateChangeEvent list.
-        final int genesisBlockHeight = stateService.getGenesisBlockHeight();
         List<PhaseWrapper> phaseWrapperList = Arrays.stream(Phase.values())
                 .map(phase -> initWithDefaultValueAtGenesisHeight(phase, genesisBlockHeight)
                         .map(event -> getPhaseWrapper(event.getParamChange()))
                         .get())
                 .collect(Collectors.toList());
-        Cycle currentCycle = new Cycle(genesisBlockHeight, ImmutableList.copyOf(phaseWrapperList));
-        stateService.addCycle(currentCycle);
-        stateService.setChainHeight(genesisBlockHeight);
+        return new Cycle(genesisBlockHeight, ImmutableList.copyOf(phaseWrapperList));
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Set<StateChangeEvent> stateChangeEvents) {
         List<PhaseWrapper> phaseWrapperListFromChangeEvents = stateChangeEvents.stream()
@@ -140,8 +119,9 @@ public class CycleService implements StartParsingListener {
         return new PhaseWrapper(phase, (int) paramChange.getValue());
     }
 
-    private boolean isFirstBlockAfterPreviousCycle(int height) {
-        final Optional<Cycle> previousCycle = getCycle(height - 1);
+    private boolean isFirstBlockAfterPreviousCycle(int height, LinkedList<Cycle> cycles) {
+        final int previousBlockHeight = height - 1;
+        final Optional<Cycle> previousCycle = getCycle(previousBlockHeight, cycles);
         return previousCycle
                 .filter(cycle -> cycle.getHeightOfLastBlock() + 1 == height)
                 .isPresent();
@@ -159,8 +139,8 @@ public class CycleService implements StartParsingListener {
         return param.name().replace("PHASE_", "").equals(phase.name());
     }
 
-    private Optional<Cycle> getCycle(int height) {
-        return stateService.getCycles().stream()
+    private Optional<Cycle> getCycle(int height, LinkedList<Cycle> cycles) {
+        return cycles.stream()
                 .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();

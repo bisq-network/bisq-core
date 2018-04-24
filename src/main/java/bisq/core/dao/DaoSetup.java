@@ -81,7 +81,7 @@ public class DaoSetup {
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        cycleService.start();
+        stateService.start();
         changeParamListService.start();
         proposalService.start();
         voteRevealService.start();

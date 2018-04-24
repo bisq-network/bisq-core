@@ -63,7 +63,7 @@ public class FullNodeParser extends BsqParser {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     TxBlock parseBlock(Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
-        stateService.startParseBlock(btcdBlock.getHeight());
+        stateService.setNewBlockHeight(btcdBlock.getHeight());
 
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock, txList);
