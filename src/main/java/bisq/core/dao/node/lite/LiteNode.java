@@ -20,8 +20,8 @@ package bisq.core.dao.node.lite;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetTxBlocksResponse;
+import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
@@ -98,13 +98,13 @@ public class LiteNode extends BsqNode {
 
         liteNodeNetworkService.addListener(new LiteNodeNetworkService.Listener() {
             @Override
-            public void onRequestedBlocksReceived(GetBsqBlocksResponse getBsqBlocksResponse) {
-                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBsqBlocksResponse.getTxBlocks()));
+            public void onRequestedTxBlocksReceived(GetTxBlocksResponse getTxBlocksResponse) {
+                LiteNode.this.onRequestedTxBlocksReceived(new ArrayList<>(getTxBlocksResponse.getTxBlocks()));
             }
 
             @Override
-            public void onNewBlockReceived(NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage) {
-                LiteNode.this.onNewBlockReceived(newBsqBlockBroadcastMessage.getTxBlock());
+            public void onNewTxBlockReceived(NewTxBlockBroadcastMessage newTxBlockBroadcastMessage) {
+                LiteNode.this.onNewTxBlockReceived(newTxBlockBroadcastMessage.getTxBlock());
             }
 
             @Override
@@ -123,7 +123,7 @@ public class LiteNode extends BsqNode {
     // First we request the blocks from a full node
     @Override
     protected void startParseBlocks() {
-        liteNodeNetworkService.requestBlocks(getStartBlockHeight());
+        liteNodeNetworkService.requestTxBlocks(getStartBlockHeight());
     }
 
 
@@ -132,33 +132,33 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We received the missing blocks
-    private void onRequestedBlocksReceived(List<TxBlock> txBlockList) {
-        log.info("onRequestedBlocksReceived: blocks with {} items", txBlockList.size());
+    private void onRequestedTxBlocksReceived(List<TxBlock> txBlockList) {
+        log.info("onRequestedTxBlocksReceived: blocks with {} items", txBlockList.size());
         if (txBlockList.size() > 0)
             log.info("block height of last item: {}", txBlockList.get(txBlockList.size() - 1).getHeight());
         // We clone with a reset of all mutable data in case the provider would not have done it.
         List<TxBlock> clonedTxBlockList = txBlockList.stream()
-                .map(bsqBlock -> TxBlock.clone(bsqBlock))
+                .map(TxBlock::clone)
                 .collect(Collectors.toList());
         liteNodeParserFacade.parseBlocks(clonedTxBlockList,
-                this::onNewBsqBlock,
+                this::onNewTxBlock,
                 this::onParseBlockChainComplete,
                 getErrorHandler());
     }
 
-    // We received a new block
-    private void onNewBlockReceived(TxBlock txBlock) {
+    // We received a new txBlock
+    private void onNewTxBlockReceived(TxBlock txBlock) {
         log.info("onNewBlockReceived: txBlock={}", txBlock.getHeight());
 
         // We clone with a reset of all mutable data in case the provider would not have done it.
         TxBlock clonedTxBlock = TxBlock.clone(txBlock);
         if (!stateService.containsTxBlock(clonedTxBlock)) {
-            //TODO check block height and prev block it it connects to existing blocks
-            liteNodeParserFacade.parseBlock(clonedTxBlock, this::onNewBsqBlock, getErrorHandler());
+            //TODO check txBlock height and prev txBlock it it connects to existing blocks
+            liteNodeParserFacade.parseBlock(clonedTxBlock, this::onNewTxBlock, getErrorHandler());
         }
     }
 
-    private void onNewBsqBlock(TxBlock txBlock) {
+    private void onNewTxBlock(TxBlock txBlock) {
         log.debug("new txBlock parsed: " + txBlock);
     }
 

@@ -40,25 +40,15 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class Block implements PersistablePayload {
 
-    /*public static Block clone(Block txBlock) {
-        final ImmutableList<Tx> txs = ImmutableList.copyOf(txBlock.getTxs().stream()
-                .map(tx -> Tx.clone(tx))
-                .collect(Collectors.toList()));
-        return new Block(txBlock.getHeight(),
-                txBlock.getTime(),
-                txBlock.getHash(),
-                txBlock.getPreviousBlockHash(),
-                txs);
-    }*/
-
     // We use the TxBlock as delegate
     @Delegate(excludes = Block.ExcludesDelegateMethods.class)
     private final TxBlock txBlock;
 
     private interface ExcludesDelegateMethods {
-        PB.BsqBlock toProtoMessage();
+        PB.Block toProtoMessage();
     }
 
+    //TODO stateChangeEvents not set in PB yet
     // The state change events for that block containing any non-blockchain data which can
     // trigger a state change in the Bisq DAO.
     private final ImmutableSet<StateChangeEvent> stateChangeEvents;
@@ -69,34 +59,25 @@ public class Block implements PersistablePayload {
         this.stateChangeEvents = stateChangeEvents;
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.BsqBlock toProtoMessage() {
-        return null;
-       /* return PB.BsqBlock.newBuilder()
-                .setHeight(height)
-                .setTime(time)
-                .setHash(hash)
-                .setPreviousBlockHash(previousBlockHash)
-                .addAllTxs(txs.stream()
-                        .map(Tx::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .build();*/
+    @Override
+    public PB.Block toProtoMessage() {
+        return PB.Block.newBuilder()
+                .setTxBlock(txBlock.toProtoMessage())
+                .build();
     }
 
-    public static Block fromProto(PB.BsqBlock proto) {
-        return null;
-       /* return new Block(proto.getHeight(),
-                proto.getTime(),
-                proto.getHash(),
-                proto.getPreviousBlockHash(),
-                proto.getTxsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getTxsList().stream()
-                                .map(Tx::fromProto)
-                                .collect(Collectors.toList())));*/
+
+    public static Block fromProto(PB.Block proto) {
+        //TODO stateChangeEvents not set yet
+        return new Block(TxBlock.fromProto(proto.getTxBlock()),
+                null);
+    }
+
+    public static Block clone(Block block) {
+        return Block.fromProto(block.toProtoMessage());
     }
 }

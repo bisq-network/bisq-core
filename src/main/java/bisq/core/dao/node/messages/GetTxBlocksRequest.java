@@ -37,11 +37,11 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
-public final class GetBsqBlocksRequest extends NetworkEnvelope implements DirectMessage, CapabilityRequiringPayload {
+public final class GetTxBlocksRequest extends NetworkEnvelope implements DirectMessage, CapabilityRequiringPayload {
     private final int fromBlockHeight;
     private final int nonce;
 
-    public GetBsqBlocksRequest(int fromBlockHeight, int nonce) {
+    public GetTxBlocksRequest(int fromBlockHeight, int nonce) {
         this(fromBlockHeight, nonce, Version.getP2PMessageVersion());
     }
 
@@ -50,7 +50,7 @@ public final class GetBsqBlocksRequest extends NetworkEnvelope implements Direct
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GetBsqBlocksRequest(int fromBlockHeight, int nonce, int messageVersion) {
+    private GetTxBlocksRequest(int fromBlockHeight, int nonce, int messageVersion) {
         super(messageVersion);
         this.fromBlockHeight = fromBlockHeight;
         this.nonce = nonce;
@@ -59,14 +59,14 @@ public final class GetBsqBlocksRequest extends NetworkEnvelope implements Direct
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
-                .setGetBsqBlocksRequest(PB.GetBsqBlocksRequest.newBuilder()
+                .setGetTxBlocksRequest(PB.GetTxBlocksRequest.newBuilder()
                         .setFromBlockHeight(fromBlockHeight)
                         .setNonce(nonce))
                 .build();
     }
 
-    public static NetworkEnvelope fromProto(PB.GetBsqBlocksRequest proto, int messageVersion) {
-        return new GetBsqBlocksRequest(proto.getFromBlockHeight(), proto.getNonce(), messageVersion);
+    public static NetworkEnvelope fromProto(PB.GetTxBlocksRequest proto, int messageVersion) {
+        return new GetTxBlocksRequest(proto.getFromBlockHeight(), proto.getNonce(), messageVersion);
     }
 
     @Override

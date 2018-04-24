@@ -31,10 +31,10 @@ import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public final class NewBsqBlockBroadcastMessage extends BroadcastMessage {
+public final class NewTxBlockBroadcastMessage extends BroadcastMessage {
     private final TxBlock txBlock;
 
-    public NewBsqBlockBroadcastMessage(TxBlock txBlock) {
+    public NewTxBlockBroadcastMessage(TxBlock txBlock) {
         this(txBlock, Version.getP2PMessageVersion());
     }
 
@@ -43,7 +43,7 @@ public final class NewBsqBlockBroadcastMessage extends BroadcastMessage {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private NewBsqBlockBroadcastMessage(TxBlock txBlock, int messageVersion) {
+    private NewTxBlockBroadcastMessage(TxBlock txBlock, int messageVersion) {
         super(messageVersion);
         this.txBlock = txBlock;
     }
@@ -51,13 +51,13 @@ public final class NewBsqBlockBroadcastMessage extends BroadcastMessage {
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
-                .setNewBsqBlockBroadcastMessage(PB.NewBsqBlockBroadcastMessage.newBuilder()
-                        .setBsqBlock(txBlock.toProtoMessage()))
+                .setNewTxBlockBroadcastMessage(PB.NewTxBlockBroadcastMessage.newBuilder()
+                        .setTxBlock(txBlock.toProtoMessage()))
                 .build();
     }
 
-    public static NetworkEnvelope fromProto(PB.NewBsqBlockBroadcastMessage proto, int messageVersion) {
-        return new NewBsqBlockBroadcastMessage(TxBlock.fromProto(proto.getBsqBlock()),
+    public static NetworkEnvelope fromProto(PB.NewTxBlockBroadcastMessage proto, int messageVersion) {
+        return new NewTxBlockBroadcastMessage(TxBlock.fromProto(proto.getTxBlock()),
                 messageVersion);
     }
 }

@@ -101,8 +101,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return NavigationPath.fromProto(proto.getNavigationPath());
                 case PAYMENT_ACCOUNT_LIST:
                     return PaymentAccountList.fromProto(proto.getPaymentAccountList(), this);
-                case BSQ_BLOCK_CHAIN:   //TODO
-                    return State.fromProto(proto.getBsqBlockChain());   //TODO
+                case STATE:
+                    return State.fromProto(proto.getState());
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case BALLOT_LIST:

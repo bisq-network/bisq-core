@@ -67,8 +67,8 @@ public class TxBlock implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.BsqBlock toProtoMessage() {
-        return PB.BsqBlock.newBuilder()
+    public PB.TxBlock toProtoMessage() {
+        return PB.TxBlock.newBuilder()
                 .setHeight(height)
                 .setTime(time)
                 .setHash(hash)
@@ -79,7 +79,7 @@ public class TxBlock implements PersistablePayload {
                 .build();
     }
 
-    public static TxBlock fromProto(PB.BsqBlock proto) {
+    public static TxBlock fromProto(PB.TxBlock proto) {
         return new TxBlock(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),

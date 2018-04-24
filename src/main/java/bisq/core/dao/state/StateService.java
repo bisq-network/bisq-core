@@ -138,9 +138,9 @@ public class StateService {
     }
 
 
-    public List<TxBlock> getClonedBlocksFrom(int fromBlockHeight) {
-        final LinkedList<Block> clonedBlocks = new LinkedList<>(getBlocks());
-        return getTxBlocks(clonedBlocks).stream()
+    public List<TxBlock> getClonedTxBlocksFrom(int fromBlockHeight) {
+        final LinkedList<TxBlock> clonedTxBlocks = new LinkedList<>(getTxBlocks());
+        return clonedTxBlocks.stream()
                 .filter(block -> block.getHeight() >= fromBlockHeight)
                 .collect(Collectors.toList());
     }

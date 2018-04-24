@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.lite.network;
 
-import bisq.core.dao.node.messages.GetBsqBlocksRequest;
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
+import bisq.core.dao.node.messages.GetTxBlocksRequest;
+import bisq.core.dao.node.messages.GetTxBlocksResponse;
 
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.network.CloseConnectionReason;
@@ -47,10 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Sends a GetBsqBlocksRequest to a full node and listens on corresponding GetBsqBlocksResponse from the full node.
+ * Sends a GetTxBlocksRequest to a full node and listens on corresponding GetTxBlocksResponse from the full node.
  */
 @Slf4j
-public class RequestBlocksHandler implements MessageListener {
+public class RequestTxBlocksHandler implements MessageListener {
     private static final long TIMEOUT = 120;
 
 
@@ -59,7 +59,7 @@ public class RequestBlocksHandler implements MessageListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public interface Listener {
-        void onComplete(GetBsqBlocksResponse getBsqBlocksResponse);
+        void onComplete(GetTxBlocksResponse getTxBlocksResponse);
 
         @SuppressWarnings("UnusedParameters")
         void onFault(String errorMessage, @SuppressWarnings("SameParameterValue") @Nullable Connection connection);
@@ -86,11 +86,11 @@ public class RequestBlocksHandler implements MessageListener {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public RequestBlocksHandler(NetworkNode networkNode,
-                                PeerManager peerManager,
-                                NodeAddress nodeAddress,
-                                int startBlockHeight,
-                                Listener listener) {
+    public RequestTxBlocksHandler(NetworkNode networkNode,
+                                  PeerManager peerManager,
+                                  NodeAddress nodeAddress,
+                                  int startBlockHeight,
+                                  Listener listener) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.nodeAddress = nodeAddress;
@@ -107,16 +107,16 @@ public class RequestBlocksHandler implements MessageListener {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void requestBlocks() {
+    public void requestTxBlocks() {
         if (!stopped) {
-            GetBsqBlocksRequest getBsqBlocksRequest = new GetBsqBlocksRequest(startBlockHeight, nonce);
-            log.debug("getBsqBlocksRequest " + getBsqBlocksRequest);
+            GetTxBlocksRequest getTxBlocksRequest = new GetTxBlocksRequest(startBlockHeight, nonce);
+            log.debug("getTxBlocksRequest " + getTxBlocksRequest);
             if (timeoutTimer == null) {
                 timeoutTimer = UserThread.runAfter(() -> {  // setup before sending to avoid race conditions
                             if (!stopped) {
-                                String errorMessage = "A timeout occurred at sending getBsqBlocksRequest:" + getBsqBlocksRequest +
+                                String errorMessage = "A timeout occurred at sending getTxBlocksRequest:" + getTxBlocksRequest +
                                         " on peersNodeAddress:" + nodeAddress;
-                                log.debug(errorMessage + " / RequestDataHandler=" + RequestBlocksHandler.this);
+                                log.debug(errorMessage + " / RequestDataHandler=" + RequestTxBlocksHandler.this);
                                 handleFault(errorMessage, nodeAddress, CloseConnectionReason.SEND_MSG_TIMEOUT);
                             } else {
                                 log.trace("We have stopped already. We ignore that timeoutTimer.run call. " +
@@ -126,14 +126,14 @@ public class RequestBlocksHandler implements MessageListener {
                         TIMEOUT);
             }
 
-            log.debug("We send a {} to peer {}. ", getBsqBlocksRequest.getClass().getSimpleName(), nodeAddress);
+            log.debug("We send a {} to peer {}. ", getTxBlocksRequest.getClass().getSimpleName(), nodeAddress);
             networkNode.addMessageListener(this);
-            SettableFuture<Connection> future = networkNode.sendMessage(nodeAddress, getBsqBlocksRequest);
+            SettableFuture<Connection> future = networkNode.sendMessage(nodeAddress, getTxBlocksRequest);
             Futures.addCallback(future, new FutureCallback<Connection>() {
                 @Override
                 public void onSuccess(Connection connection) {
                     if (!stopped) {
-                        log.trace("Send " + getBsqBlocksRequest + " to " + nodeAddress + " succeeded.");
+                        log.trace("Send " + getTxBlocksRequest + " to " + nodeAddress + " succeeded.");
                     } else {
                         log.trace("We have stopped already. We ignore that networkNode.sendMessage.onSuccess call." +
                                 "Might be caused by an previous timeout.");
@@ -143,9 +143,9 @@ public class RequestBlocksHandler implements MessageListener {
                 @Override
                 public void onFailure(@NotNull Throwable throwable) {
                     if (!stopped) {
-                        String errorMessage = "Sending getBsqBlocksRequest to " + nodeAddress +
+                        String errorMessage = "Sending getTxBlocksRequest to " + nodeAddress +
                                 " failed. That is expected if the peer is offline.\n\t" +
-                                "getBsqBlocksRequest=" + getBsqBlocksRequest + "." +
+                                "getTxBlocksRequest=" + getTxBlocksRequest + "." +
                                 "\n\tException=" + throwable.getMessage();
                         log.error(errorMessage);
                         handleFault(errorMessage, nodeAddress, CloseConnectionReason.SEND_MSG_FAILURE);
@@ -167,24 +167,24 @@ public class RequestBlocksHandler implements MessageListener {
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof GetBsqBlocksResponse) {
+        if (networkEnvelop instanceof GetTxBlocksResponse) {
             if (connection.getPeersNodeAddressOptional().isPresent() && connection.getPeersNodeAddressOptional().get().equals(nodeAddress)) {
                 Log.traceCall(networkEnvelop.toString() + "\n\tconnection=" + connection);
                 if (!stopped) {
-                    GetBsqBlocksResponse getBsqBlocksResponse = (GetBsqBlocksResponse) networkEnvelop;
-                    if (getBsqBlocksResponse.getRequestNonce() == nonce) {
+                    GetTxBlocksResponse getTxBlocksResponse = (GetTxBlocksResponse) networkEnvelop;
+                    if (getTxBlocksResponse.getRequestNonce() == nonce) {
                         stopTimeoutTimer();
                         checkArgument(connection.getPeersNodeAddressOptional().isPresent(),
                                 "RequestDataHandler.onMessage: connection.getPeersNodeAddressOptional() must be present " +
                                         "at that moment");
                         cleanup();
-                        listener.onComplete(getBsqBlocksResponse);
+                        listener.onComplete(getTxBlocksResponse);
                     } else {
                         log.warn("Nonce not matching. That can happen rarely if we get a response after a canceled " +
                                         "handshake (timeout causes connection close but peer might have sent a msg before " +
                                         "connection was closed).\n\t" +
                                         "We drop that message. nonce={} / requestNonce={}",
-                                nonce, getBsqBlocksResponse.getRequestNonce());
+                                nonce, getTxBlocksResponse.getRequestNonce());
                     }
                 } else {
                     log.warn("We have stopped already. We ignore that onDataRequest call.");

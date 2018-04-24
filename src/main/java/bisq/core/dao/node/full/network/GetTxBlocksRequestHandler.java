@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.full.network;
 
-import bisq.core.dao.node.messages.GetBsqBlocksRequest;
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
+import bisq.core.dao.node.messages.GetTxBlocksRequest;
+import bisq.core.dao.node.messages.GetTxBlocksResponse;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 
@@ -42,10 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Accepts a GetBsqBlocksRequest from a lite nodes and send back a corresponding GetBsqBlocksResponse.
+ * Accepts a GetTxBlocksRequest from a lite nodes and send back a corresponding GetTxBlocksResponse.
  */
 @Slf4j
-class GetBsqBlocksRequestHandler {
+class GetTxBlocksRequestHandler {
     private static final long TIMEOUT = 120;
 
 
@@ -75,7 +75,7 @@ class GetBsqBlocksRequestHandler {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public GetBsqBlocksRequestHandler(NetworkNode networkNode, StateService stateService, Listener listener) {
+    public GetTxBlocksRequestHandler(NetworkNode networkNode, StateService stateService, Listener listener) {
         this.networkNode = networkNode;
         this.stateService = stateService;
         this.listener = listener;
@@ -86,28 +86,28 @@ class GetBsqBlocksRequestHandler {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void onGetBsqBlocksRequest(GetBsqBlocksRequest getBsqBlocksRequest, final Connection connection) {
-        Log.traceCall(getBsqBlocksRequest + "\n\tconnection=" + connection);
-        List<TxBlock> txBlocks = stateService.getClonedBlocksFrom(getBsqBlocksRequest.getFromBlockHeight());
-        final GetBsqBlocksResponse bsqBlocksResponse = new GetBsqBlocksResponse(txBlocks, getBsqBlocksRequest.getNonce());
-        log.debug("bsqBlocksResponse " + bsqBlocksResponse.getRequestNonce());
+    public void onGetTxBlocksRequest(GetTxBlocksRequest getTxBlocksRequest, final Connection connection) {
+        Log.traceCall(getTxBlocksRequest + "\n\tconnection=" + connection);
+        List<TxBlock> txBlocks = stateService.getClonedTxBlocksFrom(getTxBlocksRequest.getFromBlockHeight());
+        final GetTxBlocksResponse getTxBlocksResponse = new GetTxBlocksResponse(txBlocks, getTxBlocksRequest.getNonce());
+        log.debug("getTxBlocksResponse " + getTxBlocksResponse.getRequestNonce());
 
         if (timeoutTimer == null) {
             timeoutTimer = UserThread.runAfter(() -> {  // setup before sending to avoid race conditions
-                        String errorMessage = "A timeout occurred for bsqBlocksResponse:" + bsqBlocksResponse +
+                        String errorMessage = "A timeout occurred for getTxBlocksResponse:" + getTxBlocksResponse +
                                 " on connection:" + connection;
                         handleFault(errorMessage, CloseConnectionReason.SEND_MSG_TIMEOUT, connection);
                     },
                     TIMEOUT, TimeUnit.SECONDS);
         }
 
-        SettableFuture<Connection> future = networkNode.sendMessage(connection, bsqBlocksResponse);
+        SettableFuture<Connection> future = networkNode.sendMessage(connection, getTxBlocksResponse);
         Futures.addCallback(future, new FutureCallback<Connection>() {
             @Override
             public void onSuccess(Connection connection) {
                 if (!stopped) {
-                    log.trace("Send DataResponse to {} succeeded. bsqBlocksResponse={}",
-                            connection.getPeersNodeAddressOptional(), bsqBlocksResponse);
+                    log.trace("Send DataResponse to {} succeeded. getTxBlocksResponse={}",
+                            connection.getPeersNodeAddressOptional(), getTxBlocksResponse);
                     cleanup();
                     listener.onComplete();
                 } else {
@@ -118,8 +118,8 @@ class GetBsqBlocksRequestHandler {
             @Override
             public void onFailure(@NotNull Throwable throwable) {
                 if (!stopped) {
-                    String errorMessage = "Sending bsqBlocksResponse to " + connection +
-                            " failed. That is expected if the peer is offline. bsqBlocksResponse=" + bsqBlocksResponse + "." +
+                    String errorMessage = "Sending getTxBlocksResponse to " + connection +
+                            " failed. That is expected if the peer is offline. getTxBlocksResponse=" + getTxBlocksResponse + "." +
                             "Exception: " + throwable.getMessage();
                     handleFault(errorMessage, CloseConnectionReason.SEND_MSG_FAILURE, connection);
                 } else {

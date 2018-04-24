@@ -36,11 +36,11 @@ import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public final class GetBsqBlocksResponse extends NetworkEnvelope implements DirectMessage, ExtendedDataSizePermission {
+public final class GetTxBlocksResponse extends NetworkEnvelope implements DirectMessage, ExtendedDataSizePermission {
     private final List<TxBlock> txBlocks;
     private final int requestNonce;
 
-    public GetBsqBlocksResponse(List<TxBlock> txBlocks, int requestNonce) {
+    public GetTxBlocksResponse(List<TxBlock> txBlocks, int requestNonce) {
         this(txBlocks, requestNonce, Version.getP2PMessageVersion());
     }
 
@@ -49,7 +49,7 @@ public final class GetBsqBlocksResponse extends NetworkEnvelope implements Direc
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GetBsqBlocksResponse(List<TxBlock> txBlocks, int requestNonce, int messageVersion) {
+    private GetTxBlocksResponse(List<TxBlock> txBlocks, int requestNonce, int messageVersion) {
         super(messageVersion);
         this.txBlocks = txBlocks;
         this.requestNonce = requestNonce;
@@ -58,18 +58,18 @@ public final class GetBsqBlocksResponse extends NetworkEnvelope implements Direc
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
-                .setGetBsqBlocksResponse(PB.GetBsqBlocksResponse.newBuilder()
-                        .addAllBsqBlocks(txBlocks.stream()
+                .setGetTxBlocksResponse(PB.GetTxBlocksResponse.newBuilder()
+                        .addAllTxBlocks(txBlocks.stream()
                                 .map(TxBlock::toProtoMessage)
                                 .collect(Collectors.toList()))
                         .setRequestNonce(requestNonce))
                 .build();
     }
 
-    public static NetworkEnvelope fromProto(PB.GetBsqBlocksResponse proto, int messageVersion) {
-        return new GetBsqBlocksResponse(proto.getBsqBlocksList().isEmpty() ?
+    public static NetworkEnvelope fromProto(PB.GetTxBlocksResponse proto, int messageVersion) {
+        return new GetTxBlocksResponse(proto.getTxBlocksList().isEmpty() ?
                 new ArrayList<>() :
-                proto.getBsqBlocksList().stream()
+                proto.getTxBlocksList().stream()
                         .map(TxBlock::fromProto)
                         .collect(Collectors.toList()),
                 proto.getRequestNonce(),

@@ -145,5 +145,15 @@ public class TxOutput implements PersistablePayload {
             this.txId = txId;
             this.index = index;
         }
+
+        @Override
+        public String toString() {
+            return txId + ":" + index;
+        }
+
+        public static Key getKeyFromString(String keyAsString) {
+            final String[] tokens = keyAsString.split(":");
+            return new Key(tokens[0], Integer.valueOf(tokens[1]));
+        }
     }
 }

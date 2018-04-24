@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -70,37 +71,19 @@ public class State implements PersistableEnvelope {
     public static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-
     private final String genesisTxId;
     private final int genesisBlockHeight;
+    private final LinkedList<Block> blocks;
+    private final Map<String, TxType> txTypeMap;
+    private final Map<String, Long> burntFeeMap;
+    private final Map<String, Integer> issuanceBlockHeightMap;
+    private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
+    private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
+    private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
 
-    // Immutable data
-    // The block is the fundamental data structure for state transition.
-    // It consists of the txBlock for blockchain related data and the stateChangeEvents for non-blockchain related
-    // data like Proposals, BlindVotes or ParamChangeEvents.
-    private final LinkedList<Block> blocks = new LinkedList<>();
-
-    // Mutable data
-
-    // Blockchain related data
-
-    // Tx specific, key is txId
-    private final Map<String, TxType> txTypeMap = new HashMap<>();
-    private final Map<String, Long> burntFeeMap = new HashMap<>();
-    private final Map<String, Integer> issuanceBlockHeightMap = new HashMap<>();
-
-    // TxOutput specific
-    private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap = new HashMap<>();
-    private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap = new HashMap<>();
-    private final Map<TxOutput.Key, SpentInfo> spentInfoMap = new HashMap<>();
-
-    // StateChangeEvents (non blockchain data)
-    private final List<Cycle> cycles = new ArrayList<>();
-    private final Map<String, Proposal> proposalPayloadMap = new HashMap<>();
+    //TODO not in PB yet as not clear if we keep it
+    private final Map<String, Proposal> proposalPayloadMap;
+    private final List<Cycle> cycles;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -110,8 +93,17 @@ public class State implements PersistableEnvelope {
     @Inject
     public State(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
                  @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.genesisTxId = genesisTxId;
-        this.genesisBlockHeight = genesisBlockHeight;
+        this(genesisTxId,
+                genesisBlockHeight,
+                new LinkedList<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new ArrayList<>());
     }
 
 
@@ -119,55 +111,81 @@ public class State implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
- /*   private State(LinkedList<Block> blocks,
-                  Map<TxOutput.Key, TxOutput> unspentTxOutputMap) {
+    private State(String genesisTxId,
+                  int genesisBlockHeight,
+                  LinkedList<Block> blocks,
+                  Map<String, TxType> txTypeMap,
+                  Map<String, Long> burntFeeMap,
+                  Map<String, Integer> issuanceBlockHeightMap,
+                  Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
+                  Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
+                  Map<TxOutput.Key, SpentInfo> spentInfoMap,
+                  Map<String, Proposal> proposalPayloadMap,
+                  List<Cycle> cycles) {
+        this.genesisTxId = genesisTxId;
+        this.genesisBlockHeight = genesisBlockHeight;
         this.blocks = blocks;
+        this.txTypeMap = txTypeMap;
+        this.burntFeeMap = burntFeeMap;
+        this.issuanceBlockHeightMap = issuanceBlockHeightMap;
         this.unspentTxOutputMap = unspentTxOutputMap;
-
-    }*/
+        this.txOutputTypeMap = txOutputTypeMap;
+        this.spentInfoMap = spentInfoMap;
+        this.proposalPayloadMap = proposalPayloadMap;
+        this.cycles = cycles;
+    }
 
     @Override
     public Message toProtoMessage() {
-        return PB.PersistableEnvelope.newBuilder().setBsqBlockChain(getBsqBlockChainBuilder()).build();
+        return PB.PersistableEnvelope.newBuilder().setState(getStateBuilder()).build();
     }
 
-    //TODO
-    private PB.BsqBlockChain.Builder getBsqBlockChainBuilder() {
-        final PB.BsqBlockChain.Builder builder = PB.BsqBlockChain.newBuilder();
-        /*
-        builder.addAllBsqBlocks(txBlocks.stream()
-                        .map(TxBlock::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .putAllTxMap(txMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Phase::getKey,
-                                v -> v.getValue().toProtoMessage())))
-                .putAllUnspentTxOutputsMap(unspentTxOutputs.entrySet().stream()
-                        .collect(Collectors.toMap(k -> k.getKey().getAsString(),
-                                v -> v.getValue().toProtoMessage())))
-                .setGenesisTxId(genesisTxId)
+    private PB.State.Builder getStateBuilder() {
+        final PB.State.Builder builder = PB.State.newBuilder();
+        builder.setGenesisTxId(genesisTxId)
                 .setGenesisBlockHeight(genesisBlockHeight)
-                .setChainHeadHeight(chainHeadHeight);
-
-        Optional.ofNullable(genesisTx).ifPresent(e -> builder.setGenesisTx(genesisTx.toProtoMessage());*/
-
+                .putAllTxTypeMap(txTypeMap.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())))
+                .putAllBurntFeeMap(burntFeeMap.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .putAllIssuanceBlockHeightMap(issuanceBlockHeightMap.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
+                .putAllTxOutputTypeMap(txOutputTypeMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
+                .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())));
         return builder;
     }
 
-    //TODO
-    public static PersistableEnvelope fromProto(PB.BsqBlockChain proto) {
-        return null;
-        /*new State(new LinkedList<>(proto.getBsqBlocksList().stream()
-                .map(TxBlock::fromProto)
-                .collect(Collectors.toList())),
-                new HashMap<>(proto.getTxMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(Map.Phase::getKey, v -> Tx.fromProto(v.getValue())))),
-                new HashMap<>(proto.getUnspentTxOutputsMapMap().entrySet().stream()
-                        .collect(Collectors.toMap(k -> new Key(k.getKey()), v -> TxOutput.fromProto(v.getValue())))),
-                proto.getGenesisTxId(),
+    public static PersistableEnvelope fromProto(PB.State proto) {
+        LinkedList<Block> blocks = proto.getBlocksList().stream()
+                .map(Block::fromProto)
+                .collect(Collectors.toCollection(LinkedList::new));
+        Map<String, TxType> txTypeMap = proto.getTxTypeMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> TxType.fromProto(e.getValue())));
+        Map<String, Long> burntFeeMap = proto.getBurntFeeMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, Integer> issuanceBlockHeightMap = proto.getIssuanceBlockHeightMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<TxOutput.Key, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
+        Map<TxOutput.Key, TxOutputType> txOutputTypeMap = proto.getTxOutputTypeMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutputType.fromProto(e.getValue())));
+        Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
+        return new State(proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
-                proto.getChainHeadHeight(),
-                proto.hasGenesisTx() ? Tx.fromProto(proto.getGenesisTx()) : null)
-        ;*/
+                blocks,
+                txTypeMap,
+                burntFeeMap,
+                issuanceBlockHeightMap,
+                unspentTxOutputMap,
+                txOutputTypeMap,
+                spentInfoMap,
+                null,
+                null);
     }
 
 
@@ -183,7 +201,7 @@ public class State implements PersistableEnvelope {
     State getClone() {
         //TODO
         return this;
-        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getBsqBlockChainBuilder().build());
+        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getStateBuilder().build());
     }
 
     //TODO
@@ -193,7 +211,7 @@ public class State implements PersistableEnvelope {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Changing map state package scope
+    // Package scope write access
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     void addBlock(Block block) {
@@ -234,7 +252,7 @@ public class State implements PersistableEnvelope {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Getters
+    // Package scope getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     String getGenesisTxId() {

@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.full.network;
 
-import bisq.core.dao.node.messages.GetBsqBlocksRequest;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetTxBlocksRequest;
+import bisq.core.dao.node.messages.NewTxBlockBroadcastMessage;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxBlock;
 
@@ -60,7 +60,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final StateService stateService;
 
     // Key is connection UID
-    private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
+    private final Map<String, GetTxBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
     private boolean stopped;
 
 
@@ -96,8 +96,8 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     public void publishNewBlock(TxBlock txBlock) {
         log.info("Publish new block at height={} and block hash={}", txBlock.getHeight(), txBlock.getHash());
-        final NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage = new NewBsqBlockBroadcastMessage(txBlock);
-        broadcaster.broadcast(newBsqBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
+        final NewTxBlockBroadcastMessage newTxBlockBroadcastMessage = new NewTxBlockBroadcastMessage(txBlock);
+        broadcaster.broadcast(newTxBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
     }
 
 
@@ -127,15 +127,15 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof GetBsqBlocksRequest) {
-            // We received a GetBsqBlocksRequest from a liteNode
+        if (networkEnvelop instanceof GetTxBlocksRequest) {
+            // We received a GetTxBlocksRequest from a liteNode
             Log.traceCall(networkEnvelop.toString() + "\n\tconnection=" + connection);
             if (!stopped) {
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
-                    GetBsqBlocksRequestHandler requestHandler = new GetBsqBlocksRequestHandler(networkNode,
+                    GetTxBlocksRequestHandler requestHandler = new GetTxBlocksRequestHandler(networkNode,
                             stateService,
-                            new GetBsqBlocksRequestHandler.Listener() {
+                            new GetTxBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {
                                     getBlocksRequestHandlers.remove(uid);
@@ -155,14 +155,14 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                                 }
                             });
                     getBlocksRequestHandlers.put(uid, requestHandler);
-                    requestHandler.onGetBsqBlocksRequest((GetBsqBlocksRequest) networkEnvelop, connection);
+                    requestHandler.onGetTxBlocksRequest((GetTxBlocksRequest) networkEnvelop, connection);
                 } else {
                     log.warn("We have already a GetDataRequestHandler for that connection started. " +
                             "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");
 
                     UserThread.runAfter(() -> {
                         if (getBlocksRequestHandlers.containsKey(uid)) {
-                            GetBsqBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
+                            GetTxBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
                             handler.stop();
                             getBlocksRequestHandlers.remove(uid);
                         }
