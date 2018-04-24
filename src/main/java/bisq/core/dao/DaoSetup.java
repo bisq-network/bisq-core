@@ -19,7 +19,8 @@ package bisq.core.dao;
 
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.period.PeriodStateUpdater;
+import bisq.core.dao.period.CycleService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
@@ -40,7 +41,8 @@ import com.google.inject.Inject;
 public class DaoSetup {
     private final BsqNode bsqNode;
     private final ProposalService proposalService;
-    private final PeriodStateUpdater periodStateUpdater;
+    private final StateService stateService;
+    private final CycleService cycleService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final ChangeParamListService changeParamListService;
@@ -52,7 +54,8 @@ public class DaoSetup {
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
-                    PeriodStateUpdater periodStateUpdater,
+                    StateService stateService,
+                    CycleService cycleService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
                     ChangeParamListService changeParamListService,
@@ -62,7 +65,8 @@ public class DaoSetup {
                     BlindVoteService blindVoteService,
                     BlindVoteListService blindVoteListService,
                     ProposalService proposalService) {
-        this.periodStateUpdater = periodStateUpdater;
+        this.stateService = stateService;
+        this.cycleService = cycleService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
         this.changeParamListService = changeParamListService;
@@ -77,7 +81,7 @@ public class DaoSetup {
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        periodStateUpdater.start();
+        cycleService.start();
         changeParamListService.start();
         proposalService.start();
         voteRevealService.start();

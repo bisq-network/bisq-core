@@ -125,7 +125,7 @@ public class VoteRevealService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRevealVotes(periodService.getChainHeight());
+        maybeRevealVotes(stateService.getChainHeight());
     }
 
     public BlindVoteList getSortedBlindVoteListOfCycle() {

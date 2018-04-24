@@ -52,8 +52,12 @@ import lombok.extern.slf4j.Slf4j;
 public class StateService {
     private State state;
 
-    private List<StateChangeEventsProvider> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
-    private List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
+    private final List<StateChangeEventsProvider> stateChangeEventsProviders = new CopyOnWriteArrayList<>();
+
+    // TODO used only by snapshot manager
+    private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
+    private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
+    private final List<StartParsingListener> startParsingListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +93,18 @@ public class StateService {
         blockListeners.remove(listener);
     }
 
+    public void addPeriodStateChangeListener(ChainHeightListener listener) {
+        chainHeightListeners.add(listener);
+    }
+
+    public void removePeriodStateChangeListener(ChainHeightListener listener) {
+        chainHeightListeners.remove(listener);
+    }
+
+    public void addStartParsingListener(StartParsingListener listener) {
+        startParsingListeners.add(listener);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Snapshot
@@ -104,13 +120,17 @@ public class StateService {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Modify state
+    // Parsing start and complete
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void startParseBlock(int blockHeight) {
+        startParsingListeners.forEach(l -> l.onStartParsing(blockHeight));
+    }
 
     // After parsing of a new txBlock is complete we trigger the processing of any non blockchain data like
     // proposalPayloads or blindVotes and after we have collected all stateChangeEvents we create a Block and
     // notify the listeners.
-    public void applyTxBlock(TxBlock txBlock) {
+    public void parseBlockComplete(TxBlock txBlock) {
         // Those who registered to process a txBlock might return a list of StateChangeEvents.
         // We collect all from all providers and then go on.
         Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
@@ -130,13 +150,22 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // Modify state
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void setChainHeight(int chainHeight) {
+        this.state.setChainHeight(chainHeight);
+        chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(chainHeight));
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // Cycle
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void addCycle(Cycle cycle) {
         state.addCycle(cycle);
     }
-
 
     public List<TxBlock> getClonedTxBlocksFrom(int fromBlockHeight) {
         final LinkedList<TxBlock> clonedTxBlocks = new LinkedList<>(getTxBlocks());
@@ -245,14 +274,22 @@ public class StateService {
     }
 
     // Cycle
-    public List<Cycle> getCycles() {
+    public LinkedList<Cycle> getCycles() {
         return state.getCycles();
     }
+
+    public Cycle getCurrentCycle() {
+        return getCycles().getLast();
+    }
+
+    public int getChainHeight() {
+        return state.getChainHeight();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Block
     ///////////////////////////////////////////////////////////////////////////////////////////
-
 
     private Optional<Block> getBlockAtHeight(int height) {
         return getBlocks().stream()

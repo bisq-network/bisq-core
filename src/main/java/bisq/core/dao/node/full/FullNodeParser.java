@@ -22,7 +22,6 @@ import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.consensus.BsqBlockController;
 import bisq.core.dao.node.consensus.BsqTxController;
 import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.period.PeriodStateUpdater;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxBlock;
@@ -54,9 +53,8 @@ public class FullNodeParser extends BsqParser {
     public FullNodeParser(BsqBlockController bsqBlockController,
                           GenesisTxController genesisTxController,
                           BsqTxController bsqTxController,
-                          StateService stateService,
-                          PeriodStateUpdater periodStateUpdater) {
-        super(bsqBlockController, genesisTxController, bsqTxController, stateService, periodStateUpdater);
+                          StateService stateService) {
+        super(bsqBlockController, genesisTxController, bsqTxController, stateService);
     }
 
 
@@ -65,7 +63,7 @@ public class FullNodeParser extends BsqParser {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     TxBlock parseBlock(Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
-        periodStateUpdater.onStartParsingNewBlock(btcdBlock.getHeight());
+        stateService.startParseBlock(btcdBlock.getHeight());
 
         long startTs = System.currentTimeMillis();
         List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock, txList);
@@ -76,7 +74,8 @@ public class FullNodeParser extends BsqParser {
                 btcdBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxsInBlock));
 
-        bsqBlockController.addBlockIfValid(txBlock);
+        if (bsqBlockController.isBlockValid(txBlock))
+            stateService.parseBlockComplete(txBlock);
 
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
                 System.currentTimeMillis() - startTs, txBlock.getHeight(), bsqTxsInBlock.size());

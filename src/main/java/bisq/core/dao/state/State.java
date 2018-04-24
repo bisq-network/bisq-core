@@ -36,10 +36,8 @@ import org.bitcoinj.core.Coin;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -83,7 +81,9 @@ public class State implements PersistableEnvelope {
 
     //TODO not in PB yet as not clear if we keep it
     private final Map<String, Proposal> proposalPayloadMap;
-    private final List<Cycle> cycles;
+    // We get a new cycle set from the cycleUpdater at the first block of a new cycle (before parsing start)
+    private final LinkedList<Cycle> cycles;
+    private int chainHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ public class State implements PersistableEnvelope {
                 new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
-                new ArrayList<>());
+                new LinkedList<>());
     }
 
 
@@ -121,7 +121,7 @@ public class State implements PersistableEnvelope {
                   Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
                   Map<TxOutput.Key, SpentInfo> spentInfoMap,
                   Map<String, Proposal> proposalPayloadMap,
-                  List<Cycle> cycles) {
+                  LinkedList<Cycle> cycles) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
         this.blocks = blocks;
@@ -250,6 +250,10 @@ public class State implements PersistableEnvelope {
         cycles.add(cycle);
     }
 
+    void setChainHeight(int chainHeight) {
+        this.chainHeight = chainHeight;
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Package scope getters
@@ -262,6 +266,15 @@ public class State implements PersistableEnvelope {
     int getGenesisBlockHeight() {
         return genesisBlockHeight;
     }
+
+    LinkedList<Cycle> getCycles() {
+        return cycles;
+    }
+
+    int getChainHeight() {
+        return chainHeight;
+    }
+
 
     int getIssuanceMaturity() {
         return ISSUANCE_MATURITY;
@@ -303,7 +316,4 @@ public class State implements PersistableEnvelope {
         return proposalPayloadMap;
     }
 
-    List<Cycle> getCycles() {
-        return cycles;
-    }
 }

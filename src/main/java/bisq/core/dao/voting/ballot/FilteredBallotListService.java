@@ -123,7 +123,7 @@ public class FilteredBallotListService {
         closedBallots.addAll(ballotListService.getBallotList().getList().stream()
                 .filter(ballot -> stateService.getTx(ballot.getTxId()).isPresent())
                 .filter(ballot -> stateService.getTx(ballot.getTxId())
-                        .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight()))
+                        .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
                         .isPresent())
                 .collect(Collectors.toList()));
     }

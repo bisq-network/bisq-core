@@ -20,6 +20,7 @@ package bisq.core.dao.voting.blindvote;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.period.Phase;
+import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -43,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BlindVoteListService implements PersistedDataHost {
     private final P2PService p2PService;
     private final PeriodService periodService;
+    private final StateService stateService;
     private final BlindVoteValidator blindVoteValidator;
     private final Storage<BlindVoteList> storage;
 
@@ -57,10 +59,12 @@ public class BlindVoteListService implements PersistedDataHost {
     @Inject
     public BlindVoteListService(P2PService p2PService,
                                 PeriodService periodService,
+                                StateService stateService,
                                 BlindVoteValidator blindVoteValidator,
                                 Storage<BlindVoteList> storage) {
         this.p2PService = p2PService;
         this.periodService = periodService;
+        this.stateService = stateService;
         this.blindVoteValidator = blindVoteValidator;
         this.storage = storage;
 
@@ -120,7 +124,7 @@ public class BlindVoteListService implements PersistedDataHost {
                 .filter(entry -> {
                     final BlindVotePayload blindVotePayload = (BlindVotePayload) entry.getProtectedStoragePayload();
                     final String txId = blindVotePayload.getBlindVote().getTxId();
-                    final int chainHeight = periodService.getChainHeight();
+                    final int chainHeight = stateService.getChainHeight();
                     return periodService.isTxInCorrectCycle(txId, chainHeight) &&
                             periodService.isTxInPhase(txId, Phase.BLIND_VOTE);
                 })
@@ -139,7 +143,7 @@ public class BlindVoteListService implements PersistedDataHost {
             final BlindVotePayload blindVotePayload = (BlindVotePayload) protectedStoragePayload;
             final BlindVote blindVote = blindVotePayload.getBlindVote();
             if (blindVoteList.stream().noneMatch(e -> e.equals(blindVote))) {
-                final int height = periodService.getChainHeight();
+                final int height = stateService.getChainHeight();
 
                 if (!BlindVoteUtils.blindVoteListContains(blindVote, blindVoteList.getList()) &&
                         blindVoteValidator.isValid(blindVote)) {

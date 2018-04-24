@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.myvote;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVotePayload;
@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MyVoteListService implements PersistedDataHost {
-    private final PeriodService periodService;
+    private final StateService stateService;
     private final BlindVoteValidator blindVoteValidator;
     private final P2PService p2PService;
     private final Storage<MyVoteList> storage;
@@ -63,12 +63,12 @@ public class MyVoteListService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteListService(PeriodService periodService,
+    public MyVoteListService(StateService stateService,
                              BlindVoteValidator blindVoteValidator,
                              P2PService p2PService,
                              KeyRing keyRing,
                              Storage<MyVoteList> storage) {
-        this.periodService = periodService;
+        this.stateService = stateService;
         this.blindVoteValidator = blindVoteValidator;
         this.p2PService = p2PService;
         this.storage = storage;
@@ -106,7 +106,7 @@ public class MyVoteListService implements PersistedDataHost {
 
     public void createAndAddNewMyVote(BallotList sortedBallotListForCycle, SecretKey secretKey, BlindVote blindVote) {
         final byte[] secretKeyBytes = Encryption.getSecretKeyBytes(secretKey);
-        MyVote myVote = new MyVote(periodService.getChainHeight(), sortedBallotListForCycle, secretKeyBytes, blindVote);
+        MyVote myVote = new MyVote(stateService.getChainHeight(), sortedBallotListForCycle, secretKeyBytes, blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
         myVoteList.add(myVote);
         persist();

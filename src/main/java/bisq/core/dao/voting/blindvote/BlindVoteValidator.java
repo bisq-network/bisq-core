@@ -75,7 +75,7 @@ public class BlindVoteValidator {
 
         final String txId = blindVote.getTxId();
         Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = periodService.getChainHeight();
+        int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();

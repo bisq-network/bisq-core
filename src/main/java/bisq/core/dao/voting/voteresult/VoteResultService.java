@@ -114,7 +114,7 @@ public class VoteResultService implements StateChangeEventsProvider {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeCalculateVoteResult(periodService.getChainHeight());
+        maybeCalculateVoteResult(stateService.getChainHeight());
     }
 
     public List<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {

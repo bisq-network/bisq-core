@@ -22,7 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.exceptions.ValidationException;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotWithTransaction;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.compensation.CompensationConsensus;
@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CompensationBallotService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final PeriodService periodService;
+    private final StateService stateService;
     private final ChangeParamListService changeParamListService;
     private final CompensationValidator compensationValidator;
 
@@ -56,12 +56,12 @@ public class CompensationBallotService {
     @Inject
     public CompensationBallotService(BsqWalletService bsqWalletService,
                                      BtcWalletService btcWalletService,
-                                     PeriodService periodService,
+                                     StateService stateService,
                                      ChangeParamListService changeParamListService,
                                      CompensationValidator compensationValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.periodService = periodService;
+        this.stateService = stateService;
         this.changeParamListService = changeParamListService;
         this.compensationValidator = compensationValidator;
     }
@@ -101,7 +101,7 @@ public class CompensationBallotService {
     private Transaction getTransaction(CompensationProposal tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
-        final Coin fee = ProposalConsensus.getFee(changeParamListService, periodService.getChainHeight());
+        final Coin fee = ProposalConsensus.getFee(changeParamListService, stateService.getChainHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

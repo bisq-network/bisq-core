@@ -26,7 +26,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
@@ -64,7 +64,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteService {
-    private final PeriodService periodService;
+    private final StateService stateService;
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
@@ -82,7 +82,7 @@ public class BlindVoteService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteService(PeriodService periodService,
+    public BlindVoteService(StateService stateService,
                             P2PService p2PService,
                             WalletsManager walletsManager,
                             BsqWalletService bsqWalletService,
@@ -93,7 +93,7 @@ public class BlindVoteService {
                             ChangeParamListService changeParamListService,
                             ProposalValidator proposalValidator,
                             KeyRing keyRing) {
-        this.periodService = periodService;
+        this.stateService = stateService;
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
@@ -196,7 +196,7 @@ public class BlindVoteService {
     }
 
     public Coin getBlindVoteFee() {
-        return BlindVoteConsensus.getFee(changeParamListService, periodService.getChainHeight());
+        return BlindVoteConsensus.getFee(changeParamListService, stateService.getChainHeight());
     }
 
     public BallotList getSortedBallotList() {

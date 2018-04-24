@@ -40,11 +40,11 @@ public class BsqBlockController {
         this.stateService = stateService;
     }
 
-    public void addBlockIfValid(TxBlock txBlock) throws BlockNotConnectingException {
+    public boolean isBlockValid(TxBlock txBlock) throws BlockNotConnectingException {
         LinkedList<TxBlock> txBlocks = stateService.getTxBlocks();
         if (!txBlocks.contains(txBlock)) {
             if (isBlockConnecting(txBlock, txBlocks)) {
-                stateService.applyTxBlock(txBlock);
+                return true;
             } else {
                 log.warn("addBlock called with a not connecting block:\n" +
                                 "height()={}, hash()={}, head.height()={}, head.hash()={}",
@@ -53,6 +53,7 @@ public class BsqBlockController {
             }
         } else {
             log.warn("We got that block already. Ignore the call.");
+            return false;
         }
     }
 

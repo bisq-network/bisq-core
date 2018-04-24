@@ -21,9 +21,9 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.PeriodStateChangeListener;
 import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.BlockListener;
+import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -150,7 +150,7 @@ public class DaoFacade {
 
     // Present fee
     public Coin getProposalFee() {
-        return ProposalConsensus.getFee(changeParamListService, periodService.getChainHeight());
+        return ProposalConsensus.getFee(changeParamListService, stateService.getChainHeight());
     }
 
     // Publish proposal, store ballot
@@ -211,11 +211,11 @@ public class DaoFacade {
     // Use case: Presentation of phases
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
+    public void addPeriodStateChangeListener(ChainHeightListener listener) {
         periodService.addPeriodStateChangeListener(listener);
     }
 
-    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
+    public void removePeriodStateChangeListener(ChainHeightListener listener) {
         periodService.removePeriodStateChangeListener(listener);
     }
 
@@ -228,7 +228,7 @@ public class DaoFacade {
     }
 
     public int getDurationForPhase(Phase phase) {
-        return periodService.getDurationForPhase(phase, periodService.getChainHeight());
+        return periodService.getDurationForPhase(phase, stateService.getChainHeight());
     }
 
     // listeners for phase change
@@ -237,7 +237,7 @@ public class DaoFacade {
     }
 
     public int getChainHeight() {
-        return periodService.getChainHeight();
+        return stateService.getChainHeight();
     }
 
 

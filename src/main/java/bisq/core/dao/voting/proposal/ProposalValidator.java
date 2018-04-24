@@ -74,7 +74,7 @@ public class ProposalValidator {
 
         final String txId = proposal.getTxId();
         Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = periodService.getChainHeight();
+        int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();

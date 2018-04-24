@@ -17,6 +17,7 @@
 
 package bisq.core.dao.period;
 
+import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -31,9 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class PeriodService {
     private final StateService stateService;
-    private final PeriodState periodState;
 
-    private final List<PeriodStateChangeListener> periodStateChangeListeners = new CopyOnWriteArrayList<>();
+    private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -41,26 +41,10 @@ public final class PeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(StateService stateService, PeriodState periodState) {
+    public PeriodService(StateService stateService) {
         this.stateService = stateService;
-        this.periodState = periodState;
 
-        periodState.addPeriodStateChangeListener(new PeriodStateChangeListener() {
-            @Override
-            public void onChainHeightChanged(int chainHeight) {
-                periodStateChangeListeners.forEach(l -> l.onChainHeightChanged(chainHeight));
-            }
-
-            @Override
-            public void onCurrentCycleChanged(Cycle currentCycle) {
-                periodStateChangeListeners.forEach(l -> l.onCurrentCycleChanged(currentCycle));
-            }
-
-            @Override
-            public void onCycleAdded(Cycle cycle) {
-                periodStateChangeListeners.forEach(l -> l.onCycleAdded(cycle));
-            }
-        });
+        stateService.addPeriodStateChangeListener(chainHeight -> chainHeightListeners.forEach(l -> l.onChainHeightChanged(chainHeight)));
     }
 
 
@@ -68,12 +52,12 @@ public final class PeriodService {
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addPeriodStateChangeListener(PeriodStateChangeListener listener) {
-        periodStateChangeListeners.add(listener);
+    public void addPeriodStateChangeListener(ChainHeightListener listener) {
+        chainHeightListeners.add(listener);
     }
 
-    public void removePeriodStateChangeListener(PeriodStateChangeListener listener) {
-        periodStateChangeListeners.remove(listener);
+    public void removePeriodStateChangeListener(ChainHeightListener listener) {
+        chainHeightListeners.remove(listener);
     }
 
 
@@ -82,15 +66,15 @@ public final class PeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public List<Cycle> getCycles() {
-        return periodState.getCycles();
+        return stateService.getCycles();
     }
 
     public Cycle getCurrentCycle() {
-        return periodState.getCurrentCycle();
+        return stateService.getCurrentCycle();
     }
 
     public int getChainHeight() {
-        return periodState.getChainHeight();
+        return stateService.getChainHeight();
     }
 
     public Optional<Tx> getOptionalTx(String txId) {

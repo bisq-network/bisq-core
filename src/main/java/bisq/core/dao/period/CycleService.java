@@ -17,9 +17,8 @@
 
 package bisq.core.dao.period;
 
-import bisq.core.dao.state.StateChangeEventsProvider;
+import bisq.core.dao.state.StartParsingListener;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxBlock;
 import bisq.core.dao.state.events.ParamChangeEvent;
 import bisq.core.dao.state.events.StateChangeEvent;
 import bisq.core.dao.voting.proposal.param.Param;
@@ -31,7 +30,6 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,12 +37,8 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Writes data to the PeriodState.
- */
 @Slf4j
-public class PeriodStateUpdater implements StateChangeEventsProvider {
-    private final PeriodState periodState;
+public class CycleService implements StartParsingListener {
     private final StateService stateService;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -52,23 +46,9 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodStateUpdater(PeriodState periodState, StateService stateService) {
-        this.periodState = periodState;
+    public CycleService(StateService stateService) {
         this.stateService = stateService;
-
-        // Once the genesis block is parsed we add the stateChangeEvents with the initial values from the
-        // default param values to the state.
-        stateService.registerStateChangeEventsProvider(this);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEventsProvider
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock) {
-        return provideStateChangeEvents(txBlock, stateService.getGenesisBlockHeight());
+        stateService.addStartParsingListener(this);
     }
 
 
@@ -83,23 +63,30 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
         initFromGenesisBlock();
     }
 
-    public void onStartParsingNewBlock(int blockHeight) {
+    @Override
+    public void onStartParsing(int blockHeight) {
         // We want to set the correct phase and cycle before we start parsing a new block.
-        // For Genesis block we did it already in the constructor
+        // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
         // applyParamToPhasesInCycle if there was a changeEvent.
         // The isFirstBlockInCycle methods returns from the previous cycle the first block as we have not
         // applied the new cycle yet. But the first block of the old cycle will always be the same as the
         // first block of the new cycle.
         if (blockHeight != stateService.getGenesisBlockHeight() && isFirstBlockAfterPreviousCycle(blockHeight)) {
+            // We take stateChangeEvents from last block of previous cycle
             Set<StateChangeEvent> stateChangeEvents = stateService.getLastBlock().getStateChangeEvents();
-            Cycle cycle = getNewCycle(blockHeight, periodState.getCurrentCycle(), stateChangeEvents);
-            periodState.setCurrentCycle(cycle);
-            periodState.addCycle(cycle);
+
+            // We have the not update stateService.getCurrentCycle() so we grab here the previousCycle
+            final Cycle previousCycle = stateService.getCurrentCycle();
+            // We create the new cycle as clone of the previous cycle and only if there have been change events we use
+            // the new values from the change event.
+            Cycle cycle = createNewCycle(blockHeight, previousCycle, stateChangeEvents);
+
+            // We add the cycle to the state
             stateService.addCycle(cycle);
         }
 
-        periodState.setChainHeight(blockHeight);
+        stateService.setChainHeight(blockHeight);
     }
 
 
@@ -111,21 +98,18 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
         // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
         // as onAllServicesInitialized might get called after the parser has started.
         // We add the default values from the Param enum to our StateChangeEvent list.
+        final int genesisBlockHeight = stateService.getGenesisBlockHeight();
         List<PhaseWrapper> phaseWrapperList = Arrays.stream(Phase.values())
-                .map(phase -> initWithDefaultValueAtGenesisHeight(phase, stateService.getGenesisBlockHeight())
+                .map(phase -> initWithDefaultValueAtGenesisHeight(phase, genesisBlockHeight)
                         .map(event -> getPhaseWrapper(event.getParamChange()))
                         .get())
                 .collect(Collectors.toList());
-        Cycle currentCycle = new Cycle(stateService.getGenesisBlockHeight(), ImmutableList.copyOf(phaseWrapperList));
-
+        Cycle currentCycle = new Cycle(genesisBlockHeight, ImmutableList.copyOf(phaseWrapperList));
         stateService.addCycle(currentCycle);
-
-        periodState.setCurrentCycle(currentCycle);
-        periodState.addCycle(currentCycle);
-        periodState.setChainHeight(stateService.getGenesisBlockHeight());
+        stateService.setChainHeight(genesisBlockHeight);
     }
 
-    private Cycle getNewCycle(int blockHeight, Cycle currentCycle, Set<StateChangeEvent> stateChangeEvents) {
+    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Set<StateChangeEvent> stateChangeEvents) {
         List<PhaseWrapper> phaseWrapperListFromChangeEvents = stateChangeEvents.stream()
                 .filter(event -> event instanceof ParamChangeEvent)
                 .map(event -> (ParamChangeEvent) event)
@@ -133,14 +117,14 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
                 .collect(Collectors.toList());
 
         List<PhaseWrapper> phaseWrapperList = new ArrayList<>();
-        for (int i = 0; i < currentCycle.getPhaseWrapperList().size(); i++) {
-            PhaseWrapper currentPhase = currentCycle.getPhaseWrapperList().get(i);
+        for (int i = 0; i < previousCycle.getPhaseWrapperList().size(); i++) {
+            PhaseWrapper phaseWrapper = previousCycle.getPhaseWrapperList().get(i);
             // If we have a change event for that phase we use the new wrapper. Otherwise we use the same as in the
-            // current cycle.
-            if (isPhaseInList(phaseWrapperListFromChangeEvents, currentPhase.getPhase()))
+            // previous cycle.
+            if (isPhaseInList(phaseWrapperListFromChangeEvents, phaseWrapper.getPhase()))
                 phaseWrapperList.add(phaseWrapperListFromChangeEvents.get(i));
             else
-                phaseWrapperList.add(currentPhase);
+                phaseWrapperList.add(phaseWrapper);
         }
         return new Cycle(blockHeight, ImmutableList.copyOf(phaseWrapperList));
     }
@@ -163,22 +147,6 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
                 .isPresent();
     }
 
-    private Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock, int genesisBlockHeight) {
-        final int height = txBlock.getHeight();
-        if (height == genesisBlockHeight)
-            return getStateChangeEventsFromParamDefaultValues(height);
-        else
-            return new HashSet<>();
-    }
-
-    private Set<StateChangeEvent> getStateChangeEventsFromParamDefaultValues(int height) {
-        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
-        Arrays.asList(Phase.values())
-                .forEach(phase -> initWithDefaultValueAtGenesisHeight(phase, height)
-                        .ifPresent(stateChangeEvents::add));
-        return stateChangeEvents;
-    }
-
     private Optional<ParamChangeEvent> initWithDefaultValueAtGenesisHeight(Phase phase, int height) {
         return Arrays.stream(Param.values())
                 .filter(param -> isParamMatchingPhase(param, phase))
@@ -192,9 +160,28 @@ public class PeriodStateUpdater implements StateChangeEventsProvider {
     }
 
     private Optional<Cycle> getCycle(int height) {
-        return periodState.getCycles().stream()
+        return stateService.getCycles().stream()
                 .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
                 .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
                 .findAny();
     }
+
+
+
+
+   /* private Set<StateChangeEvent> provideStateChangeEvents(TxBlock txBlock, int genesisBlockHeight) {
+        final int height = txBlock.getHeight();
+        if (height == genesisBlockHeight)
+            return getStateChangeEventsFromParamDefaultValues(height);
+        else
+            return new HashSet<>();
+    }*/
+
+   /* private Set<StateChangeEvent> getStateChangeEventsFromParamDefaultValues(int height) {
+        Set<StateChangeEvent> stateChangeEvents = new HashSet<>();
+        Arrays.asList(Phase.values())
+                .forEach(phase -> initWithDefaultValueAtGenesisHeight(phase, height)
+                        .ifPresent(stateChangeEvents::add));
+        return stateChangeEvents;
+    }*/
 }

@@ -15,14 +15,8 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.period;
+package bisq.core.dao.state;
 
-public interface PeriodStateChangeListener {
-    void onChainHeightChanged(int chainHeight);
-
-    default void onCurrentCycleChanged(Cycle currentCycle) {
-    }
-
-    default void onCycleAdded(Cycle cycle) {
-    }
+public interface ChainHeightListener {
+    void onChainHeightChanged(int blockHeight);
 }

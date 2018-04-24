@@ -43,11 +43,11 @@ public class BallotUtils {
     // If unconfirmed or in correct phase/cycle we remove it
     public static boolean canRemoveProposal(Proposal proposal, StateService stateService, PeriodService periodService) {
         final Optional<Tx> optionalProposalTx = stateService.getTx(proposal.getTxId());
-        return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService);
+        return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, stateService);
     }
 
-    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService) {
+    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, StateService stateService) {
         return periodService.isInPhase(tx.getBlockHeight(), Phase.PROPOSAL) &&
-                periodService.isTxInCorrectCycle(tx.getBlockHeight(), periodService.getChainHeight());
+                periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight());
     }
 }

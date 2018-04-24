@@ -40,9 +40,8 @@ import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.LiteNodeParserFacade;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
+import bisq.core.dao.period.CycleService;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.PeriodState;
-import bisq.core.dao.period.PeriodStateUpdater;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
@@ -102,8 +101,7 @@ public class DaoModule extends AppModule {
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 
         // Period
-        bind(PeriodState.class).in(Singleton.class);
-        bind(PeriodStateUpdater.class).in(Singleton.class);
+        bind(CycleService.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
 
         // blockchain parser
