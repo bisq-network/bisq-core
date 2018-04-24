@@ -23,7 +23,6 @@ import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.voting.proposal.Proposal;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 
@@ -71,6 +70,7 @@ public class State implements PersistableEnvelope {
 
     private final String genesisTxId;
     private final int genesisBlockHeight;
+    private int chainHeight;
     private final LinkedList<Block> blocks;
     private final Map<String, TxType> txTypeMap;
     private final Map<String, Long> burntFeeMap;
@@ -79,11 +79,7 @@ public class State implements PersistableEnvelope {
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
 
-    //TODO not in PB yet as not clear if we keep it
-    private final Map<String, Proposal> proposalPayloadMap;
-    // We get a new cycle set from the cycleUpdater at the first block of a new cycle (before parsing start)
     private final LinkedList<Cycle> cycles;
-    private int chainHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +91,7 @@ public class State implements PersistableEnvelope {
                  @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this(genesisTxId,
                 genesisBlockHeight,
+                genesisBlockHeight,
                 new LinkedList<>(),
                 new HashMap<>(),
                 new HashMap<>(),
@@ -102,8 +99,8 @@ public class State implements PersistableEnvelope {
                 new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
-                new HashMap<>(),
-                new LinkedList<>());
+                new LinkedList<>()
+        );
     }
 
 
@@ -113,6 +110,7 @@ public class State implements PersistableEnvelope {
 
     private State(String genesisTxId,
                   int genesisBlockHeight,
+                  int chainHeight,
                   LinkedList<Block> blocks,
                   Map<String, TxType> txTypeMap,
                   Map<String, Long> burntFeeMap,
@@ -120,10 +118,10 @@ public class State implements PersistableEnvelope {
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
                   Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
                   Map<TxOutput.Key, SpentInfo> spentInfoMap,
-                  Map<String, Proposal> proposalPayloadMap,
                   LinkedList<Cycle> cycles) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
+        this.chainHeight = chainHeight;
         this.blocks = blocks;
         this.txTypeMap = txTypeMap;
         this.burntFeeMap = burntFeeMap;
@@ -131,7 +129,6 @@ public class State implements PersistableEnvelope {
         this.unspentTxOutputMap = unspentTxOutputMap;
         this.txOutputTypeMap = txOutputTypeMap;
         this.spentInfoMap = spentInfoMap;
-        this.proposalPayloadMap = proposalPayloadMap;
         this.cycles = cycles;
     }
 
@@ -144,6 +141,7 @@ public class State implements PersistableEnvelope {
         final PB.State.Builder builder = PB.State.newBuilder();
         builder.setGenesisTxId(genesisTxId)
                 .setGenesisBlockHeight(genesisBlockHeight)
+                .setChainHeight(chainHeight)
                 .putAllTxTypeMap(txTypeMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())))
                 .putAllBurntFeeMap(burntFeeMap.entrySet().stream()
@@ -155,7 +153,8 @@ public class State implements PersistableEnvelope {
                 .putAllTxOutputTypeMap(txOutputTypeMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())));
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
+                .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()));
         return builder;
     }
 
@@ -175,8 +174,11 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutputType.fromProto(e.getValue())));
         Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
+        final LinkedList<Cycle> list = proto.getCyclesList().stream()
+                .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
         return new State(proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
+                proto.getChainHeight(),
                 blocks,
                 txTypeMap,
                 burntFeeMap,
@@ -184,35 +186,30 @@ public class State implements PersistableEnvelope {
                 unspentTxOutputMap,
                 txOutputTypeMap,
                 spentInfoMap,
-                null,
-                null);
+                list);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Utils
+    // Clone
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    //TODO remove
-    int getChainHeadHeight() {
-        return !getBlocks().isEmpty() ? getBlocks().getLast().getHeight() : 0;
-    }
 
     State getClone() {
-        //TODO
-        return this;
-        // return lock.read(() -> (StateService) StateService.fromProto(stateService.getStateBuilder().build());
+        return (State) State.fromProto(getStateBuilder().build());
     }
 
-    //TODO
     State getClone(State snapshotCandidate) {
-        return this;
+        return (State) State.fromProto(snapshotCandidate.getStateBuilder().build());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Package scope write access
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    void setChainHeight(int chainHeight) {
+        this.chainHeight = chainHeight;
+    }
 
     void addBlock(Block block) {
         blocks.add(block);
@@ -250,14 +247,19 @@ public class State implements PersistableEnvelope {
         cycles.add(cycle);
     }
 
-    void setChainHeight(int chainHeight) {
-        this.chainHeight = chainHeight;
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Package scope getters
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    int getIssuanceMaturity() {
+        return ISSUANCE_MATURITY;
+    }
+
+    Coin getGenesisTotalSupply() {
+        return GENESIS_TOTAL_SUPPLY;
+    }
+
 
     String getGenesisTxId() {
         return genesisTxId;
@@ -267,21 +269,8 @@ public class State implements PersistableEnvelope {
         return genesisBlockHeight;
     }
 
-    LinkedList<Cycle> getCycles() {
-        return cycles;
-    }
-
     int getChainHeight() {
         return chainHeight;
-    }
-
-
-    int getIssuanceMaturity() {
-        return ISSUANCE_MATURITY;
-    }
-
-    Coin getGenesisTotalSupply() {
-        return GENESIS_TOTAL_SUPPLY;
     }
 
     LinkedList<Block> getBlocks() {
@@ -312,8 +301,7 @@ public class State implements PersistableEnvelope {
         return spentInfoMap;
     }
 
-    Map<String, Proposal> getProposalPayloadMap() {
-        return proposalPayloadMap;
+    LinkedList<Cycle> getCycles() {
+        return cycles;
     }
-
 }

@@ -17,9 +17,14 @@
 
 package bisq.core.dao.period;
 
+import bisq.common.proto.persistable.PersistablePayload;
+
+import io.bisq.generated.protobuffer.PB;
+
 import com.google.common.collect.ImmutableList;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.Value;
 
@@ -32,15 +37,47 @@ import javax.annotation.concurrent.Immutable;
 //TODO add tests
 @Immutable
 @Value
-public class Cycle {
+public class Cycle implements PersistablePayload {
     // List is ordered according to the Phase enum.
     private final ImmutableList<PhaseWrapper> phaseWrapperList;
     private final int heightOfFirstBlock;
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Constructor
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     Cycle(int heightOfFirstBlock, ImmutableList<PhaseWrapper> phaseWrapperList) {
         this.heightOfFirstBlock = heightOfFirstBlock;
         this.phaseWrapperList = phaseWrapperList;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public PB.Cycle toProtoMessage() {
+        return PB.Cycle.newBuilder()
+                .addAllPhaseWrapperList(phaseWrapperList.stream()
+                        .map(PhaseWrapper::toProtoMessage)
+                        .collect(Collectors.toList()))
+                .setHeightOfFirstLock(heightOfFirstBlock)
+                .build();
+    }
+
+    public static Cycle fromProto(PB.Cycle proto) {
+        final ImmutableList<PhaseWrapper> list = ImmutableList.copyOf(proto.getPhaseWrapperListList().stream()
+                .map(PhaseWrapper::fromProto)
+                .collect(Collectors.toList()));
+        return new Cycle(proto.getHeightOfFirstLock(), list);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public int getHeightOfLastBlock() {
         return heightOfFirstBlock + getDuration() - 1;

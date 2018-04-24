@@ -17,6 +17,10 @@
 
 package bisq.core.dao.period;
 
+import bisq.common.proto.persistable.PersistablePayload;
+
+import io.bisq.generated.protobuffer.PB;
+
 import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
@@ -27,12 +31,28 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 @Value
-class PhaseWrapper {
+class PhaseWrapper implements PersistablePayload {
     private final Phase phase;
     private final int duration;
 
     PhaseWrapper(Phase phase, int duration) {
         this.phase = phase;
         this.duration = duration;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public PB.PhaseWrapper toProtoMessage() {
+        return PB.PhaseWrapper.newBuilder()
+                .setPhaseName(phase.name())
+                .setDuration(duration)
+                .build();
+    }
+
+    public static PhaseWrapper fromProto(PB.PhaseWrapper proto) {
+        return new PhaseWrapper(Phase.valueOf(proto.getPhaseName()), proto.getDuration());
     }
 }

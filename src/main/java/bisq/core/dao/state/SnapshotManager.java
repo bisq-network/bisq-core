@@ -60,7 +60,7 @@ public class SnapshotManager {
                 final int chainHeadHeight = block.getHeight();
                 if (isSnapshotHeight(chainHeadHeight) &&
                         (snapshotCandidate == null ||
-                                snapshotCandidate.getChainHeadHeight() != chainHeadHeight)) {
+                                snapshotCandidate.getChainHeight() != chainHeadHeight)) {
                     // At trigger event we store the latest snapshotCandidate to disc
                     if (snapshotCandidate != null) {
                         // We clone because storage is in a threaded context
