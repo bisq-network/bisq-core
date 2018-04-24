@@ -95,11 +95,11 @@ public class StateService {
         blockListeners.remove(listener);
     }
 
-    public void addPeriodStateChangeListener(ChainHeightListener listener) {
+    public void addChainHeightListener(ChainHeightListener listener) {
         chainHeightListeners.add(listener);
     }
 
-    public void removePeriodStateChangeListener(ChainHeightListener listener) {
+    public void removeChainHeightListener(ChainHeightListener listener) {
         chainHeightListeners.remove(listener);
     }
 

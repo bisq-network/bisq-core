@@ -17,7 +17,6 @@
 
 package bisq.core.dao.period;
 
-import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -25,15 +24,12 @@ import com.google.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class PeriodService {
     private final StateService stateService;
-
-    private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -43,21 +39,6 @@ public final class PeriodService {
     @Inject
     public PeriodService(StateService stateService) {
         this.stateService = stateService;
-
-        stateService.addPeriodStateChangeListener(chainHeight -> chainHeightListeners.forEach(l -> l.onChainHeightChanged(chainHeight)));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addPeriodStateChangeListener(ChainHeightListener listener) {
-        chainHeightListeners.add(listener);
-    }
-
-    public void removePeriodStateChangeListener(ChainHeightListener listener) {
-        chainHeightListeners.remove(listener);
     }
 
 

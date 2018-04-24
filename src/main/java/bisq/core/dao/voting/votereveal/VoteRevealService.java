@@ -113,10 +113,7 @@ public class VoteRevealService {
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
 
-        periodService.addPeriodStateChangeListener(chainHeight -> {
-            // do we want call before parser?
-            maybeRevealVotes(chainHeight);
-        });
+        stateService.addChainHeightListener(this::maybeRevealVotes);
     }
 
 

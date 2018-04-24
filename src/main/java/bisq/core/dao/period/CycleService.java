@@ -49,6 +49,11 @@ public class CycleService {
     public CycleService() {
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles,
                                                ImmutableSet<StateChangeEvent> stateChangeEvents) {
         // We want to set the correct phase and cycle before we start parsing a new block.

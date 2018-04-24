@@ -105,7 +105,7 @@ public class VoteResultService implements StateChangeEventsProvider {
         this.blindVoteListService = blindVoteListService;
         this.issuanceService = issuanceService;
 
-        periodService.addPeriodStateChangeListener(this::maybeCalculateVoteResult);
+        stateService.addChainHeightListener(this::maybeCalculateVoteResult);
     }
 
 

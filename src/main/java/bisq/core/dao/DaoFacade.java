@@ -107,7 +107,7 @@ public class DaoFacade {
         this.changeParamListService = changeParamListService;
         this.compensationBallotService = compensationBallotService;
 
-        periodService.addPeriodStateChangeListener(chainHeight -> {
+        stateService.addChainHeightListener(chainHeight -> {
             if (chainHeight > 0 && periodService.getCurrentCycle() != null)
                 periodService.getCurrentCycle().getPhaseForHeight(chainHeight).ifPresent(phaseProperty::set);
         });
@@ -211,12 +211,12 @@ public class DaoFacade {
     // Use case: Presentation of phases
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addPeriodStateChangeListener(ChainHeightListener listener) {
-        periodService.addPeriodStateChangeListener(listener);
+    public void addChainHeightListener(ChainHeightListener listener) {
+        stateService.addChainHeightListener(listener);
     }
 
-    public void removePeriodStateChangeListener(ChainHeightListener listener) {
-        periodService.removePeriodStateChangeListener(listener);
+    public void removeChainHeightListener(ChainHeightListener listener) {
+        stateService.removeChainHeightListener(listener);
     }
 
     public int getFirstBlockOfPhase(int height, Phase phase) {
