@@ -47,7 +47,7 @@ public class DaoPhase implements PersistablePayload {
         BREAK2,
         VOTE_REVEAL,
         BREAK3,
-        VOTE_RESULT,
+        RESULT,
         BREAK4
     }
 

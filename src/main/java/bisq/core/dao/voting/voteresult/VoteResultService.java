@@ -378,7 +378,7 @@ public class VoteResultService {
     }
 
     private boolean isInVoteResultPhase(int chainHeight) {
-        return periodService.getFirstBlockOfPhase(chainHeight, DaoPhase.Phase.VOTE_RESULT) == chainHeight;
+        return periodService.getFirstBlockOfPhase(chainHeight, DaoPhase.Phase.RESULT) == chainHeight;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

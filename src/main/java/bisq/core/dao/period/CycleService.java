@@ -89,7 +89,7 @@ public class CycleService {
 
     private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap) {
         // We take result from the vote result phase
-        final int heightOfVoteResultPhase = previousCycle.getFirstBlockOfPhase(DaoPhase.Phase.VOTE_RESULT);
+        final int heightOfVoteResultPhase = previousCycle.getFirstBlockOfPhase(DaoPhase.Phase.RESULT);
         List<DaoPhase> daoPhaseListFromParamChange = null;
         if (getParamChangeByBlockHeightMap.containsKey(heightOfVoteResultPhase)) {
             ParamChangeMap paramChangeMap = getParamChangeByBlockHeightMap.get(heightOfVoteResultPhase);
