@@ -55,9 +55,9 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
     protected final String title;
     protected final String description;
     protected final String link;
-    protected final String txId;
     protected final byte version;
     protected final long creationDate;
+    protected final String txId;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
