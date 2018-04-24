@@ -34,12 +34,11 @@ import javax.annotation.concurrent.Immutable;
  * Cycle represents the monthly period for proposals and voting.
  * It consists of a ordered list of phases represented by the phaseWrappers.
  */
-//TODO add tests
 @Immutable
 @Value
 public class Cycle implements PersistablePayload {
     // List is ordered according to the Phase enum.
-    private final ImmutableList<PhaseWrapper> phaseWrapperList;
+    private final ImmutableList<DaoPhase> daoPhaseList;
     private final int heightOfFirstBlock;
 
 
@@ -47,9 +46,9 @@ public class Cycle implements PersistablePayload {
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    Cycle(int heightOfFirstBlock, ImmutableList<PhaseWrapper> phaseWrapperList) {
+    Cycle(int heightOfFirstBlock, ImmutableList<DaoPhase> daoPhaseList) {
         this.heightOfFirstBlock = heightOfFirstBlock;
-        this.phaseWrapperList = phaseWrapperList;
+        this.daoPhaseList = daoPhaseList;
     }
 
 
@@ -60,18 +59,18 @@ public class Cycle implements PersistablePayload {
     @Override
     public PB.Cycle toProtoMessage() {
         return PB.Cycle.newBuilder()
-                .addAllPhaseWrapperList(phaseWrapperList.stream()
-                        .map(PhaseWrapper::toProtoMessage)
-                        .collect(Collectors.toList()))
                 .setHeightOfFirstLock(heightOfFirstBlock)
+                .addAllDaoPhase(daoPhaseList.stream()
+                        .map(DaoPhase::toProtoMessage)
+                        .collect(Collectors.toList()))
                 .build();
     }
 
     public static Cycle fromProto(PB.Cycle proto) {
-        final ImmutableList<PhaseWrapper> list = ImmutableList.copyOf(proto.getPhaseWrapperListList().stream()
-                .map(PhaseWrapper::fromProto)
+        final ImmutableList<DaoPhase> daoPhaseList = ImmutableList.copyOf(proto.getDaoPhaseList().stream()
+                .map(DaoPhase::fromProto)
                 .collect(Collectors.toList()));
-        return new Cycle(proto.getHeightOfFirstLock(), list);
+        return new Cycle(proto.getHeightOfFirstLock(), daoPhaseList);
     }
 
 
@@ -83,51 +82,51 @@ public class Cycle implements PersistablePayload {
         return heightOfFirstBlock + getDuration() - 1;
     }
 
-    public boolean isInPhase(int height, Phase phase) {
+    public boolean isInPhase(int height, DaoPhase.Phase phase) {
         return height >= getFirstBlockOfPhase(phase) &&
                 height <= getLastBlockOfPhase(phase);
     }
 
-    public int getFirstBlockOfPhase(Phase phase) {
-        return heightOfFirstBlock + phaseWrapperList.stream()
+    public int getFirstBlockOfPhase(DaoPhase.Phase phase) {
+        return heightOfFirstBlock + daoPhaseList.stream()
                 .filter(item -> item.getPhase().ordinal() < phase.ordinal())
-                .mapToInt(PhaseWrapper::getDuration).sum();
+                .mapToInt(DaoPhase::getDuration).sum();
     }
 
-    public int getLastBlockOfPhase(Phase phase) {
+    public int getLastBlockOfPhase(DaoPhase.Phase phase) {
         return getFirstBlockOfPhase(phase) + getDuration(phase) - 1;
     }
 
-    public int getDurationOfPhase(Phase phase) {
-        return phaseWrapperList.stream()
+    public int getDurationOfPhase(DaoPhase.Phase phase) {
+        return daoPhaseList.stream()
                 .filter(item -> item.getPhase() == phase)
-                .mapToInt(PhaseWrapper::getDuration)
+                .mapToInt(DaoPhase::getDuration)
                 .sum();
     }
 
-    public Optional<Phase> getPhaseForHeight(int height) {
-        return phaseWrapperList.stream()
+    public Optional<DaoPhase.Phase> getPhaseForHeight(int height) {
+        return daoPhaseList.stream()
                 .filter(item -> isInPhase(height, item.getPhase()))
-                .map(PhaseWrapper::getPhase)
+                .map(DaoPhase::getPhase)
                 .findAny();
     }
 
-    private Optional<PhaseWrapper> getPhaseWrapper(Phase phase) {
-        return phaseWrapperList.stream().filter(item -> item.getPhase() == phase).findAny();
+    private Optional<DaoPhase> getPhaseWrapper(DaoPhase.Phase phase) {
+        return daoPhaseList.stream().filter(item -> item.getPhase() == phase).findAny();
     }
 
-    private int getDuration(Phase phase) {
-        return getPhaseWrapper(phase).map(PhaseWrapper::getDuration).orElse(0);
+    private int getDuration(DaoPhase.Phase phase) {
+        return getPhaseWrapper(phase).map(DaoPhase::getDuration).orElse(0);
     }
 
     private int getDuration() {
-        return phaseWrapperList.stream().mapToInt(PhaseWrapper::getDuration).sum();
+        return daoPhaseList.stream().mapToInt(DaoPhase::getDuration).sum();
     }
 
     @Override
     public String toString() {
         return "Cycle{" +
-                "\n     phaseWrappers=" + phaseWrapperList +
+                "\n     daoPhaseList=" + daoPhaseList +
                 ",\n     heightOfFirstBlock=" + heightOfFirstBlock +
                 "\n}";
     }

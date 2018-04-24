@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.exceptions.ValidationException;
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -83,12 +83,12 @@ public class BlindVoteValidator {
                 log.warn("Tx is not in current cycle. blindVote={}", blindVote);
                 return false;
             }
-            if (!periodService.isInPhase(txHeight, Phase.BLIND_VOTE)) {
+            if (!periodService.isInPhase(txHeight, DaoPhase.Phase.BLIND_VOTE)) {
                 log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
                 return false;
             }
         } else {
-            if (!periodService.isInPhase(chainHeight, Phase.BLIND_VOTE)) {
+            if (!periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE)) {
                 log.warn("We received an unconfirmed tx and are not in BLIND_VOTE phase anymore. blindVote={}", blindVote);
                 return false;
             }

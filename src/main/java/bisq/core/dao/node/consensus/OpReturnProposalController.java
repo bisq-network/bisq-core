@@ -17,14 +17,13 @@
 
 package bisq.core.dao.node.consensus;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
@@ -36,15 +35,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class OpReturnProposalController {
-    private final ChangeParamListService changeParamListService;
     private final PeriodService periodService;
     private final StateService stateService;
 
 
     @Inject
-    public OpReturnProposalController(ChangeParamListService changeParamListService, PeriodService periodService,
+    public OpReturnProposalController(PeriodService periodService,
                                       StateService stateService) {
-        this.changeParamListService = changeParamListService;
         this.periodService = periodService;
         this.stateService = stateService;
     }
@@ -53,15 +50,15 @@ public class OpReturnProposalController {
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (opReturnData.length == 22 &&
-                bsqFee == changeParamListService.getDaoParamValue(Param.PROPOSAL_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, Phase.PROPOSAL)) {
+                bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL)) {
             stateService.setTxOutputType(txOutput, TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
         } else {
             log.info("We expected a proposal op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, Phase.PROPOSAL));
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
         }

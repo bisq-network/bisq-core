@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.voteresult.issuance;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
@@ -69,6 +69,6 @@ public class IssuanceService {
                 && compensationProposal.getRequestedBsq().value == txOutput.getValue()
                 && compensationProposal.getBsqAddress().substring(1).equals(txOutput.getAddress())
                 && periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight)
-                && periodService.isTxInPhase(txOutput.getTxId(), Phase.PROPOSAL);
+                && periodService.isTxInPhase(txOutput.getTxId(), DaoPhase.Phase.PROPOSAL);
     }
 }

@@ -17,14 +17,13 @@
 
 package bisq.core.dao.node.consensus;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
@@ -38,14 +37,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class OpReturnBlindVoteController {
-    private final ChangeParamListService changeParamListService;
     private final PeriodService periodService;
     private final StateService stateService;
 
     @Inject
-    public OpReturnBlindVoteController(ChangeParamListService changeParamListService, PeriodService periodService,
+    public OpReturnBlindVoteController(PeriodService periodService,
                                        StateService stateService) {
-        this.changeParamListService = changeParamListService;
         this.periodService = periodService;
         this.stateService = stateService;
     }
@@ -55,8 +52,8 @@ public class OpReturnBlindVoteController {
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, Model model) {
         if (model.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
-                bsqFee == changeParamListService.getDaoParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, Phase.BLIND_VOTE)) {
+                bsqFee == stateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE)) {
             stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
 
@@ -67,7 +64,7 @@ public class OpReturnBlindVoteController {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, Phase.BLIND_VOTE), blockHeight, periodService.getPhaseForHeight(blockHeight));
+            log.info("isInPhase:{}, blockHeight={}, getPhaseForHeight={}", periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE), blockHeight, periodService.getPhaseForHeight(blockHeight));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output

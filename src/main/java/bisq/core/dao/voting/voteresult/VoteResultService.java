@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -29,7 +29,6 @@ import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteUtils;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.vote.BooleanVote;
 import bisq.core.dao.voting.vote.LongVote;
 import bisq.core.dao.voting.vote.Vote;
@@ -73,7 +72,6 @@ import javax.annotation.Nullable;
 public class VoteResultService {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
-    private final ChangeParamListService changeParamListService;
     private final PeriodService periodService;
     private final BlindVoteListService blindVoteListService;
     private final IssuanceService issuanceService;
@@ -90,13 +88,11 @@ public class VoteResultService {
     @Inject
     public VoteResultService(VoteRevealService voteRevealService,
                              StateService stateService,
-                             ChangeParamListService changeParamListService,
                              PeriodService periodService,
                              BlindVoteListService blindVoteListService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
-        this.changeParamListService = changeParamListService;
         this.periodService = periodService;
         this.blindVoteListService = blindVoteListService;
         this.issuanceService = issuanceService;
@@ -150,7 +146,7 @@ public class VoteResultService {
                 if (isBlindVoteListMatchingMajority) {
                     //TODO should we write the decryptedVotes here into the state?
 
-                    List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight, changeParamListService);
+                    List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight);
 
                     applyAcceptedProposals(getAcceptedEvaluatedProposals(evaluatedProposals), chainHeight);
 
@@ -275,14 +271,13 @@ public class VoteResultService {
     }
 
     private List<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedVote> decryptedVotes,
-                                                          int chainHeight,
-                                                          ChangeParamListService changeParamListService) {
+                                                          int chainHeight) {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
         List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
-            long requiredQuorum = changeParamListService.getDaoParamValue(proposal.getQuorumParam(), chainHeight);
-            long requiredVoteThreshold = changeParamListService.getDaoParamValue(proposal.getThresholdParam(), chainHeight);
+            long requiredQuorum = stateService.getParamValue(proposal.getQuorumParam(), chainHeight);
+            long requiredVoteThreshold = stateService.getParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
             long totalStake = proposalVoteResult.getStakeOfAcceptedVotes() + proposalVoteResult.getStakeOfRejectedVotes();
@@ -363,7 +358,7 @@ public class VoteResultService {
             issuanceService.issueBsq((CompensationProposal) proposal, chainHeight);
         } /*else if (evaluatedProposal instanceof GenericProposal) {
             //TODO impl
-        } else if (evaluatedProposal instanceof ChangeParamProposal) {
+        } else if (evaluatedProposal instanceof ParamChangeProposal) {
             //TODO impl -> add to state
         } else if (evaluatedProposal instanceof RemoveAssetProposalPayload) {
             //TODO impl
@@ -383,7 +378,7 @@ public class VoteResultService {
     }
 
     private boolean isInVoteResultPhase(int chainHeight) {
-        return periodService.getFirstBlockOfPhase(chainHeight, Phase.VOTE_RESULT) == chainHeight;
+        return periodService.getFirstBlockOfPhase(chainHeight, DaoPhase.Phase.VOTE_RESULT) == chainHeight;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

@@ -26,11 +26,8 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.state.events.BlindVoteEvent;
-import bisq.core.dao.state.events.ParamChangeEvent;
-import bisq.core.dao.state.events.StateChangeEvent;
-import bisq.core.dao.voting.blindvote.BlindVote;
-import bisq.core.dao.voting.proposal.param.ParamChange;
+import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
 import org.bitcoinj.core.Coin;
 
@@ -122,7 +119,7 @@ public class StateService {
 
     public void setNewBlockHeight(int blockHeight) {
         if (blockHeight != state.getGenesisBlockHeight())
-            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), state.getStateChangeEvents())
+            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), state.getParamChangeByBlockHeightMap())
                     .ifPresent(state::addCycle);
 
         state.setChainHeight(blockHeight);
@@ -185,6 +182,10 @@ public class StateService {
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
         state.putTxOutputType(txOutput, txOutputType);
+    }
+
+    public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
+        state.putParamChangeMap(chainHeight, paramChangeMap);
     }
 
 
@@ -354,6 +355,10 @@ public class StateService {
     // TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public Block getLastBlock() {
+        return this.getBlocks().getLast();
+    }
+
     public Set<TxOutput> getTxOutputs() {
         return getTxMap().values().stream()
                 .flatMap(tx -> tx.getOutputs().stream())
@@ -442,44 +447,17 @@ public class StateService {
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateChangeEvent
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public Block getLastBlock() {
-        return this.getBlocks().getLast();
+    public Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap() {
+        return state.getParamChangeByBlockHeightMap();
     }
 
-    public Set<StateChangeEvent> getStateChangeEvents() {
-        return this.getBlocks().stream()
-                .flatMap(block -> state.getStateChangeEvents().stream())
-                .collect(Collectors.toSet());
-    }
-
-    public Set<ParamChangeEvent> getAddChangeParamEvents() {
-        return getStateChangeEvents().stream()
-                .filter(event -> event instanceof ParamChangeEvent)
-                .map(event -> (ParamChangeEvent) event)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<BlindVoteEvent> getAddBlindVoteEvents() {
-        return getStateChangeEvents().stream()
-                .filter(event -> event instanceof BlindVoteEvent)
-                .map(event -> (BlindVoteEvent) event)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<BlindVote> getBlindVotes() {
-        return getAddBlindVoteEvents().stream()
-                .map(BlindVoteEvent::getBlindVote)
-                .collect(Collectors.toSet());
-    }
-
-    public Set<ParamChange> getParamChanges() {
-        return getAddChangeParamEvents().stream()
-                .map(ParamChangeEvent::getParamChange)
-                .collect(Collectors.toSet());
+    public long getParamValue(Param param, int blockHeight) {
+        if (state.getParamChangeByBlockHeightMap().containsKey(blockHeight)) {
+            final ParamChangeMap paramChangeMap = state.getParamChangeByBlockHeightMap().get(blockHeight);
+            return paramChangeMap.getMap().get(param);
+        } else {
+            return param.getDefaultValue();
+        }
     }
 }
 

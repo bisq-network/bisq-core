@@ -27,52 +27,5 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Value
 public class GenericBallot {
-/*
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public GenericBallot(Proposal payload) {
-        super(payload, null, null);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PROTO BUFFER
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private GenericBallot(Proposal proposal,
-                          @Nullable Vote vote,
-                          @Nullable Map<String, String> extraDataMap) {
-        super(proposal,
-                vote,
-                extraDataMap);
-    }
-
-    @Override
-    public PB.Ballot toProtoMessage() {
-        return getBallotBuilder().setGenericBallot(PB.GenericBallot.newBuilder())
-                .build();
-    }
-
-    public static GenericBallot fromProto(PB.Ballot proto) {
-        return new GenericBallot(Proposal.fromProto(proto.getProposal()),
-                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null,
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public ProposalType getType() {
-        return ProposalType.GENERIC;
-    }
-
-    private GenericProposal getGenericProposalPayload() {
-        return (GenericProposal) proposal;
-    }*/
 }
 

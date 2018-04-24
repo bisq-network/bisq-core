@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -114,7 +114,7 @@ public class VoteResultConsensus {
             checkArgument(periodService.isTxInCorrectCycle(blindVoteTx.getBlockHeight(), chainHeight),
                     "blindVoteTx is not in correct cycle. blindVoteTx.getBlockHeight()="
                             + blindVoteTx.getBlockHeight());
-            checkArgument(periodService.isInPhase(blindVoteTx.getBlockHeight(), Phase.BLIND_VOTE),
+            checkArgument(periodService.isInPhase(blindVoteTx.getBlockHeight(), DaoPhase.Phase.BLIND_VOTE),
                     "blindVoteTx is not in BLIND_VOTE phase. blindVoteTx.getBlockHeight()="
                             + blindVoteTx.getBlockHeight());
             return blindVoteTx;

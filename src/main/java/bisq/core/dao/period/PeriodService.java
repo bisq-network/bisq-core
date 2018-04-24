@@ -62,7 +62,7 @@ public final class PeriodService {
         return stateService.getTx(txId);
     }
 
-    public Phase getCurrentPhase() {
+    public DaoPhase.Phase getCurrentPhase() {
         return getCurrentCycle().getPhaseForHeight(this.getChainHeight()).get();
     }
 
@@ -85,22 +85,22 @@ public final class PeriodService {
                 .findAny();
     }
 
-    public boolean isInPhase(int height, Phase phase) {
+    public boolean isInPhase(int height, DaoPhase.Phase phase) {
         return getCycle(height)
                 .filter(cycle -> cycle.isInPhase(height, phase))
                 .isPresent();
     }
 
-    public boolean isTxInPhase(String txId, Phase phase) {
+    public boolean isTxInPhase(String txId, DaoPhase.Phase phase) {
         return getOptionalTx(txId)
                 .filter(tx -> isInPhase(tx.getBlockHeight(), phase))
                 .isPresent();
     }
 
-    public Phase getPhaseForHeight(int height) {
+    public DaoPhase.Phase getPhaseForHeight(int height) {
         return getCycle(height)
                 .flatMap(cycle -> cycle.getPhaseForHeight(height))
-                .orElse(Phase.UNDEFINED);
+                .orElse(DaoPhase.Phase.UNDEFINED);
     }
 
     public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
@@ -122,7 +122,7 @@ public final class PeriodService {
                 .isPresent();
     }
 
-    public int getDurationForPhase(Phase phase, int height) {
+    public int getDurationForPhase(DaoPhase.Phase phase, int height) {
         return getCycle(height)
                 .map(cycle -> cycle.getDurationOfPhase(phase))
                 .orElse(0);
@@ -134,13 +134,13 @@ public final class PeriodService {
                 .isPresent();
     }
 
-    public int getFirstBlockOfPhase(int height, Phase phase) {
+    public int getFirstBlockOfPhase(int height, DaoPhase.Phase phase) {
         return getCycle(height)
                 .map(cycle -> cycle.getFirstBlockOfPhase(phase))
                 .orElse(0);
     }
 
-    public int getLastBlockOfPhase(int height, Phase phase) {
+    public int getLastBlockOfPhase(int height, DaoPhase.Phase phase) {
         return getCycle(height)
                 .map(cycle -> cycle.getLastBlockOfPhase(phase))
                 .orElse(0);

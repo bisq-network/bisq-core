@@ -28,7 +28,6 @@ import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.compensation.CompensationConsensus;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationValidator;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -45,7 +44,6 @@ public class CompensationBallotService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final StateService stateService;
-    private final ChangeParamListService changeParamListService;
     private final CompensationValidator compensationValidator;
 
 
@@ -57,12 +55,10 @@ public class CompensationBallotService {
     public CompensationBallotService(BsqWalletService bsqWalletService,
                                      BtcWalletService btcWalletService,
                                      StateService stateService,
-                                     ChangeParamListService changeParamListService,
                                      CompensationValidator compensationValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.stateService = stateService;
-        this.changeParamListService = changeParamListService;
         this.compensationValidator = compensationValidator;
     }
 
@@ -101,7 +97,7 @@ public class CompensationBallotService {
     private Transaction getTransaction(CompensationProposal tempPayload)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
-        final Coin fee = ProposalConsensus.getFee(changeParamListService, stateService.getChainHeight());
+        final Coin fee = ProposalConsensus.getFee(stateService, stateService.getChainHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

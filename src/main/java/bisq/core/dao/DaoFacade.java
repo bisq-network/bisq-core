@@ -20,8 +20,8 @@ package bisq.core.dao;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.exceptions.ValidationException;
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
@@ -40,7 +40,6 @@ import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalService;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.vote.Vote;
 
 import bisq.common.handlers.ErrorMessageHandler;
@@ -80,10 +79,9 @@ public class DaoFacade {
     private final PeriodService periodService;
     private final BlindVoteService blindVoteService;
     private final MyVoteListService myVoteListService;
-    private final ChangeParamListService changeParamListService;
     private final CompensationBallotService compensationBallotService;
 
-    private final ObjectProperty<Phase> phaseProperty = new SimpleObjectProperty<>(Phase.UNDEFINED);
+    private final ObjectProperty<DaoPhase.Phase> phaseProperty = new SimpleObjectProperty<>(DaoPhase.Phase.UNDEFINED);
 
     @Inject
     public DaoFacade(BallotListService ballotListService,
@@ -94,7 +92,6 @@ public class DaoFacade {
                      PeriodService periodService,
                      BlindVoteService blindVoteService,
                      MyVoteListService myVoteListService,
-                     ChangeParamListService changeParamListService,
                      CompensationBallotService compensationBallotService) {
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
@@ -104,7 +101,6 @@ public class DaoFacade {
         this.periodService = periodService;
         this.blindVoteService = blindVoteService;
         this.myVoteListService = myVoteListService;
-        this.changeParamListService = changeParamListService;
         this.compensationBallotService = compensationBallotService;
 
         stateService.addChainHeightListener(chainHeight -> {
@@ -150,7 +146,7 @@ public class DaoFacade {
 
     // Present fee
     public Coin getProposalFee() {
-        return ProposalConsensus.getFee(changeParamListService, stateService.getChainHeight());
+        return ProposalConsensus.getFee(stateService, stateService.getChainHeight());
     }
 
     // Publish proposal, store ballot
@@ -219,20 +215,20 @@ public class DaoFacade {
         stateService.removeChainHeightListener(listener);
     }
 
-    public int getFirstBlockOfPhase(int height, Phase phase) {
+    public int getFirstBlockOfPhase(int height, DaoPhase.Phase phase) {
         return periodService.getFirstBlockOfPhase(height, phase);
     }
 
-    public int getLastBlockOfPhase(int height, Phase phase) {
+    public int getLastBlockOfPhase(int height, DaoPhase.Phase phase) {
         return periodService.getLastBlockOfPhase(height, phase);
     }
 
-    public int getDurationForPhase(Phase phase) {
+    public int getDurationForPhase(DaoPhase.Phase phase) {
         return periodService.getDurationForPhase(phase, stateService.getChainHeight());
     }
 
     // listeners for phase change
-    public ReadOnlyObjectProperty<Phase> phaseProperty() {
+    public ReadOnlyObjectProperty<DaoPhase.Phase> phaseProperty() {
         return phaseProperty;
     }
 

@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;
@@ -126,7 +126,7 @@ public class BlindVoteListService implements PersistedDataHost {
                     final String txId = blindVotePayload.getBlindVote().getTxId();
                     final int chainHeight = stateService.getChainHeight();
                     return periodService.isTxInCorrectCycle(txId, chainHeight) &&
-                            periodService.isTxInPhase(txId, Phase.BLIND_VOTE);
+                            periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE);
                 })
                 .forEach(entry -> p2PService.getP2PDataStorage().broadcastProtectedStorageEntry(
                         entry, p2PService.getNetworkNode().getNodeAddress(), null, false));

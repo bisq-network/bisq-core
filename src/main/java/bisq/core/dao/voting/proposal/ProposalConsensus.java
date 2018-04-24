@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.proposal;
 
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.app.Version;
@@ -35,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalConsensus {
-    public static Coin getFee(ChangeParamListService changeParamListService, int chainHeadHeight) {
-        return Coin.valueOf(changeParamListService.getDaoParamValue(Param.PROPOSAL_FEE, chainHeadHeight));
+    public static Coin getFee(StateService stateService, int chainHeadHeight) {
+        return Coin.valueOf(stateService.getParamValue(Param.PROPOSAL_FEE, chainHeadHeight));
     }
 
     public static byte[] getHashOfPayload(Proposal payload) {

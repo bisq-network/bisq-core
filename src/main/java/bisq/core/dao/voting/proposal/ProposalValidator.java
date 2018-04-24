@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.exceptions.ValidationException;
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -82,12 +82,12 @@ public class ProposalValidator {
                 log.warn("Tx is not in current cycle. proposal={}", proposal);
                 return false;
             }
-            if (!periodService.isInPhase(txHeight, Phase.PROPOSAL)) {
+            if (!periodService.isInPhase(txHeight, DaoPhase.Phase.PROPOSAL)) {
                 log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
                 return false;
             }
         } else {
-            if (!periodService.isInPhase(chainHeight, Phase.PROPOSAL)) {
+            if (!periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL)) {
                 log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
                 return false;
             }

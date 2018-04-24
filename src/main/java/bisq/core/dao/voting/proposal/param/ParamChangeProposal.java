@@ -15,7 +15,13 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.events;
+package bisq.core.dao.voting.proposal.param;
 
-public interface StateChangeData {
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+
+//TODO impl
+@Slf4j
+@Value
+public final class ParamChangeProposal /*extends Proposal*/ {
 }

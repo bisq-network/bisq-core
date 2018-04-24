@@ -31,11 +31,31 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 @Value
-class PhaseWrapper implements PersistablePayload {
+public class DaoPhase implements PersistablePayload {
+
+    /**
+     * Enum for phase of a cycle.
+     *
+     * We don't want to use a enum with the duration as field because the duration can change by voting and enums
+     * should be considered immutable.
+     */
+    public enum Phase {
+        UNDEFINED,
+        PROPOSAL,
+        BREAK1,
+        BLIND_VOTE,
+        BREAK2,
+        VOTE_REVEAL,
+        BREAK3,
+        VOTE_RESULT,
+        BREAK4
+    }
+
+
     private final Phase phase;
     private final int duration;
 
-    PhaseWrapper(Phase phase, int duration) {
+    public DaoPhase(Phase phase, int duration) {
         this.phase = phase;
         this.duration = duration;
     }
@@ -45,14 +65,14 @@ class PhaseWrapper implements PersistablePayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.PhaseWrapper toProtoMessage() {
-        return PB.PhaseWrapper.newBuilder()
-                .setPhaseName(phase.name())
+    public PB.DaoPhase toProtoMessage() {
+        return PB.DaoPhase.newBuilder()
+                .setPhaseOrdinal(phase.ordinal())
                 .setDuration(duration)
                 .build();
     }
 
-    public static PhaseWrapper fromProto(PB.PhaseWrapper proto) {
-        return new PhaseWrapper(Phase.valueOf(proto.getPhaseName()), proto.getDuration());
+    public static DaoPhase fromProto(PB.DaoPhase proto) {
+        return new DaoPhase(Phase.values()[proto.getPhaseOrdinal()], proto.getDuration());
     }
 }

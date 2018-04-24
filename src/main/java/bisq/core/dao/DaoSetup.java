@@ -19,7 +19,6 @@ package bisq.core.dao;
 
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.period.CycleService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
@@ -27,7 +26,6 @@ import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.proposal.ProposalService;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
 
@@ -42,10 +40,8 @@ public class DaoSetup {
     private final BsqNode bsqNode;
     private final ProposalService proposalService;
     private final StateService stateService;
-    private final CycleService cycleService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
-    private final ChangeParamListService changeParamListService;
     private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
     private final MyBallotListService myBallotListService;
@@ -55,10 +51,8 @@ public class DaoSetup {
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
                     StateService stateService,
-                    CycleService cycleService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
-                    ChangeParamListService changeParamListService,
                     FilteredBallotListService filteredBallotListService,
                     BallotListService ballotListService,
                     MyBallotListService myBallotListService,
@@ -66,10 +60,8 @@ public class DaoSetup {
                     BlindVoteListService blindVoteListService,
                     ProposalService proposalService) {
         this.stateService = stateService;
-        this.cycleService = cycleService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.changeParamListService = changeParamListService;
         this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
         this.myBallotListService = myBallotListService;
@@ -82,7 +74,6 @@ public class DaoSetup {
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         stateService.start();
-        changeParamListService.start();
         proposalService.start();
         voteRevealService.start();
         ballotListService.start();

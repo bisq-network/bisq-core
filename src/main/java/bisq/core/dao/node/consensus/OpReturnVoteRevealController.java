@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.consensus;
 
+import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
-import bisq.core.dao.period.Phase;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
@@ -54,7 +54,7 @@ public class OpReturnVoteRevealController {
     void process(byte[] opReturnData, TxOutput txOutput, Tx tx, int blockHeight, Model model) {
         if (model.isVoteStakeSpentAtInputs() &&
                 opReturnData.length == 38 &&
-                periodService.isInPhase(blockHeight, Phase.VOTE_REVEAL)) {
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL)) {
             stateService.setTxOutputType(txOutput, TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             model.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
             checkArgument(model.getVoteRevealUnlockStakeOutput() != null,
@@ -65,7 +65,7 @@ public class OpReturnVoteRevealController {
             log.info("We expected a vote reveal op_return data but it did not " +
                     "match our rules. txOutput={}", txOutput);
             log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, Phase.VOTE_REVEAL));
+            log.info("isInPhase: " + periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL));
             stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
 
             // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration

@@ -32,7 +32,6 @@ import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
-import bisq.core.dao.voting.proposal.param.ChangeParamListService;
 
 import bisq.network.p2p.P2PService;
 
@@ -72,7 +71,6 @@ public class BlindVoteService {
     private final BallotListService ballotListService;
     private final BlindVoteListService blindVoteListService;
     private final MyVoteListService myVoteListService;
-    private final ChangeParamListService changeParamListService;
     private final ProposalValidator proposalValidator;
     private final PublicKey signaturePubKey;
 
@@ -90,7 +88,6 @@ public class BlindVoteService {
                             BallotListService ballotListService,
                             BlindVoteListService blindVoteListService,
                             MyVoteListService myVoteListService,
-                            ChangeParamListService changeParamListService,
                             ProposalValidator proposalValidator,
                             KeyRing keyRing) {
         this.stateService = stateService;
@@ -101,7 +98,6 @@ public class BlindVoteService {
         this.ballotListService = ballotListService;
         this.blindVoteListService = blindVoteListService;
         this.myVoteListService = myVoteListService;
-        this.changeParamListService = changeParamListService;
         this.proposalValidator = proposalValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
@@ -196,7 +192,7 @@ public class BlindVoteService {
     }
 
     public Coin getBlindVoteFee() {
-        return BlindVoteConsensus.getFee(changeParamListService, stateService.getChainHeight());
+        return BlindVoteConsensus.getFee(stateService, stateService.getChainHeight());
     }
 
     public BallotList getSortedBallotList() {
