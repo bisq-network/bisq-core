@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 public class LiteNode extends BsqNode {
     private final LiteNodeParser liteNodeParser;
     private final LiteNodeNetworkService liteNodeNetworkService;
+    private boolean startParseBlocksRequested;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -114,14 +115,21 @@ public class LiteNode extends BsqNode {
             }
         });
 
+        // We might get the onP2PNetworkReady called multiple times due bugs in the hanlding in the p2p network
+        // To protect us requesting several times we use a flag
         // delay a bit to not stress too much at startup
-        UserThread.runAfter(this::startParseBlocks, 2);
+        if (!parseBlockchainComplete && !startParseBlocksRequested)
+            UserThread.runAfter(this::startParseBlocks, 2);
     }
 
     // First we request the blocks from a full node
     @Override
     protected void startParseBlocks() {
-        liteNodeNetworkService.requestBlocks(getStartBlockHeight());
+        if (!startParseBlocksRequested) {
+            log.info("startParseBlocks");
+            startParseBlocksRequested = true;
+            liteNodeNetworkService.requestBlocks(getStartBlockHeight());
+        }
     }
 
 
@@ -135,6 +143,12 @@ public class LiteNode extends BsqNode {
         if (blockList.size() > 0)
             log.info("block height of last item: {}", blockList.get(blockList.size() - 1).getHeight());
 
+        // 4000 blocks take about 3 seconds if DAO UI is not displayed or 7 sec. if it is displayed.
+        // The updates at block height change are not much optimized yet, so that can be for sure improved
+        // 144 blocks a day would result in about 4000 in a month, so if a user downloads the app after 1 months latest
+        // release it will be a bit of a performance hit. It is a one time event as the snapshots gets created and be
+        // used at next startup.
+        long startTs = System.currentTimeMillis();
         for (Block block : blockList) {
             try {
                 liteNodeParser.parseBlock(block);
@@ -143,6 +157,7 @@ public class LiteNode extends BsqNode {
                 getErrorHandler().accept(e);
             }
         }
+        log.info("Parsing of {} blocks took {} sec.", blockList.size(), (System.currentTimeMillis() - startTs) / 1000D);
         onParseBlockChainComplete();
     }
 
