@@ -83,7 +83,6 @@ public abstract class BsqNode {
     @SuppressWarnings("WeakerAccess")
     protected void onInitialized() {
         applySnapshot();
-        log.info("onAllServicesInitialized");
         if (p2PService.isBootstrapped()) {
             log.info("onAllServicesInitialized: isBootstrapped");
             onP2PNetworkReady();
@@ -111,7 +110,6 @@ public abstract class BsqNode {
 
                 @Override
                 public void onNoSeedNodeAvailable() {
-                    log.info("onAllServicesInitialized: onNoSeedNodeAvailable");
                     onP2PNetworkReady();
                 }
 
@@ -121,7 +119,6 @@ public abstract class BsqNode {
 
                 @Override
                 public void onUpdatedDataReceived() {
-                    log.info("onAllServicesInitialized: onBootstrapComplete");
                     onP2PNetworkReady();
                 }
             });

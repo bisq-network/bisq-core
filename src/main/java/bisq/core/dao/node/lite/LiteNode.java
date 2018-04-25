@@ -22,6 +22,7 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
+import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -37,7 +38,6 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -134,16 +134,12 @@ public class LiteNode extends BsqNode {
         log.info("onRequestedBlocksReceived: blocks with {} items", blockList.size());
         if (blockList.size() > 0)
             log.info("block height of last item: {}", blockList.get(blockList.size() - 1).getHeight());
-        // We clone with a reset of all mutable data in case the provider would not have done it.
-        List<Block> clonedBlockList = blockList.stream()
-                .map(Block::clone)
-                .collect(Collectors.toList());
 
-        for (Block block : clonedBlockList) {
+        for (Block block : blockList) {
             try {
                 liteNodeParser.parseBlock(block);
                 onNewBlock(block);
-            } catch (BlockNotConnectingException e) {
+            } catch (BlockNotConnectingException | InvalidBlockException e) {
                 getErrorHandler().accept(e);
             }
         }
@@ -152,16 +148,12 @@ public class LiteNode extends BsqNode {
 
     // We received a new block
     private void onNewBlockReceived(Block block) {
-        log.info("onNewBlockReceived: block={}", block.getHeight());
-
-        // We clone with a reset of all mutable data in case the provider would not have done it.
-        Block clonedBlock = Block.clone(block);
-        if (!stateService.containsBlock(clonedBlock)) {
-            //TODO check block height and prev block it it connects to existing blocks
+        log.info("onNewBlockReceived: block at height {}", block.getHeight());
+        if (!stateService.containsBlock(block)) {
             try {
                 liteNodeParser.parseBlock(block);
                 onNewBlock(block);
-            } catch (BlockNotConnectingException e) {
+            } catch (BlockNotConnectingException | InvalidBlockException e) {
                 getErrorHandler().accept(e);
             }
         }

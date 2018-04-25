@@ -185,8 +185,6 @@ public class RpcService {
                 UserThread.execute(() -> errorHandler.accept(throwable));
             }
         });
-
-        // return client.getBlockCount();
     }
 
     public void requestBlockWithAllTransactions(int blockHeight, Consumer<Tuple2<Block, List<Tx>>> resultHandler, Consumer<Throwable> errorHandler) {

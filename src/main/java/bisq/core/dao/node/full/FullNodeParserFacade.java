@@ -70,14 +70,14 @@ public class FullNodeParserFacade {
                           Consumer<Block> newBlockHandler,
                           ResultHandler resultHandler,
                           Consumer<Throwable> errorHandler) {
-        parseBlockAsync(startBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
-        resultHandler.handleResult();
+        parseBlockAsync(startBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
     }
 
-    private void parseBlockAsync(int blockHeight, int chainHeadHeight, Consumer<Block> newBlockHandler, Consumer<Throwable> errorHandler) {
+    private void parseBlockAsync(int blockHeight, int chainHeadHeight, Consumer<Block> newBlockHandler, ResultHandler resultHandler, Consumer<Throwable> errorHandler) {
         rpcService.requestBlockWithAllTransactions(blockHeight,
                 resultTuple -> {
                     try {
+                        //TODO return BsqBlock rom rpc
                         final com.neemre.btcdcli4j.core.domain.Block btcdBlock = resultTuple.first;
                         List<Tx> txList = resultTuple.second;
                         Block block = fullNodeParser.parseBlock(btcdBlock, txList);
@@ -86,7 +86,10 @@ public class FullNodeParserFacade {
                         // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
                         if (blockHeight < chainHeadHeight) {
                             final int newBlockHeight = blockHeight + 1;
-                            parseBlockAsync(newBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);
+                            parseBlockAsync(newBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
+                        } else {
+                            // We are done
+                            resultHandler.handleResult();
                         }
                     } catch (BlockNotConnectingException e) {
                         errorHandler.accept(e);

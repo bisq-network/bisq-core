@@ -51,7 +51,7 @@ public class BlockValidator {
                 throw new BlockNotConnectingException(block);
             }
         } else {
-            log.warn("We got that block already. Ignore the call.");
+            log.warn("We got that block already. Ignore the call. blockHeight={}", block.getHeight());
             return false;
         }
     }

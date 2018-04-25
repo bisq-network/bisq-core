@@ -21,6 +21,7 @@ import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
+import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -28,7 +29,10 @@ import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,18 +53,33 @@ public class LiteNodeParser extends BsqParser {
         super(blockValidator, genesisTxValidator, txValidator, stateService);
     }
 
-    void parseBlock(Block block) throws BlockNotConnectingException {
-        int blockHeight = block.getHeight();
+    // The block we received from the seed node is already filtered for valid bsq txs but we want to verify ourselves
+    // again. So we run the parsing with that filtered tx list and add a new block with our own verified tx list as
+    // well we write the mutual state during parsing to the state model.
+    void parseBlock(Block receivedBlock) throws BlockNotConnectingException, InvalidBlockException {
+        int blockHeight = receivedBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
-        List<Tx> txList = new ArrayList<>(block.getTxs());
+        List<Tx> txList = new ArrayList<>(receivedBlock.getTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
+        if (blockValidator.validate(receivedBlock)) {
+            int oldChainHeight = stateService.getChainHeight();
+            stateService.setNewBlockHeight(receivedBlock.getHeight());
+            receivedBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
+            recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
+            final Block ownBlock = new Block(blockHeight, receivedBlock.getTime(), receivedBlock.getHash(),
+                    receivedBlock.getPreviousBlockHash(), ImmutableList.copyOf(bsqTxsInBlock));
 
-        stateService.setNewBlockHeight(block.getHeight());
+            // Check if the blocks are the same
+            if (Arrays.equals(receivedBlock.toProtoMessage().toByteArray(), ownBlock.toProtoMessage().toByteArray())) {
+                stateService.addNewBlock(ownBlock);
+            } else {
+                // We revert the chain height
+                stateService.setNewBlockHeight(oldChainHeight);
 
-        block.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
-        recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
-
-        if (blockValidator.validate(block))
-            stateService.addNewBlock(block);
+                log.warn("The block we received from the seed node is different than the block we created by our " +
+                        "own parsing.\nBlock from seed node={}\nBlock from own parsing={}", receivedBlock, ownBlock);
+                throw new InvalidBlockException(receivedBlock, ownBlock);
+            }
+        }
     }
 }

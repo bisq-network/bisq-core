@@ -44,6 +44,7 @@ public class FullNode extends BsqNode {
     private final FullNodeParserFacade fullNodeParserFacade;
     private final FullNodeNetworkService fullNodeNetworkService;
     private final JsonBlockChainExporter jsonBlockChainExporter;
+    private boolean blockHandlerAdded;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -96,12 +97,18 @@ public class FullNode extends BsqNode {
         requestChainHeadHeightAndParseBlocks(getStartBlockHeight());
     }
 
+    //TODO we get that called multiple times if we have only one seed node (to be fixed in p2p network library)
+    // To prevent that we get our handler registered multiple times we use a flag.
     @Override
     protected void onP2PNetworkReady() {
         super.onP2PNetworkReady();
 
-        if (parseBlockchainComplete)
+        if (parseBlockchainComplete && !blockHandlerAdded) {
+            final int lastBlockHeight = stateService.getLastBlock().getHeight();
+            log.info("onP2PNetworkReady: We run parseBlocksIfNewBlockAvailable with latest block height {}.", lastBlockHeight);
+            parseBlocksIfNewBlockAvailable(lastBlockHeight);
             addBlockHandler();
+        }
     }
 
     private void onNewBlock(Block block) {
@@ -116,16 +123,19 @@ public class FullNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addBlockHandler() {
-        fullNodeParserFacade.addBlockHandler(btcdBlock -> fullNodeParserFacade.parseBtcdBlockAsync(btcdBlock,
-                this::onNewBlock,
-                throwable -> {
-                    if (throwable instanceof BlockNotConnectingException) {
-                        startReOrgFromLastSnapshot();
-                    } else {
-                        log.error(throwable.toString());
-                        throwable.printStackTrace();
-                    }
-                }));
+        if (!blockHandlerAdded) {
+            blockHandlerAdded = true;
+            fullNodeParserFacade.addBlockHandler(btcdBlock -> fullNodeParserFacade.parseBtcdBlockAsync(btcdBlock,
+                    this::onNewBlock,
+                    throwable -> {
+                        if (throwable instanceof BlockNotConnectingException) {
+                            startReOrgFromLastSnapshot();
+                        } else {
+                            log.error(throwable.toString());
+                            throwable.printStackTrace();
+                        }
+                    }));
+        }
     }
 
     private void requestChainHeadHeightAndParseBlocks(int startBlockHeight) {
@@ -139,42 +149,65 @@ public class FullNode extends BsqNode {
 
     private void parseBlocksOnHeadHeight(int startBlockHeight, Integer chainHeadHeight) {
         log.info("parseBlocks with startBlockHeight={} and chainHeadHeight={}", startBlockHeight, chainHeadHeight);
-        if (chainHeadHeight != startBlockHeight) {
-            if (startBlockHeight <= chainHeadHeight) {
-                fullNodeParserFacade.parseBlocksAsync(startBlockHeight,
-                        chainHeadHeight,
-                        this::onNewBlock,
-                        () -> {
-                            // We are done but it might be that new blocks have arrived in the meantime,
-                            // so we try again with startBlockHeight set to current chainHeadHeight
-                            // We also set up the listener in the else main branch where we check
-                            // if we are at chainTip, so do not include here another check as it would
-                            // not trigger the listener registration.
-                            requestChainHeadHeightAndParseBlocks(chainHeadHeight);
-                        }, throwable -> {
-                            if (throwable instanceof BlockNotConnectingException) {
-                                startReOrgFromLastSnapshot();
+        if (startBlockHeight <= chainHeadHeight) {
+            fullNodeParserFacade.parseBlocksAsync(startBlockHeight,
+                    chainHeadHeight,
+                    this::onNewBlock,
+                    () -> {
+                        // We are done but it might be that new blocks have arrived in the meantime,
+                        // so we try again with startBlockHeight set to current chainHeadHeight
+                        // We also set up the listener in the else main branch where we check
+                        // if we are at chainTip, so do not include here another check as it would
+                        // not trigger the listener registration.
+                        parseBlocksIfNewBlockAvailable(chainHeadHeight);
+                    }, throwable -> {
+                        if (throwable instanceof BlockNotConnectingException) {
+                            BlockNotConnectingException blockNotConnectingException = (BlockNotConnectingException) throwable;
+                            final int lastBlockHeight = stateService.getLastBlock().getHeight();
+                            final int receivedBlockHeight = blockNotConnectingException.getBlock().getHeight();
+                            if (receivedBlockHeight > lastBlockHeight + 1) {
+                                // If we missed a block we request missing ones
+                                parseBlocksOnHeadHeight(lastBlockHeight, receivedBlockHeight);
                             } else {
-                                log.error(throwable.toString());
-                                throwable.printStackTrace();
-                                //TODO write error to an errorProperty
+                                startReOrgFromLastSnapshot();
                             }
-                        });
-            } else {
-                log.warn("We are trying to start with a block which is above the chain height of bitcoin core. We need probably wait longer until bitcoin core has fully synced. We try again after a delay of 1 min.");
-                UserThread.runAfter(() -> requestChainHeadHeightAndParseBlocks(startBlockHeight), 60);
-            }
+                        } else {
+                            log.error(throwable.toString());
+                            throwable.printStackTrace();
+                            //TODO write error to an errorProperty
+                        }
+                    });
         } else {
-            // We don't have received new blocks in the meantime so we are completed and we register our handler
-            onParseBlockChainComplete();
+            log.warn("We are trying to start with a block which is above the chain height of bitcoin core. " +
+                    "We need probably wait longer until bitcoin core has fully synced. " +
+                    "We try again after a delay of 1 min.");
+            UserThread.runAfter(() -> requestChainHeadHeightAndParseBlocks(startBlockHeight), 60);
         }
+    }
+
+    private void parseBlocksIfNewBlockAvailable(Integer chainHeadHeight) {
+        fullNodeParserFacade.requestChainHeadHeightAsync(newChainHeadHeight -> {
+                    if (newChainHeadHeight > chainHeadHeight) {
+                        log.info("While parsing new blocks arrived. Parse again with those missing blocks." +
+                                "ChainHeadHeight={}, newChainHeadHeight={}", chainHeadHeight, newChainHeadHeight);
+                        parseBlocksOnHeadHeight(chainHeadHeight, newChainHeadHeight);
+                    } else
+                        log.info("parseBlocksIfNewBlockAvailable did not result in a new block, so we complete.");
+                    onParseBlockChainComplete();
+                },
+                throwable -> {
+                    log.error(throwable.toString());
+                    throwable.printStackTrace();
+                });
     }
 
     @Override
     protected void onParseBlockChainComplete() {
         super.onParseBlockChainComplete();
-
-        if (p2pNetworkReady)
+        if (p2pNetworkReady && !blockHandlerAdded) {
             addBlockHandler();
+        } else {
+            log.info("onParseBlockChainComplete but P2P network is not ready yet.");
+        }
     }
 }
