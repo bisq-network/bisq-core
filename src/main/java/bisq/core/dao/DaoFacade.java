@@ -19,8 +19,8 @@ package bisq.core.dao;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.period.DaoPhase;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;

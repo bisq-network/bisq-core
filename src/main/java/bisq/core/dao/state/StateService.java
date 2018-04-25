@@ -17,8 +17,8 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.period.Cycle;
-import bisq.core.dao.period.CycleService;
+import bisq.core.dao.state.period.Cycle;
+import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;

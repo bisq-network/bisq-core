@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 

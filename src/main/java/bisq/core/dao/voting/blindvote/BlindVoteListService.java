@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.period.DaoPhase;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;

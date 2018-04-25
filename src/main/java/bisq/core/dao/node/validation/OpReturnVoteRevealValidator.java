@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.period.DaoPhase;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 
 import javax.inject.Inject;
 

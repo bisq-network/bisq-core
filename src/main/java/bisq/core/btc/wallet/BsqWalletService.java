@@ -21,7 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;

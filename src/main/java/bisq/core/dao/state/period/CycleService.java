@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.period;
+package bisq.core.dao.state.period;
 
 import bisq.core.dao.voting.ballot.proposal.param.Param;
 import bisq.core.dao.voting.ballot.proposal.param.ParamChangeMap;

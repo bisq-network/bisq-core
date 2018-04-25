@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.ballot;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.period.PeriodService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
