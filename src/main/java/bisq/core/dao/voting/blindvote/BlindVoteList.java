@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+//TODO not needed as it is stored in PersistedEntryMap
 public class BlindVoteList extends PersistableList<BlindVote> implements VoteConsensusCritical {
 
     public BlindVoteList(List<BlindVote> list) {

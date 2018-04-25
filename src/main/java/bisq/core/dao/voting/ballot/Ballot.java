@@ -44,6 +44,8 @@ import javax.annotation.Nullable;
  * Base class for all ballots like compensation request, generic request, remove asset ballots and
  * change param ballots.
  * It contains the Proposal and the Vote. If a Proposal is ignored for voting the vote object is null.
+ *
+ * One proposal has about 278 bytes
  */
 @Slf4j
 @Getter

@@ -17,8 +17,6 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.blockchain.Block;
-
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
 
@@ -34,12 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages snapshots of the StateService.
+ * Manages snapshots of State.
  */
-//TODO add tests; check if current logic is correct.
 @Slf4j
 public class SnapshotManager {
-    private static final int SNAPSHOT_GRID = 10000;
+    private static final int SNAPSHOT_GRID = 11;
 
     private final State state;
     private final StateService stateService;
@@ -56,25 +53,22 @@ public class SnapshotManager {
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        stateService.addBlockListener(new BlockListener() {
-            @Override
-            public void onBlockAdded(Block block) {
-                final int chainHeadHeight = block.getHeight();
-                if (isSnapshotHeight(chainHeadHeight) &&
-                        (snapshotCandidate == null ||
-                                snapshotCandidate.getChainHeight() != chainHeadHeight)) {
-                    // At trigger event we store the latest snapshotCandidate to disc
-                    if (snapshotCandidate != null) {
-                        // We clone because storage is in a threaded context
-                        final State cloned = state.getClone(snapshotCandidate);
-                        storage.queueUpForSave(cloned);
-                        log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
-                    }
-                    // Now we clone and keep it in memory for the next trigger
-                    snapshotCandidate = state.getClone();
-                    // don't access cloned anymore with methods as locks are transient!
-                    log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
+        stateService.addBlockListener(block -> {
+            final int chainHeadHeight = block.getHeight();
+            if (isSnapshotHeight(chainHeadHeight) &&
+                    (snapshotCandidate == null ||
+                            snapshotCandidate.getChainHeight() != chainHeadHeight)) {
+                // At trigger event we store the latest snapshotCandidate to disc
+                if (snapshotCandidate != null) {
+                    // We clone because storage is in a threaded context
+                    final State cloned = state.getClone(snapshotCandidate);
+                    storage.queueUpForSave(cloned);
+                    log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
                 }
+                // Now we clone and keep it in memory for the next trigger
+                snapshotCandidate = state.getClone();
+                // don't access cloned anymore with methods as locks are transient!
+                log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
             }
         });
     }

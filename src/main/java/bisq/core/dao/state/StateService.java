@@ -17,8 +17,6 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.state.period.Cycle;
-import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
@@ -26,6 +24,8 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.period.Cycle;
+import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.ballot.proposal.param.Param;
 import bisq.core.dao.voting.ballot.proposal.param.ParamChangeMap;
 
@@ -92,13 +92,26 @@ public class StateService {
     // Snapshot
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    //TODO
     public void applySnapshot(State snapshot) {
-        this.getBlocks().clear();
-        this.getBlocks().addAll(snapshot.getBlocks());
-
-        getUnspentTxOutputMap().clear();
-        getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
+        state.setChainHeight(snapshot.getChainHeight());
+        state.getBlocks().clear();
+        state.getBlocks().addAll(snapshot.getBlocks());
+        state.getTxTypeMap().clear();
+        state.getTxTypeMap().putAll(snapshot.getTxTypeMap());
+        state.getBurntFeeMap().clear();
+        state.getBurntFeeMap().putAll(snapshot.getBurntFeeMap());
+        state.getIssuanceBlockHeightMap().clear();
+        state.getIssuanceBlockHeightMap().putAll(snapshot.getIssuanceBlockHeightMap());
+        state.getUnspentTxOutputMap().clear();
+        state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
+        state.getTxOutputTypeMap().clear();
+        state.getTxOutputTypeMap().putAll(snapshot.getTxOutputTypeMap());
+        state.getSpentInfoMap().clear();
+        state.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
+        state.getCycles().clear();
+        state.getCycles().addAll(snapshot.getCycles());
+        state.getParamChangeByBlockHeightMap().clear();
+        state.getParamChangeByBlockHeightMap().putAll(snapshot.getParamChangeByBlockHeightMap());
     }
 
 

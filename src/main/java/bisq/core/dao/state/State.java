@@ -18,12 +18,12 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.voting.ballot.proposal.param.ParamChangeMap;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -149,6 +149,7 @@ public class State implements PersistableEnvelope {
         builder.setGenesisTxId(genesisTxId)
                 .setGenesisBlockHeight(genesisBlockHeight)
                 .setChainHeight(chainHeight)
+                .addAllBlocks(blocks.stream().map(Block::toProtoMessage).collect(Collectors.toList()))
                 .putAllTxTypeMap(txTypeMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())))
                 .putAllBurntFeeMap(burntFeeMap.entrySet().stream()

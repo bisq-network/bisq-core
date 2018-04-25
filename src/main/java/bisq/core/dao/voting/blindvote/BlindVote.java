@@ -33,6 +33,7 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Holds encryptedBallotList, txId of blindVote tx and stake.
+ * A encryptedBallotList for 1 proposal is 304 bytes
  */
 @Immutable
 @Slf4j

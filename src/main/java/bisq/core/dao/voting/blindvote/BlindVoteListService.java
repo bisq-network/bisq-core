@@ -18,9 +18,9 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.state.StateService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -46,6 +46,8 @@ public class BlindVoteListService implements PersistedDataHost {
     private final PeriodService periodService;
     private final StateService stateService;
     private final BlindVoteValidator blindVoteValidator;
+
+    //TODO not needed to store as it is stored in PersistedEntryMap
     private final Storage<BlindVoteList> storage;
 
     @Getter

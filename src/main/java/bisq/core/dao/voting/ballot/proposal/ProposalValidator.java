@@ -17,10 +17,10 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 
 import javax.inject.Inject;
@@ -79,7 +79,7 @@ public class ProposalValidator {
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.warn("Tx is not in current cycle. proposal={}", proposal);
+                log.debug("Tx is not in current cycle. proposal={}", proposal);
                 return false;
             }
             if (!periodService.isInPhase(txHeight, DaoPhase.Phase.PROPOSAL)) {
@@ -87,10 +87,8 @@ public class ProposalValidator {
                 return false;
             }
         } else {
-            if (!periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL)) {
-                log.warn("We received an unconfirmed tx and are not in PROPOSAL phase anymore. proposal={}", proposal);
-                return false;
-            }
+            // We want to show own unconfirmed proposals in the active proposals list.
+            return periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
         }
         return true;
     }

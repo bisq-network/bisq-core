@@ -17,10 +17,10 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 
 import javax.inject.Inject;
@@ -80,7 +80,7 @@ public class BlindVoteValidator {
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.warn("Tx is not in current cycle. blindVote={}", blindVote);
+                log.debug("Tx is not in current cycle. blindVote={}", blindVote);
                 return false;
             }
             if (!periodService.isInPhase(txHeight, DaoPhase.Phase.BLIND_VOTE)) {
@@ -88,10 +88,7 @@ public class BlindVoteValidator {
                 return false;
             }
         } else {
-            if (!periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE)) {
-                log.warn("We received an unconfirmed tx and are not in BLIND_VOTE phase anymore. blindVote={}", blindVote);
-                return false;
-            }
+            return periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE);
         }
         return true;
     }
