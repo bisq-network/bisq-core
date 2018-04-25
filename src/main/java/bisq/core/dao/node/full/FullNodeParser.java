@@ -18,10 +18,10 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqParser;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.consensus.BlockValidator;
-import bisq.core.dao.node.consensus.GenesisTxValidator;
-import bisq.core.dao.node.consensus.TxValidator;
+import bisq.core.dao.node.validation.BlockNotConnectingException;
+import bisq.core.dao.node.validation.BlockValidator;
+import bisq.core.dao.node.validation.GenesisTxValidator;
+import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;

@@ -17,9 +17,9 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.node.consensus.BlockValidator;
-import bisq.core.dao.node.consensus.GenesisTxValidator;
-import bisq.core.dao.node.consensus.TxValidator;
+import bisq.core.dao.node.validation.BlockValidator;
+import bisq.core.dao.node.validation.GenesisTxValidator;
+import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;

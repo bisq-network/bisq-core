@@ -15,15 +15,12 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
@@ -35,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class OpReturnProposalValidator {
-    private final PeriodService periodService;
-    private final StateService stateService;
+    protected final PeriodService periodService;
+    protected final StateService stateService;
 
 
     @Inject
@@ -48,19 +45,9 @@ public class OpReturnProposalValidator {
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    void process(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight, TxState txState) {
-        if (opReturnData.length == 22 &&
+    boolean validate(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, TxState txState) {
+        return opReturnData.length == 22 &&
                 bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL)) {
-            stateService.setTxOutputType(txOutput, TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
-            txState.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
-        } else {
-            log.info("We expected a proposal op_return data but it did not " +
-                    "match our rules. txOutput={}", txOutput);
-            log.info("blockHeight: " + blockHeight);
-            log.info("isInPhase: " + periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL));
-            stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
-
-        }
+                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
     }
 }

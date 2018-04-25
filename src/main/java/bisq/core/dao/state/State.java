@@ -227,11 +227,11 @@ public class State implements PersistableEnvelope {
         blocks.add(block);
     }
 
-    void putTxType(String txId, TxType txType) {
+    void setTxType(String txId, TxType txType) {
         txTypeMap.put(txId, txType);
     }
 
-    void putBurntFee(String txId, long burnedFee) {
+    void setBurntFee(String txId, long burnedFee) {
         burntFeeMap.put(txId, burnedFee);
     }
 
@@ -243,15 +243,15 @@ public class State implements PersistableEnvelope {
         unspentTxOutputMap.remove(txOutput.getKey());
     }
 
-    void putIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
+    void setIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
         issuanceBlockHeightMap.put(txOutput.getTxId(), chainHeight);
     }
 
-    void putSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
+    void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
     }
 
-    void putTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
+    void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
         txOutputTypeMap.put(txOutput.getKey(), txOutputType);
     }
 
@@ -259,7 +259,7 @@ public class State implements PersistableEnvelope {
         cycles.add(cycle);
     }
 
-    public void putParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
+    public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
         this.paramChangeByBlockHeightMap.put(chainHeight, paramChangeMap);
     }
 

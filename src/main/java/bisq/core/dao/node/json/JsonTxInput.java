@@ -15,18 +15,20 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.blockchain.exceptions;
+package bisq.core.dao.node.json;
 
-public class RpcException extends Exception {
-    public RpcException(String message) {
-        super(message);
-    }
+import lombok.Value;
 
-    public RpcException(String message, Throwable cause) {
-        super(message, cause);
-    }
+import javax.annotation.concurrent.Immutable;
 
-    public RpcException(Throwable cause) {
-        super(cause);
-    }
+//TODO sync up with data model
+@Value
+@Immutable
+public class JsonTxInput {
+    private final int spendingTxOutputIndex;
+    private final String spendingTxId;
+    private final long bsqAmount;
+    private final boolean isVerified;
+    private final String address;
+    private final long time;
 }

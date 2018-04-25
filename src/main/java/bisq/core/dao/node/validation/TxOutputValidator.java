@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
@@ -35,16 +35,16 @@ import javax.annotation.Nullable;
 @Slf4j
 public class TxOutputValidator {
     private final StateService stateService;
-    private final OpReturnValidator opReturnController;
+    private final OpReturnProcessor opReturnProcessor;
 
     @Inject
-    public TxOutputValidator(StateService stateService, OpReturnValidator opReturnController) {
+    public TxOutputValidator(StateService stateService, OpReturnProcessor opReturnProcessor) {
         this.stateService = stateService;
-        this.opReturnController = opReturnController;
+        this.opReturnProcessor = opReturnProcessor;
     }
 
     void processOpReturnCandidate(TxOutput txOutput, TxState txState) {
-        opReturnController.processOpReturnCandidate(txOutput, txState);
+        opReturnProcessor.processOpReturnCandidate(txOutput, txState);
     }
 
     void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, TxState txState) {
@@ -60,8 +60,12 @@ public class TxOutputValidator {
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnController.processTxOutput(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, txState);
+            opReturnProcessor.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, txState);
         }
+    }
+
+    boolean isOpReturnOutput(TxOutput txOutput) {
+        return txOutput.getOpReturnData() != null;
     }
 
     private void handleBsqOutput(TxOutput txOutput, int index, TxState txState, long txOutputValue) {

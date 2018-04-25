@@ -125,7 +125,7 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
     }
 
     public String getShortId() {
-        return uid.substring(0, 8);
+        return uid.length() > 7 ? uid.substring(0, 8) : uid;
     }
 
     public abstract ProposalType getType();

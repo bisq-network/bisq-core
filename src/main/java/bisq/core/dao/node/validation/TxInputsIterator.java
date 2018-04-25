@@ -15,36 +15,36 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.blockchain.TxInput;
 
 import javax.inject.Inject;
 
-/**
- * Verifies if a given transaction is a BSQ genesis transaction.
- */
-public class GenesisTxValidator {
+import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Iterates all inputs to calculate the available BSQ balance from all inputs and apply state change.
+ */
+@Slf4j
+public class TxInputsIterator {
     private final StateService stateService;
-    private final GenesisTxOutputIterator genesisTxOutputIterator;
+    private final TxInputProcessor txInputProcessor;
 
     @Inject
-    public GenesisTxValidator(StateService stateService,
-                              GenesisTxOutputIterator genesisTxOutputIterator) {
+    public TxInputsIterator(StateService stateService, TxInputProcessor txInputProcessor) {
         this.stateService = stateService;
-        this.genesisTxOutputIterator = genesisTxOutputIterator;
+        this.txInputProcessor = txInputProcessor;
     }
 
-    public boolean validate(Tx tx, int blockHeight) {
-        final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
-                tx.getId().equals(stateService.getGenesisTxId());
-        if (isValid) {
-            genesisTxOutputIterator.iterate(tx);
-            stateService.setTxType(tx.getId(), TxType.GENESIS);
+    TxState iterate(Tx tx, int blockHeight) {
+        TxState txState = new TxState();
+        for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
+            TxInput input = tx.getInputs().get(inputIndex);
+            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, txState, stateService);
         }
-        return isValid;
+        return txState;
     }
 }

@@ -18,8 +18,7 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.blockchain.btcd.PubKeyScript;
-import bisq.core.dao.node.blockchain.exceptions.RpcException;
+import bisq.core.dao.node.btcd.PubKeyScript;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;

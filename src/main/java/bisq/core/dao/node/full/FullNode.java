@@ -18,9 +18,9 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.BsqNode;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
+import bisq.core.dao.node.json.JsonBlockChainExporter;
+import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;

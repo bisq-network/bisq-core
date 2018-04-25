@@ -15,18 +15,21 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.blockchain.exceptions;
+package bisq.core.dao.node.json;
 
-import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.SpentInfo;
 
-import lombok.Getter;
+import lombok.Value;
 
-@Getter
-public class BlockNotConnectingException extends Exception {
+@Value
+public class JsonSpentInfo {
+    private final long height;
+    private final int inputIndex;
+    private final String txId;
 
-    private Block block;
-
-    public BlockNotConnectingException(Block block) {
-        this.block = block;
+    public JsonSpentInfo(SpentInfo spentInfo) {
+        height = spentInfo.getBlockHeight();
+        inputIndex = spentInfo.getInputIndex();
+        txId = spentInfo.getTxId();
     }
 }

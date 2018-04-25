@@ -18,29 +18,28 @@
 package bisq.core.dao;
 
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.node.blockchain.json.JsonBlockChainExporter;
-import bisq.core.dao.node.consensus.GenesisTxOutputIterator;
-import bisq.core.dao.node.consensus.GenesisTxOutputValidator;
-import bisq.core.dao.node.consensus.GenesisTxValidator;
-import bisq.core.dao.node.consensus.OpReturnBlindVoteValidator;
-import bisq.core.dao.node.consensus.OpReturnCompReqValidator;
-import bisq.core.dao.node.consensus.OpReturnProposalValidator;
-import bisq.core.dao.node.consensus.OpReturnValidator;
-import bisq.core.dao.node.consensus.OpReturnVoteRevealValidator;
-import bisq.core.dao.node.consensus.TxInputProcessor;
-import bisq.core.dao.node.consensus.TxInputsIterator;
-import bisq.core.dao.node.consensus.TxOutputValidator;
-import bisq.core.dao.node.consensus.TxOutputsIterator;
-import bisq.core.dao.node.consensus.TxValidator;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.full.FullNodeParser;
 import bisq.core.dao.node.full.FullNodeParserFacade;
 import bisq.core.dao.node.full.RpcService;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
+import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeParser;
-import bisq.core.dao.node.lite.LiteNodeParserFacade;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
+import bisq.core.dao.node.validation.GenesisTxOutputIterator;
+import bisq.core.dao.node.validation.GenesisTxOutputValidator;
+import bisq.core.dao.node.validation.GenesisTxValidator;
+import bisq.core.dao.node.validation.OpReturnBlindVoteValidator;
+import bisq.core.dao.node.validation.OpReturnCompReqValidator;
+import bisq.core.dao.node.validation.OpReturnProcessor;
+import bisq.core.dao.node.validation.OpReturnProposalValidator;
+import bisq.core.dao.node.validation.OpReturnVoteRevealValidator;
+import bisq.core.dao.node.validation.TxInputProcessor;
+import bisq.core.dao.node.validation.TxInputsIterator;
+import bisq.core.dao.node.validation.TxOutputValidator;
+import bisq.core.dao.node.validation.TxOutputsIterator;
+import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.period.CycleService;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
@@ -91,7 +90,6 @@ public class DaoModule extends AppModule {
         bind(FullNodeParser.class).in(Singleton.class);
         bind(LiteNode.class).in(Singleton.class);
         bind(LiteNodeNetworkService.class).in(Singleton.class);
-        bind(LiteNodeParserFacade.class).in(Singleton.class);
         bind(LiteNodeParser.class).in(Singleton.class);
 
         // State
@@ -113,7 +111,7 @@ public class DaoModule extends AppModule {
         bind(TxInputProcessor.class).in(Singleton.class);
         bind(TxOutputsIterator.class).in(Singleton.class);
         bind(TxOutputValidator.class).in(Singleton.class);
-        bind(OpReturnValidator.class).in(Singleton.class);
+        bind(OpReturnProcessor.class).in(Singleton.class);
         bind(OpReturnProposalValidator.class).in(Singleton.class);
         bind(OpReturnCompReqValidator.class).in(Singleton.class);
         bind(OpReturnBlindVoteValidator.class).in(Singleton.class);

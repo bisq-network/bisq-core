@@ -18,10 +18,10 @@
 package bisq.core.dao.node.lite;
 
 import bisq.core.dao.node.BsqNode;
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
+import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Slf4j
 public class LiteNode extends BsqNode {
-    private final LiteNodeParserFacade liteNodeParserFacade;
+    private final LiteNodeParser liteNodeParser;
     private final LiteNodeNetworkService liteNodeNetworkService;
 
 
@@ -66,10 +66,10 @@ public class LiteNode extends BsqNode {
                     PeriodService periodService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    LiteNodeParserFacade liteNodeParserFacade,
+                    LiteNodeParser liteNodeParser,
                     LiteNodeNetworkService liteNodeNetworkService) {
         super(stateService, periodService, snapshotManager, p2PService);
-        this.liteNodeParserFacade = liteNodeParserFacade;
+        this.liteNodeParser = liteNodeParser;
         this.liteNodeNetworkService = liteNodeNetworkService;
     }
 
@@ -140,10 +140,16 @@ public class LiteNode extends BsqNode {
         List<Block> clonedBlockList = blockList.stream()
                 .map(Block::clone)
                 .collect(Collectors.toList());
-        liteNodeParserFacade.parseBlocks(clonedBlockList,
-                this::onNewBlock,
-                this::onParseBlockChainComplete,
-                getErrorHandler());
+
+        for (Block block : clonedBlockList) {
+            try {
+                liteNodeParser.parseBlock(block);
+                onNewBlock(block);
+            } catch (BlockNotConnectingException e) {
+                getErrorHandler().accept(e);
+            }
+        }
+        onParseBlockChainComplete();
     }
 
     // We received a new block
@@ -154,7 +160,12 @@ public class LiteNode extends BsqNode {
         Block clonedBlock = Block.clone(block);
         if (!stateService.containsBlock(clonedBlock)) {
             //TODO check block height and prev block it it connects to existing blocks
-            liteNodeParserFacade.parseBlock(clonedBlock, this::onNewBlock, getErrorHandler());
+            try {
+                liteNodeParser.parseBlock(block);
+                onNewBlock(block);
+            } catch (BlockNotConnectingException e) {
+                getErrorHandler().accept(e);
+            }
         }
     }
 

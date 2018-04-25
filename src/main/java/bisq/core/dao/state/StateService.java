@@ -150,12 +150,12 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setTxType(String txId, TxType txType) {
-        state.putTxType(txId, txType);
+        state.setTxType(txId, txType);
     }
 
 
     public void setBurntFee(String txId, long burnedFee) {
-        state.putBurntFee(txId, burnedFee);
+        state.setBurntFee(txId, burnedFee);
     }
 
 
@@ -172,20 +172,20 @@ public class StateService {
     }
 
     public void addIssuanceTxOutput(TxOutput txOutput, int chainHeight) {
-        state.putIssuanceBlockHeight(txOutput, chainHeight);
-        addUnspentTxOutput(txOutput);
+        state.setIssuanceBlockHeight(txOutput, chainHeight);
+        state.addUnspentTxOutput(txOutput);
     }
 
     public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
-        state.putSpentInfo(txOutput, blockHeight, txId, inputIndex);
+        state.setSpentInfo(txOutput, blockHeight, txId, inputIndex);
     }
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        state.putTxOutputType(txOutput, txOutputType);
+        state.setTxOutputType(txOutput, txOutputType);
     }
 
     public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
-        state.putParamChangeMap(chainHeight, paramChangeMap);
+        state.setParamChangeMap(chainHeight, paramChangeMap);
     }
 
 

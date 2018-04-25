@@ -15,10 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.blockchain.json;
+package bisq.core.dao.node.json;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.blockchain.btcd.PubKeyScript;
+import bisq.core.dao.node.btcd.PubKeyScript;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.SpentInfo;

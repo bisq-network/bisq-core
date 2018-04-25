@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.full;
 
-import bisq.core.dao.node.blockchain.exceptions.BlockNotConnectingException;
+import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 

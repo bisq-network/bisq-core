@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GenesisTxOutputValidator extends TxOutputValidator {
     @Inject
-    public GenesisTxOutputValidator(StateService stateService, OpReturnValidator opReturnController) {
+    public GenesisTxOutputValidator(StateService stateService, OpReturnProcessor opReturnController) {
         super(stateService, opReturnController);
     }
 

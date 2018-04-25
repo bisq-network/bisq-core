@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -47,11 +47,13 @@ public class TxInputProcessor {
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our txState
                     // for later verification at the outputs of a reveal tx.
                     if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
-                        if (!txState.isVoteStakeSpentAtInputs()) {
-                            txState.setVoteStakeSpentAtInputs(true);
+                        if (txState.getInputFromBlindVoteStakeOutput() == null) {
+                            txState.setInputFromBlindVoteStakeOutput(txInput);
+                            txState.setSingleInputFromBlindVoteStakeOutput(true);
                         } else {
-                            log.warn("We have a tx which has 2 connected txOutputs marked as VOTE_STAKE_OUTPUT. " +
+                            log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                     "This is not a valid BSQ tx.");
+                            txState.setSingleInputFromBlindVoteStakeOutput(false);
                         }
                     }
 

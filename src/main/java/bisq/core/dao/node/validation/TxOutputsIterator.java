@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -46,7 +46,6 @@ public class TxOutputsIterator {
     }
 
     void processOpReturnCandidate(Tx tx, TxState txState) {
-        // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
 
         // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
@@ -66,13 +65,10 @@ public class TxOutputsIterator {
         for (int index = 0; index < outputs.size(); index++) {
             txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, txState);
         }
+    }
 
-        // If we have an issuanceCandidate and the type was not applied in the opReturnController we set
-        // it now to an BTC_OUTPUT.
-        if (txState.getIssuanceCandidate() != null &&
-                stateService.getTxOutputType(txState.getIssuanceCandidate()) == TxOutputType.UNDEFINED) {
-            stateService.setTxOutputType(txState.getIssuanceCandidate(), TxOutputType.BTC_OUTPUT);
-        }
+    int getNumOpReturnOutputs(Tx tx) {
+        return (int) tx.getOutputs().stream().filter(txOutputValidator::isOpReturnOutput).count();
     }
 
     boolean isAnyTxOutputTypeUndefined(Tx tx) {

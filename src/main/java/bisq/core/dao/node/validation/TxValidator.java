@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
@@ -62,20 +62,38 @@ public class TxValidator {
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
     public boolean validate(int blockHeight, Tx tx) {
+        final String txId = tx.getId();
         TxState txState = txInputsIterator.iterate(tx, blockHeight);
         final boolean bsqInputBalancePositive = txState.isInputValuePositive();
         if (bsqInputBalancePositive) {
             txOutputsIterator.processOpReturnCandidate(tx, txState);
             txOutputsIterator.iterate(tx, blockHeight, txState);
-            if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
-                final TxType txType = getTxType(tx, txState);
-                final String txId = tx.getId();
-                stateService.setTxType(txId, txType);
-                final long burnedFee = txState.getAvailableInputValue();
-                stateService.setBurntFee(txId, burnedFee);
+
+            // Multiple op return outputs are non-standard but to be safe lets check it.
+            if (txOutputsIterator.getNumOpReturnOutputs(tx) <= 1) {
+                // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
+                // we set it to an BTC_OUTPUT.
+                final TxOutput issuanceCandidate = txState.getIssuanceCandidate();
+                if (issuanceCandidate != null &&
+                        stateService.getTxOutputType(issuanceCandidate) == TxOutputType.UNDEFINED) {
+                    stateService.setTxOutputType(issuanceCandidate, TxOutputType.BTC_OUTPUT);
+                }
+
+                if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
+                    final TxType txType = getTxType(tx, txState);
+                    stateService.setTxType(txId, txType);
+                    final long burnedFee = txState.getAvailableInputValue();
+                    if (burnedFee > 0)
+                        stateService.setBurntFee(txId, burnedFee);
+                } else {
+                    String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
+                    DevEnv.logErrorAndThrowIfDevMode(msg);
+                }
             } else {
-                String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
-                DevEnv.logErrorAndThrowIfDevMode(msg);
+                // We don't consider a tx with multiple OpReturn outputs valid.
+                stateService.setTxType(txId, TxType.INVALID);
+                String msg = "Invalid tx. We have multiple opReturn outputs. tx=" + tx;
+                log.warn(msg);
             }
         }
 
@@ -90,11 +108,10 @@ public class TxValidator {
         // We need to have at least one BSQ output
 
         Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, txState);
-        final boolean bsqFeesBurnt = txState.isInputValuePositive();
-        //noinspection OptionalIsPresent
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
         } else if (txState.getOpReturnTypeCandidate() == null) {
+            final boolean bsqFeesBurnt = txState.isInputValuePositive();
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -103,7 +120,7 @@ public class TxValidator {
                 txType = TxType.TRANSFER_BSQ;
             }
         } else {
-            // We got some OP_RETURN type but it failed at validation
+            // We got some OP_RETURN type candidate but it failed at validation
             txType = TxType.INVALID;
         }
         return txType;
@@ -116,7 +133,7 @@ public class TxValidator {
                 checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
                 final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
                 checkArgument(stateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
-                        "Compensation request txOutput type need to be COMPENSATION_REQUEST_ISSUANCE_CANDIDATE_OUTPUT");
+                        "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;
                 break;
             case PROPOSAL:
@@ -147,20 +164,19 @@ public class TxValidator {
         if (txState.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
-            if (txState.getOpReturnTypeCandidate() == txState.getVerifiedOpReturnType()) {
-                final OpReturnType verifiedOpReturnType = txState.getVerifiedOpReturnType();
-                return verifiedOpReturnType != null ? Optional.of(verifiedOpReturnType) : Optional.empty();
+            final OpReturnType opReturnTypeCandidate = txState.getOpReturnTypeCandidate();
+            final OpReturnType verifiedOpReturnType = txState.getVerifiedOpReturnType();
+            if (opReturnTypeCandidate == verifiedOpReturnType) {
+                return Optional.ofNullable(verifiedOpReturnType);
             } else {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
-                        "opReturnTypeCandidate=" + txState.getOpReturnTypeCandidate() +
+                        "opReturnTypeCandidate=" + opReturnTypeCandidate +
                         " / verifiedOpReturnType=" + txState.getVerifiedOpReturnType();
                 log.error(msg);
             }
         } else {
             final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
             log.warn(msg);
-            //  if (DevEnv.isDevMode())
-            //      throw new RuntimeException(msg);
         }
         return Optional.empty();
     }

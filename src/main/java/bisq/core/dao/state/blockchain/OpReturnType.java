@@ -17,6 +17,7 @@
 
 package bisq.core.dao.state.blockchain;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import lombok.Getter;
@@ -41,19 +42,10 @@ public enum OpReturnType {
     }
 
     public static Optional<OpReturnType> getOpReturnType(byte type) {
-        if (type == PROPOSAL.getType())
-            return Optional.of(PROPOSAL);
-        else if (type == COMPENSATION_REQUEST.getType())
-            return Optional.of(COMPENSATION_REQUEST);
-        else if (type == BLIND_VOTE.getType())
-            return Optional.of(BLIND_VOTE);
-        else if (type == VOTE_REVEAL.getType())
-            return Optional.of(VOTE_REVEAL);
-        else if (type == LOCK_UP.getType())
-            return Optional.of(LOCK_UP);
-        else if (type == UNLOCK.getType())
-            return Optional.of(UNLOCK);
-        else
-            return Optional.empty();
+        return Arrays.stream(OpReturnType.values())
+                .filter(opReturnType -> opReturnType.type == type)
+                .map(Optional::of)
+                .findAny()
+                .orElse(Optional.empty());
     }
 }

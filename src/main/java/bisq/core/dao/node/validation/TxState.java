@@ -15,9 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.consensus;
+package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
+import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
 import lombok.Getter;
@@ -40,7 +41,6 @@ class TxState {
     private TxOutput blindVoteLockStakeOutput;
     @Nullable
     private TxOutput voteRevealUnlockStakeOutput;
-    private boolean voteStakeSpentAtInputs;
     private boolean bsqOutputFound;
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
@@ -52,6 +52,9 @@ class TxState {
     // At end of parsing when we do the full validation we set the type here
     @Nullable
     private OpReturnType verifiedOpReturnType;
+    @Nullable
+    private TxInput inputFromBlindVoteStakeOutput;
+    private boolean isSingleInputFromBlindVoteStakeOutput;
 
     TxState() {
     }
