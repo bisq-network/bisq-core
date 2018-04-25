@@ -60,7 +60,7 @@ public enum Param {
     PHASE_BREAK2(1),
     PHASE_VOTE_REVEAL(2),
     PHASE_BREAK3(1),
-    PHASE_VOTE_RESULT(1),
+    PHASE_RESULT(1),
     PHASE_BREAK4(1);
 
     @Getter
