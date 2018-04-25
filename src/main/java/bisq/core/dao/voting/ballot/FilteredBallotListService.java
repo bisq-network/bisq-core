@@ -19,8 +19,8 @@ package bisq.core.dao.voting.ballot;
 
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.voting.proposal.ProposalPayload;
-import bisq.core.dao.voting.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
+import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;

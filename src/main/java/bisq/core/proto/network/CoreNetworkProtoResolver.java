@@ -30,7 +30,7 @@ import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.voting.blindvote.BlindVotePayload;
-import bisq.core.dao.voting.proposal.ProposalPayload;
+import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;

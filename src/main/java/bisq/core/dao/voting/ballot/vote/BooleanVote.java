@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.vote;
+package bisq.core.dao.voting.ballot.vote;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -31,13 +31,11 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Value
-public class LongVote extends Vote {
+public class BooleanVote extends Vote {
+    private boolean accepted;
 
-    private long value;
-
-    @SuppressWarnings("WeakerAccess")
-    public LongVote(long value) {
-        this.value = value;
+    public BooleanVote(boolean accepted) {
+        this.accepted = accepted;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -47,13 +45,12 @@ public class LongVote extends Vote {
     @Override
     public Message toProtoMessage() {
         return getVoteBuilder()
-                .setLongVote(PB.LongVote.newBuilder()
-                        .setValue(value))
+                .setBooleanVote(PB.BooleanVote.newBuilder()
+                        .setAccepted(accepted))
                 .build();
     }
 
-    public static LongVote fromProto(PB.Vote proto) {
-        return new LongVote(proto.getLongVote().getValue());
+    public static BooleanVote fromProto(PB.Vote proto) {
+        return new BooleanVote(proto.getBooleanVote().getAccepted());
     }
-
 }

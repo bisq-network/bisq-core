@@ -15,36 +15,45 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.vote;
-
-import bisq.common.proto.ProtobufferException;
-import bisq.common.proto.network.NetworkPayload;
-import bisq.common.proto.persistable.PersistablePayload;
+package bisq.core.dao.voting.ballot.vote;
 
 import io.bisq.generated.protobuffer.PB;
 
-import lombok.ToString;
+import com.google.protobuf.Message;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Value;
+
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public abstract class Vote implements PersistablePayload, NetworkPayload {
+@Value
+public class LongVote extends Vote {
+
+    private long value;
+
+    @SuppressWarnings("WeakerAccess")
+    public LongVote(long value) {
+        this.value = value;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static Vote fromProto(PB.Vote proto) {
-        switch (proto.getMessageCase()) {
-            case BOOLEAN_VOTE:
-                return BooleanVote.fromProto(proto);
-            case LONG_VOTE:
-                return LongVote.fromProto(proto);
-            default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
-        }
+    @Override
+    public Message toProtoMessage() {
+        return getVoteBuilder()
+                .setLongVote(PB.LongVote.newBuilder()
+                        .setValue(value))
+                .build();
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected PB.Vote.Builder getVoteBuilder() {
-        return PB.Vote.newBuilder();
+    public static LongVote fromProto(PB.Vote proto) {
+        return new LongVote(proto.getLongVote().getValue());
     }
+
 }

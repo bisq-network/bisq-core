@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.compensation;
+package bisq.core.dao.voting.ballot.proposal.compensation;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
 

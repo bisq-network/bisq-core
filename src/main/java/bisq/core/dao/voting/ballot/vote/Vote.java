@@ -15,42 +15,36 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.vote;
+package bisq.core.dao.voting.ballot.vote;
+
+import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.network.NetworkPayload;
+import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.Message;
-
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.Value;
 
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@EqualsAndHashCode(callSuper = true)
 @ToString
-@Value
-public class BooleanVote extends Vote {
-    private boolean accepted;
-
-    public BooleanVote(boolean accepted) {
-        this.accepted = accepted;
-    }
+public abstract class Vote implements PersistablePayload, NetworkPayload {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public Message toProtoMessage() {
-        return getVoteBuilder()
-                .setBooleanVote(PB.BooleanVote.newBuilder()
-                        .setAccepted(accepted))
-                .build();
+    public static Vote fromProto(PB.Vote proto) {
+        switch (proto.getMessageCase()) {
+            case BOOLEAN_VOTE:
+                return BooleanVote.fromProto(proto);
+            case LONG_VOTE:
+                return LongVote.fromProto(proto);
+            default:
+                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+        }
     }
 
-    public static BooleanVote fromProto(PB.Vote proto) {
-        return new BooleanVote(proto.getBooleanVote().getAccepted());
+    @SuppressWarnings("WeakerAccess")
+    protected PB.Vote.Builder getVoteBuilder() {
+        return PB.Vote.newBuilder();
     }
 }

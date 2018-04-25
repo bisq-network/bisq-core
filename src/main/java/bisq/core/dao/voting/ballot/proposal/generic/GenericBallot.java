@@ -15,13 +15,17 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.asset;
+package bisq.core.dao.voting.ballot.proposal.generic;
+
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Request for removing an altcoin. Altcoins are added if they fulfill the formal requirements but can be requested by
- * stakeholders to get removed for any reasons (e.g. majority of stakeholder consider it a scam coin).
+ * Generic proposal for anything not covered by specific proposals.
  */
-
-// TODO implement
-public class RemoveAssetBallot {
+//TODO impl
+@Slf4j
+@Value
+public class GenericBallot {
 }
+

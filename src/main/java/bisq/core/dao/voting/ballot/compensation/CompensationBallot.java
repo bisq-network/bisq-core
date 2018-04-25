@@ -18,10 +18,10 @@
 package bisq.core.dao.voting.ballot.compensation;
 
 import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalType;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
-import bisq.core.dao.voting.vote.Vote;
+import bisq.core.dao.voting.ballot.proposal.Proposal;
+import bisq.core.dao.voting.ballot.proposal.ProposalType;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.ballot.vote.Vote;
 
 import io.bisq.generated.protobuffer.PB;
 

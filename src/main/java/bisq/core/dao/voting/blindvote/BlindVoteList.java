@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.core.dao.voting.vote.VoteConsensusCritical;
+import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;

@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.voting.ballot.proposal;
 
 import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;

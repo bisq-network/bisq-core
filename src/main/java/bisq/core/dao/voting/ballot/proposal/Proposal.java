@@ -15,13 +15,13 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.voting.ballot.proposal;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
-import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.vote.VoteConsensusCritical;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.ballot.proposal.param.Param;
+import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;

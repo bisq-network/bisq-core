@@ -31,7 +31,7 @@ import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.myvote.MyVoteListService;
-import bisq.core.dao.voting.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 
 import bisq.network.p2p.P2PService;
 

@@ -26,8 +26,8 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.proposal.param.ParamChangeMap;
+import bisq.core.dao.voting.ballot.proposal.param.Param;
+import bisq.core.dao.voting.ballot.proposal.param.ParamChangeMap;
 
 import org.bitcoinj.core.Coin;
 

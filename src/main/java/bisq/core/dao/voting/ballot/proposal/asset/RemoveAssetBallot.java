@@ -15,11 +15,13 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.voting.ballot.proposal.asset;
 
-public enum ProposalType {
-    COMPENSATION_REQUEST,
-    GENERIC,
-    CHANGE_PARAM,
-    REMOVE_ALTCOIN
+/**
+ * Request for removing an altcoin. Altcoins are added if they fulfill the formal requirements but can be requested by
+ * stakeholders to get removed for any reasons (e.g. majority of stakeholder consider it a scam coin).
+ */
+
+// TODO implement
+public class RemoveAssetBallot {
 }

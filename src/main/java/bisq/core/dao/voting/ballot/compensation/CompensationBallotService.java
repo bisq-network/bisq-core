@@ -24,10 +24,10 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.ballot.BallotWithTransaction;
-import bisq.core.dao.voting.proposal.ProposalConsensus;
-import bisq.core.dao.voting.proposal.compensation.CompensationConsensus;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
-import bisq.core.dao.voting.proposal.compensation.CompensationValidator;
+import bisq.core.dao.voting.ballot.proposal.ProposalConsensus;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationConsensus;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationValidator;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;

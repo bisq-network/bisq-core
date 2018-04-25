@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.param;
+package bisq.core.dao.voting.ballot.proposal.param;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;

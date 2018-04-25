@@ -37,10 +37,10 @@ import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalConsensus;
-import bisq.core.dao.voting.proposal.ProposalService;
-import bisq.core.dao.voting.vote.Vote;
+import bisq.core.dao.voting.ballot.proposal.Proposal;
+import bisq.core.dao.voting.ballot.proposal.ProposalConsensus;
+import bisq.core.dao.voting.ballot.proposal.ProposalService;
+import bisq.core.dao.voting.ballot.vote.Vote;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;

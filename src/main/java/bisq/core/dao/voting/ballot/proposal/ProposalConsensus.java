@@ -15,11 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.voting.ballot.proposal;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.voting.ballot.proposal.param.Param;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
