@@ -287,6 +287,10 @@ public class StateService {
         return getBlocks().contains(block);
     }
 
+    public boolean containsBlockHash(String blockHash) {
+        return getBlocks().stream().anyMatch(block -> block.getHash().equals(blockHash));
+    }
+
     public long getBlockTime(int height) {
         return getBlockAtHeight(height).map(Block::getTime).orElse(0L);
     }

@@ -85,7 +85,10 @@ public class RpcService {
 
     private BtcdClient client;
     private BtcdDaemon daemon;
-    private final ListeningExecutorService executor = Utilities.getListeningExecutorService("RpcService", 15, 30, 60);
+
+    // We could use multiple threads but then we need to support ordering of results in a queue
+    // Kepp that for optimization after measuring performance differences
+    private final ListeningExecutorService executor = Utilities.getSingleThreadExecutor("RpcService");
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +107,6 @@ public class RpcService {
         this.rpcPort = rpcPort;
         this.rpcBlockPort = rpcBlockPort;
         this.dumpBlockchainData = dumpBlockchainData;
-
     }
 
     public void setup(ResultHandler resultHandler, Consumer<Throwable> errorHandler) {

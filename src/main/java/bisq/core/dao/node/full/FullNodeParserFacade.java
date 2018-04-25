@@ -78,8 +78,9 @@ public class FullNodeParserFacade {
         rpcService.requestBlockWithAllTransactions(blockHeight,
                 resultTuple -> {
                     try {
+                        final com.neemre.btcdcli4j.core.domain.Block btcdBlock = resultTuple.first;
                         List<Tx> txList = resultTuple.second;
-                        Block block = fullNodeParser.parseBlock(resultTuple.first, txList);
+                        Block block = fullNodeParser.parseBlock(btcdBlock, txList);
                         newBlockHandler.accept(block);
 
                         // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
