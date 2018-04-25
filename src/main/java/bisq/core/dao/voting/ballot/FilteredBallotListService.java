@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.ballot;
 
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 
@@ -121,8 +121,8 @@ public class FilteredBallotListService {
 
         closedBallots.clear();
         closedBallots.addAll(ballotListService.getBallotList().getList().stream()
-                .filter(ballot -> stateService.getTx(ballot.getTxId()).isPresent())
-                .filter(ballot -> stateService.getTx(ballot.getTxId())
+                .filter(ballot -> stateService.getTx(ballot.getProposalTxId()).isPresent())
+                .filter(ballot -> stateService.getTx(ballot.getProposalTxId())
                         .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
                         .isPresent())
                 .collect(Collectors.toList()));

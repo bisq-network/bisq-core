@@ -56,15 +56,14 @@ public class CompensationBallot extends Ballot {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationBallot(Proposal proposal,
-                               @Nullable Vote vote) {
+    public CompensationBallot(Proposal proposal,
+                              @Nullable Vote vote) {
         super(proposal, vote);
     }
 
     @Override
     public PB.Ballot toProtoMessage() {
-        return getBallotBuilder().setCompensationBallot(PB.CompensationBallot.newBuilder())
-                .build();
+        return getBallotBuilder().setCompensationBallot(PB.CompensationBallot.newBuilder()).build();
     }
 
     public static CompensationBallot fromProto(PB.Ballot proto) {

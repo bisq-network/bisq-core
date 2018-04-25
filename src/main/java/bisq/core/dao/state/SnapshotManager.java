@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Slf4j
 public class SnapshotManager {
-    private static final int SNAPSHOT_GRID = 11;
+    private static final int SNAPSHOT_GRID = 11000;
 
     private final State state;
     private final StateService stateService;

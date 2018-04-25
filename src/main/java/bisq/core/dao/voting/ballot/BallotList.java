@@ -23,8 +23,6 @@ import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,16 +44,6 @@ public class BallotList extends PersistableList<Ballot> implements VoteConsensus
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public static BallotList clone(BallotList ballotList) throws InvalidProtocolBufferException {
-        final PB.PersistableEnvelope proto = ballotList.toProtoMessage();
-        return BallotList.getBallotListFromBytes(proto.toByteArray());
-    }
-
-    public static BallotList getBallotListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
-        final PB.PersistableEnvelope envelope = PB.PersistableEnvelope.parseFrom(bytes);
-        return BallotList.fromProto(envelope.getBallotList());
-    }
 
     @Override
     public PB.PersistableEnvelope toProtoMessage() {

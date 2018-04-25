@@ -17,15 +17,15 @@
 
 package bisq.core.dao.voting.voteresult;
 
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.voting.ballot.BallotList;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
+import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
@@ -51,14 +51,14 @@ public class VoteResultConsensus {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
-    public static byte[] decryptProposalList(byte[] encryptedProposalList, SecretKey secretKey) throws CryptoException {
-        return Encryption.decrypt(encryptedProposalList, secretKey);
+    public static byte[] decryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws CryptoException {
+        return Encryption.decrypt(encryptedVotes, secretKey);
     }
 
-    public static BallotList getDecryptedBallotList(byte[] encryptedBallotList, SecretKey secretKey) throws VoteResultException {
+    public static VoteWithProposalTxIdList getDecryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws VoteResultException {
         try {
-            final byte[] decrypted = VoteResultConsensus.decryptProposalList(encryptedBallotList, secretKey);
-            return BallotList.getBallotListFromBytes(decrypted);
+            final byte[] decrypted = decryptVotes(encryptedVotes, secretKey);
+            return VoteWithProposalTxIdList.getVoteWithProposalTxIdListFromBytes(decrypted);
         } catch (Throwable t) {
             throw new VoteResultException(t);
         }

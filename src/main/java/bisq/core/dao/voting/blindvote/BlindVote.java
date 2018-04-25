@@ -41,20 +41,20 @@ import javax.annotation.concurrent.Immutable;
 public final class BlindVote implements PersistablePayload {
 
     public static BlindVote clone(BlindVote blindVote) {
-        return new BlindVote(blindVote.encryptedBallotList,
+        return new BlindVote(blindVote.encryptedVotes,
                 blindVote.getTxId(),
                 blindVote.getStake());
     }
 
-    private final byte[] encryptedBallotList;
+    private final byte[] encryptedVotes; // created from voteWithProposalTxIdList
     private final String txId;
     // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.
     private final long stake;
 
-    public BlindVote(byte[] encryptedBallotList,
+    public BlindVote(byte[] encryptedVotes,
                      String txId,
                      long stake) {
-        this.encryptedBallotList = encryptedBallotList;
+        this.encryptedVotes = encryptedVotes;
         this.txId = txId;
         this.stake = stake;
     }
@@ -73,13 +73,13 @@ public final class BlindVote implements PersistablePayload {
     @NotNull
     public PB.BlindVote.Builder getBuilder() {
         return PB.BlindVote.newBuilder()
-                .setEncryptedBallotList(ByteString.copyFrom(encryptedBallotList))
+                .setEncryptedVotes(ByteString.copyFrom(encryptedVotes))
                 .setTxId(txId)
                 .setStake(stake);
     }
 
     public static BlindVote fromProto(PB.BlindVote proto) {
-        return new BlindVote(proto.getEncryptedBallotList().toByteArray(),
+        return new BlindVote(proto.getEncryptedVotes().toByteArray(),
                 proto.getTxId(),
                 proto.getStake());
     }
@@ -91,7 +91,7 @@ public final class BlindVote implements PersistablePayload {
 
     public String toString() {
         return "BlindVotePayload{" +
-                "\n     encryptedProposalList=" + Utilities.bytesAsHexString(encryptedBallotList) +
+                "\n     encryptedVotes=" + Utilities.bytesAsHexString(encryptedVotes) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +
                 "\n}";

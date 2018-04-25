@@ -40,23 +40,23 @@ import bisq.core.dao.node.validation.TxInputsIterator;
 import bisq.core.dao.node.validation.TxOutputValidator;
 import bisq.core.dao.node.validation.TxOutputsIterator;
 import bisq.core.dao.node.validation.TxValidator;
-import bisq.core.dao.state.period.CycleService;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.CycleService;
+import bisq.core.dao.state.period.PeriodService;
+import bisq.core.dao.voting.ballot.BallotFactory;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
-import bisq.core.dao.voting.ballot.generic.GenericBallotFactory;
+import bisq.core.dao.voting.ballot.proposal.ProposalService;
+import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationValidator;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
 import bisq.core.dao.voting.myvote.MyVoteListService;
-import bisq.core.dao.voting.ballot.proposal.ProposalService;
-import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
-import bisq.core.dao.voting.ballot.proposal.compensation.CompensationValidator;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -123,7 +123,7 @@ public class DaoModule extends AppModule {
         bind(CompensationValidator.class).in(Singleton.class);
 
         // Ballot
-        bind(GenericBallotFactory.class).in(Singleton.class);
+        bind(BallotFactory.class).in(Singleton.class);
         bind(BallotListService.class).in(Singleton.class);
         bind(MyBallotListService.class).in(Singleton.class);
         bind(FilteredBallotListService.class).in(Singleton.class);

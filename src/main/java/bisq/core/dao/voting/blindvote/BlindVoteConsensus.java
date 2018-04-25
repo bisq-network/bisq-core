@@ -20,7 +20,6 @@ package bisq.core.dao.voting.blindvote;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.proposal.param.Param;
 
 import bisq.common.app.Version;
@@ -47,12 +46,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-    // Sorted by TxId
-    public static void sortProposalList(List<Ballot> ballots) {
-        ballots.sort(Comparator.comparing(Ballot::getTxId));
-        log.info("Sorted proposalList for blind vote: " + ballots.stream()
-                .map(Ballot::getTxId)
-                .collect(Collectors.toList()));
+    public static void sortBallotList(List<Ballot> list) {
+        list.sort(Comparator.comparing(Ballot::getProposalTxId));
+        log.info("Sorted ballotList: " + list);
     }
 
     // 128 bit AES key is good enough for our use case
@@ -60,20 +56,13 @@ public class BlindVoteConsensus {
         return Encryption.generateSecretKey(128);
     }
 
-    public static byte[] getEncryptedBallotList(BallotList ballotList, SecretKey secretKey) throws CryptoException {
-        final byte[] payload = ballotList.toProtoMessage().toByteArray();
-        final byte[] encryptedProposalList = Encryption.encrypt(payload, secretKey);
-        log.info("encryptedProposalList: " + Utilities.bytesAsHexString(encryptedProposalList));
-        return encryptedProposalList;
-
-           /*  byte[] decryptedProposalList = Encryption.decrypt(encryptedProposalList, secretKey);
-        try {
-            PB.PersistableEnvelope proto = PB.PersistableEnvelope.parseFrom(decryptedProposalList);
-            PersistableEnvelope decrypted = BallotList.fromProto(proto.getBallotList());
-            log.error(decrypted.toString());
-        } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
-        }*/
+    // TODO should we use PB as data input or a more common encoding like json?
+    // Are there risks that PB encoding format changes?
+    public static byte[] getEncryptedVotes(VoteWithProposalTxIdList voteWithProposalTxIdList, SecretKey secretKey) throws CryptoException {
+        final byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
+        final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
+        log.info("encrypted: " + Utilities.bytesAsHexString(encrypted));
+        return encrypted;
     }
 
     public static byte[] getHashOfEncryptedProposalList(byte[] encryptedProposalList) {

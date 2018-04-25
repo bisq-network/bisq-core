@@ -111,8 +111,6 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return MyVoteList.fromProto(proto.getMyVoteList());
                 case BLIND_VOTE_LIST:
                     return BlindVoteList.fromProto(proto.getBlindVoteList());
-                /*case PARAM_CHANGE_EVENT_LIST:
-                    return ChangeParamEventList.fromProto(proto.getParamChangeEventList());*/
 
                 default:
                     throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());

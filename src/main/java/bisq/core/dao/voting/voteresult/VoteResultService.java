@@ -17,21 +17,26 @@
 
 package bisq.core.dao.voting.voteresult;
 
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
+import bisq.core.dao.voting.ballot.Ballot;
+import bisq.core.dao.voting.ballot.BallotFactory;
 import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.blindvote.BlindVote;
-import bisq.core.dao.voting.blindvote.BlindVoteList;
-import bisq.core.dao.voting.blindvote.BlindVoteListService;
-import bisq.core.dao.voting.blindvote.BlindVoteUtils;
+import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.ballot.vote.BooleanVote;
 import bisq.core.dao.voting.ballot.vote.LongVote;
 import bisq.core.dao.voting.ballot.vote.Vote;
+import bisq.core.dao.voting.blindvote.BlindVote;
+import bisq.core.dao.voting.blindvote.BlindVoteList;
+import bisq.core.dao.voting.blindvote.BlindVoteListService;
+import bisq.core.dao.voting.blindvote.BlindVoteUtils;
+import bisq.core.dao.voting.blindvote.VoteWithProposalTxId;
+import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -73,6 +78,7 @@ public class VoteResultService {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final PeriodService periodService;
+    private final BallotListService ballotListService;
     private final BlindVoteListService blindVoteListService;
     private final IssuanceService issuanceService;
     @Getter
@@ -89,11 +95,13 @@ public class VoteResultService {
     public VoteResultService(VoteRevealService voteRevealService,
                              StateService stateService,
                              PeriodService periodService,
+                             BallotListService ballotListService,
                              BlindVoteListService blindVoteListService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.periodService = periodService;
+        this.ballotListService = ballotListService;
         this.blindVoteListService = blindVoteListService;
         this.issuanceService = issuanceService;
 
@@ -182,7 +190,12 @@ public class VoteResultService {
                         Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteListService.getBlindVoteList());
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
-                            BallotList ballotList = VoteResultConsensus.getDecryptedBallotList(blindVote.getEncryptedBallotList(), secretKey);
+                            VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptVotes(blindVote.getEncryptedVotes(), secretKey);
+
+                            // We lookup for the proposals we have in our local list which match the txId from the
+                            // voteWithProposalTxIdList and create a ballot list with the proposal and the vote from
+                            // the voteWithProposalTxIdList
+                            BallotList ballotList = createBallotList(voteWithProposalTxIdList);
                             return new DecryptedVote(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, blindVoteStake, ballotList);
                         } else {
                             log.warn("We have a blindVoteTx but we do not have the corresponding blindVote in our local list.\n" +
@@ -192,6 +205,10 @@ public class VoteResultService {
                             return null;
                         }
 
+                    } catch (MissingBallotException e) {
+                        //TODO handle case that we are missing proposals
+                        log.error("We are missing proposals to create the vote result: " + e.toString());
+                        return null;
                     } catch (Throwable e) {
                         log.error("Could not create DecryptedVote: " + e.toString());
                         return null;
@@ -199,6 +216,33 @@ public class VoteResultService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+    }
+
+    private BallotList createBallotList(VoteWithProposalTxIdList voteWithProposalTxIdList) throws MissingBallotException {
+        Map<String, Vote> voteByTxIdMap = voteWithProposalTxIdList.stream()
+                .collect(Collectors.toMap(VoteWithProposalTxId::getProposalTxId, VoteWithProposalTxId::getVote));
+
+        Map<String, Ballot> ballotByTxIdMap = ballotListService.getBallotList().stream()
+                .collect(Collectors.toMap(Ballot::getProposalTxId, ballot -> ballot));
+
+        List<String> missing = new ArrayList<>();
+        List<Ballot> ballots = voteByTxIdMap.entrySet().stream()
+                .map(e -> {
+                    final String txId = e.getKey();
+                    if (ballotByTxIdMap.containsKey(txId)) {
+                        final Ballot ballot = ballotByTxIdMap.get(txId);
+                        return BallotFactory.getBallot(ballot.getProposal(), e.getValue());
+                    } else {
+                        missing.add(txId);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (!missing.isEmpty())
+            throw new MissingBallotException(ballots, missing);
+
+        return new BallotList(ballots);
     }
 
     private Map<byte[], Long> getStakeByHashOfBlindVoteListMap(Set<DecryptedVote> decryptedVotes) {
@@ -380,6 +424,7 @@ public class VoteResultService {
     private boolean isInVoteResultPhase(int chainHeight) {
         return periodService.getFirstBlockOfPhase(chainHeight, DaoPhase.Phase.RESULT) == chainHeight;
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Inner classes

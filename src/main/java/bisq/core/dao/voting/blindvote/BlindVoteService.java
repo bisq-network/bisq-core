@@ -30,8 +30,8 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
 
@@ -127,14 +127,14 @@ public class BlindVoteService {
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            final BallotList sortedBallotList = getSortedBallotList();
-            log.info("BallotList used in blind vote. sortedBallotList={}", sortedBallotList);
+            final VoteWithProposalTxIdList voteWithProposalTxIdList = getSortedVoteWithProposalTxIdList();
+            log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
 
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            byte[] encryptedBallotList = BlindVoteConsensus.getEncryptedBallotList(sortedBallotList, secretKey);
+            byte[] encryptedVotes = BlindVoteConsensus.getEncryptedVotes(voteWithProposalTxIdList, secretKey);
 
-            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedBallotList);
-            log.info("Sha256Ripemd160 hash of encryptedBallotList: " + Utilities.bytesAsHexString(hash));
+            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedVotes);
+            log.info("Sha256Ripemd160 hash of encryptedVotes: " + Utilities.bytesAsHexString(hash));
             byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
 
             final Transaction blindVoteTx = getBlindVoteTx(stake, getBlindVoteFee(), opReturnData);
@@ -174,7 +174,7 @@ public class BlindVoteService {
             // in worst case if it does not succeed the blind vote will be ignored anyway.
             // Inconsistently propagated blind votes in the p2p network could have potentially worse effects.
 
-            BlindVote blindVote = createAndStoreBlindVote(encryptedBallotList, blindVoteTx, stake, secretKey);
+            BlindVote blindVote = createAndStoreBlindVote(encryptedVotes, blindVoteTx, stake, secretKey);
 
             boolean success = addToP2pNetwork(blindVote);
             if (success) {
@@ -195,12 +195,19 @@ public class BlindVoteService {
         return BlindVoteConsensus.getFee(stateService, stateService.getChainHeight());
     }
 
+    public VoteWithProposalTxIdList getSortedVoteWithProposalTxIdList() {
+        final List<VoteWithProposalTxId> list = getSortedBallotList().stream()
+                .map(ballot -> new VoteWithProposalTxId(ballot.getProposalTxId(), ballot.getVote()))
+                .collect(Collectors.toList());
+        return new VoteWithProposalTxIdList(list);
+    }
+
     public BallotList getSortedBallotList() {
-        final List<Ballot> ballots = ballotListService.getBallotList().stream()
+        final List<Ballot> list = ballotListService.getBallotList().stream()
                 .filter(ballot -> proposalValidator.isValid(ballot.getProposal()))
                 .collect(Collectors.toList());
-        BlindVoteConsensus.sortProposalList(ballots);
-        return new BallotList(ballots);
+        BlindVoteConsensus.sortBallotList(list);
+        return new BallotList(list);
     }
 
 
@@ -208,10 +215,12 @@ public class BlindVoteService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVote createAndStoreBlindVote(byte[] encryptedBallotList, Transaction blindVoteTx, Coin stake,
+    private BlindVote createAndStoreBlindVote(byte[] encryptedVotes, Transaction blindVoteTx, Coin stake,
                                               SecretKey secretKey) {
-        BlindVote blindVote = new BlindVote(encryptedBallotList, blindVoteTx.getHashAsString(), stake.value);
+        BlindVote blindVote = new BlindVote(encryptedVotes, blindVoteTx.getHashAsString(), stake.value);
         blindVoteListService.addMyBlindVote(blindVote);
+
+        //TODO is it needed to maintain myVoteList extra?
         myVoteListService.createAndAddNewMyVote(getSortedBallotList(), secretKey, blindVote);
         return blindVote;
     }

@@ -42,4 +42,12 @@ public class VoteResultException extends Exception {
     public VoteResultException(Throwable cause) {
         super(cause);
     }
+
+    @Override
+    public String toString() {
+        return "VoteResultException{" +
+                "\n     blindVotePayload=" + blindVotePayload +
+                "\n     cause=" + getCause() +
+                "\n} " + super.toString();
+    }
 }

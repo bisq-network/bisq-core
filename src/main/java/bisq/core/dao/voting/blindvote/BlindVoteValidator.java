@@ -55,8 +55,8 @@ public class BlindVoteValidator {
 
     private void validateDataFields(BlindVote blindVote) throws ValidationException {
         try {
-            checkNotNull(blindVote.getEncryptedBallotList(), "encryptedProposalList must not be null");
-            checkArgument(blindVote.getEncryptedBallotList().length > 0, "encryptedProposalList must not be empty");
+            checkNotNull(blindVote.getEncryptedVotes(), "encryptedProposalList must not be null");
+            checkArgument(blindVote.getEncryptedVotes().length > 0, "encryptedProposalList must not be empty");
             checkNotNull(blindVote.getTxId(), "txId must not be null");
             checkArgument(blindVote.getTxId().length() > 0, "txId must not be empty");
             checkArgument(blindVote.getStake() > 0, "stake must be positive");

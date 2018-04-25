@@ -45,8 +45,7 @@ public class BooleanVote extends Vote {
     @Override
     public Message toProtoMessage() {
         return getVoteBuilder()
-                .setBooleanVote(PB.BooleanVote.newBuilder()
-                        .setAccepted(accepted))
+                .setBooleanVote(PB.BooleanVote.newBuilder().setAccepted(accepted))
                 .build();
     }
 

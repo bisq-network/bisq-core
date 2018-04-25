@@ -93,8 +93,8 @@ public abstract class Ballot implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected Ballot(Proposal proposal,
-                     @Nullable Vote vote) {
+    public Ballot(Proposal proposal,
+                  @Nullable Vote vote) {
         this.proposal = proposal;
         this.vote = vote;
     }
@@ -136,7 +136,7 @@ public abstract class Ballot implements PersistablePayload {
 
     abstract public ProposalType getType();
 
-    public String getTxId() {
+    public String getProposalTxId() {
         return proposal.getTxId();
     }
 
