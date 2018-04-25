@@ -19,14 +19,14 @@ package bisq.core.dao;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotListService;
@@ -34,13 +34,13 @@ import bisq.core.dao.voting.ballot.BallotWithTransaction;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.myvote.MyVote;
-import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.proposal.ProposalConsensus;
 import bisq.core.dao.voting.ballot.proposal.ProposalService;
 import bisq.core.dao.voting.ballot.vote.Vote;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.myvote.MyVote;
+import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
@@ -307,5 +307,21 @@ public class DaoFacade {
 
     public Optional<TxType> getTxType(String txId) {
         return stateService.getTxType(txId);
+    }
+
+    public boolean isTxOutputSpendable(String txId, int index) {
+        return stateService.isTxOutputSpendable(txId, index);
+    }
+
+    public Set<TxOutput> getLockedInBondOutputs() {
+        return stateService.getLockedInBondOutputs();
+    }
+
+    public boolean containsTx(String txId) {
+        return stateService.containsTx(txId);
+    }
+
+    public boolean isBsqTxOutputType(TxOutput txOutput) {
+        return stateService.isBsqTxOutputType(txOutput);
     }
 }

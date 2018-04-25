@@ -17,7 +17,7 @@
 
 package bisq.core.btc.wallet;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.DaoFacade;
 
 import org.bitcoinj.core.TransactionOutput;
 
@@ -31,18 +31,18 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BsqCoinSelector extends BisqDefaultCoinSelector {
-    private final StateService stateService;
+    private DaoFacade daoFacade;
 
     @Inject
-    public BsqCoinSelector(StateService stateService) {
+    public BsqCoinSelector(DaoFacade daoFacade) {
         super(true);
-        this.stateService = stateService;
+        this.daoFacade = daoFacade;
     }
 
     @Override
     protected boolean isTxOutputSpendable(TransactionOutput output) {
         // output.getParentTransaction() cannot be null as it is checked in calling method
         return output.getParentTransaction() != null &&
-                stateService.isTxOutputSpendable(output.getParentTransaction().getHashAsString(), output.getIndex());
+                daoFacade.isTxOutputSpendable(output.getParentTransaction().getHashAsString(), output.getIndex());
     }
 }

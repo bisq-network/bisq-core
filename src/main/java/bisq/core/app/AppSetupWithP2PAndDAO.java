@@ -21,6 +21,7 @@ import bisq.core.dao.DaoSetup;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
+import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
@@ -46,6 +47,7 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  AccountAgeWitnessService accountAgeWitnessService,
                                  FilterManager filterManager,
                                  DaoSetup daoSetup,
+                                 MyVoteListService myVoteListService,
                                  MyBallotListService myBallotListService,
                                  BallotListService ballotListService,
                                  BlindVoteListService blindVoteListService) {
@@ -55,9 +57,12 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                 tradeStatisticsManager,
                 accountAgeWitnessService,
                 filterManager);
+
         this.daoSetup = daoSetup;
-        this.persistedDataHosts.add(myBallotListService);
-        this.persistedDataHosts.add(ballotListService);
+
+        persistedDataHosts.add(myVoteListService);
+        persistedDataHosts.add(myBallotListService);
+        persistedDataHosts.add(ballotListService);
         persistedDataHosts.add(blindVoteListService);
     }
 

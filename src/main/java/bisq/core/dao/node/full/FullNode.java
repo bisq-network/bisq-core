@@ -21,7 +21,6 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -54,13 +53,12 @@ public class FullNode extends BsqNode {
     @SuppressWarnings("WeakerAccess")
     @Inject
     public FullNode(StateService stateService,
-                    PeriodService periodService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     FullNodeParserFacade fullNodeParserFacade,
                     JsonBlockChainExporter jsonBlockChainExporter,
                     FullNodeNetworkService fullNodeNetworkService) {
-        super(stateService, periodService, snapshotManager, p2PService);
+        super(stateService, snapshotManager, p2PService);
         this.fullNodeParserFacade = fullNodeParserFacade;
         this.jsonBlockChainExporter = jsonBlockChainExporter;
         this.fullNodeNetworkService = fullNodeNetworkService;
