@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Hides implementation details how we access parser. For full node there are asynchronous calls vai the rp service
+ * Hides implementation details how we access parser. For full node there are asynchronous calls via the rp service
  * to the parser. The rpc service runs in a separate thread. The parser runs in user thread.
  */
 @Slf4j
@@ -81,6 +81,8 @@ public class FullNodeParserFacade {
                         List<Tx> txList = resultTuple.second;
                         Block block = fullNodeParser.parseBlock(resultTuple.first, txList);
                         newBlockHandler.accept(block);
+
+                        // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
                         if (blockHeight < chainHeadHeight) {
                             final int newBlockHeight = blockHeight + 1;
                             parseBlockAsync(newBlockHeight, chainHeadHeight, newBlockHandler, errorHandler);

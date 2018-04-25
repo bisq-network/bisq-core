@@ -17,11 +17,11 @@
 
 package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.voting.ValidationException;
 
 import javax.inject.Inject;
 

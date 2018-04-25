@@ -1,4 +1,4 @@
-package bisq.core.dao.exceptions;
+package bisq.core.dao.voting;
 
 import bisq.core.dao.state.blockchain.Tx;
 
@@ -35,16 +35,5 @@ public class ValidationException extends Exception {
     public ValidationException(Throwable cause, Tx tx) {
         super(cause);
         this.tx = tx;
-    }
-
-    @Override
-    public String toString() {
-        return "ValidationException{" +
-                "\n     message=" + getMessage() +
-                "\n     cause.message=" + getCause().getMessage() +
-                "\n     requestedBsq=" + (requestedBsq == null ? "null" : requestedBsq) +
-                ",\n     minRequestAmount=" + (minRequestAmount == null ? "null" : minRequestAmount) +
-                ",\n     txId=" + (tx == null ? "null" : tx.getId()) +
-                "\n} " + super.toString();
     }
 }

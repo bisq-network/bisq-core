@@ -19,7 +19,6 @@ package bisq.core.dao;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.period.DaoPhase;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.BlockListener;
@@ -28,6 +27,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.BallotWithTransaction;

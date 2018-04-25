@@ -17,9 +17,9 @@
 
 package bisq.core.dao.voting.proposal.compensation;
 
-import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.period.PeriodService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 
