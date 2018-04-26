@@ -67,6 +67,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
     public static final String SPECIFIC_BANKS_ID = "SPECIFIC_BANKS";
     public static final String SWISH_ID = "SWISH";
     public static final String ALI_PAY_ID = "ALI_PAY";
+    public static final String WECHAT_PAY_ID = "WECHAT_PAY";
     public static final String CLEAR_X_CHANGE_ID = "CLEAR_X_CHANGE";
     public static final String CHASE_QUICK_PAY_ID = "CHASE_QUICK_PAY";
     public static final String INTERAC_E_TRANSFER_ID = "INTERAC_E_TRANSFER";
@@ -91,6 +92,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
     public static PaymentMethod SPECIFIC_BANKS;
     public static PaymentMethod SWISH;
     public static PaymentMethod ALI_PAY;
+    public static PaymentMethod WECHAT_PAY;
     public static PaymentMethod CLEAR_X_CHANGE;
     public static PaymentMethod CHASE_QUICK_PAY;
     public static PaymentMethod INTERAC_E_TRANSFER;
@@ -208,6 +210,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
 
                     // China
                     ALI_PAY = new PaymentMethod(ALI_PAY_ID, DAY, maxTradeLimitLowRisk),
+                    WECHAT_PAY = new PaymentMethod(WECHAT_PAY_ID, DAY, maxTradeLimitLowRisk),
 
                     // Altcoins
                     BLOCK_CHAINS = new PaymentMethod(BLOCK_CHAINS_ID, DAY, maxTradeLimitVeryLowRisk)
