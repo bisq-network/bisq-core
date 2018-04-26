@@ -27,8 +27,10 @@ import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
-import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 /**
  * Base class for the lite and full node.
@@ -43,27 +45,64 @@ public abstract class BsqNode {
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
-    @Getter
+    private final P2PServiceListener p2PServiceListener;
     protected boolean parseBlockchainComplete;
     protected boolean p2pNetworkReady;
+    @Setter
+    @Nullable
+    protected ErrorMessageHandler errorMessageHandler;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @SuppressWarnings("WeakerAccess")
     @Inject
     public BsqNode(StateService stateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
-
         this.p2PService = p2PService;
         this.stateService = stateService;
 
         genesisTxId = stateService.getGenesisTxId();
         genesisBlockHeight = stateService.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
+
+        p2PServiceListener = new P2PServiceListener() {
+            @Override
+            public void onTorNodeReady() {
+            }
+
+            @Override
+            public void onHiddenServicePublished() {
+            }
+
+            @Override
+            public void onSetupFailed(Throwable throwable) {
+            }
+
+            @Override
+            public void onRequestCustomBridges() {
+            }
+
+            @Override
+            public void onDataReceived() {
+            }
+
+            @Override
+            public void onNoSeedNodeAvailable() {
+                onP2PNetworkReady();
+            }
+
+            @Override
+            public void onNoPeersAvailable() {
+            }
+
+            @Override
+            public void onUpdatedDataReceived() {
+                onP2PNetworkReady();
+            }
+        };
     }
 
 
@@ -71,7 +110,7 @@ public abstract class BsqNode {
     // Public methods
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract void start(ErrorMessageHandler errorMessageHandler);
+    public abstract void start();
 
     public abstract void shutDown();
 
@@ -83,51 +122,19 @@ public abstract class BsqNode {
     @SuppressWarnings("WeakerAccess")
     protected void onInitialized() {
         applySnapshot();
+
         if (p2PService.isBootstrapped()) {
             log.info("onAllServicesInitialized: isBootstrapped");
             onP2PNetworkReady();
         } else {
-            p2PService.addP2PServiceListener(new P2PServiceListener() {
-                @Override
-                public void onTorNodeReady() {
-                }
-
-                @Override
-                public void onHiddenServicePublished() {
-                }
-
-                @Override
-                public void onSetupFailed(Throwable throwable) {
-                }
-
-                @Override
-                public void onRequestCustomBridges() {
-                }
-
-                @Override
-                public void onDataReceived() {
-                }
-
-                @Override
-                public void onNoSeedNodeAvailable() {
-                    onP2PNetworkReady();
-                }
-
-                @Override
-                public void onNoPeersAvailable() {
-                }
-
-                @Override
-                public void onUpdatedDataReceived() {
-                    onP2PNetworkReady();
-                }
-            });
+            p2PService.addP2PServiceListener(p2PServiceListener);
         }
     }
 
     @SuppressWarnings("WeakerAccess")
     protected void onP2PNetworkReady() {
         p2pNetworkReady = true;
+        p2PService.removeP2PServiceListener(p2PServiceListener);
     }
 
     @SuppressWarnings("WeakerAccess")

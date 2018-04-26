@@ -84,19 +84,19 @@ public abstract class BsqParser {
     // Performance-wise the recursion does not hurt (e.g. 5-20 ms).
     // The RPC requestTransaction is the bottleneck.
     protected void recursiveFindBsqTxs(List<Tx> bsqTxsInBlock,
-                                       List<Tx> transactions,
+                                       List<Tx> txs,
                                        int blockHeight,
                                        int recursionCounter,
                                        int maxRecursions) {
         // The set of txIds of txs which are used for inputs of another tx in same block
-        Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(transactions);
+        Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(txs);
 
         List<Tx> txsWithoutInputsFromSameBlock = new ArrayList<>();
         List<Tx> txsWithInputsFromSameBlock = new ArrayList<>();
 
         // First we find the txs which have no intra-block inputs
         outerLoop:
-        for (Tx tx : transactions) {
+        for (Tx tx : txs) {
             for (TxInput input : tx.getInputs()) {
                 if (intraBlockSpendingTxIdSet.contains(input.getConnectedTxOutputTxId())) {
                     // We have an input from one of the intra-block-transactions, so we cannot process that tx now.
@@ -109,7 +109,7 @@ public abstract class BsqParser {
             // txsWithoutInputsFromSameBlock.
             txsWithoutInputsFromSameBlock.add(tx);
         }
-        checkArgument(txsWithInputsFromSameBlock.size() + txsWithoutInputsFromSameBlock.size() == transactions.size(),
+        checkArgument(txsWithInputsFromSameBlock.size() + txsWithoutInputsFromSameBlock.size() == txs.size(),
                 "txsWithInputsFromSameBlock.size + txsWithoutInputsFromSameBlock.size != transactions.size");
 
         // Usual values is up to 25

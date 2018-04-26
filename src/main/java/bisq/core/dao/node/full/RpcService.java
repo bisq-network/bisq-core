@@ -25,7 +25,6 @@ import bisq.core.dao.state.blockchain.TxOutput;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.util.Tuple2;
 import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
@@ -87,7 +86,7 @@ public class RpcService {
     private BtcdDaemon daemon;
 
     // We could use multiple threads but then we need to support ordering of results in a queue
-    // Kepp that for optimization after measuring performance differences
+    // Keep that for optimization after measuring performance differences
     private final ListeningExecutorService executor = Utilities.getSingleThreadExecutor("RpcService");
 
 
@@ -109,7 +108,12 @@ public class RpcService {
         this.dumpBlockchainData = dumpBlockchainData;
     }
 
-    public void setup(ResultHandler resultHandler, Consumer<Throwable> errorHandler) {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    void setup(ResultHandler resultHandler, Consumer<Throwable> errorHandler) {
         ListenableFuture<Void> future = executor.submit(() -> {
             try {
                 long startTs = System.currentTimeMillis();
@@ -156,25 +160,32 @@ public class RpcService {
         });
     }
 
-    public void registerBlockHandler(Consumer<Block> blockHandler) {
+    void addNewBtcBlockHandler(Consumer<bisq.core.dao.state.blockchain.Block> btcBlockHandler,
+                               Consumer<Throwable> errorHandler) {
         daemon.addBlockListener(new BlockListener() {
             @Override
-            public void blockDetected(Block block) {
-                if (block != null) {
-                    log.info("New block received: height={}, id={}", block.getHeight(), block.getHash());
-                    if (block.getHeight() != null && block.getHash() != null) {
-                        UserThread.execute(() -> blockHandler.accept(block));
-                    } else {
-                        log.warn("We received a block with block.getHeight()=null or block.getHash()=null. That should not happen.");
-                    }
-                } else {
-                    log.warn("We received a block with value null. That should not happen.");
-                }
+            public void blockDetected(Block btcdBlock) {
+                log.info("New block received: height={}, id={}", btcdBlock.getHeight(), btcdBlock.getHash());
+                // Once we receive a new btcdBlock we request all txs for it
+                requestTxs(btcdBlock,
+                        txList -> {
+                            // We received all txs for that block. We map to userThread to notify result handler
+                            UserThread.execute(() -> {
+                                // After we received the tx list for that block we create a temp Block which
+                                // contains all BTC txs.
+                                btcBlockHandler.accept(new bisq.core.dao.state.blockchain.Block(btcdBlock.getHeight(),
+                                        btcdBlock.getTime(),
+                                        btcdBlock.getHash(),
+                                        btcdBlock.getPreviousBlockHash(),
+                                        ImmutableList.copyOf(txList)));
+                            });
+                        },
+                        throwable -> UserThread.execute(() -> errorHandler.accept(throwable)));
             }
         });
     }
 
-    public void requestChainHeadHeight(Consumer<Integer> resultHandler, Consumer<Throwable> errorHandler) {
+    void requestChainHeadHeight(Consumer<Integer> resultHandler, Consumer<Throwable> errorHandler) {
         ListenableFuture<Integer> future = executor.submit(client::getBlockCount);
         Futures.addCallback(future, new FutureCallback<Integer>() {
             public void onSuccess(Integer chainHeadHeight) {
@@ -187,18 +198,24 @@ public class RpcService {
         });
     }
 
-    public void requestBlockWithAllTransactions(int blockHeight, Consumer<Tuple2<Block, List<Tx>>> resultHandler, Consumer<Throwable> errorHandler) {
-        ListenableFuture<Tuple2<Block, List<Tx>>> future = executor.submit(() -> {
+    void requestBtcBlock(int blockHeight,
+                         Consumer<bisq.core.dao.state.blockchain.Block> resultHandler,
+                         Consumer<Throwable> errorHandler) {
+        ListenableFuture<bisq.core.dao.state.blockchain.Block> future = executor.submit(() -> {
             String blockHash = client.getBlockHash(blockHeight);
-            Block block = client.getBlock(blockHash);
-            List<Tx> txList = getTxList(block);
-            return new Tuple2<>(block, txList);
+            Block btcdBlock = client.getBlock(blockHash);
+            List<Tx> txList = getTxList(btcdBlock);
+            return new bisq.core.dao.state.blockchain.Block(btcdBlock.getHeight(),
+                    btcdBlock.getTime(),
+                    btcdBlock.getHash(),
+                    btcdBlock.getPreviousBlockHash(),
+                    ImmutableList.copyOf(txList));
         });
 
-        Futures.addCallback(future, new FutureCallback<Tuple2<Block, List<Tx>>>() {
+        Futures.addCallback(future, new FutureCallback<bisq.core.dao.state.blockchain.Block>() {
             @Override
-            public void onSuccess(Tuple2<Block, List<Tx>> result) {
-                UserThread.execute(() -> resultHandler.accept(result));
+            public void onSuccess(bisq.core.dao.state.blockchain.Block block) {
+                UserThread.execute(() -> resultHandler.accept(block));
             }
 
             @Override
@@ -208,18 +225,23 @@ public class RpcService {
         });
     }
 
-    public void requestAllTransactionsOfBlock(Block block, Consumer<List<Tx>> resultHandler, Consumer<Throwable> errorHandler) {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private void requestTxs(Block block, Consumer<List<Tx>> resultHandler, Consumer<Throwable> errorHandler) {
         ListenableFuture<List<Tx>> future = executor.submit(() -> getTxList(block));
 
         Futures.addCallback(future, new FutureCallback<List<Tx>>() {
             @Override
             public void onSuccess(List<Tx> result) {
-                UserThread.execute(() -> resultHandler.accept(result));
+                resultHandler.accept(result);
             }
 
             @Override
             public void onFailure(@NotNull Throwable throwable) {
-                UserThread.execute(() -> errorHandler.accept(throwable));
+                errorHandler.accept(throwable);
             }
         });
     }
@@ -239,40 +261,7 @@ public class RpcService {
         return txList;
     }
 
-
-    // TODO only used in tests
-    public void requestBlock(int blockHeight, Consumer<Block> resultHandler, Consumer<Throwable> errorHandler) {
-        ListenableFuture<Block> future = executor.submit(() -> {
-            final String blockHash = client.getBlockHash(blockHeight);
-            return client.getBlock(blockHash);
-        });
-
-        Futures.addCallback(future, new FutureCallback<Block>() {
-            @Override
-            public void onSuccess(Block block) {
-                UserThread.execute(() -> resultHandler.accept(block));
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable throwable) {
-                UserThread.execute(() -> errorHandler.accept(throwable));
-            }
-        });
-    }
-
-    public void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
-        try {
-            Transaction transaction = requestTx(txId);
-            final BigDecimal fee = transaction.getFee();
-            if (fee != null)
-                feesByBlock.put(blockHeight, Math.abs(fee.multiply(BigDecimal.valueOf(Coin.COIN.value)).longValue()));
-        } catch (BitcoindException | CommunicationException e) {
-            log.error("error at requestFees with txId={}, blockHeight={}", txId, blockHeight);
-            throw new RpcException(e.getMessage(), e);
-        }
-    }
-
-    public Tx requestTx(String txId, int blockHeight) throws RpcException {
+    private Tx requestTx(String txId, int blockHeight) throws RpcException {
         try {
             RawTransaction rawTransaction = requestRawTransaction(txId);
             // rawTransaction.getTime() is in seconds but we keep it in ms internally
@@ -339,4 +328,17 @@ public class RpcService {
     private Transaction requestTx(String txId) throws BitcoindException, CommunicationException {
         return client.getTransaction(txId);
     }
+
+    private void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
+        try {
+            Transaction transaction = requestTx(txId);
+            final BigDecimal fee = transaction.getFee();
+            if (fee != null)
+                feesByBlock.put(blockHeight, Math.abs(fee.multiply(BigDecimal.valueOf(Coin.COIN.value)).longValue()));
+        } catch (BitcoindException | CommunicationException e) {
+            log.error("error at requestFees with txId={}, blockHeight={}", txId, blockHeight);
+            throw new RpcException(e.getMessage(), e);
+        }
+    }
+
 }

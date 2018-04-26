@@ -20,7 +20,6 @@ package bisq.core.dao;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.full.FullNode;
 import bisq.core.dao.node.full.FullNodeParser;
-import bisq.core.dao.node.full.FullNodeParserFacade;
 import bisq.core.dao.node.full.RpcService;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.json.JsonBlockChainExporter;
@@ -85,7 +84,6 @@ public class DaoModule extends AppModule {
         bind(BsqNodeProvider.class).in(Singleton.class);
         bind(RpcService.class).in(Singleton.class);
         bind(FullNode.class).in(Singleton.class);
-        bind(FullNodeParserFacade.class).in(Singleton.class);
         bind(FullNodeNetworkService.class).in(Singleton.class);
         bind(FullNodeParser.class).in(Singleton.class);
         bind(LiteNode.class).in(Singleton.class);

@@ -57,27 +57,34 @@ public class FullNodeParser extends BsqParser {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Package private
+    // Package scope
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    Block parseBlock(com.neemre.btcdcli4j.core.domain.Block btcdBlock, List<Tx> txList) throws BlockNotConnectingException {
-        stateService.setNewBlockHeight(btcdBlock.getHeight());
+    /**
+     *
+     * @param btcBlock  Contains all transactions of a BTC block
+     * @return bsqBlock: Is a clone of btcBlock but filtered so it contains only bsq transactions
+     * @throws BlockNotConnectingException If new block does not connect to previous block
+     */
+    Block parseBlock(Block btcBlock) throws BlockNotConnectingException {
+        final int blockHeight = btcBlock.getHeight();
+        stateService.setNewBlockHeight(blockHeight);
 
         long startTs = System.currentTimeMillis();
-        List<Tx> bsqTxsInBlock = findBsqTxsInBlock(btcdBlock, txList);
+        List<Tx> bsqTxs = getBsqTxsFromBlock(btcBlock);
 
-        final Block block = new Block(btcdBlock.getHeight(),
-                btcdBlock.getTime(),
-                btcdBlock.getHash(),
-                btcdBlock.getPreviousBlockHash(),
-                ImmutableList.copyOf(bsqTxsInBlock));
+        final Block bsqBlock = new Block(blockHeight,
+                btcBlock.getTime(),
+                btcBlock.getHash(),
+                btcBlock.getPreviousBlockHash(),
+                ImmutableList.copyOf(bsqTxs));
 
-        if (blockValidator.validate(block))
-            stateService.addNewBlock(block);
+        if (blockValidator.validate(bsqBlock))
+            stateService.addNewBlock(bsqBlock);
 
-        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxsInBlock.size={}",
-                System.currentTimeMillis() - startTs, block.getHeight(), bsqTxsInBlock.size());
-        return block;
+        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
+                System.currentTimeMillis() - startTs, blockHeight, bsqTxs.size());
+        return bsqBlock;
     }
 
 
@@ -85,8 +92,8 @@ public class FullNodeParser extends BsqParser {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private List<Tx> findBsqTxsInBlock(com.neemre.btcdcli4j.core.domain.Block btcdBlock, List<Tx> txList) {
-        int blockHeight = btcdBlock.getHeight();
+    private List<Tx> getBsqTxsFromBlock(Block block) {
+        int blockHeight = block.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 
         // Check if the new block is the same chain we have built on.
@@ -96,18 +103,19 @@ public class FullNodeParser extends BsqParser {
         long startTs = System.currentTimeMillis();
 
         // We check first for genesis tx
-        for (Tx tx : txList) {
+        for (Tx tx : block.getTxs()) {
             checkForGenesisTx(blockHeight, bsqTxsInBlock, tx);
         }
         log.debug("Requesting {} transactions took {} ms",
-                btcdBlock.getTx().size(), System.currentTimeMillis() - startTs);
+                block.getTxs().size(), System.currentTimeMillis() - startTs);
+
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).
         // Realistically we don't expect more then a few recursive calls.
         // There are some blocks with testing such dependency chains like block 130768 where at each iteration only
         // one get resolved.
         // Lately there is a patter with 24 iterations observed
-        recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
+        recursiveFindBsqTxs(bsqTxsInBlock, block.getTxs(), blockHeight, 0, 5300);
 
         return bsqTxsInBlock;
     }

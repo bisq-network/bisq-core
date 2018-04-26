@@ -28,9 +28,11 @@ import bisq.core.dao.state.blockchain.Block;
 import bisq.network.p2p.P2PService;
 
 import bisq.common.UserThread;
-import bisq.common.handlers.ErrorMessageHandler;
+import bisq.common.handlers.ResultHandler;
 
 import javax.inject.Inject;
+
+import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,10 +43,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FullNode extends BsqNode {
 
-    private final FullNodeParserFacade fullNodeParserFacade;
+    private final RpcService rpcService;
+    private final FullNodeParser fullNodeParser;
     private final FullNodeNetworkService fullNodeNetworkService;
     private final JsonBlockChainExporter jsonBlockChainExporter;
-    private boolean blockHandlerAdded;
+    private boolean addBlockHandlerAdded;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -56,11 +59,14 @@ public class FullNode extends BsqNode {
     public FullNode(StateService stateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    FullNodeParserFacade fullNodeParserFacade,
+                    RpcService rpcService,
+                    FullNodeParser fullNodeParser,
                     JsonBlockChainExporter jsonBlockChainExporter,
                     FullNodeNetworkService fullNodeNetworkService) {
         super(stateService, snapshotManager, p2PService);
-        this.fullNodeParserFacade = fullNodeParserFacade;
+        this.rpcService = rpcService;
+        this.fullNodeParser = fullNodeParser;
+
         this.jsonBlockChainExporter = jsonBlockChainExporter;
         this.fullNodeNetworkService = fullNodeNetworkService;
     }
@@ -71,22 +77,19 @@ public class FullNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void start(ErrorMessageHandler errorMessageHandler) {
-        fullNodeParserFacade.setupAsync(() -> {
+    public void start() {
+        rpcService.setup(() -> {
                     super.onInitialized();
                     startParseBlocks();
                 },
-                throwable -> {
-                    log.error(throwable.toString());
-                    throwable.printStackTrace();
-                    errorMessageHandler.handleErrorMessage("Initializing BsqFullNode failed: Error=" + throwable.toString());
-                });
+                this::handleError);
     }
 
     public void shutDown() {
         jsonBlockChainExporter.shutDown();
         fullNodeNetworkService.shutDown();
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Protected
@@ -97,24 +100,27 @@ public class FullNode extends BsqNode {
         requestChainHeadHeightAndParseBlocks(getStartBlockHeight());
     }
 
-    //TODO we get that called multiple times if we have only one seed node (to be fixed in p2p network library)
-    // To prevent that we get our handler registered multiple times we use a flag.
     @Override
     protected void onP2PNetworkReady() {
         super.onP2PNetworkReady();
 
-        if (parseBlockchainComplete && !blockHandlerAdded) {
+        if (parseBlockchainComplete) {
+            addBlockHandler();
+
             final int lastBlockHeight = stateService.getLastBlock().getHeight();
             log.info("onP2PNetworkReady: We run parseBlocksIfNewBlockAvailable with latest block height {}.", lastBlockHeight);
             parseBlocksIfNewBlockAvailable(lastBlockHeight);
-            addBlockHandler();
         }
     }
 
-    private void onNewBlock(Block block) {
-        jsonBlockChainExporter.maybeExport();
-        if (parseBlockchainComplete && p2pNetworkReady)
-            fullNodeNetworkService.publishNewBlock(block);
+    @Override
+    protected void onParseBlockChainComplete() {
+        super.onParseBlockChainComplete();
+
+        if (p2pNetworkReady)
+            addBlockHandler();
+        else
+            log.info("onParseBlockChainComplete but P2P network is not ready yet.");
     }
 
 
@@ -123,34 +129,50 @@ public class FullNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addBlockHandler() {
-        if (!blockHandlerAdded) {
-            blockHandlerAdded = true;
-            fullNodeParserFacade.addBlockHandler(btcdBlock -> fullNodeParserFacade.parseBtcdBlockAsync(btcdBlock,
-                    this::onNewBlock,
-                    throwable -> {
-                        if (throwable instanceof BlockNotConnectingException) {
-                            startReOrgFromLastSnapshot();
-                        } else {
-                            log.error(throwable.toString());
-                            throwable.printStackTrace();
+        if (!addBlockHandlerAdded) {
+            addBlockHandlerAdded = true;
+            rpcService.addNewBtcBlockHandler(btcBlock -> {
+                        try {
+                            Block bsqBlock = fullNodeParser.parseBlock(btcBlock);
+                            onNewBlock(bsqBlock);
+                        } catch (BlockNotConnectingException throwable) {
+                            handleError(throwable);
                         }
-                    }));
+                    },
+                    this::handleError);
         }
     }
 
-    private void requestChainHeadHeightAndParseBlocks(int startBlockHeight) {
-        log.info("parseBlocks startBlockHeight={}", startBlockHeight);
-        fullNodeParserFacade.requestChainHeadHeightAsync(chainHeadHeight -> parseBlocksOnHeadHeight(startBlockHeight, chainHeadHeight),
-                throwable -> {
-                    log.error(throwable.toString());
-                    throwable.printStackTrace();
-                });
+    private void onNewBlock(Block block) {
+        jsonBlockChainExporter.maybeExport();
+
+        if (p2pNetworkReady)
+            fullNodeNetworkService.publishNewBlock(block);
     }
 
-    private void parseBlocksOnHeadHeight(int startBlockHeight, Integer chainHeadHeight) {
-        log.info("parseBlocks with startBlockHeight={} and chainHeadHeight={}", startBlockHeight, chainHeadHeight);
+    private void parseBlocksIfNewBlockAvailable(int chainHeadHeight) {
+        rpcService.requestChainHeadHeight(newChainHeadHeight -> {
+                    if (newChainHeadHeight > chainHeadHeight) {
+                        log.info("During parsing new blocks have arrived. We parse again with those missing blocks." +
+                                "ChainHeadHeight={}, newChainHeadHeight={}", chainHeadHeight, newChainHeadHeight);
+                        parseBlocksOnHeadHeight(chainHeadHeight, newChainHeadHeight);
+                    } else
+                        log.info("parseBlocksIfNewBlockAvailable did not result in a new block, so we complete.");
+                    onParseBlockChainComplete();
+                },
+                this::handleError);
+    }
+
+    private void requestChainHeadHeightAndParseBlocks(int startBlockHeight) {
+        log.info("requestChainHeadHeightAndParseBlocks with startBlockHeight={}", startBlockHeight);
+        rpcService.requestChainHeadHeight(chainHeadHeight -> parseBlocksOnHeadHeight(startBlockHeight, chainHeadHeight),
+                this::handleError);
+    }
+
+    private void parseBlocksOnHeadHeight(int startBlockHeight, int chainHeadHeight) {
         if (startBlockHeight <= chainHeadHeight) {
-            fullNodeParserFacade.parseBlocksAsync(startBlockHeight,
+            log.info("parseBlocks with startBlockHeight={} and chainHeadHeight={}", startBlockHeight, chainHeadHeight);
+            parseBlocks(startBlockHeight,
                     chainHeadHeight,
                     this::onNewBlock,
                     () -> {
@@ -162,19 +184,10 @@ public class FullNode extends BsqNode {
                         parseBlocksIfNewBlockAvailable(chainHeadHeight);
                     }, throwable -> {
                         if (throwable instanceof BlockNotConnectingException) {
-                            BlockNotConnectingException blockNotConnectingException = (BlockNotConnectingException) throwable;
                             final int lastBlockHeight = stateService.getLastBlock().getHeight();
-                            final int receivedBlockHeight = blockNotConnectingException.getBlock().getHeight();
-                            if (receivedBlockHeight > lastBlockHeight + 1) {
-                                // If we missed a block we request missing ones
-                                parseBlocksOnHeadHeight(lastBlockHeight, receivedBlockHeight);
-                            } else {
-                                startReOrgFromLastSnapshot();
-                            }
+                            requestChainHeadHeightAndParseBlocks(lastBlockHeight);
                         } else {
-                            log.error(throwable.toString());
-                            throwable.printStackTrace();
-                            //TODO write error to an errorProperty
+                            handleError(throwable);
                         }
                     });
         } else {
@@ -185,29 +198,44 @@ public class FullNode extends BsqNode {
         }
     }
 
-    private void parseBlocksIfNewBlockAvailable(Integer chainHeadHeight) {
-        fullNodeParserFacade.requestChainHeadHeightAsync(newChainHeadHeight -> {
-                    if (newChainHeadHeight > chainHeadHeight) {
-                        log.info("While parsing new blocks arrived. Parse again with those missing blocks." +
-                                "ChainHeadHeight={}, newChainHeadHeight={}", chainHeadHeight, newChainHeadHeight);
-                        parseBlocksOnHeadHeight(chainHeadHeight, newChainHeadHeight);
-                    } else
-                        log.info("parseBlocksIfNewBlockAvailable did not result in a new block, so we complete.");
-                    onParseBlockChainComplete();
-                },
-                throwable -> {
-                    log.error(throwable.toString());
-                    throwable.printStackTrace();
-                });
+    private void parseBlocks(int startBlockHeight,
+                             int chainHeadHeight,
+                             Consumer<Block> newBlockHandler,
+                             ResultHandler resultHandler,
+                             Consumer<Throwable> errorHandler) {
+        parseBlock(startBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
     }
 
-    @Override
-    protected void onParseBlockChainComplete() {
-        super.onParseBlockChainComplete();
-        if (p2pNetworkReady && !blockHandlerAdded) {
-            addBlockHandler();
-        } else {
-            log.info("onParseBlockChainComplete but P2P network is not ready yet.");
-        }
+    // Recursively request and parse all blocks
+    private void parseBlock(int blockHeight, int chainHeadHeight,
+                            Consumer<Block> newBlockHandler, ResultHandler resultHandler,
+                            Consumer<Throwable> errorHandler) {
+        rpcService.requestBtcBlock(blockHeight,
+                btcBlock -> {
+                    try {
+                        Block bsqBlock = fullNodeParser.parseBlock(btcBlock);
+                        newBlockHandler.accept(bsqBlock);
+
+                        // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
+                        if (blockHeight < chainHeadHeight) {
+                            final int newBlockHeight = blockHeight + 1;
+                            parseBlock(newBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
+                        } else {
+                            // We are done
+                            resultHandler.handleResult();
+                        }
+                    } catch (BlockNotConnectingException e) {
+                        errorHandler.accept(e);
+                    }
+                },
+                errorHandler);
+    }
+
+    private void handleError(Throwable throwable) {
+        final String errorMessage = "Initializing FullNode failed: Error=" + throwable.toString();
+        log.error(errorMessage);
+
+        if (errorMessageHandler != null)
+            errorMessageHandler.handleErrorMessage(errorMessage);
     }
 }

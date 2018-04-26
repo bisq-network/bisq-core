@@ -29,7 +29,8 @@ public class InvalidBlockException extends Exception {
     private final Block receivedBlock;
     private final Block ownBlock;
 
-    public InvalidBlockException(Block receivedBlock, Block ownBlock) {
+    public InvalidBlockException(String msg, Block receivedBlock, Block ownBlock) {
+        super(msg);
         this.receivedBlock = receivedBlock;
         this.ownBlock = ownBlock;
     }

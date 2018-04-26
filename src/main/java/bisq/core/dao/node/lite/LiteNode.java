@@ -30,18 +30,13 @@ import bisq.core.dao.state.blockchain.Block;
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.network.Connection;
 
-import bisq.common.UserThread;
-import bisq.common.handlers.ErrorMessageHandler;
-
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -53,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 public class LiteNode extends BsqNode {
     private final LiteNodeParser liteNodeParser;
     private final LiteNodeNetworkService liteNodeNetworkService;
-    private boolean startParseBlocksRequested;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +62,7 @@ public class LiteNode extends BsqNode {
                     LiteNodeParser liteNodeParser,
                     LiteNodeNetworkService liteNodeNetworkService) {
         super(stateService, snapshotManager, p2PService);
+
         this.liteNodeParser = liteNodeParser;
         this.liteNodeNetworkService = liteNodeNetworkService;
     }
@@ -78,10 +73,11 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void start(ErrorMessageHandler errorMessageHandler) {
+    public void start() {
         super.onInitialized();
     }
 
+    @Override
     public void shutDown() {
         liteNodeNetworkService.shutDown();
     }
@@ -115,21 +111,15 @@ public class LiteNode extends BsqNode {
             }
         });
 
-        // We might get the onP2PNetworkReady called multiple times due bugs in the hanlding in the p2p network
-        // To protect us requesting several times we use a flag
-        // delay a bit to not stress too much at startup
-        if (!parseBlockchainComplete && !startParseBlocksRequested)
-            UserThread.runAfter(this::startParseBlocks, 2);
+        if (!parseBlockchainComplete)
+            startParseBlocks();
     }
 
     // First we request the blocks from a full node
     @Override
     protected void startParseBlocks() {
-        if (!startParseBlocksRequested) {
-            log.info("startParseBlocks");
-            startParseBlocksRequested = true;
-            liteNodeNetworkService.requestBlocks(getStartBlockHeight());
-        }
+        log.info("startParseBlocks");
+        liteNodeNetworkService.requestBlocks(getStartBlockHeight());
     }
 
 
@@ -139,9 +129,9 @@ public class LiteNode extends BsqNode {
 
     // We received the missing blocks
     private void onRequestedBlocksReceived(List<Block> blockList) {
-        log.info("onRequestedBlocksReceived: blocks with {} items", blockList.size());
-        if (blockList.size() > 0)
-            log.info("block height of last item: {}", blockList.get(blockList.size() - 1).getHeight());
+        if (!blockList.isEmpty())
+            log.info("We received blocks from height {} to {}", blockList.get(0).getHeight(),
+                    blockList.get(blockList.size() - 1).getHeight());
 
         // 4000 blocks take about 3 seconds if DAO UI is not displayed or 7 sec. if it is displayed.
         // The updates at block height change are not much optimized yet, so that can be for sure improved
@@ -149,14 +139,7 @@ public class LiteNode extends BsqNode {
         // release it will be a bit of a performance hit. It is a one time event as the snapshots gets created and be
         // used at next startup.
         long startTs = System.currentTimeMillis();
-        for (Block block : blockList) {
-            try {
-                liteNodeParser.parseBlock(block);
-                onNewBlock(block);
-            } catch (BlockNotConnectingException | InvalidBlockException e) {
-                getErrorHandler().accept(e);
-            }
-        }
+        blockList.forEach(this::parseBlock);
         log.info("Parsing of {} blocks took {} sec.", blockList.size(), (System.currentTimeMillis() - startTs) / 1000D);
         onParseBlockChainComplete();
     }
@@ -164,29 +147,22 @@ public class LiteNode extends BsqNode {
     // We received a new block
     private void onNewBlockReceived(Block block) {
         log.info("onNewBlockReceived: block at height {}", block.getHeight());
-        if (!stateService.containsBlock(block)) {
-            try {
+        parseBlock(block);
+    }
+
+    private void parseBlock(Block block) {
+        try {
+            if (!stateService.containsBlock(block))
                 liteNodeParser.parseBlock(block);
-                onNewBlock(block);
-            } catch (BlockNotConnectingException | InvalidBlockException e) {
-                getErrorHandler().accept(e);
-            }
-        }
-    }
-
-    private void onNewBlock(Block block) {
-        log.debug("new block parsed: " + block);
-    }
-
-    @NotNull
-    private Consumer<Throwable> getErrorHandler() {
-        return throwable -> {
+        } catch (BlockNotConnectingException | InvalidBlockException throwable) {
             if (throwable instanceof BlockNotConnectingException) {
                 startReOrgFromLastSnapshot();
             } else {
                 log.error(throwable.toString());
                 throwable.printStackTrace();
+                if (errorMessageHandler != null)
+                    errorMessageHandler.handleErrorMessage(throwable.toString());
             }
-        };
+        }
     }
 }

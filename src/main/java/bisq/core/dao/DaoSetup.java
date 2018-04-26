@@ -23,9 +23,9 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
+import bisq.core.dao.voting.ballot.proposal.ProposalService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.ballot.proposal.ProposalService;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
 
@@ -73,6 +73,8 @@ public class DaoSetup {
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
+        bsqNode.setErrorMessageHandler(errorMessageHandler);
+
         stateService.start();
         proposalService.start();
         voteRevealService.start();
@@ -82,7 +84,7 @@ public class DaoSetup {
         filteredBallotListService.start();
         blindVoteListService.start();
         voteResultService.start();
-        bsqNode.start(errorMessageHandler);
+        bsqNode.start();
     }
 
     public void shutDown() {

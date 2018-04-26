@@ -278,8 +278,9 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                                 startBlockHeight + " / lastReceivedBlockHeight=" + lastReceivedBlockHeight);
                 }
             } else {
-                log.warn("We have started already a requestDataHandshake to peer. nodeAddress=" + peersNodeAddress + "\n" +
-                        "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");
+                log.warn("We have started already a requestDataHandshake for startBlockHeight {} to peer. nodeAddress={}\n" +
+                                "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.",
+                        peersNodeAddress, startBlockHeight);
 
                 UserThread.runAfter(() -> {
                     if (requestBlocksHandlerMap.containsKey(key)) {

@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -70,15 +69,17 @@ public class LiteNodeParser extends BsqParser {
                     receivedBlock.getPreviousBlockHash(), ImmutableList.copyOf(bsqTxsInBlock));
 
             // Check if the blocks are the same
-            if (Arrays.equals(receivedBlock.toProtoMessage().toByteArray(), ownBlock.toProtoMessage().toByteArray())) {
+            if (receivedBlock.equals(ownBlock)) {
                 stateService.addNewBlock(ownBlock);
             } else {
                 // We revert the chain height
+                // TODO test if that has any unwanted effects
                 stateService.setNewBlockHeight(oldChainHeight);
 
-                log.warn("The block we received from the seed node is different than the block we created by our " +
-                        "own parsing.\nBlock from seed node={}\nBlock from own parsing={}", receivedBlock, ownBlock);
-                throw new InvalidBlockException(receivedBlock, ownBlock);
+                final String msg = "The block we received from the seed node is different than the block we created by our " +
+                        "own parsing.\nBlock from seed node=" + receivedBlock + "\nBlock from own parsing={}" + ownBlock;
+                log.warn(msg);
+                throw new InvalidBlockException(msg, receivedBlock, ownBlock);
             }
         }
     }
