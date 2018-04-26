@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.ballot;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
@@ -35,13 +35,12 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
-import java.util.Optional;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens on the P2P network for new proposals and add valid proposals as new ballots to the list.
+ *
  */
 @Slf4j
 public class BallotListService implements PersistedDataHost {
@@ -143,20 +142,8 @@ public class BallotListService implements PersistedDataHost {
                             return false;
                         }
                     })
-                    .ifPresent(ballot -> removeProposalFromList(ballot.getProposal()));
+                    .ifPresent(ballot -> BallotUtils.removeProposalFromBallotList(proposal, ballotList.getList()));
         }
     }
 
-    private void removeProposalFromList(Proposal proposal) {
-        Optional<Ballot> optionalBallot = BallotUtils.findProposalInBallotList(proposal, ballotList.getList());
-        if (optionalBallot.isPresent()) {
-            if (ballotList.remove(optionalBallot.get())) {
-                persist();
-            } else {
-                log.warn("Removal of ballot failed");
-            }
-        } else {
-            log.warn("We called removeProposalFromList at a ballot which was not in our list");
-        }
-    }
 }

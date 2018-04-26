@@ -17,10 +17,10 @@
 
 package bisq.core.dao.voting.ballot;
 
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 
 import java.util.List;
@@ -49,5 +49,9 @@ public class BallotUtils {
     public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, StateService stateService) {
         return periodService.isInPhase(tx.getBlockHeight(), DaoPhase.Phase.PROPOSAL) &&
                 periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight());
+    }
+
+    public static void removeProposalFromBallotList(Proposal proposal, List<Ballot> ballotList) {
+        findProposalInBallotList(proposal, ballotList).ifPresent(ballotList::remove);
     }
 }

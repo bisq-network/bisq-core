@@ -83,7 +83,7 @@ public class State implements PersistableEnvelope {
 
     private final LinkedList<Cycle> cycles;
 
-    private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;  // key is blockHeight
+    private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -260,8 +260,8 @@ public class State implements PersistableEnvelope {
         cycles.add(cycle);
     }
 
-    public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
-        this.paramChangeByBlockHeightMap.put(chainHeight, paramChangeMap);
+    public void setParamChangeMap(int blockHeight, ParamChangeMap paramChangeMap) {
+        paramChangeByBlockHeightMap.put(blockHeight, paramChangeMap);
     }
 
 

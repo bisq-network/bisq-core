@@ -17,13 +17,13 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
-import bisq.network.p2p.storage.payload.AppendOnlyPayload;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
+import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -50,9 +50,6 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
- * <p>
- * We persist all ProposalPayload data in the PersistedEntryMap.
- * Data size on disk for one item is: about 743 bytes (443 bytes is for ownerPubKeyEncoded)
  */
 @Immutable
 @Slf4j
@@ -60,7 +57,7 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
-        CapabilityRequiringPayload, AppendOnlyPayload {
+        CapabilityRequiringPayload, PersistablePayload {
 
     protected final Proposal proposal;
     protected final byte[] ownerPubKeyEncoded;
