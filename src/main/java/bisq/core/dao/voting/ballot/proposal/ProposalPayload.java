@@ -17,13 +17,13 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
+import bisq.network.p2p.storage.payload.AppendOnlyPayload;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
-import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -59,8 +59,8 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
+        CapabilityRequiringPayload, AppendOnlyPayload {
 
     protected final Proposal proposal;
     protected final byte[] ownerPubKeyEncoded;
