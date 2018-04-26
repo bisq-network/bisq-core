@@ -17,13 +17,13 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.network.p2p.storage.payload.AppendOnlyPayload;
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
+import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.JsonExclude;
 import bisq.common.util.Utilities;
 
@@ -55,7 +55,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Slf4j
 @Value
-public final class BlindVotePayload implements LazyProcessedPayload, ProtectedStoragePayload, AppendOnlyPayload,
+public final class BlindVotePayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload {
 
     private final BlindVote blindVote;
