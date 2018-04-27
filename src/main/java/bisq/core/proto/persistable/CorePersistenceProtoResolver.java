@@ -24,6 +24,7 @@ import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
 import bisq.core.dao.voting.myvote.MyVoteList;
+import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
@@ -102,17 +103,17 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return NavigationPath.fromProto(proto.getNavigationPath());
                 case PAYMENT_ACCOUNT_LIST:
                     return PaymentAccountList.fromProto(proto.getPaymentAccountList(), this);
+                case PERSISTABLE_NETWORK_PAYLOAD_LIST:
+                    return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case ACCOUNT_AGE_WITNESS_STORE:
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
-                case PERSISTABLE_NETWORK_PAYLOAD_LIST:
-                    return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case STATE:
                     return State.fromProto(proto.getState());
                 case BALLOT_LIST:
                     return BallotList.fromProto(proto.getBallotList());
-               case MY_VOTE_LIST:
+                case MY_VOTE_LIST:
                     return MyVoteList.fromProto(proto.getMyVoteList());
                 case BLIND_VOTE_LIST:
                     return BlindVoteList.fromProto(proto.getBlindVoteList());
