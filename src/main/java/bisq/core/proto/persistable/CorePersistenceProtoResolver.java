@@ -25,6 +25,7 @@ import bisq.core.dao.param.ParamChangeEventList;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.myvote.MyVoteList;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.payment.AccountAgeWitnessMap;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
@@ -106,6 +107,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return BsqBlockChain.fromProto(proto.getBsqBlockChain());
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
+                case ACCOUNT_AGE_WITNESS_MAP:
+                    return AccountAgeWitnessMap.fromProto(proto.getAccountAgeWitnessMap());
                 case PROPOSAL_LIST:
                     return ProposalList.fromProto(proto.getProposalList());
                 case MY_VOTE_LIST:
