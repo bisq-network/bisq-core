@@ -35,8 +35,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AccountAgeWitnessStorageService extends BaseMapStorageService<AccountAgeWitnessMap, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "AccountAgeWitnessMap";
+public class AccountAgeWitnessStorageService extends BaseMapStorageService<AccountAgeWitnessStore, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "AccountAgeWitnessStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -45,10 +45,9 @@ public class AccountAgeWitnessStorageService extends BaseMapStorageService<Accou
 
     @Inject
     public AccountAgeWitnessStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                           Storage<AccountAgeWitnessMap> persistableNetworkPayloadMapStorage) {
+                                           Storage<AccountAgeWitnessStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
@@ -75,7 +74,7 @@ public class AccountAgeWitnessStorageService extends BaseMapStorageService<Accou
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected AccountAgeWitnessMap createEnvelope() {
-        return new AccountAgeWitnessMap();
+    protected AccountAgeWitnessStore createEnvelope() {
+        return new AccountAgeWitnessStore();
     }
 }

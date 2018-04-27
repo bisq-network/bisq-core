@@ -26,6 +26,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -33,12 +34,17 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * We store only the payload in the PB file to save disc space. The hash of the payload can be created anyway and
+ * is only used as key in the map. So we have a hybrid data structure which is represented as list in the protobuffer
+ * definition and provide a hashMap for the domain access.
+ */
 @Slf4j
-public class TradeStatistics2Map implements PersistableEnvelope {
+public class TradeStatistics2Store implements PersistableEnvelope {
     @Getter
     private Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> map = new ConcurrentHashMap<>();
 
-    TradeStatistics2Map() {
+    TradeStatistics2Store() {
     }
 
 
@@ -46,27 +52,29 @@ public class TradeStatistics2Map implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public TradeStatistics2Map(Map<P2PDataStorage.ByteArray, TradeStatistics2> map) {
-        this.map.putAll(map);
+    private TradeStatistics2Store(List<TradeStatistics2> list) {
+        list.forEach(item -> map.put(P2PDataStorage.getHashAsByteArray(item), item));
     }
 
     public Message toProtoMessage() {
-        // Protobuffer maps don't support bytes as key so we use a hex string
-        Map<String, PB.TradeStatistics2> mapForPB = map.entrySet().stream().
-                collect(Collectors.toMap(e -> e.getKey().getHex(), e -> ((TradeStatistics2) e.getValue()).toProtoTradeStatistics2()));
         return PB.PersistableEnvelope.newBuilder()
-                .setTradeStatistics2Map(PB.TradeStatistics2Map.newBuilder()
-                        .putAllItems(mapForPB))
+                .setTradeStatistics2Store(getBuilder())
                 .build();
     }
 
-    public static PersistableEnvelope fromProto(PB.TradeStatistics2Map proto) {
-        Map<P2PDataStorage.ByteArray, TradeStatistics2> mapFromPB = proto.getItemsMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> new P2PDataStorage.ByteArray(e.getKey()),
-                        e -> TradeStatistics2.fromProto(e.getValue())));
-        return new TradeStatistics2Map(mapFromPB);
+    private PB.TradeStatistics2Store.Builder getBuilder() {
+        final List<PB.TradeStatistics2> protoList = map.values().stream()
+                .map(payload -> (TradeStatistics2) payload)
+                .map(TradeStatistics2::toProtoTradeStatistics2)
+                .collect(Collectors.toList());
+        return PB.TradeStatistics2Store.newBuilder().addAllItems(protoList);
     }
 
+    public static PersistableEnvelope fromProto(PB.TradeStatistics2Store proto) {
+        List<TradeStatistics2> list = proto.getItemsList().stream()
+                .map(TradeStatistics2::fromProto).collect(Collectors.toList());
+        return new TradeStatistics2Store(list);
+    }
     public boolean containsKey(P2PDataStorage.ByteArray hash) {
         return map.containsKey(hash);
     }

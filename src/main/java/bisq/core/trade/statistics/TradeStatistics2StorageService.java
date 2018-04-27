@@ -35,8 +35,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class TradeStatistics2StorageService extends BaseMapStorageService<TradeStatistics2Map, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "TradeStatistics2Map";
+public class TradeStatistics2StorageService extends BaseMapStorageService<TradeStatistics2Store, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "TradeStatistics2Store";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ public class TradeStatistics2StorageService extends BaseMapStorageService<TradeS
 
     @Inject
     public TradeStatistics2StorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                          Storage<TradeStatistics2Map> persistableNetworkPayloadMapStorage) {
+                                          Storage<TradeStatistics2Store> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -75,7 +75,7 @@ public class TradeStatistics2StorageService extends BaseMapStorageService<TradeS
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected TradeStatistics2Map createEnvelope() {
-        return new TradeStatistics2Map();
+    protected TradeStatistics2Store createEnvelope() {
+        return new TradeStatistics2Store();
     }
 }

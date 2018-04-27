@@ -26,6 +26,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -33,12 +34,18 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+
+/**
+ * We store only the payload in the PB file to save disc space. The hash of the payload can be created anyway and
+ * is only used as key in the map. So we have a hybrid data structure which is represented as list in the protobuffer
+ * definition and provide a hashMap for the domain access.
+ */
 @Slf4j
-public class AccountAgeWitnessMap implements PersistableEnvelope {
+public class AccountAgeWitnessStore implements PersistableEnvelope {
     @Getter
     private Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> map = new ConcurrentHashMap<>();
 
-    AccountAgeWitnessMap() {
+    AccountAgeWitnessStore() {
     }
 
 
@@ -46,25 +53,28 @@ public class AccountAgeWitnessMap implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public AccountAgeWitnessMap(Map<P2PDataStorage.ByteArray, AccountAgeWitness> map) {
-        this.map.putAll(map);
+    private AccountAgeWitnessStore(List<AccountAgeWitness> list) {
+        list.forEach(item -> map.put(P2PDataStorage.getHashAsByteArray(item), item));
     }
 
     public Message toProtoMessage() {
-        // Protobuffer maps don't support bytes as key so we use a hex string
-        Map<String, PB.AccountAgeWitness> mapForPB = map.entrySet().stream().
-                collect(Collectors.toMap(e -> e.getKey().getHex(), e -> ((AccountAgeWitness) e.getValue()).toProtoAccountAgeWitness()));
         return PB.PersistableEnvelope.newBuilder()
-                .setAccountAgeWitnessMap(PB.AccountAgeWitnessMap.newBuilder()
-                        .putAllItems(mapForPB))
+                .setAccountAgeWitnessStore(getBuilder())
                 .build();
     }
 
-    public static PersistableEnvelope fromProto(PB.AccountAgeWitnessMap proto) {
-        Map<P2PDataStorage.ByteArray, AccountAgeWitness> mapFromPB = proto.getItemsMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> new P2PDataStorage.ByteArray(e.getKey()),
-                        e -> AccountAgeWitness.fromProto(e.getValue())));
-        return new AccountAgeWitnessMap(mapFromPB);
+    private PB.AccountAgeWitnessStore.Builder getBuilder() {
+        final List<PB.AccountAgeWitness> protoList = map.values().stream()
+                .map(payload -> (AccountAgeWitness) payload)
+                .map(AccountAgeWitness::toProtoAccountAgeWitness)
+                .collect(Collectors.toList());
+        return PB.AccountAgeWitnessStore.newBuilder().addAllItems(protoList);
+    }
+
+    public static PersistableEnvelope fromProto(PB.AccountAgeWitnessStore proto) {
+        List<AccountAgeWitness> list = proto.getItemsList().stream()
+                .map(AccountAgeWitness::fromProto).collect(Collectors.toList());
+        return new AccountAgeWitnessStore(list);
     }
 
     public boolean containsKey(P2PDataStorage.ByteArray hash) {
