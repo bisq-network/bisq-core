@@ -25,6 +25,7 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
@@ -83,12 +84,16 @@ public class TradeStatisticsManager {
     @Inject
     public TradeStatisticsManager(P2PService p2PService,
                                   PriceFeedService priceFeedService,
+                                  TradeStatistics2StorageService tradeStatistics2StorageService,
+                                  AppendOnlyDataStoreService appendOnlyDataStoreService,
                                   @Named(Storage.STORAGE_DIR) File storageDir,
                                   @Named(AppOptionKeys.DUMP_STATISTICS) boolean dumpStatistics) {
         this.p2PService = p2PService;
         this.priceFeedService = priceFeedService;
         this.dumpStatistics = dumpStatistics;
         jsonFileManager = new JsonFileManager(storageDir);
+
+        appendOnlyDataStoreService.addService(tradeStatistics2StorageService);
     }
 
     public void onAllServicesInitialized() {

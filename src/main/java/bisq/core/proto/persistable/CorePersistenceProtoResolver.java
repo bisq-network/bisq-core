@@ -29,6 +29,7 @@ import bisq.core.payment.AccountAgeWitnessMap;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
+import bisq.core.trade.statistics.TradeStatistics2Map;
 import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
 
@@ -109,6 +110,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case ACCOUNT_AGE_WITNESS_MAP:
                     return AccountAgeWitnessMap.fromProto(proto.getAccountAgeWitnessMap());
+                case TRADE_STATISTICS2_MAP:
+                    return TradeStatistics2Map.fromProto(proto.getTradeStatistics2Map());
                 case PROPOSAL_LIST:
                     return ProposalList.fromProto(proto.getProposalList());
                 case MY_VOTE_LIST:
