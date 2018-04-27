@@ -12,20 +12,6 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-javadoc {
-    options.author = true
-    options.addStringOption('Xdoclint:none', '-quiet')
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives javadocJar
-}
-
 repositories {
     jcenter()
     maven { url 'https://jitpack.io' }
