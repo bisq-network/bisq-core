@@ -53,7 +53,7 @@ public class TradeStatistics2Store implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private TradeStatistics2Store(List<TradeStatistics2> list) {
-        list.forEach(item -> map.put(P2PDataStorage.getHashAsByteArray(item), item));
+        list.forEach(item -> map.put(new P2PDataStorage.ByteArray(item.getHash()), item));
     }
 
     public Message toProtoMessage() {

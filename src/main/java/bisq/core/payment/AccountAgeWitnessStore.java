@@ -54,7 +54,7 @@ public class AccountAgeWitnessStore implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private AccountAgeWitnessStore(List<AccountAgeWitness> list) {
-        list.forEach(item -> map.put(P2PDataStorage.getHashAsByteArray(item), item));
+        list.forEach(item -> map.put(new P2PDataStorage.ByteArray(item.getHash()), item));
     }
 
     public Message toProtoMessage() {
