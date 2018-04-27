@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SpecificBanksAccount.class, SameBankAccount.class, NationalBankAccount.class,
-        WesternUnionAccount.class, CashDepositAccount.class, PaymentMethod.class})
+        MoneyGramAccount.class, WesternUnionAccount.class, CashDepositAccount.class, PaymentMethod.class})
 public class ReceiptValidatorTest {
     private ReceiptValidator validator;
     private PaymentAccount account;
@@ -203,5 +203,23 @@ public class ReceiptValidatorTest {
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(false);
 
         assertTrue(validator.isValid());
+    }
+
+    @Test
+    public void testIsValidWhenMoneyGramAccount() {
+        account = mock(MoneyGramAccount.class);
+
+        PaymentMethod.MONEY_GRAM = mock(PaymentMethod.class);
+
+        when(offer.getPaymentMethod()).thenReturn(PaymentMethod.MONEY_GRAM);
+
+        when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
+        when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
+        when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
+        when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(false);
+
+        assertTrue(new ReceiptValidator(offer, account, predicates).isValid());
     }
 }
