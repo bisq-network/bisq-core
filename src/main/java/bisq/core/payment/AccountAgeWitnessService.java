@@ -26,6 +26,7 @@ import bisq.core.user.User;
 
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.P2PDataStorage;
 
 import bisq.common.UserThread;
@@ -83,10 +84,15 @@ public class AccountAgeWitnessService {
 
 
     @Inject
-    public AccountAgeWitnessService(KeyRing keyRing, P2PService p2PService, User user) {
+    public AccountAgeWitnessService(KeyRing keyRing, P2PService p2PService, User user,
+                                    AccountAgeWitnessStorageService accountAgeWitnessStorageService,
+                                    AppendOnlyDataStoreService appendOnlyDataStoreService) {
         this.keyRing = keyRing;
         this.p2PService = p2PService;
         this.user = user;
+
+        // We need to add that early (before onAllServicesInitialized) as it will be used at startup.
+        appendOnlyDataStoreService.addService(accountAgeWitnessStorageService);
     }
 
 

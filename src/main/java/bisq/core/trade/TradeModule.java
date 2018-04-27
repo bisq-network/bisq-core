@@ -19,8 +19,10 @@ package bisq.core.trade;
 
 import bisq.core.app.AppOptionKeys;
 import bisq.core.payment.AccountAgeWitnessService;
+import bisq.core.payment.AccountAgeWitnessStorageService;
 import bisq.core.trade.closed.ClosedTradableManager;
 import bisq.core.trade.failed.FailedTradesManager;
+import bisq.core.trade.statistics.TradeStatistics2StorageService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
 
 import bisq.common.app.AppModule;
@@ -41,9 +43,11 @@ public class TradeModule extends AppModule {
     protected void configure() {
         bind(TradeManager.class).in(Singleton.class);
         bind(TradeStatisticsManager.class).in(Singleton.class);
+        bind(TradeStatistics2StorageService.class).in(Singleton.class);
         bind(ClosedTradableManager.class).in(Singleton.class);
         bind(FailedTradesManager.class).in(Singleton.class);
         bind(AccountAgeWitnessService.class).in(Singleton.class);
+        bind(AccountAgeWitnessStorageService.class).in(Singleton.class);
         bindConstant().annotatedWith(named(AppOptionKeys.DUMP_STATISTICS)).to(environment.getRequiredProperty(AppOptionKeys.DUMP_STATISTICS));
     }
 }
