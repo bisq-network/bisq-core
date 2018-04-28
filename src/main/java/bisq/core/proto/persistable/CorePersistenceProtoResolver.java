@@ -35,9 +35,8 @@ import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
 
 import bisq.network.p2p.peers.peerexchange.PeerList;
-import bisq.network.p2p.storage.PersistableNetworkPayloadList;
-import bisq.network.p2p.storage.PersistedEntryMap;
-import bisq.network.p2p.storage.SequenceNumberMap;
+import bisq.network.p2p.storage.persistence.PersistableNetworkPayloadList;
+import bisq.network.p2p.storage.persistence.SequenceNumberMap;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.network.NetworkProtoResolver;
@@ -79,9 +78,6 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
             switch (proto.getMessageCase()) {
                 case SEQUENCE_NUMBER_MAP:
                     return SequenceNumberMap.fromProto(proto.getSequenceNumberMap());
-                case PERSISTED_ENTRY_MAP:
-                    return PersistedEntryMap.fromProto(proto.getPersistedEntryMap().getPersistedEntryMapMap(),
-                            networkProtoResolver);
                 case PEER_LIST:
                     return PeerList.fromProto(proto.getPeerList());
                 case ADDRESS_ENTRY_LIST:
