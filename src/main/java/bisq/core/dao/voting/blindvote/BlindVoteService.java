@@ -34,6 +34,7 @@ import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.AppendOnlyDataStoreService;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
@@ -88,6 +89,8 @@ public class BlindVoteService {
                             BallotListService ballotListService,
                             BlindVoteListService blindVoteListService,
                             MyVoteListService myVoteListService,
+                            BlindVoteStorageService blindVoteStorageService,
+                            AppendOnlyDataStoreService appendOnlyDataStoreService,
                             ProposalValidator proposalValidator,
                             KeyRing keyRing) {
         this.stateService = stateService;
@@ -101,6 +104,8 @@ public class BlindVoteService {
         this.proposalValidator = proposalValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
+
+        appendOnlyDataStoreService.addService(blindVoteStorageService);
     }
 
 
