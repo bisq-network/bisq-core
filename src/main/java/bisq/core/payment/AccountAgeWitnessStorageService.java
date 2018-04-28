@@ -21,7 +21,6 @@ import bisq.network.p2p.storage.BaseMapStorageService;
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 
-import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.storage.Storage;
 
 import com.google.inject.name.Named;
@@ -64,7 +63,7 @@ public class AccountAgeWitnessStorageService extends BaseMapStorageService<Accou
     }
 
     @Override
-    public boolean isMyPayload(PersistablePayload payload) {
+    public boolean isMyPayload(PersistableNetworkPayload payload) {
         return payload instanceof AccountAgeWitness;
     }
 

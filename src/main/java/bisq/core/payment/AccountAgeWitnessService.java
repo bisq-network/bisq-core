@@ -107,7 +107,7 @@ public class AccountAgeWitnessService {
         });
 
         // At startup the P2PDataStorage initializes earlier, otherwise we ge the listener called.
-        p2PService.getP2PDataStorage().getPersistableNetworkPayloadList().getMap().values().forEach(e -> {
+        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(e -> {
             if (e instanceof AccountAgeWitness)
                 addToMap((AccountAgeWitness) e);
         });
