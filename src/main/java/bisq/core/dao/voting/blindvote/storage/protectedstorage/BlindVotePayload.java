@@ -15,7 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.blindvote;
+package bisq.core.dao.voting.blindvote.storage.protectedstorage;
+
+import bisq.core.dao.voting.blindvote.BlindVote;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
@@ -55,7 +57,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Slf4j
 @Value
-public final class BlindVoteProtectedStoragePayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
+public final class BlindVotePayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
         CapabilityRequiringPayload {
 
     private final BlindVote blindVote;
@@ -72,8 +74,8 @@ public final class BlindVoteProtectedStoragePayload implements LazyProcessedPayl
     private Map<String, String> extraDataMap;
 
 
-    public BlindVoteProtectedStoragePayload(BlindVote blindVote,
-                                            PublicKey ownerPubKey) {
+    public BlindVotePayload(BlindVote blindVote,
+                            PublicKey ownerPubKey) {
         this(blindVote, Sig.getPublicKeyBytes(ownerPubKey), null);
     }
 
@@ -82,9 +84,9 @@ public final class BlindVoteProtectedStoragePayload implements LazyProcessedPayl
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVoteProtectedStoragePayload(BlindVote blindVote,
-                                             byte[] ownerPubKeyEncoded,
-                                             @Nullable Map<String, String> extraDataMap) {
+    private BlindVotePayload(BlindVote blindVote,
+                             byte[] ownerPubKeyEncoded,
+                             @Nullable Map<String, String> extraDataMap) {
         this.blindVote = blindVote;
         this.ownerPubKeyEncoded = ownerPubKeyEncoded;
         this.extraDataMap = extraDataMap;
@@ -95,21 +97,21 @@ public final class BlindVoteProtectedStoragePayload implements LazyProcessedPayl
     // Used for sending over the network
     @Override
     public PB.StoragePayload toProtoMessage() {
-        final PB.BlindVoteProtectedStoragePayload.Builder builder = getBuilder();
-        return PB.StoragePayload.newBuilder().setBlindVoteProtectedStoragePayload(builder).build();
+        final PB.BlindVotePayload.Builder builder = getBuilder();
+        return PB.StoragePayload.newBuilder().setBlindVotePayload(builder).build();
     }
 
     @NotNull
-    public PB.BlindVoteProtectedStoragePayload.Builder getBuilder() {
-        final PB.BlindVoteProtectedStoragePayload.Builder builder = PB.BlindVoteProtectedStoragePayload.newBuilder()
+    public PB.BlindVotePayload.Builder getBuilder() {
+        final PB.BlindVotePayload.Builder builder = PB.BlindVotePayload.newBuilder()
                 .setBlindVote(blindVote.getBuilder())
                 .setOwnerPubKeyAsEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
         Optional.ofNullable(getExtraDataMap()).ifPresent(builder::putAllExtraData);
         return builder;
     }
 
-    public static BlindVoteProtectedStoragePayload fromProto(PB.BlindVoteProtectedStoragePayload proto) {
-        return new BlindVoteProtectedStoragePayload(BlindVote.fromProto(proto.getBlindVote()),
+    public static BlindVotePayload fromProto(PB.BlindVotePayload proto) {
+        return new BlindVotePayload(BlindVote.fromProto(proto.getBlindVote()),
                 proto.getOwnerPubKeyAsEncoded().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
@@ -139,7 +141,7 @@ public final class BlindVoteProtectedStoragePayload implements LazyProcessedPayl
     }
 
     public String toString() {
-        return "BlindVoteProtectedStoragePayload{" +
+        return "BlindVotePayload{" +
                 ",\n     blindVote='" + blindVote + '\'' +
                 ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
                 ",\n     extraDataMap=" + extraDataMap +

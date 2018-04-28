@@ -31,10 +31,14 @@ import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
+import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
@@ -89,8 +93,10 @@ public class BlindVoteService {
                             BallotListService ballotListService,
                             BlindVoteListService blindVoteListService,
                             MyVoteListService myVoteListService,
+                            BlindVoteAppendOnlyStorageService blindVoteAppendOnlyStorageService,
                             BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
+                            ProtectedDataStoreService protectedDataStoreService,
                             ProposalValidator proposalValidator,
                             KeyRing keyRing) {
         this.stateService = stateService;
@@ -105,7 +111,8 @@ public class BlindVoteService {
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
 
-        appendOnlyDataStoreService.addService(blindVoteStorageService);
+        appendOnlyDataStoreService.addService(blindVoteAppendOnlyStorageService);
+        protectedDataStoreService.addService(blindVoteStorageService);
     }
 
 
@@ -231,7 +238,7 @@ public class BlindVoteService {
     }
 
     private boolean addToP2pNetwork(BlindVote blindVote) {
-        BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload = new BlindVoteProtectedStoragePayload(blindVote, signaturePubKey);
-        return p2PService.addProtectedStorageEntry(blindVoteProtectedStoragePayload, true);
+        BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
+        return p2PService.addProtectedStorageEntry(blindVotePayload, true);
     }
 }

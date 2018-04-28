@@ -29,8 +29,8 @@ import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
 import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
-import bisq.core.dao.voting.ballot.proposal.ProposalProtectedStoragePayload;
-import bisq.core.dao.voting.blindvote.BlindVoteProtectedStoragePayload;
+import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalPayload;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
@@ -196,10 +196,10 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return MailboxStoragePayload.fromProto(proto.getMailboxStoragePayload());
                 case OFFER_PAYLOAD:
                     return OfferPayload.fromProto(proto.getOfferPayload());
-                case PROPOSAL_PROTECTED_STORAGE_PAYLOAD:
-                    return ProposalProtectedStoragePayload.fromProto(proto.getProposalProtectedStoragePayload());
-                case BLIND_VOTE_PROTECTED_STORAGE_PAYLOAD:
-                    return BlindVoteProtectedStoragePayload.fromProto(proto.getBlindVoteProtectedStoragePayload());
+                case PROPOSAL_PAYLOAD:
+                    return ProposalPayload.fromProto(proto.getProposalPayload());
+                case BLIND_VOTE_PAYLOAD:
+                    return BlindVotePayload.fromProto(proto.getBlindVotePayload());
                 default:
                     throw new ProtobufferException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
             }

@@ -27,9 +27,13 @@ import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotUtils;
 import bisq.core.dao.voting.ballot.MyBallotListService;
+import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyStorageService;
+import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalPayload;
+import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalStorageService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
+import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
 import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
@@ -73,7 +77,9 @@ public class ProposalService {
                            WalletsManager walletsManager,
                            PeriodService periodService,
                            ProposalAppendOnlyStorageService proposalAppendOnlyStorageService,
+                           ProposalStorageService proposalStorageService,
                            AppendOnlyDataStoreService appendOnlyDataStoreService,
+                           ProtectedDataStoreService protectedDataStoreService,
                            StateService stateService,
                            MyBallotListService myBallotListService,
                            KeyRing keyRing) {
@@ -88,6 +94,7 @@ public class ProposalService {
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
 
         appendOnlyDataStoreService.addService(proposalAppendOnlyStorageService);
+        protectedDataStoreService.addService(proposalStorageService);
     }
 
 
@@ -186,7 +193,7 @@ public class ProposalService {
         return p2PService.addProtectedStorageEntry(createProposalPayload(proposal), true);
     }
 
-    private ProposalProtectedStoragePayload createProposalPayload(Proposal proposal) {
-        return new ProposalProtectedStoragePayload(proposal, signaturePubKey);
+    private ProposalPayload createProposalPayload(Proposal proposal) {
+        return new ProposalPayload(proposal, signaturePubKey);
     }
 }

@@ -17,8 +17,8 @@
 
 package bisq.core.proto;
 
-import bisq.core.dao.voting.ballot.proposal.ProposalAppendOnlyPayload;
-import bisq.core.dao.voting.blindvote.BlindVoteAppendOnlyPayload;
+import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
 import bisq.core.payment.AccountAgeWitness;
 import bisq.core.payment.payload.AliPayAccountPayload;
 import bisq.core.payment.payload.CashAppAccountPayload;

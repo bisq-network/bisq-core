@@ -19,8 +19,8 @@ package bisq.core.dao.voting.ballot;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.ballot.proposal.ProposalProtectedStoragePayload;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalPayload;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
@@ -109,7 +109,7 @@ public class FilteredBallotListService {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         // Need a bit of delay as otherwise the handler might get called before the item got removed from the
         // lists (at least at  localhost/regtest there are race conditions, over real network it will be much slower anyway)
-        if (protectedStoragePayload instanceof ProposalProtectedStoragePayload)
+        if (protectedStoragePayload instanceof ProposalPayload)
             UserThread.runAfter(this::updateLists, 100, TimeUnit.MILLISECONDS);
     }
 

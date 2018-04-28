@@ -15,7 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.ballot.proposal;
+package bisq.core.dao.voting.ballot.proposal.storage.protectedstorage;
+
+import bisq.core.dao.voting.ballot.proposal.Proposal;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
@@ -49,14 +51,14 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * ProposalProtectedStoragePayload is wrapper for proposal sent over wire as well as it gets persisted.
+ * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
  */
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ProposalProtectedStoragePayload implements LazyProcessedPayload, ProtectedStoragePayload,
+public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
         CapabilityRequiringPayload, PersistablePayload {
 
     protected final Proposal proposal;
@@ -71,8 +73,8 @@ public class ProposalProtectedStoragePayload implements LazyProcessedPayload, Pr
     // Used just for caching. Don't persist.
     private final transient PublicKey ownerPubKey;
 
-    public ProposalProtectedStoragePayload(Proposal proposal,
-                                           PublicKey ownerPublicKey) {
+    public ProposalPayload(Proposal proposal,
+                           PublicKey ownerPublicKey) {
         this(proposal, Sig.getPublicKeyBytes(ownerPublicKey), null);
     }
 
@@ -80,9 +82,9 @@ public class ProposalProtectedStoragePayload implements LazyProcessedPayload, Pr
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected ProposalProtectedStoragePayload(Proposal proposal,
-                                              byte[] ownerPubPubKeyEncoded,
-                                              @Nullable Map<String, String> extraDataMap) {
+    protected ProposalPayload(Proposal proposal,
+                              byte[] ownerPubPubKeyEncoded,
+                              @Nullable Map<String, String> extraDataMap) {
         this.proposal = proposal;
         this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.extraDataMap = extraDataMap;
@@ -90,8 +92,8 @@ public class ProposalProtectedStoragePayload implements LazyProcessedPayload, Pr
         ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
-    public PB.ProposalProtectedStoragePayload.Builder getProposalProtectedStoragePayloadBuilder() {
-        final PB.ProposalProtectedStoragePayload.Builder builder = PB.ProposalProtectedStoragePayload.newBuilder()
+    public PB.ProposalPayload.Builder getProposalPayloadBuilder() {
+        final PB.ProposalPayload.Builder builder = PB.ProposalPayload.newBuilder()
                 .setProposal(proposal.getProposalBuilder())
                 .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
@@ -100,11 +102,11 @@ public class ProposalProtectedStoragePayload implements LazyProcessedPayload, Pr
 
     @Override
     public PB.StoragePayload toProtoMessage() {
-        return PB.StoragePayload.newBuilder().setProposalProtectedStoragePayload(getProposalProtectedStoragePayloadBuilder()).build();
+        return PB.StoragePayload.newBuilder().setProposalPayload(getProposalPayloadBuilder()).build();
     }
 
-    public static ProposalProtectedStoragePayload fromProto(PB.ProposalProtectedStoragePayload proto) {
-        return new ProposalProtectedStoragePayload(Proposal.fromProto(proto.getProposal()),
+    public static ProposalPayload fromProto(PB.ProposalPayload proto) {
+        return new ProposalPayload(Proposal.fromProto(proto.getProposal()),
                 proto.getOwnerPubKeyEncoded().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }

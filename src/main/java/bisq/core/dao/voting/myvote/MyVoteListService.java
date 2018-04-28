@@ -21,8 +21,8 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVote;
-import bisq.core.dao.voting.blindvote.BlindVoteProtectedStoragePayload;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
 
 import bisq.network.p2p.P2PService;
 
@@ -145,11 +145,11 @@ public class MyVoteListService implements PersistedDataHost {
                 .filter(myVote -> blindVoteValidator.isValid(myVote.getBlindVote()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
-                        BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload = new BlindVoteProtectedStoragePayload(myVote.getBlindVote(), signaturePubKey);
-                        if (addBlindVoteToP2PNetwork(blindVoteProtectedStoragePayload)) {
-                            log.info("Added BlindVoteProtectedStoragePayload to P2P network.\nBlindVoteProtectedStoragePayload={}", myVote.getBlindVote());
+                        BlindVotePayload blindVotePayload = new BlindVotePayload(myVote.getBlindVote(), signaturePubKey);
+                        if (addBlindVoteToP2PNetwork(blindVotePayload)) {
+                            log.info("Added BlindVotePayload to P2P network.\nBlindVotePayload={}", myVote.getBlindVote());
                         } else {
-                            log.warn("Adding of BlindVoteProtectedStoragePayload to P2P network failed.\nBlindVoteProtectedStoragePayload={}", myVote.getBlindVote());
+                            log.warn("Adding of BlindVotePayload to P2P network failed.\nBlindVotePayload={}", myVote.getBlindVote());
                         }
                     } else {
                         final String msg = "revealTxId have to be null at publishMyBlindVotes.\nmyVote=" + myVote;
@@ -159,8 +159,8 @@ public class MyVoteListService implements PersistedDataHost {
                 });
     }
 
-    private boolean addBlindVoteToP2PNetwork(BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload) {
-        return p2PService.addProtectedStorageEntry(blindVoteProtectedStoragePayload, true);
+    private boolean addBlindVoteToP2PNetwork(BlindVotePayload blindVotePayload) {
+        return p2PService.addProtectedStorageEntry(blindVotePayload, true);
     }
 
     private void persist() {

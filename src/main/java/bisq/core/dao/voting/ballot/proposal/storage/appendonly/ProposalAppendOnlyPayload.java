@@ -15,8 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.ballot.proposal;
+package bisq.core.dao.voting.ballot.proposal.storage.appendonly;
 
+import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
@@ -44,6 +45,7 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+//TODO add CapabilityRequiringPayload
 public class ProposalAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
     private Proposal proposal;
     protected final byte[] hash;

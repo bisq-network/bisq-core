@@ -22,9 +22,11 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.ballot.proposal.ProposalAppendOnlyStore;
-import bisq.core.dao.voting.blindvote.BlindVoteAppendOnlyStore;
+import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyStore;
+import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalStore;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
@@ -107,10 +109,14 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
-                case PROPOSAL_APPEND_ONLY_STORE:
-                    return ProposalAppendOnlyStore.fromProto(proto.getProposalAppendOnlyStore());
                 case BLIND_VOTE_APPEND_ONLY_STORE:
                     return BlindVoteAppendOnlyStore.fromProto(proto.getBlindVoteAppendOnlyStore());
+                case PROPOSAL_APPEND_ONLY_STORE:
+                    return ProposalAppendOnlyStore.fromProto(proto.getProposalAppendOnlyStore());
+                case PROPOSAL_STORE:
+                    return ProposalStore.fromProto(proto.getProposalStore(), networkProtoResolver);
+                case BLIND_VOTE_STORE:
+                    return BlindVoteStore.fromProto(proto.getBlindVoteStore(), networkProtoResolver);
                 case STATE:
                     return State.fromProto(proto.getState());
                 case BALLOT_LIST:

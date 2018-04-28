@@ -15,9 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.blindvote;
+package bisq.core.dao.voting.blindvote.storage.appendonly;
 
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.voting.blindvote.BlindVote;
 
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 
