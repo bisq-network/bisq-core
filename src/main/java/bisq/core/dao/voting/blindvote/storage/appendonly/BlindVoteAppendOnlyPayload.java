@@ -39,6 +39,8 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Wrapper for proposal to be stored in the append-only BlindVoteAppendOnlyStore storage.
+ *
+ * Data size: 185 bytes
  */
 @Immutable
 @Slf4j

@@ -31,6 +31,7 @@ import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyPayload;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
@@ -197,6 +198,10 @@ public class BlindVoteService {
                 //TODO define specific exception
                 exceptionHandler.handleException(new Exception(msg));
             }
+
+            // We publish all proposals we used for our blind vote. Now the proposals get into an append only data store
+            // and cannot be removed anymore. From now on we will access proposals only from that data store.
+            addProposalsToAppendOnlyStore(getSortedBallotList());
         } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
                 WalletException | IOException exception) {
             exceptionHandler.handleException(exception);
@@ -240,5 +245,16 @@ public class BlindVoteService {
     private boolean addToP2pNetwork(BlindVote blindVote) {
         BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
         return p2PService.addProtectedStorageEntry(blindVotePayload, true);
+    }
+
+    private void addProposalsToAppendOnlyStore(BallotList ballotList) {
+        ballotList.stream()
+                .map(Ballot::getProposal)
+                .map(ProposalAppendOnlyPayload::new)
+                .forEach(proposalAppendOnlyPayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(proposalAppendOnlyPayload, true);
+                    if (!success)
+                        log.warn("addProposalsToAppendOnlyStore failed for proposal " + proposalAppendOnlyPayload.getProposal());
+                });
     }
 }

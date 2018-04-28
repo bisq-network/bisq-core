@@ -39,6 +39,7 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Wrapper for proposal to be stored in the append-only ProposalAppendOnlyStore storage.
+ * Data size: about 312 bytes
  */
 @Immutable
 @Slf4j

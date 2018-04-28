@@ -152,7 +152,7 @@ public class DaoFacade {
     // Publish proposal, store ballot
     public void publishBallot(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
                               ErrorMessageHandler errorMessageHandler) {
-        proposalService.publishBallot(ballot, transaction, resultHandler, errorMessageHandler);
+        proposalService.publishProposal(ballot, transaction, resultHandler, errorMessageHandler);
     }
 
     // Allow remove if it is my proposal

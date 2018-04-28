@@ -52,6 +52,7 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
+ * Data size: about 1.245 bytes (pubKey makes it big)
  */
 @Immutable
 @Slf4j

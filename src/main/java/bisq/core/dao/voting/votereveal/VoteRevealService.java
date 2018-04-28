@@ -26,18 +26,21 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
+
+import bisq.network.p2p.P2PService;
 
 import bisq.common.util.Utilities;
 
@@ -74,9 +77,10 @@ public class VoteRevealService {
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
-    private MyVoteListService myVoteListService;
+    private final MyVoteListService myVoteListService;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
+    private final P2PService p2PService;
     private final WalletsManager walletsManager;
 
     @Getter
@@ -96,6 +100,7 @@ public class VoteRevealService {
                              MyVoteListService myVoteListService,
                              BsqWalletService bsqWalletService,
                              BtcWalletService btcWalletService,
+                             P2PService p2PService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
         this.blindVoteListService = blindVoteListService;
@@ -105,6 +110,7 @@ public class VoteRevealService {
         this.myVoteListService = myVoteListService;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
+        this.p2PService = p2PService;
         this.walletsManager = walletsManager;
 
         voteRevealExceptions.addListener((ListChangeListener<VoteRevealException>) c -> {
@@ -236,6 +242,14 @@ public class VoteRevealService {
                             exception, voteRevealTx));
                 }
             });
+
+            // We publish all our blindVotes to a append-only data store. Even we have no feature to remove a already
+            // published blind vote it could have been removed technically and we want to keep that option open in case
+            // we support that one day. So we did not want to use the append only data store in the first event when we
+            // created the blind votes but used the normal protected data store. Now after the reveal removal of any
+            // blind vote would nto make sense and we want to guarantee that the data is immutably persisted.
+            // From now on we only access blind vote data from that append only data store.
+            addBlindVotesToAppendOnlyStore(getSortedBlindVoteListOfCycle());
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";
             log.error("{}. chainHeight={},  blindVoteTxId()={}", msg, chainHeight, myVote.getTxId());
@@ -249,5 +263,15 @@ public class VoteRevealService {
         Transaction preparedTx = bsqWalletService.getPreparedVoteRevealTx(stakeTxOutput);
         Transaction txWithBtcFee = btcWalletService.completePreparedVoteRevealTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
+    }
+
+    private void addBlindVotesToAppendOnlyStore(BlindVoteList blindVotes) {
+        blindVotes.stream()
+                .map(BlindVoteAppendOnlyPayload::new)
+                .forEach(blindVoteAppendOnlyPayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(blindVoteAppendOnlyPayload, true);
+                    if (!success)
+                        log.warn("addBlindVotesToAppendOnlyStore failed for blindVote " + blindVoteAppendOnlyPayload.getBlindVote());
+                });
     }
 }

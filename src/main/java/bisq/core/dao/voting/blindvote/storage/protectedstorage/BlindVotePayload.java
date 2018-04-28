@@ -53,6 +53,8 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Wrapper for blindVote sent over wire.
+ *
+ * Data size: about 1.119 bytes (pubKey makes it big)
  */
 @Immutable
 @Slf4j

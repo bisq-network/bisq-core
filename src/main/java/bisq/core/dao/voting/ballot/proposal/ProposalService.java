@@ -107,9 +107,8 @@ public class ProposalService {
     }
 
     // Broadcast proposalTx and publish proposal to P2P network
-    public void publishBallot(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
-                              ErrorMessageHandler errorMessageHandler) {
-        Proposal proposal = ballot.getProposal();
+    public void publishProposal(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
+                                ErrorMessageHandler errorMessageHandler) {
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
@@ -139,6 +138,7 @@ public class ProposalService {
         // proposal stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
         // in worst case if it does not succeed the proposal will be ignored anyway.
         // Inconsistently propagated proposals in the p2p network could have potentially worse effects.
+        Proposal proposal = ballot.getProposal();
         final boolean success = addToP2PNetwork(proposal);
         if (success) {
             log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
@@ -189,6 +189,10 @@ public class ProposalService {
         });
     }
 
+    // Our proposal will be stored as protected storage payload in the p2p network and will be persisted to the
+    // ProposalStore. The proposal can still be removed by the owner (protected by sig / pubKey).
+    // Later when entering the blind vote phase the voters we will store the proposal  to the append-only data store
+    // to make sure the data is immutably persisted.
     private boolean addToP2PNetwork(Proposal proposal) {
         return p2PService.addProtectedStorageEntry(createProposalPayload(proposal), true);
     }

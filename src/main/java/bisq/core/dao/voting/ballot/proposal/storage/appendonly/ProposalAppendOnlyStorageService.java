@@ -17,8 +17,6 @@
 
 package bisq.core.dao.voting.ballot.proposal.storage.appendonly;
 
-import bisq.core.dao.voting.ballot.proposal.Proposal;
-
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 import bisq.network.p2p.storage.persistence.StoreService;
@@ -66,7 +64,7 @@ public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppen
 
     @Override
     public boolean canHandle(PersistableNetworkPayload payload) {
-        return payload instanceof Proposal;
+        return payload instanceof ProposalAppendOnlyPayload;
     }
 
 
