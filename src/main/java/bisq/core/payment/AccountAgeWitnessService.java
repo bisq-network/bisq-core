@@ -26,8 +26,8 @@ import bisq.core.user.User;
 
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.P2PDataStorage;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.UserThread;
 import bisq.common.crypto.CryptoException;
@@ -101,7 +101,7 @@ public class AccountAgeWitnessService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onAllServicesInitialized() {
-        p2PService.getP2PDataStorage().addPersistableNetworkPayloadMapListener(payload -> {
+        p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(payload -> {
             if (payload instanceof AccountAgeWitness)
                 addToMap((AccountAgeWitness) payload);
         });

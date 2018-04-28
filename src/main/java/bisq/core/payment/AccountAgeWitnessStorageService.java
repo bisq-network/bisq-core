@@ -17,9 +17,9 @@
 
 package bisq.core.payment;
 
-import bisq.network.p2p.storage.BaseMapStorageService;
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.persistence.BaseMapStorageService;
 
 import bisq.common.storage.Storage;
 

@@ -34,8 +34,8 @@ import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
 
 import bisq.network.p2p.peers.peerexchange.PeerList;
-import bisq.network.p2p.storage.PersistableNetworkPayloadList;
-import bisq.network.p2p.storage.SequenceNumberMap;
+import bisq.network.p2p.storage.persistence.PersistableNetworkPayloadList;
+import bisq.network.p2p.storage.persistence.SequenceNumberMap;
 
 import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.network.NetworkProtoResolver;

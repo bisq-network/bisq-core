@@ -25,10 +25,10 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.UserThread;
 import bisq.common.storage.JsonFileManager;
@@ -110,7 +110,7 @@ public class TradeStatisticsManager {
             jsonFileManager.writeToDisc(Utilities.objectToJson(cryptoCurrencyList), "crypto_currency_list");
         }
 
-        p2PService.getP2PDataStorage().addPersistableNetworkPayloadMapListener(payload -> {
+        p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(payload -> {
             if (payload instanceof TradeStatistics2)
                 addToMap((TradeStatistics2) payload, true);
         });
