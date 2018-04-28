@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.ballot.proposal;
+package bisq.core.dao.voting.blindvote;
 
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
@@ -41,11 +41,11 @@ import lombok.extern.slf4j.Slf4j;
  * definition and provide a hashMap for the domain access.
  */
 @Slf4j
-public class ProposalStore implements PersistableEnvelope {
+public class BlindVoteAppendOnlyStore implements PersistableEnvelope {
     @Getter
     private Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> map = new ConcurrentHashMap<>();
 
-    ProposalStore() {
+    BlindVoteAppendOnlyStore() {
     }
 
 
@@ -53,28 +53,28 @@ public class ProposalStore implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalStore(List<ProposalPayload> list) {
+    private BlindVoteAppendOnlyStore(List<BlindVoteAppendOnlyPayload> list) {
         list.forEach(item -> map.put(new P2PDataStorage.ByteArray(item.getHash()), item));
     }
 
     public Message toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder()
-                .setProposalStore(getBuilder())
+                .setBlindVoteAppendOnlyStore(getBuilder())
                 .build();
     }
 
-    private PB.ProposalStore.Builder getBuilder() {
-        final List<PB.ProposalPayload> protoList = map.values().stream()
-                .map(payload -> (ProposalPayload) payload)
-                .map(ProposalPayload::toProtoProposalPayload)
+    private PB.BlindVoteAppendOnlyStore.Builder getBuilder() {
+        final List<PB.BlindVoteAppendOnlyPayload> protoList = map.values().stream()
+                .map(payload -> (BlindVoteAppendOnlyPayload) payload)
+                .map(BlindVoteAppendOnlyPayload::toProtoBlindVotePayload)
                 .collect(Collectors.toList());
-        return PB.ProposalStore.newBuilder().addAllItems(protoList);
+        return PB.BlindVoteAppendOnlyStore.newBuilder().addAllItems(protoList);
     }
 
-    public static PersistableEnvelope fromProto(PB.ProposalStore proto) {
-        List<ProposalPayload> list = proto.getItemsList().stream()
-                .map(ProposalPayload::fromProto).collect(Collectors.toList());
-        return new ProposalStore(list);
+    public static PersistableEnvelope fromProto(PB.BlindVoteAppendOnlyStore proto) {
+        List<BlindVoteAppendOnlyPayload> list = proto.getItemsList().stream()
+                .map(BlindVoteAppendOnlyPayload::fromProto).collect(Collectors.toList());
+        return new BlindVoteAppendOnlyStore(list);
     }
 
     public boolean containsKey(P2PDataStorage.ByteArray hash) {

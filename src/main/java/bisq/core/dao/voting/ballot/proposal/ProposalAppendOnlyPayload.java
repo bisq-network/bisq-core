@@ -37,18 +37,18 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Wrapper for proposal to be stored in the append-only ProposalStore storage.
+ * Wrapper for proposal to be stored in the append-only ProposalAppendOnlyStore storage.
  */
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ProposalPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
+public class ProposalAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
     private Proposal proposal;
     protected final byte[] hash;
 
-    public ProposalPayload(Proposal proposal) {
+    public ProposalAppendOnlyPayload(Proposal proposal) {
         this(proposal, Hash.getSha256Ripemd160hash(proposal.toProtoMessage().toByteArray()));
     }
 
@@ -56,27 +56,27 @@ public class ProposalPayload implements PersistableNetworkPayload, PersistableEn
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalPayload(Proposal proposal, byte[] hash) {
+    private ProposalAppendOnlyPayload(Proposal proposal, byte[] hash) {
         this.proposal = proposal;
         this.hash = hash;
     }
 
-    private PB.ProposalPayload.Builder getProposalBuilder() {
-        return PB.ProposalPayload.newBuilder()
+    private PB.ProposalAppendOnlyPayload.Builder getProposalBuilder() {
+        return PB.ProposalAppendOnlyPayload.newBuilder()
                 .setProposal(proposal.toProtoMessage())
                 .setHash(ByteString.copyFrom(hash));
     }
 
     @Override
     public PB.PersistableNetworkPayload toProtoMessage() {
-        return PB.PersistableNetworkPayload.newBuilder().setProposalPayload(getProposalBuilder()).build();
+        return PB.PersistableNetworkPayload.newBuilder().setProposalAppendOnlyPayload(getProposalBuilder()).build();
     }
 
-    public static ProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new ProposalPayload(Proposal.fromProto(proto.getProposal()), proto.getHash().toByteArray());
+    public static ProposalAppendOnlyPayload fromProto(PB.ProposalAppendOnlyPayload proto) {
+        return new ProposalAppendOnlyPayload(Proposal.fromProto(proto.getProposal()), proto.getHash().toByteArray());
     }
 
-    public PB.ProposalPayload toProtoProposalPayload() {
+    public PB.ProposalAppendOnlyPayload toProtoProposalPayload() {
         return getProposalBuilder().build();
     }
 

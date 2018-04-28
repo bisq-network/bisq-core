@@ -17,8 +17,8 @@
 
 package bisq.core.proto;
 
-import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
-import bisq.core.dao.voting.blindvote.BlindVotePayload;
+import bisq.core.dao.voting.ballot.proposal.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.blindvote.BlindVoteAppendOnlyPayload;
 import bisq.core.payment.AccountAgeWitness;
 import bisq.core.payment.payload.AliPayAccountPayload;
 import bisq.core.payment.payload.CashAppAccountPayload;
@@ -143,10 +143,10 @@ public class CoreProtoResolver implements ProtoResolver {
                     return AccountAgeWitness.fromProto(proto.getAccountAgeWitness());
                 case TRADE_STATISTICS2:
                     return TradeStatistics2.fromProto(proto.getTradeStatistics2());
-                case PROPOSAL_PAYLOAD:
-                    return ProposalPayload.fromProto(proto.getProposalPayload());
-                case BLIND_VOTE_PAYLOAD:
-                    return BlindVotePayload.fromProto(proto.getBlindVotePayload());
+                case PROPOSAL_APPEND_ONLY_PAYLOAD:
+                    return ProposalAppendOnlyPayload.fromProto(proto.getProposalAppendOnlyPayload());
+                case BLIND_VOTE_APPEND_ONLY_PAYLOAD:
+                    return BlindVoteAppendOnlyPayload.fromProto(proto.getBlindVoteAppendOnlyPayload());
                 default:
                     throw new ProtobufferException("Unknown proto message case (PB.PersistableNetworkPayload). messageCase=" + proto.getMessageCase());
             }

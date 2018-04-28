@@ -29,7 +29,7 @@ import bisq.core.dao.voting.ballot.BallotUtils;
 import bisq.core.dao.voting.ballot.MyBallotListService;
 
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.AppendOnlyDataStoreService;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
@@ -72,7 +72,7 @@ public class ProposalService {
     public ProposalService(P2PService p2PService,
                            WalletsManager walletsManager,
                            PeriodService periodService,
-                           ProposalStorageService proposalStorageService,
+                           ProposalAppendOnlyStorageService proposalAppendOnlyStorageService,
                            AppendOnlyDataStoreService appendOnlyDataStoreService,
                            StateService stateService,
                            MyBallotListService myBallotListService,
@@ -87,7 +87,7 @@ public class ProposalService {
         numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
         p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
 
-        appendOnlyDataStoreService.addService(proposalStorageService);
+        appendOnlyDataStoreService.addService(proposalAppendOnlyStorageService);
     }
 
 

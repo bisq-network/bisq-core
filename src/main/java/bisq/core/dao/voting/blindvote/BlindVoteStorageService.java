@@ -17,11 +17,10 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.network.p2p.storage.BaseMapStorageService;
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.persistence.StoreService;
 
-import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.storage.Storage;
 
 import com.google.inject.name.Named;
@@ -35,8 +34,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BlindVoteStorageService extends BaseMapStorageService<BlindVoteStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "BlindVoteStore";
+public class BlindVoteStorageService extends StoreService<BlindVoteAppendOnlyStore, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "BlindVoteAppendOnlyStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +44,7 @@ public class BlindVoteStorageService extends BaseMapStorageService<BlindVoteStor
 
     @Inject
     public BlindVoteStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                   Storage<BlindVoteStore> persistableNetworkPayloadMapStorage) {
+                                   Storage<BlindVoteAppendOnlyStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -60,12 +59,12 @@ public class BlindVoteStorageService extends BaseMapStorageService<BlindVoteStor
 
     @Override
     public Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> getMap() {
-        return envelope.getMap();
+        return store.getMap();
     }
 
     @Override
-    public boolean isMyPayload(PersistablePayload payload) {
-        return payload instanceof BlindVote;
+    public boolean canHandle(PersistableNetworkPayload payload) {
+        return payload instanceof BlindVoteAppendOnlyPayload;
     }
 
 
@@ -74,7 +73,7 @@ public class BlindVoteStorageService extends BaseMapStorageService<BlindVoteStor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected BlindVoteStore createEnvelope() {
-        return new BlindVoteStore();
+    protected BlindVoteAppendOnlyStore createStore() {
+        return new BlindVoteAppendOnlyStore();
     }
 }

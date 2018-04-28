@@ -37,18 +37,18 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Wrapper for proposal to be stored in the append-only BlindVoteStore storage.
+ * Wrapper for proposal to be stored in the append-only BlindVoteAppendOnlyStore storage.
  */
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
+public class BlindVoteAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
     private BlindVote blindVote;
     protected final byte[] hash;
 
-    public BlindVotePayload(BlindVote blindVote) {
+    public BlindVoteAppendOnlyPayload(BlindVote blindVote) {
         this(blindVote, Hash.getSha256Ripemd160hash(blindVote.toProtoMessage().toByteArray()));
     }
 
@@ -56,27 +56,27 @@ public class BlindVotePayload implements PersistableNetworkPayload, PersistableE
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVotePayload(BlindVote blindVote, byte[] hash) {
+    private BlindVoteAppendOnlyPayload(BlindVote blindVote, byte[] hash) {
         this.blindVote = blindVote;
         this.hash = hash;
     }
 
-    private PB.BlindVotePayload.Builder getBlindVoteBuilder() {
-        return PB.BlindVotePayload.newBuilder()
+    private PB.BlindVoteAppendOnlyPayload.Builder getBlindVoteBuilder() {
+        return PB.BlindVoteAppendOnlyPayload.newBuilder()
                 .setBlindVote(blindVote.toProtoMessage())
                 .setHash(ByteString.copyFrom(hash));
     }
 
     @Override
     public PB.PersistableNetworkPayload toProtoMessage() {
-        return PB.PersistableNetworkPayload.newBuilder().setBlindVotePayload(getBlindVoteBuilder()).build();
+        return PB.PersistableNetworkPayload.newBuilder().setBlindVoteAppendOnlyPayload(getBlindVoteBuilder()).build();
     }
 
-    public static BlindVotePayload fromProto(PB.BlindVotePayload proto) {
-        return new BlindVotePayload(BlindVote.fromProto(proto.getBlindVote()), proto.getHash().toByteArray());
+    public static BlindVoteAppendOnlyPayload fromProto(PB.BlindVoteAppendOnlyPayload proto) {
+        return new BlindVoteAppendOnlyPayload(BlindVote.fromProto(proto.getBlindVote()), proto.getHash().toByteArray());
     }
 
-    public PB.BlindVotePayload toProtoBlindVotePayload() {
+    public PB.BlindVoteAppendOnlyPayload toProtoBlindVotePayload() {
         return getBlindVoteBuilder().build();
     }
 

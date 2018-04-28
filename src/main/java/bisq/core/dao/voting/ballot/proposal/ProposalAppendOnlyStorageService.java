@@ -17,11 +17,10 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
-import bisq.network.p2p.storage.BaseMapStorageService;
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.persistence.StoreService;
 
-import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.storage.Storage;
 
 import com.google.inject.name.Named;
@@ -35,8 +34,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProposalStorageService extends BaseMapStorageService<ProposalStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "ProposalStore";
+public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppendOnlyStore, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "ProposalAppendOnlyStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -44,8 +43,8 @@ public class ProposalStorageService extends BaseMapStorageService<ProposalStore,
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                  Storage<ProposalStore> persistableNetworkPayloadMapStorage) {
+    public ProposalAppendOnlyStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
+                                            Storage<ProposalAppendOnlyStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -60,11 +59,11 @@ public class ProposalStorageService extends BaseMapStorageService<ProposalStore,
 
     @Override
     public Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> getMap() {
-        return envelope.getMap();
+        return store.getMap();
     }
 
     @Override
-    public boolean isMyPayload(PersistablePayload payload) {
+    public boolean canHandle(PersistableNetworkPayload payload) {
         return payload instanceof Proposal;
     }
 
@@ -74,7 +73,7 @@ public class ProposalStorageService extends BaseMapStorageService<ProposalStore,
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected ProposalStore createEnvelope() {
-        return new ProposalStore();
+    protected ProposalAppendOnlyStore createStore() {
+        return new ProposalAppendOnlyStore();
     }
 }

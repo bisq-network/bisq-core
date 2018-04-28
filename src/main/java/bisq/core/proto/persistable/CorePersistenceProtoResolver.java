@@ -22,9 +22,9 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.ballot.proposal.ProposalStore;
+import bisq.core.dao.voting.ballot.proposal.ProposalAppendOnlyStore;
+import bisq.core.dao.voting.blindvote.BlindVoteAppendOnlyStore;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
-import bisq.core.dao.voting.blindvote.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
@@ -107,10 +107,10 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
-                case PROPOSAL_STORE:
-                    return ProposalStore.fromProto(proto.getProposalStore());
-                case BLIND_VOTE_STORE:
-                    return BlindVoteStore.fromProto(proto.getBlindVoteStore());
+                case PROPOSAL_APPEND_ONLY_STORE:
+                    return ProposalAppendOnlyStore.fromProto(proto.getProposalAppendOnlyStore());
+                case BLIND_VOTE_APPEND_ONLY_STORE:
+                    return BlindVoteAppendOnlyStore.fromProto(proto.getBlindVoteAppendOnlyStore());
                 case STATE:
                     return State.fromProto(proto.getState());
                 case BALLOT_LIST:
@@ -119,9 +119,9 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return MyVoteList.fromProto(proto.getMyVoteList());
                 case BLIND_VOTE_LIST:
                     return BlindVoteList.fromProto(proto.getBlindVoteList());
-
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope).\n" +
+                            "messageCase=" + proto.getMessageCase() + "\nproto=" + proto);
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.PersistableEnvelope is null");

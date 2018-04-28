@@ -34,7 +34,7 @@ import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.AppendOnlyDataStoreService;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
