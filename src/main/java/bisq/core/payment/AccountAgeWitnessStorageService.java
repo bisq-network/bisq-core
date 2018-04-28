@@ -19,7 +19,7 @@ package bisq.core.payment;
 
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
-import bisq.network.p2p.storage.persistence.BaseMapStorageService;
+import bisq.network.p2p.storage.persistence.StoreService;
 
 import bisq.common.storage.Storage;
 
@@ -34,7 +34,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AccountAgeWitnessStorageService extends BaseMapStorageService<AccountAgeWitnessStore, PersistableNetworkPayload> {
+public class AccountAgeWitnessStorageService extends StoreService<AccountAgeWitnessStore, PersistableNetworkPayload> {
     public static final String FILE_NAME = "AccountAgeWitnessStore";
 
 
@@ -59,11 +59,11 @@ public class AccountAgeWitnessStorageService extends BaseMapStorageService<Accou
 
     @Override
     public Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> getMap() {
-        return envelope.getMap();
+        return store.getMap();
     }
 
     @Override
-    public boolean isMyPayload(PersistableNetworkPayload payload) {
+    public boolean canHandle(PersistableNetworkPayload payload) {
         return payload instanceof AccountAgeWitness;
     }
 
@@ -73,7 +73,7 @@ public class AccountAgeWitnessStorageService extends BaseMapStorageService<Accou
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected AccountAgeWitnessStore createEnvelope() {
+    protected AccountAgeWitnessStore createStore() {
         return new AccountAgeWitnessStore();
     }
 }
