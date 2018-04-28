@@ -17,27 +17,16 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
-import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
-import bisq.network.p2p.storage.payload.LazyProcessedPayload;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
-import bisq.common.app.Capabilities;
-import bisq.common.crypto.Sig;
-import bisq.common.proto.persistable.PersistablePayload;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+
+import bisq.common.crypto.Hash;
+import bisq.common.proto.persistable.PersistableEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
-
-import org.springframework.util.CollectionUtils;
-
-import java.security.PublicKey;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -45,85 +34,64 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
+ * Wrapper for proposal to be stored in the append-only ProposalStore storage.
  */
 @Immutable
 @Slf4j
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
-        CapabilityRequiringPayload, PersistablePayload {
+public class ProposalPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
+    private Proposal proposal;
+    protected final byte[] hash;
 
-    protected final Proposal proposal;
-    protected final byte[] ownerPubKeyEncoded;
-
-    // Should be only used in emergency case if we need to add data but do not want to break backward compatibility
-    // at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
-    // field in a class would break that hash and therefore break the storage mechanism.
-    @Nullable
-    protected final Map<String, String> extraDataMap;
-
-    // Used just for caching. Don't persist.
-    private final transient PublicKey ownerPubKey;
-
-    public ProposalPayload(Proposal proposal,
-                           PublicKey ownerPublicKey) {
-        this(proposal, Sig.getPublicKeyBytes(ownerPublicKey), null);
+    public ProposalPayload(Proposal proposal) {
+        this(proposal, Hash.getSha256Ripemd160hash(proposal.toProtoMessage().toByteArray()));
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected ProposalPayload(Proposal proposal,
-                              byte[] ownerPubPubKeyEncoded,
-                              @Nullable Map<String, String> extraDataMap) {
+    private ProposalPayload(Proposal proposal, byte[] hash) {
         this.proposal = proposal;
-        this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
-        this.extraDataMap = extraDataMap;
-
-        ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
+        this.hash = hash;
     }
 
-    public PB.ProposalPayload.Builder getProposalPayloadBuilder() {
-        final PB.ProposalPayload.Builder builder = PB.ProposalPayload.newBuilder()
-                .setProposal(proposal.getProposalBuilder())
-                .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
-        Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
-        return builder;
+    private PB.ProposalPayload.Builder getProposalBuilder() {
+        return PB.ProposalPayload.newBuilder()
+                .setProposal(proposal.toProtoMessage())
+                .setHash(ByteString.copyFrom(hash));
     }
 
     @Override
-    public PB.StoragePayload toProtoMessage() {
-        return PB.StoragePayload.newBuilder().setProposalPayload(getProposalPayloadBuilder()).build();
+    public PB.PersistableNetworkPayload toProtoMessage() {
+        return PB.PersistableNetworkPayload.newBuilder().setProposalPayload(getProposalBuilder()).build();
     }
 
     public static ProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new ProposalPayload(Proposal.fromProto(proto.getProposal()),
-                proto.getOwnerPubKeyEncoded().toByteArray(),
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+        return new ProposalPayload(Proposal.fromProto(proto.getProposal()), proto.getHash().toByteArray());
+    }
+
+    public PB.ProposalPayload toProtoProposalPayload() {
+        return getProposalBuilder().build();
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Getters
+    // PersistableNetworkPayload
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PublicKey getOwnerPubKey() {
-        return ownerPubKey;
+    public boolean verifyHashSize() {
+        return hash.length == 20;
     }
 
-    // Pre 0.6 version don't know the new message type and throw an error which leads to disconnecting the peer.
     @Override
-    public List<Integer> getRequiredCapabilities() {
-        return new ArrayList<>(Collections.singletonList(
-                Capabilities.Capability.PROPOSAL.ordinal()
-        ));
+    public byte[] getHash() {
+        return hash;
     }
 }

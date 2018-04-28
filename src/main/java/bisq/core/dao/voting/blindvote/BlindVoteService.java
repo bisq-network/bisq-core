@@ -226,7 +226,7 @@ public class BlindVoteService {
     }
 
     private boolean addToP2pNetwork(BlindVote blindVote) {
-        BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
-        return p2PService.addProtectedStorageEntry(blindVotePayload, true);
+        BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload = new BlindVoteProtectedStoragePayload(blindVote, signaturePubKey);
+        return p2PService.addProtectedStorageEntry(blindVoteProtectedStoragePayload, true);
     }
 }

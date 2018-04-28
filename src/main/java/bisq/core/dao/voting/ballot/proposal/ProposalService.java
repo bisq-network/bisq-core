@@ -22,8 +22,8 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotUtils;
 import bisq.core.dao.voting.ballot.MyBallotListService;
@@ -181,7 +181,7 @@ public class ProposalService {
         return p2PService.addProtectedStorageEntry(createProposalPayload(proposal), true);
     }
 
-    private ProposalPayload createProposalPayload(Proposal proposal) {
-        return new ProposalPayload(proposal, signaturePubKey);
+    private ProposalProtectedStoragePayload createProposalPayload(Proposal proposal) {
+        return new ProposalProtectedStoragePayload(proposal, signaturePubKey);
     }
 }

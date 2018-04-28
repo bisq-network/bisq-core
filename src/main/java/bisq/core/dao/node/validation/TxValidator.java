@@ -175,7 +175,8 @@ public class TxValidator {
                 log.error(msg);
             }
         } else {
-            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. tx=" + tx;
+            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
+                    "Burned fee=" + txState.getAvailableInputValue() / 100D + " BSQ. tx=" + tx;
             log.warn(msg);
         }
         return Optional.empty();

@@ -21,7 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
-import bisq.core.dao.voting.ballot.proposal.ProposalPayload;
+import bisq.core.dao.voting.ballot.proposal.ProposalProtectedStoragePayload;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
 
 import bisq.network.p2p.storage.HashMapChangedListener;
@@ -114,8 +114,8 @@ public class BallotListService implements PersistedDataHost {
 
     private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload) {
-            final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
+        if (protectedStoragePayload instanceof ProposalProtectedStoragePayload) {
+            final Proposal proposal = ((ProposalProtectedStoragePayload) protectedStoragePayload).getProposal();
             if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList()) &&
                     proposalValidator.isValid(proposal)) {
                 log.info("We received a new proposal from the P2P network. Proposal.uid={}", proposal.getUid());
@@ -129,8 +129,8 @@ public class BallotListService implements PersistedDataHost {
     // We allow removal only if we are in the correct phase and cycle or the tx is unconfirmed
     private void onRemovedProtectedStorageEntry(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof ProposalPayload) {
-            final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
+        if (protectedStoragePayload instanceof ProposalProtectedStoragePayload) {
+            final Proposal proposal = ((ProposalProtectedStoragePayload) protectedStoragePayload).getProposal();
             BallotUtils.findProposalInBallotList(proposal, ballotList.getList())
                     .filter(ballot -> {
                         if (BallotUtils.canRemoveProposal(proposal, stateService, periodService)) {

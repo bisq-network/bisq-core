@@ -91,7 +91,7 @@ public final class BlindVote implements PersistablePayload, NetworkPayload {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public String toString() {
-        return "BlindVotePayload{" +
+        return "BlindVoteProtectedStoragePayload{" +
                 "\n     encryptedVotes=" + Utilities.bytesAsHexString(encryptedVotes) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +

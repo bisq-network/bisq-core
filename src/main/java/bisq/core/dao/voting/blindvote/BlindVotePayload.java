@@ -17,132 +17,80 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
-import bisq.network.p2p.storage.payload.LazyProcessedPayload;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
-import bisq.common.app.Capabilities;
-import bisq.common.crypto.Sig;
-import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.JsonExclude;
-import bisq.common.util.Utilities;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+
+import bisq.common.crypto.Hash;
+import bisq.common.proto.persistable.PersistableEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
 
-import org.springframework.util.CollectionUtils;
-
-import java.security.PublicKey;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import lombok.Value;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Wrapper for blindVote sent over wire.
+ * Wrapper for proposal to be stored in the append-only BlindVoteStore storage.
  */
 @Immutable
 @Slf4j
-@Value
-public final class BlindVotePayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+@Getter
+@EqualsAndHashCode
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+public class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
+    private BlindVote blindVote;
+    protected final byte[] hash;
 
-    private final BlindVote blindVote;
-    private final byte[] ownerPubKeyEncoded;
-
-    // Used just for caching, not included in PB.
-    @JsonExclude
-    private final transient PublicKey ownerPubKey;
-
-    // Should be only used in emergency case if we need to add data but do not want to break backward compatibility
-    // at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
-    // field in a class would break that hash and therefore break the storage mechanism.
-    @Nullable
-    private Map<String, String> extraDataMap;
-
-
-    public BlindVotePayload(BlindVote blindVote,
-                            PublicKey ownerPubKey) {
-        this(blindVote, Sig.getPublicKeyBytes(ownerPubKey), null);
+    public BlindVotePayload(BlindVote blindVote) {
+        this(blindVote, Hash.getSha256Ripemd160hash(blindVote.toProtoMessage().toByteArray()));
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVotePayload(BlindVote blindVote,
-                             byte[] ownerPubKeyEncoded,
-                             @Nullable Map<String, String> extraDataMap) {
+    private BlindVotePayload(BlindVote blindVote, byte[] hash) {
         this.blindVote = blindVote;
-        this.ownerPubKeyEncoded = ownerPubKeyEncoded;
-        this.extraDataMap = extraDataMap;
-
-        ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
+        this.hash = hash;
     }
 
-    // Used for sending over the network
+    private PB.BlindVotePayload.Builder getBlindVoteBuilder() {
+        return PB.BlindVotePayload.newBuilder()
+                .setBlindVote(blindVote.toProtoMessage())
+                .setHash(ByteString.copyFrom(hash));
+    }
+
     @Override
-    public PB.StoragePayload toProtoMessage() {
-        final PB.BlindVotePayload.Builder builder = getBuilder();
-        return PB.StoragePayload.newBuilder().setBlindVotePayload(builder).build();
-    }
-
-    @NotNull
-    public PB.BlindVotePayload.Builder getBuilder() {
-        final PB.BlindVotePayload.Builder builder = PB.BlindVotePayload.newBuilder()
-                .setBlindVote(blindVote.getBuilder())
-                .setOwnerPubKeyAsEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
-        Optional.ofNullable(getExtraDataMap()).ifPresent(builder::putAllExtraData);
-        return builder;
+    public PB.PersistableNetworkPayload toProtoMessage() {
+        return PB.PersistableNetworkPayload.newBuilder().setBlindVotePayload(getBlindVoteBuilder()).build();
     }
 
     public static BlindVotePayload fromProto(PB.BlindVotePayload proto) {
-        return new BlindVotePayload(BlindVote.fromProto(proto.getBlindVote()),
-                proto.getOwnerPubKeyAsEncoded().toByteArray(),
-                CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
+        return new BlindVotePayload(BlindVote.fromProto(proto.getBlindVote()), proto.getHash().toByteArray());
     }
 
+    public PB.BlindVotePayload toProtoBlindVotePayload() {
+        return getBlindVoteBuilder().build();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
+    // PersistableNetworkPayload
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PublicKey getOwnerPubKey() {
-        return ownerPubKey;
+    public boolean verifyHashSize() {
+        return hash.length == 20;
     }
 
     @Override
-    @Nullable
-    public Map<String, String> getExtraDataMap() {
-        return extraDataMap;
-    }
-
-    // Pre 0.7 version don't know the new message type and throw an error which leads to disconnecting the peer.
-    @Override
-    public List<Integer> getRequiredCapabilities() {
-        return new ArrayList<>(Collections.singletonList(
-                Capabilities.Capability.BLIND_VOTE.ordinal()
-        ));
-    }
-
-    public String toString() {
-        return "BlindVotePayload{" +
-                ",\n     blindVote='" + blindVote + '\'' +
-                ",\n     ownerPubKeyEncoded=" + Utilities.bytesAsHexString(ownerPubKeyEncoded) +
-                ",\n     extraDataMap=" + extraDataMap +
-                "\n}";
+    public byte[] getHash() {
+        return hash;
     }
 }

@@ -78,7 +78,7 @@ public class BlindVoteListService implements PersistedDataHost {
 
             @Override
             public void onRemoved(ProtectedStorageEntry entry) {
-                if (entry.getProtectedStoragePayload() instanceof BlindVotePayload)
+                if (entry.getProtectedStoragePayload() instanceof BlindVoteProtectedStoragePayload)
                     throw new UnsupportedOperationException("Removal of blind vote data is not supported");
             }
         });
@@ -122,10 +122,10 @@ public class BlindVoteListService implements PersistedDataHost {
     // For additional resilience we re-publish our list of blindVotes a the moment we publish the revealVote tx.
     public void republishAllBlindVotesOfCycle() {
         p2PService.getDataMap().values().stream()
-                .filter(entry -> entry.getProtectedStoragePayload() instanceof BlindVotePayload)
+                .filter(entry -> entry.getProtectedStoragePayload() instanceof BlindVoteProtectedStoragePayload)
                 .filter(entry -> {
-                    final BlindVotePayload blindVotePayload = (BlindVotePayload) entry.getProtectedStoragePayload();
-                    final String txId = blindVotePayload.getBlindVote().getTxId();
+                    final BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload = (BlindVoteProtectedStoragePayload) entry.getProtectedStoragePayload();
+                    final String txId = blindVoteProtectedStoragePayload.getBlindVote().getTxId();
                     final int chainHeight = stateService.getChainHeight();
                     return periodService.isTxInCorrectCycle(txId, chainHeight) &&
                             periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE);
@@ -141,15 +141,15 @@ public class BlindVoteListService implements PersistedDataHost {
 
     private void onAddedProtectedStorageEntry(ProtectedStorageEntry protectedStorageEntry, boolean storeLocally) {
         final ProtectedStoragePayload protectedStoragePayload = protectedStorageEntry.getProtectedStoragePayload();
-        if (protectedStoragePayload instanceof BlindVotePayload) {
-            final BlindVotePayload blindVotePayload = (BlindVotePayload) protectedStoragePayload;
-            final BlindVote blindVote = blindVotePayload.getBlindVote();
+        if (protectedStoragePayload instanceof BlindVoteProtectedStoragePayload) {
+            final BlindVoteProtectedStoragePayload blindVoteProtectedStoragePayload = (BlindVoteProtectedStoragePayload) protectedStoragePayload;
+            final BlindVote blindVote = blindVoteProtectedStoragePayload.getBlindVote();
             if (blindVoteList.stream().noneMatch(e -> e.equals(blindVote))) {
                 final int height = stateService.getChainHeight();
 
                 if (!BlindVoteUtils.blindVoteListContains(blindVote, blindVoteList.getList()) &&
                         blindVoteValidator.isValid(blindVote)) {
-                    log.info("We received a BlindVotePayload from the P2P network. BlindVotePayload=" + blindVotePayload);
+                    log.info("We received a BlindVoteProtectedStoragePayload from the P2P network. BlindVoteProtectedStoragePayload=" + blindVoteProtectedStoragePayload);
                     blindVoteList.add(blindVote);
 
                     if (storeLocally) {
@@ -157,11 +157,11 @@ public class BlindVoteListService implements PersistedDataHost {
                     }
                 } else {
                     log.warn("We are not in the tolerated phase anymore and ignore that " +
-                                    "blindVotePayload. blindVotePayload={}, height={}", blindVotePayload,
+                                    "blindVoteProtectedStoragePayload. blindVoteProtectedStoragePayload={}, height={}", blindVoteProtectedStoragePayload,
                             height);
                 }
             } else {
-                log.debug("We have that blindVotePayload already in our list. blindVotePayload={}", blindVotePayload);
+                log.debug("We have that blindVoteProtectedStoragePayload already in our list. blindVoteProtectedStoragePayload={}", blindVoteProtectedStoragePayload);
             }
         }
     }

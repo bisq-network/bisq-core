@@ -22,7 +22,9 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
+import bisq.core.dao.voting.ballot.proposal.ProposalStore;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
+import bisq.core.dao.voting.blindvote.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
@@ -109,6 +111,10 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
+                case PROPOSAL_STORE:
+                    return ProposalStore.fromProto(proto.getProposalStore());
+                case BLIND_VOTE_STORE:
+                    return BlindVoteStore.fromProto(proto.getBlindVoteStore());
                 case STATE:
                     return State.fromProto(proto.getState());
                 case BALLOT_LIST:
