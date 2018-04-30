@@ -31,16 +31,16 @@ import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
+import bisq.core.dao.voting.ballot.vote.Vote;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.myvote.MyVote;
+import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.FilteredProposalListService;
 import bisq.core.dao.voting.proposal.MyProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
-import bisq.core.dao.voting.ballot.vote.Vote;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.myvote.MyVote;
-import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
@@ -110,10 +110,16 @@ public class DaoFacade {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Use case: Present proposals
+    //
+    // Phase: Proposal
+    //
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Present proposals
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Use case: Present lists
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public ObservableList<Proposal> getActiveOrMyUnconfirmedProposals() {
         return filteredProposalListService.getActiveOrMyUnconfirmedProposals();
     }
@@ -122,17 +128,8 @@ public class DaoFacade {
         return filteredProposalListService.getClosedProposals();
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Use case: Present ballots
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public ObservableList<Ballot> getActiveOrMyUnconfirmedBallots() {
-        return filteredBallotListService.getActiveOrMyUnconfirmedBallots();
-    }
-
-    public ObservableList<Ballot> getClosedBallots() {
-        return filteredBallotListService.getClosedBallots();
+    public List<Proposal> getMyProposals() {
+        return myProposalListService.getMyProposals();
     }
 
 
@@ -157,12 +154,12 @@ public class DaoFacade {
                 bsqAddress);
     }
 
-    // Present fee
+    // Show fee
     public Coin getProposalFee() {
         return ProposalConsensus.getFee(stateService, stateService.getChainHeight());
     }
 
-    // Publish proposal and persist it
+    // Publish proposal tx, proposal payload and and persist it to myProposalList
     public void publishMyProposal(Proposal proposal, Transaction transaction, ResultHandler resultHandler,
                                   ErrorMessageHandler errorMessageHandler) {
         myProposalListService.publishProposal(proposal, transaction, resultHandler, errorMessageHandler);
@@ -180,18 +177,36 @@ public class DaoFacade {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Use case: Vote on proposal/ballot
+    //
+    // Phase: Blind Vote
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Use case: Present lists
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public ObservableList<Ballot> getActiveOrMyUnconfirmedBallots() {
+        return filteredBallotListService.getActiveOrMyUnconfirmedBallots();
+    }
+
+    public ObservableList<Ballot> getClosedBallots() {
+        return filteredBallotListService.getClosedBallots();
+    }
+
+    public List<MyVote> getMyVoteList() {
+        return myVoteListService.getMyVoteList().getList();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Use case: Vote
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Vote on ballot
     public void setVote(Ballot ballot, @Nullable Vote vote) {
         ballot.setVote(vote);
         ballotListService.persist();
-    }
-
-    // Present myVotes
-    public List<MyVote> getMyVoteList() {
-        return myVoteListService.getMyVoteList().getList();
     }
 
 
@@ -213,6 +228,13 @@ public class DaoFacade {
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         blindVoteService.publishBlindVote(stake, resultHandler, exceptionHandler);
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Generic
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
