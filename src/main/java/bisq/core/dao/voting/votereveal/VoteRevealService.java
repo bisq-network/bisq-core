@@ -137,7 +137,7 @@ public class VoteRevealService {
 
     public BlindVoteList getSortedBlindVoteListOfCycle(BlindVoteList blindVoteList) {
         final List<BlindVote> list = blindVoteList.stream()
-                .filter(blindVoteValidator::isValid)
+                .filter(blindVoteValidator::isValidOrUnconfirmed)
                 .collect(Collectors.toList());
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
@@ -165,7 +165,7 @@ public class VoteRevealService {
         if (periodService.getPhaseForHeight(chainHeight) == DaoPhase.Phase.VOTE_REVEAL) {
             myVoteListService.getMyVoteList().stream()
                     .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
-                    .filter(myVote -> blindVoteValidator.isValid(myVote.getBlindVote()))
+                    .filter(myVote -> blindVoteValidator.isValidOrUnconfirmed(myVote.getBlindVote()))
                     .forEach(myVote -> {
                         // We handle the exception here inside the stream iteration as we have not get triggered from an
                         // outside user intent anyway. We keep errors in a observable list so clients can observe that to

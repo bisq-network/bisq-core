@@ -142,7 +142,7 @@ public class MyVoteListService implements PersistedDataHost {
     // Only republish if valid as well that reveal tx is not yet set.
     private void publishMyBlindVotes() {
         getMyVoteList().stream()
-                .filter(myVote -> blindVoteValidator.isValid(myVote.getBlindVote()))
+                .filter(myVote -> blindVoteValidator.isValidOrUnconfirmed(myVote.getBlindVote()))
                 .forEach(myVote -> {
                     if (myVote.getRevealTxId() == null) {
                         BlindVotePayload blindVotePayload = new BlindVotePayload(myVote.getBlindVote(), signaturePubKey);

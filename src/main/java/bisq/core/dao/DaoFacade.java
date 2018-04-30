@@ -30,13 +30,13 @@ import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.ballot.BallotWithTransaction;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
-import bisq.core.dao.voting.ballot.MyBallotListService;
-import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
+import bisq.core.dao.voting.ballot.proposal.FilteredProposalListService;
+import bisq.core.dao.voting.ballot.proposal.MyProposalListService;
 import bisq.core.dao.voting.ballot.proposal.Proposal;
 import bisq.core.dao.voting.ballot.proposal.ProposalConsensus;
-import bisq.core.dao.voting.ballot.proposal.ProposalService;
+import bisq.core.dao.voting.ballot.proposal.ProposalWithTransaction;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.myvote.MyVote;
@@ -71,37 +71,37 @@ import javax.annotation.Nullable;
  * by providing a reduced API and/or aggregating subroutines.
  */
 public class DaoFacade {
+    private final FilteredProposalListService filteredProposalListService;
     private final BallotListService ballotListService;
     private final FilteredBallotListService filteredBallotListService;
-    private final MyBallotListService myBallotListService;
-    private final ProposalService proposalService;
+    private final MyProposalListService myProposalListService;
     private final StateService stateService;
     private final PeriodService periodService;
     private final BlindVoteService blindVoteService;
     private final MyVoteListService myVoteListService;
-    private final CompensationBallotService compensationBallotService;
+    private final CompensationProposalService compensationProposalService;
 
     private final ObjectProperty<DaoPhase.Phase> phaseProperty = new SimpleObjectProperty<>(DaoPhase.Phase.UNDEFINED);
 
     @Inject
-    public DaoFacade(BallotListService ballotListService,
+    public DaoFacade(MyProposalListService myProposalListService,
+                     FilteredProposalListService filteredProposalListService,
+                     BallotListService ballotListService,
                      FilteredBallotListService filteredBallotListService,
-                     MyBallotListService myBallotListService,
-                     ProposalService proposalService,
                      StateService stateService,
                      PeriodService periodService,
                      BlindVoteService blindVoteService,
                      MyVoteListService myVoteListService,
-                     CompensationBallotService compensationBallotService) {
+                     CompensationProposalService compensationProposalService) {
+        this.filteredProposalListService = filteredProposalListService;
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
-        this.myBallotListService = myBallotListService;
-        this.proposalService = proposalService;
+        this.myProposalListService = myProposalListService;
         this.stateService = stateService;
         this.periodService = periodService;
         this.blindVoteService = blindVoteService;
         this.myVoteListService = myVoteListService;
-        this.compensationBallotService = compensationBallotService;
+        this.compensationProposalService = compensationProposalService;
 
         stateService.addChainHeightListener(chainHeight -> {
             if (chainHeight > 0 && periodService.getCurrentCycle() != null)
@@ -110,10 +110,23 @@ public class DaoFacade {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Use case: Present proposals/ballots
+    // Use case: Present proposals
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Present proposals/ballots
+    // Present proposals
+    public ObservableList<Proposal> getActiveOrMyUnconfirmedProposals() {
+        return filteredProposalListService.getActiveOrMyUnconfirmedProposals();
+    }
+
+    public ObservableList<Proposal> getClosedProposals() {
+        return filteredProposalListService.getClosedProposals();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Use case: Present ballots
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public ObservableList<Ballot> getActiveOrMyUnconfirmedBallots() {
         return filteredBallotListService.getActiveOrMyUnconfirmedBallots();
     }
@@ -124,19 +137,19 @@ public class DaoFacade {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Use case: Create proposal/ballot
+    // Use case: Create proposal
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Creation of Ballot and proposalTransaction
-    public BallotWithTransaction getCompensationBallotWithTransaction(String name,
-                                                                      String title,
-                                                                      String description,
-                                                                      String link,
-                                                                      Coin requestedBsq,
-                                                                      String bsqAddress)
+    // Creation of Proposal and proposalTransaction
+    public ProposalWithTransaction getCompensationProposalWithTransaction(String name,
+                                                                          String title,
+                                                                          String description,
+                                                                          String link,
+                                                                          Coin requestedBsq,
+                                                                          String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
-        return compensationBallotService.createBallotWithTransaction(name,
+        return compensationProposalService.createProposalWithTransaction(name,
                 title,
                 description,
                 link,
@@ -149,21 +162,20 @@ public class DaoFacade {
         return ProposalConsensus.getFee(stateService, stateService.getChainHeight());
     }
 
-    // Publish proposal, store ballot
-    public void publishBallot(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
-                              ErrorMessageHandler errorMessageHandler) {
-        proposalService.publishProposal(ballot, transaction, resultHandler, errorMessageHandler);
+    // Publish proposal and persist it
+    public void publishMyProposal(Proposal proposal, Transaction transaction, ResultHandler resultHandler,
+                                  ErrorMessageHandler errorMessageHandler) {
+        myProposalListService.publishProposal(proposal, transaction, resultHandler, errorMessageHandler);
     }
 
-    // Allow remove if it is my proposal
+    // Check if it is my proposal
     public boolean isMyProposal(Proposal proposal) {
-        return myBallotListService.isMyProposal(proposal);
+        return myProposalListService.isMyProposal(proposal);
     }
 
-    // Remove my ballot
-    public boolean removeBallot(Ballot ballot) {
-        myBallotListService.removeBallot(ballot);
-        return proposalService.removeMyProposal(ballot);
+    // Remove my proposal
+    public boolean removeMyProposal(Proposal proposal) {
+        return myProposalListService.removeMyProposal(proposal);
     }
 
 

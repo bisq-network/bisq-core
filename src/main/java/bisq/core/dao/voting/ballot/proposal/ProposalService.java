@@ -17,55 +17,54 @@
 
 package bisq.core.dao.voting.ballot.proposal;
 
-import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
-import bisq.core.btc.wallet.TxBroadcaster;
-import bisq.core.btc.wallet.TxMalleabilityException;
-import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.ballot.BallotUtils;
-import bisq.core.dao.voting.ballot.MyBallotListService;
+import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyPayload;
 import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyStorageService;
 import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalPayload;
 import bisq.core.dao.voting.ballot.proposal.storage.protectedstorage.ProposalStorageService;
 
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreListener;
 import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
-import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
-import bisq.common.crypto.KeyRing;
-import bisq.common.handlers.ErrorMessageHandler;
-import bisq.common.handlers.ResultHandler;
-
-import org.bitcoinj.core.Transaction;
 
 import com.google.inject.Inject;
 
-import javafx.beans.value.ChangeListener;
-
-import java.security.PublicKey;
-
+import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates proposal tx and broadcasts proposal to network. Republish own proposals at startup.
+ * Maintains preliminaryProposals and confirmedProposals. Republishes preliminaryProposals to append-only data store
+ * when entering the blind vote phase.
  */
 @Slf4j
-public class ProposalService {
+public class ProposalService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
     private final P2PService p2PService;
-    private final WalletsManager walletsManager;
     private final PeriodService periodService;
     private final StateService stateService;
-    private final MyBallotListService myBallotListService;
-    private final PublicKey signaturePubKey;
+    private final ProposalValidator proposalValidator;
 
-    private ChangeListener<Number> numConnectedPeersListener;
+    // Proposals we receive in the proposal phase. They can be removed in that phase and that list must not be used for
+    // consensus critical code.
+    @Getter
+    private final List<Proposal> preliminaryProposals = new ArrayList<>();
+
+    // Proposals which got added to the append-only data store at the beginning of the blind vote phase.
+    // They cannot be removed anymore. This list is used for consensus critical code.
+    @Getter
+    private final List<Proposal> confirmedProposals = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -74,27 +73,71 @@ public class ProposalService {
 
     @Inject
     public ProposalService(P2PService p2PService,
-                           WalletsManager walletsManager,
                            PeriodService periodService,
                            ProposalAppendOnlyStorageService proposalAppendOnlyStorageService,
                            ProposalStorageService proposalStorageService,
                            AppendOnlyDataStoreService appendOnlyDataStoreService,
                            ProtectedDataStoreService protectedDataStoreService,
                            StateService stateService,
-                           MyBallotListService myBallotListService,
-                           KeyRing keyRing) {
+                           ProposalValidator proposalValidator) {
         this.p2PService = p2PService;
-        this.walletsManager = walletsManager;
         this.periodService = periodService;
         this.stateService = stateService;
-        this.myBallotListService = myBallotListService;
-        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-
-        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
-        p2PService.getNumConnectedPeers().addListener(numConnectedPeersListener);
+        this.proposalValidator = proposalValidator;
 
         appendOnlyDataStoreService.addService(proposalAppendOnlyStorageService);
         protectedDataStoreService.addService(proposalStorageService);
+
+        stateService.addChainHeightListener(this);
+        p2PService.addHashSetChangedListener(this);
+        p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ChainHeightListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onChainHeightChanged(int blockHeight) {
+        // When we enter the  blind vote phase we re-publish all proposals we have received from the p2p network to the
+        // append only data store.
+        // From now on we will access proposals only from that data store.
+        if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE) == blockHeight) {
+            rePublishProposalsToAppendOnlyDataStore();
+
+            // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
+            fillConfirmedProposals();
+        } else if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.PROPOSAL) == blockHeight) {
+            // Cycle has changed, we reset the lists.
+            fillPreliminaryProposals();
+            fillConfirmedProposals();
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // HashMapChangedListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onAdded(ProtectedStorageEntry entry) {
+        onAddedProtectedData(entry);
+    }
+
+    @Override
+    public void onRemoved(ProtectedStorageEntry entry) {
+        onRemovedProtectedData(entry);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // AppendOnlyDataStoreListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onAdded(PersistableNetworkPayload payload) {
+        onAddedAppendOnlyData(payload);
     }
 
 
@@ -103,67 +146,8 @@ public class ProposalService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRePublish();
-    }
-
-    // Broadcast proposalTx and publish proposal to P2P network
-    public void publishProposal(Ballot ballot, Transaction transaction, ResultHandler resultHandler,
-                                ErrorMessageHandler errorMessageHandler) {
-        walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
-            @Override
-            public void onSuccess(Transaction transaction) {
-                resultHandler.handleResult();
-            }
-
-            @Override
-            public void onTimeout(TxBroadcastTimeoutException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-
-            @Override
-            public void onTxMalleability(TxMalleabilityException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-
-            @Override
-            public void onFailure(TxBroadcastException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
-            }
-        });
-
-        // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
-        // proposal stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
-        // in worst case if it does not succeed the proposal will be ignored anyway.
-        // Inconsistently propagated proposals in the p2p network could have potentially worse effects.
-        Proposal proposal = ballot.getProposal();
-        final boolean success = addToP2PNetwork(proposal);
-        if (success) {
-            log.info("We added a proposal to the P2P network. Proposal.uid=" + proposal.getUid());
-        } else {
-            final String msg = "Adding of proposal to P2P network failed. proposal=" + proposal;
-            log.error(msg);
-            errorMessageHandler.handleErrorMessage(msg);
-        }
-
-        myBallotListService.storeBallot(ballot);
-    }
-
-    public boolean removeMyProposal(Ballot ballot) {
-        final Proposal proposal = ballot.getProposal();
-        if (BallotUtils.canRemoveProposal(proposal, stateService, periodService)) {
-            boolean success = p2PService.removeData(createProposalPayload(proposal), true);
-            if (!success)
-                log.warn("Removal of ballot from p2p network failed. ballot={}", ballot);
-
-            return success;
-        } else {
-            final String msg = "removeProposal called with a Ballot which is outside of the Ballot phase.";
-            DevEnv.logErrorAndThrowIfDevMode(msg);
-            return false;
-        }
+        fillPreliminaryProposals();
+        fillConfirmedProposals();
     }
 
 
@@ -171,33 +155,78 @@ public class ProposalService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void maybeRePublish() {
-        // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
-        // to avoid activity peaks at startup
-        UserThread.runAfter(() -> {
-            if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                rePublishProposals(myBallotListService.getProposals());
+    private void fillPreliminaryProposals() {
+        preliminaryProposals.clear();
+        p2PService.getDataMap().values().forEach(this::onAddedProtectedData);
+    }
+
+    private void fillConfirmedProposals() {
+        confirmedProposals.clear();
+        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAddedAppendOnlyData);
+    }
+
+    private void rePublishProposalsToAppendOnlyDataStore() {
+        preliminaryProposals.stream()
+                .filter(proposalValidator::isValidAndConfirmed)
+                .map(ProposalAppendOnlyPayload::new)
+                .forEach(appendOnlyPayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
+                    if (!success)
+                        log.warn("rePublishProposalsToAppendOnlyDataStore failed for proposal " + appendOnlyPayload.getProposal());
+                });
+    }
+
+    private void onAddedProtectedData(ProtectedStorageEntry entry) {
+        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
+            if (!ProposalUtils.containsProposal(proposal, preliminaryProposals)) {
+                if (proposalValidator.isValid(proposal, true)) {
+                    log.info("We received a new proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
+                    preliminaryProposals.add(proposal);
+                } else {
+                    log.warn("We received a invalid proposal from the P2P network. Proposal={}", proposal);
+                }
+            } else {
+                log.debug("We received a new proposal from the P2P network but we have it already in out list. " +
+                        "We ignore that proposal. Proposal.txId={}", proposal.getTxId());
             }
-        }, 2);
+        }
     }
 
-    private void rePublishProposals(List<Proposal> proposals) {
-        proposals.forEach(proposal -> {
-            if (!addToP2PNetwork(proposal))
-                log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
-        });
+    private void onRemovedProtectedData(ProtectedStorageEntry entry) {
+        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof ProposalPayload) {
+            final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
+            ProposalUtils.findProposalInList(proposal, preliminaryProposals)
+                    .filter(p -> {
+                        if (ProposalUtils.canRemoveProposal(p, stateService, periodService)) {
+                            return true;
+                        } else {
+                            final String msg = "onRemoved called for a proposal which is outside of the proposal phase. " +
+                                    "This is invalid and we ignore the call.";
+                            DevEnv.logErrorAndThrowIfDevMode(msg);
+                            return false;
+                        }
+                    })
+                    .ifPresent(p -> ProposalUtils.removeProposalFromList(proposal, preliminaryProposals));
+        }
     }
 
-    // Our proposal will be stored as protected storage payload in the p2p network and will be persisted to the
-    // ProposalStore. The proposal can still be removed by the owner (protected by sig / pubKey).
-    // Later when entering the blind vote phase the voters we will store the proposal  to the append-only data store
-    // to make sure the data is immutably persisted.
-    private boolean addToP2PNetwork(Proposal proposal) {
-        return p2PService.addProtectedStorageEntry(createProposalPayload(proposal), true);
-    }
-
-    private ProposalPayload createProposalPayload(Proposal proposal) {
-        return new ProposalPayload(proposal, signaturePubKey);
+    private void onAddedAppendOnlyData(PersistableNetworkPayload payload) {
+        if (payload instanceof ProposalAppendOnlyPayload) {
+            final Proposal proposal = ((ProposalAppendOnlyPayload) payload).getProposal();
+            if (!ProposalUtils.containsProposal(proposal, confirmedProposals)) {
+                if (proposalValidator.isValidAndConfirmed(proposal)) {
+                    log.info("We received a new append-only proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
+                    confirmedProposals.add(proposal);
+                } else {
+                    log.warn("We received a invalid append-only proposal from the P2P network. Proposal={}", proposal);
+                }
+            } else {
+                log.debug("We received a new append-only proposal from the P2P network but we have it already in out list. " +
+                        "We ignore that proposal. Proposal.txId={}", proposal.getTxId());
+            }
+        }
     }
 }

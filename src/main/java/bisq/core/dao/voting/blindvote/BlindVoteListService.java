@@ -114,7 +114,7 @@ public class BlindVoteListService implements PersistedDataHost {
 
     public void addMyBlindVote(BlindVote blindVote) {
         if (!BlindVoteUtils.blindVoteListContains(blindVote, blindVoteList.getList()) &&
-                blindVoteValidator.isValid(blindVote)) {
+                blindVoteValidator.isValidOrUnconfirmed(blindVote)) {
             blindVoteList.add(blindVote);
             persist();
         }
@@ -149,7 +149,7 @@ public class BlindVoteListService implements PersistedDataHost {
                 final int height = stateService.getChainHeight();
 
                 if (!BlindVoteUtils.blindVoteListContains(blindVote, blindVoteList.getList()) &&
-                        blindVoteValidator.isValid(blindVote)) {
+                        blindVoteValidator.isValidOrUnconfirmed(blindVote)) {
                     log.info("We received a BlindVotePayload from the P2P network. BlindVotePayload=" + blindVotePayload);
                     blindVoteList.add(blindVote);
 

@@ -67,7 +67,16 @@ public class BlindVoteValidator {
         }
     }
 
-    public boolean isValid(BlindVote blindVote) {
+
+    public boolean isValidOrUnconfirmed(BlindVote blindVote) {
+        return isValid(blindVote, true);
+    }
+
+    public boolean isValidAndConfirmed(BlindVote blindVote) {
+        return isValid(blindVote, false);
+    }
+
+    public boolean isValid(BlindVote blindVote, boolean allowUnconfirmed) {
         if (!areDataFieldsValid(blindVote)) {
             log.warn("blindVote is invalid. blindVote={}", blindVote);
             return false;
@@ -87,8 +96,10 @@ public class BlindVoteValidator {
                 log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
                 return false;
             }
-        } else {
+        } else if (allowUnconfirmed) {
             return periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE);
+        } else {
+            return false;
         }
         return true;
     }

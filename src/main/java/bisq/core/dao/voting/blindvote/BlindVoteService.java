@@ -26,18 +26,26 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
-import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.HashMapChangedListener;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreListener;
 import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
@@ -59,16 +67,19 @@ import java.security.PublicKey;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and published blindVote and the blindVote tx.
  */
 @Slf4j
-public class BlindVoteService {
+public class BlindVoteService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
     private final StateService stateService;
     private final P2PService p2PService;
     private final WalletsManager walletsManager;
@@ -77,8 +88,20 @@ public class BlindVoteService {
     private final BallotListService ballotListService;
     private final BlindVoteListService blindVoteListService;
     private final MyVoteListService myVoteListService;
+    private PeriodService periodService;
     private final ProposalValidator proposalValidator;
+    private BlindVoteValidator blindVoteValidator;
     private final PublicKey signaturePubKey;
+
+    // BlindVotes we receive in the blind vote phase. They could be theoretically removed (we might add a feature to
+    // remove a published blind vote in future)in that phase and that list must not be used for consensus critical code.
+    @Getter
+    private final List<BlindVote> preliminaryBlindVotes = new ArrayList<>();
+
+    // BlindVotes which got added to the append-only data store at the beginning of the vote reveal phase.
+    // They cannot be removed anymore. This list is used for consensus critical code.
+    @Getter
+    private final List<BlindVote> confirmedBlindVotes = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -94,11 +117,13 @@ public class BlindVoteService {
                             BallotListService ballotListService,
                             BlindVoteListService blindVoteListService,
                             MyVoteListService myVoteListService,
+                            PeriodService periodService,
                             BlindVoteAppendOnlyStorageService blindVoteAppendOnlyStorageService,
                             BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             ProtectedDataStoreService protectedDataStoreService,
                             ProposalValidator proposalValidator,
+                            BlindVoteValidator blindVoteValidator,
                             KeyRing keyRing) {
         this.stateService = stateService;
         this.p2PService = p2PService;
@@ -108,12 +133,83 @@ public class BlindVoteService {
         this.ballotListService = ballotListService;
         this.blindVoteListService = blindVoteListService;
         this.myVoteListService = myVoteListService;
+        this.periodService = periodService;
         this.proposalValidator = proposalValidator;
+        this.blindVoteValidator = blindVoteValidator;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
 
         appendOnlyDataStoreService.addService(blindVoteAppendOnlyStorageService);
         protectedDataStoreService.addService(blindVoteStorageService);
+
+        stateService.addChainHeightListener(this);
+        p2PService.addHashSetChangedListener(this);
+        p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
+    }
+
+
+  /*  @Override
+    public void onChainHeightChanged(int blockHeight) {
+        // When we enter the  blind vote phase we re-publish all proposals we have received from the p2p network to the
+        // append only data store.
+        // From now on we will access proposals only from that data store.
+        if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE) == blockHeight) {
+            ballotListService.getBallotList().stream()
+                    .filter(ballot -> proposalValidator.isValidOrUnconfirmed(ballot.getProposal()))
+                    .map(Ballot::getProposal)
+                    .map(ProposalAppendOnlyPayload::new)
+                    .forEach(proposalAppendOnlyPayload -> {
+                        boolean success = p2PService.addPersistableNetworkPayload(proposalAppendOnlyPayload, true);
+                        if (!success)
+                            log.warn("addProposalsToAppendOnlyStore failed for proposal " + proposalAppendOnlyPayload.getProposal());
+                    });
+        }
+    }*/
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ChainHeightListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onChainHeightChanged(int blockHeight) {
+        // When we enter the vote reveal phase we re-publish all blindVotes we have received from the p2p network to the
+        // append only data store.
+        // From now on we will access blindVotes only from that data store.
+        if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL) == blockHeight) {
+            rePublishBlindVotesToAppendOnlyDataStore();
+
+            // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
+            fillConfirmedBlindVotes();
+        } else if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.PROPOSAL) == blockHeight) {
+            // Cycle has changed, we reset the lists.
+            fillPreliminaryBlindVotes();
+            fillConfirmedBlindVotes();
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // HashMapChangedListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onAdded(ProtectedStorageEntry entry) {
+        onAddedProtectedData(entry);
+    }
+
+    @Override
+    public void onRemoved(ProtectedStorageEntry entry) {
+        onRemovedProtectedData(entry);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // AppendOnlyDataStoreListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onAdded(PersistableNetworkPayload payload) {
+        onAddedAppendOnlyData(payload);
     }
 
 
@@ -122,6 +218,8 @@ public class BlindVoteService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
+        fillPreliminaryBlindVotes();
+        fillConfirmedBlindVotes();
     }
 
     // For showing fee estimation in confirmation popup
@@ -198,10 +296,6 @@ public class BlindVoteService {
                 //TODO define specific exception
                 exceptionHandler.handleException(new Exception(msg));
             }
-
-            // We publish all proposals we used for our blind vote. Now the proposals get into an append only data store
-            // and cannot be removed anymore. From now on we will access proposals only from that data store.
-            addProposalsToAppendOnlyStore(getSortedBallotList());
         } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
                 WalletException | IOException exception) {
             exceptionHandler.handleException(exception);
@@ -221,16 +315,106 @@ public class BlindVoteService {
 
     public BallotList getSortedBallotList() {
         final List<Ballot> list = ballotListService.getBallotList().stream()
-                .filter(ballot -> proposalValidator.isValid(ballot.getProposal()))
+                .filter(ballot -> proposalValidator.isValidOrUnconfirmed(ballot.getProposal()))
                 .collect(Collectors.toList());
         BlindVoteConsensus.sortBallotList(list);
         return new BallotList(list);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Utils
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public static boolean containsBlindVote(BlindVote blindVote, List<BlindVote> blindVoteList) {
+        return findBlindVoteInList(blindVote, blindVoteList).isPresent();
+    }
+
+    public static Optional<BlindVote> findBlindVoteInList(BlindVote blindVote, List<BlindVote> blindVoteList) {
+        return blindVoteList.stream()
+                .filter(vote -> vote.equals(blindVote))
+                .findAny();
+    }
+
+    public static Optional<BlindVote> findBlindVote(String blindVoteTxId, BlindVoteList blindVoteList) {
+        return blindVoteList.stream()
+                .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
+                .findAny();
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+
+    private void fillPreliminaryBlindVotes() {
+        preliminaryBlindVotes.clear();
+        p2PService.getDataMap().values().forEach(this::onAddedProtectedData);
+    }
+
+    private void fillConfirmedBlindVotes() {
+        confirmedBlindVotes.clear();
+        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAddedAppendOnlyData);
+    }
+
+    private void rePublishBlindVotesToAppendOnlyDataStore() {
+        preliminaryBlindVotes.stream()
+                .filter(blindVoteValidator::isValidAndConfirmed)
+                .map(BlindVoteAppendOnlyPayload::new)
+                .forEach(appendOnlyPayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
+                    if (!success)
+                        log.warn("rePublishBlindVotesToAppendOnlyDataStore failed for blindVote " +
+                                appendOnlyPayload.getBlindVote());
+                });
+    }
+
+    private void onAddedProtectedData(ProtectedStorageEntry entry) {
+        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof BlindVotePayload) {
+            final BlindVote blindVote = ((BlindVotePayload) protectedStoragePayload).getBlindVote();
+            if (!containsBlindVote(blindVote, preliminaryBlindVotes)) {
+                if (blindVoteValidator.isValid(blindVote, true)) {
+                    log.info("We received a new blindVote from the P2P network. BlindVote.txId={}", blindVote.getTxId());
+                    preliminaryBlindVotes.add(blindVote);
+                } else {
+                    log.warn("We received a invalid blindVote from the P2P network. BlindVote={}", blindVote);
+
+                }
+            } else {
+                log.debug("We received a new blindVote from the P2P network but we have it already in out list. " +
+                        "We ignore that blindVote. BlindVote.txId={}", blindVote.getTxId());
+            }
+        }
+    }
+
+    private void onRemovedProtectedData(ProtectedStorageEntry entry) {
+        if (entry.getProtectedStoragePayload() instanceof BlindVotePayload) {
+            String msg = "We do not support removal of blind votes. ProtectedStoragePayload=" +
+                    entry.getProtectedStoragePayload();
+            log.error(msg);
+            throw new UnsupportedOperationException(msg);
+        }
+    }
+
+    private void onAddedAppendOnlyData(PersistableNetworkPayload payload) {
+        if (payload instanceof BlindVoteAppendOnlyPayload) {
+            final BlindVote blindVote = ((BlindVoteAppendOnlyPayload) payload).getBlindVote();
+            if (!containsBlindVote(blindVote, confirmedBlindVotes)) {
+                if (blindVoteValidator.isValidAndConfirmed(blindVote)) {
+                    log.info("We received a new append-only blindVote from the P2P network. BlindVote.txId={}",
+                            blindVote.getTxId());
+                    confirmedBlindVotes.add(blindVote);
+                } else {
+                    log.warn("We received a invalid append-only blindVote from the P2P network. BlindVote={}", blindVote);
+                }
+            } else {
+                log.debug("We received a new append-only blindVote from the P2P network but we have it already in out list. " +
+                        "We ignore that blindVote. BlindVote.txId={}", blindVote.getTxId());
+            }
+        }
+    }
+
 
     private BlindVote createAndStoreBlindVote(byte[] encryptedVotes, Transaction blindVoteTx, Coin stake,
                                               SecretKey secretKey) {
@@ -245,16 +429,5 @@ public class BlindVoteService {
     private boolean addToP2pNetwork(BlindVote blindVote) {
         BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote, signaturePubKey);
         return p2PService.addProtectedStorageEntry(blindVotePayload, true);
-    }
-
-    private void addProposalsToAppendOnlyStore(BallotList ballotList) {
-        ballotList.stream()
-                .map(Ballot::getProposal)
-                .map(ProposalAppendOnlyPayload::new)
-                .forEach(proposalAppendOnlyPayload -> {
-                    boolean success = p2PService.addPersistableNetworkPayload(proposalAppendOnlyPayload, true);
-                    if (!success)
-                        log.warn("addProposalsToAppendOnlyStore failed for proposal " + proposalAppendOnlyPayload.getProposal());
-                });
     }
 }

@@ -49,8 +49,11 @@ import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
+import bisq.core.dao.voting.ballot.proposal.FilteredProposalListService;
+import bisq.core.dao.voting.ballot.proposal.MyProposalListService;
 import bisq.core.dao.voting.ballot.proposal.ProposalService;
 import bisq.core.dao.voting.ballot.proposal.ProposalValidator;
+import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.ballot.proposal.compensation.CompensationValidator;
 import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyStorageService;
 import bisq.core.dao.voting.ballot.proposal.storage.appendonly.ProposalAppendOnlyStore;
@@ -125,12 +128,17 @@ public class DaoModule extends AppModule {
 
         // Proposal
         bind(ProposalService.class).in(Singleton.class);
+        bind(MyProposalListService.class).in(Singleton.class);
+        bind(FilteredProposalListService.class).in(Singleton.class);
+
         bind(ProposalAppendOnlyStore.class).in(Singleton.class);
         bind(ProposalAppendOnlyStorageService.class).in(Singleton.class);
         bind(ProposalStore.class).in(Singleton.class);
         bind(ProposalStorageService.class).in(Singleton.class);
         bind(ProposalValidator.class).in(Singleton.class);
+
         bind(CompensationValidator.class).in(Singleton.class);
+        bind(CompensationProposalService.class).in(Singleton.class);
 
         // Ballot
         bind(BallotFactory.class).in(Singleton.class);
