@@ -15,32 +15,31 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.ballot;
+package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.Proposal;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+
+import bisq.network.p2p.storage.P2PDataStorage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
-public class BallotUtils {
-    public static boolean ballotListContainsProposal(Proposal proposal, List<Ballot> ballotList) {
-        return findProposalInBallotList(proposal, ballotList).isPresent();
+public class ProposalUtils {
+    public static boolean containsProposal(Proposal proposal, List<Proposal> proposals) {
+        return findProposalInList(proposal, proposals).isPresent();
     }
 
-    public static Optional<Ballot> findProposalInBallotList(Proposal proposal, List<Ballot> ballotList) {
-        return ballotList.stream()
-                .filter(ballot -> ballot.getProposal().equals(proposal))
+    public static Optional<Proposal> findProposalInList(Proposal proposal, List<Proposal> proposals) {
+        return proposals.stream()
+                .filter(p -> p.equals(proposal))
                 .findAny();
     }
 
-    // If unconfirmed or in correct phase/cycle we remove it
     public static boolean canRemoveProposal(Proposal proposal, StateService stateService, PeriodService periodService) {
         final Optional<Tx> optionalProposalTx = stateService.getTx(proposal.getTxId());
         return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, stateService);
@@ -51,7 +50,14 @@ public class BallotUtils {
                 periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight());
     }
 
-    public static void removeProposalFromBallotList(Proposal proposal, List<Ballot> ballotList) {
-        findProposalInBallotList(proposal, ballotList).ifPresent(ballotList::remove);
+    public static void removeProposalFromList(Proposal proposal, List<Proposal> proposals) {
+        findProposalInList(proposal, proposals).ifPresent(proposals::remove);
+    }
+
+    public static List<Proposal> getProposalsFromAppendOnlyStore(P2PDataStorage p2pDataStorage) {
+        return p2pDataStorage.getAppendOnlyDataStoreMap().values().stream()
+                .filter(persistableNetworkPayload -> persistableNetworkPayload instanceof ProposalAppendOnlyPayload)
+                .map(persistableNetworkPayload -> ((ProposalAppendOnlyPayload) persistableNetworkPayload).getProposal())
+                .collect(Collectors.toList());
     }
 }

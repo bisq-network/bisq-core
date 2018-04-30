@@ -24,7 +24,7 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.Cycle;
-import bisq.core.dao.voting.ballot.proposal.param.ParamChangeMap;
+import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 

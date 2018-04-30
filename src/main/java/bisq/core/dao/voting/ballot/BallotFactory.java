@@ -18,8 +18,8 @@
 package bisq.core.dao.voting.ballot;
 
 import bisq.core.dao.voting.ballot.compensation.CompensationBallot;
-import bisq.core.dao.voting.ballot.proposal.Proposal;
-import bisq.core.dao.voting.ballot.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.proposal.Proposal;
+import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.ballot.vote.Vote;
 
 import lombok.extern.slf4j.Slf4j;

@@ -15,21 +15,19 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.voteresult;
+package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.voting.proposal.Proposal;
+import org.bitcoinj.core.Transaction;
 
 import lombok.Value;
 
 @Value
-public class ProposalVoteResult {
+public class ProposalWithTransaction {
     private final Proposal proposal;
-    private final long stakeOfAcceptedVotes;
-    private final long stakeOfRejectedVotes;
+    private final Transaction transaction;
 
-    ProposalVoteResult(Proposal proposal, long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
+    public ProposalWithTransaction(Proposal proposal, Transaction transaction) {
         this.proposal = proposal;
-        this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
-        this.stakeOfRejectedVotes = stakeOfRejectedVotes;
+        this.transaction = transaction;
     }
 }

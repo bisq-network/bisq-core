@@ -23,7 +23,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.MyBallotListService;
-import bisq.core.dao.voting.ballot.proposal.ProposalService;
+import bisq.core.dao.voting.proposal.ProposalService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.voteresult.VoteResultService;

@@ -21,7 +21,7 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.voting.ballot.proposal.param.Param;
+import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
 

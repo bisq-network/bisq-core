@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.voteresult;
 
-import bisq.core.dao.voting.ballot.proposal.Proposal;
+import bisq.core.dao.voting.proposal.Proposal;
 
 import lombok.Value;
 

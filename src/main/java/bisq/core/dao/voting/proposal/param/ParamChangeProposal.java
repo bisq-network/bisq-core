@@ -15,21 +15,13 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.voteresult;
-
-import bisq.core.dao.voting.proposal.Proposal;
+package bisq.core.dao.voting.proposal.param;
 
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
+//TODO impl
+@Slf4j
 @Value
-public class ProposalVoteResult {
-    private final Proposal proposal;
-    private final long stakeOfAcceptedVotes;
-    private final long stakeOfRejectedVotes;
-
-    ProposalVoteResult(Proposal proposal, long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
-        this.proposal = proposal;
-        this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
-        this.stakeOfRejectedVotes = stakeOfRejectedVotes;
-    }
+public final class ParamChangeProposal /*extends Proposal*/ {
 }

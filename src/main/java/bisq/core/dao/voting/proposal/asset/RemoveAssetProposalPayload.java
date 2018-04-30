@@ -15,21 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.voteresult;
+package bisq.core.dao.voting.proposal.asset;
 
-import bisq.core.dao.voting.proposal.Proposal;
+import lombok.extern.slf4j.Slf4j;
 
-import lombok.Value;
-
-@Value
-public class ProposalVoteResult {
-    private final Proposal proposal;
-    private final long stakeOfAcceptedVotes;
-    private final long stakeOfRejectedVotes;
-
-    ProposalVoteResult(Proposal proposal, long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
-        this.proposal = proposal;
-        this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
-        this.stakeOfRejectedVotes = stakeOfRejectedVotes;
-    }
+// TODO implement
+@Slf4j
+public final class RemoveAssetProposalPayload {
 }
