@@ -79,7 +79,9 @@ public class CompensationProposalService {
         validate(proposal);
 
         Transaction transaction = getTransaction(proposal);
-        return new ProposalWithTransaction(proposal, transaction);
+
+        final CompensationProposal proposalWithTxId = getProposalWithTxId(proposal, transaction);
+        return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
     // We have txId set to null in proposal as we cannot know it before the tx is created.
@@ -108,5 +110,10 @@ public class CompensationProposalService {
 
     private void validate(CompensationProposal proposal) throws ValidationException {
         compensationValidator.validateDataFields(proposal);
+    }
+
+    private CompensationProposal getProposalWithTxId(CompensationProposal proposal, Transaction transaction) {
+        final String txId = transaction.getHashAsString();
+        return (CompensationProposal) proposal.cloneWithTxId(txId);
     }
 }

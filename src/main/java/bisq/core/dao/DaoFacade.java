@@ -358,4 +358,8 @@ public class DaoFacade {
     public boolean isBsqTxOutputType(TxOutput txOutput) {
         return stateService.isBsqTxOutputType(txOutput);
     }
+
+    public boolean isInPhaseButNotLastBlock(DaoPhase.Phase phase) {
+        return periodService.isInPhaseButNotLastBlock(phase);
+    }
 }

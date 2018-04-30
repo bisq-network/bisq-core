@@ -145,4 +145,10 @@ public final class PeriodService {
                 .map(cycle -> cycle.getLastBlockOfPhase(phase))
                 .orElse(0);
     }
+
+    public boolean isInPhaseButNotLastBlock(DaoPhase.Phase phase) {
+        final int chainHeight = getChainHeight();
+        return isInPhase(chainHeight, phase) &&
+                chainHeight != getLastBlockOfPhase(chainHeight, phase);
+    }
 }

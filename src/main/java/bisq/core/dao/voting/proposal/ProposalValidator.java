@@ -81,6 +81,11 @@ public class ProposalValidator {
         }
 
         final String txId = proposal.getTxId();
+        if (txId == null || txId.equals("")) {
+            log.warn("txId must be set. proposal={}", proposal);
+            return false;
+        }
+
         Optional<Tx> optionalTx = stateService.getTx(txId);
         int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
