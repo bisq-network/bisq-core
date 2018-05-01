@@ -42,7 +42,7 @@ import bisq.common.app.DevEnv;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.setup.GracefulShutDownHandler;
-import bisq.common.storage.CorruptedDataBaseFilesHandler;
+import bisq.common.storage.CorruptedDatabaseFilesHandler;
 import bisq.common.storage.Storage;
 import bisq.common.util.Utilities;
 
@@ -205,8 +205,8 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     }
 
     private void setCorruptedDataBaseFilesHandler() {
-        CorruptedDataBaseFilesHandler corruptedDataBaseFilesHandler = injector.getInstance(CorruptedDataBaseFilesHandler.class);
-        Storage.setCorruptedDataBaseFilesHandler(corruptedDataBaseFilesHandler);
+        CorruptedDatabaseFilesHandler corruptedDatabaseFilesHandler = injector.getInstance(CorruptedDatabaseFilesHandler.class);
+        Storage.setCorruptedDatabaseFilesHandler(corruptedDatabaseFilesHandler);
     }
 
     protected void setupPersistedDataHosts(Injector injector) {
