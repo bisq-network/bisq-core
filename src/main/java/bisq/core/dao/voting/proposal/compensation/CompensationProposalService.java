@@ -80,7 +80,7 @@ public class CompensationProposalService {
 
         Transaction transaction = getTransaction(proposal);
 
-        final CompensationProposal proposalWithTxId = getProposalWithTxId(proposal, transaction);
+        final CompensationProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
@@ -112,8 +112,7 @@ public class CompensationProposalService {
         compensationValidator.validateDataFields(proposal);
     }
 
-    private CompensationProposal getProposalWithTxId(CompensationProposal proposal, Transaction transaction) {
-        final String txId = transaction.getHashAsString();
+    private CompensationProposal getProposalWithTxId(CompensationProposal proposal, String txId) {
         return (CompensationProposal) proposal.cloneWithTxId(txId);
     }
 }

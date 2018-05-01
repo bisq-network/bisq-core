@@ -129,7 +129,7 @@ public class DaoFacade {
     }
 
     public List<Proposal> getMyProposals() {
-        return myProposalListService.getMyProposals();
+        return myProposalListService.getList();
     }
 
 
@@ -162,17 +162,17 @@ public class DaoFacade {
     // Publish proposal tx, proposal payload and and persist it to myProposalList
     public void publishMyProposal(Proposal proposal, Transaction transaction, ResultHandler resultHandler,
                                   ErrorMessageHandler errorMessageHandler) {
-        myProposalListService.publishProposal(proposal, transaction, resultHandler, errorMessageHandler);
+        myProposalListService.publishTxAndPayload(proposal, transaction, resultHandler, errorMessageHandler);
     }
 
     // Check if it is my proposal
     public boolean isMyProposal(Proposal proposal) {
-        return myProposalListService.isMyProposal(proposal);
+        return myProposalListService.isMine(proposal);
     }
 
     // Remove my proposal
     public boolean removeMyProposal(Proposal proposal) {
-        return myProposalListService.removeMyProposal(proposal);
+        return myProposalListService.remove(proposal);
     }
 
 
