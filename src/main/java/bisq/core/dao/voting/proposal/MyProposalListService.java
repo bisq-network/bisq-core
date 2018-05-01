@@ -24,6 +24,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalPayload;
 
@@ -213,8 +214,12 @@ public class MyProposalListService implements PersistedDataHost {
 
     private void rePublishProposals() {
         myProposalList.forEach(proposal -> {
-            if (!addToP2PNetwork(proposal))
-                log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
+            final String txId = proposal.getTxId();
+            if (periodService.isTxInPhase(txId, DaoPhase.Phase.PROPOSAL) &&
+                    periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
+                if (!addToP2PNetwork(proposal))
+                    log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
+            }
         });
     }
 
