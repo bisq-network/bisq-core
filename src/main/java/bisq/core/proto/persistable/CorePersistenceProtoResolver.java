@@ -22,12 +22,13 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStore;
 import bisq.core.dao.voting.blindvote.BlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
+import bisq.core.dao.voting.proposal.ProposalList;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
+import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStore;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
@@ -119,6 +120,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return BlindVoteStore.fromProto(proto.getBlindVoteStore(), networkProtoResolver);
                 case STATE:
                     return State.fromProto(proto.getState());
+                case PROPOSAL_LIST:
+                    return ProposalList.fromProto(proto.getProposalList());
                 case BALLOT_LIST:
                     return BallotList.fromProto(proto.getBallotList());
                 case MY_VOTE_LIST:
