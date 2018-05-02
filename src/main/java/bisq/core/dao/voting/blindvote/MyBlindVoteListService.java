@@ -88,7 +88,7 @@ public class MyBlindVoteListService implements PersistedDataHost {
     private final ProposalValidator proposalValidator;
     private final ChangeListener<Number> numConnectedPeersListener;
     @Getter
-    private final MyBlindVoteList myMyBlindVoteList = new MyBlindVoteList();
+    private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
     private final PublicKey signaturePubKey;
 
 
@@ -131,10 +131,10 @@ public class MyBlindVoteListService implements PersistedDataHost {
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            MyBlindVoteList persisted = storage.initAndGetPersisted(myMyBlindVoteList, 100);
+            MyBlindVoteList persisted = storage.initAndGetPersisted(myBlindVoteList, 100);
             if (persisted != null) {
-                myMyBlindVoteList.clear();
-                myMyBlindVoteList.addAll(persisted.getList());
+                myBlindVoteList.clear();
+                myBlindVoteList.addAll(persisted.getList());
             }
         }
     }
@@ -264,7 +264,7 @@ public class MyBlindVoteListService implements PersistedDataHost {
     }
 
     private void rePublish() {
-        myMyBlindVoteList.forEach(blindVote -> {
+        myBlindVoteList.forEach(blindVote -> {
             final String txId = blindVote.getTxId();
             if (periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE) &&
                     periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
@@ -286,8 +286,8 @@ public class MyBlindVoteListService implements PersistedDataHost {
     }
 
     private void addToList(BlindVote blindVote) {
-        if (!BlindVoteUtils.containsBlindVote(blindVote, myMyBlindVoteList.getList())) {
-            myMyBlindVoteList.add(blindVote);
+        if (!BlindVoteUtils.containsBlindVote(blindVote, myBlindVoteList.getList())) {
+            myBlindVoteList.add(blindVote);
             persist();
         }
     }

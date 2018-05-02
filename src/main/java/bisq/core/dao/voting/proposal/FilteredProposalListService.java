@@ -33,7 +33,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered observableLists of the Proposals from ProposalListService.
+ * Provides filtered observableLists of the Proposals from proposalService.
  */
 @Slf4j
 public class FilteredProposalListService implements ProposalService.ListChangeListener {
@@ -90,5 +90,4 @@ public class FilteredProposalListService implements ProposalService.ListChangeLi
         activeOrMyUnconfirmedProposals.clear();
         activeOrMyUnconfirmedProposals.addAll(set);
     }
-
 }

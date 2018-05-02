@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * PersistableEnvelope wrapper for list of ballots. Used in vote consensus, so changes can break consensus!
+ * PersistableEnvelope wrapper for list of ballots.
  */
 public class BallotList extends PersistableList<Ballot> implements VoteConsensusCritical {
 

@@ -36,6 +36,9 @@ import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Creates CompensationProposal and transaction.
+ */
 @Slf4j
 public class CompensationProposalService {
     private final BsqWalletService bsqWalletService;

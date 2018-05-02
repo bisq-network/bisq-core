@@ -29,6 +29,7 @@ import bisq.core.dao.voting.ballot.vote.BooleanVote;
 import bisq.core.dao.voting.ballot.vote.LongVote;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.blindvote.BlindVote;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteUtils;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
@@ -79,6 +80,7 @@ public class VoteResultService {
     private final PeriodService periodService;
     private final BallotListService ballotListService;
     private final MyBlindVoteListService myBlindVoteListService;
+    private final BlindVoteService blindVoteService;
     private final IssuanceService issuanceService;
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
@@ -96,12 +98,14 @@ public class VoteResultService {
                              PeriodService periodService,
                              BallotListService ballotListService,
                              MyBlindVoteListService myBlindVoteListService,
+                             BlindVoteService blindVoteService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.stateService = stateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
         this.myBlindVoteListService = myBlindVoteListService;
+        this.blindVoteService = blindVoteService;
         this.issuanceService = issuanceService;
 
         stateService.addChainHeightListener(this::maybeCalculateVoteResult);
@@ -186,7 +190,7 @@ public class VoteResultService {
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
-                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, myBlindVoteListService.getMyMyBlindVoteList());
+                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, myBlindVoteListService.getMyBlindVoteList());
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptVotes(blindVote.getEncryptedVotes(), secretKey);
@@ -294,8 +298,7 @@ public class VoteResultService {
     }
 
     private MyBlindVoteList findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        final MyBlindVoteList clonedMyBlindVoteList = new MyBlindVoteList(myBlindVoteListService.getMyMyBlindVoteList().getList());
-        MyBlindVoteList list = voteRevealService.getSortedBlindVoteListOfCycle(clonedMyBlindVoteList);
+        MyBlindVoteList list = voteRevealService.getSortedBlindVoteListOfCycle();
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...
             list.remove(0);

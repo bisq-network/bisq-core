@@ -74,7 +74,7 @@ public class ProposalValidator {
         return isValid(proposal, false);
     }
 
-    public boolean isValid(Proposal proposal, boolean allowUnconfirmed) {
+    private boolean isValid(Proposal proposal, boolean allowUnconfirmed) {
         if (!areDataFieldsValid(proposal)) {
             log.warn("proposal data fields are invalid. proposal={}", proposal);
             return false;
@@ -99,12 +99,12 @@ public class ProposalValidator {
                 log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
                 return false;
             }
+            return true;
         } else if (allowUnconfirmed) {
             // We want to show own unconfirmed proposals in the active proposals list.
             return periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
         } else {
             return false;
         }
-        return true;
     }
 }

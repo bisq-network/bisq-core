@@ -72,7 +72,7 @@ public class FilteredBallotListService implements BallotListService.ListChangeLi
     public void onListChanged(List<Ballot> list) {
         activeOrMyUnconfirmedBallots.clear();
         activeOrMyUnconfirmedBallots.addAll(list.stream()
-                .filter(ballot -> proposalValidator.isValidOrUnconfirmed(ballot.getProposal()))
+                .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
                 .collect(Collectors.toList()));
 
         closedBallots.clear();

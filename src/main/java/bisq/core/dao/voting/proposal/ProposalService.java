@@ -17,8 +17,10 @@
 
 package bisq.core.dao.voting.proposal;
 
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
@@ -50,7 +52,8 @@ import lombok.extern.slf4j.Slf4j;
  * when entering the blind vote phase.
  */
 @Slf4j
-public class ProposalService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
+public class ProposalService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener,
+        BlockListener {
     public interface ListChangeListener {
         void onPreliminaryProposalsChanged(List<Proposal> list);
 
@@ -62,6 +65,8 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
 
+    private final List<ListChangeListener> listeners = new ArrayList<>();
+
     // Proposals we receive in the proposal phase. They can be removed in that phase and that list must not be used for
     // consensus critical code.
     @Getter
@@ -71,7 +76,6 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     // They cannot be removed anymore. This list is used for consensus critical code.
     @Getter
     private final List<Proposal> confirmedProposals = new ArrayList<>();
-    private final List<ListChangeListener> listeners = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +102,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
         stateService.addChainHeightListener(this);
         p2PService.addHashSetChangedListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
+        stateService.addBlockListener(this);
     }
 
 
@@ -117,9 +122,19 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
             fillConfirmedProposals();
         } else if (periodService.isFirstBlockInCycle()) {
             // Cycle has changed, we reset the lists.
-            fillPreliminaryProposals();
             fillConfirmedProposals();
         }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BlockListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onBlockAdded(Block block) {
+        // We use the block listener here as we need to get the tx fully parsed when checking if the proposal is valid
+        fillPreliminaryProposals();
     }
 
 
@@ -194,7 +209,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
         if (protectedStoragePayload instanceof ProposalPayload) {
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
             if (!ProposalUtils.containsProposal(proposal, preliminaryProposals)) {
-                if (proposalValidator.isValid(proposal, true)) {
+                if (proposalValidator.isValidAndConfirmed(proposal)) {
                     log.info("We received a new proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
                     preliminaryProposals.add(proposal);
                     listeners.forEach(l -> l.onPreliminaryProposalsChanged(preliminaryProposals));

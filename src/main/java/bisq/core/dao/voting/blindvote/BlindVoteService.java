@@ -17,8 +17,10 @@
 
 package bisq.core.dao.voting.blindvote;
 
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
@@ -48,7 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  * when entering the vote reveal phase.
  */
 @Slf4j
-public class BlindVoteService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
+public class BlindVoteService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener,
+        BlockListener {
     private final P2PService p2PService;
     private PeriodService periodService;
     private BlindVoteValidator blindVoteValidator;
@@ -108,9 +111,19 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
             fillConfirmedBlindVotes();
         } else if (periodService.isFirstBlockInCycle()) {
             // Cycle has changed, we reset the lists.
-            fillPreliminaryBlindVotes();
             fillConfirmedBlindVotes();
         }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BlockListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onBlockAdded(Block block) {
+        // We use the block listener here as we need to get the tx fully parsed when checking if the proposal is valid
+        fillPreliminaryBlindVotes();
     }
 
 
@@ -135,7 +148,15 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
 
     @Override
     public void onAdded(PersistableNetworkPayload payload) {
-        onAddedAppendOnlyData(payload);
+        // We only accept data from the network if we are in the correct phase.
+        // If we would accept data during the vote reveal phase a malicious node could withhold
+        // data and send it at the end of the vote reveal phase. Voters who have already revealed their vote would
+        // miss that data and it could lead to the situation that they will end up in a minority data view
+        // rendering their vote invalid. That attack i snot very likely as the attacker would need to have a lot of
+        // stake to have influence. But he could still disrupt other voters with higher stake and create more
+        // fragmented data views.
+        if (periodService.isInPhase(periodService.getChainHeight(), DaoPhase.Phase.BLIND_VOTE))
+            onAddedAppendOnlyData(payload);
     }
 
 
@@ -180,7 +201,7 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
         if (protectedStoragePayload instanceof BlindVotePayload) {
             final BlindVote blindVote = ((BlindVotePayload) protectedStoragePayload).getBlindVote();
             if (!BlindVoteUtils.containsBlindVote(blindVote, preliminaryBlindVotes)) {
-                if (blindVoteValidator.isValid(blindVote, true)) {
+                if (blindVoteValidator.isValidAndConfirmed(blindVote)) {
                     log.info("We received a new blindVote from the P2P network. BlindVote.txId={}", blindVote.getTxId());
                     preliminaryBlindVotes.add(blindVote);
                 } else {
