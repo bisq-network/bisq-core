@@ -22,10 +22,9 @@ import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
-import bisq.core.dao.voting.ballot.MyBallotListService;
-import bisq.core.dao.voting.proposal.ProposalService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.proposal.ProposalService;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
 
@@ -44,7 +43,6 @@ public class DaoSetup {
     private final VoteResultService voteResultService;
     private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
-    private final MyBallotListService myBallotListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteListService blindVoteListService;
 
@@ -55,7 +53,6 @@ public class DaoSetup {
                     VoteResultService voteResultService,
                     FilteredBallotListService filteredBallotListService,
                     BallotListService ballotListService,
-                    MyBallotListService myBallotListService,
                     BlindVoteService blindVoteService,
                     BlindVoteListService blindVoteListService,
                     ProposalService proposalService) {
@@ -64,7 +61,6 @@ public class DaoSetup {
         this.voteResultService = voteResultService;
         this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
-        this.myBallotListService = myBallotListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteListService = blindVoteListService;
         this.proposalService = proposalService;
@@ -79,7 +75,6 @@ public class DaoSetup {
         proposalService.start();
         voteRevealService.start();
         ballotListService.start();
-        myBallotListService.start();
         blindVoteService.start();
         filteredBallotListService.start();
         blindVoteListService.start();

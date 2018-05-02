@@ -205,8 +205,7 @@ public class DaoFacade {
 
     // Vote on ballot
     public void setVote(Ballot ballot, @Nullable Vote vote) {
-        ballot.setVote(vote);
-        ballotListService.persist();
+        ballotListService.setVote(ballot, vote);
     }
 
 

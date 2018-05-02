@@ -47,8 +47,15 @@ import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotFactory;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
-import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
+import bisq.core.dao.voting.blindvote.BlindVoteListService;
+import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
+import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
+import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.FilteredProposalListService;
 import bisq.core.dao.voting.proposal.MyProposalListService;
 import bisq.core.dao.voting.proposal.ProposalService;
@@ -59,14 +66,6 @@ import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStorag
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
 import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStorageService;
 import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStore;
-import bisq.core.dao.voting.blindvote.BlindVoteListService;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.blindvote.BlindVoteValidator;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
-import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
-import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
-import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -143,7 +142,6 @@ public class DaoModule extends AppModule {
         // Ballot
         bind(BallotFactory.class).in(Singleton.class);
         bind(BallotListService.class).in(Singleton.class);
-        bind(MyBallotListService.class).in(Singleton.class);
         bind(FilteredBallotListService.class).in(Singleton.class);
         bind(CompensationBallotService.class).in(Singleton.class);
 

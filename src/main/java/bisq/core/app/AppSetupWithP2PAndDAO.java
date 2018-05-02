@@ -19,7 +19,6 @@ package bisq.core.app;
 
 import bisq.core.dao.DaoSetup;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.ballot.MyBallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.filter.FilterManager;
@@ -48,7 +47,6 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  FilterManager filterManager,
                                  DaoSetup daoSetup,
                                  MyVoteListService myVoteListService,
-                                 MyBallotListService myBallotListService,
                                  BallotListService ballotListService,
                                  BlindVoteListService blindVoteListService) {
         super(encryptionService,
@@ -61,7 +59,6 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
         this.daoSetup = daoSetup;
 
         persistedDataHosts.add(myVoteListService);
-        persistedDataHosts.add(myBallotListService);
         persistedDataHosts.add(ballotListService);
         persistedDataHosts.add(blindVoteListService);
     }

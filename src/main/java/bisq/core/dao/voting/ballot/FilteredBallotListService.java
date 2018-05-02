@@ -17,15 +17,16 @@
 
 package bisq.core.dao.voting.ballot;
 
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalPayload;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
 
-import bisq.network.p2p.storage.HashMapChangedListener;
 import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreListener;
 
 import bisq.common.UserThread;
 
@@ -44,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService {
+public class FilteredBallotListService implements AppendOnlyDataStoreListener, BlockListener {
     private final BallotListService ballotListService;
     private final PeriodService periodService;
     private final StateService stateService;
@@ -71,19 +72,29 @@ public class FilteredBallotListService {
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
 
-        stateService.addBlockListener(block -> updateLists());
+        stateService.addBlockListener(this);
+        p2pDataStorage.addAppendOnlyDataStoreListener(this);
+    }
 
-        p2pDataStorage.addHashMapChangedListener(new HashMapChangedListener() {
-            @Override
-            public void onAdded(ProtectedStorageEntry entry) {
-                onProposalsChangeFromP2PNetwork(entry);
-            }
 
-            @Override
-            public void onRemoved(ProtectedStorageEntry entry) {
-                onProposalsChangeFromP2PNetwork(entry);
-            }
-        });
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // AppendOnlyDataStoreListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onAdded(PersistableNetworkPayload payload) {
+        if (payload instanceof ProposalAppendOnlyPayload)
+            UserThread.runAfter(this::updateLists, 100, TimeUnit.MILLISECONDS);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BlockListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onBlockAdded(Block block) {
+        updateLists();
     }
 
 
@@ -95,23 +106,10 @@ public class FilteredBallotListService {
         updateLists();
     }
 
-    // We delegate to ballotListService
-    public void persist() {
-        ballotListService.persist();
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void onProposalsChangeFromP2PNetwork(ProtectedStorageEntry entry) {
-        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
-        // Need a bit of delay as otherwise the handler might get called before the item got removed from the
-        // lists (at least at  localhost/regtest there are race conditions, over real network it will be much slower anyway)
-        if (protectedStoragePayload instanceof ProposalPayload)
-            UserThread.runAfter(this::updateLists, 100, TimeUnit.MILLISECONDS);
-    }
 
     private void updateLists() {
         activeOrMyUnconfirmedBallots.clear();
