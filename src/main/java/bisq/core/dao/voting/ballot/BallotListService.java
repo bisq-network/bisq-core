@@ -100,7 +100,7 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
             final Proposal proposal = proposalAppendOnlyPayload.getProposal();
             if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList()) &&
                     proposalValidator.isValidAndConfirmed(proposal)) {
-                Ballot ballot = Ballot.createBallotFromProposal(proposal);
+                Ballot ballot = new Ballot(proposal);
                 ballotList.add(ballot);
                 listeners.forEach(l -> l.onListChanged(ballotList.getList()));
                 if (storeLocally)

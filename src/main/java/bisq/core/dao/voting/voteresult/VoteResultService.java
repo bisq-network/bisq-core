@@ -23,11 +23,8 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.ballot.BallotFactory;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.ballot.vote.BooleanVote;
 import bisq.core.dao.voting.ballot.vote.LongVote;
 import bisq.core.dao.voting.ballot.vote.Vote;
@@ -37,6 +34,8 @@ import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteUtils;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.voting.proposal.Proposal;
+import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -230,8 +229,7 @@ public class VoteResultService {
                 .map(e -> {
                     final String txId = e.getKey();
                     if (ballotByTxIdMap.containsKey(txId)) {
-                        final Ballot ballot = ballotByTxIdMap.get(txId);
-                        return BallotFactory.getBallot(ballot.getProposal(), e.getValue());
+                        return ballotByTxIdMap.get(txId);
                     } else {
                         missing.add(txId);
                         return null;

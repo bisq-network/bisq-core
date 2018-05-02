@@ -17,12 +17,10 @@
 
 package bisq.core.dao.voting.ballot;
 
-import bisq.core.dao.voting.ballot.compensation.CompensationBallot;
+import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
-import bisq.core.dao.voting.ballot.vote.Vote;
 
-import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -36,8 +34,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
-
 import javax.annotation.Nullable;
 
 /**
@@ -50,28 +46,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public abstract class Ballot implements PersistablePayload {
-
-    public static Ballot createBallotFromProposal(Proposal proposal) {
-        switch (proposal.getType()) {
-            case COMPENSATION_REQUEST:
-                return new CompensationBallot(proposal);
-            case GENERIC:
-                //TODO
-                throw new RuntimeException("Not implemented yet");
-            case CHANGE_PARAM:
-                //TODO
-                throw new RuntimeException("Not implemented yet");
-            case REMOVE_ALTCOIN:
-                //TODO
-                throw new RuntimeException("Not implemented yet");
-            default:
-                final String msg = "Undefined ProposalType " + proposal.getType();
-                log.error(msg);
-                throw new RuntimeException(msg);
-        }
-    }
-
+public class Ballot implements PersistablePayload {
     protected final Proposal proposal;
     @Nullable
     protected Vote vote;
@@ -101,27 +76,15 @@ public abstract class Ballot implements PersistablePayload {
 
     @Override
     public PB.Ballot toProtoMessage() {
-        return getBallotBuilder().build();
-    }
-
-    @NotNull
-    protected PB.Ballot.Builder getBallotBuilder() {
         final PB.Ballot.Builder builder = PB.Ballot.newBuilder()
                 .setProposal(proposal.getProposalBuilder());
         Optional.ofNullable(vote).ifPresent(e -> builder.setVote((PB.Vote) e.toProtoMessage()));
-        return builder;
+        return builder.build();
     }
 
-    //TODO add other proposal types
     public static Ballot fromProto(PB.Ballot proto) {
-        switch (proto.getMessageCase()) {
-            case COMPENSATION_BALLOT:
-                return CompensationBallot.fromProto(proto);
-            /*case GENERIC_BALLOT:
-                return GenericBallot.fromProto(proto);*/
-            default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
-        }
+        return new Ballot(Proposal.fromProto(proto.getProposal()),
+                proto.hasVote() ? Vote.fromProto(proto.getVote()) : null);
     }
 
 
@@ -134,7 +97,9 @@ public abstract class Ballot implements PersistablePayload {
         voteResultProperty.set(vote);
     }
 
-    abstract public ProposalType getType();
+    public ProposalType getType() {
+        return getProposal().getType();
+    }
 
     public String getProposalTxId() {
         return proposal.getTxId();

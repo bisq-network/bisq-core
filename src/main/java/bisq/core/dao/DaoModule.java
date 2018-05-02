@@ -44,10 +44,8 @@ import bisq.core.dao.state.State;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.ballot.BallotFactory;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
-import bisq.core.dao.voting.ballot.compensation.CompensationBallotService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
@@ -140,10 +138,8 @@ public class DaoModule extends AppModule {
         bind(CompensationProposalService.class).in(Singleton.class);
 
         // Ballot
-        bind(BallotFactory.class).in(Singleton.class);
         bind(BallotListService.class).in(Singleton.class);
         bind(FilteredBallotListService.class).in(Singleton.class);
-        bind(CompensationBallotService.class).in(Singleton.class);
 
         // MyVote
         bind(MyVoteListService.class).in(Singleton.class);
