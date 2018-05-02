@@ -33,6 +33,7 @@ import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.FilteredProposalListService;
@@ -78,6 +79,7 @@ public class DaoFacade {
     private final StateService stateService;
     private final PeriodService periodService;
     private final BlindVoteService blindVoteService;
+    private final MyBlindVoteListService myBlindVoteListService;
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
 
@@ -91,6 +93,7 @@ public class DaoFacade {
                      StateService stateService,
                      PeriodService periodService,
                      BlindVoteService blindVoteService,
+                     MyBlindVoteListService myBlindVoteListService,
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -100,6 +103,7 @@ public class DaoFacade {
         this.stateService = stateService;
         this.periodService = periodService;
         this.blindVoteService = blindVoteService;
+        this.myBlindVoteListService = myBlindVoteListService;
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
 
@@ -216,17 +220,17 @@ public class DaoFacade {
 
     // When creating blind vote we present fee
     public Coin getBlindVoteFeeForCycle() {
-        return blindVoteService.getBlindVoteFee();
+        return myBlindVoteListService.getBlindVoteFee();
     }
 
     // Used for mining fee estimation
     public Transaction getDummyBlindVoteTx(Coin stake, Coin blindVoteFee) throws WalletException, InsufficientMoneyException, TransactionVerificationException {
-        return blindVoteService.getDummyBlindVoteTx(stake, blindVoteFee);
+        return myBlindVoteListService.getDummyBlindVoteTx(stake, blindVoteFee);
     }
 
     // Publish blindVote tx and broadcast blindVote to p2p network and store to blindVoteList.
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-        blindVoteService.publishBlindVote(stake, resultHandler, exceptionHandler);
+        myBlindVoteListService.publishBlindVote(stake, resultHandler, exceptionHandler);
     }
 
 

@@ -115,7 +115,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
 
             // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
             fillConfirmedProposals();
-        } else if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.PROPOSAL) == blockHeight) {
+        } else if (periodService.isFirstBlockInCycle()) {
             // Cycle has changed, we reset the lists.
             fillPreliminaryProposals();
             fillConfirmedProposals();

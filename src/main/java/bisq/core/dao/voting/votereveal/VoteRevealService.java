@@ -32,10 +32,10 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
-import bisq.core.dao.voting.blindvote.BlindVoteList;
-import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.blindvote.MyBlindVoteList;
+import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
@@ -73,7 +73,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealService {
     private final StateService stateService;
-    private final BlindVoteListService blindVoteListService;
+    private final MyBlindVoteListService myBlindVoteListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
@@ -93,7 +93,7 @@ public class VoteRevealService {
 
     @Inject
     public VoteRevealService(StateService stateService,
-                             BlindVoteListService blindVoteListService,
+                             MyBlindVoteListService myBlindVoteListService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
                              PeriodService periodService,
@@ -103,7 +103,7 @@ public class VoteRevealService {
                              P2PService p2PService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
-        this.blindVoteListService = blindVoteListService;
+        this.myBlindVoteListService = myBlindVoteListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
         this.periodService = periodService;
@@ -131,23 +131,23 @@ public class VoteRevealService {
         maybeRevealVotes(stateService.getChainHeight());
     }
 
-    public BlindVoteList getSortedBlindVoteListOfCycle() {
-        return getSortedBlindVoteListOfCycle(blindVoteListService.getBlindVoteList());
+    public MyBlindVoteList getSortedBlindVoteListOfCycle() {
+        return getSortedBlindVoteListOfCycle(myBlindVoteListService.getMyMyBlindVoteList());
     }
 
-    public BlindVoteList getSortedBlindVoteListOfCycle(BlindVoteList blindVoteList) {
-        final List<BlindVote> list = blindVoteList.stream()
+    public MyBlindVoteList getSortedBlindVoteListOfCycle(MyBlindVoteList myBlindVoteList) {
+        final List<BlindVote> list = myBlindVoteList.stream()
                 .filter(blindVoteValidator::isValidOrUnconfirmed)
                 .collect(Collectors.toList());
         if (list.isEmpty())
             log.warn("sortBlindVoteList is empty");
         BlindVoteConsensus.sortBlindVoteList(list);
         log.info("getSortedBlindVoteListForCurrentCycle list={}", list);
-        return new BlindVoteList(list);
+        return new MyBlindVoteList(list);
     }
 
     public byte[] getHashOfBlindVoteList() {
-        BlindVoteList list = getSortedBlindVoteListOfCycle();
+        MyBlindVoteList list = getSortedBlindVoteListOfCycle();
         return VoteRevealConsensus.getHashOfBlindVoteList(list);
     }
 
@@ -213,9 +213,6 @@ public class VoteRevealService {
                 public void onSuccess(Transaction transaction) {
                     log.info("voteRevealTx successfully broadcasted.");
                     myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
-
-                    //Republish list of blind votes to gain more resilience
-                    blindVoteListService.republishAllBlindVotesOfCycle();
                 }
 
                 @Override
@@ -265,7 +262,7 @@ public class VoteRevealService {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void addBlindVotesToAppendOnlyStore(BlindVoteList blindVotes) {
+    private void addBlindVotesToAppendOnlyStore(MyBlindVoteList blindVotes) {
         blindVotes.stream()
                 .map(BlindVoteAppendOnlyPayload::new)
                 .forEach(blindVoteAppendOnlyPayload -> {

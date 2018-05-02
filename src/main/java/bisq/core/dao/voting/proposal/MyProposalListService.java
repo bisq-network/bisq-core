@@ -39,10 +39,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Publishes proposal tx and proposalPayload to p2p network. Allow removal of proposal if in proposal phase.
- * Maintains ProposalList for own proposals. Triggers republishing of my proposals at startup.
+ * Maintains MyProposalList for own proposals. Triggers republishing of my proposals at startup.
  */
 @Slf4j
-public class MyProposalListService extends MyListService<Proposal, ProposalList> implements PersistedDataHost {
+public class MyProposalListService extends MyListService<Proposal, MyProposalList> implements PersistedDataHost {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -53,7 +53,7 @@ public class MyProposalListService extends MyListService<Proposal, ProposalList>
                                  StateService stateService,
                                  PeriodService periodService,
                                  WalletsManager walletsManager,
-                                 Storage<ProposalList> storage,
+                                 Storage<MyProposalList> storage,
                                  KeyRing keyRing) {
         super(p2PService,
                 stateService,
@@ -74,8 +74,8 @@ public class MyProposalListService extends MyListService<Proposal, ProposalList>
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected ProposalList createMyList() {
-        return new ProposalList();
+    protected MyProposalList createMyList() {
+        return new MyProposalList();
     }
 
     @Override
@@ -84,7 +84,7 @@ public class MyProposalListService extends MyListService<Proposal, ProposalList>
     }
 
     @Override
-    protected void rePublishProposals() {
+    protected void rePublish() {
         myList.forEach(proposal -> {
             final String txId = proposal.getTxId();
             if (periodService.isTxInPhase(txId, DaoPhase.Phase.PROPOSAL) &&
@@ -96,7 +96,7 @@ public class MyProposalListService extends MyListService<Proposal, ProposalList>
     }
 
     @Override
-    protected boolean canRemoveProposal(Proposal proposal, StateService stateService, PeriodService periodService) {
+    protected boolean canRemovePayload(Proposal proposal, StateService stateService, PeriodService periodService) {
         return ProposalUtils.canRemoveProposal(proposal, stateService, periodService);
     }
 

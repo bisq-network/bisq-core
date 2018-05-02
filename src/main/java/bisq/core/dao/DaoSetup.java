@@ -21,8 +21,8 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
+import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.proposal.ProposalService;
 import bisq.core.dao.voting.voteresult.VoteResultService;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -42,7 +42,7 @@ public class DaoSetup {
     private final VoteResultService voteResultService;
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
-    private final BlindVoteListService blindVoteListService;
+    private final MyBlindVoteListService myBlindVoteListService;
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
@@ -51,14 +51,14 @@ public class DaoSetup {
                     VoteResultService voteResultService,
                     BallotListService ballotListService,
                     BlindVoteService blindVoteService,
-                    BlindVoteListService blindVoteListService,
+                    MyBlindVoteListService myBlindVoteListService,
                     ProposalService proposalService) {
         this.stateService = stateService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
-        this.blindVoteListService = blindVoteListService;
+        this.myBlindVoteListService = myBlindVoteListService;
         this.proposalService = proposalService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
@@ -72,7 +72,7 @@ public class DaoSetup {
         voteRevealService.start();
         ballotListService.start();
         blindVoteService.start();
-        blindVoteListService.start();
+        myBlindVoteListService.start();
         voteResultService.start();
         bsqNode.start();
     }

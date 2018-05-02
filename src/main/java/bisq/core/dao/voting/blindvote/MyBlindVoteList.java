@@ -15,59 +15,55 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
+import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * PersistableEnvelope wrapper for list of ballots. Used in vote consensus, so changes can break consensus!
- */
-public class ProposalList extends PersistableList<Proposal> implements VoteConsensusCritical {
+public class MyBlindVoteList extends PersistableList<BlindVote> implements VoteConsensusCritical {
 
-    public ProposalList(List<Proposal> list) {
+    public MyBlindVoteList(List<BlindVote> list) {
         super(list);
     }
 
-    public ProposalList() {
+    public MyBlindVoteList() {
         super();
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.PersistableEnvelope toProtoMessage() {
-        return PB.PersistableEnvelope.newBuilder().setProposalList(getBuilder()).build();
+    public Message toProtoMessage() {
+        return PB.PersistableEnvelope.newBuilder()
+                .setMyBlindVoteList(PB.MyBlindVoteList.newBuilder()
+                        .addAllBlindVote(getList().stream()
+                                .map(BlindVote::toProtoMessage)
+                                .collect(Collectors.toList())))
+                .build();
     }
 
-    public PB.ProposalList.Builder getBuilder() {
-        return PB.ProposalList.newBuilder()
-                .addAllProposal(getList().stream()
-                        .map(Proposal::toProtoMessage)
-                        .collect(Collectors.toList()));
-    }
-
-    public static ProposalList fromProto(PB.ProposalList proto) {
-        return new ProposalList(new ArrayList<>(proto.getProposalList().stream()
-                .map(Proposal::fromProto)
+    public static PersistableEnvelope fromProto(PB.MyBlindVoteList proto) {
+        return new MyBlindVoteList(new ArrayList<>(proto.getBlindVoteList().stream()
+                .map(BlindVote::fromProto)
                 .collect(Collectors.toList())));
     }
 
     @Override
     public String toString() {
-        return "List of UID's in ProposalList: " + getList().stream()
-                .map(Proposal::getUid)
+        return "MyBlindVoteList: " + getList().stream()
+                .map(BlindVote::getTxId)
                 .collect(Collectors.toList());
     }
 }
-

@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BlindVoteUtils {
-    public static boolean blindVoteListContains(BlindVote blindVote, List<BlindVote> blindVoteList) {
+    public static boolean containsBlindVote(BlindVote blindVote, List<BlindVote> blindVoteList) {
         return findBlindVoteInList(blindVote, blindVoteList).isPresent();
     }
 
@@ -34,8 +34,8 @@ public class BlindVoteUtils {
                 .findAny();
     }
 
-    public static Optional<BlindVote> findBlindVote(String blindVoteTxId, BlindVoteList blindVoteList) {
-        return blindVoteList.stream()
+    public static Optional<BlindVote> findBlindVote(String blindVoteTxId, MyBlindVoteList myBlindVoteList) {
+        return myBlindVoteList.stream()
                 .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                 .findAny();
     }

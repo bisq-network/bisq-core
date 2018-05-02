@@ -22,11 +22,11 @@ import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.blindvote.BlindVoteList;
+import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
-import bisq.core.dao.voting.proposal.ProposalList;
+import bisq.core.dao.voting.proposal.MyProposalList;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
 import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStore;
 import bisq.core.payment.AccountAgeWitnessStore;
@@ -120,14 +120,14 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return BlindVoteStore.fromProto(proto.getBlindVoteStore(), networkProtoResolver);
                 case STATE:
                     return State.fromProto(proto.getState());
-                case PROPOSAL_LIST:
-                    return ProposalList.fromProto(proto.getProposalList());
+                case MY_PROPOSAL_LIST:
+                    return MyProposalList.fromProto(proto.getMyProposalList());
                 case BALLOT_LIST:
                     return BallotList.fromProto(proto.getBallotList());
                 case MY_VOTE_LIST:
                     return MyVoteList.fromProto(proto.getMyVoteList());
-                case BLIND_VOTE_LIST:
-                    return BlindVoteList.fromProto(proto.getBlindVoteList());
+                case MY_BLIND_VOTE_LIST:
+                    return MyBlindVoteList.fromProto(proto.getMyBlindVoteList());
                 default:
                     throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope).\n" +
                             "messageCase=" + proto.getMessageCase() + "\nproto=" + proto);

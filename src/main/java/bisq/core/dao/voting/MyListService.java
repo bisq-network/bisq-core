@@ -61,7 +61,7 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
     protected final P2PService p2PService;
     protected final StateService stateService;
     protected final PeriodService periodService;
-    private final WalletsManager walletsManager;
+    protected final WalletsManager walletsManager;
     protected final Storage<R> storage;
     protected final PublicKey signaturePubKey;
 
@@ -107,7 +107,7 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
     @Override
     public void readPersisted() {
         if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq()) {
-            R persisted = storage.initAndGetPersisted(myList, getListName(), 20);
+            R persisted = storage.initAndGetPersisted(myList, getListName(), 100);
             if (persisted != null) {
                 myList.clear();
                 myList.addAll(persisted.getList());
@@ -122,7 +122,7 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // Broadcast proposalTx and publish payload to P2P network
+    // Broadcast tx and publish payload to P2P network
     public void publishTxAndPayload(T payload, Transaction transaction, ResultHandler resultHandler,
                                     ErrorMessageHandler errorMessageHandler) {
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
@@ -153,12 +153,12 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
         // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
         // payload stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
         // in worst case if it does not succeed the payload will be ignored anyway.
-        // Inconsistently propagated proposals in the p2p network could have potentially worse effects.
+        // Inconsistently propagated payloads in the p2p network could have potentially worse effects.
         addToP2PNetwork(payload, errorMessageHandler);
     }
 
     public boolean remove(T payload) {
-        if (canRemoveProposal(payload, stateService, periodService)) {
+        if (canRemovePayload(payload, stateService, periodService)) {
             boolean success = p2PService.removeData(createProtectedStoragePayload(payload), true);
             if (!success)
                 log.warn("Removal of payload from p2p network failed. payload={}", payload);
@@ -166,11 +166,11 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
             if (myList.remove(payload))
                 persist();
             else
-                log.warn("We called removeProposalFromList at a payload which was not in our list");
+                log.warn("We called remove at a payload which was not in our list");
 
             return success;
         } else {
-            final String msg = "removeProposal called with a payload which is outside of the payload phase.";
+            final String msg = "remove called with a payload which is outside of the payload phase.";
             DevEnv.logErrorAndThrowIfDevMode(msg);
             return false;
         }
@@ -191,13 +191,13 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
 
     abstract protected R createMyList();
 
-    abstract protected void rePublishProposals();
+    abstract protected void rePublish();
 
     abstract protected boolean listContainsPayload(T payload, List<T> list);
 
     abstract protected ProtectedStoragePayload createProtectedStoragePayload(T payload);
 
-    protected abstract boolean canRemoveProposal(T payload, StateService stateService, PeriodService periodService);
+    abstract protected boolean canRemovePayload(T payload, StateService stateService, PeriodService periodService);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -214,6 +214,10 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
             errorMessageHandler.handleErrorMessage(msg);
         }
 
+        addToList(payload);
+    }
+
+    private void addToList(T payload) {
         if (!listContainsPayload(payload, getList())) {
             myList.add(payload);
             persist();
@@ -226,7 +230,7 @@ public abstract class MyListService<T extends PersistablePayload, R extends Pers
         UserThread.runAfter(() -> {
             if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
                 p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                rePublishProposals();
+                rePublish();
             }
         }, 2);
     }

@@ -46,9 +46,9 @@ import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
-import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
+import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStorageService;
@@ -150,8 +150,8 @@ public class DaoModule extends AppModule {
         bind(BlindVoteAppendOnlyStorageService.class).in(Singleton.class);
         bind(BlindVoteStore.class).in(Singleton.class);
         bind(BlindVoteStorageService.class).in(Singleton.class);
-        bind(BlindVoteListService.class).in(Singleton.class);
         bind(BlindVoteValidator.class).in(Singleton.class);
+        bind(MyBlindVoteListService.class).in(Singleton.class);
 
         // VoteReveal
         bind(VoteRevealService.class).in(Singleton.class);

@@ -140,6 +140,11 @@ public final class PeriodService {
                 .orElse(0);
     }
 
+    public boolean isFirstBlockInCycle() {
+        final int chainHeight = getChainHeight();
+        return getFirstBlockOfPhase(chainHeight, DaoPhase.Phase.PROPOSAL) == chainHeight;
+    }
+
     public int getLastBlockOfPhase(int height, DaoPhase.Phase phase) {
         return getCycle(height)
                 .map(cycle -> cycle.getLastBlockOfPhase(phase))
