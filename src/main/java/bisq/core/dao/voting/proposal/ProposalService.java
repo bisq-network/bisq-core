@@ -51,6 +51,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ProposalService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
+    public interface ListChangeListener {
+        void onPreliminaryProposalsChanged(List<Proposal> list);
+
+        void onConfirmedProposalsChanged(List<Proposal> list);
+    }
+
     private final P2PService p2PService;
     private final PeriodService periodService;
     private final StateService stateService;
@@ -65,6 +71,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     // They cannot be removed anymore. This list is used for consensus critical code.
     @Getter
     private final List<Proposal> confirmedProposals = new ArrayList<>();
+    private final List<ListChangeListener> listeners = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -150,6 +157,10 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
         fillConfirmedProposals();
     }
 
+    public void addListener(ListChangeListener listener) {
+        listeners.add(listener);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -158,11 +169,13 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     private void fillPreliminaryProposals() {
         preliminaryProposals.clear();
         p2PService.getDataMap().values().forEach(this::onAddedProtectedData);
+        listeners.forEach(l -> l.onPreliminaryProposalsChanged(preliminaryProposals));
     }
 
     private void fillConfirmedProposals() {
         confirmedProposals.clear();
         p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAddedAppendOnlyData);
+        listeners.forEach(l -> l.onConfirmedProposalsChanged(confirmedProposals));
     }
 
     private void rePublishProposalsToAppendOnlyDataStore() {
@@ -184,6 +197,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
                 if (proposalValidator.isValid(proposal, true)) {
                     log.info("We received a new proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
                     preliminaryProposals.add(proposal);
+                    listeners.forEach(l -> l.onPreliminaryProposalsChanged(preliminaryProposals));
                 } else {
                     log.warn("We received a invalid proposal from the P2P network. Proposal={}", proposal);
                 }
@@ -209,7 +223,10 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
                             return false;
                         }
                     })
-                    .ifPresent(p -> ProposalUtils.removeProposalFromList(proposal, preliminaryProposals));
+                    .ifPresent(p -> {
+                        ProposalUtils.removeProposalFromList(proposal, preliminaryProposals);
+                        listeners.forEach(l -> l.onPreliminaryProposalsChanged(preliminaryProposals));
+                    });
         }
     }
 
@@ -220,6 +237,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
                 if (proposalValidator.isValidAndConfirmed(proposal)) {
                     log.info("We received a new append-only proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
                     confirmedProposals.add(proposal);
+                    listeners.forEach(l -> l.onConfirmedProposalsChanged(confirmedProposals));
                 } else {
                     log.warn("We received a invalid append-only proposal from the P2P network. Proposal={}", proposal);
                 }

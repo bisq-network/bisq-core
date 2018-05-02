@@ -17,15 +17,7 @@
 
 package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.state.ChainHeightListener;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.PeriodService;
-
-import bisq.network.p2p.storage.HashMapChangedListener;
-import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
-import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreListener;
 
 import com.google.inject.Inject;
 
@@ -33,6 +25,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,9 +36,8 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the Proposals from ProposalListService.
  */
 @Slf4j
-public class FilteredProposalListService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener {
+public class FilteredProposalListService implements ProposalService.ListChangeListener {
     private final ProposalService proposalService;
-    private final P2PDataStorage p2pDataStorage;
     private final PeriodService periodService;
     @Getter
     private final ObservableList<Proposal> activeOrMyUnconfirmedProposals = FXCollections.observableArrayList();
@@ -59,60 +51,32 @@ public class FilteredProposalListService implements ChainHeightListener, HashMap
 
     @Inject
     public FilteredProposalListService(ProposalService proposalService,
-                                       P2PDataStorage p2pDataStorage,
-                                       PeriodService periodService,
-                                       StateService stateService) {
+                                       PeriodService periodService) {
         this.proposalService = proposalService;
-        this.p2pDataStorage = p2pDataStorage;
         this.periodService = periodService;
 
-        stateService.addChainHeightListener(this);
-        p2pDataStorage.addHashMapChangedListener(this);
-        p2pDataStorage.addAppendOnlyDataStoreListener(this);
+        proposalService.addListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainHeightListener
+    // ProposalService.ListChangeListener
     ///////////////////////////////////////////////////////////////////////////////////////////
+
 
     @Override
-    public void onChainHeightChanged(int blockHeight) {
-        updateLists();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // HashMapChangedListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onAdded(ProtectedStorageEntry data) {
-        updateLists();
+    public void onPreliminaryProposalsChanged(List<Proposal> preliminaryProposals) {
+        fillActiveOrMyUnconfirmedProposals();
     }
 
     @Override
-    public void onRemoved(ProtectedStorageEntry data) {
-        updateLists();
-    }
+    public void onConfirmedProposalsChanged(List<Proposal> confirmedProposals) {
+        fillActiveOrMyUnconfirmedProposals();
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // AppendOnlyDataStoreListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onAdded(PersistableNetworkPayload payload) {
-        updateLists();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        updateLists();
+        closedProposals.clear();
+        closedProposals.addAll(confirmedProposals.stream()
+                .filter(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()))
+                .collect(Collectors.toList()));
     }
 
 
@@ -120,15 +84,11 @@ public class FilteredProposalListService implements ChainHeightListener, HashMap
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void updateLists() {
+    private void fillActiveOrMyUnconfirmedProposals() {
         Set<Proposal> set = new HashSet<>(proposalService.getPreliminaryProposals());
         set.addAll(proposalService.getConfirmedProposals());
         activeOrMyUnconfirmedProposals.clear();
         activeOrMyUnconfirmedProposals.addAll(set);
-
-        closedProposals.clear();
-        closedProposals.addAll(ProposalUtils.getProposalsFromAppendOnlyStore(p2pDataStorage).stream()
-                .filter(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()))
-                .collect(Collectors.toList()));
     }
+
 }

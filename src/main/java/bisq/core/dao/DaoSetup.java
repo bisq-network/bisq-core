@@ -21,7 +21,6 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.proposal.ProposalService;
@@ -41,7 +40,6 @@ public class DaoSetup {
     private final StateService stateService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
-    private final FilteredBallotListService filteredBallotListService;
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteListService blindVoteListService;
@@ -51,7 +49,6 @@ public class DaoSetup {
                     StateService stateService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
-                    FilteredBallotListService filteredBallotListService,
                     BallotListService ballotListService,
                     BlindVoteService blindVoteService,
                     BlindVoteListService blindVoteListService,
@@ -59,7 +56,6 @@ public class DaoSetup {
         this.stateService = stateService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.filteredBallotListService = filteredBallotListService;
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteListService = blindVoteListService;
@@ -76,7 +72,6 @@ public class DaoSetup {
         voteRevealService.start();
         ballotListService.start();
         blindVoteService.start();
-        filteredBallotListService.start();
         blindVoteListService.start();
         voteResultService.start();
         bsqNode.start();

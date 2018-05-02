@@ -32,6 +32,9 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,11 +46,16 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 public class BallotListService implements PersistedDataHost, AppendOnlyDataStoreListener {
+    public interface ListChangeListener {
+        void onListChanged(List<Ballot> list);
+    }
+
     private final P2PDataStorage p2pDataStorage;
     private ProposalValidator proposalValidator;
     private final Storage<BallotList> storage;
     @Getter
     private final BallotList ballotList = new BallotList();
+    private final List<ListChangeListener> listeners = new ArrayList<>();
 
     @Inject
     public BallotListService(P2PDataStorage p2pDataStorage,
@@ -94,6 +102,7 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
                     proposalValidator.isValidAndConfirmed(proposal)) {
                 Ballot ballot = Ballot.createBallotFromProposal(proposal);
                 ballotList.add(ballot);
+                listeners.forEach(l -> l.onListChanged(ballotList.getList()));
                 if (storeLocally)
                     persist();
             }
@@ -114,6 +123,10 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
     public void setVote(Ballot ballot, @Nullable Vote vote) {
         ballot.setVote(vote);
         persist();
+    }
+
+    public void addListener(ListChangeListener listener) {
+        listeners.add(listener);
     }
 
 

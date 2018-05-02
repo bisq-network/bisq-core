@@ -17,25 +17,16 @@
 
 package bisq.core.dao.voting.ballot;
 
-import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
-
-import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
-import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreListener;
-
-import bisq.common.UserThread;
 
 import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -45,8 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService implements AppendOnlyDataStoreListener, BlockListener {
-    private final BallotListService ballotListService;
+public class FilteredBallotListService implements BallotListService.ListChangeListener {
     private final PeriodService periodService;
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
@@ -63,62 +53,30 @@ public class FilteredBallotListService implements AppendOnlyDataStoreListener, B
 
     @Inject
     public FilteredBallotListService(BallotListService ballotListService,
-                                     P2PDataStorage p2pDataStorage,
                                      PeriodService periodService,
                                      StateService stateService,
                                      ProposalValidator proposalValidator) {
-        this.ballotListService = ballotListService;
         this.periodService = periodService;
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
 
-        stateService.addBlockListener(this);
-        p2pDataStorage.addAppendOnlyDataStoreListener(this);
+        ballotListService.addListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // AppendOnlyDataStoreListener
+    // BallotListService.ListChangeListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onAdded(PersistableNetworkPayload payload) {
-        if (payload instanceof ProposalAppendOnlyPayload)
-            UserThread.runAfter(this::updateLists, 100, TimeUnit.MILLISECONDS);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // BlockListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onBlockAdded(Block block) {
-        updateLists();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        updateLists();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Private
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void updateLists() {
+    public void onListChanged(List<Ballot> list) {
         activeOrMyUnconfirmedBallots.clear();
-        activeOrMyUnconfirmedBallots.addAll(ballotListService.getBallotList().stream()
+        activeOrMyUnconfirmedBallots.addAll(list.stream()
                 .filter(ballot -> proposalValidator.isValidOrUnconfirmed(ballot.getProposal()))
                 .collect(Collectors.toList()));
 
         closedBallots.clear();
-        closedBallots.addAll(ballotListService.getBallotList().getList().stream()
+        closedBallots.addAll(list.stream()
                 .filter(ballot -> stateService.getTx(ballot.getProposalTxId()).isPresent())
                 .filter(ballot -> stateService.getTx(ballot.getProposalTxId())
                         .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
