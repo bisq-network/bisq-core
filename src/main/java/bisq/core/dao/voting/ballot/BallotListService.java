@@ -18,6 +18,8 @@
 package bisq.core.dao.voting.ballot;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
@@ -31,8 +33,8 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +47,7 @@ import javax.annotation.Nullable;
  * The BallotList contains all ballots of all cycles.
  */
 @Slf4j
-public class BallotListService implements PersistedDataHost, AppendOnlyDataStoreListener {
+public class BallotListService implements ParseBlockChainListener, PersistedDataHost, AppendOnlyDataStoreListener {
     public interface ListChangeListener {
         void onListChanged(List<Ballot> list);
     }
@@ -54,15 +56,16 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
     private final Storage<BallotList> storage;
     @Getter
     private final BallotList ballotList = new BallotList();
-    private final List<ListChangeListener> listeners = new ArrayList<>();
+    private final List<ListChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     public BallotListService(P2PDataStorage p2pDataStorage,
+                             StateService stateService,
                              Storage<BallotList> storage) {
         this.p2pDataStorage = p2pDataStorage;
         this.storage = storage;
 
-        p2pDataStorage.addAppendOnlyDataStoreListener(this);
+        stateService.addParseBlockChainListener(this);
     }
 
 
@@ -84,6 +87,17 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // ParseBlockChainListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onComplete() {
+        p2pDataStorage.addAppendOnlyDataStoreListener(this);
+        p2pDataStorage.getAppendOnlyDataStoreMap().values().forEach(this::onPersistableNetworkPayloadAdded);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // AppendOnlyDataStoreListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,26 +106,12 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
         onPersistableNetworkPayloadAdded(payload);
     }
 
-    private void onPersistableNetworkPayloadAdded(PersistableNetworkPayload payload) {
-        if (payload instanceof ProposalAppendOnlyPayload) {
-            ProposalAppendOnlyPayload proposalAppendOnlyPayload = (ProposalAppendOnlyPayload) payload;
-            final Proposal proposal = proposalAppendOnlyPayload.getProposal();
-            if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList())) {
-                Ballot ballot = new Ballot(proposal);
-                ballotList.add(ballot);
-                listeners.forEach(l -> l.onListChanged(ballotList.getList()));
-                persist();
-            }
-        }
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        p2pDataStorage.getAppendOnlyDataStoreMap().values().forEach(this::onPersistableNetworkPayloadAdded);
     }
 
     public void setVote(Ballot ballot, @Nullable Vote vote) {
@@ -127,6 +127,19 @@ public class BallotListService implements PersistedDataHost, AppendOnlyDataStore
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private void onPersistableNetworkPayloadAdded(PersistableNetworkPayload payload) {
+        if (payload instanceof ProposalAppendOnlyPayload) {
+            ProposalAppendOnlyPayload proposalAppendOnlyPayload = (ProposalAppendOnlyPayload) payload;
+            final Proposal proposal = proposalAppendOnlyPayload.getProposal();
+            if (!BallotUtils.ballotListContainsProposal(proposal, ballotList.getList())) {
+                Ballot ballot = new Ballot(proposal);
+                ballotList.add(ballot);
+                listeners.forEach(l -> l.onListChanged(ballotList.getList()));
+                persist();
+            }
+        }
+    }
 
     private void persist() {
         storage.queueUpForSave();

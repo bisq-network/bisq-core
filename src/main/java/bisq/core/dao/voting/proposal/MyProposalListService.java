@@ -47,15 +47,23 @@ import javafx.beans.value.ChangeListener;
 import java.security.PublicKey;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Publishes proposal tx and proposalPayload to p2p network. Allow removal of proposal if in proposal phase.
- * Maintains MyProposalList for own proposals. Triggers republishing of my proposals at startup.
+ * Publishes proposal tx and proposalPayload to p2p network.
+ * Allow removal of proposal if in proposal phase.
+ * Maintains MyProposalList for own proposals.
+ * Triggers republishing of my proposals at startup.
  */
 @Slf4j
 public class MyProposalListService implements PersistedDataHost {
+    public interface Listener {
+        void onListChanged(List<Proposal> list);
+    }
+
+
     private final P2PService p2PService;
     private final StateService stateService;
     private final PeriodService periodService;
@@ -65,6 +73,7 @@ public class MyProposalListService implements PersistedDataHost {
 
     private final MyProposalList myProposalList = new MyProposalList();
     private final ChangeListener<Number> numConnectedPeersListener;
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -99,8 +108,22 @@ public class MyProposalListService implements PersistedDataHost {
             if (persisted != null) {
                 myProposalList.clear();
                 myProposalList.addAll(persisted.getList());
+                listeners.forEach(l -> l.onListChanged(getList()));
             }
         }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Listeners
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
 
@@ -155,11 +178,12 @@ public class MyProposalListService implements PersistedDataHost {
             if (!success)
                 log.warn("Removal of proposal from p2p network failed. proposal={}", proposal);
 
-            if (myProposalList.remove(proposal))
+            if (myProposalList.remove(proposal)) {
+                listeners.forEach(l -> l.onListChanged(getList()));
                 persist();
-            else
+            } else {
                 log.warn("We called remove at a proposal which was not in our list");
-
+            }
             return success;
         } else {
             final String msg = "remove called with a proposal which is outside of the proposal phase.";
@@ -199,6 +223,7 @@ public class MyProposalListService implements PersistedDataHost {
     private void addToList(Proposal proposal) {
         if (!ProposalUtils.containsProposal(proposal, getList())) {
             myProposalList.add(proposal);
+            listeners.forEach(l -> l.onListChanged(getList()));
             persist();
         }
     }
@@ -224,7 +249,6 @@ public class MyProposalListService implements PersistedDataHost {
             }
         });
     }
-
 
     private void persist() {
         storage.queueUpForSave();

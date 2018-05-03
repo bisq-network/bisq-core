@@ -52,6 +52,7 @@ public class StateService {
     // TODO used only by snapshot manager
     private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
     private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
+    private final List<ParseBlockChainListener> parseBlockChainListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +86,14 @@ public class StateService {
 
     public void removeChainHeightListener(ChainHeightListener listener) {
         chainHeightListeners.remove(listener);
+    }
+
+    public void addParseBlockChainListener(ParseBlockChainListener listener) {
+        parseBlockChainListeners.add(listener);
+    }
+
+    public void removeParseBlockChainListener(ParseBlockChainListener listener) {
+        parseBlockChainListeners.remove(listener);
     }
 
 
@@ -145,6 +154,10 @@ public class StateService {
         log.info("New Block added at blockHeight " + block.getHeight());
     }
 
+    public void onParseBlockChainComplete() {
+        parseBlockChainListeners.forEach(ParseBlockChainListener::onComplete);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Modify state
@@ -157,6 +170,7 @@ public class StateService {
                 .filter(block -> block.getHeight() >= fromBlockHeight)
                 .collect(Collectors.toList());
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Tx

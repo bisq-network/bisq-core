@@ -19,6 +19,7 @@ package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
@@ -43,17 +44,18 @@ import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Maintains preliminaryProposals and confirmedProposals. Republishes preliminaryProposals to append-only data store
- * when entering the blind vote phase.
+ * Maintains preliminaryProposals and confirmedProposals.
+ * Republishes preliminaryProposals to append-only data store when entering the blind vote phase.
  */
 @Slf4j
 public class ProposalService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener,
-        BlockListener {
+        BlockListener, ParseBlockChainListener {
     public interface ListChangeListener {
         void onPreliminaryProposalsChanged(List<Proposal> list);
 
@@ -65,7 +67,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
 
-    private final List<ListChangeListener> listeners = new ArrayList<>();
+    private final List<ListChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     // Proposals we receive in the proposal phase. They can be removed in that phase and that list must not be used for
     // consensus critical code.
@@ -76,6 +78,7 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     // They cannot be removed anymore. This list is used for consensus critical code.
     @Getter
     private final List<Proposal> confirmedProposals = new ArrayList<>();
+    private boolean rePublishInCycleExecuted;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -99,10 +102,32 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
         appendOnlyDataStoreService.addService(proposalAppendOnlyStorageService);
         protectedDataStoreService.addService(proposalStorageService);
 
+        stateService.addParseBlockChainListener(this);
         stateService.addChainHeightListener(this);
+        stateService.addBlockListener(this);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ParseBlockChainListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onComplete() {
+        stateService.removeParseBlockChainListener(this);
+
+        // We wait until we have parsed the blockchain to have consistent data for validation before we register
+        // our p2p network listeners.
         p2PService.addHashSetChangedListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
-        stateService.addBlockListener(this);
+
+        // Fill the lists with the data we have collected in out stores.
+        fillPreliminaryProposals();
+        fillConfirmedProposals();
+
+        // Now as we have set all p2p network data lets run the onChainHeightChanged again in case we are on a
+        // relevant blockHeight.
+        onChainHeightChanged(stateService.getChainHeight());
     }
 
 
@@ -115,14 +140,18 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
         // When we enter the  blind vote phase we re-publish all proposals we have received from the p2p network to the
         // append only data store.
         // From now on we will access proposals only from that data store.
-        if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE) == blockHeight) {
+        if (!rePublishInCycleExecuted && blockHeight >= periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE)) {
+            rePublishInCycleExecuted = true;
             rePublishProposalsToAppendOnlyDataStore();
 
-            // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
+            // At republish we get filled our appendOnlyDataStore synchronously so we can use that to fill our confirmed list.
             fillConfirmedProposals();
         } else if (periodService.isFirstBlockInCycle()) {
-            // Cycle has changed, we reset the lists.
+            // Cycle has changed, we reset the list.
             fillConfirmedProposals();
+
+            // We reset the flag to enable again republishing when entering next blind vote phase
+            rePublishInCycleExecuted = false;
         }
     }
 
@@ -168,8 +197,6 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        fillPreliminaryProposals();
-        fillConfirmedProposals();
     }
 
     public void addListener(ListChangeListener listener) {
@@ -210,11 +237,13 @@ public class ProposalService implements ChainHeightListener, HashMapChangedListe
             final Proposal proposal = ((ProposalPayload) protectedStoragePayload).getProposal();
             if (!ProposalUtils.containsProposal(proposal, preliminaryProposals)) {
                 if (proposalValidator.isValidAndConfirmed(proposal)) {
-                    log.info("We received a new proposal from the P2P network. Proposal.txId={}", proposal.getTxId());
+                    log.info("We received a new proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                            proposal.getTxId(), stateService.getChainHeight());
                     preliminaryProposals.add(proposal);
                     listeners.forEach(l -> l.onPreliminaryProposalsChanged(preliminaryProposals));
                 } else {
-                    log.warn("We received a invalid proposal from the P2P network. Proposal={}", proposal);
+                    log.warn("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                            proposal.getTxId(), stateService.getChainHeight());
                 }
             } else {
                 log.debug("We received a new proposal from the P2P network but we have it already in out list. " +

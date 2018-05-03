@@ -67,6 +67,7 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
     // They cannot be removed anymore. This list is used for consensus critical code.
     @Getter
     private final List<BlindVote> confirmedBlindVotes = new ArrayList<>();
+    private boolean rePublishInCycleExecuted;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,12 +105,14 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
         // When we enter the vote reveal phase we re-publish all blindVotes we have received from the p2p network to the
         // append only data store.
         // From now on we will access blindVotes only from that data store.
-        if (periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL) == blockHeight) {
+        if (!rePublishInCycleExecuted && blockHeight >= periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL)) {
+            rePublishInCycleExecuted = true;
             rePublishBlindVotesToAppendOnlyDataStore();
 
             // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
             fillConfirmedBlindVotes();
         } else if (periodService.isFirstBlockInCycle()) {
+            rePublishInCycleExecuted = false;
             // Cycle has changed, we reset the lists.
             fillConfirmedBlindVotes();
         }

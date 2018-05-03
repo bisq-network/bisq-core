@@ -38,7 +38,6 @@ import bisq.common.util.Tuple2;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -90,7 +90,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     private final PeerManager peerManager;
     private final Collection<NodeAddress> seedNodeAddresses;
 
-    private final List<Listener> listeners = new ArrayList<>();
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
     // Key is tuple of seedNode address and requested blockHeight
     private final Map<Tuple2<NodeAddress, Integer>, RequestBlocksHandler> requestBlocksHandlerMap = new HashMap<>();

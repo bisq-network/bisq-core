@@ -17,6 +17,7 @@
 
 package bisq.core.dao.voting.ballot;
 
+import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
@@ -36,7 +37,8 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService implements BallotListService.ListChangeListener {
+public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.ListChangeListener {
+    private final BallotListService ballotListService;
     private final PeriodService periodService;
     private final StateService stateService;
     private final ProposalValidator proposalValidator;
@@ -56,11 +58,23 @@ public class FilteredBallotListService implements BallotListService.ListChangeLi
                                      PeriodService periodService,
                                      StateService stateService,
                                      ProposalValidator proposalValidator) {
+        this.ballotListService = ballotListService;
         this.periodService = periodService;
         this.stateService = stateService;
         this.proposalValidator = proposalValidator;
 
+        stateService.addParseBlockChainListener(this);
+
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ParseBlockChainListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onComplete() {
         ballotListService.addListener(this);
+        onListChanged(ballotListService.getBallotList().getList());
     }
 
 

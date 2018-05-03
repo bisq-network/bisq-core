@@ -157,6 +157,7 @@ public abstract class BsqNode {
 
     protected void onParseBlockChainComplete() {
         parseBlockchainComplete = true;
+        stateService.onParseBlockChainComplete();
     }
 
     @SuppressWarnings("WeakerAccess")
