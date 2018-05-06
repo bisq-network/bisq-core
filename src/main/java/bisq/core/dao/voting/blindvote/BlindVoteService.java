@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
@@ -39,8 +39,12 @@ import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -50,13 +54,14 @@ import lombok.extern.slf4j.Slf4j;
  * when entering the vote reveal phase.
  */
 @Slf4j
-public class BlindVoteService implements ChainHeightListener, HashMapChangedListener, AppendOnlyDataStoreListener,
-        BlockListener {
+public class BlindVoteService implements ParseBlockChainListener, HashMapChangedListener,
+        AppendOnlyDataStoreListener, BlockListener {
+    private final StateService stateService;
     private final P2PService p2PService;
-    private PeriodService periodService;
-    private BlindVoteValidator blindVoteValidator;
+    private final PeriodService periodService;
+    private final BlindVoteValidator blindVoteValidator;
 
-    // BlindVotes we receive in the blind vote phase. They could be theoretically removed (we might add a feature to
+  /*  // BlindVotes we receive in the blind vote phase. They could be theoretically removed (we might add a feature to
     // remove a published blind vote in future)in that phase and that list must not be used for consensus critical code.
     // Another reason why we want to maintain preliminaryBlindVotes is because we want to show items arrived from the
     // p2p network even if they are not confirmed.
@@ -66,8 +71,21 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
     // BlindVotes which got added to the append-only data store at the beginning of the vote reveal phase.
     // They cannot be removed anymore. This list is used for consensus critical code.
     @Getter
-    private final List<BlindVote> confirmedBlindVotes = new ArrayList<>();
-    private boolean rePublishInCycleExecuted;
+    private final List<BlindVote> confirmedBlindVotes = new ArrayList<>();*/
+
+    // BlindVotes we receive in the blindVote phase. They can be removed in that phase and that list must not be used for
+    // consensus critical code.
+    @Getter
+    private final ObservableList<BlindVote> protectedStoreList = FXCollections.observableArrayList();
+    @Getter
+    private final FilteredList<BlindVote> preliminaryList = new FilteredList<>(protectedStoreList);
+
+    // BlindVotes which got added to the append-only data store at the beginning of the blind vote phase.
+    // They cannot be removed anymore. This list is used for consensus critical code.
+    @Getter
+    private final ObservableList<BlindVoteAppendOnlyPayload> appendOnlyStoreList = FXCollections.observableArrayList();
+    @Getter
+    private final FilteredList<BlindVoteAppendOnlyPayload> verifiedList = new FilteredList<>(appendOnlyStoreList);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +101,7 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             ProtectedDataStoreService protectedDataStoreService,
                             BlindVoteValidator blindVoteValidator) {
+        this.stateService = stateService;
         this.p2PService = p2PService;
         this.periodService = periodService;
         this.blindVoteValidator = blindVoteValidator;
@@ -90,32 +109,41 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
         appendOnlyDataStoreService.addService(blindVoteAppendOnlyStorageService);
         protectedDataStoreService.addService(blindVoteStorageService);
 
-        stateService.addChainHeightListener(this);
+
+        stateService.addParseBlockChainListener(this);
+        stateService.addBlockListener(this);
+
         p2PService.addHashSetChangedListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
+
+        preliminaryList.setPredicate(proposal -> {
+            // We do not validate phase, cycle and confirmation yet.
+            if (blindVoteValidator.areDataFieldsValid(proposal)) {
+                log.debug("We received a new proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                        proposal.getTxId(), stateService.getChainHeight());
+                return true;
+            } else {
+                log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                        proposal.getTxId(), stateService.getChainHeight());
+                return false;
+            }
+        });
+
+        setPredicateForAppendOnlyPayload();
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainHeightListener
+    // ParseBlockChainListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onChainHeightChanged(int blockHeight) {
-        // When we enter the vote reveal phase we re-publish all blindVotes we have received from the p2p network to the
-        // append only data store.
-        // From now on we will access blindVotes only from that data store.
-        if (!rePublishInCycleExecuted && blockHeight >= periodService.getFirstBlockOfPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL)) {
-            rePublishInCycleExecuted = true;
-            rePublishBlindVotesToAppendOnlyDataStore();
+    public void onComplete() {
+        stateService.removeParseBlockChainListener(this);
 
-            // At republish we get set out local map synchronously so we can use that to fill our confirmed list.
-            fillConfirmedBlindVotes();
-        } else if (periodService.isFirstBlockInCycle()) {
-            rePublishInCycleExecuted = false;
-            // Cycle has changed, we reset the lists.
-            fillConfirmedBlindVotes();
-        }
+        // Fill the lists with the data we have collected in out stores.
+        fillListFromProtectedStore();
+        fillListFromAppendOnlyDataStore();
     }
 
 
@@ -125,8 +153,17 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
 
     @Override
     public void onBlockAdded(Block block) {
-        // We use the block listener here as we need to get the tx fully parsed when checking if the proposal is valid
-        fillPreliminaryBlindVotes();
+        // We need to do that after parsing the block!
+        if (block.getHeight() == getTriggerHeight()) {
+            publishToAppendOnlyDataStore(block.getHash());
+
+            // We need to update out predicate as we might not get called the onAppendOnlyDataAdded methods in case
+            // we have the data already.
+            fillListFromAppendOnlyDataStore();
+            // In case the list has not changed the filter predicate would not be applied,
+            // so we trigger a re-evaluation.
+            setPredicateForAppendOnlyPayload();
+        }
     }
 
 
@@ -136,12 +173,12 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
 
     @Override
     public void onAdded(ProtectedStorageEntry entry) {
-        onAddedProtectedData(entry);
+        onProtectedDataAdded(entry);
     }
 
     @Override
     public void onRemoved(ProtectedStorageEntry entry) {
-        onRemovedProtectedData(entry);
+        onProtectedDataRemoved(entry);
     }
 
 
@@ -151,15 +188,7 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
 
     @Override
     public void onAdded(PersistableNetworkPayload payload) {
-        // We only accept data from the network if we are in the correct phase.
-        // If we would accept data during the vote reveal phase a malicious node could withhold
-        // data and send it at the end of the vote reveal phase. Voters who have already revealed their vote would
-        // miss that data and it could lead to the situation that they will end up in a minority data view
-        // rendering their vote invalid. That attack i snot very likely as the attacker would need to have a lot of
-        // stake to have influence. But he could still disrupt other voters with higher stake and create more
-        // fragmented data views.
-        if (periodService.isInPhase(periodService.getChainHeight(), DaoPhase.Phase.BLIND_VOTE))
-            onAddedAppendOnlyData(payload);
+        onAppendOnlyDataAdded(payload);
     }
 
 
@@ -168,8 +197,20 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        fillPreliminaryBlindVotes();
-        fillConfirmedBlindVotes();
+        // Fill the lists with the data we have collected in out stores.
+        fillListFromAppendOnlyDataStore();
+        fillListFromProtectedStore();
+    }
+
+    public List<BlindVote> getVerifiedBlindVotes() {
+        return verifiedList.stream()
+                .map(BlindVoteAppendOnlyPayload::getBlindVote)
+                .collect(Collectors.toList());
+    }
+
+    public int getTriggerHeight() {
+        // TODO we will use 10 block after first block of break2 phase to avoid re-org issues.
+        return periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK2) /* + 10*/;
     }
 
 
@@ -177,71 +218,70 @@ public class BlindVoteService implements ChainHeightListener, HashMapChangedList
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void fillPreliminaryBlindVotes() {
-        preliminaryBlindVotes.clear();
-        p2PService.getDataMap().values().forEach(this::onAddedProtectedData);
+    // We need to trigger a change when our block height has changes by applying the predicate again.
+    // The underlying list might not have been changes and would not trigger a new evaluation of the filtered list.
+    private void setPredicateForAppendOnlyPayload() {
+        verifiedList.setPredicate(proposalAppendOnlyPayload -> {
+            if (!blindVoteValidator.isAppendOnlyPayloadValid(proposalAppendOnlyPayload,
+                    getTriggerHeight(), stateService)) {
+                log.debug("We received an invalid proposalAppendOnlyPayload. payload={}, blockHeight={}",
+                        proposalAppendOnlyPayload, stateService.getChainHeight());
+                return false;
+            }
+
+            if (blindVoteValidator.isValidAndConfirmed(proposalAppendOnlyPayload.getBlindVote())) {
+                return true;
+            } else {
+                log.debug("We received a invalid append-only proposal from the P2P network. " +
+                                "Proposal.txId={}, blockHeight={}",
+                        proposalAppendOnlyPayload.getBlindVote().getTxId(), stateService.getChainHeight());
+                return false;
+            }
+        });
+    } // The blockHeight when we do the publishing of the proposals to the append only data store
+
+    private void fillListFromProtectedStore() {
+        p2PService.getDataMap().values().forEach(this::onProtectedDataAdded);
     }
 
-    private void fillConfirmedBlindVotes() {
-        confirmedBlindVotes.clear();
-        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAddedAppendOnlyData);
+    private void fillListFromAppendOnlyDataStore() {
+        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAppendOnlyDataAdded);
     }
 
-    private void rePublishBlindVotesToAppendOnlyDataStore() {
-        preliminaryBlindVotes.stream()
+    private void publishToAppendOnlyDataStore(String blockHash) {
+        preliminaryList.stream()
                 .filter(blindVoteValidator::isValidAndConfirmed)
-                .map(BlindVoteAppendOnlyPayload::new)
+                .map(blindVote -> new BlindVoteAppendOnlyPayload(blindVote, blockHash))
                 .forEach(appendOnlyPayload -> {
                     boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
                     if (!success)
-                        log.warn("rePublishBlindVotesToAppendOnlyDataStore failed for blindVote " +
-                                appendOnlyPayload.getBlindVote());
+                        log.warn("publishToAppendOnlyDataStore failed for blindVote " + appendOnlyPayload.getBlindVote());
                 });
     }
 
-    private void onAddedProtectedData(ProtectedStorageEntry entry) {
+    private void onProtectedDataAdded(ProtectedStorageEntry entry) {
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof BlindVotePayload) {
             final BlindVote blindVote = ((BlindVotePayload) protectedStoragePayload).getBlindVote();
-            if (!BlindVoteUtils.containsBlindVote(blindVote, preliminaryBlindVotes)) {
-                if (blindVoteValidator.isValidAndConfirmed(blindVote)) {
-                    log.info("We received a new blindVote from the P2P network. BlindVote.txId={}", blindVote.getTxId());
-                    preliminaryBlindVotes.add(blindVote);
-                } else {
-                    log.warn("We received a invalid blindVote from the P2P network. BlindVote={}", blindVote);
-
-                }
-            } else {
-                log.debug("We received a new blindVote from the P2P network but we have it already in out list. " +
-                        "We ignore that blindVote. BlindVote.txId={}", blindVote.getTxId());
-            }
+            if (!protectedStoreList.contains(blindVote))
+                protectedStoreList.add(blindVote);
         }
     }
 
-    private void onRemovedProtectedData(ProtectedStorageEntry entry) {
-        if (entry.getProtectedStoragePayload() instanceof BlindVotePayload) {
-            String msg = "We do not support removal of blind votes. ProtectedStoragePayload=" +
-                    entry.getProtectedStoragePayload();
-            log.error(msg);
-            throw new UnsupportedOperationException(msg);
+    private void onProtectedDataRemoved(ProtectedStorageEntry entry) {
+        final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
+        if (protectedStoragePayload instanceof BlindVotePayload) {
+            final BlindVote blindVote = ((BlindVotePayload) protectedStoragePayload).getBlindVote();
+            if (protectedStoreList.contains(blindVote))
+                protectedStoreList.remove(blindVote);
         }
     }
 
-    private void onAddedAppendOnlyData(PersistableNetworkPayload payload) {
-        if (payload instanceof BlindVoteAppendOnlyPayload) {
-            final BlindVote blindVote = ((BlindVoteAppendOnlyPayload) payload).getBlindVote();
-            if (!BlindVoteUtils.containsBlindVote(blindVote, confirmedBlindVotes)) {
-                if (blindVoteValidator.isValidAndConfirmed(blindVote)) {
-                    log.info("We received a new append-only blindVote from the P2P network. BlindVote.txId={}",
-                            blindVote.getTxId());
-                    confirmedBlindVotes.add(blindVote);
-                } else {
-                    log.warn("We received a invalid append-only blindVote from the P2P network. BlindVote={}", blindVote);
-                }
-            } else {
-                log.debug("We received a new append-only blindVote from the P2P network but we have it already in out list. " +
-                        "We ignore that blindVote. BlindVote.txId={}", blindVote.getTxId());
-            }
+    private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
+        if (persistableNetworkPayload instanceof BlindVoteAppendOnlyPayload) {
+            BlindVoteAppendOnlyPayload blindVoteAppendOnlyPayload = (BlindVoteAppendOnlyPayload) persistableNetworkPayload;
+            if (!appendOnlyStoreList.contains(blindVoteAppendOnlyPayload))
+                appendOnlyStoreList.add(blindVoteAppendOnlyPayload);
         }
     }
 }

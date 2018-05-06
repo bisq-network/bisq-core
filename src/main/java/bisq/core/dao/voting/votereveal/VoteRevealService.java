@@ -27,10 +27,10 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
@@ -55,9 +55,8 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -131,20 +130,8 @@ public class VoteRevealService {
         maybeRevealVotes(stateService.getChainHeight());
     }
 
-    public MyBlindVoteList getSortedBlindVoteListOfCycle() {
-        List<BlindVote> confirmedBlindVotes = blindVoteService.getConfirmedBlindVotes();
-        final List<BlindVote> list = confirmedBlindVotes.stream()
-                .filter(blindVoteValidator::isValidAndConfirmed)
-                .collect(Collectors.toList());
-        if (list.isEmpty())
-            log.warn("sortBlindVoteList is empty");
-        BlindVoteConsensus.sortBlindVoteList(list);
-        log.info("getSortedBlindVoteListForCurrentCycle list={}", list);
-        return new MyBlindVoteList(list);
-    }
-
     public byte[] getHashOfBlindVoteList() {
-        MyBlindVoteList list = getSortedBlindVoteListOfCycle();
+        MyBlindVoteList list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
         return VoteRevealConsensus.getHashOfBlindVoteList(list);
     }
 
@@ -162,7 +149,7 @@ public class VoteRevealService {
         if (periodService.getPhaseForHeight(chainHeight) == DaoPhase.Phase.VOTE_REVEAL) {
             myVoteListService.getMyVoteList().stream()
                     .filter(myVote -> myVote.getRevealTxId() == null) // we have not already revealed
-                    .filter(myVote -> blindVoteValidator.isValidAndConfirmed(myVote.getBlindVote()))
+                    .filter(myVote -> periodService.isTxInCorrectCycle(myVote.getTxId(), chainHeight))
                     .forEach(myVote -> {
                         // We handle the exception here inside the stream iteration as we have not get triggered from an
                         // outside user intent anyway. We keep errors in a observable list so clients can observe that to
@@ -243,7 +230,8 @@ public class VoteRevealService {
             // created the blind votes but used the normal protected data store. Now after the reveal removal of any
             // blind vote would nto make sense and we want to guarantee that the data is immutably persisted.
             // From now on we only access blind vote data from that append only data store.
-            addBlindVotesToAppendOnlyStore(getSortedBlindVoteListOfCycle());
+            final MyBlindVoteList sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+            publishToAppendOnlyDataStore(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";
             log.error("{}. chainHeight={},  blindVoteTxId()={}", msg, chainHeight, myVote.getTxId());
@@ -259,13 +247,18 @@ public class VoteRevealService {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void addBlindVotesToAppendOnlyStore(MyBlindVoteList blindVotes) {
-        blindVotes.stream()
-                .map(BlindVoteAppendOnlyPayload::new)
-                .forEach(blindVoteAppendOnlyPayload -> {
-                    boolean success = p2PService.addPersistableNetworkPayload(blindVoteAppendOnlyPayload, true);
-                    if (!success)
-                        log.warn("addBlindVotesToAppendOnlyStore failed for blindVote " + blindVoteAppendOnlyPayload.getBlindVote());
-                });
+    private void publishToAppendOnlyDataStore(MyBlindVoteList blindVotes) {
+        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(blindVoteService.getTriggerHeight());
+        if (optionalBlock.isPresent()) {
+            String blockHash = optionalBlock.get().getHash();
+            blindVotes.stream()
+                    .filter(blindVoteValidator::isValidAndConfirmed)
+                    .map(blindVote -> new BlindVoteAppendOnlyPayload(blindVote, blockHash))
+                    .forEach(appendOnlyPayload -> {
+                        boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
+                        if (!success)
+                            log.warn("publishToAppendOnlyDataStore failed for blindVote " + appendOnlyPayload.getBlindVote());
+                    });
+        }
     }
 }

@@ -17,17 +17,29 @@
 
 package bisq.core.dao.voting.proposal.storage.appendonly;
 
-import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.voting.proposal.Proposal;
 
+import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
+import bisq.network.p2p.storage.payload.DateTolerantPayload;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 
+import bisq.common.app.Capabilities;
 import bisq.common.crypto.Hash;
 import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -35,6 +47,7 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -47,36 +60,59 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 //TODO add CapabilityRequiringPayload
-public class ProposalAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
-    private Proposal proposal;
-    protected final byte[] hash;
+public class ProposalAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
+        CapabilityRequiringPayload, VoteConsensusCritical {
+    private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
 
-    public ProposalAppendOnlyPayload(Proposal proposal) {
-        this(proposal, Hash.getSha256Ripemd160hash(proposal.toProtoMessage().toByteArray()));
+    private Proposal proposal;
+    private final long date;            // 8 byte
+    private final byte[] blockHash;     // 32 byte hash
+    protected final byte[] hash;        // 20 byte
+
+    public ProposalAppendOnlyPayload(Proposal proposal, String blockHash) {
+        this(proposal,
+                new Date().getTime(),
+                Utilities.decodeFromHex(blockHash),
+                null);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalAppendOnlyPayload(Proposal proposal, byte[] hash) {
+    private ProposalAppendOnlyPayload(Proposal proposal, long date, byte[] blockHash, @Nullable byte[] hash) {
         this.proposal = proposal;
-        this.hash = hash;
+        this.date = date;
+        this.blockHash = blockHash;
+
+        if (hash == null) {
+            // We combine hash of payload + blockHash to get hash used as storage key.
+            this.hash = Hash.getRipemd160hash(ArrayUtils.addAll(proposal.toProtoMessage().toByteArray(), blockHash));
+        } else {
+            this.hash = hash;
+        }
     }
 
     private PB.ProposalAppendOnlyPayload.Builder getProposalBuilder() {
         return PB.ProposalAppendOnlyPayload.newBuilder()
                 .setProposal(proposal.toProtoMessage())
+                .setDate(date)
+                .setBlockHash(ByteString.copyFrom(blockHash))
                 .setHash(ByteString.copyFrom(hash));
     }
 
     @Override
     public PB.PersistableNetworkPayload toProtoMessage() {
-        return PB.PersistableNetworkPayload.newBuilder().setProposalAppendOnlyPayload(getProposalBuilder()).build();
+        return PB.PersistableNetworkPayload.newBuilder()
+                .setProposalAppendOnlyPayload(getProposalBuilder())
+                .build();
     }
 
     public static ProposalAppendOnlyPayload fromProto(PB.ProposalAppendOnlyPayload proto) {
-        return new ProposalAppendOnlyPayload(Proposal.fromProto(proto.getProposal()), proto.getHash().toByteArray());
+        return new ProposalAppendOnlyPayload(Proposal.fromProto(proto.getProposal()),
+                proto.getDate(),
+                proto.getBlockHash().toByteArray(),
+                proto.getHash().toByteArray());
     }
 
     public PB.ProposalAppendOnlyPayload toProtoProposalPayload() {
@@ -96,5 +132,39 @@ public class ProposalAppendOnlyPayload implements PersistableNetworkPayload, Per
     @Override
     public byte[] getHash() {
         return hash;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DateTolerantPayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public boolean isDateInTolerance() {
+        // We don't allow older or newer then 1 day.
+        // Preventing forward dating is also important to protect against a sophisticated attack
+        return Math.abs(new Date().getTime() - date) <= TOLERANCE;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // CapabilityRequiringPayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public List<Integer> getRequiredCapabilities() {
+        return new ArrayList<>(Collections.singletonList(
+                Capabilities.Capability.PROPOSAL.ordinal()
+        ));
+    }
+
+    @Override
+    public String toString() {
+        return "ProposalAppendOnlyPayload{" +
+                "\n     proposal=" + proposal +
+                ",\n     date=" + date +
+                ",\n     blockHash=" + Utilities.bytesAsHexString(blockHash) +
+                ",\n     hash=" + Utilities.bytesAsHexString(hash) +
+                "\n}";
     }
 }

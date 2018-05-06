@@ -20,6 +20,7 @@ package bisq.core.dao.voting.blindvote.storage.protectedstorage;
 import bisq.core.dao.voting.blindvote.BlindVote;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +62,7 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Value
 public final class BlindVotePayload implements LazyProcessedPayload, ProtectedStoragePayload, PersistablePayload,
-        CapabilityRequiringPayload {
+        ExpirablePayload, CapabilityRequiringPayload {
 
     private final BlindVote blindVote;
     private final byte[] ownerPubKeyEncoded;
@@ -140,6 +142,17 @@ public final class BlindVotePayload implements LazyProcessedPayload, ProtectedSt
         return new ArrayList<>(Collections.singletonList(
                 Capabilities.Capability.BLIND_VOTE.ordinal()
         ));
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ExpirablePayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getTTL() {
+        // We keep data 2 months to be safe if we increase durations of cycle. Also give a bit more resilience in case
+        // of any issues with the append-only data store
+        return TimeUnit.DAYS.toMillis(60);
     }
 
     public String toString() {

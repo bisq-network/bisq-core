@@ -20,6 +20,7 @@ package bisq.core.dao.voting.proposal.storage.protectedstorage;
 import bisq.core.dao.voting.proposal.Proposal;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
+import bisq.network.p2p.storage.payload.ExpirablePayload;
 import bisq.network.p2p.storage.payload.LazyProcessedPayload;
 import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -60,7 +62,7 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
-        CapabilityRequiringPayload, PersistablePayload {
+        ExpirablePayload, CapabilityRequiringPayload, PersistablePayload {
 
     protected final Proposal proposal;
     protected final byte[] ownerPubKeyEncoded;
@@ -114,7 +116,7 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Getters
+    // ProtectedStoragePayload
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
@@ -122,11 +124,27 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
         return ownerPubKey;
     }
 
-    // Pre 0.6 version don't know the new message type and throw an error which leads to disconnecting the peer.
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // CapabilityRequiringPayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
     public List<Integer> getRequiredCapabilities() {
         return new ArrayList<>(Collections.singletonList(
                 Capabilities.Capability.PROPOSAL.ordinal()
         ));
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ExpirablePayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getTTL() {
+        // We keep data 2 months to be safe if we increase durations of cycle. Also give a bit more resilience in case
+        // of any issues with the append-only data store
+        return TimeUnit.DAYS.toMillis(60);
     }
 }

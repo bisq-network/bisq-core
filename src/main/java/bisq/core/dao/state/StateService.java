@@ -291,7 +291,7 @@ public class StateService {
     // Block
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Optional<Block> getBlockAtHeight(int height) {
+    public Optional<Block> getBlockAtHeight(int height) {
         return getBlocks().stream()
                 .filter(block -> block.getHeight() == height)
                 .findAny();

@@ -18,14 +18,19 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
+
+import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -100,6 +105,27 @@ public class BlindVoteValidator {
         } else if (allowUnconfirmed) {
             return periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE);
         } else {
+            return false;
+        }
+    }
+
+    public boolean isAppendOnlyPayloadValid(BlindVoteAppendOnlyPayload appendOnlyPayload,
+                                            int publishTriggerBlockHeight,
+                                            StateService stateService) {
+        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
+        if (optionalBlock.isPresent()) {
+            final long blockTimeInMs = optionalBlock.get().getTime() * 1000L;
+            final long tolerance = TimeUnit.HOURS.toMillis(5);
+            final boolean isInTolerance = Math.abs(blockTimeInMs - appendOnlyPayload.getDate()) <= tolerance;
+            final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
+            final boolean isCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
+            if (!isInTolerance)
+                log.warn("BlindVoteAppendOnlyPayload is not in time tolerance");
+            if (!isCorrectBlockHash)
+                log.warn("BlindVoteAppendOnlyPayload has not correct block hash");
+            return isInTolerance && isCorrectBlockHash;
+        } else {
+            log.debug("block at publishTriggerBlockHeight is not present.");
             return false;
         }
     }

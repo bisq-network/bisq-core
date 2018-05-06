@@ -17,8 +17,10 @@
 
 package bisq.core.dao.voting.ballot;
 
+import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 
@@ -26,9 +28,9 @@ import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,16 +39,15 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.ListChangeListener {
+public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.ListChangeListener, BlockListener {
     private final BallotListService ballotListService;
-    private final PeriodService periodService;
-    private final StateService stateService;
-    private final ProposalValidator proposalValidator;
 
     @Getter
-    private final ObservableList<Ballot> activeOrMyUnconfirmedBallots = FXCollections.observableArrayList();
+    private final ObservableList<Ballot> allBallots = FXCollections.observableArrayList();
     @Getter
-    private final ObservableList<Ballot> closedBallots = FXCollections.observableArrayList();
+    private final FilteredList<Ballot> validAndConfirmedBallots = new FilteredList<>(allBallots);
+    @Getter
+    private final FilteredList<Ballot> closedBallots = new FilteredList<>(allBallots);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -59,11 +60,21 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
                                      StateService stateService,
                                      ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
-        this.periodService = periodService;
-        this.stateService = stateService;
-        this.proposalValidator = proposalValidator;
 
         stateService.addParseBlockChainListener(this);
+        stateService.addBlockListener(this);
+
+        validAndConfirmedBallots.setPredicate(ballot -> {
+            return proposalValidator.isValidAndConfirmed(ballot.getProposal());
+        });
+
+        closedBallots.setPredicate(ballot -> {
+            final String proposalTxId = ballot.getProposalTxId();
+            return stateService.getTx(proposalTxId).isPresent() &&
+                    stateService.getTx(proposalTxId)
+                            .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
+                            .isPresent();
+        });
 
     }
 
@@ -77,6 +88,11 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
         onListChanged(ballotListService.getBallotList().getList());
     }
 
+    @Override
+    public void onBlockAdded(Block block) {
+        onListChanged(ballotListService.getBallotList().getList());
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // BallotListService.ListChangeListener
@@ -84,17 +100,7 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
 
     @Override
     public void onListChanged(List<Ballot> list) {
-        activeOrMyUnconfirmedBallots.clear();
-        activeOrMyUnconfirmedBallots.addAll(list.stream()
-                .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
-                .collect(Collectors.toList()));
-
-        closedBallots.clear();
-        closedBallots.addAll(list.stream()
-                .filter(ballot -> stateService.getTx(ballot.getProposalTxId()).isPresent())
-                .filter(ballot -> stateService.getTx(ballot.getProposalTxId())
-                        .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
-                        .isPresent())
-                .collect(Collectors.toList()));
+        allBallots.clear();
+        allBallots.addAll(list);
     }
 }

@@ -23,6 +23,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -30,7 +31,6 @@ import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalPayload;
 
 import bisq.network.p2p.P2PService;
 
-import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.KeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
@@ -58,11 +58,10 @@ import lombok.extern.slf4j.Slf4j;
  * Triggers republishing of my proposals at startup.
  */
 @Slf4j
-public class MyProposalListService implements PersistedDataHost {
+public class MyProposalListService implements PersistedDataHost, ParseBlockChainListener {
     public interface Listener {
         void onListChanged(List<Proposal> list);
     }
-
 
     private final P2PService p2PService;
     private final StateService stateService;
@@ -72,8 +71,9 @@ public class MyProposalListService implements PersistedDataHost {
     private final PublicKey signaturePubKey;
 
     private final MyProposalList myProposalList = new MyProposalList();
-    private final ChangeListener<Number> numConnectedPeersListener;
+    private ChangeListener<Number> numConnectedPeersListener;
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -93,7 +93,6 @@ public class MyProposalListService implements PersistedDataHost {
         this.storage = storage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
     }
 
 
@@ -128,11 +127,21 @@ public class MyProposalListService implements PersistedDataHost {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // ParseBlockChainListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onComplete() {
+        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+        rePublishOnceWellConnected();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRePublish();
     }
 
     // Broadcast tx and publish proposal to P2P network
@@ -167,7 +176,7 @@ public class MyProposalListService implements PersistedDataHost {
         // proposal stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
         // in worst case if it does not succeed the proposal will be ignored anyway.
         // Inconsistently propagated payloads in the p2p network could have potentially worse effects.
-        addToP2PNetwork(proposal, errorMessageHandler);
+        addToP2PNetworkAsProtectedData(proposal, errorMessageHandler);
 
         addToList(proposal);
     }
@@ -205,8 +214,8 @@ public class MyProposalListService implements PersistedDataHost {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void addToP2PNetwork(Proposal proposal, ErrorMessageHandler errorMessageHandler) {
-        final boolean success = addToP2PNetwork(proposal);
+    private void addToP2PNetworkAsProtectedData(Proposal proposal, ErrorMessageHandler errorMessageHandler) {
+        final boolean success = addToP2PNetworkAsProtectedData(proposal);
         if (success) {
             log.debug("We added a proposal to the P2P network. proposal=" + proposal);
         } else {
@@ -216,7 +225,7 @@ public class MyProposalListService implements PersistedDataHost {
         }
     }
 
-    private boolean addToP2PNetwork(Proposal proposal) {
+    private boolean addToP2PNetworkAsProtectedData(Proposal proposal) {
         return p2PService.addProtectedStorageEntry(new ProposalPayload(proposal, signaturePubKey), true);
     }
 
@@ -228,15 +237,11 @@ public class MyProposalListService implements PersistedDataHost {
         }
     }
 
-    private void maybeRePublish() {
-        // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
-        // to avoid activity peaks at startup
-        UserThread.runAfter(() -> {
-            if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                rePublish();
-            }
-        }, 2);
+    private void rePublishOnceWellConnected() {
+        if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped())) {
+            p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+            rePublish();
+        }
     }
 
     private void rePublish() {
@@ -244,7 +249,7 @@ public class MyProposalListService implements PersistedDataHost {
             final String txId = proposal.getTxId();
             if (periodService.isTxInPhase(txId, DaoPhase.Phase.PROPOSAL) &&
                     periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
-                if (!addToP2PNetwork(proposal))
+                if (!addToP2PNetworkAsProtectedData(proposal))
                     log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
             }
         });

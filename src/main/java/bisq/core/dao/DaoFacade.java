@@ -192,7 +192,7 @@ public class DaoFacade {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public ObservableList<Ballot> getActiveOrMyUnconfirmedBallots() {
-        return filteredBallotListService.getActiveOrMyUnconfirmedBallots();
+        return filteredBallotListService.getValidAndConfirmedBallots();
     }
 
     public ObservableList<Ballot> getClosedBallots() {

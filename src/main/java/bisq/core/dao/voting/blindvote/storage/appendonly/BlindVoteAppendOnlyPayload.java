@@ -20,14 +20,26 @@ package bisq.core.dao.voting.blindvote.storage.appendonly;
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.voting.blindvote.BlindVote;
 
+import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
+import bisq.network.p2p.storage.payload.DateTolerantPayload;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 
+import bisq.common.app.Capabilities;
 import bisq.common.crypto.Hash;
 import bisq.common.proto.persistable.PersistableEnvelope;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -35,6 +47,7 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -47,26 +60,44 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class BlindVoteAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, VoteConsensusCritical {
-    private BlindVote blindVote;
-    protected final byte[] hash;
+public class BlindVoteAppendOnlyPayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
+        CapabilityRequiringPayload, VoteConsensusCritical {
+    private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
 
-    public BlindVoteAppendOnlyPayload(BlindVote blindVote) {
-        this(blindVote, Hash.getSha256Ripemd160hash(blindVote.toProtoMessage().toByteArray()));
+    private BlindVote blindVote;
+    private final long date;            // 8 byte
+    private final byte[] blockHash;     // 32 byte hash
+    protected final byte[] hash;        // 20 byte
+
+    public BlindVoteAppendOnlyPayload(BlindVote blindVote, String blockHash) {
+        this(blindVote,
+                new Date().getTime(),
+                Utilities.decodeFromHex(blockHash),
+                null);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVoteAppendOnlyPayload(BlindVote blindVote, byte[] hash) {
+    private BlindVoteAppendOnlyPayload(BlindVote blindVote, long date, byte[] blockHash, @Nullable byte[] hash) {
         this.blindVote = blindVote;
-        this.hash = hash;
+        this.date = date;
+        this.blockHash = blockHash;
+
+        if (hash == null) {
+            // We combine hash of payload + blockHash to get hash used as storage key.
+            this.hash = Hash.getRipemd160hash(ArrayUtils.addAll(blindVote.toProtoMessage().toByteArray(), blockHash));
+        } else {
+            this.hash = hash;
+        }
     }
 
     private PB.BlindVoteAppendOnlyPayload.Builder getBlindVoteBuilder() {
         return PB.BlindVoteAppendOnlyPayload.newBuilder()
                 .setBlindVote(blindVote.toProtoMessage())
+                .setDate(date)
+                .setBlockHash(ByteString.copyFrom(blockHash))
                 .setHash(ByteString.copyFrom(hash));
     }
 
@@ -76,12 +107,16 @@ public class BlindVoteAppendOnlyPayload implements PersistableNetworkPayload, Pe
     }
 
     public static BlindVoteAppendOnlyPayload fromProto(PB.BlindVoteAppendOnlyPayload proto) {
-        return new BlindVoteAppendOnlyPayload(BlindVote.fromProto(proto.getBlindVote()), proto.getHash().toByteArray());
+        return new BlindVoteAppendOnlyPayload(BlindVote.fromProto(proto.getBlindVote()),
+                proto.getDate(),
+                proto.getBlockHash().toByteArray(),
+                proto.getHash().toByteArray());
     }
 
     public PB.BlindVoteAppendOnlyPayload toProtoBlindVotePayload() {
         return getBlindVoteBuilder().build();
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PersistableNetworkPayload
@@ -95,5 +130,29 @@ public class BlindVoteAppendOnlyPayload implements PersistableNetworkPayload, Pe
     @Override
     public byte[] getHash() {
         return hash;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DateTolerantPayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public boolean isDateInTolerance() {
+        // We don't allow older or newer then 1 day.
+        // Preventing forward dating is also important to protect against a sophisticated attack
+        return Math.abs(new Date().getTime() - date) <= TOLERANCE;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // CapabilityRequiringPayload
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public List<Integer> getRequiredCapabilities() {
+        return new ArrayList<>(Collections.singletonList(
+                Capabilities.Capability.BLIND_VOTE.ordinal()
+        ));
     }
 }

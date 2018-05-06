@@ -18,9 +18,12 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BlockListener;
+import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
 
 import org.bitcoinj.core.TransactionConfidence;
 
@@ -28,7 +31,9 @@ import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,16 +46,20 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the Proposals from proposalService.
  */
 @Slf4j
-public class FilteredProposalListService implements ParseBlockChainListener, ProposalService.ListChangeListener, MyProposalListService.Listener {
+public class FilteredProposalListService implements ChainHeightListener, BlockListener, MyProposalListService.Listener {
     private final ProposalService proposalService;
-    private final MyProposalListService myProposalListService;
     private final StateService stateService;
+    private final MyProposalListService myProposalListService;
     private final BsqWalletService bsqWalletService;
+    private final ProposalValidator proposalValidator;
     private final PeriodService periodService;
     @Getter
-    private final ObservableList<Proposal> activeOrMyUnconfirmedProposals = FXCollections.observableArrayList();
+    private final ObservableList<Proposal> allProposals = FXCollections.observableArrayList();
     @Getter
-    private final ObservableList<Proposal> closedProposals = FXCollections.observableArrayList();
+    private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(allProposals);
+    @Getter
+    private final FilteredList<Proposal> closedProposals = new FilteredList<>(allProposals);
+    private List<Proposal> myUnconfirmedProposals = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -59,56 +68,52 @@ public class FilteredProposalListService implements ParseBlockChainListener, Pro
 
     @Inject
     public FilteredProposalListService(ProposalService proposalService,
-                                       MyProposalListService myProposalListService,
                                        StateService stateService,
+                                       MyProposalListService myProposalListService,
                                        BsqWalletService bsqWalletService,
+                                       ProposalValidator proposalValidator,
                                        PeriodService periodService) {
         this.proposalService = proposalService;
-        this.myProposalListService = myProposalListService;
         this.stateService = stateService;
+        this.myProposalListService = myProposalListService;
         this.bsqWalletService = bsqWalletService;
+        this.proposalValidator = proposalValidator;
         this.periodService = periodService;
 
-        stateService.addParseBlockChainListener(this);
+        stateService.addChainHeightListener(this);
+        stateService.addBlockListener(this);
+        myProposalListService.addListener(this);
+
+        proposalService.getProtectedStoreList().addListener((javafx.collections.ListChangeListener<Proposal>) c -> {
+            updateLists();
+        });
+        proposalService.getVerifiedList().addListener((javafx.collections.ListChangeListener<ProposalAppendOnlyPayload>) c -> {
+            updateLists();
+        });
+
+        updatePredicates();
     }
 
+    private void updatePredicates() {
+        activeOrMyUnconfirmedProposals.setPredicate(proposal -> proposalValidator.isValidAndConfirmed(proposal) ||
+                myUnconfirmedProposals.contains(proposal));
+        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()));
+    }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    // At new cycle we don't get a list change but we want to update our predicates
+    @Override
+    public void onChainHeightChanged(int blockHeight) {
+        // updateLists();
+    }
 
     @Override
-    public void onComplete() {
-        proposalService.addListener(this);
-        myProposalListService.addListener(this);
-        fillActiveOrMyUnconfirmedProposals();
-        fillClosedProposals();
+    public void onBlockAdded(Block block) {
+        updateLists();
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // MyProposalListService.Listener
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public void onListChanged(List<Proposal> list) {
-        fillActiveOrMyUnconfirmedProposals();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // ProposalService.ListChangeListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onPreliminaryProposalsChanged(List<Proposal> preliminaryProposals) {
-        fillActiveOrMyUnconfirmedProposals();
-    }
-
-    @Override
-    public void onConfirmedProposalsChanged(List<Proposal> confirmedProposals) {
-        fillActiveOrMyUnconfirmedProposals();
-        fillClosedProposals();
+        updateLists();
     }
 
 
@@ -116,32 +121,33 @@ public class FilteredProposalListService implements ParseBlockChainListener, Pro
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void fillActiveOrMyUnconfirmedProposals() {
-        Set<Proposal> set = new HashSet<>(proposalService.getPreliminaryProposals());
-        set.addAll(proposalService.getConfirmedProposals());
-        activeOrMyUnconfirmedProposals.clear();
-        activeOrMyUnconfirmedProposals.addAll(set);
+
+    private void updateLists() {
+        final FilteredList<Proposal> tempProposals = proposalService.getPreliminaryList();
+        final Set<Proposal> verifiedProposals = proposalService.getVerifiedList().stream()
+                .map(ProposalAppendOnlyPayload::getProposal)
+                .collect(Collectors.toSet());
+        Set<Proposal> set = new HashSet<>(tempProposals);
+        set.addAll(verifiedProposals);
 
         // We want to show our own unconfirmed proposals. Unconfirmed proposals from other users are not included
         // in the list.
         // If a tx is not found in the stateService it can be that it is either unconfirmed or invalid.
         // To avoid inclusion of invalid txs we add a check for the confidence type from the bsqWalletService.
-        Set<Proposal> myUnconfirmedProposals = myProposalListService.getList().stream()
+        myUnconfirmedProposals.clear();
+        myUnconfirmedProposals.addAll(myProposalListService.getList().stream()
                 .filter(p -> !stateService.getTx(p.getTxId()).isPresent()) // Tx is still not in our bsq blocks
                 .filter(p -> {
                     final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(p.getTxId());
                     return confidenceForTxId != null &&
                             confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
                 })
-                .collect(Collectors.toSet());
-        activeOrMyUnconfirmedProposals.addAll(myUnconfirmedProposals);
-    }
-
-    private void fillClosedProposals() {
-        closedProposals.clear();
-        closedProposals.addAll(proposalService.getConfirmedProposals().stream()
-                .filter(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()))
                 .collect(Collectors.toList()));
-    }
+        set.addAll(myUnconfirmedProposals);
 
+        allProposals.clear();
+        allProposals.addAll(set);
+
+        updatePredicates();
+    }
 }

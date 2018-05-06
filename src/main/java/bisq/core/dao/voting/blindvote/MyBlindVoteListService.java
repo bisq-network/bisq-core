@@ -27,10 +27,10 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
@@ -39,7 +39,6 @@ import bisq.core.dao.voting.proposal.ProposalValidator;
 
 import bisq.network.p2p.P2PService;
 
-import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
@@ -75,7 +74,7 @@ import lombok.extern.slf4j.Slf4j;
  * Maintains MyBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup.
  */
 @Slf4j
-public class MyBlindVoteListService implements PersistedDataHost {
+public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChainListener {
     private final P2PService p2PService;
     private final StateService stateService;
     private final PeriodService periodService;
@@ -86,7 +85,7 @@ public class MyBlindVoteListService implements PersistedDataHost {
     private final BallotListService ballotListService;
     private final MyVoteListService myVoteListService;
     private final ProposalValidator proposalValidator;
-    private final ChangeListener<Number> numConnectedPeersListener;
+    private ChangeListener<Number> numConnectedPeersListener;
     @Getter
     private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
     private final PublicKey signaturePubKey;
@@ -119,8 +118,6 @@ public class MyBlindVoteListService implements PersistedDataHost {
         this.myVoteListService = myVoteListService;
         this.proposalValidator = proposalValidator;
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
-
-        numConnectedPeersListener = (observable, oldValue, newValue) -> maybeRePublish();
     }
 
 
@@ -141,11 +138,21 @@ public class MyBlindVoteListService implements PersistedDataHost {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // ParseBlockChainListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onComplete() {
+        rePublishOnceWellConnected();
+        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRePublish();
     }
 
     public Coin getBlindVoteFee() {
@@ -161,7 +168,7 @@ public class MyBlindVoteListService implements PersistedDataHost {
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            BallotList sortedBallotList = getSortedBallotList();
+            BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService, proposalValidator);
             final VoteWithProposalTxIdList voteWithProposalTxIdList = getSortedVoteWithProposalTxIdList(sortedBallotList);
             log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
 
@@ -211,14 +218,14 @@ public class MyBlindVoteListService implements PersistedDataHost {
             BlindVote blindVote = new BlindVote(encryptedVotes, blindVoteTx.getHashAsString(), stake.value);
             addToList(blindVote);
 
-            // We store our source data for the blind vote in myVoteList
-            myVoteListService.createAndAddMyVote(sortedBallotList, secretKey, blindVote);
-
-            addToP2PNetwork(blindVote, errorMessage -> {
+            addToP2PNetworkAsProtectedData(blindVote, errorMessage -> {
                 log.error(errorMessage);
                 //TODO define specific exception
                 exceptionHandler.handleException(new Exception(errorMessage));
             });
+
+            // We store our source data for the blind vote in myVoteList
+            myVoteListService.createAndAddMyVote(sortedBallotList, secretKey, blindVote);
         } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
                 WalletException | IOException exception) {
             exceptionHandler.handleException(exception);
@@ -244,23 +251,11 @@ public class MyBlindVoteListService implements PersistedDataHost {
         return new VoteWithProposalTxIdList(list);
     }
 
-    private BallotList getSortedBallotList() {
-        final List<Ballot> list = ballotListService.getBallotList().stream()
-                .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
-                .collect(Collectors.toList());
-        BlindVoteConsensus.sortBallotList(list);
-        return new BallotList(list);
-    }
-
-    private void maybeRePublish() {
-        // Delay a bit for localhost testing to not fail as isBootstrapped is false. Also better for production version
-        // to avoid activity peaks at startup
-        UserThread.runAfter(() -> {
-            if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-                p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-                rePublish();
-            }
-        }, 2);
+    private void rePublishOnceWellConnected() {
+        if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
+            p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+            rePublish();
+        }
     }
 
     private void rePublish() {
@@ -268,14 +263,14 @@ public class MyBlindVoteListService implements PersistedDataHost {
             final String txId = blindVote.getTxId();
             if (periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE) &&
                     periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
-                if (!addToP2PNetwork(blindVote))
+                if (!addToP2PNetworkAsProtectedData(blindVote))
                     log.warn("Adding of blindVote to P2P network failed.\nblindVote=" + blindVote);
             }
         });
     }
 
-    private void addToP2PNetwork(BlindVote blindVote, ErrorMessageHandler errorMessageHandler) {
-        final boolean success = addToP2PNetwork(blindVote);
+    private void addToP2PNetworkAsProtectedData(BlindVote blindVote, ErrorMessageHandler errorMessageHandler) {
+        final boolean success = addToP2PNetworkAsProtectedData(blindVote);
         if (success) {
             log.debug("We added a blindVote to the P2P network. blindVote=" + blindVote);
         } else {
@@ -292,7 +287,7 @@ public class MyBlindVoteListService implements PersistedDataHost {
         }
     }
 
-    private boolean addToP2PNetwork(BlindVote blindVote) {
+    private boolean addToP2PNetworkAsProtectedData(BlindVote blindVote) {
         return p2PService.addProtectedStorageEntry(new BlindVotePayload(blindVote, signaturePubKey), true);
     }
 

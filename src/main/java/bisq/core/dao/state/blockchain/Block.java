@@ -49,7 +49,7 @@ public class Block implements PersistablePayload {
     }
 
     private final int height;
-    private final long time;
+    private final long time; // in seconds!
     private final String hash;
     private final String previousBlockHash;
     private final ImmutableList<Tx> txs;

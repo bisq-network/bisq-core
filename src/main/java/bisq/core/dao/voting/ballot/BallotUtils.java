@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BallotUtils {
-    public static boolean ballotListContainsProposal(Proposal proposal, List<Ballot> ballotList) {
+    public static boolean listContainsProposal(Proposal proposal, List<Ballot> ballotList) {
         return findProposalInBallotList(proposal, ballotList).isPresent();
     }
 

@@ -20,6 +20,9 @@ package bisq.core.dao.voting.blindvote;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.voting.ballot.Ballot;
+import bisq.core.dao.voting.ballot.BallotList;
+import bisq.core.dao.voting.ballot.BallotListService;
+import bisq.core.dao.voting.proposal.ProposalValidator;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.app.Version;
@@ -46,9 +49,27 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-    public static void sortBallotList(List<Ballot> list) {
-        list.sort(Comparator.comparing(Ballot::getProposalTxId));
-        log.info("Sorted ballotList: " + list);
+
+    public static BallotList getSortedBallotList(BallotListService ballotListService, ProposalValidator proposalValidator) {
+        final List<Ballot> ballotList = ballotListService.getBallotList().stream()
+                .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
+                .distinct()
+                .sorted(Comparator.comparing(Ballot::getProposalTxId)).collect(Collectors.toList());
+        log.info("Sorted ballotList: " + ballotList);
+        return new BallotList(ballotList);
+    }
+
+    public static MyBlindVoteList getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService, BlindVoteValidator blindVoteValidator) {
+        final List<BlindVote> list = blindVoteService.getVerifiedBlindVotes().stream()
+                .filter(blindVoteValidator::isValidAndConfirmed) // prob. not needed
+                .distinct()
+                .sorted(Comparator.comparing(BlindVote::getTxId))
+                .collect(Collectors.toList());
+
+        log.info("Sorted blindVote txId list: " + list.stream()
+                .map(BlindVote::getTxId)
+                .collect(Collectors.toList()));
+        return new MyBlindVoteList(list);
     }
 
     // 128 bit AES key is good enough for our use case
@@ -85,17 +106,9 @@ public class BlindVoteConsensus {
         }
     }
 
-
     public static Coin getFee(StateService stateService, int chainHeadHeight) {
         final Coin fee = Coin.valueOf(stateService.getParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
         log.info("Fee for blind vote: " + fee);
         return fee;
-    }
-
-    public static void sortBlindVoteList(List<BlindVote> list) {
-        list.sort(Comparator.comparing(BlindVote::getTxId));
-        log.info("Sorted blindVote txId list: " + list.stream()
-                .map(BlindVote::getTxId)
-                .collect(Collectors.toList()));
     }
 }

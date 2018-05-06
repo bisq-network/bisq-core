@@ -18,14 +18,19 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+
+import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +71,7 @@ public class ProposalValidator {
         }
     }
 
+
     public boolean isValidOrUnconfirmed(Proposal proposal) {
         return isValid(proposal, true);
     }
@@ -76,34 +82,59 @@ public class ProposalValidator {
 
     private boolean isValid(Proposal proposal, boolean allowUnconfirmed) {
         if (!areDataFieldsValid(proposal)) {
-            log.warn("proposal data fields are invalid. proposal={}", proposal);
+            log.warn("proposal data fields are invalid. proposal.getTxId()={}", proposal.getTxId());
             return false;
         }
 
         final String txId = proposal.getTxId();
         if (txId == null || txId.equals("")) {
-            log.warn("txId must be set. proposal={}", proposal);
+            log.warn("txId must be set. proposal.getTxId()={}", proposal.getTxId());
             return false;
         }
 
         Optional<Tx> optionalTx = stateService.getTx(txId);
         int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
+
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.debug("Tx is not in current cycle. proposal={}", proposal);
+                log.debug("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
             if (!periodService.isInPhase(txHeight, DaoPhase.Phase.PROPOSAL)) {
-                log.warn("Tx is not in PROPOSAL phase. proposal={}", proposal);
+                log.debug("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
             return true;
         } else if (allowUnconfirmed) {
             // We want to show own unconfirmed proposals in the active proposals list.
-            return periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
+            final boolean inPhase = periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
+            if (inPhase)
+                log.debug("proposal is unconfirmed and in proposal phase: txId={}", txId);
+            return inPhase;
         } else {
+            return false;
+        }
+    }
+
+    public boolean isAppendOnlyPayloadValid(ProposalAppendOnlyPayload appendOnlyPayload,
+                                            int publishTriggerBlockHeight,
+                                            StateService stateService) {
+        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
+        if (optionalBlock.isPresent()) {
+            final long blockTimeInMs = optionalBlock.get().getTime() * 1000L;
+            final long tolerance = TimeUnit.HOURS.toMillis(5);
+            final boolean isInTolerance = Math.abs(blockTimeInMs - appendOnlyPayload.getDate()) <= tolerance;
+            final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
+            final boolean isCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
+            if (!isInTolerance)
+                log.warn("ProposalAppendOnlyPayload is not in time tolerance");
+            if (!isCorrectBlockHash)
+                log.warn("ProposalAppendOnlyPayload has not correct block hash");
+            return isInTolerance && isCorrectBlockHash;
+        } else {
+            log.debug("block at publishTriggerBlockHeight is not present.");
             return false;
         }
     }

@@ -31,6 +31,8 @@ import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,6 +81,8 @@ public class LiteNodeParser extends BsqParser {
                 final String msg = "The block we received from the seed node is different than the block we created by our " +
                         "own parsing.\nBlock from seed node=" + receivedBlock + "\nBlock from own parsing={}" + ownBlock;
                 log.warn(msg);
+                String diff = StringUtils.difference(receivedBlock.toString(), ownBlock.toString());
+                log.warn("diff: " + diff);
                 throw new InvalidBlockException(msg, receivedBlock, ownBlock);
             }
         }
