@@ -195,7 +195,8 @@ public class VoteResultService {
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
-                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, myBlindVoteListService.getMyBlindVoteList());
+                        MyBlindVoteList blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteList);
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptVotes(blindVote.getEncryptedVotes(), secretKey);
@@ -238,7 +239,8 @@ public class VoteResultService {
                 .map(e -> {
                     final String txId = e.getKey();
                     if (ballotByTxIdMap.containsKey(txId)) {
-                        return ballotByTxIdMap.get(txId);
+                        final Ballot ballot = ballotByTxIdMap.get(txId);
+                        return new Ballot(ballot.getProposal(), e.getValue());
                     } else {
                         missing.add(txId);
                         return null;
