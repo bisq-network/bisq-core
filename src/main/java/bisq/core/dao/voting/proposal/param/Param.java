@@ -54,14 +54,24 @@ public enum Param {
 
     // Period phase
     PHASE_UNDEFINED(0),
-    PHASE_PROPOSAL(3),
-    PHASE_BREAK1(1),
-    PHASE_BLIND_VOTE(3),
-    PHASE_BREAK2(1),
-    PHASE_VOTE_REVEAL(3),
-    PHASE_BREAK3(1),
-    PHASE_RESULT(1),
-    PHASE_BREAK4(1);
+    PHASE_PROPOSAL(3),      // 24 days
+    PHASE_BREAK1(1),        // 10 blocks
+    PHASE_BLIND_VOTE(3),    // 4 days
+    PHASE_BREAK2(1),        // 10 blocks
+    PHASE_VOTE_REVEAL(3),   // 2 days
+    PHASE_BREAK3(1),        // 10 blocks
+    PHASE_RESULT(1),        // 1 block
+    PHASE_BREAK4(1);        // 10 blocks
+
+    /*PHASE_UNDEFINED(0),
+    PHASE_PROPOSAL(3456),      // 24 days
+    PHASE_BREAK1(10),        // 10 blocks
+    PHASE_BLIND_VOTE(576),    // 4 days
+    PHASE_BREAK2(1),        // 10 blocks
+    PHASE_VOTE_REVEAL(432),   // 2 days
+    PHASE_BREAK3(10),        // 10 blocks
+    PHASE_RESULT(1),        // 1 block
+    PHASE_BREAK4(10);        // 10 blocks*/
 
     @Getter
     private int defaultValue;
