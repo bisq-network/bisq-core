@@ -91,7 +91,7 @@ public class BankUtil {
             case "HK":
                 return Res.get("payment.bankCode");
             default:
-                return isBankIdRequired(countryCode) ? Res.get("payment.bankId") : Res.get("payment.bankIdOptional");
+                return isBankIdRequired(countryCode) ? Res.getWithCol("payment.bankId") : Res.get("payment.bankIdOptional");
         }
 
     }
