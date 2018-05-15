@@ -127,7 +127,7 @@ public final class Alert implements ProtectedStoragePayload, ExpirablePayload {
 
     @Override
     public long getTTL() {
-        return TimeUnit.DAYS.toMillis(60);
+        return TimeUnit.DAYS.toMillis(90);
     }
 
     public void setSigAndPubKey(String signatureAsBase64, PublicKey ownerPubKey) {
