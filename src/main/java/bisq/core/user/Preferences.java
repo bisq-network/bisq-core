@@ -56,6 +56,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -480,11 +481,13 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
     }
 
     private void setFiatCurrencies(List<FiatCurrency> currencies) {
-        fiatCurrenciesAsObservable.setAll(currencies);
+        fiatCurrenciesAsObservable.setAll(currencies.stream()
+                .map(fiatCurrency -> new FiatCurrency(fiatCurrency.getCurrency()))
+                .distinct().collect(Collectors.toList()));
     }
 
     private void setCryptoCurrencies(List<CryptoCurrency> currencies) {
-        cryptoCurrenciesAsObservable.setAll(currencies);
+        cryptoCurrenciesAsObservable.setAll(currencies.stream().distinct().collect(Collectors.toList()));
     }
 
     public void setBlockChainExplorerTestNet(BlockChainExplorer blockChainExplorerTestNet) {

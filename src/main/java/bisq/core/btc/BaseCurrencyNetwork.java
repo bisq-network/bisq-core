@@ -86,7 +86,7 @@ public enum BaseCurrencyNetwork {
     public long getDefaultMinFeePerByte() {
         switch (BisqEnvironment.getBaseCurrencyNetwork().getCurrencyCode()) {
             case "BTC":
-                return FeeService.BTC_REFERENCE_DEFAULT_MIN_TX_FEE_PER_KB.divide(1000).value;
+                return 1;
             case "LTC":
                 return FeeService.LTC_REFERENCE_DEFAULT_MIN_TX_FEE.value;
             case "DASH":
