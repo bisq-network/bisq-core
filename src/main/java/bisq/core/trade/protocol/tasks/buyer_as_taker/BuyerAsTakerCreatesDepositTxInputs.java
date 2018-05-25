@@ -51,7 +51,7 @@ public class BuyerAsTakerCreatesDepositTxInputs extends TradeTask {
             BtcWalletService walletService = processModel.getBtcWalletService();
             Address takersAddress = walletService.getOrCreateAddressEntry(processModel.getOffer().getId(),
                     AddressEntry.Context.RESERVED_FOR_TRADE).getAddress();
-            Address takersChangeAddress = walletService.getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
+            Address takersChangeAddress = walletService.getFreshAddressEntry().getAddress();
             InputsAndChangeOutput result = processModel.getTradeWalletService().takerCreatesDepositsTxInputs(
                     takerInputAmount,
                     txFee.subtract(bsqTakerFee),

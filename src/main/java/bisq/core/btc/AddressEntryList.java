@@ -139,10 +139,20 @@ public final class AddressEntryList implements PersistableEnvelope, PersistedDat
     }
 
     public void swapToAvailable(AddressEntry addressEntry) {
-        boolean changed2 = remove(addressEntry);
-        boolean changed1 = add(new AddressEntry(addressEntry.getKeyPair(), AddressEntry.Context.AVAILABLE));
+        boolean changed1 = remove(addressEntry);
+        boolean changed2 = add(new AddressEntry(addressEntry.getKeyPair(), AddressEntry.Context.AVAILABLE));
         if (changed1 || changed2)
             persist();
+    }
+
+    public AddressEntry swapAvailableToAddressEntryWithOfferId(AddressEntry addressEntry, AddressEntry.Context context, String offerId) {
+        boolean changed1 = remove(addressEntry);
+        final AddressEntry newAddressEntry = new AddressEntry(addressEntry.getKeyPair(), context, offerId);
+        boolean changed2 = add(newAddressEntry);
+        if (changed1 || changed2)
+            persist();
+
+        return newAddressEntry;
     }
 
     public void persist() {
