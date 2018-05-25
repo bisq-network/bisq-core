@@ -53,9 +53,11 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
 
     public static final String OK_PAY_ID = "OK_PAY";
     public static final String UPHOLD_ID = "UPHOLD";
-    public static final String CASH_APP_ID = "CASH_APP";
+    @Deprecated
+    public static final String CASH_APP_ID = "CASH_APP"; // Removed due too high chargeback risk
     public static final String MONEY_BEAM_ID = "MONEY_BEAM";
-    public static final String VENMO_ID = "VENMO";
+    @Deprecated
+    public static final String VENMO_ID = "VENMO";  // Removed due too high chargeback risk
     public static final String POPMONEY_ID = "POPMONEY";
     public static final String REVOLUT_ID = "REVOLUT";
     public static final String PERFECT_MONEY_ID = "PERFECT_MONEY";
@@ -78,9 +80,11 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
 
     public static PaymentMethod OK_PAY;
     public static PaymentMethod UPHOLD;
-    public static PaymentMethod CASH_APP;
+    @Deprecated
+    public static PaymentMethod CASH_APP; // Removed due too high chargeback risk
     public static PaymentMethod MONEY_BEAM;
-    public static PaymentMethod VENMO;
+    @Deprecated
+    public static PaymentMethod VENMO; // Removed due too high chargeback risk
     public static PaymentMethod POPMONEY;
     public static PaymentMethod REVOLUT;
     public static PaymentMethod PERFECT_MONEY;

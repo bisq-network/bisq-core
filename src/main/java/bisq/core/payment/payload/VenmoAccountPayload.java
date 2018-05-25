@@ -34,6 +34,8 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+// Removed due too high chargeback risk
+@Deprecated
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Setter
