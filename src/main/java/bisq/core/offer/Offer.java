@@ -27,6 +27,7 @@ import bisq.core.offer.availability.OfferAvailabilityProtocol;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.provider.price.MarketPrice;
 import bisq.core.provider.price.PriceFeedService;
+import bisq.core.util.CoinUtil;
 
 import bisq.network.p2p.NodeAddress;
 
@@ -225,12 +226,8 @@ public class Offer implements NetworkPayload, PersistablePayload {
     public Volume getVolumeByAmount(Coin amount) {
         Price price = getPrice();
         if (price != null && amount != null) {
-            // try {
-            return price.getVolumeByAmount(amount);
-           /* } catch (Throwable t) {
-                log.error("getVolumeByAmount failed. Error=" + t.getMessage());
-                return null;
-            }*/
+            final Volume volumeByAmount = price.getVolumeByAmount(amount);
+            return CoinUtil.roundVolume(volumeByAmount);
         } else {
             return null;
         }

@@ -18,6 +18,7 @@
 package bisq.core.monetary;
 
 import bisq.core.locale.CurrencyUtil;
+import bisq.core.util.CoinUtil;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Monetary;
@@ -57,12 +58,15 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
     }
 
     public Volume getVolumeByAmount(Coin amount) {
-        if (monetary instanceof Fiat)
-            return new Volume(new ExchangeRate((Fiat) monetary).coinToFiat(amount));
-        else if (monetary instanceof Altcoin)
+        if (monetary instanceof Fiat) {
+            final Fiat fiat = new ExchangeRate((Fiat) this.monetary).coinToFiat(amount);
+            Volume volume = new Volume(fiat);
+            return CoinUtil.roundVolume(volume);
+        } else if (monetary instanceof Altcoin) {
             return new Volume(new AltcoinExchangeRate((Altcoin) monetary).coinToAltcoin(amount));
-        else
+        } else {
             throw new IllegalStateException("Monetary must be either of type Fiat or Altcoin");
+        }
     }
 
     public Coin getAmountByVolume(Volume volume) {
