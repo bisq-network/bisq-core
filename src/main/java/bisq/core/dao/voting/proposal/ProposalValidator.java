@@ -30,7 +30,6 @@ import bisq.common.util.Utilities;
 import javax.inject.Inject;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -93,8 +92,8 @@ public class ProposalValidator {
         }
 
         Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = stateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
+        int chainHeight = stateService.getChainHeight();
 
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
@@ -111,30 +110,29 @@ public class ProposalValidator {
             // We want to show own unconfirmed proposals in the active proposals list.
             final boolean inPhase = periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
             if (inPhase)
-                log.debug("proposal is unconfirmed and in proposal phase: txId={}", txId);
+                log.debug("proposal is unconfirmed and we are in proposal phase: txId={}", txId);
             return inPhase;
         } else {
             return false;
         }
     }
 
-    public boolean isAppendOnlyPayloadValid(ProposalAppendOnlyPayload appendOnlyPayload,
-                                            int publishTriggerBlockHeight,
-                                            StateService stateService) {
-        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
+    public boolean hasCorrectBlockHash(ProposalAppendOnlyPayload appendOnlyPayload,
+                                       int blockHeightOfBreakStart,
+                                       StateService stateService) {
+        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(blockHeightOfBreakStart);
         if (optionalBlock.isPresent()) {
-            final long blockTimeInMs = optionalBlock.get().getTime() * 1000L;
-            final long tolerance = TimeUnit.HOURS.toMillis(5);
-            final boolean isInTolerance = Math.abs(blockTimeInMs - appendOnlyPayload.getDate()) <= tolerance;
             final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
-            final boolean isCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
-            if (!isInTolerance)
-                log.warn("ProposalAppendOnlyPayload is not in time tolerance");
-            if (!isCorrectBlockHash)
-                log.warn("ProposalAppendOnlyPayload has not correct block hash");
-            return isInTolerance && isCorrectBlockHash;
+            final boolean hasCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
+            if (!hasCorrectBlockHash) {
+                log.warn("ProposalAppendOnlyPayload has not correct block hash. blockHeightOfBreakStart={}",
+                        blockHeightOfBreakStart);
+                return false;
+            }
+
+            return true;
         } else {
-            log.debug("block at publishTriggerBlockHeight is not present.");
+            log.debug("block at blockHeightOfBreakStart is not present.");
             return false;
         }
     }

@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.ListChangeListener, BlockListener {
+public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.BallotListChangeListener, BlockListener {
     private final BallotListService ballotListService;
 
     @Getter
@@ -95,7 +95,7 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BallotListService.ListChangeListener
+    // BallotListService.BallotListChangeListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override

@@ -30,6 +30,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
@@ -84,10 +85,10 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
         stateService.addBlockListener(this);
         myProposalListService.addListener(this);
 
-        proposalService.getProtectedStoreList().addListener((javafx.collections.ListChangeListener<Proposal>) c -> {
+        proposalService.getProtectedStoreList().addListener((ListChangeListener<Proposal>) c -> {
             updateLists();
         });
-        proposalService.getVerifiedList().addListener((javafx.collections.ListChangeListener<ProposalAppendOnlyPayload>) c -> {
+        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalAppendOnlyPayload>) c -> {
             updateLists();
         });
 
@@ -123,8 +124,8 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
 
 
     private void updateLists() {
-        final FilteredList<Proposal> tempProposals = proposalService.getPreliminaryList();
-        final Set<Proposal> verifiedProposals = proposalService.getVerifiedList().stream()
+        final List<Proposal> tempProposals = proposalService.getProtectedStoreList();
+        final Set<Proposal> verifiedProposals = proposalService.getAppendOnlyStoreList().stream()
                 .map(ProposalAppendOnlyPayload::getProposal)
                 .collect(Collectors.toSet());
         Set<Proposal> set = new HashSet<>(tempProposals);

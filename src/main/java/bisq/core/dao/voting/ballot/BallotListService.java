@@ -27,6 +27,8 @@ import bisq.common.storage.Storage;
 
 import javax.inject.Inject;
 
+import javafx.collections.ListChangeListener;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -42,20 +44,20 @@ import javax.annotation.Nullable;
 @Slf4j
 public class BallotListService implements PersistedDataHost {
 
-    public interface ListChangeListener {
+    public interface BallotListChangeListener {
         void onListChanged(List<Ballot> list);
     }
 
     private final Storage<BallotList> storage;
     private final BallotList ballotList = new BallotList();
-    private final List<ListChangeListener> listeners = new CopyOnWriteArrayList<>();
+    private final List<BallotListChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     public BallotListService(ProposalService proposalService,
                              Storage<BallotList> storage) {
         this.storage = storage;
 
-        proposalService.getVerifiedList().addListener((javafx.collections.ListChangeListener<ProposalAppendOnlyPayload>) c -> {
+        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalAppendOnlyPayload>) c -> {
             c.next();
             if (c.wasAdded())
                 c.getAddedSubList().stream()
@@ -100,7 +102,7 @@ public class BallotListService implements PersistedDataHost {
         persist();
     }
 
-    public void addListener(ListChangeListener listener) {
+    public void addListener(BallotListChangeListener listener) {
         listeners.add(listener);
     }
 

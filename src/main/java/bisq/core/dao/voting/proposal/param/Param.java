@@ -55,9 +55,9 @@ public enum Param {
     // Period phase
     PHASE_UNDEFINED(0),
     PHASE_PROPOSAL(3),      // 24 days
-    PHASE_BREAK1(1),        // 10 blocks
+    PHASE_BREAK1(2),        // has to be >= 10 blocks
     PHASE_BLIND_VOTE(3),    // 4 days
-    PHASE_BREAK2(1),        // 10 blocks
+    PHASE_BREAK2(2),        // has to be >= 10 blocks
     PHASE_VOTE_REVEAL(3),   // 2 days
     PHASE_BREAK3(1),        // 10 blocks
     PHASE_RESULT(1),        // 1 block

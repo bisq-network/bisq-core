@@ -42,9 +42,9 @@ public class DaoPhase implements PersistablePayload {
     public enum Phase {
         UNDEFINED,
         PROPOSAL,
-        BREAK1,
+        BREAK1, // has to be >= 10 blocks
         BLIND_VOTE,
-        BREAK2,
+        BREAK2, // has to be >= 10 blocks
         VOTE_REVEAL,
         BREAK3,
         RESULT,
