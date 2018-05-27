@@ -236,7 +236,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         if (persistableNetworkPayload instanceof ProposalAppendOnlyPayload) {
             ProposalAppendOnlyPayload proposalAppendOnlyPayload = (ProposalAppendOnlyPayload) persistableNetworkPayload;
             int blockHeightOfBreakStart = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
-            if (!proposalValidator.hasCorrectBlockHash(proposalAppendOnlyPayload, blockHeightOfBreakStart, stateService)) {
+            if (proposalValidator.hasCorrectBlockHash(proposalAppendOnlyPayload, blockHeightOfBreakStart, stateService)) {
                 if (proposalValidator.isValidAndConfirmed(proposalAppendOnlyPayload.getProposal())) {
                     if (!appendOnlyStoreList.contains(proposalAppendOnlyPayload))
                         appendOnlyStoreList.add(proposalAppendOnlyPayload);
