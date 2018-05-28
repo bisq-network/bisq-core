@@ -17,6 +17,8 @@
 
 package bisq.core.util;
 
+import bisq.core.monetary.Volume;
+
 import org.bitcoinj.core.Coin;
 
 import org.slf4j.Logger;
@@ -26,8 +28,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class CoinCryptoUtilsTest {
-    private static final Logger log = LoggerFactory.getLogger(CoinCryptoUtilsTest.class);
+public class CoinUtilTest {
+    private static final Logger log = LoggerFactory.getLogger(CoinUtilTest.class);
 
     @Test
     public void testGetFeePerBtc() {
@@ -53,6 +55,12 @@ public class CoinCryptoUtilsTest {
         assertEquals(Coin.parseCoin("0.1"), CoinUtil.maxCoin(Coin.parseCoin("0.1"), Coin.parseCoin("0.01")));
         assertEquals(Coin.parseCoin("0.05"), CoinUtil.maxCoin(Coin.parseCoin("0"), Coin.parseCoin("0.05")));
         assertEquals(Coin.parseCoin("0.05"), CoinUtil.maxCoin(Coin.parseCoin("0.05"), Coin.parseCoin("0")));
+    }
+
+    @Test
+    public void testRoundFiatVolume() {
+        assertEquals(1000000L, CoinUtil.roundVolume(Volume.parse("100.12", "USD")).getValue());
+        assertEquals(1010000L, CoinUtil.roundVolume(Volume.parse("100.51", "USD")).getValue());
     }
 
 }

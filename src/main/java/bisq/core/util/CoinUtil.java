@@ -17,9 +17,12 @@
 
 package bisq.core.util;
 
+import bisq.core.monetary.Volume;
+
 import bisq.common.util.MathUtils;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.utils.Fiat;
 
 public class CoinUtil {
 
@@ -40,5 +43,15 @@ public class CoinUtil {
 
     public static double getFeePerByte(Coin miningFee, int txSize) {
         return MathUtils.roundDouble(((double) miningFee.value / (double) txSize), 2);
+    }
+
+    public static Volume roundVolume(Volume volumeByAmount) {
+        if (volumeByAmount.getMonetary() instanceof Fiat) {
+            final long rounded = MathUtils.roundDoubleToLong(volumeByAmount.getValue() / 10000D) * 10000L;
+            long val = Math.max(10000L, rounded); // We don't allow 0 value
+            return new Volume(Fiat.valueOf(volumeByAmount.getCurrencyCode(), val));
+        } else {
+            return volumeByAmount;
+        }
     }
 }
