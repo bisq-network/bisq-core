@@ -71,7 +71,7 @@ public class CreateTakerFeeTx extends TradeTask {
             String id = processModel.getOffer().getId();
             AddressEntry addressEntry = walletService.getOrCreateAddressEntry(id, AddressEntry.Context.OFFER_FUNDING);
             AddressEntry reservedForTradeAddressEntry = walletService.getOrCreateAddressEntry(id, AddressEntry.Context.RESERVED_FOR_TRADE);
-            AddressEntry changeAddressEntry = walletService.getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE);
+            AddressEntry changeAddressEntry = walletService.getFreshAddressEntry();
             Address fundingAddress = addressEntry.getAddress();
             Address reservedForTradeAddress = reservedForTradeAddressEntry.getAddress();
             Address changeAddress = changeAddressEntry.getAddress();
