@@ -66,6 +66,7 @@ public class State implements PersistableEnvelope {
     // block 376078 has 2843 recursions and caused once a StackOverflowError, a second run worked. Took 1,2 sec.
 
     // BTC MAIN NET
+    // new: --genesisBlockHeight=524717 --genesisTxId=81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e
     public static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
     public static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
 

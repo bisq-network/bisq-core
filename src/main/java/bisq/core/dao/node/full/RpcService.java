@@ -202,9 +202,12 @@ public class RpcService {
                          Consumer<bisq.core.dao.state.blockchain.Block> resultHandler,
                          Consumer<Throwable> errorHandler) {
         ListenableFuture<bisq.core.dao.state.blockchain.Block> future = executor.submit(() -> {
+            long startTs = System.currentTimeMillis();
             String blockHash = client.getBlockHash(blockHeight);
             Block btcdBlock = client.getBlock(blockHash);
             List<Tx> txList = getTxList(btcdBlock);
+            log.info("requestBtcBlock with all txs took {} ms at blockHeight {}; txList.size={}",
+                    System.currentTimeMillis() - startTs, blockHeight, txList.size());
             return new bisq.core.dao.state.blockchain.Block(btcdBlock.getHeight(),
                     btcdBlock.getTime(),
                     btcdBlock.getHash(),
@@ -248,7 +251,6 @@ public class RpcService {
 
     @NotNull
     private List<Tx> getTxList(Block block) throws RpcException {
-        long startTs = System.currentTimeMillis();
         List<Tx> txList = new ArrayList<>();
         int height = block.getHeight();
         // Ordering of the tx is essential! So we do not use multiple threads for requesting the txs.
@@ -257,7 +259,6 @@ public class RpcService {
             Tx tx = requestTx(txId, height);
             txList.add(tx);
         }
-        log.debug("getTxList via RPC took {} ms.", (System.currentTimeMillis() - startTs));
         return txList;
     }
 
@@ -278,12 +279,10 @@ public class RpcService {
                     .map(rawOutput -> {
                                 byte[] opReturnData = null;
                                 final com.neemre.btcdcli4j.core.domain.PubKeyScript scriptPubKey = rawOutput.getScriptPubKey();
-                                if (scriptPubKey.getType().equals(ScriptTypes.NULL_DATA)) {
+                        if (ScriptTypes.NULL_DATA.equals(scriptPubKey.getType()) && scriptPubKey.getAsm() != null) {
                                     String[] chunks = scriptPubKey.getAsm().split(" ");
-                                    // TODO only store BSQ OP_RETURN date filtered by type byte
-
                                     // We get on testnet a lot of "OP_RETURN 0" data, so we filter those away
-                                    if (chunks.length == 2 && chunks[0].equals("OP_RETURN") && !"0".equals(chunks[1])) {
+                                    if (chunks.length == 2 && "OP_RETURN".equals(chunks[0]) && !"0".equals(chunks[1])) {
                                         try {
                                             opReturnData = Utils.HEX.decode(chunks[1]);
                                         } catch (Throwable t) {
@@ -317,6 +316,9 @@ public class RpcService {
                     ImmutableList.copyOf(txOutputs));
         } catch (BitcoindException | CommunicationException e) {
             log.error("error at requestTx with txId={}, blockHeight={}", txId, blockHeight);
+            throw new RpcException(e.getMessage(), e);
+        }catch (Throwable e) {
+            log.error("Unexpected error at requestTx with txId={}, blockHeight={}", txId, blockHeight);
             throw new RpcException(e.getMessage(), e);
         }
     }

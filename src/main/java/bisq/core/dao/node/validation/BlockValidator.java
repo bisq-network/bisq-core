@@ -45,9 +45,13 @@ public class BlockValidator {
             if (isBlockConnecting(block, blocks)) {
                 return true;
             } else {
+                final Block last = blocks.getLast();
                 log.warn("addBlock called with a not connecting block. New block:\n" +
                                 "height()={}, hash()={}, lastBlock.height()={}, lastBlock.hash()={}",
-                        block.getHeight(), block.getHash(), blocks.getLast().getHeight(), blocks.getLast().getHash());
+                        block.getHeight(),
+                        block.getHash(),
+                        last != null ? last.getHeight() : "null",
+                        last != null ? last.getHash() : "null");
                 throw new BlockNotConnectingException(block);
             }
         } else {

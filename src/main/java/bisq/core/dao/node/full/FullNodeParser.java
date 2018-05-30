@@ -96,18 +96,13 @@ public class FullNodeParser extends BsqParser {
         int blockHeight = block.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 
-        // Check if the new block is the same chain we have built on.
         // We use a list as we want to maintain sorting of tx intra-block dependency
         List<Tx> bsqTxsInBlock = new ArrayList<>();
-        // We add all transactions to the block
-        long startTs = System.currentTimeMillis();
 
         // We check first for genesis tx
         for (Tx tx : block.getTxs()) {
             checkForGenesisTx(blockHeight, bsqTxsInBlock, tx);
         }
-        log.debug("Requesting {} transactions took {} ms",
-                block.getTxs().size(), System.currentTimeMillis() - startTs);
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).
@@ -115,8 +110,10 @@ public class FullNodeParser extends BsqParser {
         // There are some blocks with testing such dependency chains like block 130768 where at each iteration only
         // one get resolved.
         // Lately there is a patter with 24 iterations observed
+        long startTs = System.currentTimeMillis();
         recursiveFindBsqTxs(bsqTxsInBlock, block.getTxs(), blockHeight, 0, 5300);
-
+        log.debug("recursiveFindBsqTxs took {} ms",
+                block.getTxs().size(), System.currentTimeMillis() - startTs);
         return bsqTxsInBlock;
     }
 }

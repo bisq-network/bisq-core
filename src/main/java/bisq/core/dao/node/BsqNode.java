@@ -156,6 +156,7 @@ public abstract class BsqNode {
     abstract protected void startParseBlocks();
 
     protected void onParseBlockChainComplete() {
+        log.info("onParseBlockChainComplete");
         parseBlockchainComplete = true;
         stateService.onParseBlockChainComplete();
     }
