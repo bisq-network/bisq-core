@@ -17,22 +17,22 @@
 
 package bisq.core.app;
 
-import com.google.inject.Injector;
+import bisq.common.app.AppModule;
 
-/**
- * Headless version of Bisq with all features enabled.
- * Used for Desktop, Http-API and gRPC applications.
- */
-public class BisqDaemon {
-    private Injector injector;
-    private AppSetup appSetup;
+import org.springframework.core.env.Environment;
 
-    public void setInjector(Injector injector) {
-        this.injector = injector;
+public class BisqDaemonModule extends AppModule {
+
+    public BisqDaemonModule(Environment environment) {
+        super(environment);
     }
 
-    public void startApplication() {
-        appSetup = injector.getInstance(DaemonAppSetup.class);
-        appSetup.start();
+    @Override
+    protected void configure() {
+        install(coreModule());
+    }
+
+    private CoreModule coreModule() {
+        return new CoreModule(environment);
     }
 }
