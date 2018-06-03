@@ -58,6 +58,7 @@ import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.SealedAndSigned;
+import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
@@ -137,7 +138,7 @@ public class BisqSetup {
     @Nullable
     private Consumer<String> cryptoSetupFailedHandler, chainFileLockedExceptionHandler,
             spvFileCorruptedHandler, lockedUpFundsHandler, daoSetupErrorHandler, filterWarningHandler,
-            displaySecurityRecommendationHandler;
+            displaySecurityRecommendationHandler, wrongOSArchitectureHandler;
     @Getter
     @Setter
     @Nullable
@@ -242,6 +243,7 @@ public class BisqSetup {
     private void step3() {
         readMapsFromResources();
         checkCryptoSetup();
+        checkForCorrectOSArchitecture();
     }
 
     private void step4() {
@@ -435,6 +437,17 @@ public class BisqSetup {
                 });
     }
 
+    private void checkForCorrectOSArchitecture() {
+        if (!Utilities.isCorrectOSArchitecture()) {
+            String osArchitecture = Utilities.getOSArchitecture();
+            // We don't force a shutdown as the osArchitecture might in strange cases return a wrong value.
+            // Needs at least more testing on different machines...
+            Objects.requireNonNull(wrongOSArchitectureHandler).accept(Res.get("popup.warning.wrongVersion",
+                    osArchitecture,
+                    Utilities.getJVMArchitecture(),
+                    osArchitecture));
+        }
+    }
 
     private void initDomainServices() {
         log.info("onBasicServicesInitialized");
