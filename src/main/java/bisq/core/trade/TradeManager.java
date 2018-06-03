@@ -582,6 +582,25 @@ public class TradeManager implements PersistedDataHost {
                 .filter(Trade::isFundsLockedIn);
     }
 
+    public Set<String> getSetOfAllTradeIds() {
+        Set<String> tradesIdSet = getLockedTradesStream()
+                .filter(Trade::hasFailed)
+                .map(Trade::getId)
+                .collect(Collectors.toSet());
+        tradesIdSet.addAll(failedTradesManager.getLockedTradesStream()
+                .map(Trade::getId)
+                .collect(Collectors.toSet()));
+        tradesIdSet.addAll(closedTradableManager.getLockedTradesStream()
+                .map(e -> {
+                    log.warn("We found a closed trade with locked up funds. " +
+                            "That should never happen. trade ID=" + e.getId());
+                    return e.getId();
+                })
+                .collect(Collectors.toSet()));
+
+        return tradesIdSet;
+    }
+
     public void applyTradePeriodState() {
         updateTradePeriodState();
         clock.addListener(new Clock.Listener() {
