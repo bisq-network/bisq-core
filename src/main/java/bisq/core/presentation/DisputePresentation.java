@@ -19,6 +19,8 @@ package bisq.core.presentation;
 
 import bisq.core.arbitration.DisputeManager;
 
+import javax.inject.Inject;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -32,6 +34,7 @@ public class DisputePresentation {
     @Getter
     private final BooleanProperty showOpenDisputesNotification = new SimpleBooleanProperty();
 
+    @Inject
     public DisputePresentation(DisputeManager disputeManager) {
         disputeManager.getNumOpenDisputes().addListener((observable, oldValue, newValue) -> {
             int openDisputes = (int) newValue;

@@ -19,6 +19,8 @@ package bisq.core.presentation;
 
 import bisq.core.trade.TradeManager;
 
+import javax.inject.Inject;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -32,6 +34,7 @@ public class TradePresentation {
     @Getter
     private final BooleanProperty showPendingTradesNotification = new SimpleBooleanProperty();
 
+    @Inject
     public TradePresentation(TradeManager tradeManager) {
         tradeManager.getNumPendingTrades().addListener((observable, oldValue, newValue) -> {
             long numPendingTrades = (long) newValue;
