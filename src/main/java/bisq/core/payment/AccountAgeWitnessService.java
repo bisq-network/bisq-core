@@ -60,8 +60,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class AccountAgeWitnessService {
     private static final Date RELEASE = Utilities.getUTCDate(2017, GregorianCalendar.NOVEMBER, 11);
-    private static final Date FIRST_PHASE = Utilities.getUTCDate(2017, GregorianCalendar.DECEMBER, 15);
-    private static final Date SECOND_PHASE = Utilities.getUTCDate(2018, GregorianCalendar.JANUARY, 15);
     public static final Date FULL_ACTIVATION = Utilities.getUTCDate(2018, GregorianCalendar.FEBRUARY, 15);
 
     public enum AccountAge {
@@ -148,18 +146,18 @@ public class AccountAgeWitnessService {
             p2PService.addPersistableNetworkPayload(accountAgeWitness, false);
     }
 
-    public byte[] getAccountInputDataWithSalt(PaymentAccountPayload paymentAccountPayload) {
+    private byte[] getAccountInputDataWithSalt(PaymentAccountPayload paymentAccountPayload) {
         return Utilities.concatenateByteArrays(paymentAccountPayload.getAgeWitnessInputData(), paymentAccountPayload.getSalt());
     }
 
-    public AccountAgeWitness getNewWitness(PaymentAccountPayload paymentAccountPayload, PubKeyRing pubKeyRing) {
+    private AccountAgeWitness getNewWitness(PaymentAccountPayload paymentAccountPayload, PubKeyRing pubKeyRing) {
         byte[] accountInputDataWithSalt = getAccountInputDataWithSalt(paymentAccountPayload);
         byte[] hash = Hash.getSha256Ripemd160hash(Utilities.concatenateByteArrays(accountInputDataWithSalt,
                 pubKeyRing.getSignaturePubKeyBytes()));
         return new AccountAgeWitness(hash, new Date().getTime());
     }
 
-    public Optional<AccountAgeWitness> findWitness(PaymentAccountPayload paymentAccountPayload, PubKeyRing pubKeyRing) {
+    private Optional<AccountAgeWitness> findWitness(PaymentAccountPayload paymentAccountPayload, PubKeyRing pubKeyRing) {
         byte[] accountInputDataWithSalt = getAccountInputDataWithSalt(paymentAccountPayload);
         byte[] hash = Hash.getSha256Ripemd160hash(Utilities.concatenateByteArrays(accountInputDataWithSalt,
                 pubKeyRing.getSignaturePubKeyBytes()));
@@ -167,7 +165,7 @@ public class AccountAgeWitnessService {
         return getWitnessByHash(hash);
     }
 
-    public Optional<AccountAgeWitness> getWitnessByHash(byte[] hash) {
+    private Optional<AccountAgeWitness> getWitnessByHash(byte[] hash) {
         P2PDataStorage.ByteArray hashAsByteArray = new P2PDataStorage.ByteArray(hash);
 
         final boolean containsKey = accountAgeWitnessMap.containsKey(hashAsByteArray);
@@ -177,7 +175,7 @@ public class AccountAgeWitnessService {
         return accountAgeWitnessMap.containsKey(hashAsByteArray) ? Optional.of(accountAgeWitnessMap.get(hashAsByteArray)) : Optional.<AccountAgeWitness>empty();
     }
 
-    public Optional<AccountAgeWitness> getWitnessByHashAsHex(String hashAsHex) {
+    private Optional<AccountAgeWitness> getWitnessByHashAsHex(String hashAsHex) {
         return getWitnessByHash(Utilities.decodeFromHex(hashAsHex));
     }
 
@@ -201,9 +199,9 @@ public class AccountAgeWitnessService {
             double factor;
 
             final long accountAge = getAccountAge((accountAgeWitnessOptional.get()), now);
-            AccountAge accountAgeCategory = accountAgeWitnessOptional.isPresent() ?
-                    getAccountAgeCategory(accountAge) :
-                    AccountAgeWitnessService.AccountAge.LESS_ONE_MONTH;
+            AccountAge accountAgeCategory = accountAgeWitnessOptional
+                    .map(accountAgeWitness1 -> getAccountAgeCategory(accountAge))
+                    .orElse(AccountAge.LESS_ONE_MONTH);
 
             // TODO Fade in by date can be removed after feb 2018
             // We want to fade in the limit over 2 months to avoid that all users get limited to 25% of the limit when
@@ -214,27 +212,11 @@ public class AccountAgeWitnessService {
                     factor = 1;
                     break;
                 case ONE_TO_TWO_MONTHS:
-                    if (now.before(FIRST_PHASE)) {
-                        factor = 1;
-                    } else if (now.before(SECOND_PHASE)) {
-                        factor = 1;
-                    } else if (now.before(FULL_ACTIVATION)) {
-                        factor = 0.75;
-                    } else {
-                        factor = 0.5;
-                    }
+                    factor = 0.5;
                     break;
                 case LESS_ONE_MONTH:
                 default:
-                    if (now.before(FIRST_PHASE)) {
-                        factor = 1;
-                    } else if (now.before(SECOND_PHASE)) {
-                        factor = 0.75;
-                    } else if (now.before(FULL_ACTIVATION)) {
-                        factor = 0.5;
-                    } else {
-                        factor = 0.25;
-                    }
+                    factor = 0.25;
                     break;
             }
 
@@ -244,7 +226,7 @@ public class AccountAgeWitnessService {
                     accountAge / TimeUnit.DAYS.toMillis(1) + " days",
                     Coin.valueOf(limit).toFriendlyString(),
                     factor,
-                    accountAgeWitnessOptional.isPresent() ? Utilities.bytesAsHexString(accountAgeWitnessOptional.get().getHash()) : "accountAgeWitnessOptional not present");
+                    accountAgeWitnessOptional.map(accountAgeWitness -> Utilities.bytesAsHexString(accountAgeWitness.getHash())).orElse("accountAgeWitnessOptional not present"));
             return limit;
         } else {
             return maxTradeLimit.value;
@@ -258,13 +240,10 @@ public class AccountAgeWitnessService {
 
     public AccountAgeWitness getMyWitness(PaymentAccountPayload paymentAccountPayload) {
         final Optional<AccountAgeWitness> accountAgeWitnessOptional = findWitness(paymentAccountPayload, keyRing.getPubKeyRing());
-        if (accountAgeWitnessOptional.isPresent())
-            return accountAgeWitnessOptional.get();
-        else
-            return getNewWitness(paymentAccountPayload, keyRing.getPubKeyRing());
+        return accountAgeWitnessOptional.orElseGet(() -> getNewWitness(paymentAccountPayload, keyRing.getPubKeyRing()));
     }
 
-    public byte[] getMyWitnessHash(PaymentAccountPayload paymentAccountPayload) {
+    private byte[] getMyWitnessHash(PaymentAccountPayload paymentAccountPayload) {
         return getMyWitness(paymentAccountPayload).getHash();
     }
 
@@ -277,7 +256,9 @@ public class AccountAgeWitnessService {
     }
 
     public long getMyTradeLimit(PaymentAccount paymentAccount, String currencyCode) {
-        return getTradeLimit(paymentAccount.getPaymentMethod().getMaxTradeLimitAsCoin(currencyCode), currencyCode, Optional.of(getMyWitness(paymentAccount.getPaymentAccountPayload())), new Date());
+        final Optional<AccountAgeWitness> witnessOptional = Optional.of(getMyWitness(paymentAccount.getPaymentAccountPayload()));
+        return getTradeLimit(paymentAccount.getPaymentMethod()
+                .getMaxTradeLimitAsCoin(currencyCode), currencyCode, witnessOptional, new Date());
     }
 
 
@@ -290,8 +271,10 @@ public class AccountAgeWitnessService {
         final Optional<String> accountAgeWitnessHash = offer.getAccountAgeWitnessHashAsHex();
         final Optional<AccountAgeWitness> witnessByHashAsHex = accountAgeWitnessHash.isPresent() ?
                 getWitnessByHashAsHex(accountAgeWitnessHash.get()) :
-                Optional.<AccountAgeWitness>empty();
-        return witnessByHashAsHex.isPresent() ? getAccountAge(witnessByHashAsHex.get(), peersCurrentDate) : -1L;
+                Optional.empty();
+        return witnessByHashAsHex
+                .map(accountAgeWitness -> getAccountAge(accountAgeWitness, peersCurrentDate))
+                .orElse(-1L);
     }
 
 
@@ -320,7 +303,6 @@ public class AccountAgeWitnessService {
         }
 
         // Check if date in witness is not older than the release date of that feature (was added in v0.6)
-        // TODO set date before releasing
         if (!isDateAfterReleaseDate(peersWitness.getDate(), RELEASE, errorMessageHandler))
             return false;
 
@@ -364,7 +346,7 @@ public class AccountAgeWitnessService {
         return result;
     }
 
-    boolean verifyPeersCurrentDate(Date peersCurrentDate, ErrorMessageHandler errorMessageHandler) {
+    private boolean verifyPeersCurrentDate(Date peersCurrentDate, ErrorMessageHandler errorMessageHandler) {
         final boolean result = Math.abs(peersCurrentDate.getTime() - new Date().getTime()) <= TimeUnit.DAYS.toMillis(1);
         if (!result) {
             final String msg = "Peers current date is further then 1 day off to our current date. " +
@@ -375,9 +357,9 @@ public class AccountAgeWitnessService {
         return result;
     }
 
-    boolean verifyWitnessHash(byte[] witnessHash,
-                              byte[] hash,
-                              ErrorMessageHandler errorMessageHandler) {
+    private boolean verifyWitnessHash(byte[] witnessHash,
+                                      byte[] hash,
+                                      ErrorMessageHandler errorMessageHandler) {
         final boolean result = Arrays.equals(witnessHash, hash);
         if (!result) {
             final String msg = "witnessHash is not matching peers hash. " +
@@ -394,6 +376,7 @@ public class AccountAgeWitnessService {
                                           ErrorMessageHandler errorMessageHandler) {
         Offer offer = trade.getOffer();
         Coin tradeAmount = checkNotNull(trade.getTradeAmount());
+        checkNotNull(offer);
         final String currencyCode = offer.getCurrencyCode();
         final Coin defaultMaxTradeLimit = PaymentMethod.getPaymentMethodById(offer.getOfferPayload().getPaymentMethodId()).getMaxTradeLimitAsCoin(currencyCode);
         long peersCurrentTradeLimit = getTradeLimit(defaultMaxTradeLimit, currencyCode, Optional.of(peersWitness), peersCurrentDate);
