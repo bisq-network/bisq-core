@@ -46,6 +46,7 @@ import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.messaging.DecryptedMailboxListener;
 
+import bisq.common.Clock;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.crypto.KeyRing;
@@ -80,6 +81,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 import java.io.File;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -115,6 +117,7 @@ public class TradeManager implements PersistedDataHost {
     private final FilterManager filterManager;
     private final TradeStatisticsManager tradeStatisticsManager;
     private final AccountAgeWitnessService accountAgeWitnessService;
+    private final Clock clock;
 
     private final Storage<TradableList<Trade>> tradableListStorage;
     private TradableList<Trade> tradableList;
@@ -146,6 +149,7 @@ public class TradeManager implements PersistedDataHost {
                         TradeStatisticsManager tradeStatisticsManager,
                         PersistenceProtoResolver persistenceProtoResolver,
                         AccountAgeWitnessService accountAgeWitnessService,
+                        Clock clock,
                         @Named(Storage.STORAGE_DIR) File storageDir) {
         this.user = user;
         this.keyRing = keyRing;
@@ -160,6 +164,7 @@ public class TradeManager implements PersistedDataHost {
         this.filterManager = filterManager;
         this.tradeStatisticsManager = tradeStatisticsManager;
         this.accountAgeWitnessService = accountAgeWitnessService;
+        this.clock = clock;
 
         tradableListStorage = new Storage<>(storageDir, persistenceProtoResolver);
 
@@ -575,5 +580,39 @@ public class TradeManager implements PersistedDataHost {
     public Stream<Trade> getLockedTradesStream() {
         return getTradableList().stream()
                 .filter(Trade::isFundsLockedIn);
+    }
+
+    public void applyTradePeriodState() {
+        updateTradePeriodState();
+        clock.addListener(new Clock.Listener() {
+            @Override
+            public void onSecondTick() {
+            }
+
+            @Override
+            public void onMinuteTick() {
+                updateTradePeriodState();
+            }
+
+            @Override
+            public void onMissedSecondTick(long missed) {
+            }
+        });
+    }
+
+    private void updateTradePeriodState() {
+        tradableList.getList().forEach(trade -> {
+            if (!trade.isPayoutPublished()) {
+                Date maxTradePeriodDate = trade.getMaxTradePeriodDate();
+                Date halfTradePeriodDate = trade.getHalfTradePeriodDate();
+                if (maxTradePeriodDate != null && halfTradePeriodDate != null) {
+                    Date now = new Date();
+                    if (now.after(maxTradePeriodDate))
+                        trade.setTradePeriodState(Trade.TradePeriodState.TRADE_PERIOD_OVER);
+                    else if (now.after(halfTradePeriodDate))
+                        trade.setTradePeriodState(Trade.TradePeriodState.SECOND_HALF);
+                }
+            }
+        });
     }
 }
