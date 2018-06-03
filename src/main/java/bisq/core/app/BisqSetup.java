@@ -230,6 +230,10 @@ public class BisqSetup {
         this.formatter = formatter;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Setup
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public void start(Runnable setupCompleteHandler) {
         this.setupCompleteHandler = setupCompleteHandler;
         maybeReSyncSPVChain();
@@ -251,10 +255,89 @@ public class BisqSetup {
     }
 
     private void step5() {
-        setupCompleteHandler.run();
         initDomainServices();
+
+        setupCompleteHandler.run();
+
+        // We set that after calling the setupCompleteHandler to not trigger a popup from the dev dummy accounts
+        // in MainViewModel
+        maybeShowSecurityRecommendation();
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void displayAlertIfPresent(Alert alert, boolean openNewVersionPopup) {
+        if (alert != null) {
+            if (alert.isUpdateInfo()) {
+                user.setDisplayedAlert(alert);
+                final boolean isNewVersion = alert.isNewVersion();
+                newVersionAvailableProperty.set(isNewVersion);
+                String key = "Update_" + alert.getVersion();
+                if (isNewVersion && (preferences.showAgain(key) || openNewVersionPopup)) {
+                    Objects.requireNonNull(displayUpdateHandler).accept(alert, key);
+                }
+            } else {
+                final Alert displayedAlert = user.getDisplayedAlert();
+                if (displayedAlert == null || !displayedAlert.equals(alert))
+                    Objects.requireNonNull(displayAlertHandler).accept(alert);
+            }
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Getters
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Wallet
+    public StringProperty getBtcInfo() {
+        return walletAppSetup.getBtcInfo();
+    }
+
+    public DoubleProperty getBtcSyncProgress() {
+        return walletAppSetup.getBtcSyncProgress();
+    }
+
+    public StringProperty getWalletServiceErrorMsg() {
+        return walletAppSetup.getWalletServiceErrorMsg();
+    }
+
+    public StringProperty getBtcSplashSyncIconId() {
+        return walletAppSetup.getBtcSplashSyncIconId();
+    }
+
+    // P2P
+    public StringProperty getP2PNetworkInfo() {
+        return p2PNetworkSetup.getP2PNetworkInfo();
+    }
+
+    public BooleanProperty getSplashP2PNetworkAnimationVisible() {
+        return p2PNetworkSetup.getSplashP2PNetworkAnimationVisible();
+    }
+
+    public StringProperty getP2pNetworkWarnMsg() {
+        return p2PNetworkSetup.getP2pNetworkWarnMsg();
+    }
+
+    public StringProperty getP2PNetworkIconId() {
+        return p2PNetworkSetup.getP2PNetworkIconId();
+    }
+
+    public BooleanProperty getUpdatedDataReceived() {
+        return p2PNetworkSetup.getUpdatedDataReceived();
+    }
+
+    public StringProperty getP2pNetworkLabelId() {
+        return p2PNetworkSetup.getP2pNetworkLabelId();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void maybeReSyncSPVChain() {
         // We do the delete of the spv file at startup before BitcoinJ is initialized to avoid issues with locked files under Windows.
@@ -381,7 +464,7 @@ public class BisqSetup {
         // need to store it to not get garbage collected
         p2pNetworkAndWalletInitialized = EasyBind.combine(walletInitialized, p2pNetworkReady,
                 (a, b) -> {
-                    log.info("\nwalletInitialized={}\n" +
+                    log.info("walletInitialized={}\n" +
                                     "p2pNetWorkReady={}",
                             a, b);
                     return a && b;
@@ -450,7 +533,7 @@ public class BisqSetup {
     }
 
     private void initDomainServices() {
-        log.info("onBasicServicesInitialized");
+        log.info("initDomainServices");
 
         clock.start();
 
@@ -514,72 +597,14 @@ public class BisqSetup {
             }
         });
 
+        allBasicServicesInitialized = true;
+    }
+
+    private void maybeShowSecurityRecommendation() {
         String key = "remindPasswordAndBackup";
         user.getPaymentAccountsAsObservable().addListener((SetChangeListener<PaymentAccount>) change -> {
             if (!walletsManager.areWalletsEncrypted() && preferences.showAgain(key) && change.wasAdded())
                 Objects.requireNonNull(displaySecurityRecommendationHandler).accept(key);
         });
-
-        allBasicServicesInitialized = true;
-    }
-
-    public void displayAlertIfPresent(Alert alert, boolean openNewVersionPopup) {
-        if (alert != null) {
-            if (alert.isUpdateInfo()) {
-                user.setDisplayedAlert(alert);
-                final boolean isNewVersion = alert.isNewVersion();
-                newVersionAvailableProperty.set(isNewVersion);
-                String key = "Update_" + alert.getVersion();
-                if (isNewVersion && (preferences.showAgain(key) || openNewVersionPopup)) {
-                    Objects.requireNonNull(displayUpdateHandler).accept(alert, key);
-                }
-            } else {
-                final Alert displayedAlert = user.getDisplayedAlert();
-                if (displayedAlert == null || !displayedAlert.equals(alert))
-                    Objects.requireNonNull(displayAlertHandler).accept(alert);
-            }
-        }
-    }
-
-    // Wallet
-    public StringProperty getBtcInfo() {
-        return walletAppSetup.getBtcInfo();
-    }
-
-    public DoubleProperty getBtcSyncProgress() {
-        return walletAppSetup.getBtcSyncProgress();
-    }
-
-    public StringProperty getWalletServiceErrorMsg() {
-        return walletAppSetup.getWalletServiceErrorMsg();
-    }
-
-    public StringProperty getBtcSplashSyncIconId() {
-        return walletAppSetup.getBtcSplashSyncIconId();
-    }
-
-    // P2P
-    public StringProperty getP2PNetworkInfo() {
-        return p2PNetworkSetup.getP2PNetworkInfo();
-    }
-
-    public BooleanProperty getSplashP2PNetworkAnimationVisible() {
-        return p2PNetworkSetup.getSplashP2PNetworkAnimationVisible();
-    }
-
-    public StringProperty getP2pNetworkWarnMsg() {
-        return p2PNetworkSetup.getP2pNetworkWarnMsg();
-    }
-
-    public StringProperty getP2PNetworkIconId() {
-        return p2PNetworkSetup.getP2PNetworkIconId();
-    }
-
-    public BooleanProperty getUpdatedDataReceived() {
-        return p2PNetworkSetup.getUpdatedDataReceived();
-    }
-
-    public StringProperty getP2pNetworkLabelId() {
-        return p2PNetworkSetup.getP2pNetworkLabelId();
     }
 }
