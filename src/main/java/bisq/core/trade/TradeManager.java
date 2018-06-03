@@ -68,8 +68,11 @@ import javax.inject.Named;
 import com.google.common.util.concurrent.FutureCallback;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
 
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import org.spongycastle.crypto.params.KeyParameter;
@@ -87,6 +90,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.Getter;
 import lombok.Setter;
 
 import org.jetbrains.annotations.NotNull;
@@ -119,6 +123,8 @@ public class TradeManager implements PersistedDataHost {
     @Setter
     @Nullable
     private ErrorMessageHandler takeOfferRequestErrorMessageHandler;
+    @Getter
+    private final LongProperty numPendingTrades = new SimpleLongProperty();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -216,6 +222,9 @@ public class TradeManager implements PersistedDataHost {
                     initPendingTrades();
                 }
             });
+
+        tradableList.getList().addListener((ListChangeListener<Trade>) change -> onTradesChanged());
+        onTradesChanged();
     }
 
     public void shutDown() {
@@ -256,7 +265,11 @@ public class TradeManager implements PersistedDataHost {
         pendingTradesInitialized.set(true);
     }
 
-    public void cleanUpAddressEntries() {
+    private void onTradesChanged() {
+        this.numPendingTrades.set(tradableList.getList().size());
+    }
+
+    private void cleanUpAddressEntries() {
         Set<String> tradesIdSet = getLockedTradesStream()
                 .map(Trade::getId)
                 .collect(Collectors.toSet());

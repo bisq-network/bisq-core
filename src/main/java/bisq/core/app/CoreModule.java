@@ -25,6 +25,7 @@ import bisq.core.filter.FilterModule;
 import bisq.core.network.p2p.seed.DefaultSeedNodeRepository;
 import bisq.core.network.p2p.seed.SeedNodeAddressLookup;
 import bisq.core.offer.OfferModule;
+import bisq.core.presentation.CorePresentationModule;
 import bisq.core.proto.network.CoreNetworkProtoResolver;
 import bisq.core.proto.persistable.CorePersistenceProtoResolver;
 import bisq.core.trade.TradeModule;
@@ -101,6 +102,7 @@ public class CoreModule extends AppModule {
         install(daoModule());
         install(alertModule());
         install(filterModule());
+        install(corePresentationModule());
     }
 
     private TradeModule tradeModule() {
@@ -137,5 +139,9 @@ public class CoreModule extends AppModule {
 
     private DaoModule daoModule() {
         return new DaoModule(environment);
+    }
+
+    private CorePresentationModule corePresentationModule() {
+        return new CorePresentationModule(environment);
     }
 }

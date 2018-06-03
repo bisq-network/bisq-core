@@ -68,10 +68,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import org.fxmisc.easybind.EasyBind;
 import org.fxmisc.easybind.Subscription;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -121,9 +119,7 @@ public class DisputeManager implements PersistedDataHost {
 
     private final Map<String, Subscription> disputeIsClosedSubscriptionsMap = new HashMap<>();
     @Getter
-    private final StringProperty numOpenDisputesAsString = new SimpleStringProperty();
-    @Getter
-    private final BooleanProperty showOpenDisputesNotification = new SimpleBooleanProperty();
+    private final IntegerProperty numOpenDisputes = new SimpleIntegerProperty();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -228,12 +224,7 @@ public class DisputeManager implements PersistedDataHost {
                             int openDisputes = disputes.getList().stream()
                                     .filter(e -> !e.isClosed())
                                     .collect(Collectors.toList()).size();
-                            if (openDisputes > 0)
-                                numOpenDisputesAsString.set(String.valueOf(openDisputes));
-                            if (openDisputes > 9)
-                                numOpenDisputesAsString.set("★");
-
-                            showOpenDisputesNotification.set(openDisputes > 0);
+                            numOpenDisputes.set(openDisputes);
                         });
                     });
             disputeIsClosedSubscriptionsMap.put(id, disputeStateSubscription);
@@ -251,7 +242,7 @@ public class DisputeManager implements PersistedDataHost {
 
         // If we have duplicate disputes we close the second one (might happen if both traders opened a dispute and arbitrator
         // was offline, so could not forward msg to other peer, then the arbitrator might have 4 disputes open for 1 trade)
-        openDisputes.entrySet().stream().forEach(openDisputeEntry -> {
+        openDisputes.entrySet().forEach(openDisputeEntry -> {
             String key = openDisputeEntry.getKey();
             if (closedDisputes.containsKey(key)) {
                 final Dispute closedDispute = closedDisputes.get(key);
