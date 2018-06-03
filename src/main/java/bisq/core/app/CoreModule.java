@@ -64,6 +64,10 @@ public class CoreModule extends AppModule {
 
     @Override
     protected void configure() {
+        bind(BisqSetup.class).in(Singleton.class);
+        bind(P2PNetworkSetup.class).in(Singleton.class);
+        bind(WalletAppSetup.class).in(Singleton.class);
+
         bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
 
         bind(KeyStorage.class).in(Singleton.class);
@@ -73,9 +77,6 @@ public class CoreModule extends AppModule {
         bind(Preferences.class).in(Singleton.class);
         bind(BridgeAddressProvider.class).to(Preferences.class).in(Singleton.class);
         bind(CorruptedDatabaseFilesHandler.class).in(Singleton.class);
-        bind(BisqSetup.class).in(Singleton.class);
-        bind(P2PNetworkSetup.class).in(Singleton.class);
-        bind(WalletAppSetup.class).in(Singleton.class);
 
         bind(SeedNodeAddressLookup.class).in(Singleton.class);
         bind(SeedNodeRepository.class).to(DefaultSeedNodeRepository.class).in(Singleton.class);
