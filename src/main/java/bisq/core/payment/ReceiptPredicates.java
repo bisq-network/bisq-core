@@ -100,11 +100,13 @@ class ReceiptPredicates {
         return codes.contains(offer.getCurrencyCode());
     }
 
-    boolean isSepaRelated(Offer offer, PaymentAccount account) {
-        PaymentMethod offerPaymentMethod = offer.getPaymentMethod();
-        return (account instanceof SepaAccount
-                || account instanceof SepaInstantAccount)
-                && (offerPaymentMethod.equals(PaymentMethod.SEPA)
-                || offerPaymentMethod.equals(PaymentMethod.SEPA_INSTANT));
+    boolean isMatchingSepaOffer(Offer offer, PaymentAccount account) {
+        final boolean isSepa = account instanceof SepaAccount;
+        final boolean isSepaInstant = account instanceof SepaInstantAccount;
+        return offer.getPaymentMethod().equals(PaymentMethod.SEPA) && (isSepa || isSepaInstant);
+    }
+
+    boolean isMatchingSepaInstant(Offer offer, PaymentAccount account) {
+        return offer.getPaymentMethod().equals(PaymentMethod.SEPA_INSTANT) && account instanceof SepaInstantAccount;
     }
 }

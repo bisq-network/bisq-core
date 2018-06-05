@@ -79,14 +79,25 @@ public class ReceiptValidatorTest {
     }
 
     @Test
-    public void testIsValidWhenSepaRelated() {
+    public void testIsValidWhenSepaOffer() {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(false);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(true);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(true);
 
         assertTrue(validator.isValid());
-        verify(predicates).isSepaRelated(offer, account);
+        verify(predicates).isMatchingSepaOffer(offer, account);
+    }
+
+    @Test
+    public void testIsValidWhenSepaInstant() {
+        when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
+        when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
+        when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(true);
+
+        assertTrue(validator.isValid());
+        verify(predicates).isMatchingSepaOffer(offer, account);
     }
 
     @Test
@@ -96,7 +107,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(true);
         when(predicates.isMatchingBankId(offer, account)).thenReturn(false);
 
@@ -110,7 +122,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(true);
         when(predicates.isMatchingBankId(offer, account)).thenReturn(false);
 
@@ -124,7 +137,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(true);
         when(predicates.isMatchingBankId(offer, account)).thenReturn(true);
 
@@ -138,7 +152,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(true);
         when(predicates.isMatchingBankId(offer, account)).thenReturn(true);
 
@@ -152,7 +167,9 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(false);
 
         assertTrue(new ReceiptValidator(offer, account, predicates).isValid());
@@ -169,7 +186,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(false);
 
         assertTrue(new ReceiptValidator(offer, account, predicates).isValid());
@@ -180,7 +198,8 @@ public class ReceiptValidatorTest {
         when(predicates.isMatchingCurrency(offer, account)).thenReturn(true);
         when(predicates.isEqualPaymentMethods(offer, account)).thenReturn(true);
         when(predicates.isMatchingCountryCodes(offer, account)).thenReturn(true);
-        when(predicates.isSepaRelated(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaOffer(offer, account)).thenReturn(false);
+        when(predicates.isMatchingSepaInstant(offer, account)).thenReturn(false);
         when(predicates.isOfferRequireSameOrSpecificBank(offer, account)).thenReturn(false);
 
         assertTrue(validator.isValid());
