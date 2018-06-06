@@ -88,7 +88,6 @@ import java.net.Socket;
 
 import java.io.IOException;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -129,37 +128,29 @@ public class BisqSetup {
     private final BisqEnvironment bisqEnvironment;
     private final AccountAgeWitnessService accountAgeWitnessService;
     private final BSFormatter formatter;
-    @Getter
     @Setter
     @Nullable
     private Consumer<Runnable> displayTacHandler;
-    @Getter
     @Setter
     @Nullable
     private Consumer<String> cryptoSetupFailedHandler, chainFileLockedExceptionHandler,
             spvFileCorruptedHandler, lockedUpFundsHandler, daoSetupErrorHandler, filterWarningHandler,
             displaySecurityRecommendationHandler, displayLocalhostHandler, wrongOSArchitectureHandler;
-    @Getter
     @Setter
     @Nullable
     private Consumer<Boolean> displayTorNetworkSettingsHandler;
-    @Getter
     @Setter
     @Nullable
     private Runnable showFirstPopupIfResyncSPVRequestedHandler;
-    @Getter
     @Setter
     @Nullable
     private Consumer<Consumer<KeyParameter>> requestWalletPasswordHandler;
-    @Getter
     @Setter
     @Nullable
     private Consumer<Alert> displayAlertHandler;
-    @Getter
     @Setter
     @Nullable
     private BiConsumer<Alert, String> displayUpdateHandler;
-    @Getter
     @Setter
     @Nullable
     private Consumer<PrivateNotificationPayload> displayPrivateNotificationHandler;
@@ -277,13 +268,13 @@ public class BisqSetup {
                 final boolean isNewVersion = alert.isNewVersion();
                 newVersionAvailableProperty.set(isNewVersion);
                 String key = "Update_" + alert.getVersion();
-                if (isNewVersion && (preferences.showAgain(key) || openNewVersionPopup)) {
-                    Objects.requireNonNull(displayUpdateHandler).accept(alert, key);
+                if (isNewVersion && (preferences.showAgain(key) || openNewVersionPopup) && displayUpdateHandler != null) {
+                    displayUpdateHandler.accept(alert, key);
                 }
             } else {
                 final Alert displayedAlert = user.getDisplayedAlert();
-                if (displayedAlert == null || !displayedAlert.equals(alert))
-                    Objects.requireNonNull(displayAlertHandler).accept(alert);
+                if ((displayedAlert == null || !displayedAlert.equals(alert)) && displayAlertHandler != null)
+                    displayAlertHandler.accept(alert);
             }
         }
     }
@@ -442,16 +433,16 @@ public class BisqSetup {
     private void startP2pNetworkAndWallet() {
         ChangeListener<Boolean> walletInitializedListener = (observable, oldValue, newValue) -> {
             // TODO that seems to be called too often if Tor takes longer to start up...
-            if (newValue && !p2pNetworkReady.get())
-                Objects.requireNonNull(displayTorNetworkSettingsHandler).accept(true);
+            if (newValue && !p2pNetworkReady.get() && displayTorNetworkSettingsHandler != null)
+                displayTorNetworkSettingsHandler.accept(true);
         };
 
         Timer startupTimeout = UserThread.runAfter(() -> {
             log.warn("startupTimeout called");
             if (walletsManager.areWalletsEncrypted())
                 walletInitialized.addListener(walletInitializedListener);
-            else
-                Objects.requireNonNull(displayTorNetworkSettingsHandler).accept(true);
+            else if (displayTorNetworkSettingsHandler != null)
+                displayTorNetworkSettingsHandler.accept(true);
         }, STARTUP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
 
         p2pNetworkReady = p2PNetworkSetup.init(this::initWallet, displayTorNetworkSettingsHandler);
@@ -474,7 +465,8 @@ public class BisqSetup {
             if (newValue) {
                 startupTimeout.stop();
                 walletInitialized.removeListener(walletInitializedListener);
-                Objects.requireNonNull(displayTorNetworkSettingsHandler).accept(false);
+                if (displayTorNetworkSettingsHandler != null)
+                    displayTorNetworkSettingsHandler.accept(false);
                 step5();
             }
         });
@@ -485,14 +477,17 @@ public class BisqSetup {
             if (p2pNetworkReady.get())
                 p2PNetworkSetup.setSplashP2PNetworkAnimationVisible(true);
 
-            Objects.requireNonNull(requestWalletPasswordHandler).accept(aesKey -> {
-                walletsManager.setAesKey(aesKey);
-                if (preferences.isResyncSpvRequested()) {
-                    Objects.requireNonNull(showFirstPopupIfResyncSPVRequestedHandler).run();
-                } else {
-                    walletInitialized.set(true);
-                }
-            });
+            if (requestWalletPasswordHandler != null) {
+                requestWalletPasswordHandler.accept(aesKey -> {
+                    walletsManager.setAesKey(aesKey);
+                    if (preferences.isResyncSpvRequested()) {
+                        if (showFirstPopupIfResyncSPVRequestedHandler != null)
+                            showFirstPopupIfResyncSPVRequestedHandler.run();
+                    } else {
+                        walletInitialized.set(true);
+                    }
+                });
+            }
         };
         walletAppSetup.init(chainFileLockedExceptionHandler,
                 spvFileCorruptedHandler,
@@ -517,16 +512,17 @@ public class BisqSetup {
                     final String message = Res.get("popup.warning.lockedUpFunds",
                             formatter.formatCoinWithCode(balance), e.getAddressString(), e.getOfferId());
                     log.warn(message);
-                    Objects.requireNonNull(lockedUpFundsHandler).accept(message);
+                    if (lockedUpFundsHandler != null)
+                        lockedUpFundsHandler.accept(message);
                 });
     }
 
     private void checkForCorrectOSArchitecture() {
-        if (!Utilities.isCorrectOSArchitecture()) {
+        if (!Utilities.isCorrectOSArchitecture() && wrongOSArchitectureHandler != null) {
             String osArchitecture = Utilities.getOSArchitecture();
             // We don't force a shutdown as the osArchitecture might in strange cases return a wrong value.
             // Needs at least more testing on different machines...
-            Objects.requireNonNull(wrongOSArchitectureHandler).accept(Res.get("popup.warning.wrongVersion",
+            wrongOSArchitectureHandler.accept(Res.get("popup.warning.wrongVersion",
                     osArchitecture,
                     Utilities.getJVMArchitecture(),
                     osArchitecture));
@@ -572,14 +568,19 @@ public class BisqSetup {
                 displayAlertIfPresent(newValue, false));
         displayAlertIfPresent(alertManager.alertMessageProperty().get(), false);
 
-        privateNotificationManager.privateNotificationProperty().addListener((observable, oldValue, newValue) ->
-                Objects.requireNonNull(displayPrivateNotificationHandler).accept(newValue));
+        privateNotificationManager.privateNotificationProperty().addListener((observable, oldValue, newValue) -> {
+            if (displayPrivateNotificationHandler != null)
+                displayPrivateNotificationHandler.accept(newValue);
+        });
 
         p2PService.onAllServicesInitialized();
 
         feeService.onAllServicesInitialized();
 
-        daoSetup.onAllServicesInitialized(errorMessage -> Objects.requireNonNull(daoSetupErrorHandler).accept(errorMessage));
+        daoSetup.onAllServicesInitialized(errorMessage -> {
+            if (daoSetupErrorHandler != null)
+                daoSetupErrorHandler.accept(errorMessage);
+        });
 
         tradeStatisticsManager.onAllServicesInitialized();
 
@@ -589,12 +590,12 @@ public class BisqSetup {
 
         filterManager.onAllServicesInitialized();
         filterManager.addListener(filter -> {
-            if (filter != null) {
+            if (filter != null && filterWarningHandler != null) {
                 if (filter.getSeedNodes() != null && !filter.getSeedNodes().isEmpty())
-                    Objects.requireNonNull(filterWarningHandler).accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.seed")));
+                    filterWarningHandler.accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.seed")));
 
                 if (filter.getPriceRelayNodes() != null && !filter.getPriceRelayNodes().isEmpty())
-                    Objects.requireNonNull(filterWarningHandler).accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.priceRelay")));
+                    filterWarningHandler.accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.priceRelay")));
             }
         });
 
@@ -604,14 +605,16 @@ public class BisqSetup {
     private void maybeShowSecurityRecommendation() {
         String key = "remindPasswordAndBackup";
         user.getPaymentAccountsAsObservable().addListener((SetChangeListener<PaymentAccount>) change -> {
-            if (!walletsManager.areWalletsEncrypted() && preferences.showAgain(key) && change.wasAdded())
-                Objects.requireNonNull(displaySecurityRecommendationHandler).accept(key);
+            if (!walletsManager.areWalletsEncrypted() && preferences.showAgain(key) && change.wasAdded() &&
+                    displaySecurityRecommendationHandler != null)
+                displaySecurityRecommendationHandler.accept(key);
         });
     }
 
     private void maybeShowLocalhostRunningInfo() {
         String key = "bitcoinLocalhostNode";
-        if (bisqEnvironment.isBitcoinLocalhostNodeRunning() && preferences.showAgain(key))
-            Objects.requireNonNull(displayLocalhostHandler).accept(key);
+        if (bisqEnvironment.isBitcoinLocalhostNodeRunning() && preferences.showAgain(key) &&
+                displayLocalhostHandler != null)
+            displayLocalhostHandler.accept(key);
     }
 }

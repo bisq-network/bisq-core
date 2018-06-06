@@ -90,6 +90,7 @@ public class BisqCoreApp implements UncaughtExceptionHandler {
         bisqSetup.setDisplayPrivateNotificationHandler(privateNotification -> log.info("onDisplayPrivateNotificationHandler. privateNotification={}", privateNotification));
         bisqSetup.setDaoSetupErrorHandler(errorMessage -> log.info("onDaoSetupErrorHandler. errorMessage={}", errorMessage));
         bisqSetup.setDisplaySecurityRecommendationHandler(key -> log.info("onDisplaySecurityRecommendationHandler"));
+        bisqSetup.setDisplayLocalhostHandler(key -> log.info("onDisplayLocalhostHandler"));
         bisqSetup.setWrongOSArchitectureHandler(msg -> log.info("onWrongOSArchitectureHandler. msg={}", msg));
 
         corruptedDatabaseFilesHandler.getCorruptedDatabaseFiles().ifPresent(files -> log.info("getCorruptedDatabaseFiles. files={}", files));
