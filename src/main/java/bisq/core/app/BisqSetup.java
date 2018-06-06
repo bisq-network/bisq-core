@@ -138,7 +138,7 @@ public class BisqSetup {
     @Nullable
     private Consumer<String> cryptoSetupFailedHandler, chainFileLockedExceptionHandler,
             spvFileCorruptedHandler, lockedUpFundsHandler, daoSetupErrorHandler, filterWarningHandler,
-            displaySecurityRecommendationHandler, wrongOSArchitectureHandler;
+            displaySecurityRecommendationHandler, displayLocalhostHandler, wrongOSArchitectureHandler;
     @Getter
     @Setter
     @Nullable
@@ -262,6 +262,7 @@ public class BisqSetup {
         // We set that after calling the setupCompleteHandler to not trigger a popup from the dev dummy accounts
         // in MainViewModel
         maybeShowSecurityRecommendation();
+        maybeShowLocalhostRunningInfo();
     }
 
 
@@ -606,5 +607,11 @@ public class BisqSetup {
             if (!walletsManager.areWalletsEncrypted() && preferences.showAgain(key) && change.wasAdded())
                 Objects.requireNonNull(displaySecurityRecommendationHandler).accept(key);
         });
+    }
+
+    private void maybeShowLocalhostRunningInfo() {
+        String key = "bitcoinLocalhostNode";
+        if (bisqEnvironment.isBitcoinLocalhostNodeRunning() && preferences.showAgain(key))
+            Objects.requireNonNull(displayLocalhostHandler).accept(key);
     }
 }
