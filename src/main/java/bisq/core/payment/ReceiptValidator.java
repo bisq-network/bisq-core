@@ -59,13 +59,17 @@ class ReceiptValidator {
         if (predicates.isMatchingSepaOffer(offer, account)) {
             // Sepa offer and taker account is Sepa or Sepa Instant
             return true;
-        } else if (predicates.isMatchingSepaInstant(offer, account)) {
+        }
+
+        if (predicates.isMatchingSepaInstant(offer, account)) {
             // Sepa Instant offer and taker account
             return true;
-        } else if (predicates.isOfferRequireSameOrSpecificBank(offer, account)) {
-            return predicates.isMatchingBankId(offer, account);
-        } else {
-            return isEqualPaymentMethods;
         }
+
+        if (predicates.isOfferRequireSameOrSpecificBank(offer, account)) {
+            return predicates.isMatchingBankId(offer, account);
+        }
+
+        return isEqualPaymentMethods;
     }
 }
