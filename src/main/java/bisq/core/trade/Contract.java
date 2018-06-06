@@ -111,8 +111,8 @@ public final class Contract implements NetworkPayload {
         this.makerMultiSigPubKey = makerMultiSigPubKey;
         this.takerMultiSigPubKey = takerMultiSigPubKey;
 
-        final String makerPaymentMethodId = makerPaymentAccountPayload.getPaymentMethodId();
-        final String takerPaymentMethodId = takerPaymentAccountPayload.getPaymentMethodId();
+        String makerPaymentMethodId = makerPaymentAccountPayload.getPaymentMethodId();
+        String takerPaymentMethodId = takerPaymentAccountPayload.getPaymentMethodId();
         // For SEPA offers we accept also SEPA_INSTANT takers
         // Otherwise both ids need to be the same
         boolean result = (makerPaymentMethodId.equals(PaymentMethod.SEPA_ID) && takerPaymentMethodId.equals(PaymentMethod.SEPA_INSTANT_ID)) ||

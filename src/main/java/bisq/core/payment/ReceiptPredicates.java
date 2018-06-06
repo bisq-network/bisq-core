@@ -101,8 +101,8 @@ class ReceiptPredicates {
     }
 
     boolean isMatchingSepaOffer(Offer offer, PaymentAccount account) {
-        final boolean isSepa = account instanceof SepaAccount;
-        final boolean isSepaInstant = account instanceof SepaInstantAccount;
+        boolean isSepa = account instanceof SepaAccount;
+        boolean isSepaInstant = account instanceof SepaInstantAccount;
         return offer.getPaymentMethod().equals(PaymentMethod.SEPA) && (isSepa || isSepaInstant);
     }
 
