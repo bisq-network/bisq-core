@@ -17,10 +17,11 @@
 
 package bisq.core.app;
 
+import bisq.core.CoreModule;
+
 import bisq.common.UserThread;
 import bisq.common.app.AppModule;
 import bisq.common.setup.CommonSetup;
-import bisq.common.setup.UncaughtExceptionHandler;
 
 import joptsimple.OptionSet;
 
@@ -31,31 +32,23 @@ import java.util.concurrent.ThreadFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Application for headless version of Bisq with all features enabled.
- * Can run standalone but does not has any interface without any of the application wrappers
- * like Desktop, Http-API and gRPC.
- */
 @Slf4j
-public class BisqDaemonMain extends BisqExecutable implements UncaughtExceptionHandler {
-
-    private BisqDaemon bisqDaemon;
+public class BisqHeadlessAppMain extends BisqExecutable {
+    protected HeadlessApp headlessApp;
 
     public static void main(String[] args) throws Exception {
         if (BisqExecutable.setupInitialOptionParser(args)) {
             // For some reason the JavaFX launch process results in us losing the thread context class loader: reset it.
             // In order to work around a bug in JavaFX 8u25 and below, you must include the following code as the first line of your realMain method:
-            Thread.currentThread().setContextClassLoader(BisqDaemonMain.class.getClassLoader());
+            Thread.currentThread().setContextClassLoader(BisqHeadlessAppMain.class.getClassLoader());
 
-            new BisqDaemonMain().execute(args);
+            new BisqHeadlessAppMain().execute(args);
         }
     }
 
     @Override
     protected void doExecute(OptionSet options) {
         super.doExecute(options);
-
-        CommonSetup.setup(this);
 
         keepRunning();
     }
@@ -75,19 +68,16 @@ public class BisqDaemonMain extends BisqExecutable implements UncaughtExceptionH
 
     @Override
     protected void launchApplication() {
-        UserThread.execute(() -> {
-            try {
-                bisqDaemon = new BisqDaemon();
-                UserThread.execute(this::onApplicationLaunched);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        headlessApp = new BisqHeadlessApp();
+        CommonSetup.setup(BisqHeadlessAppMain.this.headlessApp);
+
+        UserThread.execute(this::onApplicationLaunched);
     }
 
     @Override
     protected void onApplicationLaunched() {
         super.onApplicationLaunched();
+        headlessApp.setGracefulShutDownHandler(this);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -96,28 +86,23 @@ public class BisqDaemonMain extends BisqExecutable implements UncaughtExceptionH
 
     @Override
     protected AppModule getModule() {
-        return new BisqDaemonModule(bisqEnvironment);
+        return new CoreModule(bisqEnvironment);
     }
 
     @Override
     protected void applyInjector() {
         super.applyInjector();
 
-        bisqDaemon.setInjector(injector);
+        headlessApp.setInjector(injector);
     }
 
     @Override
     protected void startApplication() {
-        bisqDaemon.startApplication();
+        // We need to be in user thread! We mapped at launchApplication already...
+        headlessApp.startApplication();
 
-    }
-
-    @Override
-    public void handleUncaughtException(Throwable throwable, boolean doShutDown) {
-        log.error(throwable.toString());
-
-        if (doShutDown)
-            gracefulShutDown(() -> log.info("gracefulShutDown complete"));
+        // In headless mode we don't have an async behaviour so we trigger the setup by calling onApplicationStarted
+        onApplicationStarted();
     }
 
     private void keepRunning() {
@@ -129,4 +114,3 @@ public class BisqDaemonMain extends BisqExecutable implements UncaughtExceptionH
         }
     }
 }
-

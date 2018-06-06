@@ -15,8 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.core.app.misc;
 
+import bisq.core.app.SetupUtils;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
@@ -41,7 +42,7 @@ import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DaemonAppSetup extends AppSetup {
+public class AppSetupWithP2P extends AppSetup {
     protected final P2PService p2PService;
     protected final AccountAgeWitnessService accountAgeWitnessService;
     protected final FilterManager filterManager;
@@ -50,12 +51,12 @@ public class DaemonAppSetup extends AppSetup {
     protected ArrayList<PersistedDataHost> persistedDataHosts;
 
     @Inject
-    public DaemonAppSetup(EncryptionService encryptionService,
-                          KeyRing keyRing,
-                          P2PService p2PService,
-                          TradeStatisticsManager tradeStatisticsManager,
-                          AccountAgeWitnessService accountAgeWitnessService,
-                          FilterManager filterManager) {
+    public AppSetupWithP2P(EncryptionService encryptionService,
+                           KeyRing keyRing,
+                           P2PService p2PService,
+                           TradeStatisticsManager tradeStatisticsManager,
+                           AccountAgeWitnessService accountAgeWitnessService,
+                           FilterManager filterManager) {
         super(encryptionService, keyRing);
         this.p2PService = p2PService;
         this.tradeStatisticsManager = tradeStatisticsManager;

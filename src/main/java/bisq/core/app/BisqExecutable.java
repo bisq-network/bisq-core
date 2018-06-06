@@ -215,6 +215,12 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
 
     protected abstract void startApplication();
 
+    // Once the application is ready we get that callback and we start the setup
+    protected void onApplicationStarted() {
+        BisqSetup bisqSetup = injector.getInstance(BisqSetup.class);
+        bisqSetup.start();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // GracefulShutDownHandler implementation

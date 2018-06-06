@@ -88,6 +88,8 @@ import java.net.Socket;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -100,6 +102,10 @@ import javax.annotation.Nullable;
 
 @Slf4j
 public class BisqSetup {
+    public interface BisqSetupCompleteListener {
+        void onSetupComplete();
+    }
+
     private static final long STARTUP_TIMEOUT_MINUTES = 4;
 
     private final P2PNetworkSetup p2PNetworkSetup;
@@ -162,7 +168,7 @@ public class BisqSetup {
     private boolean allBasicServicesInitialized;
     @SuppressWarnings("FieldCanBeLocal")
     private MonadicBinding<Boolean> p2pNetworkAndWalletInitialized;
-    private Runnable setupCompleteHandler;
+    private List<BisqSetupCompleteListener> bisqSetupCompleteListeners = new ArrayList<>();
 
 
     @Inject
@@ -225,8 +231,11 @@ public class BisqSetup {
     // Setup
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void start(Runnable setupCompleteHandler) {
-        this.setupCompleteHandler = setupCompleteHandler;
+    public void addBisqSetupCompleteListener(BisqSetupCompleteListener listener) {
+        bisqSetupCompleteListeners.add(listener);
+    }
+
+    public void start() {
         maybeReSyncSPVChain();
         maybeShowTac();
     }
@@ -248,7 +257,7 @@ public class BisqSetup {
     private void step5() {
         initDomainServices();
 
-        setupCompleteHandler.run();
+        bisqSetupCompleteListeners.forEach(BisqSetupCompleteListener::onSetupComplete);
 
         // We set that after calling the setupCompleteHandler to not trigger a popup from the dev dummy accounts
         // in MainViewModel

@@ -17,22 +17,15 @@
 
 package bisq.core.app;
 
+import bisq.common.setup.GracefulShutDownHandler;
+import bisq.common.setup.UncaughtExceptionHandler;
+
 import com.google.inject.Injector;
 
-/**
- * Headless version of Bisq with all features enabled.
- * Used for Desktop, Http-API and gRPC applications.
- */
-public class BisqDaemon {
-    private Injector injector;
-    private AppSetup appSetup;
+public interface HeadlessApp extends UncaughtExceptionHandler, BisqSetup.BisqSetupCompleteListener {
+    void setGracefulShutDownHandler(GracefulShutDownHandler gracefulShutDownHandler);
 
-    public void setInjector(Injector injector) {
-        this.injector = injector;
-    }
+    void setInjector(Injector injector);
 
-    public void startApplication() {
-        appSetup = injector.getInstance(DaemonAppSetup.class);
-        appSetup.start();
-    }
+    void startApplication();
 }

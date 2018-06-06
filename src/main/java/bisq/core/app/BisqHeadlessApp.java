@@ -21,7 +21,6 @@ import bisq.core.trade.TradeManager;
 
 import bisq.common.UserThread;
 import bisq.common.setup.GracefulShutDownHandler;
-import bisq.common.setup.UncaughtExceptionHandler;
 import bisq.common.storage.CorruptedDatabaseFilesHandler;
 import bisq.common.util.Profiler;
 
@@ -34,13 +33,13 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BisqCoreApp implements UncaughtExceptionHandler {
+public class BisqHeadlessApp implements HeadlessApp {
     private static final long LOG_MEMORY_PERIOD_MIN = 10;
     @Getter
     private static Runnable shutDownHandler;
 
     @Setter
-    private Injector injector;
+    protected Injector injector;
     @Setter
     private GracefulShutDownHandler gracefulShutDownHandler;
     private boolean shutDownRequested;
@@ -48,19 +47,19 @@ public class BisqCoreApp implements UncaughtExceptionHandler {
     private CorruptedDatabaseFilesHandler corruptedDatabaseFilesHandler;
     private TradeManager tradeManager;
 
-    public BisqCoreApp() {
+    public BisqHeadlessApp() {
         shutDownHandler = this::stop;
     }
-
 
     public void startApplication() {
         try {
             bisqSetup = injector.getInstance(BisqSetup.class);
+            bisqSetup.addBisqSetupCompleteListener(this);
+
             corruptedDatabaseFilesHandler = injector.getInstance(CorruptedDatabaseFilesHandler.class);
             tradeManager = injector.getInstance(TradeManager.class);
 
             setupHandlers();
-            bisqSetup.start(this::onSetupComplete);
 
             UserThread.runPeriodically(() -> Profiler.printSystemLoad(log), LOG_MEMORY_PERIOD_MIN, TimeUnit.MINUTES);
         } catch (Throwable throwable) {
@@ -69,11 +68,12 @@ public class BisqCoreApp implements UncaughtExceptionHandler {
         }
     }
 
-    private void onSetupComplete() {
+    @Override
+    public void onSetupComplete() {
         log.info("onSetupComplete");
     }
 
-    private void setupHandlers() {
+    protected void setupHandlers() {
         bisqSetup.setDisplayTacHandler(acceptedHandler -> {
             log.info("onDisplayTacHandler: We accept the tacs automatically in headless mode");
             acceptedHandler.run();
@@ -93,6 +93,7 @@ public class BisqCoreApp implements UncaughtExceptionHandler {
         bisqSetup.setDisplayLocalhostHandler(key -> log.info("onDisplayLocalhostHandler"));
         bisqSetup.setWrongOSArchitectureHandler(msg -> log.info("onWrongOSArchitectureHandler. msg={}", msg));
 
+        //TODO move to bisqSetup
         corruptedDatabaseFilesHandler.getCorruptedDatabaseFiles().ifPresent(files -> log.info("getCorruptedDatabaseFiles. files={}", files));
         tradeManager.setTakeOfferRequestErrorMessageHandler(errorMessage -> log.info("onTakeOfferRequestErrorMessageHandler"));
     }

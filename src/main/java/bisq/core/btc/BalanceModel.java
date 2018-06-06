@@ -24,8 +24,6 @@ import bisq.core.trade.TradeManager;
 import bisq.core.trade.closed.ClosedTradableManager;
 import bisq.core.trade.failed.FailedTradesManager;
 
-import bisq.common.UserThread;
-
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 
@@ -65,13 +63,17 @@ public class BalanceModel {
     }
 
     public void updateBalance() {
-        // Without delaying to the next cycle it does not update.
+        //TODO check if still needed
+      /*  // Without delaying to the next cycle it does not update.
         // Seems order of events we are listening on causes that...
         UserThread.execute(() -> {
             updateAvailableBalance();
             updateReservedBalance();
             updateLockedBalance();
-        });
+        });*/
+        updateAvailableBalance();
+        updateReservedBalance();
+        updateLockedBalance();
     }
 
     private void updateAvailableBalance() {
