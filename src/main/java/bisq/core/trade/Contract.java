@@ -20,6 +20,7 @@ package bisq.core.trade;
 import bisq.core.monetary.Price;
 import bisq.core.offer.OfferPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
+import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.proto.CoreProtoResolver;
 
 import bisq.network.p2p.NodeAddress;
@@ -110,12 +111,15 @@ public final class Contract implements NetworkPayload {
         this.makerMultiSigPubKey = makerMultiSigPubKey;
         this.takerMultiSigPubKey = takerMultiSigPubKey;
 
-        // PaymentMethod need to be the same
-        checkArgument(makerPaymentAccountPayload.getPaymentMethodId()
-                        .equals(takerPaymentAccountPayload.getPaymentMethodId()),
-                "payment methods of maker and taker must be the same.\n" +
-                        "makerPaymentMethodId=" + makerPaymentAccountPayload.getPaymentMethodId() + "\n" +
-                        "takerPaymentMethodId=" + takerPaymentAccountPayload.getPaymentMethodId());
+        String makerPaymentMethodId = makerPaymentAccountPayload.getPaymentMethodId();
+        String takerPaymentMethodId = takerPaymentAccountPayload.getPaymentMethodId();
+        // For SEPA offers we accept also SEPA_INSTANT takers
+        // Otherwise both ids need to be the same
+        boolean result = (makerPaymentMethodId.equals(PaymentMethod.SEPA_ID) && takerPaymentMethodId.equals(PaymentMethod.SEPA_INSTANT_ID)) ||
+                makerPaymentMethodId.equals(takerPaymentMethodId);
+        checkArgument(result, "payment methods of maker and taker must be the same.\n" +
+                "makerPaymentMethodId=" + makerPaymentMethodId + "\n" +
+                "takerPaymentMethodId=" + takerPaymentMethodId);
     }
 
 
