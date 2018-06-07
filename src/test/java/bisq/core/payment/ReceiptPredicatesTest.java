@@ -53,19 +53,23 @@ public class ReceiptPredicatesTest {
     }
 
     @Test
-    public void testIsSepaRelated() {
+    public void testIsMatchingSepaOffer() {
         Offer offer = mock(Offer.class);
         PaymentMethod.SEPA = mock(PaymentMethod.class);
         when(offer.getPaymentMethod()).thenReturn(PaymentMethod.SEPA);
 
-        assertTrue(predicates.isSepaRelated(offer, mock(SepaInstantAccount.class)));
-        assertTrue(predicates.isSepaRelated(offer, mock(SepaAccount.class)));
+        assertTrue(predicates.isMatchingSepaOffer(offer, mock(SepaInstantAccount.class)));
+        assertTrue(predicates.isMatchingSepaOffer(offer, mock(SepaAccount.class)));
+    }
 
+    @Test
+    public void testIsMatchingSepaInstant() {
+        Offer offer = mock(Offer.class);
         PaymentMethod.SEPA_INSTANT = mock(PaymentMethod.class);
         when(offer.getPaymentMethod()).thenReturn(PaymentMethod.SEPA_INSTANT);
 
-        assertTrue(predicates.isSepaRelated(offer, mock(SepaInstantAccount.class)));
-        assertTrue(predicates.isSepaRelated(offer, mock(SepaAccount.class)));
+        assertTrue(predicates.isMatchingSepaInstant(offer, mock(SepaInstantAccount.class)));
+        assertFalse(predicates.isMatchingSepaInstant(offer, mock(SepaAccount.class)));
     }
 
     @Test

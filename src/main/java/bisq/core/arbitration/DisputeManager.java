@@ -23,7 +23,6 @@ import bisq.core.arbitration.messages.DisputeResultMessage;
 import bisq.core.arbitration.messages.OpenNewDisputeMessage;
 import bisq.core.arbitration.messages.PeerOpenedDisputeMessage;
 import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
-import bisq.core.btc.AddressEntry;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BtcWalletService;
@@ -807,7 +806,7 @@ public class DisputeManager implements PersistedDataHost {
 
     private boolean isArbitrator(DisputeResult disputeResult) {
         return Arrays.equals(disputeResult.getArbitratorPubKey(),
-                walletService.getOrCreateAddressEntry(AddressEntry.Context.ARBITRATOR).getPubKey());
+                walletService.getArbitratorAddressEntry().getPubKey());
     }
 
     public String getNrOfDisputes(boolean isBuyer, Contract contract) {

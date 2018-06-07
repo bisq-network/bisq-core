@@ -24,7 +24,8 @@ import bisq.core.payment.payload.VenmoAccountPayload;
 
 import lombok.EqualsAndHashCode;
 
-//TODO missing support for selected trade currency
+// Removed due too high chargeback risk
+@Deprecated
 @EqualsAndHashCode(callSuper = true)
 public final class VenmoAccount extends PaymentAccount {
     public VenmoAccount() {

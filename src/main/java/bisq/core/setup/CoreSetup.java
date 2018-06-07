@@ -27,6 +27,8 @@ import bisq.common.app.Log;
 import bisq.common.app.Version;
 import bisq.common.util.Utilities;
 
+import java.net.URISyntaxException;
+
 import java.nio.file.Paths;
 
 import ch.qos.logback.classic.Level;
@@ -45,6 +47,15 @@ public class CoreSetup {
 
         Version.setBaseCryptoNetworkId(BisqEnvironment.getBaseCurrencyNetwork().ordinal());
         Version.printVersion();
+
+        try {
+            final String pathOfCodeSource = Utilities.getPathOfCodeSource();
+            if (!pathOfCodeSource.endsWith("classes"))
+                log.info("Path to Bisq jar file: " + pathOfCodeSource);
+        } catch (URISyntaxException e) {
+            log.error(e.toString());
+            e.printStackTrace();
+        }
     }
 
     private static void setupLog(BisqEnvironment bisqEnvironment) {

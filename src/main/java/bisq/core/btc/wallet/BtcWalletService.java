@@ -53,7 +53,6 @@ import com.google.common.util.concurrent.Futures;
 
 import org.spongycastle.crypto.params.KeyParameter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -147,7 +146,7 @@ public class BtcWalletService extends WalletService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // CompensationBallot tx
+    // CompensationRequest tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction completePreparedCompensationRequestTx(Coin issuanceAmount, Address issuanceAddress, Transaction feeTx, byte[] opReturnData) throws
@@ -187,7 +186,7 @@ public class BtcWalletService extends WalletService {
         int txSizeWithUnsignedInputs = 300;
         final Coin txFeePerByte = feeService.getTxFeePerByte();
 
-        Address changeAddress = getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
+        Address changeAddress = getFreshAddressEntry().getAddress();
         checkNotNull(changeAddress, "changeAddress must not be null");
 
         final BtcCoinSelector coinSelector = new BtcCoinSelector(walletsSetup.getAddressesByContext(AddressEntry.Context.AVAILABLE));
@@ -249,7 +248,7 @@ public class BtcWalletService extends WalletService {
     public Transaction completePreparedGenericProposalTx(Transaction preparedBurnFeeTx, byte[] opReturnData) {
         try {
             //TODO dummy
-            return completePreparedCompensationRequestTx(Coin.valueOf(10000), getOrCreateUnusedAddressEntry(AddressEntry.Context.AVAILABLE).getAddress(),
+            return completePreparedCompensationRequestTx(Coin.valueOf(10000), getFreshAddressEntry().getAddress(),
                     preparedBurnFeeTx, opReturnData);
         } catch (TransactionVerificationException e) {
             e.printStackTrace();
@@ -309,7 +308,7 @@ public class BtcWalletService extends WalletService {
         int txSizeWithUnsignedInputs = 300;
         final Coin txFeePerByte = feeService.getTxFeePerByte();
 
-        Address changeAddress = getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
+        Address changeAddress = getFreshAddressEntry().getAddress();
         checkNotNull(changeAddress, "changeAddress must not be null");
 
         final BtcCoinSelector coinSelector = new BtcCoinSelector(walletsSetup.getAddressesByContext(AddressEntry.Context.AVAILABLE));
@@ -447,7 +446,7 @@ public class BtcWalletService extends WalletService {
         // In case there are no change outputs we force a change by adding min dust to the BTC input
         Coin forcedChangeValue = Coin.ZERO;
 
-        Address changeAddress = getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddress();
+        Address changeAddress = getFreshAddressEntry().getAddress();
         checkNotNull(changeAddress, "changeAddress must not be null");
 
         final BtcCoinSelector coinSelector = new BtcCoinSelector(walletsSetup.getAddressesByContext(AddressEntry.Context.AVAILABLE));
@@ -534,15 +533,6 @@ public class BtcWalletService extends WalletService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Send funds to a CompensationBallot
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void fundCompensationRequest(Coin amount, String btcAddress, Address squAddressForCompensationRequestFunding, FutureCallback<Transaction> callback) {
-        //TODO
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
     // AddressEntry
     ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -561,21 +551,31 @@ public class BtcWalletService extends WalletService {
         if (addressEntry.isPresent()) {
             return addressEntry.get();
         } else {
-            AddressEntry entry = addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(),
-                    context, offerId));
-            saveAddressEntryList();
-            return entry;
+            // We try to use available and not yet used entries
+            Optional<AddressEntry> emptyAvailableAddressEntry = getAddressEntryListAsImmutableList().stream()
+                    .filter(e -> AddressEntry.Context.AVAILABLE == e.getContext())
+                    .filter(e -> getNumTxOutputsForAddress(e.getAddress()) == 0)
+                    .findAny();
+            if (emptyAvailableAddressEntry.isPresent()) {
+                return addressEntryList.swapAvailableToAddressEntryWithOfferId(emptyAvailableAddressEntry.get(), context, offerId);
+            } else {
+                AddressEntry entry = new AddressEntry(wallet.freshReceiveKey(), context, offerId);
+                addressEntryList.addAddressEntry(entry);
+                return entry;
+            }
         }
     }
 
-    public AddressEntry getOrCreateAddressEntry(AddressEntry.Context context) {
+    public AddressEntry getArbitratorAddressEntry() {
+        AddressEntry.Context context = AddressEntry.Context.ARBITRATOR;
         Optional<AddressEntry> addressEntry = getAddressEntryListAsImmutableList().stream()
                 .filter(e -> context == e.getContext())
                 .findAny();
         return getOrCreateAddressEntry(context, addressEntry);
     }
 
-    public AddressEntry getOrCreateUnusedAddressEntry(AddressEntry.Context context) {
+    public AddressEntry getFreshAddressEntry() {
+        AddressEntry.Context context = AddressEntry.Context.AVAILABLE;
         Optional<AddressEntry> addressEntry = getAddressEntryListAsImmutableList().stream()
                 .filter(e -> context == e.getContext())
                 .filter(e -> getNumTxOutputsForAddress(e.getAddress()) == 0)
@@ -587,8 +587,8 @@ public class BtcWalletService extends WalletService {
         if (addressEntry.isPresent()) {
             return addressEntry.get();
         } else {
-            AddressEntry entry = addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), context));
-            saveAddressEntryList();
+            AddressEntry entry = new AddressEntry(wallet.freshReceiveKey(), context);
+            addressEntryList.addAddressEntry(entry);
             return entry;
         }
     }
@@ -706,7 +706,7 @@ public class BtcWalletService extends WalletService {
 
     public void doubleSpendTransaction(String txId, Runnable resultHandler, ErrorMessageHandler errorMessageHandler)
             throws InsufficientFundsException {
-        AddressEntry addressEntry = getOrCreateUnusedAddressEntry(AddressEntry.Context.AVAILABLE);
+        AddressEntry addressEntry = getFreshAddressEntry();
         checkNotNull(addressEntry.getAddress(), "addressEntry.getAddress() must not be null");
         Optional<Transaction> transactionOptional = wallet.getTransactions(true).stream()
                 .filter(t -> t.getHashAsString().equals(txId))
@@ -924,7 +924,8 @@ public class BtcWalletService extends WalletService {
                 counter++;
                 fee = txFeeForWithdrawalPerByte.multiply(txSize);
                 // We use a dummy address for the output
-                SendRequest sendRequest = getSendRequestForMultipleAddresses(fromAddresses, getOrCreateAddressEntry(AddressEntry.Context.AVAILABLE).getAddressString(), amount, fee, null, aesKey);
+                final String dummyReceiver = getFreshAddressEntry().getAddressString();
+                SendRequest sendRequest = getSendRequestForMultipleAddresses(fromAddresses, dummyReceiver, amount, fee, null, aesKey);
                 wallet.completeTx(sendRequest);
                 tx = sendRequest.tx;
                 txSize = tx.bitcoinSerialize().length;
@@ -1063,13 +1064,7 @@ public class BtcWalletService extends WalletService {
         if (changeAddress != null)
             addressEntryOptional = findAddressEntry(changeAddress, AddressEntry.Context.AVAILABLE);
 
-        if (addressEntryOptional.isPresent()) {
-            changeAddressAddressEntry = addressEntryOptional.get();
-        } else {
-            ArrayList<AddressEntry> list = new ArrayList<>(addressEntries);
-            if (!list.isEmpty())
-                changeAddressAddressEntry = list.get(0);
-        }
+        changeAddressAddressEntry = addressEntryOptional.orElseGet(() -> getFreshAddressEntry());
         checkNotNull(changeAddressAddressEntry, "change address must not be null");
         sendRequest.changeAddress = changeAddressAddressEntry.getAddress();
         return sendRequest;
