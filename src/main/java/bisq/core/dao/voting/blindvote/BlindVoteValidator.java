@@ -18,19 +18,14 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
-
-import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -109,7 +104,7 @@ public class BlindVoteValidator {
         }
     }
 
-    public boolean isAppendOnlyPayloadValid(BlindVoteAppendOnlyPayload appendOnlyPayload,
+   /* public boolean isAppendOnlyPayloadValid(BlindVoteAppendOnlyPayload appendOnlyPayload,
                                             int publishTriggerBlockHeight,
                                             StateService stateService) {
         final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
@@ -128,5 +123,5 @@ public class BlindVoteValidator {
             log.debug("block at publishTriggerBlockHeight is not present.");
             return false;
         }
-    }
+    }*/
 }

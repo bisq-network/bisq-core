@@ -125,7 +125,8 @@ public class ProposalValidator {
             final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
             final boolean hasCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
             if (!hasCorrectBlockHash) {
-                log.warn("ProposalAppendOnlyPayload has not correct block hash. blockHeightOfBreakStart={}",
+                //TODO called at startup when we are not in cycle of proposal
+                log.debug("ProposalAppendOnlyPayload has not correct block hash. blockHeightOfBreakStart={}",
                         blockHeightOfBreakStart);
                 return false;
             }

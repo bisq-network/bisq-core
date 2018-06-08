@@ -406,9 +406,13 @@ public class StateService {
 
     public boolean isBsqTxOutputType(TxOutput txOutput) {
         final TxOutputType txOutputType = getTxOutputType(txOutput);
-        return txOutputType != TxOutputType.UNDEFINED &&
+
+        if (txOutputType == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT)
+            return isIssuanceTx(txOutput.getTxId());
+
+        return (txOutputType != TxOutputType.UNDEFINED &&
                 txOutputType != TxOutputType.BTC_OUTPUT &&
-                txOutputType != TxOutputType.INVALID_OUTPUT;
+                txOutputType != TxOutputType.INVALID_OUTPUT);
     }
 
     public boolean isTxOutputSpendable(String txId, int index) {

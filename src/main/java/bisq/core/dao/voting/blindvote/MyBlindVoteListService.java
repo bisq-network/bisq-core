@@ -33,7 +33,7 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 
@@ -41,7 +41,6 @@ import bisq.network.p2p.P2PService;
 
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
-import bisq.common.crypto.KeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
@@ -59,8 +58,6 @@ import javafx.beans.value.ChangeListener;
 
 import javax.crypto.SecretKey;
 
-import java.security.PublicKey;
-
 import java.io.IOException;
 
 import java.util.List;
@@ -69,9 +66,12 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
+
 /**
  * Publishes blind vote tx and blind vote payload to p2p network.
- * Maintains MyBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup.
+ * Maintains MyBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup during blind
+ * vote phase of current cycle.
  */
 @Slf4j
 public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChainListener {
@@ -88,7 +88,6 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
     private ChangeListener<Number> numConnectedPeersListener;
     @Getter
     private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
-    private final PublicKey signaturePubKey;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -105,8 +104,7 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
                                   BtcWalletService btcWalletService,
                                   BallotListService ballotListService,
                                   MyVoteListService myVoteListService,
-                                  ProposalValidator proposalValidator,
-                                  KeyRing keyRing) {
+                                  ProposalValidator proposalValidator) {
         this.p2PService = p2PService;
         this.stateService = stateService;
         this.periodService = periodService;
@@ -117,7 +115,6 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
         this.ballotListService = ballotListService;
         this.myVoteListService = myVoteListService;
         this.proposalValidator = proposalValidator;
-        signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
     }
 
 
@@ -218,7 +215,7 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
             BlindVote blindVote = new BlindVote(encryptedVotes, blindVoteTx.getHashAsString(), stake.value);
             addToList(blindVote);
 
-            addToP2PNetworkAsProtectedData(blindVote, errorMessage -> {
+            addToP2PNetwork(blindVote, errorMessage -> {
                 log.error(errorMessage);
                 //TODO define specific exception
                 exceptionHandler.handleException(new Exception(errorMessage));
@@ -254,29 +251,28 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
     private void rePublishOnceWellConnected() {
         if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
             p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
-            rePublish();
+
+            myBlindVoteList.forEach(blindVote -> {
+                final String txId = blindVote.getTxId();
+                if (periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE) &&
+                        periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
+                    addToP2PNetwork(blindVote, null);
+                }
+            });
         }
     }
 
-    private void rePublish() {
-        myBlindVoteList.forEach(blindVote -> {
-            final String txId = blindVote.getTxId();
-            if (periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE) &&
-                    periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
-                if (!addToP2PNetworkAsProtectedData(blindVote))
-                    log.warn("Adding of blindVote to P2P network failed.\nblindVote=" + blindVote);
-            }
-        });
-    }
+    private void addToP2PNetwork(BlindVote blindVote, @Nullable ErrorMessageHandler errorMessageHandler) {
+        BlindVoteAppendOnlyPayload appendOnlyPayload = new BlindVoteAppendOnlyPayload(blindVote);
+        boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
 
-    private void addToP2PNetworkAsProtectedData(BlindVote blindVote, ErrorMessageHandler errorMessageHandler) {
-        final boolean success = addToP2PNetworkAsProtectedData(blindVote);
         if (success) {
             log.debug("We added a blindVote to the P2P network. blindVote=" + blindVote);
         } else {
             final String msg = "Adding of blindVote to P2P network failed. blindVote=" + blindVote;
             log.error(msg);
-            errorMessageHandler.handleErrorMessage(msg);
+            if (errorMessageHandler != null)
+                errorMessageHandler.handleErrorMessage(msg);
         }
     }
 
@@ -285,10 +281,6 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
             myBlindVoteList.add(blindVote);
             persist();
         }
-    }
-
-    private boolean addToP2PNetworkAsProtectedData(BlindVote blindVote) {
-        return p2PService.addProtectedStorageEntry(new BlindVotePayload(blindVote, signaturePubKey), true);
     }
 
     private void persist() {

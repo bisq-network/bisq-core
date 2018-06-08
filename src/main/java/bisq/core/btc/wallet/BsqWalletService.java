@@ -349,10 +349,11 @@ public class BsqWalletService extends WalletService implements BlockListener {
                         TxOutput txOutput = txOptional.get().getOutputs().get(i);
                         if (stateService.isBsqTxOutputType(txOutput)) {
                             //TODO check why values are not the same
-                            if (txOutput.getValue() != output.getValue().value)
+                            if (txOutput.getValue() != output.getValue().value) {
                                 log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +
                                                 "txOutput.getValue()={}, output.getValue().value={}, txId={}",
                                         txOutput.getValue(), output.getValue().value, txId);
+                            }
 
                             // If it is a valid BSQ output we add it
                             result = result.add(Coin.valueOf(txOutput.getValue()));
@@ -518,6 +519,6 @@ public class BsqWalletService extends WalletService implements BlockListener {
     }
 
     public Address getUnusedAddress() {
-        return wallet.currentReceiveAddress();
+        return wallet.freshReceiveAddress();
     }
 }

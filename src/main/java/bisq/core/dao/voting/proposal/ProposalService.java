@@ -211,7 +211,8 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 if (!protectedStoreList.contains(proposal))
                     protectedStoreList.add(proposal);
             } else {
-                log.warn("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                //TODO called at startup when we are not in cycle of proposal
+                log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
                         proposal.getTxId(), stateService.getChainHeight());
             }
         }
@@ -246,7 +247,8 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                             proposalAppendOnlyPayload.getProposal().getTxId(), stateService.getChainHeight());
                 }
             } else {
-                log.warn("We received an invalid proposalAppendOnlyPayload. payload={}, blockHeightOfBreakStart={}",
+                //TODO called at startup when we are not in cycle of proposal
+                log.debug("We received an invalid proposalAppendOnlyPayload. payload={}, blockHeightOfBreakStart={}",
                         proposalAppendOnlyPayload, blockHeightOfBreakStart);
             }
         }

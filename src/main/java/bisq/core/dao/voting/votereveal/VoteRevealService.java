@@ -253,7 +253,7 @@ public class VoteRevealService {
             String blockHash = optionalBlock.get().getHash();
             blindVotes.stream()
                     .filter(blindVoteValidator::isValidAndConfirmed)
-                    .map(blindVote -> new BlindVoteAppendOnlyPayload(blindVote, blockHash))
+                    .map(BlindVoteAppendOnlyPayload::new)
                     .forEach(appendOnlyPayload -> {
                         boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
                         if (!success)

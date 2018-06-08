@@ -30,7 +30,6 @@ import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalPayload;
-import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVotePayload;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
@@ -198,8 +197,6 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return OfferPayload.fromProto(proto.getOfferPayload());
                 case PROPOSAL_PAYLOAD:
                     return ProposalPayload.fromProto(proto.getProposalPayload());
-                case BLIND_VOTE_PAYLOAD:
-                    return BlindVotePayload.fromProto(proto.getBlindVotePayload());
                 default:
                     throw new ProtobufferException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
             }

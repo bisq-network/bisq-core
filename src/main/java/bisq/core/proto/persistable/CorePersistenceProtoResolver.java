@@ -24,7 +24,6 @@ import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
-import bisq.core.dao.voting.blindvote.storage.protectedstorage.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.dao.voting.proposal.MyProposalList;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
@@ -116,8 +115,6 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return ProposalAppendOnlyStore.fromProto(proto.getProposalAppendOnlyStore());
                 case PROPOSAL_STORE:
                     return ProposalStore.fromProto(proto.getProposalStore(), networkProtoResolver);
-                case BLIND_VOTE_STORE:
-                    return BlindVoteStore.fromProto(proto.getBlindVoteStore(), networkProtoResolver);
                 case STATE:
                     return State.fromProto(proto.getState());
                 case MY_PROPOSAL_LIST:
