@@ -36,7 +36,7 @@ import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVotePayload;
+import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 

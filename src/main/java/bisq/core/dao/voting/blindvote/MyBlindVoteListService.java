@@ -33,7 +33,7 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVotePayload;
+import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 

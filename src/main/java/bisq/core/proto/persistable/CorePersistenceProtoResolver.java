@@ -23,7 +23,7 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteStore;
+import bisq.core.dao.voting.blindvote.storage.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.dao.voting.proposal.MyProposalList;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStore;
