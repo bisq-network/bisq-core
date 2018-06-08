@@ -23,11 +23,11 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStore;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.dao.voting.proposal.MyProposalList;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyStore;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalStore;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStore;
+import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalStore;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
@@ -109,12 +109,12 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
-                case BLIND_VOTE_APPEND_ONLY_STORE:
-                    return BlindVoteAppendOnlyStore.fromProto(proto.getBlindVoteAppendOnlyStore());
-                case PROPOSAL_APPEND_ONLY_STORE:
-                    return ProposalAppendOnlyStore.fromProto(proto.getProposalAppendOnlyStore());
+                case BLIND_VOTE_STORE:
+                    return BlindVoteStore.fromProto(proto.getBlindVoteStore());
                 case PROPOSAL_STORE:
-                    return ProposalStore.fromProto(proto.getProposalStore(), networkProtoResolver);
+                    return ProposalStore.fromProto(proto.getProposalStore());
+                case TEMP_PROPOSAL_STORE:
+                    return TempProposalStore.fromProto(proto.getTempProposalStore(), networkProtoResolver);
                 case STATE:
                     return State.fromProto(proto.getState());
                 case MY_PROPOSAL_LIST:

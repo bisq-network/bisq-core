@@ -21,7 +21,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import bisq.network.p2p.storage.P2PDataStorage;
 
@@ -56,8 +56,8 @@ public class ProposalUtils {
 
     public static List<Proposal> getProposalsFromAppendOnlyStore(P2PDataStorage p2pDataStorage) {
         return p2pDataStorage.getAppendOnlyDataStoreMap().values().stream()
-                .filter(persistableNetworkPayload -> persistableNetworkPayload instanceof ProposalAppendOnlyPayload)
-                .map(persistableNetworkPayload -> ((ProposalAppendOnlyPayload) persistableNetworkPayload).getProposal())
+                .filter(persistableNetworkPayload -> persistableNetworkPayload instanceof ProposalPayload)
+                .map(persistableNetworkPayload -> ((ProposalPayload) persistableNetworkPayload).getProposal())
                 .collect(Collectors.toList());
     }
 }

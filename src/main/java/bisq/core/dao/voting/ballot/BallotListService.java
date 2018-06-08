@@ -20,7 +20,7 @@ package bisq.core.dao.voting.ballot;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.proposal.ProposalService;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
@@ -57,11 +57,11 @@ public class BallotListService implements PersistedDataHost {
                              Storage<BallotList> storage) {
         this.storage = storage;
 
-        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalAppendOnlyPayload>) c -> {
+        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalPayload>) c -> {
             c.next();
             if (c.wasAdded())
                 c.getAddedSubList().stream()
-                        .map(ProposalAppendOnlyPayload::getProposal)
+                        .map(ProposalPayload::getProposal)
                         .filter(proposal -> !BallotUtils.listContainsProposal(proposal, ballotList.getList()))
                         .forEach(proposal -> {
                             Ballot ballot = new Ballot(proposal);

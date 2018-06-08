@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.blindvote.storage.appendonly;
+package bisq.core.dao.voting.proposal.storage.appendonly;
 
 import bisq.network.p2p.storage.P2PDataStorage;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
@@ -34,8 +34,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BlindVoteAppendOnlyStorageService extends StoreService<BlindVoteAppendOnlyStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "BlindVoteAppendOnlyStore";
+public class ProposalStorageService extends StoreService<ProposalStore, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "ProposalStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -43,8 +43,8 @@ public class BlindVoteAppendOnlyStorageService extends StoreService<BlindVoteApp
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteAppendOnlyStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                             Storage<BlindVoteAppendOnlyStore> persistableNetworkPayloadMapStorage) {
+    public ProposalStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
+                                  Storage<ProposalStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -64,7 +64,7 @@ public class BlindVoteAppendOnlyStorageService extends StoreService<BlindVoteApp
 
     @Override
     public boolean canHandle(PersistableNetworkPayload payload) {
-        return payload instanceof BlindVoteAppendOnlyPayload;
+        return payload instanceof ProposalPayload;
     }
 
 
@@ -73,7 +73,7 @@ public class BlindVoteAppendOnlyStorageService extends StoreService<BlindVoteApp
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected BlindVoteAppendOnlyStore createStore() {
-        return new BlindVoteAppendOnlyStore();
+    protected ProposalStore createStore() {
+        return new ProposalStore();
     }
 }

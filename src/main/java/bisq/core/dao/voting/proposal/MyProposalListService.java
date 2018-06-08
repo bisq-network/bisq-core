@@ -27,7 +27,7 @@ import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.ProposalPayload;
+import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalPayload;
 
 import bisq.network.p2p.P2PService;
 
@@ -183,7 +183,7 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
 
     public boolean remove(Proposal proposal) {
         if (ProposalUtils.canRemoveProposal(proposal, stateService, periodService)) {
-            boolean success = p2PService.removeData(new ProposalPayload(proposal, signaturePubKey), true);
+            boolean success = p2PService.removeData(new TempProposalPayload(proposal, signaturePubKey), true);
             if (!success)
                 log.warn("Removal of proposal from p2p network failed. proposal={}", proposal);
 
@@ -226,7 +226,7 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
     }
 
     private boolean addToP2PNetworkAsProtectedData(Proposal proposal) {
-        return p2PService.addProtectedStorageEntry(new ProposalPayload(proposal, signaturePubKey), true);
+        return p2PService.addProtectedStorageEntry(new TempProposalPayload(proposal, signaturePubKey), true);
     }
 
     private void addToList(Proposal proposal) {

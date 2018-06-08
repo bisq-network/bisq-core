@@ -15,19 +15,16 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.storage.protectedstorage;
+package bisq.core.dao.voting.proposal.storage.appendonly;
 
 import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 
-import bisq.common.proto.network.NetworkProtoResolver;
 import bisq.common.proto.persistable.PersistableEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
-
-import javax.inject.Inject;
 
 import java.util.List;
 import java.util.Map;
@@ -46,9 +43,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProposalStore implements PersistableEnvelope {
     @Getter
-    private Map<P2PDataStorage.ByteArray, ProtectedStorageEntry> map = new ConcurrentHashMap<>();
+    private Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> map = new ConcurrentHashMap<>();
 
-    @Inject
     ProposalStore() {
     }
 
@@ -57,8 +53,8 @@ public class ProposalStore implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalStore(List<ProtectedStorageEntry> list) {
-        list.forEach(entry -> map.put(P2PDataStorage.getCompactHashAsByteArray(entry.getProtectedStoragePayload()), entry));
+    private ProposalStore(List<ProposalPayload> list) {
+        list.forEach(item -> map.put(new P2PDataStorage.ByteArray(item.getHash()), item));
     }
 
     public Message toProtoMessage() {
@@ -68,16 +64,16 @@ public class ProposalStore implements PersistableEnvelope {
     }
 
     private PB.ProposalStore.Builder getBuilder() {
-        final List<PB.ProtectedStorageEntry> protoList = map.values().stream()
-                .map(ProtectedStorageEntry::toProtectedStorageEntry)
+        final List<PB.ProposalPayload> protoList = map.values().stream()
+                .map(payload -> (ProposalPayload) payload)
+                .map(ProposalPayload::toProtoProposalPayload)
                 .collect(Collectors.toList());
         return PB.ProposalStore.newBuilder().addAllItems(protoList);
     }
 
-    public static PersistableEnvelope fromProto(PB.ProposalStore proto, NetworkProtoResolver networkProtoResolver) {
-        List<ProtectedStorageEntry> list = proto.getItemsList().stream()
-                .map(entry -> ProtectedStorageEntry.fromProto(entry, networkProtoResolver))
-                .collect(Collectors.toList());
+    public static PersistableEnvelope fromProto(PB.ProposalStore proto) {
+        List<ProposalPayload> list = proto.getItemsList().stream()
+                .map(ProposalPayload::fromProto).collect(Collectors.toList());
         return new ProposalStore(list);
     }
 

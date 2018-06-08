@@ -21,8 +21,8 @@ import bisq.core.dao.state.ParseBlockChainListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyStorageService;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVotePayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteStorageService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
@@ -51,7 +51,7 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
     private final PeriodService periodService;
     private final BlindVoteValidator blindVoteValidator;
 
-    private final ObservableList<BlindVoteAppendOnlyPayload> appendOnlyStoreList = FXCollections.observableArrayList();
+    private final ObservableList<BlindVotePayload> appendOnlyStoreList = FXCollections.observableArrayList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
     public BlindVoteService(StateService stateService,
                             P2PService p2PService,
                             PeriodService periodService,
-                            BlindVoteAppendOnlyStorageService blindVoteAppendOnlyStorageService,
+                            BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             ProtectedDataStoreService protectedDataStoreService,
                             BlindVoteValidator blindVoteValidator) {
@@ -71,7 +71,7 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
         this.periodService = periodService;
         this.blindVoteValidator = blindVoteValidator;
 
-        appendOnlyDataStoreService.addService(blindVoteAppendOnlyStorageService);
+        appendOnlyDataStoreService.addService(blindVoteStorageService);
         stateService.addParseBlockChainListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
@@ -112,7 +112,7 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
     public List<BlindVote> getVerifiedBlindVotes() {
         return appendOnlyStoreList.stream()
                 .filter(payload -> blindVoteValidator.isValidAndConfirmed(payload.getBlindVote()))
-                .map(BlindVoteAppendOnlyPayload::getBlindVote)
+                .map(BlindVotePayload::getBlindVote)
                 .collect(Collectors.toList());
     }
 
@@ -154,10 +154,10 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
     }
 
     private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
-        if (persistableNetworkPayload instanceof BlindVoteAppendOnlyPayload) {
-            BlindVoteAppendOnlyPayload blindVoteAppendOnlyPayload = (BlindVoteAppendOnlyPayload) persistableNetworkPayload;
-            if (!appendOnlyStoreList.contains(blindVoteAppendOnlyPayload))
-                appendOnlyStoreList.add(blindVoteAppendOnlyPayload);
+        if (persistableNetworkPayload instanceof BlindVotePayload) {
+            BlindVotePayload blindVotePayload = (BlindVotePayload) persistableNetworkPayload;
+            if (!appendOnlyStoreList.contains(blindVotePayload))
+                appendOnlyStoreList.add(blindVotePayload);
         }
     }
 }

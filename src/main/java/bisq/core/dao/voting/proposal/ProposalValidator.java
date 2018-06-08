@@ -23,7 +23,7 @@ import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import bisq.common.util.Utilities;
 
@@ -117,7 +117,7 @@ public class ProposalValidator {
         }
     }
 
-    public boolean hasCorrectBlockHash(ProposalAppendOnlyPayload appendOnlyPayload,
+    public boolean hasCorrectBlockHash(ProposalPayload appendOnlyPayload,
                                        int blockHeightOfBreakStart,
                                        StateService stateService) {
         final Optional<Block> optionalBlock = stateService.getBlockAtHeight(blockHeightOfBreakStart);
@@ -126,7 +126,7 @@ public class ProposalValidator {
             final boolean hasCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
             if (!hasCorrectBlockHash) {
                 //TODO called at startup when we are not in cycle of proposal
-                log.debug("ProposalAppendOnlyPayload has not correct block hash. blockHeightOfBreakStart={}",
+                log.debug("ProposalPayload has not correct block hash. blockHeightOfBreakStart={}",
                         blockHeightOfBreakStart);
                 return false;
             }

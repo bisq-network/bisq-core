@@ -23,7 +23,7 @@ import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalAppendOnlyPayload;
+import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import org.bitcoinj.core.TransactionConfidence;
 
@@ -88,7 +88,7 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
         proposalService.getProtectedStoreList().addListener((ListChangeListener<Proposal>) c -> {
             updateLists();
         });
-        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalAppendOnlyPayload>) c -> {
+        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalPayload>) c -> {
             updateLists();
         });
 
@@ -126,7 +126,7 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
     private void updateLists() {
         final List<Proposal> tempProposals = proposalService.getProtectedStoreList();
         final Set<Proposal> verifiedProposals = proposalService.getAppendOnlyStoreList().stream()
-                .map(ProposalAppendOnlyPayload::getProposal)
+                .map(ProposalPayload::getProposal)
                 .collect(Collectors.toSet());
         Set<Proposal> set = new HashSet<>(tempProposals);
         set.addAll(verifiedProposals);

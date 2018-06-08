@@ -15,16 +15,19 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.storage.appendonly;
+package bisq.core.dao.voting.proposal.storage.protectedstorage;
 
 import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 
+import bisq.common.proto.network.NetworkProtoResolver;
 import bisq.common.proto.persistable.PersistableEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
+
+import javax.inject.Inject;
 
 import java.util.List;
 import java.util.Map;
@@ -41,11 +44,12 @@ import lombok.extern.slf4j.Slf4j;
  * definition and provide a hashMap for the domain access.
  */
 @Slf4j
-public class ProposalAppendOnlyStore implements PersistableEnvelope {
+public class TempProposalStore implements PersistableEnvelope {
     @Getter
-    private Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> map = new ConcurrentHashMap<>();
+    private Map<P2PDataStorage.ByteArray, ProtectedStorageEntry> map = new ConcurrentHashMap<>();
 
-    ProposalAppendOnlyStore() {
+    @Inject
+    TempProposalStore() {
     }
 
 
@@ -53,28 +57,28 @@ public class ProposalAppendOnlyStore implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalAppendOnlyStore(List<ProposalAppendOnlyPayload> list) {
-        list.forEach(item -> map.put(new P2PDataStorage.ByteArray(item.getHash()), item));
+    private TempProposalStore(List<ProtectedStorageEntry> list) {
+        list.forEach(entry -> map.put(P2PDataStorage.getCompactHashAsByteArray(entry.getProtectedStoragePayload()), entry));
     }
 
     public Message toProtoMessage() {
         return PB.PersistableEnvelope.newBuilder()
-                .setProposalAppendOnlyStore(getBuilder())
+                .setTempProposalStore(getBuilder())
                 .build();
     }
 
-    private PB.ProposalAppendOnlyStore.Builder getBuilder() {
-        final List<PB.ProposalAppendOnlyPayload> protoList = map.values().stream()
-                .map(payload -> (ProposalAppendOnlyPayload) payload)
-                .map(ProposalAppendOnlyPayload::toProtoProposalPayload)
+    private PB.TempProposalStore.Builder getBuilder() {
+        final List<PB.ProtectedStorageEntry> protoList = map.values().stream()
+                .map(ProtectedStorageEntry::toProtectedStorageEntry)
                 .collect(Collectors.toList());
-        return PB.ProposalAppendOnlyStore.newBuilder().addAllItems(protoList);
+        return PB.TempProposalStore.newBuilder().addAllItems(protoList);
     }
 
-    public static PersistableEnvelope fromProto(PB.ProposalAppendOnlyStore proto) {
-        List<ProposalAppendOnlyPayload> list = proto.getItemsList().stream()
-                .map(ProposalAppendOnlyPayload::fromProto).collect(Collectors.toList());
-        return new ProposalAppendOnlyStore(list);
+    public static PersistableEnvelope fromProto(PB.TempProposalStore proto, NetworkProtoResolver networkProtoResolver) {
+        List<ProtectedStorageEntry> list = proto.getItemsList().stream()
+                .map(entry -> ProtectedStorageEntry.fromProto(entry, networkProtoResolver))
+                .collect(Collectors.toList());
+        return new TempProposalStore(list);
     }
 
     public boolean containsKey(P2PDataStorage.ByteArray hash) {

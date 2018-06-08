@@ -36,7 +36,7 @@ import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 
@@ -253,7 +253,7 @@ public class VoteRevealService {
             String blockHash = optionalBlock.get().getHash();
             blindVotes.stream()
                     .filter(blindVoteValidator::isValidAndConfirmed)
-                    .map(BlindVoteAppendOnlyPayload::new)
+                    .map(BlindVotePayload::new)
                     .forEach(appendOnlyPayload -> {
                         boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
                         if (!success)

@@ -104,7 +104,7 @@ public class BlindVoteValidator {
         }
     }
 
-   /* public boolean isAppendOnlyPayloadValid(BlindVoteAppendOnlyPayload appendOnlyPayload,
+   /* public boolean isAppendOnlyPayloadValid(BlindVotePayload appendOnlyPayload,
                                             int publishTriggerBlockHeight,
                                             StateService stateService) {
         final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
@@ -115,9 +115,9 @@ public class BlindVoteValidator {
             final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
             final boolean isCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
             if (!isInTolerance)
-                log.warn("BlindVoteAppendOnlyPayload is not in time tolerance");
+                log.warn("BlindVotePayload is not in time tolerance");
             if (!isCorrectBlockHash)
-                log.warn("BlindVoteAppendOnlyPayload has not correct block hash");
+                log.warn("BlindVotePayload has not correct block hash");
             return isInTolerance && isCorrectBlockHash;
         } else {
             log.debug("block at publishTriggerBlockHeight is not present.");

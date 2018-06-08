@@ -15,10 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.storage.appendonly;
+package bisq.core.dao.voting.proposal.storage.protectedstorage;
 
 import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
+import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 import bisq.network.p2p.storage.persistence.StoreService;
 
 import bisq.common.storage.Storage;
@@ -34,8 +34,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppendOnlyStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "ProposalAppendOnlyStore";
+public class TempProposalStorageService extends StoreService<TempProposalStore, ProtectedStorageEntry> {
+    public static final String FILE_NAME = "TempProposalStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -43,8 +43,8 @@ public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppen
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalAppendOnlyStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                            Storage<ProposalAppendOnlyStore> persistableNetworkPayloadMapStorage) {
+    public TempProposalStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
+                                      Storage<TempProposalStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -58,13 +58,13 @@ public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppen
     }
 
     @Override
-    public Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> getMap() {
+    public Map<P2PDataStorage.ByteArray, ProtectedStorageEntry> getMap() {
         return store.getMap();
     }
 
     @Override
-    public boolean canHandle(PersistableNetworkPayload payload) {
-        return payload instanceof ProposalAppendOnlyPayload;
+    public boolean canHandle(ProtectedStorageEntry entry) {
+        return entry.getProtectedStoragePayload() instanceof TempProposalPayload;
     }
 
 
@@ -73,7 +73,7 @@ public class ProposalAppendOnlyStorageService extends StoreService<ProposalAppen
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected ProposalAppendOnlyStore createStore() {
-        return new ProposalAppendOnlyStore();
+    protected TempProposalStore createStore() {
+        return new TempProposalStore();
     }
 }

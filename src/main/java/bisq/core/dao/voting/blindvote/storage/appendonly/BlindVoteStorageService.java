@@ -15,10 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.storage.protectedstorage;
+package bisq.core.dao.voting.blindvote.storage.appendonly;
 
 import bisq.network.p2p.storage.P2PDataStorage;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
+import bisq.network.p2p.storage.payload.PersistableNetworkPayload;
 import bisq.network.p2p.storage.persistence.StoreService;
 
 import bisq.common.storage.Storage;
@@ -34,8 +34,8 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ProposalStorageService extends StoreService<ProposalStore, ProtectedStorageEntry> {
-    public static final String FILE_NAME = "ProposalStore";
+public class BlindVoteStorageService extends StoreService<BlindVoteStore, PersistableNetworkPayload> {
+    public static final String FILE_NAME = "BlindVoteStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -43,8 +43,8 @@ public class ProposalStorageService extends StoreService<ProposalStore, Protecte
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ProposalStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
-                                  Storage<ProposalStore> persistableNetworkPayloadMapStorage) {
+    public BlindVoteStorageService(@Named(Storage.STORAGE_DIR) File storageDir,
+                                   Storage<BlindVoteStore> persistableNetworkPayloadMapStorage) {
         super(storageDir, persistableNetworkPayloadMapStorage);
     }
 
@@ -58,13 +58,13 @@ public class ProposalStorageService extends StoreService<ProposalStore, Protecte
     }
 
     @Override
-    public Map<P2PDataStorage.ByteArray, ProtectedStorageEntry> getMap() {
+    public Map<P2PDataStorage.ByteArray, PersistableNetworkPayload> getMap() {
         return store.getMap();
     }
 
     @Override
-    public boolean canHandle(ProtectedStorageEntry entry) {
-        return entry.getProtectedStoragePayload() instanceof ProposalPayload;
+    public boolean canHandle(PersistableNetworkPayload payload) {
+        return payload instanceof BlindVotePayload;
     }
 
 
@@ -73,7 +73,7 @@ public class ProposalStorageService extends StoreService<ProposalStore, Protecte
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected ProposalStore createStore() {
-        return new ProposalStore();
+    protected BlindVoteStore createStore() {
+        return new BlindVoteStore();
     }
 }

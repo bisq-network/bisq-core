@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * ProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
+ * TempProposalPayload is wrapper for proposal sent over wire as well as it gets persisted.
  * Data size: about 1.245 bytes (pubKey makes it big)
  */
 @Immutable
@@ -61,7 +61,7 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
+public class TempProposalPayload implements LazyProcessedPayload, ProtectedStoragePayload,
         ExpirablePayload, CapabilityRequiringPayload, PersistablePayload {
 
     protected final Proposal proposal;
@@ -76,8 +76,8 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
     // Used just for caching. Don't persist.
     private final transient PublicKey ownerPubKey;
 
-    public ProposalPayload(Proposal proposal,
-                           PublicKey ownerPublicKey) {
+    public TempProposalPayload(Proposal proposal,
+                               PublicKey ownerPublicKey) {
         this(proposal, Sig.getPublicKeyBytes(ownerPublicKey), null);
     }
 
@@ -85,9 +85,9 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected ProposalPayload(Proposal proposal,
-                              byte[] ownerPubPubKeyEncoded,
-                              @Nullable Map<String, String> extraDataMap) {
+    protected TempProposalPayload(Proposal proposal,
+                                  byte[] ownerPubPubKeyEncoded,
+                                  @Nullable Map<String, String> extraDataMap) {
         this.proposal = proposal;
         this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.extraDataMap = extraDataMap;
@@ -95,8 +95,8 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
         ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
-    public PB.ProposalPayload.Builder getProposalPayloadBuilder() {
-        final PB.ProposalPayload.Builder builder = PB.ProposalPayload.newBuilder()
+    public PB.TempProposalPayload.Builder getTempProposalPayloadBuilder() {
+        final PB.TempProposalPayload.Builder builder = PB.TempProposalPayload.newBuilder()
                 .setProposal(proposal.getProposalBuilder())
                 .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded));
         Optional.ofNullable(extraDataMap).ifPresent(builder::putAllExtraData);
@@ -105,18 +105,18 @@ public class ProposalPayload implements LazyProcessedPayload, ProtectedStoragePa
 
     @Override
     public PB.StoragePayload toProtoMessage() {
-        return PB.StoragePayload.newBuilder().setProposalPayload(getProposalPayloadBuilder()).build();
+        return PB.StoragePayload.newBuilder().setTempProposalPayload(getTempProposalPayloadBuilder()).build();
     }
 
-    public static ProposalPayload fromProto(PB.ProposalPayload proto) {
-        return new ProposalPayload(Proposal.fromProto(proto.getProposal()),
+    public static TempProposalPayload fromProto(PB.TempProposalPayload proto) {
+        return new TempProposalPayload(Proposal.fromProto(proto.getProposal()),
                 proto.getOwnerPubKeyEncoded().toByteArray(),
                 CollectionUtils.isEmpty(proto.getExtraDataMap()) ? null : proto.getExtraDataMap());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ProtectedStoragePayload
+    // TempStoragePayload
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override

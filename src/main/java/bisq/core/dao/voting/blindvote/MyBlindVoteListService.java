@@ -33,7 +33,7 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteAppendOnlyPayload;
+import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 
@@ -263,7 +263,7 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
     }
 
     private void addToP2PNetwork(BlindVote blindVote, @Nullable ErrorMessageHandler errorMessageHandler) {
-        BlindVoteAppendOnlyPayload appendOnlyPayload = new BlindVoteAppendOnlyPayload(blindVote);
+        BlindVotePayload appendOnlyPayload = new BlindVotePayload(blindVote);
         boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
 
         if (success) {
