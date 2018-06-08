@@ -27,7 +27,7 @@ import bisq.core.dao.voting.blindvote.storage.appendonly.BlindVoteStore;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.dao.voting.proposal.MyProposalList;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStore;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalStore;
+import bisq.core.dao.voting.proposal.storage.temp.TempProposalStore;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;

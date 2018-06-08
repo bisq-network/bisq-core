@@ -25,8 +25,8 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStorageService;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalPayload;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalStorageService;
+import bisq.core.dao.voting.proposal.storage.temp.TempProposalPayload;
+import bisq.core.dao.voting.proposal.storage.temp.TempProposalStorageService;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.storage.HashMapChangedListener;

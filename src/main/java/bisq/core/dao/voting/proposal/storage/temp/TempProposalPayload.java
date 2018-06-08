@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.storage.protectedstorage;
+package bisq.core.dao.voting.proposal.storage.temp;
 
 import bisq.core.dao.voting.proposal.Proposal;
 

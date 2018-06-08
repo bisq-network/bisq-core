@@ -29,7 +29,7 @@ import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
 import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
-import bisq.core.dao.voting.proposal.storage.protectedstorage.TempProposalPayload;
+import bisq.core.dao.voting.proposal.storage.temp.TempProposalPayload;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
