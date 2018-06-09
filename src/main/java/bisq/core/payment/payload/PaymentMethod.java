@@ -39,6 +39,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Supported payment methods within Bisq. All additions, removals and changes should be
+ * reflected in the documentation at https://docs.bisq.network/payment-methods.html
+ */
 @EqualsAndHashCode(exclude = {"maxTradePeriod", "maxTradeLimit"})
 @ToString
 @Slf4j
