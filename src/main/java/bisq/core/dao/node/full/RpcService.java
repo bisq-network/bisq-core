@@ -204,7 +204,7 @@ public class RpcService {
         ListenableFuture<bisq.core.dao.state.blockchain.Block> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
             String blockHash = client.getBlockHash(blockHeight);
-            Block btcdBlock = client.getBlock(blockHash);
+            Block btcdBlock = client.getBlock(blockHash);  // hash, 2 -> 2 is full tx list
             List<Tx> txList = getTxList(btcdBlock);
             log.info("requestBtcBlock with all txs took {} ms at blockHeight {}; txList.size={}",
                     System.currentTimeMillis() - startTs, blockHeight, txList.size());

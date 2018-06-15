@@ -27,6 +27,7 @@ import lombok.Getter;
  */
 
 public enum OpReturnType {
+    //TODO remove
     VALUE_PADDING((byte) 0x01),
     PROPOSAL((byte) 0x02),
     COMPENSATION_REQUEST((byte) 0x03),
