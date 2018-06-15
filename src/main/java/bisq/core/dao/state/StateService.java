@@ -24,6 +24,7 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.proposal.param.Param;
@@ -109,8 +110,8 @@ public class StateService {
         state.getTxTypeMap().putAll(snapshot.getTxTypeMap());
         state.getBurntFeeMap().clear();
         state.getBurntFeeMap().putAll(snapshot.getBurntFeeMap());
-        state.getIssuanceBlockHeightMap().clear();
-        state.getIssuanceBlockHeightMap().putAll(snapshot.getIssuanceBlockHeightMap());
+        state.getIssuanceMap().clear();
+        state.getIssuanceMap().putAll(snapshot.getIssuanceMap());
         state.getUnspentTxOutputMap().clear();
         state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
         state.getTxOutputTypeMap().clear();
@@ -198,8 +199,9 @@ public class StateService {
         state.removeUnspentTxOutput(txOutput);
     }
 
-    public void addIssuanceTxOutput(TxOutput txOutput, int chainHeight) {
-        state.setIssuanceBlockHeight(txOutput, chainHeight);
+    public void addIssuance(Issuance issuance) {
+        TxOutput txOutput = issuance.getTxOutput();
+        state.addIssuance(issuance);
         state.addUnspentTxOutput(txOutput);
     }
 
@@ -256,8 +258,8 @@ public class StateService {
         return state.getBurntFeeMap();
     }
 
-    public Map<String, Integer> getIssuanceBlockHeightMap() {
-        return state.getIssuanceBlockHeightMap();
+    public Map<TxOutput.Key, Issuance> getIssuanceMap() {
+        return state.getIssuanceMap();
     }
 
     // TxOutput
@@ -319,11 +321,20 @@ public class StateService {
     }
 
     public boolean isIssuanceTx(String txId) {
-        return getIssuanceBlockHeightMap().containsKey(txId);
+        return getIssuance(txId).isPresent();
     }
 
     public int getIssuanceBlockHeight(String txId) {
-        return getIssuanceBlockHeightMap().getOrDefault(txId, 0);
+        return getIssuance(txId)
+                .map(Issuance::getChainHeight)
+                .orElse(0);
+    }
+
+    private Optional<Issuance> getIssuance(String txId) {
+        return getIssuanceMap().entrySet().stream()
+                .filter(entry -> entry.getKey().getTxId().equals(txId))
+                .map(Map.Entry::getValue)
+                .findFirst();
     }
 
     public Optional<Tx> getTx(String txId) {

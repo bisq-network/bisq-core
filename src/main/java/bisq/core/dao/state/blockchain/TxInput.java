@@ -23,7 +23,9 @@ import io.bisq.generated.protobuffer.PB;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -33,19 +35,24 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Value
 @EqualsAndHashCode
+@Slf4j
 public class TxInput implements PersistablePayload {
 
     public static TxInput clone(TxInput txInput) {
         return new TxInput(txInput.getConnectedTxOutputTxId(),
-                txInput.getConnectedTxOutputIndex());
+                txInput.getConnectedTxOutputIndex(),
+                txInput.getPubKey());
     }
 
     private final String connectedTxOutputTxId;
     private final int connectedTxOutputIndex;
+    @Nullable
+    private final String pubKey;
 
-    public TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex) {
+    public TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex, @Nullable String pubKey) {
         this.connectedTxOutputTxId = connectedTxOutputTxId;
         this.connectedTxOutputIndex = connectedTxOutputIndex;
+        this.pubKey = pubKey;
     }
 
 
@@ -63,7 +70,8 @@ public class TxInput implements PersistablePayload {
 
     public static TxInput fromProto(PB.TxInput proto) {
         return new TxInput(proto.getConnectedTxOutputTxId(),
-                proto.getConnectedTxOutputIndex());
+                proto.getConnectedTxOutputIndex(),
+                proto.getPubKey());
     }
 
 
@@ -71,7 +79,7 @@ public class TxInput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public TxOutput.Key getTxIdIndexTuple() {
+    public TxOutput.Key getConnectedTxOutputKey() {
         return new TxOutput.Key(connectedTxOutputTxId, connectedTxOutputIndex);
     }
 
@@ -80,6 +88,7 @@ public class TxInput implements PersistablePayload {
         return "TxInput{" +
                 "\n     connectedTxOutputTxId='" + connectedTxOutputTxId + '\'' +
                 ",\n     connectedTxOutputIndex=" + connectedTxOutputIndex +
+                ",\n     pubKey=" + pubKey +
                 "\n}";
     }
 }

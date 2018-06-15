@@ -17,14 +17,18 @@
 
 package bisq.core.dao.voting.voteresult.issuance;
 
+import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxInput;
+import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +46,7 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public IssuanceService(StateService stateService,
-                           PeriodService periodService) {
+    public IssuanceService(StateService stateService, PeriodService periodService) {
         this.stateService = stateService;
         this.periodService = periodService;
     }
@@ -53,14 +56,26 @@ public class IssuanceService {
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
-                    stateService.addIssuanceTxOutput(txOutput, chainHeight);
+                    long amount = compensationProposal.getRequestedBsq().value;
+                    long date = compensationProposal.getCreationDate().getTime();
+                    Optional<Tx> optionalTx = stateService.getTx(compensationProposal.getTxId());
+                    if (optionalTx.isPresent()) {
+                        Tx tx = optionalTx.get();
+                        // We use key from first input
+                        TxInput txInput = tx.getInputs().get(0);
+                        String inputPubKey = txInput.getPubKey();
+                        Issuance issuance = new Issuance(txOutput, chainHeight, amount, inputPubKey, date);
+                        stateService.addIssuance(issuance);
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("\n################################################################################\n");
-                    sb.append("We issued new BSQ to tx with ID ").append(txOutput.getTxId())
-                            .append("\nfor compensationProposal with UID ").append(compensationProposal.getUid())
-                            .append("\n################################################################################\n");
-                    log.info(sb.toString());
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("\n################################################################################\n");
+                        sb.append("We issued new BSQ to tx with ID ").append(txOutput.getTxId())
+                                .append("\nfor compensationProposal with UID ").append(compensationProposal.getUid())
+                                .append("\n################################################################################\n");
+                        log.info(sb.toString());
+                    } else {
+                        log.error("Tx for compensation request not found. txId={}", compensationProposal.getTxId());
+                    }
                 });
     }
 
