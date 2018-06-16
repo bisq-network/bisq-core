@@ -186,6 +186,8 @@ public class BisqEnvironment extends StandardEnvironment {
     @Setter
     protected boolean isBitcoinLocalhostNodeRunning;
     @Getter
+    protected String desktopWithHttpApi, desktopWithGrpcApi;
+    @Getter
     protected List<String> bannedSeedNodes, bannedBtcNodes, bannedPriceRelayNodes;
 
     protected final String btcNodes, seedNodes, ignoreDevMsg, useDevPrivilegeKeys, useDevMode, useTorForBtc, rpcUser, rpcPassword,
@@ -220,6 +222,12 @@ public class BisqEnvironment extends StandardEnvironment {
                 appDataDir(userDataDir, appName);
         staticAppDataDir = appDataDir;
 
+        desktopWithHttpApi = commandLineProperties.containsProperty(AppOptionKeys.DESKTOP_WITH_HTTP_API) ?
+                (String) commandLineProperties.getProperty(AppOptionKeys.DESKTOP_WITH_HTTP_API) :
+                "false";
+        desktopWithGrpcApi = commandLineProperties.containsProperty(AppOptionKeys.DESKTOP_WITH_GRPC_API) ?
+                (String) commandLineProperties.getProperty(AppOptionKeys.DESKTOP_WITH_GRPC_API) :
+                "false";
         ignoreDevMsg = commandLineProperties.containsProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY) ?
                 (String) commandLineProperties.getProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY) :
                 "";
@@ -425,6 +433,8 @@ public class BisqEnvironment extends StandardEnvironment {
                 setProperty(NetworkOptionKeys.SOCKS_5_PROXY_HTTP_ADDRESS, socks5ProxyHttpAddress);
 
                 setProperty(AppOptionKeys.APP_DATA_DIR_KEY, appDataDir);
+                setProperty(AppOptionKeys.DESKTOP_WITH_HTTP_API, desktopWithHttpApi);
+                setProperty(AppOptionKeys.DESKTOP_WITH_GRPC_API, desktopWithGrpcApi);
                 setProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY, ignoreDevMsg);
                 setProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, useDevPrivilegeKeys);
                 setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);

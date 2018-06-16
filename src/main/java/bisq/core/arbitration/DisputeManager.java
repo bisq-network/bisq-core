@@ -27,10 +27,9 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
-import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.locale.Res;
+import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.Contract;
 import bisq.core.trade.Tradable;
@@ -64,6 +63,15 @@ import com.google.inject.Inject;
 
 import javax.inject.Named;
 
+import com.google.common.util.concurrent.FutureCallback;
+
+import org.fxmisc.easybind.EasyBind;
+import org.fxmisc.easybind.Subscription;
+
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import java.io.File;
@@ -72,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,6 +90,12 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import lombok.Getter;
+
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 
 public class DisputeManager implements PersistedDataHost {
     private static final Logger log = LoggerFactory.getLogger(DisputeManager.class);
@@ -101,6 +116,10 @@ public class DisputeManager implements PersistedDataHost {
     private final Map<String, Dispute> openDisputes;
     private final Map<String, Dispute> closedDisputes;
     private final Map<String, Timer> delayMsgMap = new HashMap<>();
+
+    private final Map<String, Subscription> disputeIsClosedSubscriptionsMap = new HashMap<>();
+    @Getter
+    private final IntegerProperty numOpenDisputes = new SimpleIntegerProperty();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -178,6 +197,38 @@ public class DisputeManager implements PersistedDataHost {
         tryApplyMessages();
 
         cleanupDisputes();
+
+        disputes.getList().addListener((ListChangeListener<Dispute>) change -> {
+            change.next();
+            onDisputesChangeListener(change.getAddedSubList(), change.getRemoved());
+        });
+        onDisputesChangeListener(disputes.getList(), null);
+    }
+
+    private void onDisputesChangeListener(List<? extends Dispute> addedList, @Nullable List<? extends Dispute> removedList) {
+        if (removedList != null) {
+            removedList.forEach(dispute -> {
+                String id = dispute.getId();
+                if (disputeIsClosedSubscriptionsMap.containsKey(id)) {
+                    disputeIsClosedSubscriptionsMap.get(id).unsubscribe();
+                    disputeIsClosedSubscriptionsMap.remove(id);
+                }
+            });
+        }
+        addedList.forEach(dispute -> {
+            String id = dispute.getId();
+            Subscription disputeStateSubscription = EasyBind.subscribe(dispute.isClosedProperty(),
+                    isClosed -> {
+                        // We get the event before the list gets updated, so we execute on next frame
+                        UserThread.execute(() -> {
+                            int openDisputes = disputes.getList().stream()
+                                    .filter(e -> !e.isClosed())
+                                    .collect(Collectors.toList()).size();
+                            numOpenDisputes.set(openDisputes);
+                        });
+                    });
+            disputeIsClosedSubscriptionsMap.put(id, disputeStateSubscription);
+        });
     }
 
     public void cleanupDisputes() {
@@ -191,7 +242,7 @@ public class DisputeManager implements PersistedDataHost {
 
         // If we have duplicate disputes we close the second one (might happen if both traders opened a dispute and arbitrator
         // was offline, so could not forward msg to other peer, then the arbitrator might have 4 disputes open for 1 trade)
-        openDisputes.entrySet().stream().forEach(openDisputeEntry -> {
+        openDisputes.entrySet().forEach(openDisputeEntry -> {
             String key = openDisputeEntry.getKey();
             if (closedDisputes.containsKey(key)) {
                 final Dispute closedDispute = closedDisputes.get(key);
@@ -695,6 +746,35 @@ public class DisputeManager implements PersistedDataHost {
                                 );
                                 Transaction committedDisputedPayoutTx = tradeWalletService.addTxToWallet(signedDisputedPayoutTx);
                                 log.debug("broadcast committedDisputedPayoutTx");
+                                tradeWalletService.broadcastTx(committedDisputedPayoutTx, new FutureCallback<Transaction>() {
+                                    @Override
+                                    public void onSuccess(Transaction transaction) {
+                                        log.debug("BroadcastTx succeeded. Transaction:" + transaction);
+
+                                        // after successful publish we send peer the tx
+
+                                        dispute.setDisputePayoutTxId(transaction.getHashAsString());
+                                        sendPeerPublishedPayoutTxMessage(transaction, dispute, contract);
+
+                                        // set state after payout as we call swapTradeEntryToAvailableEntry
+                                        if (tradeManager.getTradeById(dispute.getTradeId()).isPresent())
+                                            tradeManager.closeDisputedTrade(dispute.getTradeId());
+                                        else {
+                                            Optional<OpenOffer> openOfferOptional = openOfferManager.getOpenOfferById(dispute.getTradeId());
+                                            if (openOfferOptional.isPresent())
+                                                openOfferManager.closeOpenOffer(openOfferOptional.get().getOffer());
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(@NotNull Throwable t) {
+                                        log.error(t.getMessage());
+                                    }
+                                }, 15);
+
+                                //TODO
+                                /*Transaction committedDisputedPayoutTx = tradeWalletService.addTxToWallet(signedDisputedPayoutTx);
+                                log.debug("broadcast committedDisputedPayoutTx");
                                 tradeWalletService.broadcastTx(committedDisputedPayoutTx,
                                         new TxBroadcaster.Callback() {
                                             @Override
@@ -719,6 +799,7 @@ public class DisputeManager implements PersistedDataHost {
                                                 log.error(exception.getMessage());
                                             }
                                         }, 15);
+                                */
                             } catch (AddressFormatException | WalletException | TransactionVerificationException e) {
                                 e.printStackTrace();
                                 log.error("Error at traderSignAndFinalizeDisputedPayoutTx " + e.getMessage());

@@ -15,9 +15,15 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.core;
 
 import bisq.core.alert.AlertModule;
+import bisq.core.app.AppOptionKeys;
+import bisq.core.app.BisqEnvironment;
+import bisq.core.app.BisqFacade;
+import bisq.core.app.BisqSetup;
+import bisq.core.app.P2PNetworkSetup;
+import bisq.core.app.WalletAppSetup;
 import bisq.core.arbitration.ArbitratorModule;
 import bisq.core.btc.BitcoinModule;
 import bisq.core.dao.DaoModule;
@@ -25,6 +31,7 @@ import bisq.core.filter.FilterModule;
 import bisq.core.network.p2p.seed.DefaultSeedNodeRepository;
 import bisq.core.network.p2p.seed.SeedNodeAddressLookup;
 import bisq.core.offer.OfferModule;
+import bisq.core.presentation.CorePresentationModule;
 import bisq.core.proto.network.CoreNetworkProtoResolver;
 import bisq.core.proto.persistable.CorePersistenceProtoResolver;
 import bisq.core.trade.TradeModule;
@@ -43,6 +50,7 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.KeyStorage;
 import bisq.common.proto.network.NetworkProtoResolver;
 import bisq.common.proto.persistable.PersistenceProtoResolver;
+import bisq.common.storage.CorruptedDatabaseFilesHandler;
 import bisq.common.storage.Storage;
 
 import org.springframework.core.env.Environment;
@@ -54,24 +62,28 @@ import java.io.File;
 
 import static com.google.inject.name.Names.named;
 
-public class ModuleForAppWithP2p extends AppModule {
+public class CoreModule extends AppModule {
 
-    public ModuleForAppWithP2p(Environment environment) {
+    public CoreModule(Environment environment) {
         super(environment);
     }
 
     @Override
     protected void configure() {
-        configEnvironment();
+        bind(BisqSetup.class).in(Singleton.class);
+        bind(P2PNetworkSetup.class).in(Singleton.class);
+        bind(WalletAppSetup.class).in(Singleton.class);
+        bind(BisqFacade.class).in(Singleton.class);
+
+        bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
 
         bind(KeyStorage.class).in(Singleton.class);
         bind(KeyRing.class).in(Singleton.class);
         bind(User.class).in(Singleton.class);
         bind(Clock.class).in(Singleton.class);
-        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
-        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
         bind(Preferences.class).in(Singleton.class);
         bind(BridgeAddressProvider.class).to(Preferences.class).in(Singleton.class);
+        bind(CorruptedDatabaseFilesHandler.class).in(Singleton.class);
 
         bind(SeedNodeAddressLookup.class).in(Singleton.class);
         bind(SeedNodeRepository.class).to(DefaultSeedNodeRepository.class).in(Singleton.class);
@@ -81,6 +93,9 @@ public class ModuleForAppWithP2p extends AppModule {
 
         File keyStorageDir = new File(environment.getRequiredProperty(KeyStorage.KEY_STORAGE_DIR));
         bind(File.class).annotatedWith(named(KeyStorage.KEY_STORAGE_DIR)).toInstance(keyStorageDir);
+
+        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
+        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
 
         Boolean useDevPrivilegeKeys = environment.getProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, Boolean.class, false);
         bind(boolean.class).annotatedWith(Names.named(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS)).toInstance(useDevPrivilegeKeys);
@@ -98,45 +113,46 @@ public class ModuleForAppWithP2p extends AppModule {
         install(daoModule());
         install(alertModule());
         install(filterModule());
+        install(corePresentationModule());
     }
 
-    protected void configEnvironment() {
-        bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
-    }
-
-    protected TradeModule tradeModule() {
+    private TradeModule tradeModule() {
         return new TradeModule(environment);
     }
 
-    protected EncryptionServiceModule encryptionServiceModule() {
+    private EncryptionServiceModule encryptionServiceModule() {
         return new EncryptionServiceModule(environment);
     }
 
-    protected ArbitratorModule arbitratorModule() {
+    private ArbitratorModule arbitratorModule() {
         return new ArbitratorModule(environment);
     }
 
-    protected AlertModule alertModule() {
+    private AlertModule alertModule() {
         return new AlertModule(environment);
     }
 
-    protected FilterModule filterModule() {
+    private FilterModule filterModule() {
         return new FilterModule(environment);
     }
 
-    protected OfferModule offerModule() {
+    private OfferModule offerModule() {
         return new OfferModule(environment);
     }
 
-    protected P2PModule p2pModule() {
+    private P2PModule p2pModule() {
         return new P2PModule(environment);
     }
 
-    protected BitcoinModule bitcoinModule() {
+    private BitcoinModule bitcoinModule() {
         return new BitcoinModule(environment);
     }
 
-    protected DaoModule daoModule() {
+    private DaoModule daoModule() {
         return new DaoModule(environment);
+    }
+
+    private CorePresentationModule corePresentationModule() {
+        return new CorePresentationModule(environment);
     }
 }

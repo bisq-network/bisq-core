@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.core.app.misc;
 
 import bisq.core.dao.DaoSetup;
 import bisq.core.dao.voting.ballot.BallotListService;
