@@ -27,9 +27,10 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.locale.Res;
-import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.Contract;
 import bisq.core.trade.Tradable;
@@ -63,8 +64,6 @@ import com.google.inject.Inject;
 
 import javax.inject.Named;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import org.fxmisc.easybind.EasyBind;
 import org.fxmisc.easybind.Subscription;
 
@@ -92,8 +91,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
-
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -746,35 +743,6 @@ public class DisputeManager implements PersistedDataHost {
                                 );
                                 Transaction committedDisputedPayoutTx = tradeWalletService.addTxToWallet(signedDisputedPayoutTx);
                                 log.debug("broadcast committedDisputedPayoutTx");
-                                tradeWalletService.broadcastTx(committedDisputedPayoutTx, new FutureCallback<Transaction>() {
-                                    @Override
-                                    public void onSuccess(Transaction transaction) {
-                                        log.debug("BroadcastTx succeeded. Transaction:" + transaction);
-
-                                        // after successful publish we send peer the tx
-
-                                        dispute.setDisputePayoutTxId(transaction.getHashAsString());
-                                        sendPeerPublishedPayoutTxMessage(transaction, dispute, contract);
-
-                                        // set state after payout as we call swapTradeEntryToAvailableEntry
-                                        if (tradeManager.getTradeById(dispute.getTradeId()).isPresent())
-                                            tradeManager.closeDisputedTrade(dispute.getTradeId());
-                                        else {
-                                            Optional<OpenOffer> openOfferOptional = openOfferManager.getOpenOfferById(dispute.getTradeId());
-                                            if (openOfferOptional.isPresent())
-                                                openOfferManager.closeOpenOffer(openOfferOptional.get().getOffer());
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onFailure(@NotNull Throwable t) {
-                                        log.error(t.getMessage());
-                                    }
-                                }, 15);
-
-                                //TODO
-                                /*Transaction committedDisputedPayoutTx = tradeWalletService.addTxToWallet(signedDisputedPayoutTx);
-                                log.debug("broadcast committedDisputedPayoutTx");
                                 tradeWalletService.broadcastTx(committedDisputedPayoutTx,
                                         new TxBroadcaster.Callback() {
                                             @Override
@@ -799,7 +767,7 @@ public class DisputeManager implements PersistedDataHost {
                                                 log.error(exception.getMessage());
                                             }
                                         }, 15);
-                                */
+
                             } catch (AddressFormatException | WalletException | TransactionVerificationException e) {
                                 e.printStackTrace();
                                 log.error("Error at traderSignAndFinalizeDisputedPayoutTx " + e.getMessage());
