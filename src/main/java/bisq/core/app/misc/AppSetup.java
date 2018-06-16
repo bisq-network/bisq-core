@@ -15,7 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.core.app.misc;
+
+import bisq.core.app.BisqEnvironment;
+import bisq.core.app.SetupUtils;
 
 import bisq.network.crypto.EncryptionService;
 

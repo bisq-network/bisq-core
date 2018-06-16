@@ -222,6 +222,16 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
 
     protected abstract void startApplication();
 
+    // Once the application is ready we get that callback and we start the setup
+    protected void onApplicationStarted() {
+        startAppSetup();
+    }
+
+    protected void startAppSetup() {
+        BisqSetup bisqSetup = injector.getInstance(BisqSetup.class);
+        bisqSetup.start();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // GracefulShutDownHandler implementation
@@ -322,6 +332,14 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
         parser.accepts(AppOptionKeys.IGNORE_DEV_MSG_KEY,
                 description("If set to true all signed network_messages from bisq developers are ignored " +
                         "(Global alert, Version update alert, Filters for offers, nodes or trading account data)", false))
+                .withRequiredArg()
+                .ofType(boolean.class);
+        parser.accepts(AppOptionKeys.DESKTOP_WITH_HTTP_API,
+                description("If set to true Bisq Desktop starts with Http API", false))
+                .withRequiredArg()
+                .ofType(boolean.class);
+        parser.accepts(AppOptionKeys.DESKTOP_WITH_GRPC_API,
+                description("If set to true Bisq Desktop starts with gRPC API", false))
                 .withRequiredArg()
                 .ofType(boolean.class);
         parser.accepts(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS,

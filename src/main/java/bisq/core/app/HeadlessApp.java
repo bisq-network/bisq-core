@@ -17,15 +17,15 @@
 
 package bisq.core.app;
 
-public class AppOptionKeys {
-    public static final String DESKTOP_WITH_HTTP_API = "desktopWithHttpApi";
-    public static final String DESKTOP_WITH_GRPC_API = "desktopWithGrpcApi";
-    public static final String APP_NAME_KEY = "appName";
-    public static final String USER_DATA_DIR_KEY = "userDataDir";
-    public static final String APP_DATA_DIR_KEY = "appDataDir";
-    public static final String PROVIDERS = "providers";
-    public static final String MAX_MEMORY = "maxMemory";
-    public static final String DUMP_STATISTICS = "dumpStatistics";
-    public static final String IGNORE_DEV_MSG_KEY = "ignoreDevMsg";
-    public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
+import bisq.common.setup.GracefulShutDownHandler;
+import bisq.common.setup.UncaughtExceptionHandler;
+
+import com.google.inject.Injector;
+
+public interface HeadlessApp extends UncaughtExceptionHandler, BisqSetup.BisqSetupCompleteListener {
+    void setGracefulShutDownHandler(GracefulShutDownHandler gracefulShutDownHandler);
+
+    void setInjector(Injector injector);
+
+    void startApplication();
 }
