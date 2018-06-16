@@ -111,8 +111,8 @@ public class FullNodeParserTest {
         int height = 200;
         String hash = "abc123";
         long time = new Date().getTime();
-        final List<TxInput> inputs = asList(new TxInput("tx1", 0),
-                new TxInput("tx1", 1));
+        final List<TxInput> inputs = asList(new TxInput("tx1", 0, null),
+                new TxInput("tx1", 1, null));
         final List<TxOutput> outputs = asList(new TxOutput(0, 101, "tx1", null, null, null, height));
         Tx tx = new Tx("vo", height, hash, time,
                 ImmutableList.copyOf(inputs),
@@ -179,7 +179,7 @@ public class FullNodeParserTest {
                 ImmutableList.copyOf(new ArrayList<TxInput>()),
                 ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId200, null, null, null, 200))));
         Tx genesisTx = new Tx(genesisTxId, 200, bh200, time,
-                ImmutableList.copyOf(asList(new TxInput("someoldtx", 0))),
+                ImmutableList.copyOf(asList(new TxInput("someoldtx", 0, null))),
                 ImmutableList.copyOf(asList(new TxOutput(0, issuance.getValue(), genesisTxId, null, null, null, 200))));
         RawBlock block200 = new RawBlock(bh200, 10, 10, 200, 2, "root", asList(tx200, genTx), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh199, bh201);
 
@@ -195,7 +195,7 @@ public class FullNodeParserTest {
                 ImmutableList.copyOf(new ArrayList<TxInput>()),
                 ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId201, null, null, null, 201))));
         Tx bsqTx1 = new Tx(bsqTx1Id, 201, bh201, time,
-                ImmutableList.copyOf(asList(new TxInput(genesisTxId, 0))),
+                ImmutableList.copyOf(asList(new TxInput(genesisTxId, 0, null))),
                 ImmutableList.copyOf(asList(new TxOutput(0, bsqTx1Value1, bsqTx1Id, null, null, null, 201),
                         new TxOutput(1, bsqTx1Value2, bsqTx1Id, null, null, null, 201))));
         RawBlock block201 = new RawBlock(bh201, 10, 10, 201, 2, "root", asList(tx201, txbsqtx1), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh200, "nextBlockHash");
