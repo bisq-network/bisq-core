@@ -27,14 +27,12 @@ import lombok.Getter;
  */
 
 public enum OpReturnType {
-    //TODO remove
-    VALUE_PADDING((byte) 0x01),
-    PROPOSAL((byte) 0x02),
-    COMPENSATION_REQUEST((byte) 0x03),
-    BLIND_VOTE((byte) 0x04),
-    VOTE_REVEAL((byte) 0x05),
-    LOCK_UP((byte) 0x06),
-    UNLOCK((byte) 0x07);
+    PROPOSAL((byte) 0x10),
+    COMPENSATION_REQUEST((byte) 0x11),
+    BLIND_VOTE((byte) 0x12),
+    VOTE_REVEAL((byte) 0x13),
+    LOCK_UP((byte) 0x14),
+    UNLOCK((byte) 0x15);
 
     @Getter
     private byte type;
