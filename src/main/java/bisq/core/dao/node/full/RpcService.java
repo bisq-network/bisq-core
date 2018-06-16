@@ -19,6 +19,7 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.node.btcd.PubKeyScript;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -27,14 +28,13 @@ import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.util.Utilities;
 
-import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Utils;
 
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
 import com.neemre.btcdcli4j.core.client.BtcdClientImpl;
-import com.neemre.btcdcli4j.core.domain.Block;
+import com.neemre.btcdcli4j.core.domain.RawBlock;
 import com.neemre.btcdcli4j.core.domain.RawTransaction;
 import com.neemre.btcdcli4j.core.domain.Transaction;
 import com.neemre.btcdcli4j.core.domain.enums.ScriptTypes;
@@ -56,11 +56,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
-import java.math.BigDecimal;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -160,27 +156,26 @@ public class RpcService {
         });
     }
 
-    void addNewBtcBlockHandler(Consumer<bisq.core.dao.state.blockchain.Block> btcBlockHandler,
+    void addNewBtcBlockHandler(Consumer<Block> btcBlockHandler,
                                Consumer<Throwable> errorHandler) {
         daemon.addBlockListener(new BlockListener() {
             @Override
-            public void blockDetected(Block btcdBlock) {
-                log.info("New block received: height={}, id={}", btcdBlock.getHeight(), btcdBlock.getHash());
-                // Once we receive a new btcdBlock we request all txs for it
-                requestTxs(btcdBlock,
-                        txList -> {
-                            // We received all txs for that block. We map to userThread to notify result handler
-                            UserThread.execute(() -> {
-                                // After we received the tx list for that block we create a temp Block which
-                                // contains all BTC txs.
-                                btcBlockHandler.accept(new bisq.core.dao.state.blockchain.Block(btcdBlock.getHeight(),
-                                        btcdBlock.getTime(),
-                                        btcdBlock.getHash(),
-                                        btcdBlock.getPreviousBlockHash(),
-                                        ImmutableList.copyOf(txList)));
-                            });
-                        },
-                        throwable -> UserThread.execute(() -> errorHandler.accept(throwable)));
+            public void blockDetected(RawBlock rawBlock) {
+                try {
+                    log.info("New block received: height={}, id={}", rawBlock.getHeight(), rawBlock.getHash());
+                    List<Tx> txList = rawBlock.getTx().stream()
+                            .map(e -> getTxFromRawTransaction(e, rawBlock))
+                            .collect(Collectors.toList());
+                    UserThread.execute(() -> {
+                        btcBlockHandler.accept(new Block(rawBlock.getHeight(),
+                                rawBlock.getTime(),
+                                rawBlock.getHash(),
+                                rawBlock.getPreviousBlockHash(),
+                                ImmutableList.copyOf(txList)));
+                    });
+                } catch (Throwable t) {
+                    errorHandler.accept(t);
+                }
             }
         });
     }
@@ -199,25 +194,27 @@ public class RpcService {
     }
 
     void requestBtcBlock(int blockHeight,
-                         Consumer<bisq.core.dao.state.blockchain.Block> resultHandler,
+                         Consumer<Block> resultHandler,
                          Consumer<Throwable> errorHandler) {
-        ListenableFuture<bisq.core.dao.state.blockchain.Block> future = executor.submit(() -> {
+        ListenableFuture<Block> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
             String blockHash = client.getBlockHash(blockHeight);
-            Block btcdBlock = client.getBlock(blockHash);  // hash, 2 -> 2 is full tx list
-            List<Tx> txList = getTxList(btcdBlock);
+            RawBlock rawBlock = client.getBlock(blockHash, 2);
+            List<Tx> txList = rawBlock.getTx().stream()
+                    .map(e -> getTxFromRawTransaction(e, rawBlock))
+                    .collect(Collectors.toList());
             log.info("requestBtcBlock with all txs took {} ms at blockHeight {}; txList.size={}",
                     System.currentTimeMillis() - startTs, blockHeight, txList.size());
-            return new bisq.core.dao.state.blockchain.Block(btcdBlock.getHeight(),
-                    btcdBlock.getTime(),
-                    btcdBlock.getHash(),
-                    btcdBlock.getPreviousBlockHash(),
+            return new Block(rawBlock.getHeight(),
+                    rawBlock.getTime(),
+                    rawBlock.getHash(),
+                    rawBlock.getPreviousBlockHash(),
                     ImmutableList.copyOf(txList));
         });
 
-        Futures.addCallback(future, new FutureCallback<bisq.core.dao.state.blockchain.Block>() {
+        Futures.addCallback(future, new FutureCallback<Block>() {
             @Override
-            public void onSuccess(bisq.core.dao.state.blockchain.Block block) {
+            public void onSuccess(Block block) {
                 UserThread.execute(() -> resultHandler.accept(block));
             }
 
@@ -233,105 +230,65 @@ public class RpcService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void requestTxs(Block block, Consumer<List<Tx>> resultHandler, Consumer<Throwable> errorHandler) {
-        ListenableFuture<List<Tx>> future = executor.submit(() -> getTxList(block));
+    private Tx getTxFromRawTransaction(RawTransaction rawTransaction, RawBlock rawBlock) {
+        String txId = rawTransaction.getTxId();
+        long blockTime = rawBlock.getTime() * 1000; // We convert block time to ms
+        int blockHeight = rawBlock.getHeight();
+        String blockHash = rawBlock.getHash();
+        final List<TxInput> txInputs = rawTransaction.getVIn()
+                .stream()
+                .filter(rawInput -> rawInput != null && rawInput.getVOut() != null && rawInput.getTxId() != null)
+                .map(rawInput -> new TxInput(rawInput.getTxId(), rawInput.getVOut()))
+                .collect(Collectors.toList());
 
-        Futures.addCallback(future, new FutureCallback<List<Tx>>() {
-            @Override
-            public void onSuccess(List<Tx> result) {
-                resultHandler.accept(result);
-            }
-
-            @Override
-            public void onFailure(@NotNull Throwable throwable) {
-                errorHandler.accept(throwable);
-            }
-        });
-    }
-
-    @NotNull
-    private List<Tx> getTxList(Block block) throws RpcException {
-        List<Tx> txList = new ArrayList<>();
-        int height = block.getHeight();
-        // Ordering of the tx is essential! So we do not use multiple threads for requesting the txs.
-        // Might be optimized in future but then we need to make sure order is correct.
-        for (String txId : block.getTx()) {
-            Tx tx = requestTx(txId, height);
-            txList.add(tx);
-        }
-        return txList;
-    }
-
-    private Tx requestTx(String txId, int blockHeight) throws RpcException {
-        try {
-            RawTransaction rawTransaction = requestRawTransaction(txId);
-            // rawTransaction.getTime() is in seconds but we keep it in ms internally
-            final long time = rawTransaction.getTime() * 1000;
-            final List<TxInput> txInputs = rawTransaction.getVIn()
-                    .stream()
-                    .filter(rawInput -> rawInput != null && rawInput.getVOut() != null && rawInput.getTxId() != null)
-                    .map(rawInput -> new TxInput(rawInput.getTxId(), rawInput.getVOut()))
-                    .collect(Collectors.toList());
-
-            final List<TxOutput> txOutputs = rawTransaction.getVOut()
-                    .stream()
-                    .filter(e -> e != null && e.getN() != null && e.getValue() != null && e.getScriptPubKey() != null)
-                    .map(rawOutput -> {
-                                byte[] opReturnData = null;
-                                final com.neemre.btcdcli4j.core.domain.PubKeyScript scriptPubKey = rawOutput.getScriptPubKey();
-                        if (ScriptTypes.NULL_DATA.equals(scriptPubKey.getType()) && scriptPubKey.getAsm() != null) {
-                                    String[] chunks = scriptPubKey.getAsm().split(" ");
-                                    // We get on testnet a lot of "OP_RETURN 0" data, so we filter those away
-                                    if (chunks.length == 2 && "OP_RETURN".equals(chunks[0]) && !"0".equals(chunks[1])) {
-                                        try {
-                                            opReturnData = Utils.HEX.decode(chunks[1]);
-                                        } catch (Throwable t) {
-                                            // We get sometimes exceptions, seems BitcoinJ
-                                            // cannot handle all existing OP_RETURN data, but we ignore them
-                                            // anyway as our OP_RETURN data is valid in BitcoinJ
-                                            log.warn("Error at Utils.HEX.decode(chunks[1]): " + t.toString() + " / chunks[1]=" + chunks[1]);
-                                        }
+        final List<TxOutput> txOutputs = rawTransaction.getVOut()
+                .stream()
+                .filter(e -> e != null && e.getN() != null && e.getValue() != null && e.getScriptPubKey() != null)
+                .map(rawOutput -> {
+                            byte[] opReturnData = null;
+                            final com.neemre.btcdcli4j.core.domain.PubKeyScript scriptPubKey = rawOutput.getScriptPubKey();
+                            if (ScriptTypes.NULL_DATA.equals(scriptPubKey.getType()) && scriptPubKey.getAsm() != null) {
+                                String[] chunks = scriptPubKey.getAsm().split(" ");
+                                // We get on testnet a lot of "OP_RETURN 0" data, so we filter those away
+                                if (chunks.length == 2 && "OP_RETURN".equals(chunks[0]) && !"0".equals(chunks[1])) {
+                                    try {
+                                        opReturnData = Utils.HEX.decode(chunks[1]);
+                                    } catch (Throwable t) {
+                                        // We get sometimes exceptions, seems BitcoinJ
+                                        // cannot handle all existing OP_RETURN data, but we ignore them
+                                        // anyway as our OP_RETURN data is valid in BitcoinJ
+                                        log.warn("Error at Utils.HEX.decode(chunks[1]): " + t.toString() + " / chunks[1]=" + chunks[1]);
                                     }
                                 }
-                                // We don't support raw MS which are the only case where scriptPubKey.getAddresses()>1
-                                String address = scriptPubKey.getAddresses() != null &&
-                                        scriptPubKey.getAddresses().size() == 1 ? scriptPubKey.getAddresses().get(0) : null;
-                                final PubKeyScript pubKeyScript = dumpBlockchainData ? new PubKeyScript(scriptPubKey) : null;
-                                return new TxOutput(rawOutput.getN(),
-                                        rawOutput.getValue().movePointRight(8).longValue(),
-                                        rawTransaction.getTxId(),
-                                        pubKeyScript,
-                                        address,
-                                        opReturnData,
-                                        blockHeight);
                             }
-                    )
-                    .collect(Collectors.toList());
+                            // We don't support raw MS which are the only case where scriptPubKey.getAddresses()>1
+                            String address = scriptPubKey.getAddresses() != null &&
+                                    scriptPubKey.getAddresses().size() == 1 ? scriptPubKey.getAddresses().get(0) : null;
+                            final PubKeyScript pubKeyScript = dumpBlockchainData ? new PubKeyScript(scriptPubKey) : null;
+                            return new TxOutput(rawOutput.getN(),
+                                    rawOutput.getValue().movePointRight(8).longValue(),
+                                    rawTransaction.getTxId(),
+                                    pubKeyScript,
+                                    address,
+                                    opReturnData,
+                                    blockHeight);
+                        }
+                )
+                .collect(Collectors.toList());
 
-            return new Tx(txId,
-                    blockHeight,
-                    rawTransaction.getBlockHash(),
-                    time,
-                    ImmutableList.copyOf(txInputs),
-                    ImmutableList.copyOf(txOutputs));
-        } catch (BitcoindException | CommunicationException e) {
-            log.error("error at requestTx with txId={}, blockHeight={}", txId, blockHeight);
-            throw new RpcException(e.getMessage(), e);
-        }catch (Throwable e) {
-            log.error("Unexpected error at requestTx with txId={}, blockHeight={}", txId, blockHeight);
-            throw new RpcException(e.getMessage(), e);
-        }
-    }
-
-    private RawTransaction requestRawTransaction(String txId) throws BitcoindException, CommunicationException {
-        return (RawTransaction) client.getRawTransaction(txId, 1);
+        return new Tx(txId,
+                blockHeight,
+                blockHash,
+                blockTime,
+                ImmutableList.copyOf(txInputs),
+                ImmutableList.copyOf(txOutputs));
     }
 
     private Transaction requestTx(String txId) throws BitcoindException, CommunicationException {
         return client.getTransaction(txId);
     }
 
-    private void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
+  /*  private void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
         try {
             Transaction transaction = requestTx(txId);
             final BigDecimal fee = transaction.getFee();
@@ -341,6 +298,5 @@ public class RpcService {
             log.error("error at requestFees with txId={}, blockHeight={}", txId, blockHeight);
             throw new RpcException(e.getMessage(), e);
         }
-    }
-
+    }*/
 }

@@ -34,7 +34,8 @@ import org.bitcoinj.core.Coin;
 
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
-import com.neemre.btcdcli4j.core.domain.Block;
+import com.neemre.btcdcli4j.core.domain.RawBlock;
+import com.neemre.btcdcli4j.core.domain.RawTransaction;
 
 import com.google.common.collect.ImmutableList;
 
@@ -156,6 +157,7 @@ public class FullNodeParserTest {
         int startHeight = 199;
         int headHeight = 201;
         Coin issuance = Coin.parseCoin("2.5");
+        RawTransaction genTx = new RawTransaction("gen block hash", 0, 0L, 0L, genesisTxId);
 
         // Blockhashes
         String bh199 = "blockhash199";
@@ -164,25 +166,29 @@ public class FullNodeParserTest {
 
         // Block 199
         String cbId199 = "cbid199";
+        RawTransaction tx199 = new RawTransaction(bh199, 0, 0L, 0L, cbId199);
         Tx cbTx199 = new Tx(cbId199, 199, bh199, time,
                 ImmutableList.copyOf(new ArrayList<TxInput>()),
                 ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId199, null, null, null, 199))));
-        Block block199 = new Block(bh199, 10, 10, 199, 2, "root", asList(cbId199), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", "previousBlockHash", bh200);
+        RawBlock block199 = new RawBlock(bh199, 10, 10, 199, 2, "root", asList(tx199), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", "previousBlockHash", bh200);
 
         // Genesis Block
         String cbId200 = "cbid200";
+        RawTransaction tx200 = new RawTransaction(bh200, 0, 0L, 0L, cbId200);
         Tx cbTx200 = new Tx(cbId200, 200, bh200, time,
                 ImmutableList.copyOf(new ArrayList<TxInput>()),
                 ImmutableList.copyOf(asList(new TxOutput(0, 25, cbId200, null, null, null, 200))));
         Tx genesisTx = new Tx(genesisTxId, 200, bh200, time,
                 ImmutableList.copyOf(asList(new TxInput("someoldtx", 0))),
                 ImmutableList.copyOf(asList(new TxOutput(0, issuance.getValue(), genesisTxId, null, null, null, 200))));
-        Block block200 = new Block(bh200, 10, 10, 200, 2, "root", asList(cbId200, genesisTxId), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh199, bh201);
+        RawBlock block200 = new RawBlock(bh200, 10, 10, 200, 2, "root", asList(tx200, genTx), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh199, bh201);
 
         // Block 201
         // Make a bsq transaction
         String cbId201 = "cbid201";
         String bsqTx1Id = "bsqtx1";
+        RawTransaction tx201 = new RawTransaction(bh201, 0, 0L, 0L, cbId201);
+        RawTransaction txbsqtx1 = new RawTransaction(bh201, 0, 0L, 0L, bsqTx1Id);
         long bsqTx1Value1 = Coin.parseCoin("2.4").getValue();
         long bsqTx1Value2 = Coin.parseCoin("0.04").getValue();
         Tx cbTx201 = new Tx(cbId201, 201, bh201, time,
@@ -192,7 +198,7 @@ public class FullNodeParserTest {
                 ImmutableList.copyOf(asList(new TxInput(genesisTxId, 0))),
                 ImmutableList.copyOf(asList(new TxOutput(0, bsqTx1Value1, bsqTx1Id, null, null, null, 201),
                         new TxOutput(1, bsqTx1Value2, bsqTx1Id, null, null, null, 201))));
-        Block block201 = new Block(bh201, 10, 10, 201, 2, "root", asList(cbId201, bsqTx1Id), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh200, "nextBlockHash");
+        RawBlock block201 = new RawBlock(bh201, 10, 10, 201, 2, "root", asList(tx201, txbsqtx1), time, Long.parseLong("1234"), "bits", BigDecimal.valueOf(1), "chainwork", bh200, "nextBlockHash");
 
         // TODO update test with new API
         /*
