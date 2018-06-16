@@ -332,15 +332,18 @@ public class VoteResultService {
             long requiredVoteThreshold = stateService.getParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
-            long totalStake = proposalVoteResult.getStakeOfAcceptedVotes() + proposalVoteResult.getStakeOfRejectedVotes();
+            long stakeOfAcceptedVotes = proposalVoteResult.getStakeOfAcceptedVotes();
+            long stakeOfRejectedVotes = proposalVoteResult.getStakeOfRejectedVotes();
+            long totalStake = stakeOfAcceptedVotes + stakeOfRejectedVotes;
 
-            log.info("totalStake: {}, required requiredQuorum: {}", totalStake, requiredQuorum);
+            log.info("proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}, " +
+                            "required requiredQuorum: {}, requiredVoteThreshold: {}",
+                    proposal.getTxId(), totalStake, stakeOfAcceptedVotes, stakeOfRejectedVotes, requiredVoteThreshold, requiredQuorum);
             if (totalStake >= requiredQuorum) {
-                long reachedThreshold = proposalVoteResult.getStakeOfAcceptedVotes() / totalStake;
-                // We multiply by 10000 as we use a long for requiredVoteThreshold and we want precision of 2 with
+                // We multiply by 10000 as we use a long for reachedThreshold and we want precision of 2 with
                 // a % value. E.g. 50% is 50.00. We represent 1.0000 for 100%, so 10000 is the long value to reach the
                 // required precision.
-                reachedThreshold *= 10_000;
+                long reachedThreshold = stakeOfAcceptedVotes * 10_000 / totalStake;
 
                 log.info("reached threshold: {} %, required threshold: {} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold e.g. 50% is not enough but 50.01%
