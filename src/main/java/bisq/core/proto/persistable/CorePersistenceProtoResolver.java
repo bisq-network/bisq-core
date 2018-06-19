@@ -24,6 +24,7 @@ import bisq.core.dao.state.State;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.BlindVoteStore;
+import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.myvote.MyVoteList;
 import bisq.core.dao.voting.proposal.MyProposalList;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStore;
@@ -125,6 +126,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return MyVoteList.fromProto(proto.getMyVoteList());
                 case MY_BLIND_VOTE_LIST:
                     return MyBlindVoteList.fromProto(proto.getMyBlindVoteList());
+                case MERIT_LIST:
+                    return MeritList.fromProto(proto.getMeritList());
                 default:
                     throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope).\n" +
                             "messageCase=" + proto.getMessageCase() + "\nproto=" + proto);

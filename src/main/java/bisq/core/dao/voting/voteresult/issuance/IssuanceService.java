@@ -17,14 +17,18 @@
 
 package bisq.core.dao.voting.voteresult.issuance;
 
+import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxInput;
+import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +46,7 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public IssuanceService(StateService stateService,
-                           PeriodService periodService) {
+    public IssuanceService(StateService stateService, PeriodService periodService) {
         this.stateService = stateService;
         this.periodService = periodService;
     }
@@ -53,14 +56,30 @@ public class IssuanceService {
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
-                    stateService.addIssuanceTxOutput(txOutput, chainHeight);
+                    // We don't check atm if the output is unspent. We cannot use the bsqWallet as that would not
+                    // reflect our current block state (could have been spent at later block which is valid and
+                    // bsqWallet would show that spent state). We would need to support a spent status for the outputs
+                    // which are interpreted as BTC like a not yet accepted comp. request is.
+                    long amount = compensationProposal.getRequestedBsq().value;
+                    Optional<Tx> optionalTx = stateService.getTx(compensationProposal.getTxId());
+                    if (optionalTx.isPresent()) {
+                        Tx tx = optionalTx.get();
+                        // We use key from first input
+                        TxInput txInput = tx.getInputs().get(0);
+                        String pubKey = txInput.getPubKey();
+                        Issuance issuance = new Issuance(tx.getId(), chainHeight, amount, pubKey);
+                        stateService.addIssuance(issuance);
+                        stateService.addUnspentTxOutput(txOutput);
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("\n################################################################################\n");
-                    sb.append("We issued new BSQ to tx with ID ").append(txOutput.getTxId())
-                            .append("\nfor compensationProposal with UID ").append(compensationProposal.getUid())
-                            .append("\n################################################################################\n");
-                    log.info(sb.toString());
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("\n################################################################################\n");
+                        sb.append("We issued new BSQ to tx with ID ").append(txOutput.getTxId())
+                                .append("\nfor compensationProposal with UID ").append(compensationProposal.getUid())
+                                .append("\n################################################################################\n");
+                        log.info(sb.toString());
+                    } else {
+                        log.error("Tx for compensation request not found. txId={}", compensationProposal.getTxId());
+                    }
                 });
     }
 

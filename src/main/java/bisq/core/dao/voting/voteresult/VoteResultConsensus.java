@@ -26,10 +26,15 @@ import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.voting.merit.MeritList;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
+import bisq.common.util.MathUtils;
 import bisq.common.util.Utilities;
+
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
 
 import javax.crypto.SecretKey;
 
@@ -51,7 +56,7 @@ public class VoteResultConsensus {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
-    public static byte[] decryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws CryptoException {
+    private static byte[] decryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws CryptoException {
         return Encryption.decrypt(encryptedVotes, secretKey);
     }
 
@@ -62,6 +67,71 @@ public class VoteResultConsensus {
         } catch (Throwable t) {
             throw new VoteResultException(t);
         }
+    }
+
+    public static MeritList getDecryptMeritList(byte[] encryptedMeritList, SecretKey secretKey) throws VoteResultException {
+        try {
+            final byte[] decrypted = Encryption.decrypt(encryptedMeritList, secretKey);
+            return MeritList.getMeritListFromBytes(decrypted);
+        } catch (Throwable t) {
+            throw new VoteResultException(t);
+        }
+    }
+
+    public static long getWeightedMeritAmount(long amount, int issuanceHeight, int currentHeight, int blocksPerYear) {
+        if (issuanceHeight > currentHeight)
+            throw new IllegalArgumentException("issuanceHeight must not be larger than currentHeight");
+        if (currentHeight < 0)
+            throw new IllegalArgumentException("currentHeight must not be negative");
+        if (amount < 0)
+            throw new IllegalArgumentException("amount must not be negative");
+        if (blocksPerYear < 0)
+            throw new IllegalArgumentException("blocksPerYear must not be negative");
+
+        // We use a linear function  to apply a factor for the issuance amount of 1 if the issuance was recent and 0
+        // if the issuance was 2 years old or older.
+        int maxAge = 2 * blocksPerYear;
+        int age = Math.min(maxAge, currentHeight - issuanceHeight);
+
+        double rel = MathUtils.roundDouble((double) age / (double) maxAge, 10);
+        double factor = 1d - rel;
+        long weightedAmount = MathUtils.roundDoubleToLong(amount * factor);
+        log.info("getWeightedMeritAmount: amount={}, factor={}, weightedAmount={}, ", amount, factor, weightedAmount);
+        return weightedAmount;
+    }
+
+    public static long getMeritStake(String blindVoteTxId, MeritList meritList, StateService stateService) {
+        int blocksPerYear = 50_000; // 51264;
+        int currentChainHeight = stateService.getChainHeight();
+        return meritList.getList().stream()
+                .filter(merit -> {
+                    String pubKeyAsHex = merit.getIssuance().getPubKey();
+                    if (pubKeyAsHex == null)
+                        return false;
+
+                    // TODO Check if a sig key was used multiple times for different voters
+                    // At the moment we don't impl. that to not add too much complexity and as we consider that
+                    // risk very low.
+
+                    boolean result = false;
+                    try {
+                        ECKey pubKey = ECKey.fromPublicOnly(Utilities.decodeFromHex(pubKeyAsHex));
+                        ECKey.ECDSASignature signature = ECKey.ECDSASignature.decodeFromDER(merit.getSignature()).toCanonicalised();
+                        Sha256Hash data = Sha256Hash.wrap(blindVoteTxId);
+                        result = pubKey.verify(data, signature);
+                    } catch (Throwable t) {
+                        log.error("Signature verification of issuance failed: " + t.toString());
+                    }
+                    log.debug("Signature verification result {}, txId={}", result, blindVoteTxId);
+                    return result;
+                })
+                .mapToLong(merit -> {
+                    return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                            merit.getIssuance().getChainHeight(),
+                            currentChainHeight,
+                            blocksPerYear);
+                })
+                .sum();
     }
 
     //TODO add tests
@@ -97,7 +167,6 @@ public class VoteResultConsensus {
         }
     }
 
-
     public static Tx getBlindVoteTx(TxOutput blindVoteStakeOutput, StateService stateService,
                                     PeriodService periodService, int chainHeight)
             throws VoteResultException {
@@ -122,5 +191,4 @@ public class VoteResultConsensus {
             throw new VoteResultException(t);
         }
     }
-
 }

@@ -22,6 +22,7 @@ import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
+import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 import bisq.core.dao.voting.proposal.param.Param;
 
@@ -83,6 +84,12 @@ public class BlindVoteConsensus {
         final byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
         final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
         log.info("encrypted: " + Utilities.bytesAsHexString(encrypted));
+        return encrypted;
+    }
+
+    public static byte[] getEncryptedMeritList(MeritList meritList, SecretKey secretKey) throws CryptoException {
+        final byte[] bytes = meritList.toProtoMessage().toByteArray();
+        final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
         return encrypted;
     }
 

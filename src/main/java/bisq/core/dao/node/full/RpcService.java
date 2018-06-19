@@ -238,7 +238,23 @@ public class RpcService {
         final List<TxInput> txInputs = rawTransaction.getVIn()
                 .stream()
                 .filter(rawInput -> rawInput != null && rawInput.getVOut() != null && rawInput.getTxId() != null)
-                .map(rawInput -> new TxInput(rawInput.getTxId(), rawInput.getVOut()))
+                .map(rawInput -> {
+                    // We don't support segWit inputs yet as well as no pay to pubkey txs...
+                    String[] split = rawInput.getScriptSig().getAsm().split("\\[ALL\\] ");
+                    String pubKeyAsHex;
+                    if (split.length == 2) {
+                        pubKeyAsHex = rawInput.getScriptSig().getAsm().split("\\[ALL\\] ")[1];
+                    } else {
+                        // If we receive a pay to pubkey tx the pubKey is not included as
+                        // it is in the output already.
+                        // Bitcoin Core creates payToPubKey tx when spending mined coins (regtest)...
+                        pubKeyAsHex = null;
+                        log.warn("pubKeyAsHex is not set as we received a not supported sigScript " +
+                                        "(segWit or patToPubKey tx). asm={},  txId={}",
+                                rawInput.getScriptSig().getAsm(), rawTransaction.getTxId());
+                    }
+                    return new TxInput(rawInput.getTxId(), rawInput.getVOut(), pubKeyAsHex);
+                })
                 .collect(Collectors.toList());
 
         final List<TxOutput> txOutputs = rawTransaction.getVOut()

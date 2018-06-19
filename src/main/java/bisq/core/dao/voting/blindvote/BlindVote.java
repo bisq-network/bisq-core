@@ -44,20 +44,24 @@ public final class BlindVote implements PersistablePayload, NetworkPayload {
     public static BlindVote clone(BlindVote blindVote) {
         return new BlindVote(blindVote.encryptedVotes,
                 blindVote.getTxId(),
-                blindVote.getStake());
+                blindVote.getStake(),
+                blindVote.getEncryptedMeritList());
     }
 
     private final byte[] encryptedVotes; // created from voteWithProposalTxIdList
     private final String txId;
     // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.
     private final long stake;
+    private byte[] encryptedMeritList;
 
     public BlindVote(byte[] encryptedVotes,
                      String txId,
-                     long stake) {
+                     long stake,
+                     byte[] encryptedMeritList) {
         this.encryptedVotes = encryptedVotes;
         this.txId = txId;
         this.stake = stake;
+        this.encryptedMeritList = encryptedMeritList;
     }
 
 
@@ -76,13 +80,15 @@ public final class BlindVote implements PersistablePayload, NetworkPayload {
         return PB.BlindVote.newBuilder()
                 .setEncryptedVotes(ByteString.copyFrom(encryptedVotes))
                 .setTxId(txId)
-                .setStake(stake);
+                .setStake(stake)
+                .setEncryptedMeritList(ByteString.copyFrom(encryptedMeritList));
     }
 
     public static BlindVote fromProto(PB.BlindVote proto) {
         return new BlindVote(proto.getEncryptedVotes().toByteArray(),
                 proto.getTxId(),
-                proto.getStake());
+                proto.getStake(),
+                proto.getEncryptedMeritList().toByteArray());
     }
 
 
@@ -95,6 +101,7 @@ public final class BlindVote implements PersistablePayload, NetworkPayload {
                 "\n     encryptedVotes=" + Utilities.bytesAsHexString(encryptedVotes) +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     stake=" + stake +
+                ",\n     encryptedMeritList=" + Utilities.bytesAsHexString(encryptedMeritList) +
                 "\n}";
     }
 }

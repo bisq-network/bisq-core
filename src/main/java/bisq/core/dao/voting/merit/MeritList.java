@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.blindvote;
+package bisq.core.dao.voting.merit;
 
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
@@ -29,51 +29,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
-
-// We don't persist that list but use it only for encoding the VoteWithProposalTxId list
+// We don't persist that list but use it only for encoding the MeritList list
 // to PB bytes in the blindVote.
 
 // Not used as PersistableList
 // TODO create diff. super class
-@Slf4j
-public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTxId> implements VoteConsensusCritical {
+public class MeritList extends PersistableList<Merit> implements VoteConsensusCritical {
 
-    public VoteWithProposalTxIdList(List<VoteWithProposalTxId> list) {
+    public MeritList(List<Merit> list) {
         super(list);
     }
 
+    public MeritList() {
+        super();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static VoteWithProposalTxIdList getVoteWithProposalTxIdListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
-        return VoteWithProposalTxIdList.fromProto(PB.VoteWithProposalTxIdList.parseFrom(bytes));
-    }
-
     @Override
-    public PB.VoteWithProposalTxIdList toProtoMessage() {
+    public PB.MeritList toProtoMessage() {
         return getBuilder().build();
     }
 
-    public PB.VoteWithProposalTxIdList.Builder getBuilder() {
-        return PB.VoteWithProposalTxIdList.newBuilder()
-                .addAllItem(getList().stream()
-                        .map(VoteWithProposalTxId::toProtoMessage)
+    public PB.MeritList.Builder getBuilder() {
+        return PB.MeritList.newBuilder()
+                .addAllMerit(getList().stream()
+                        .map(Merit::toProtoMessage)
                         .collect(Collectors.toList()));
     }
 
-    public static VoteWithProposalTxIdList fromProto(PB.VoteWithProposalTxIdList proto) {
-        final ArrayList<VoteWithProposalTxId> list = proto.getItemList().stream()
-                .map(VoteWithProposalTxId::fromProto).collect(Collectors.toCollection(ArrayList::new));
-        return new VoteWithProposalTxIdList(list);
+    public static MeritList fromProto(PB.MeritList proto) {
+        return new MeritList(new ArrayList<>(proto.getMeritList().stream()
+                .map(Merit::fromProto)
+                .collect(Collectors.toList())));
     }
 
-    @Override
-    public String toString() {
-        return "VoteWithProposalTxIdList: " + getList().stream()
-                .map(VoteWithProposalTxId::getProposalTxId)
-                .collect(Collectors.toList());
+    public static MeritList getMeritListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
+        return MeritList.fromProto(PB.MeritList.parseFrom(bytes));
     }
 }

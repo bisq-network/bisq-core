@@ -40,7 +40,7 @@ public class TxInputProcessor {
 
     void process(TxInput txInput, int blockHeight, String txId, int inputIndex, TxState txState,
                  StateService stateService) {
-        this.stateService.getUnspentAndMatureTxOutput(txInput.getTxIdIndexTuple())
+        this.stateService.getUnspentAndMatureTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
                     txState.addToInputValue(connectedTxOutput.getValue());
 

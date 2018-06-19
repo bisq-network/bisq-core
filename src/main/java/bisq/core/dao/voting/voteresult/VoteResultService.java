@@ -34,9 +34,9 @@ import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteUtils;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
-import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
@@ -81,7 +81,6 @@ public class VoteResultService {
     private final StateService stateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
-    private final MyBlindVoteListService myBlindVoteListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
     private final IssuanceService issuanceService;
@@ -100,7 +99,6 @@ public class VoteResultService {
                              StateService stateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
-                             MyBlindVoteListService myBlindVoteListService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
                              IssuanceService issuanceService) {
@@ -108,7 +106,6 @@ public class VoteResultService {
         this.stateService = stateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
-        this.myBlindVoteListService = myBlindVoteListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
         this.issuanceService = issuanceService;
@@ -200,12 +197,13 @@ public class VoteResultService {
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptVotes(blindVote.getEncryptedVotes(), secretKey);
+                            MeritList meritList = VoteResultConsensus.getDecryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
 
                             // We lookup for the proposals we have in our local list which match the txId from the
                             // voteWithProposalTxIdList and create a ballot list with the proposal and the vote from
                             // the voteWithProposalTxIdList
                             BallotList ballotList = createBallotList(voteWithProposalTxIdList);
-                            return new DecryptedVote(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, blindVoteStake, ballotList);
+                            return new DecryptedVote(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, blindVoteStake, ballotList, meritList);
                         } else {
                             log.warn("We have a blindVoteTx but we do not have the corresponding blindVote in our local list.\n" +
                                     "That can happen if the blindVote item was not properly broadcasted. We will go on " +
@@ -229,9 +227,11 @@ public class VoteResultService {
 
     private BallotList createBallotList(VoteWithProposalTxIdList voteWithProposalTxIdList) throws MissingBallotException {
         Map<String, Vote> voteByTxIdMap = voteWithProposalTxIdList.stream()
+                .filter(voteWithProposalTxId -> voteWithProposalTxId.getVote() != null)
                 .collect(Collectors.toMap(VoteWithProposalTxId::getProposalTxId, VoteWithProposalTxId::getVote));
 
         Map<String, Ballot> ballotByTxIdMap = ballotListService.getBallotList().stream()
+                .filter(ballot -> ballot.getVote() != null)
                 .collect(Collectors.toMap(Ballot::getProposalTxId, ballot -> ballot));
 
         List<String> missing = new ArrayList<>();
@@ -260,7 +260,12 @@ public class VoteResultService {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
             map.computeIfAbsent(hash, e -> 0L);
             long aggregatedStake = map.get(hash);
-            aggregatedStake += decryptedVote.getStake();
+            long meritStake = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(), decryptedVote.getMeritList(), stateService);
+            long stake = decryptedVote.getStake();
+            long combinedStake = stake + meritStake;
+            log.debug("blindVoteTxId={}, meritStake={}, stake={}, combinedStake={}",
+                    decryptedVote.getBlindVoteTxId(), meritStake, stake, combinedStake);
+            aggregatedStake += combinedStake;
             map.put(hash, aggregatedStake);
         });
         return map;
@@ -332,15 +337,18 @@ public class VoteResultService {
             long requiredVoteThreshold = stateService.getParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
-            long totalStake = proposalVoteResult.getStakeOfAcceptedVotes() + proposalVoteResult.getStakeOfRejectedVotes();
+            long stakeOfAcceptedVotes = proposalVoteResult.getStakeOfAcceptedVotes();
+            long stakeOfRejectedVotes = proposalVoteResult.getStakeOfRejectedVotes();
+            long totalStake = stakeOfAcceptedVotes + stakeOfRejectedVotes;
 
-            log.info("totalStake: {}, required requiredQuorum: {}", totalStake, requiredQuorum);
+            log.info("proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}, " +
+                            "required requiredQuorum: {}, requiredVoteThreshold: {}",
+                    proposal.getTxId(), totalStake, stakeOfAcceptedVotes, stakeOfRejectedVotes, requiredVoteThreshold, requiredQuorum);
             if (totalStake >= requiredQuorum) {
-                long reachedThreshold = proposalVoteResult.getStakeOfAcceptedVotes() / totalStake;
-                // We multiply by 10000 as we use a long for requiredVoteThreshold and we want precision of 2 with
+                // We multiply by 10000 as we use a long for reachedThreshold and we want precision of 2 with
                 // a % value. E.g. 50% is 50.00. We represent 1.0000 for 100%, so 10000 is the long value to reach the
                 // required precision.
-                reachedThreshold *= 10_000;
+                long reachedThreshold = stakeOfAcceptedVotes * 10_000 / totalStake;
 
                 log.info("reached threshold: {} %, required threshold: {} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold e.g. 50% is not enough but 50.01%
@@ -373,23 +381,30 @@ public class VoteResultService {
                     final Proposal proposal = ballot.getProposal();
                     voteWithStakeByProposalMap.putIfAbsent(proposal, new ArrayList<>());
                     final List<VoteWithStake> voteWithStakeList = voteWithStakeByProposalMap.get(proposal);
-                    voteWithStakeList.add(new VoteWithStake(ballot.getVote(), decryptedVote.getStake()));
+                    voteWithStakeList.add(new VoteWithStake(ballot.getVote(), decryptedVote.getStake(), decryptedVote.getMeritList(), decryptedVote.getBlindVoteTxId()));
                 });
     }
 
     private ProposalVoteResult getResultPerProposal(List<VoteWithStake> voteWithStakeList, Proposal proposal) {
         long stakeOfAcceptedVotes = 0;
         long stakeOfRejectedVotes = 0;
+
         for (VoteWithStake voteWithStake : voteWithStakeList) {
+            String blindVoteTxId = voteWithStake.getBlindVoteTxId();
+            MeritList meritList = voteWithStake.getMeritList();
+            long meritStake = VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, stateService);
             long stake = voteWithStake.getStake();
+            long combinedStake = stake + meritStake;
+            log.info("proposalTxId={}, stake={}, meritStake={}, combinedStake={}",
+                    proposal.getTxId(), stake, meritStake, combinedStake);
             Vote vote = voteWithStake.getVote();
             if (vote != null) {
                 if (vote instanceof BooleanVote) {
                     BooleanVote result = (BooleanVote) vote;
                     if (result.isAccepted()) {
-                        stakeOfAcceptedVotes += stake;
+                        stakeOfAcceptedVotes += combinedStake;
                     } else {
-                        stakeOfRejectedVotes += stake;
+                        stakeOfRejectedVotes += combinedStake;
                     }
                 } else if (vote instanceof LongVote) {
                     //TODO impl
@@ -454,10 +469,14 @@ public class VoteResultService {
         @Nullable
         private final Vote vote;
         private final long stake;
+        private final MeritList meritList;
+        private final String blindVoteTxId;
 
-        VoteWithStake(@Nullable Vote vote, long stake) {
+        VoteWithStake(@Nullable Vote vote, long stake, MeritList meritList, String blindVoteTxId) {
             this.vote = vote;
             this.stake = stake;
+            this.meritList = meritList;
+            this.blindVoteTxId = blindVoteTxId;
         }
     }
 }

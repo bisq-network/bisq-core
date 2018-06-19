@@ -23,6 +23,7 @@ import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
@@ -77,7 +78,7 @@ public class State implements PersistableEnvelope {
     private final LinkedList<Block> blocks;
     private final Map<String, TxType> txTypeMap; // key is txId
     private final Map<String, Long> burntFeeMap; // key is txId
-    private final Map<String, Integer> issuanceBlockHeightMap; // key is txId of issuance txOutput, value is blockHeight
+    private final Map<String, Issuance> issuanceMap; // key is txId
     private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
@@ -120,7 +121,7 @@ public class State implements PersistableEnvelope {
                   LinkedList<Block> blocks,
                   Map<String, TxType> txTypeMap,
                   Map<String, Long> burntFeeMap,
-                  Map<String, Integer> issuanceBlockHeightMap,
+                  Map<String, Issuance> issuanceMap,
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
                   Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
                   Map<TxOutput.Key, SpentInfo> spentInfoMap,
@@ -132,7 +133,7 @@ public class State implements PersistableEnvelope {
         this.blocks = blocks;
         this.txTypeMap = txTypeMap;
         this.burntFeeMap = burntFeeMap;
-        this.issuanceBlockHeightMap = issuanceBlockHeightMap;
+        this.issuanceMap = issuanceMap;
         this.unspentTxOutputMap = unspentTxOutputMap;
         this.txOutputTypeMap = txOutputTypeMap;
         this.spentInfoMap = spentInfoMap;
@@ -155,8 +156,8 @@ public class State implements PersistableEnvelope {
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())))
                 .putAllBurntFeeMap(burntFeeMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .putAllIssuanceBlockHeightMap(issuanceBlockHeightMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .putAllIssuanceMap(issuanceMap.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
                 .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
                 .putAllTxOutputTypeMap(txOutputTypeMap.entrySet().stream()
@@ -177,8 +178,8 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> TxType.fromProto(e.getValue())));
         Map<String, Long> burntFeeMap = proto.getBurntFeeMapMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<String, Integer> issuanceBlockHeightMap = proto.getIssuanceBlockHeightMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         Map<TxOutput.Key, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
         Map<TxOutput.Key, TxOutputType> txOutputTypeMap = proto.getTxOutputTypeMapMap().entrySet().stream()
@@ -195,7 +196,7 @@ public class State implements PersistableEnvelope {
                 blocks,
                 txTypeMap,
                 burntFeeMap,
-                issuanceBlockHeightMap,
+                issuanceMap,
                 unspentTxOutputMap,
                 txOutputTypeMap,
                 spentInfoMap,
@@ -245,8 +246,8 @@ public class State implements PersistableEnvelope {
         unspentTxOutputMap.remove(txOutput.getKey());
     }
 
-    void setIssuanceBlockHeight(TxOutput txOutput, int chainHeight) {
-        issuanceBlockHeightMap.put(txOutput.getTxId(), chainHeight);
+    void addIssuance(Issuance issuance) {
+        issuanceMap.put(issuance.getTxId(), issuance);
     }
 
     void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
@@ -303,8 +304,8 @@ public class State implements PersistableEnvelope {
         return burntFeeMap;
     }
 
-    Map<String, Integer> getIssuanceBlockHeightMap() {
-        return issuanceBlockHeightMap;
+    Map<String, Issuance> getIssuanceMap() {
+        return issuanceMap;
     }
 
     Map<TxOutput.Key, TxOutput> getUnspentTxOutputMap() {
