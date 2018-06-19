@@ -78,7 +78,7 @@ public class State implements PersistableEnvelope {
     private final LinkedList<Block> blocks;
     private final Map<String, TxType> txTypeMap; // key is txId
     private final Map<String, Long> burntFeeMap; // key is txId
-    private final Map<TxOutput.Key, Issuance> issuanceMap;
+    private final Map<String, Issuance> issuanceMap; // key is txId
     private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
@@ -121,7 +121,7 @@ public class State implements PersistableEnvelope {
                   LinkedList<Block> blocks,
                   Map<String, TxType> txTypeMap,
                   Map<String, Long> burntFeeMap,
-                  Map<TxOutput.Key, Issuance> issuanceMap,
+                  Map<String, Issuance> issuanceMap,
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
                   Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
                   Map<TxOutput.Key, SpentInfo> spentInfoMap,
@@ -157,7 +157,7 @@ public class State implements PersistableEnvelope {
                 .putAllBurntFeeMap(burntFeeMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
                 .putAllIssuanceMap(issuanceMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
                 .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
                 .putAllTxOutputTypeMap(txOutputTypeMap.entrySet().stream()
@@ -178,8 +178,8 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> TxType.fromProto(e.getValue())));
         Map<String, Long> burntFeeMap = proto.getBurntFeeMapMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<TxOutput.Key, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> Issuance.fromProto(e.getValue())));
+        Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         Map<TxOutput.Key, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
         Map<TxOutput.Key, TxOutputType> txOutputTypeMap = proto.getTxOutputTypeMapMap().entrySet().stream()
@@ -247,7 +247,7 @@ public class State implements PersistableEnvelope {
     }
 
     void addIssuance(Issuance issuance) {
-        issuanceMap.put(issuance.getTxOutput().getKey(), issuance);
+        issuanceMap.put(issuance.getTxId(), issuance);
     }
 
     void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
@@ -304,7 +304,7 @@ public class State implements PersistableEnvelope {
         return burntFeeMap;
     }
 
-    Map<TxOutput.Key, Issuance> getIssuanceMap() {
+    Map<String, Issuance> getIssuanceMap() {
         return issuanceMap;
     }
 

@@ -200,9 +200,7 @@ public class StateService {
     }
 
     public void addIssuance(Issuance issuance) {
-        TxOutput txOutput = issuance.getTxOutput();
         state.addIssuance(issuance);
-        state.addUnspentTxOutput(txOutput);
     }
 
     public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
@@ -258,7 +256,7 @@ public class StateService {
         return state.getBurntFeeMap();
     }
 
-    public Map<TxOutput.Key, Issuance> getIssuanceMap() {
+    public Map<String, Issuance> getIssuanceMap() {
         return state.getIssuanceMap();
     }
 
@@ -332,7 +330,7 @@ public class StateService {
 
     private Optional<Issuance> getIssuance(String txId) {
         return getIssuanceMap().entrySet().stream()
-                .filter(entry -> entry.getKey().getTxId().equals(txId))
+                .filter(entry -> entry.getKey().equals(txId))
                 .map(Map.Entry::getValue)
                 .findFirst();
     }

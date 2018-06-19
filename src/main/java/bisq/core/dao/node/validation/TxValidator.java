@@ -171,7 +171,8 @@ public class TxValidator {
             } else {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + opReturnTypeCandidate +
-                        " / verifiedOpReturnType=" + txState.getVerifiedOpReturnType();
+                        " / verifiedOpReturnType=" + txState.getVerifiedOpReturnType() +
+                        "txId=" + tx.getId();
                 log.error(msg);
             }
         } else {

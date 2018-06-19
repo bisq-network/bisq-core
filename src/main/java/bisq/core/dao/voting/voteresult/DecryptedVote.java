@@ -18,6 +18,7 @@
 package bisq.core.dao.voting.voteresult;
 
 import bisq.core.dao.voting.ballot.BallotList;
+import bisq.core.dao.voting.merit.MeritList;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -34,12 +35,15 @@ class DecryptedVote {
     private final String blindVoteTxId; // not used yet but keep it for now
     private final long stake;
     private final BallotList ballotList;
+    private final MeritList meritList;
 
-    DecryptedVote(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake, BallotList ballotList) {
+    DecryptedVote(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake,
+                  BallotList ballotList, MeritList meritList) {
         this.hashOfBlindVoteList = hashOfBlindVoteList;
         this.voteRevealTxId = voteRevealTxId;
         this.blindVoteTxId = blindVoteTxId;
         this.stake = stake;
         this.ballotList = ballotList;
+        this.meritList = meritList;
     }
 }

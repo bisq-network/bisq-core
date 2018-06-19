@@ -47,7 +47,7 @@ public class TxInput implements PersistablePayload {
     private final String connectedTxOutputTxId;
     private final int connectedTxOutputIndex;
     @Nullable
-    private final String pubKey;
+    private final String pubKey; // as hex
 
     public TxInput(String connectedTxOutputTxId, int connectedTxOutputIndex, @Nullable String pubKey) {
         this.connectedTxOutputTxId = connectedTxOutputTxId;

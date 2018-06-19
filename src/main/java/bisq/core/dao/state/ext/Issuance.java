@@ -17,7 +17,8 @@
 
 package bisq.core.dao.state.ext;
 
-import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.common.proto.network.NetworkPayload;
+import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -32,21 +33,19 @@ import javax.annotation.concurrent.Immutable;
 
 @Immutable
 @Value
-public class Issuance {
-    private final TxOutput txOutput;
+public class Issuance implements PersistablePayload, NetworkPayload {
+    private final String txId;
     private final int chainHeight;
     private final long amount;
     @Nullable
-    private final String inputPubKey; // sig key of first input it issuance tx
-    private final long date;
+    private final String pubKey; // sig key as hex of first input it issuance tx
 
     @Inject
-    public Issuance(TxOutput txOutput, int chainHeight, long amount, @Nullable String inputPubKey, long date) {
-        this.txOutput = txOutput;
+    public Issuance(String txId, int chainHeight, long amount, @Nullable String pubKey) {
+        this.txId = txId;
         this.chainHeight = chainHeight;
         this.amount = amount;
-        this.inputPubKey = inputPubKey;
-        this.date = date;
+        this.pubKey = pubKey;
     }
 
 
@@ -56,22 +55,19 @@ public class Issuance {
 
     public PB.Issuance toProtoMessage() {
         final PB.Issuance.Builder builder = PB.Issuance.newBuilder()
-                .setTxOutput(txOutput.toProtoMessage())
+                .setTxId(txId)
                 .setChainHeight(chainHeight)
-                .setAmount(amount)
-                .setDate(date);
+                .setAmount(amount);
 
-        Optional.ofNullable(inputPubKey).ifPresent(e -> builder.setInputPubKey(inputPubKey));
+        Optional.ofNullable(pubKey).ifPresent(e -> builder.setPubKey(pubKey));
 
         return builder.build();
     }
 
     public static Issuance fromProto(PB.Issuance proto) {
-        return new Issuance(TxOutput.fromProto(proto.getTxOutput()),
+        return new Issuance(proto.getTxId(),
                 proto.getChainHeight(),
                 proto.getAmount(),
-                proto.getInputPubKey().isEmpty() ? null : proto.getInputPubKey(),
-                proto.getDate());
+                proto.getPubKey().isEmpty() ? null : proto.getPubKey());
     }
-
 }

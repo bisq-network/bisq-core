@@ -56,16 +56,20 @@ public class IssuanceService {
         compReqIssuanceTxOutputs.stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
+                    // We don't check atm if the output is unspent. We cannot use the bsqWallet as that would not
+                    // reflect our current block state (could have been spent at later block which is valid and
+                    // bsqWallet would show that spent state). We would need to support a spent status for the outputs
+                    // which are interpreted as BTC like a not yet accepted comp. request is.
                     long amount = compensationProposal.getRequestedBsq().value;
-                    long date = compensationProposal.getCreationDate().getTime();
                     Optional<Tx> optionalTx = stateService.getTx(compensationProposal.getTxId());
                     if (optionalTx.isPresent()) {
                         Tx tx = optionalTx.get();
                         // We use key from first input
                         TxInput txInput = tx.getInputs().get(0);
-                        String inputPubKey = txInput.getPubKey();
-                        Issuance issuance = new Issuance(txOutput, chainHeight, amount, inputPubKey, date);
+                        String pubKey = txInput.getPubKey();
+                        Issuance issuance = new Issuance(tx.getId(), chainHeight, amount, pubKey);
                         stateService.addIssuance(issuance);
+                        stateService.addUnspentTxOutput(txOutput);
 
                         StringBuilder sb = new StringBuilder();
                         sb.append("\n################################################################################\n");
