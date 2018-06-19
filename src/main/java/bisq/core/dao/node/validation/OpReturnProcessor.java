@@ -42,6 +42,7 @@ public class OpReturnProcessor {
     private final OpReturnCompReqValidator opReturnCompReqValidator;
     private final OpReturnBlindVoteValidator opReturnBlindVoteValidator;
     private final OpReturnVoteRevealValidator opReturnVoteRevealValidator;
+    private final OpReturnLockupValidator opReturnLockupValidator;
     private final StateService stateService;
 
     @Inject
@@ -49,12 +50,14 @@ public class OpReturnProcessor {
                              OpReturnCompReqValidator opReturnCompReqValidator,
                              OpReturnBlindVoteValidator opReturnBlindVoteValidator,
                              OpReturnVoteRevealValidator opReturnVoteRevealValidator,
+                             OpReturnLockupValidator opReturnLockupValidator,
                              StateService stateService) {
 
         this.opReturnProposalValidator = opReturnProposalValidator;
         this.opReturnCompReqValidator = opReturnCompReqValidator;
         this.opReturnBlindVoteValidator = opReturnBlindVoteValidator;
         this.opReturnVoteRevealValidator = opReturnVoteRevealValidator;
+        this.opReturnLockupValidator = opReturnLockupValidator;
         this.stateService = stateService;
     }
 
@@ -102,9 +105,8 @@ public class OpReturnProcessor {
             case VOTE_REVEAL:
                 processVoteReveal(opReturnData, txOutput, blockHeight, txState);
                 break;
-            case LOCK_UP:
-                // TODO
-                stateService.setTxOutputType(txOutput, TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
+            case LOCKUP:
+                processLockup(opReturnData, txOutput, blockHeight, txState);
                 break;
             case UNLOCK:
                 // TODO
@@ -186,6 +188,23 @@ public class OpReturnProcessor {
             // that it is valid BSQ.
             if (txState.getVoteRevealUnlockStakeOutput() != null)
                 stateService.setTxOutputType(txState.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
+        }
+    }
+
+    private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, TxState txState) {
+        final TxOutput lockupCandidate = txState.getLockupOutput();
+        if (opReturnLockupValidator.validate(opReturnData, blockHeight, txState)) {
+            stateService.setTxOutputType(txOutput, TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
+            stateService.setTxOutputType(lockupCandidate, TxOutputType.BOND_LOCK);
+            txState.setVerifiedOpReturnType(OpReturnType.LOCKUP);
+        } else {
+            log.info("We expected a lockup op_return data but it did not " +
+                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
+            stateService.setTxOutputType(txOutput, TxOutputType.INVALID_OUTPUT);
+
+            // If the opReturn is invalid the lockup candidate cannot become BSQ, so we set it to BTC
+            if (lockupCandidate != null)
+                stateService.setTxOutputType(lockupCandidate, TxOutputType.BTC_OUTPUT);
         }
     }
 }

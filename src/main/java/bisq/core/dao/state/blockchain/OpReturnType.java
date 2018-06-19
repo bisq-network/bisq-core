@@ -31,7 +31,7 @@ public enum OpReturnType {
     COMPENSATION_REQUEST((byte) 0x11),
     BLIND_VOTE((byte) 0x12),
     VOTE_REVEAL((byte) 0x13),
-    LOCK_UP((byte) 0x14),
+    LOCKUP((byte) 0x14),
     UNLOCK((byte) 0x15);
 
     @Getter

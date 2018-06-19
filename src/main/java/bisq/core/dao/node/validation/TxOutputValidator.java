@@ -88,6 +88,13 @@ public class TxOutputValidator {
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
             // in the txState.
             applyStateChangeForBsqOutput(txOutput, null);
+        } else if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.LOCKUP) {
+            // First output might be lockup output.
+            txState.setLockupOutput(txOutput);
+
+            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
+            // in the txState.
+            applyStateChangeForBsqOutput(txOutput, null);
         } else {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }

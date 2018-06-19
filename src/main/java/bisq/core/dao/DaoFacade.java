@@ -19,6 +19,7 @@ package bisq.core.dao;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
+import bisq.core.dao.bonding.lockup.LockupService;
 import bisq.core.dao.state.BlockListener;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
@@ -82,6 +83,7 @@ public class DaoFacade {
     private final MyBlindVoteListService myBlindVoteListService;
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
+    private final LockupService lockupService;
 
     private final ObjectProperty<DaoPhase.Phase> phaseProperty = new SimpleObjectProperty<>(DaoPhase.Phase.UNDEFINED);
 
@@ -95,7 +97,8 @@ public class DaoFacade {
                      BlindVoteService blindVoteService,
                      MyBlindVoteListService myBlindVoteListService,
                      MyVoteListService myVoteListService,
-                     CompensationProposalService compensationProposalService) {
+                     CompensationProposalService compensationProposalService,
+                     LockupService lockupService) {
         this.filteredProposalListService = filteredProposalListService;
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
@@ -106,6 +109,7 @@ public class DaoFacade {
         this.myBlindVoteListService = myBlindVoteListService;
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
+        this.lockupService = lockupService;
 
         stateService.addChainHeightListener(chainHeight -> {
             if (chainHeight > 0 && periodService.getCurrentCycle() != null)
@@ -272,6 +276,17 @@ public class DaoFacade {
 
     public int getChainHeight() {
         return stateService.getChainHeight();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Use case: Bonding
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // Publish lockup tx
+    public void publishLockupTx(Coin lockupAmount, int lockupTime, ResultHandler resultHandler,
+                                ExceptionHandler exceptionHandler) {
+        lockupService.publishLockupTx(lockupAmount, lockupTime, resultHandler, exceptionHandler);
     }
 
 

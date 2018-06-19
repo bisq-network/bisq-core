@@ -41,6 +41,8 @@ class TxState {
     private TxOutput blindVoteLockStakeOutput;
     @Nullable
     private TxOutput voteRevealUnlockStakeOutput;
+    @Nullable
+    private TxOutput lockupOutput;
     private boolean bsqOutputFound;
 
     // That will be set preliminary at first parsing the last output. Not guaranteed

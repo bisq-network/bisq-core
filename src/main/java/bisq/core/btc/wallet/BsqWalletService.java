@@ -452,6 +452,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     }
 
     // TODO add tests
+    // target - the amount of BSQ that won't be included in the change output (burnt as fee)
     private void addInputsAndChangeOutputForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
             throws InsufficientBsqException {
         Coin requiredInput;
@@ -504,6 +505,21 @@ public class BsqWalletService extends WalletService implements BlockListener {
         tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, stake));
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
         // printTx("getPreparedVoteRevealTx", tx);
+        return tx;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Lockup bond tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedLockupTx(Coin lockupAmount)
+            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
+        Transaction tx = new Transaction(params);
+        checkArgument(Restrictions.isAboveDust(lockupAmount), "The amount is too low (dust limit).");
+        tx.addOutput(new TransactionOutput(params, tx, lockupAmount, getUnusedAddress()));
+        addInputsAndChangeOutputForTx(tx, lockupAmount, bsqCoinSelector);
+        printTx("prepareLockupTx", tx);
         return tx;
     }
 
