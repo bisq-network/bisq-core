@@ -81,6 +81,8 @@ public class LiteNode extends BsqNode {
     @Override
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         super.onInitialized();
+
+        liteNodeNetworkService.init();
     }
 
     public void shutDown() {

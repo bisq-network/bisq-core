@@ -39,6 +39,7 @@ import bisq.core.trade.statistics.TradeStatisticsManager;
 import bisq.core.user.User;
 import bisq.core.util.Validator;
 
+import bisq.network.p2p.AckMessage;
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.DecryptedDirectMessageListener;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
@@ -184,6 +185,10 @@ public class TradeManager implements PersistedDataHost {
                     // The mailbox message will be removed inside the tasks after they are processed successfully
                     if (tradeOptional.isPresent())
                         tradeOptional.get().addDecryptedMessageWithPubKey(decryptedMessageWithPubKey);
+                } else if (networkEnvelop instanceof AckMessage) {
+                    AckMessage ackMessage = (AckMessage) networkEnvelop;
+                    //TODO for testing
+                    log.error("Received mailbox AckMessage at trade {}. ackMessage={}", ackMessage.getSourceUid(), ackMessage);
                 }
             }
         });

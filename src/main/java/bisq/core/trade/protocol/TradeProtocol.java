@@ -20,11 +20,16 @@ package bisq.core.trade.protocol;
 import bisq.core.trade.MakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
+import bisq.core.trade.messages.PayDepositRequest;
 import bisq.core.trade.messages.TradeMessage;
 
+import bisq.network.p2p.AckMessage;
+import bisq.network.p2p.AckMessageSourceType;
 import bisq.network.p2p.DecryptedDirectMessageListener;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
+import bisq.network.p2p.MailboxMessage;
 import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.SendMailboxMessageListener;
 
 import bisq.common.Timer;
 import bisq.common.UserThread;
@@ -36,6 +41,8 @@ import javafx.beans.value.ChangeListener;
 import java.security.PublicKey;
 
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 import static bisq.core.util.Validator.nonEmptyStringOf;
 
@@ -66,6 +73,11 @@ public abstract class TradeProtocol {
 
                     if (tradeMessage.getTradeId().equals(processModel.getOfferId()))
                         doHandleDecryptedMessage(tradeMessage, peersNodeAddress);
+                } else if (networkEnvelop instanceof AckMessage) {
+                    AckMessage ackMessage = (AckMessage) networkEnvelop;
+                    //TODO for testing
+                    if (ackMessage.getSourceId().equals(trade.getId()))
+                        log.error("Received direct AckMessage at trade {}. ackMessage={}", trade.getId(), ackMessage);
                 }
             }
         };
@@ -130,12 +142,66 @@ public abstract class TradeProtocol {
 
     protected void handleTaskRunnerSuccess(String info) {
         log.debug("handleTaskRunnerSuccess " + info);
+
+        sendAckMessage(true, null);
     }
 
     protected void handleTaskRunnerFault(String errorMessage) {
         log.error(errorMessage);
+
+        sendAckMessage(false, errorMessage);
+
         cleanupTradableOnFault();
         cleanup();
+    }
+
+    private void sendAckMessage(boolean result, @Nullable String errorMessage) {
+        TradeMessage tradeMessage = processModel.getTradeMessage();
+        // We complete at initial protocol setup with the setup listener tasks.
+        // Other cases are if we start from an UI event the task runner (payment started, confirmed).
+        // In such cases we have not set any tradeMessage and we ignore the sendAckMessage call.
+        if (tradeMessage == null)
+            return;
+
+        String tradeId = tradeMessage.getTradeId();
+        String sourceUid = "";
+        if (tradeMessage instanceof MailboxMessage) {
+            sourceUid = ((MailboxMessage) tradeMessage).getUid();
+        } else {
+            // For direct msg we don't have a mandatory uid so we need to cast to get it
+            if (tradeMessage instanceof PayDepositRequest) {
+                sourceUid = ((PayDepositRequest) tradeMessage).getUid();
+            }
+        }
+        AckMessage ackMessage = new AckMessage(processModel.getMyNodeAddress(),
+                AckMessageSourceType.TRADE_MESSAGE,
+                tradeMessage.getClass().getSimpleName(),
+                sourceUid,
+                tradeId,
+                result,
+                errorMessage);
+
+        processModel.getP2PService().sendEncryptedMailboxMessage(
+                trade.getTradingPeerNodeAddress(),
+                processModel.getTradingPeer().getPubKeyRing(),
+                ackMessage,
+                new SendMailboxMessageListener() {
+                    @Override
+                    public void onArrived() {
+                        log.error("AckMessage arrived at peer. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                    }
+
+                    @Override
+                    public void onStoredInMailbox() {
+                        log.error("AckMessage stored in mailbox. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                    }
+
+                    @Override
+                    public void onFault(String errorMessage) {
+                        log.error("sendEncryptedMailboxMessage failed. AckMessage=" + ackMessage);
+                    }
+                }
+        );
     }
 
     private void cleanupTradableOnFault() {
