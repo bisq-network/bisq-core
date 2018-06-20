@@ -274,7 +274,7 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
                 description("Override hard coded seed nodes as comma separated list: E.g. rxdkppp3vicnbgqt.onion:8002, mfla72c4igh5ta2t.onion:8002", ""))
                 .withRequiredArg();
         parser.accepts(NetworkOptionKeys.MY_ADDRESS,
-                description("My own onion address (used for botstrap nodes to exclude itself)", ""))
+                description("My own onion address (used for bootstrap nodes to exclude itself)", ""))
                 .withRequiredArg();
         parser.accepts(NetworkOptionKeys.BAN_LIST,
                 description("Nodes to exclude from network connections.", ""))
