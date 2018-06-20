@@ -44,6 +44,7 @@ import bisq.core.trade.messages.PublishDepositTxRequest;
 import bisq.core.trade.statistics.TradeStatistics;
 
 import bisq.network.p2p.CloseConnectionMessage;
+import bisq.network.p2p.ConfirmationMessage;
 import bisq.network.p2p.PrefixedSealedAndSignedMessage;
 import bisq.network.p2p.peers.getdata.messages.GetDataResponse;
 import bisq.network.p2p.peers.getdata.messages.GetUpdatedDataRequest;
@@ -153,6 +154,8 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
 
                 case ADD_PERSISTABLE_NETWORK_PAYLOAD_MESSAGE:
                     return AddPersistableNetworkPayloadMessage.fromProto(proto.getAddPersistableNetworkPayloadMessage(), this, messageVersion);
+                case CONFIRMATION_MESSAGE:
+                    return ConfirmationMessage.fromProto(proto.getConfirmationMessage(), messageVersion);
                 default:
                     throw new ProtobufferException("Unknown proto message case (PB.NetworkEnvelope). messageCase=" + proto.getMessageCase());
             }
