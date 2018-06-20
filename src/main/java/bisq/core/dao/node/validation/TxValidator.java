@@ -97,7 +97,7 @@ public class TxValidator {
             }
         }
 
-        return bsqInputBalancePositive;
+        return bsqInputBalancePositive || txState.getBurntBondValue() > 0;
     }
 
     // TODO add tests

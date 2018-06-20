@@ -82,6 +82,8 @@ public class State implements PersistableEnvelope {
     private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
+    private final Map<TxOutput.Key, Integer> lockTimeMap;
+    private final Map<TxOutput.Key, Integer> unlockBlockHeightMap;
 
     private final LinkedList<Cycle> cycles;
 
@@ -99,6 +101,8 @@ public class State implements PersistableEnvelope {
                 genesisBlockHeight,
                 genesisBlockHeight,
                 new LinkedList<>(),
+                new HashMap<>(),
+                new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
@@ -125,6 +129,8 @@ public class State implements PersistableEnvelope {
                   Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
                   Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
                   Map<TxOutput.Key, SpentInfo> spentInfoMap,
+                  Map<TxOutput.Key, Integer> lockTimeMap,
+                  Map<TxOutput.Key, Integer> unlockBlockHeightMap,
                   LinkedList<Cycle> cycles,
                   Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
         this.genesisTxId = genesisTxId;
@@ -137,6 +143,8 @@ public class State implements PersistableEnvelope {
         this.unspentTxOutputMap = unspentTxOutputMap;
         this.txOutputTypeMap = txOutputTypeMap;
         this.spentInfoMap = spentInfoMap;
+        this.lockTimeMap = lockTimeMap;
+        this.unlockBlockHeightMap = unlockBlockHeightMap;
         this.cycles = cycles;
         this.paramChangeByBlockHeightMap = paramChangeByBlockHeightMap;
     }
@@ -164,6 +172,10 @@ public class State implements PersistableEnvelope {
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
+                .putAllLockTimeMap(lockTimeMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)))
+                .putAllUnlockBlockHeightMap(unlockBlockHeightMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)))
                 .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
                 .putAllParamChangeByBlockHeight(paramChangeByBlockHeightMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())));
@@ -186,6 +198,10 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutputType.fromProto(e.getValue())));
         Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
+        Map<TxOutput.Key, Integer> lockTimeMap = proto.getLockTimeMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), Map.Entry::getValue));
+        Map<TxOutput.Key, Integer> unlockBlockHeightMap = proto.getUnlockBlockHeightMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), Map.Entry::getValue));
         final LinkedList<Cycle> cycles = proto.getCyclesList().stream()
                 .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
         Map<Integer, ParamChangeMap> paramChangeListMap = proto.getParamChangeByBlockHeightMap().entrySet().stream()
@@ -200,6 +216,8 @@ public class State implements PersistableEnvelope {
                 unspentTxOutputMap,
                 txOutputTypeMap,
                 spentInfoMap,
+                lockTimeMap,
+                unlockBlockHeightMap,
                 cycles,
                 paramChangeListMap);
     }
@@ -250,8 +268,24 @@ public class State implements PersistableEnvelope {
         issuanceMap.put(issuance.getTxId(), issuance);
     }
 
+    void removeLockTimeTxOutput(TxOutput txOutput) {
+        lockTimeMap.remove(txOutput.getKey());
+    }
+
+    void removeUnlockBlockHeightTxOutput(TxOutput txOutput) {
+        unlockBlockHeightMap.remove(txOutput.getKey());
+    }
+
     void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
+    }
+
+    void setLockTime(TxOutput txOutput, int lockTime) {
+        lockTimeMap.put(txOutput.getKey(), lockTime);
+    }
+
+    void setUnlockBlockHeight(TxOutput txOutput, int unlockBlockHeight) {
+        unlockBlockHeightMap.put(txOutput.getKey(), unlockBlockHeight);
     }
 
     void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
@@ -318,6 +352,14 @@ public class State implements PersistableEnvelope {
 
     Map<TxOutput.Key, SpentInfo> getSpentInfoMap() {
         return spentInfoMap;
+    }
+
+    Map<TxOutput.Key, Integer> getLockTimeMap() {
+        return lockTimeMap;
+    }
+
+    Map<TxOutput.Key, Integer> getUnlockBlockHeightMap() {
+        return unlockBlockHeightMap;
     }
 
     LinkedList<Cycle> getCycles() {

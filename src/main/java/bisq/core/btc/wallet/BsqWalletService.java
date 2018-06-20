@@ -84,7 +84,8 @@ public class BsqWalletService extends WalletService implements BlockListener {
     private Coin lockedInBondsBalance = Coin.ZERO;
     @Getter
     private Coin lockedForVotingBalance = Coin.ZERO;
-
+    @Getter
+    private Coin unlockingBondsBalance = Coin.ZERO;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -218,15 +219,18 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
+        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingBondsOutputs().stream()
+                .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
+                .mapToLong(TxOutput::getValue)
+                .sum());
+
         availableBalance = bsqCoinSelector.select(NetworkParameters.MAX_MONEY, wallet.calculateAllSpendCandidates())
-                .valueGathered
-                .subtract(lockedForVotingBalance)
-                .subtract(lockedInBondsBalance);
+                .valueGathered;
         if (availableBalance.isNegative())
             availableBalance = Coin.ZERO;
 
         bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, pendingBalance,
-                lockedForVotingBalance, lockedInBondsBalance));
+                lockedForVotingBalance, lockedInBondsBalance, unlockingBondsBalance));
     }
 
     public void addBsqBalanceListener(BsqBalanceListener listener) {
@@ -365,6 +369,33 @@ public class BsqWalletService extends WalletService implements BlockListener {
                     // If the tx is not confirmed yet we add the value and assume it is a valid BSQ output.
                     result = result.add(output.getValue());
                 }*/
+            }
+        }
+        return result;
+    }
+
+    public Coin getValueLockedUpInBond(Transaction transaction) throws ScriptException {
+        Coin result = Coin.ZERO;
+        final String txId = transaction.getHashAsString();
+        Optional<Tx> txOptional = stateService.getTx(txId);
+        // Only the first output can be locked
+        TransactionOutput output = transaction.getOutputs().get(0);
+        final boolean isConfirmed = output.getParentTransaction() != null &&
+                output.getParentTransaction().getConfidence().getConfidenceType() ==
+                        TransactionConfidence.ConfidenceType.BUILDING;
+        if (output.isMineOrWatched(wallet) && isConfirmed && txOptional.isPresent()) {
+            // The index of the BSQ tx outputs are the same as the bitcoinj tx outputs
+            TxOutput txOutput = txOptional.get().getOutputs().get(0);
+            if (stateService.isLockedOutput(txOutput)) {
+                //TODO check why values are not the same
+                if (txOutput.getValue() != output.getValue().value) {
+                    log.warn("getValueLockedUpInBond: Value of BSQ output do not match BitcoinJ tx output. " +
+                                    "txOutput.getValue()={}, output.getValue().value={}, txId={}",
+                            txOutput.getValue(), output.getValue().value, txId);
+                }
+
+                // If it is a valid BSQ output we add it
+                result = result.add(Coin.valueOf(txOutput.getValue()));
             }
         }
         return result;
@@ -520,6 +551,26 @@ public class BsqWalletService extends WalletService implements BlockListener {
         tx.addOutput(new TransactionOutput(params, tx, lockupAmount, getUnusedAddress()));
         addInputsAndChangeOutputForTx(tx, lockupAmount, bsqCoinSelector);
         printTx("prepareLockupTx", tx);
+        return tx;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Unlock bond tx
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedUnlockTx(TxOutput lockedTxOutput)
+            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
+        Transaction tx = new Transaction(params);
+        // Unlocking means spending the full value of the locked txoutput to another txoutput with the same value
+        Coin amountToUnlock = Coin.valueOf(lockedTxOutput.getValue());
+        checkArgument(Restrictions.isAboveDust(amountToUnlock), "The amount is too low (dust limit).");
+        Transaction lockupTx = getTransaction(lockedTxOutput.getTxId());
+        checkNotNull(lockupTx, "blindVoteTx must not be null");
+        TransactionOutPoint outPoint = new TransactionOutPoint(params, lockedTxOutput.getIndex(), lockupTx);
+        // Input is not signed yet so we use new byte[]{}
+        tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, amountToUnlock));
+        tx.addOutput(new TransactionOutput(params, tx, amountToUnlock, getUnusedAddress()));
+        printTx("prepareUnlockTx", tx);
         return tx;
     }
 

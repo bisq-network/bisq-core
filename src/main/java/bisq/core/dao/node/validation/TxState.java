@@ -21,6 +21,9 @@ import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,6 +38,7 @@ import javax.annotation.Nullable;
 @Setter
 class TxState {
     private long availableInputValue = 0;
+    private long burntBondValue = 0;
     @Nullable
     private TxOutput issuanceCandidate;
     @Nullable
@@ -44,6 +48,13 @@ class TxState {
     @Nullable
     private TxOutput lockupOutput;
     private boolean bsqOutputFound;
+
+    @Nullable
+    private TxOutput spentLockedConnectedTxOutput;
+    private int unlockBlockHeight;
+
+    @Nullable
+    private HashSet<TxOutput> spentUnlockedConnectedTxOutputs = new HashSet<>();
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
     // that it is a valid BSQ tx at that moment.
@@ -75,5 +86,10 @@ class TxState {
 
     public boolean isInputValuePositive() {
         return availableInputValue > 0;
+    }
+
+    public void burnBond(long value) {
+        subtractFromInputValue(value);
+        this.burntBondValue += value;
     }
 }

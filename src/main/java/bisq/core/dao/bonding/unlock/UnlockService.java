@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.bonding.lockup;
+package bisq.core.dao.bonding.unlock;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
@@ -28,8 +28,8 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
+import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
-import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.app.Version;
 import bisq.common.handlers.ExceptionHandler;
@@ -41,18 +41,16 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import javafx.beans.value.ChangeListener;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 @Slf4j
-public class LockupService {
+public class UnlockService {
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
@@ -65,7 +63,7 @@ public class LockupService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public LockupService(WalletsManager walletsManager,
+    public UnlockService(WalletsManager walletsManager,
                          BsqWalletService bsqWalletService,
                          BtcWalletService btcWalletService,
                          StateService stateService) {
@@ -75,15 +73,13 @@ public class LockupService {
         this.stateService = stateService;
     }
 
-    public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
+    public void publishUnlockTx(String lockedTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
-        checkArgument(lockTime <= stateService.getParamValue(Param.LOCKTIME_MAX, stateService.getChainHeight()) &&
-                lockTime >= stateService.getParamValue(Param.LOCKTIME_MIN, stateService.getChainHeight()));
         try {
-            byte[] opReturnData = getOpReturnData(lockTime);
-            final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
+            TxOutput lockedTxOutput = stateService.getLockedTxOutput(lockedTxId).get();
+            final Transaction unlockTx = getUnlockTx(lockedTxOutput);
 
-            walletsManager.publishAndCommitBsqTx(lockupTx, new TxBroadcaster.Callback() {
+            walletsManager.publishAndCommitBsqTx(unlockTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     resultHandler.handleResult();
@@ -105,39 +101,18 @@ public class LockupService {
                 }
             });
 
-        } catch (TransactionVerificationException | InsufficientMoneyException | WalletException |
-                IOException exception) {
+        } catch (TransactionVerificationException | InsufficientMoneyException | WalletException exception) {
             exceptionHandler.handleException(exception);
         }
     }
 
-    private byte[] getOpReturnData(int lockTime) throws IOException {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnType.LOCKUP.getType());
-            outputStream.write(Version.LOCKUP_VERSION);
-            outputStream.write(lockTime >>> 8);
-            outputStream.write(lockTime);
-            // TODO: handle short data
-            // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
-            // require by btcd-cli4j
-            // Write an extra byte to avoid the asm conversion to int in bitcoind
-            outputStream.write(0);
-            return outputStream.toByteArray();
-        } catch (IOException e) {
-            // Not expected to happen ever
-            e.printStackTrace();
-            log.error(e.toString());
-            throw e;
-        }
-    }
-
-    private Transaction getLockupTx(Coin lockupAmount, byte[] opReturnData)
+    private Transaction getUnlockTx(TxOutput lockedTxOutput)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
-        Transaction preparedTx = bsqWalletService.getPreparedLockupTx(lockupAmount);
-        Transaction txWithBtcFee = btcWalletService.completePreparedBsqTx(preparedTx, true, opReturnData);
+        Transaction preparedTx = bsqWalletService.getPreparedUnlockTx(lockedTxOutput);
+        Transaction txWithBtcFee = btcWalletService.completePreparedBsqTx(preparedTx, true, null);
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
 
-        log.info("Lockup tx: " + transaction);
+        log.info("Unlock tx: " + transaction);
         return transaction;
     }
 

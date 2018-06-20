@@ -23,6 +23,8 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -57,6 +59,29 @@ public class TxInputProcessor {
                         }
                     }
 
+                    if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BOND_LOCK) {
+                        // First check if this is a bond unlock tx, a locked BSQ txOutput is spent
+                        // to a corresponding BOND_UNLOCK txOutput. The BOND_UNLOCK can only be spent after
+                        // lock time blocks has passed.
+                        if (txState.getSpentLockedConnectedTxOutput() == null) {
+                            txState.setSpentLockedConnectedTxOutput(connectedTxOutput);
+                            stateService.getLockTime(connectedTxOutput).ifPresent(lockTime ->
+                                    txState.setUnlockBlockHeight(blockHeight + lockTime));
+                        }
+                    } else if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BOND_UNLOCK) {
+                        // Spending an unlocked txOutput
+                        txState.getSpentUnlockedConnectedTxOutputs().add(connectedTxOutput);
+                        stateService.getUnlockBlockHeight(connectedTxOutput).ifPresent(unlockBlockHeight -> {
+                            // Only count the input as BSQ input if spent after unlock time
+                            if (blockHeight <= unlockBlockHeight)
+                                txState.burnBond(connectedTxOutput.getValue());
+                        });
+                    }
+
+                    if (txState.getSpentLockedConnectedTxOutput() != null)
+                        stateService.removeLockTimeTxOutput(connectedTxOutput);
+                    txState.getSpentUnlockedConnectedTxOutputs().stream().forEach(txOutput ->
+                            stateService.removeUnlockBlockHeightTxOutput(txOutput));
                     stateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
                     stateService.removeUnspentTxOutput(connectedTxOutput);
                 });

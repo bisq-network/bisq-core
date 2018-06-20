@@ -37,10 +37,9 @@ class OpReturnLockupValidator {
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    boolean validate(byte[] opReturnData, int blockHeight, TxState txState) {
-        int lockupTime = (opReturnData[2] << 8) | opReturnData[3];
+    boolean validate(byte[] opReturnData, int lockTime, int blockHeight, TxState txState) {
         return txState.getLockupOutput() != null && opReturnData.length == 5 &&
-                lockupTime >= stateService.getParamValue(Param.LOCKTIME_MIN, blockHeight) &&
-                lockupTime <= stateService.getParamValue(Param.LOCKTIME_MAX, blockHeight);
+                lockTime >= stateService.getParamValue(Param.LOCKTIME_MIN, blockHeight) &&
+                lockTime <= stateService.getParamValue(Param.LOCKTIME_MAX, blockHeight);
     }
 }

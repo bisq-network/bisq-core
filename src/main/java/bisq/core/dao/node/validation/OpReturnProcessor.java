@@ -193,9 +193,11 @@ public class OpReturnProcessor {
 
     private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, TxState txState) {
         final TxOutput lockupCandidate = txState.getLockupOutput();
-        if (opReturnLockupValidator.validate(opReturnData, blockHeight, txState)) {
+        int lockTime = (opReturnData[2] << 8) | opReturnData[3];
+        if (opReturnLockupValidator.validate(opReturnData, lockTime, blockHeight, txState)) {
             stateService.setTxOutputType(txOutput, TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(lockupCandidate, TxOutputType.BOND_LOCK);
+            stateService.setLockTime(lockupCandidate, lockTime);
             txState.setVerifiedOpReturnType(OpReturnType.LOCKUP);
         } else {
             log.info("We expected a lockup op_return data but it did not " +
