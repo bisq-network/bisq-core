@@ -20,6 +20,7 @@ package bisq.core.trade.protocol;
 import bisq.core.trade.MakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
+import bisq.core.trade.messages.CounterCurrencyTransferStartedMessage;
 import bisq.core.trade.messages.PayDepositRequest;
 import bisq.core.trade.messages.TradeMessage;
 
@@ -75,9 +76,14 @@ public abstract class TradeProtocol {
                         doHandleDecryptedMessage(tradeMessage, peersNodeAddress);
                 } else if (networkEnvelop instanceof AckMessage) {
                     AckMessage ackMessage = (AckMessage) networkEnvelop;
-                    //TODO for testing
-                    if (ackMessage.getSourceId().equals(trade.getId()))
-                        log.error("Received direct AckMessage at trade {}. ackMessage={}", trade.getId(), ackMessage);
+                    if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE &&
+                            ackMessage.getSourceId().equals(trade.getId())) {
+                        // We only handle the ack for CounterCurrencyTransferStartedMessage
+                        if (ackMessage.getSourceMsgClassName().equals(CounterCurrencyTransferStartedMessage.class.getSimpleName()))
+                            processModel.setPaymentStartedAckMessage(ackMessage);
+
+                        log.info("Received AckMessage as directMessage for tradeId {}. ackMessage={}", trade.getId(), ackMessage);
+                    }
                 }
             }
         };
@@ -188,12 +194,12 @@ public abstract class TradeProtocol {
                 new SendMailboxMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.error("AckMessage arrived at peer. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                        log.info("AckMessage arrived at peer. tradeId={}, ackMessage={}", tradeId, ackMessage);
                     }
 
                     @Override
                     public void onStoredInMailbox() {
-                        log.error("AckMessage stored in mailbox. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                        log.info("AckMessage stored in mailbox. tradeId={}, ackMessage={}", tradeId, ackMessage);
                     }
 
                     @Override

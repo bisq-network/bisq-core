@@ -40,6 +40,7 @@ import bisq.core.user.User;
 import bisq.core.util.Validator;
 
 import bisq.network.p2p.AckMessage;
+import bisq.network.p2p.AckMessageSourceType;
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.DecryptedDirectMessageListener;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
@@ -183,12 +184,19 @@ public class TradeManager implements PersistedDataHost {
                     String tradeId = ((TradeMessage) networkEnvelop).getTradeId();
                     Optional<Trade> tradeOptional = tradableList.stream().filter(e -> e.getId().equals(tradeId)).findAny();
                     // The mailbox message will be removed inside the tasks after they are processed successfully
-                    if (tradeOptional.isPresent())
-                        tradeOptional.get().addDecryptedMessageWithPubKey(decryptedMessageWithPubKey);
+                    tradeOptional.ifPresent(trade -> trade.addDecryptedMessageWithPubKey(decryptedMessageWithPubKey));
                 } else if (networkEnvelop instanceof AckMessage) {
                     AckMessage ackMessage = (AckMessage) networkEnvelop;
-                    //TODO for testing
-                    log.error("Received mailbox AckMessage at trade {}. ackMessage={}", ackMessage.getSourceUid(), ackMessage);
+                    if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE) {
+                        if (ackMessage.isSuccess()) {
+                            log.info("Received mailbox AckMessage with tradeId {}. ackMessage={}",
+                                    ackMessage.getSourceId(), ackMessage);
+                        } else {
+                            log.warn("Received mailbox AckMessage with error message for tradeId {}. ackMessage={}",
+                                    ackMessage.getSourceId(), ackMessage);
+                        }
+                        p2PService.removeEntryFromMailbox(decryptedMessageWithPubKey);
+                    }
                 }
             }
         });
@@ -199,7 +207,9 @@ public class TradeManager implements PersistedDataHost {
         tradableList = new TradableList<>(tradableListStorage, "PendingTrades");
         tradableList.forEach(trade -> {
             trade.setTransientFields(tradableListStorage, btcWalletService);
-            trade.getOffer().setPriceFeedService(priceFeedService);
+            Offer offer = trade.getOffer();
+            if (offer != null)
+                offer.setPriceFeedService(priceFeedService);
         });
     }
 
