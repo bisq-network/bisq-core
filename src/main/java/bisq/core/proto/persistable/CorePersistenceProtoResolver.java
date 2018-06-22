@@ -54,6 +54,7 @@ import java.io.File;
 
 import lombok.extern.slf4j.Slf4j;
 
+// TODO Use ProtobufferException instead of ProtobufferRuntimeException
 @Slf4j
 public class CorePersistenceProtoResolver extends CoreProtoResolver implements PersistenceProtoResolver {
     private final Provider<BtcWalletService> btcWalletService;
@@ -116,7 +117,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return ParamChangeEventList.fromProto(proto.getParamChangeEventList());
 
                 default:
-                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.PersistableEnvelope). " +
+                            "messageCase=" + proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.PersistableEnvelope is null");

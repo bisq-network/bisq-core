@@ -29,6 +29,7 @@ import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.SealedAndSigned;
 import bisq.common.handlers.ResultHandler;
+import bisq.common.proto.ProtobufferException;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -75,7 +76,7 @@ public class SetupUtils {
                     } else {
                         errorHandler.accept(new CryptoException("Payload not correct after decryption"));
                     }
-                } catch (CryptoException e) {
+                } catch (CryptoException | ProtobufferException e) {
                     log.error(e.toString());
                     e.printStackTrace();
                     errorHandler.accept(e);
