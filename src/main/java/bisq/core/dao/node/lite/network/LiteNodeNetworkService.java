@@ -110,15 +110,18 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
         this.peerManager = peerManager;
         // seedNodeAddresses can be empty (in case there is only 1 seed node, the seed node starting up has no other seed nodes)
         this.seedNodeAddresses = new HashSet<>(seedNodesRepository.getSeedNodeAddresses());
-
-        networkNode.addMessageListener(this);
-        networkNode.addConnectionListener(this);
-        peerManager.addListener(this);
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void init() {
+        networkNode.addMessageListener(this);
+        networkNode.addConnectionListener(this);
+        peerManager.addListener(this);
+    }
 
     @SuppressWarnings("Duplicates")
     public void shutDown() {
