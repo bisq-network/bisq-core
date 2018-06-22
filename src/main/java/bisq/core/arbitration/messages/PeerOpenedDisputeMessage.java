@@ -74,4 +74,9 @@ public final class PeerOpenedDisputeMessage extends DisputeMessage {
                 proto.getUid(),
                 messageVersion);
     }
+
+    @Override
+    public String getTradeId() {
+        return dispute.getTradeId();
+    }
 }

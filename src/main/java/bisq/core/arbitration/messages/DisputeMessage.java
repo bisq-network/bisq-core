@@ -35,4 +35,6 @@ public abstract class DisputeMessage extends NetworkEnvelope implements MailboxM
         super(messageVersion);
         this.uid = uid;
     }
+
+    public abstract String getTradeId();
 }

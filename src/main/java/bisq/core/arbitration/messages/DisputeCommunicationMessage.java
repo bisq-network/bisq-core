@@ -191,5 +191,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
         return storedInMailboxProperty;
     }
 
-
+    @Override
+    public String getTradeId() {
+        return tradeId;
+    }
 }

@@ -80,4 +80,9 @@ public final class PeerPublishedDisputePayoutTxMessage extends DisputeMessage {
                 proto.getUid(),
                 messageVersion);
     }
+
+    @Override
+    public String getTradeId() {
+        return tradeId;
+    }
 }
