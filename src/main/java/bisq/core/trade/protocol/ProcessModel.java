@@ -207,7 +207,6 @@ public class ProcessModel implements Model, PersistablePayload {
         processModel.setTempTradingPeerNodeAddress(proto.hasTempTradingPeerNodeAddress() ? NodeAddress.fromProto(proto.getTempTradingPeerNodeAddress()) : null);
         String paymentStartedMessageState = proto.getPaymentStartedMessageState().isEmpty() ? MessageState.UNDEFINED.name() : proto.getPaymentStartedMessageState();
         ObjectProperty<MessageState> paymentStartedMessageStateProperty = processModel.getPaymentStartedMessageStateProperty();
-        log.error("from PB paymentStartedMessageStateProperty " + paymentStartedMessageStateProperty);
         paymentStartedMessageStateProperty.set(ProtoUtil.enumFromProto(MessageState.class, paymentStartedMessageState));
         return processModel;
     }
@@ -313,6 +312,5 @@ public class ProcessModel implements Model, PersistablePayload {
 
     public void setPaymentStartedMessageState(MessageState paymentStartedMessageStateProperty) {
         this.paymentStartedMessageStateProperty.set(paymentStartedMessageStateProperty);
-        persist();
     }
 }
