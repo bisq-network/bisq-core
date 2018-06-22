@@ -46,7 +46,7 @@ import bisq.core.payment.payload.WesternUnionAccountPayload;
 import bisq.core.trade.statistics.TradeStatistics2;
 
 import bisq.common.proto.ProtoResolver;
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistableEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
@@ -81,7 +81,7 @@ public class CoreProtoResolver implements ProtoResolver {
                                 case SPECIFIC_BANKS_ACCOUNT_PAYLOAD:
                                     return SpecificBanksAccountPayload.fromProto(proto);
                                 default:
-                                    throw new ProtobufferException("Unknown proto message case" +
+                                    throw new ProtobufferRuntimeException("Unknown proto message case" +
                                             "(PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.BankAccountPayload). " +
                                             "messageCase=" + messageCaseBank);
                             }
@@ -94,7 +94,7 @@ public class CoreProtoResolver implements ProtoResolver {
                         case SEPA_INSTANT_ACCOUNT_PAYLOAD:
                             return SepaInstantAccountPayload.fromProto(proto);
                         default:
-                            throw new ProtobufferException("Unknown proto message case" +
+                            throw new ProtobufferRuntimeException("Unknown proto message case" +
                                     "(PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload)." +
                                     " messageCase=" + messageCaseCountry);
                     }
@@ -125,11 +125,11 @@ public class CoreProtoResolver implements ProtoResolver {
                 case U_S_POSTAL_MONEY_ORDER_ACCOUNT_PAYLOAD:
                     return USPostalMoneyOrderAccountPayload.fromProto(proto);
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.PaymentAccountPayload). messageCase=" + messageCase);
+                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.PaymentAccountPayload). messageCase=" + messageCase);
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.PaymentAccountPayload is null");
-            throw new ProtobufferException("PB.PaymentAccountPayload is null");
+            throw new ProtobufferRuntimeException("PB.PaymentAccountPayload is null");
         }
     }
 
@@ -142,11 +142,11 @@ public class CoreProtoResolver implements ProtoResolver {
                 case TRADE_STATISTICS2:
                     return TradeStatistics2.fromProto(proto.getTradeStatistics2());
                 default:
-                    throw new ProtobufferException("Unknown proto message case (PB.PersistableNetworkPayload). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case (PB.PersistableNetworkPayload). messageCase=" + proto.getMessageCase());
             }
         } else {
             log.error("PB.PersistableNetworkPayload is null");
-            throw new ProtobufferException("PB.PersistableNetworkPayload is null");
+            throw new ProtobufferRuntimeException("PB.PersistableNetworkPayload is null");
         }
     }
 }

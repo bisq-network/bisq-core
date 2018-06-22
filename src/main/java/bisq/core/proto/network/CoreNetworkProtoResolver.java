@@ -61,7 +61,7 @@ import bisq.network.p2p.storage.payload.MailboxStoragePayload;
 import bisq.network.p2p.storage.payload.ProtectedMailboxStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.network.NetworkProtoResolver;
@@ -154,11 +154,11 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case ADD_PERSISTABLE_NETWORK_PAYLOAD_MESSAGE:
                     return AddPersistableNetworkPayloadMessage.fromProto(proto.getAddPersistableNetworkPayloadMessage(), this, messageVersion);
                 default:
-                    throw new ProtobufferException("Unknown proto message case (PB.NetworkEnvelope). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case (PB.NetworkEnvelope). messageCase=" + proto.getMessageCase());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.NetworkEnvelope is null");
-            throw new ProtobufferException("PB.NetworkEnvelope is null");
+            throw new ProtobufferRuntimeException("PB.NetworkEnvelope is null");
         }
     }
 
@@ -170,11 +170,11 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case PROTECTED_STORAGE_ENTRY:
                     return ProtectedStorageEntry.fromProto(proto.getProtectedStorageEntry(), this);
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.StorageEntryWrapper). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.StorageEntryWrapper). messageCase=" + proto.getMessageCase());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.StorageEntryWrapper is null");
-            throw new ProtobufferException("PB.StorageEntryWrapper is null");
+            throw new ProtobufferRuntimeException("PB.StorageEntryWrapper is null");
         }
     }
 
@@ -201,11 +201,11 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case BLIND_VOTE:
                     return BlindVote.fromProto(proto.getBlindVote());
                 default:
-                    throw new ProtobufferException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.StoragePayload is null");
-            throw new ProtobufferException("PB.StoragePayload is null");
+            throw new ProtobufferRuntimeException("PB.StoragePayload is null");
         }
     }
 }
