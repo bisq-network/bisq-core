@@ -178,19 +178,19 @@ public class TradeManager implements PersistedDataHost {
             public void onMailboxMessageAdded(DecryptedMessageWithPubKey decryptedMessageWithPubKey, NodeAddress senderNodeAddress) {
                 log.debug("onMailboxMessageAdded decryptedMessageWithPubKey: " + decryptedMessageWithPubKey);
                 log.trace("onMailboxMessageAdded senderAddress: " + senderNodeAddress);
-                NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
-                if (networkEnvelop instanceof TradeMessage) {
-                    log.trace("Received TradeMessage: " + networkEnvelop);
-                    String tradeId = ((TradeMessage) networkEnvelop).getTradeId();
+                NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
+                if (networkEnvelope instanceof TradeMessage) {
+                    log.trace("Received TradeMessage: " + networkEnvelope);
+                    String tradeId = ((TradeMessage) networkEnvelope).getTradeId();
                     Optional<Trade> tradeOptional = tradableList.stream().filter(e -> e.getId().equals(tradeId)).findAny();
                     // The mailbox message will be removed inside the tasks after they are processed successfully
                     tradeOptional.ifPresent(trade -> trade.addDecryptedMessageWithPubKey(decryptedMessageWithPubKey));
-                } else if (networkEnvelop instanceof AckMessage) {
-                    AckMessage ackMessage = (AckMessage) networkEnvelop;
+                } else if (networkEnvelope instanceof AckMessage) {
+                    AckMessage ackMessage = (AckMessage) networkEnvelope;
                     if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE) {
                         if (ackMessage.isSuccess()) {
-                            log.info("Received mailbox AckMessage with tradeId {}. ackMessage={}",
-                                    ackMessage.getSourceId(), ackMessage);
+                            log.info("Received mailbox AckMessage with tradeId {} and uid={}",
+                                    ackMessage.getSourceId(), ackMessage.getSourceUid());
                         } else {
                             log.warn("Received mailbox AckMessage with error message for tradeId {}. ackMessage={}",
                                     ackMessage.getSourceId(), ackMessage);

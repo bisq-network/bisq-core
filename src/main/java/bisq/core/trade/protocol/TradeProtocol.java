@@ -66,23 +66,29 @@ public abstract class TradeProtocol {
             PubKeyRing tradingPeerPubKeyRing = processModel.getTradingPeer().getPubKeyRing();
             PublicKey signaturePubKey = decryptedMessageWithPubKey.getSignaturePubKey();
             if (tradingPeerPubKeyRing != null && signaturePubKey.equals(tradingPeerPubKeyRing.getSignaturePubKey())) {
-                NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
-                log.trace("handleNewMessage: message = " + networkEnvelop.getClass().getSimpleName() + " from " + peersNodeAddress);
-                if (networkEnvelop instanceof TradeMessage) {
-                    TradeMessage tradeMessage = (TradeMessage) networkEnvelop;
+                NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
+                log.trace("handleNewMessage: message = " + networkEnvelope.getClass().getSimpleName() + " from " + peersNodeAddress);
+                if (networkEnvelope instanceof TradeMessage) {
+                    TradeMessage tradeMessage = (TradeMessage) networkEnvelope;
                     nonEmptyStringOf(tradeMessage.getTradeId());
 
                     if (tradeMessage.getTradeId().equals(processModel.getOfferId()))
                         doHandleDecryptedMessage(tradeMessage, peersNodeAddress);
-                } else if (networkEnvelop instanceof AckMessage) {
-                    AckMessage ackMessage = (AckMessage) networkEnvelop;
+                } else if (networkEnvelope instanceof AckMessage) {
+                    AckMessage ackMessage = (AckMessage) networkEnvelope;
                     if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE &&
                             ackMessage.getSourceId().equals(trade.getId())) {
                         // We only handle the ack for CounterCurrencyTransferStartedMessage
                         if (ackMessage.getSourceMsgClassName().equals(CounterCurrencyTransferStartedMessage.class.getSimpleName()))
                             processModel.setPaymentStartedAckMessage(ackMessage);
 
-                        log.info("Received AckMessage as directMessage for tradeId {}. ackMessage={}", trade.getId(), ackMessage);
+                        if (ackMessage.isSuccess()) {
+                            log.info("Received AckMessage as directMessage with tradeId {} and uid={}",
+                                    ackMessage.getSourceId(), ackMessage.getSourceUid());
+                        } else {
+                            log.warn("Received AckMessage as directMessage with error message for tradeId {}. ackMessage={}",
+                                    ackMessage.getSourceId(), ackMessage);
+                        }
                     }
                 }
             }
@@ -194,17 +200,19 @@ public abstract class TradeProtocol {
                 new SendMailboxMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.info("AckMessage arrived at peer. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                        log.info("AckMessage arrived at peer {}. tradeId={}, uid={}",
+                                trade.getTradingPeerNodeAddress(), tradeId, ackMessage.getSourceUid());
                     }
 
                     @Override
                     public void onStoredInMailbox() {
-                        log.info("AckMessage stored in mailbox. tradeId={}, ackMessage={}", tradeId, ackMessage);
+                        log.info("AckMessage stored in mailbox for peer {}. tradeId={}, uid={}",
+                                trade.getTradingPeerNodeAddress(), tradeId, ackMessage.getSourceUid());
                     }
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. AckMessage=" + ackMessage);
+                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}", ackMessage, trade.getTradingPeerNodeAddress());
                     }
                 }
         );
