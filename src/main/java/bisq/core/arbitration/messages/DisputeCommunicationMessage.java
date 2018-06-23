@@ -195,4 +195,22 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
     public String getTradeId() {
         return tradeId;
     }
+
+    @Override
+    public String toString() {
+        return "DisputeCommunicationMessage{" +
+                "\n     tradeId='" + tradeId + '\'' +
+                ",\n     traderId=" + traderId +
+                ",\n     senderIsTrader=" + senderIsTrader +
+                ",\n     message='" + message + '\'' +
+                ",\n     attachments=" + attachments +
+                ",\n     senderNodeAddress=" + senderNodeAddress +
+                ",\n     date=" + date +
+                ",\n     isSystemMessage=" + isSystemMessage +
+                ",\n     arrivedProperty=" + arrivedProperty +
+                ",\n     storedInMailboxProperty=" + storedInMailboxProperty +
+                ",\n     DisputeCommunicationMessage.uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
+    }
 }

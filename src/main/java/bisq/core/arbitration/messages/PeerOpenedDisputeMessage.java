@@ -79,4 +79,14 @@ public final class PeerOpenedDisputeMessage extends DisputeMessage {
     public String getTradeId() {
         return dispute.getTradeId();
     }
+
+    @Override
+    public String toString() {
+        return "PeerOpenedDisputeMessage{" +
+                "\n     dispute=" + dispute +
+                ",\n     senderNodeAddress=" + senderNodeAddress +
+                ",\n     PeerOpenedDisputeMessage.uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
+    }
 }

@@ -20,6 +20,7 @@ package bisq.core.arbitration.messages;
 import bisq.network.p2p.NodeAddress;
 
 import bisq.common.app.Version;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -84,5 +85,16 @@ public final class PeerPublishedDisputePayoutTxMessage extends DisputeMessage {
     @Override
     public String getTradeId() {
         return tradeId;
+    }
+
+    @Override
+    public String toString() {
+        return "PeerPublishedDisputePayoutTxMessage{" +
+                "\n     transaction=" + Utilities.bytesAsHexString(transaction) +
+                ",\n     tradeId='" + tradeId + '\'' +
+                ",\n     senderNodeAddress=" + senderNodeAddress +
+                ",\n     PeerPublishedDisputePayoutTxMessage.uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
     }
 }

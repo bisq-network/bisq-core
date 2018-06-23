@@ -60,6 +60,7 @@ public final class Dispute implements NetworkPayload {
     private final int traderId;
     private final boolean disputeOpenerIsBuyer;
     private final boolean disputeOpenerIsMaker;
+    // PubKeyRing of trader who opened the dispute
     private final PubKeyRing traderPubKeyRing;
     private final long tradeDate;
     private final Contract contract;
