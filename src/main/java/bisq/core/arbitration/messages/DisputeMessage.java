@@ -23,9 +23,7 @@ import bisq.common.proto.network.NetworkEnvelope;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
-@ToString
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage {
@@ -37,4 +35,13 @@ public abstract class DisputeMessage extends NetworkEnvelope implements MailboxM
     }
 
     public abstract String getTradeId();
+
+
+    @Override
+    public String toString() {
+        return "DisputeMessage{" +
+                "\n     uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
+    }
 }

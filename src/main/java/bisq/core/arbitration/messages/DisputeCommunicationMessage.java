@@ -30,19 +30,19 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import javax.annotation.Nullable;
 
 @EqualsAndHashCode(callSuper = true)
-@ToString
 @Getter
 public final class DisputeCommunicationMessage extends DisputeMessage {
     private final String tradeId;
@@ -62,22 +62,17 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                                        int traderId,
                                        boolean senderIsTrader,
                                        String message,
-                                       @Nullable List<Attachment> attachments,
-                                       NodeAddress senderNodeAddress,
-                                       long date,
-                                       boolean arrived,
-                                       boolean storedInMailbox,
-                                       String uid) {
+                                       NodeAddress senderNodeAddress) {
         this(tradeId,
                 traderId,
                 senderIsTrader,
                 message,
-                attachments,
+                null,
                 senderNodeAddress,
-                date,
-                arrived,
-                storedInMailbox,
-                uid,
+                new Date().getTime(),
+                false,
+                false,
+                UUID.randomUUID().toString(),
                 Version.getP2PMessageVersion());
     }
 

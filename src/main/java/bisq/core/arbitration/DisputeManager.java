@@ -73,7 +73,6 @@ import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -295,12 +294,7 @@ public class DisputeManager implements PersistedDataHost {
                         keyRing.getPubKeyRing().hashCode(),
                         false,
                         Res.get("support.systemMsg", sysMsg),
-                        null,
-                        p2PService.getAddress(),
-                        new Date().getTime(),
-                        false,
-                        false,
-                        UUID.randomUUID().toString()
+                        p2PService.getAddress()
                 );
                 disputeCommunicationMessage.setSystemMessage(true);
                 dispute.addDisputeMessage(disputeCommunicationMessage);
@@ -383,12 +377,7 @@ public class DisputeManager implements PersistedDataHost {
                     keyRing.getPubKeyRing().hashCode(),
                     false,
                     Res.get("support.systemMsg", sysMsg),
-                    null,
-                    p2PService.getAddress(),
-                    new Date().getTime(),
-                    false,
-                    false,
-                    UUID.randomUUID().toString()
+                    p2PService.getAddress()
             );
             disputeCommunicationMessage.setSystemMessage(true);
             dispute.addDisputeMessage(disputeCommunicationMessage);
@@ -443,12 +432,7 @@ public class DisputeManager implements PersistedDataHost {
                 dispute.getTraderPubKeyRing().hashCode(),
                 isTrader(dispute),
                 text,
-                null,
-                p2PService.getAddress(),
-                new Date().getTime(),
-                false,
-                false,
-                UUID.randomUUID().toString()
+                p2PService.getAddress()
         );
 
         disputeCommunicationMessage.addAllAttachments(attachments);
@@ -500,12 +484,7 @@ public class DisputeManager implements PersistedDataHost {
                 dispute.getTraderPubKeyRing().hashCode(),
                 false,
                 text,
-                null,
-                p2PService.getAddress(),
-                new Date().getTime(),
-                false,
-                false,
-                UUID.randomUUID().toString()
+                p2PService.getAddress()
         );
 
         dispute.addDisputeMessage(disputeCommunicationMessage);
