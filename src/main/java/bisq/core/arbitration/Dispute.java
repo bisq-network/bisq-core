@@ -247,7 +247,7 @@ public final class Dispute implements NetworkPayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addDisputeMessage(DisputeCommunicationMessage disputeCommunicationMessage) {
+    public void addDisputeCommunicationMessage(DisputeCommunicationMessage disputeCommunicationMessage) {
         if (!disputeCommunicationMessages.contains(disputeCommunicationMessage)) {
             disputeCommunicationMessages.add(disputeCommunicationMessage);
             storage.queueUpForSave();

@@ -27,7 +27,10 @@ import io.bisq.generated.protobuffer.PB;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,15 +39,24 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import java.lang.ref.WeakReference;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = {"listener"})
 @Getter
+@Slf4j
 public final class DisputeCommunicationMessage extends DisputeMessage {
+
+    public interface Listener {
+        void onMessageStateChanged();
+    }
+
     private final String tradeId;
     private final int traderId;
     private final boolean senderIsTrader;
@@ -57,6 +69,10 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
 
     private final BooleanProperty arrivedProperty;
     private final BooleanProperty storedInMailboxProperty;
+    private final BooleanProperty acknowledgedProperty;
+    private final StringProperty errorMessageProperty;
+
+    transient private WeakReference<Listener> listener;
 
     public DisputeCommunicationMessage(String tradeId,
                                        int traderId,
@@ -73,7 +89,9 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 false,
                 false,
                 UUID.randomUUID().toString(),
-                Version.getP2PMessageVersion());
+                Version.getP2PMessageVersion(),
+                false,
+                null);
     }
 
 
@@ -91,7 +109,9 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                                         boolean arrived,
                                         boolean storedInMailbox,
                                         String uid,
-                                        int messageVersion) {
+                                        int messageVersion,
+                                        boolean acknowledged,
+                                        @Nullable String errorMessage) {
         super(messageVersion, uid);
         this.tradeId = tradeId;
         this.traderId = traderId;
@@ -102,24 +122,29 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
         this.date = date;
         arrivedProperty = new SimpleBooleanProperty(arrived);
         storedInMailboxProperty = new SimpleBooleanProperty(storedInMailbox);
+        acknowledgedProperty = new SimpleBooleanProperty(acknowledged);
+        errorMessageProperty = new SimpleStringProperty(errorMessage);
+        notifyChangeListener();
     }
 
     @Override
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
+        PB.DisputeCommunicationMessage.Builder builder = PB.DisputeCommunicationMessage.newBuilder()
+                .setTradeId(tradeId)
+                .setTraderId(traderId)
+                .setSenderIsTrader(senderIsTrader)
+                .setMessage(message)
+                .addAllAttachments(attachments.stream().map(Attachment::toProtoMessage).collect(Collectors.toList()))
+                .setSenderNodeAddress(senderNodeAddress.toProtoMessage())
+                .setDate(date)
+                .setArrived(arrivedProperty.get())
+                .setStoredInMailbox(storedInMailboxProperty.get())
+                .setIsSystemMessage(isSystemMessage)
+                .setUid(uid)
+                .setAcknowledged(acknowledgedProperty.get());
+        Optional.ofNullable(errorMessageProperty.get()).ifPresent(builder::setErrorMessage);
         return getNetworkEnvelopeBuilder()
-                .setDisputeCommunicationMessage(PB.DisputeCommunicationMessage.newBuilder()
-                        .setTradeId(tradeId)
-                        .setTraderId(traderId)
-                        .setSenderIsTrader(senderIsTrader)
-                        .setMessage(message)
-                        .addAllAttachments(attachments.stream().map(Attachment::toProtoMessage).collect(Collectors.toList()))
-                        .setSenderNodeAddress(senderNodeAddress.toProtoMessage())
-                        .setDate(date)
-                        .setArrived(arrivedProperty.get())
-                        .setStoredInMailbox(storedInMailboxProperty.get())
-                        .setIsSystemMessage(isSystemMessage)
-                        .setUid(uid)
-                )
+                .setDisputeCommunicationMessage(builder)
                 .build();
     }
 
@@ -135,7 +160,9 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 proto.getArrived(),
                 proto.getStoredInMailbox(),
                 proto.getUid(),
-                messageVersion);
+                messageVersion,
+                proto.getAcknowledged(),
+                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage());
         disputeCommunicationMessage.setSystemMessage(proto.getIsSystemMessage());
         return disputeCommunicationMessage;
     }
@@ -143,22 +170,9 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
     public static DisputeCommunicationMessage fromPayloadProto(PB.DisputeCommunicationMessage proto) {
         // We have the case that an envelope got wrapped into a payload.
         // We don't check the message version here as it was checked in the carrier envelope already (in connection class)
-        // Payloads dont have a message version and are also used for persistence
+        // Payloads don't have a message version and are also used for persistence
         // We set the value to -1 to indicate it is set but irrelevant
-        final DisputeCommunicationMessage disputeCommunicationMessage = new DisputeCommunicationMessage(
-                proto.getTradeId(),
-                proto.getTraderId(),
-                proto.getSenderIsTrader(),
-                proto.getMessage(),
-                new ArrayList<>(proto.getAttachmentsList().stream().map(Attachment::fromProto).collect(Collectors.toList())),
-                NodeAddress.fromProto(proto.getSenderNodeAddress()),
-                proto.getDate(),
-                proto.getArrived(),
-                proto.getStoredInMailbox(),
-                proto.getUid(),
-                -1);
-        disputeCommunicationMessage.setSystemMessage(proto.getIsSystemMessage());
-        return disputeCommunicationMessage;
+        return fromProto(proto, -1);
     }
 
 
@@ -172,23 +186,53 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
 
     public void setArrived(@SuppressWarnings("SameParameterValue") boolean arrived) {
         this.arrivedProperty.set(arrived);
-    }
-
-    public void setStoredInMailbox(@SuppressWarnings("SameParameterValue") boolean storedInMailbox) {
-        this.storedInMailboxProperty.set(storedInMailbox);
+        notifyChangeListener();
     }
 
     public ReadOnlyBooleanProperty arrivedProperty() {
         return arrivedProperty;
     }
 
+
+    public void setStoredInMailbox(@SuppressWarnings("SameParameterValue") boolean storedInMailbox) {
+        this.storedInMailboxProperty.set(storedInMailbox);
+        notifyChangeListener();
+    }
+
     public ReadOnlyBooleanProperty storedInMailboxProperty() {
         return storedInMailboxProperty;
+    }
+
+    public void setAcknowledged(boolean acknowledged) {
+        this.acknowledgedProperty.set(acknowledged);
+        notifyChangeListener();
+    }
+
+    public ReadOnlyBooleanProperty acknowledgedProperty() {
+        return acknowledgedProperty;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessageProperty.set(errorMessage);
+        notifyChangeListener();
+    }
+
+    public ReadOnlyStringProperty errorMessageProperty() {
+        return errorMessageProperty;
     }
 
     @Override
     public String getTradeId() {
         return tradeId;
+    }
+
+    public void addWeakMessageStateListener(Listener listener) {
+        this.listener = new WeakReference<>(listener);
+    }
+
+    private void notifyChangeListener() {
+        if (listener != null && listener.get() != null)
+            listener.get().onMessageStateChanged();
     }
 
     @Override
@@ -206,6 +250,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 ",\n     storedInMailboxProperty=" + storedInMailboxProperty +
                 ",\n     DisputeCommunicationMessage.uid='" + uid + '\'' +
                 ",\n     messageVersion=" + messageVersion +
+                ",\n     acknowledgedProperty=" + acknowledgedProperty +
+                ",\n     errorMessageProperty=" + errorMessageProperty +
                 "\n} " + super.toString();
     }
 }

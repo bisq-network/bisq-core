@@ -160,7 +160,7 @@ public class DisputeManager implements PersistedDataHost {
     public void readPersisted() {
         disputes = new DisputeList(disputeStorage);
         disputes.readPersisted();
-        disputes.stream().forEach(dispute -> dispute.setStorage(getDisputeStorage()));
+        disputes.stream().forEach(dispute -> dispute.setStorage(disputeStorage));
     }
 
     public void onAllServicesInitialized() {
@@ -188,7 +188,7 @@ public class DisputeManager implements PersistedDataHost {
 
     public void cleanupDisputes() {
         disputes.stream().forEach(dispute -> {
-            dispute.setStorage(getDisputeStorage());
+            dispute.setStorage(disputeStorage);
             if (dispute.isClosed())
                 closedDisputes.put(dispute.getTradeId(), dispute);
             else
@@ -197,7 +197,7 @@ public class DisputeManager implements PersistedDataHost {
 
         // If we have duplicate disputes we close the second one (might happen if both traders opened a dispute and arbitrator
         // was offline, so could not forward msg to other peer, then the arbitrator might have 4 disputes open for 1 trade)
-        openDisputes.entrySet().stream().forEach(openDisputeEntry -> {
+        openDisputes.entrySet().forEach(openDisputeEntry -> {
             String key = openDisputeEntry.getKey();
             if (closedDisputes.containsKey(key)) {
                 final Dispute closedDispute = closedDisputes.get(key);
@@ -228,16 +228,7 @@ public class DisputeManager implements PersistedDataHost {
             if (networkEnvelope instanceof DisputeMessage) {
                 dispatchMessage((DisputeMessage) networkEnvelope);
             } else if (networkEnvelope instanceof AckMessage) {
-                AckMessage ackMessage = (AckMessage) networkEnvelope;
-                if (ackMessage.getSourceType() == AckMessageSourceType.DISPUTE_MESSAGE) {
-                    if (ackMessage.isSuccess()) {
-                        log.info("Received AckMessage as directMessage with tradeId {} and uid={}",
-                                ackMessage.getSourceId(), ackMessage.getSourceUid());
-                    } else {
-                        log.warn("Received AckMessage as directMessage with error message for tradeId {}. ackMessage={}",
-                                ackMessage.getSourceId(), ackMessage);
-                    }
-                }
+                processAckMessage((AckMessage) networkEnvelope, null);
             }
         });
         decryptedDirectMessageWithPubKeys.clear();
@@ -249,21 +240,39 @@ public class DisputeManager implements PersistedDataHost {
                 dispatchMessage((DisputeMessage) networkEnvelope);
                 p2PService.removeEntryFromMailbox(decryptedMessageWithPubKey);
             } else if (networkEnvelope instanceof AckMessage) {
-                AckMessage ackMessage = (AckMessage) networkEnvelope;
-                if (ackMessage.getSourceType() == AckMessageSourceType.DISPUTE_MESSAGE) {
-                    if (ackMessage.isSuccess()) {
-                        log.info("Received mailbox AckMessage with tradeId {} and uid={}",
-                                ackMessage.getSourceId(), ackMessage.getSourceUid());
-                    } else {
-                        log.warn("Received mailbox AckMessage with error message for tradeId {}. ackMessage={}",
-                                ackMessage.getSourceId(), ackMessage);
-                    }
-
-                    p2PService.removeEntryFromMailbox(decryptedMessageWithPubKey);
-                }
+                processAckMessage((AckMessage) networkEnvelope, decryptedMessageWithPubKey);
             }
         });
         decryptedMailboxMessageWithPubKeys.clear();
+    }
+
+    private void processAckMessage(AckMessage networkEnvelope, @Nullable DecryptedMessageWithPubKey decryptedMessageWithPubKey) {
+        AckMessage ackMessage = networkEnvelope;
+        if (ackMessage.getSourceType() == AckMessageSourceType.DISPUTE_MESSAGE) {
+            boolean isMailboxMessage = decryptedMessageWithPubKey != null;
+            String info = isMailboxMessage ? "mailbox message" : "direct message";
+            if (ackMessage.isSuccess()) {
+                log.info("Received AckMessage as " + info + " with tradeId {} and uid={}",
+                        ackMessage.getSourceId(), ackMessage.getSourceUid());
+            } else {
+                log.warn("Received AckMessage as " + info + " with error message for tradeId {}. ackMessage={}",
+                        ackMessage.getSourceId(), ackMessage);
+            }
+
+            disputes.getList().stream()
+                    .flatMap(dispute -> dispute.getDisputeCommunicationMessages().stream())
+                    .filter(msg -> msg.getUid().equals(ackMessage.getSourceUid()))
+                    .forEach(msg -> {
+                        if (ackMessage.isSuccess())
+                            msg.setAcknowledged(true);
+                        else
+                            msg.setErrorMessage(ackMessage.getErrorMessage());
+                    });
+            disputes.persist();
+
+            if (isMailboxMessage)
+                p2PService.removeEntryFromMailbox(decryptedMessageWithPubKey);
+        }
     }
 
     private void dispatchMessage(DisputeMessage message) {
@@ -297,7 +306,7 @@ public class DisputeManager implements PersistedDataHost {
                         p2PService.getAddress()
                 );
                 disputeCommunicationMessage.setSystemMessage(true);
-                dispute.addDisputeMessage(disputeCommunicationMessage);
+                dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
                 if (!reOpen) {
                     disputes.add(dispute);
                 }
@@ -312,6 +321,7 @@ public class DisputeManager implements PersistedDataHost {
                                 log.info("Message arrived at peer. tradeId={}, uid={}",
                                         disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                                 disputeCommunicationMessage.setArrived(true);
+                                disputes.persist();
                                 resultHandler.handleResult();
                             }
 
@@ -320,6 +330,7 @@ public class DisputeManager implements PersistedDataHost {
                                 log.info("Message stored in mailbox. tradeId={}, uid={}",
                                         disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                                 disputeCommunicationMessage.setStoredInMailbox(true);
+                                disputes.persist();
                                 resultHandler.handleResult();
                             }
 
@@ -380,7 +391,7 @@ public class DisputeManager implements PersistedDataHost {
                     p2PService.getAddress()
             );
             disputeCommunicationMessage.setSystemMessage(true);
-            dispute.addDisputeMessage(disputeCommunicationMessage);
+            dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
             disputes.add(dispute);
 
             // we mirrored dispute already!
@@ -399,6 +410,7 @@ public class DisputeManager implements PersistedDataHost {
                             log.info("Message arrived at peer. tradeId={}, uid={}",
                                     disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                             disputeCommunicationMessage.setArrived(true);
+                            disputes.persist();
                         }
 
                         @Override
@@ -406,6 +418,7 @@ public class DisputeManager implements PersistedDataHost {
                             log.info("Message stored in mailbox. tradeId={}, uid={}",
                                     disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                             disputeCommunicationMessage.setStoredInMailbox(true);
+                            disputes.persist();
                         }
 
                         @Override
@@ -440,10 +453,9 @@ public class DisputeManager implements PersistedDataHost {
         NodeAddress peerNodeAddress = tuple.first;
         PubKeyRing receiverPubKeyRing = tuple.second;
 
-        if (isTrader(dispute))
-            dispute.addDisputeMessage(disputeCommunicationMessage);
-        else if (isArbitrator(dispute) && !disputeCommunicationMessage.isSystemMessage())
-            dispute.addDisputeMessage(disputeCommunicationMessage);
+        if (isTrader(dispute) ||
+                (isArbitrator(dispute) && !disputeCommunicationMessage.isSystemMessage()))
+            dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
 
         if (receiverPubKeyRing != null) {
             log.trace("sendDisputeDirectMessage to peerAddress " + peerNodeAddress);
@@ -456,6 +468,7 @@ public class DisputeManager implements PersistedDataHost {
                             log.info("Message arrived at peer. tradeId={}, uid={}",
                                     disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                             disputeCommunicationMessage.setArrived(true);
+                            disputes.persist();
                         }
 
                         @Override
@@ -463,6 +476,7 @@ public class DisputeManager implements PersistedDataHost {
                             log.info("Message stored in mailbox. tradeId={}, uid={}",
                                     disputeCommunicationMessage.getTradeId(), disputeCommunicationMessage.getUid());
                             disputeCommunicationMessage.setStoredInMailbox(true);
+                            disputes.persist();
                         }
 
                         @Override
@@ -487,7 +501,7 @@ public class DisputeManager implements PersistedDataHost {
                 p2PService.getAddress()
         );
 
-        dispute.addDisputeMessage(disputeCommunicationMessage);
+        dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
         disputeResult.setDisputeCommunicationMessage(disputeCommunicationMessage);
 
         NodeAddress peerNodeAddress;
@@ -507,6 +521,7 @@ public class DisputeManager implements PersistedDataHost {
                         log.info("Message arrived at peer. tradeId={}, uid={}",
                                 disputeResultMessage.getTradeId(), disputeResultMessage.getUid());
                         disputeCommunicationMessage.setArrived(true);
+                        disputes.persist();
                     }
 
                     @Override
@@ -514,6 +529,7 @@ public class DisputeManager implements PersistedDataHost {
                         log.info("Message stored in mailbox. tradeId={}, uid={}",
                                 disputeResultMessage.getTradeId(), disputeResultMessage.getUid());
                         disputeCommunicationMessage.setStoredInMailbox(true);
+                        disputes.persist();
                     }
 
                     @Override
@@ -608,7 +624,7 @@ public class DisputeManager implements PersistedDataHost {
             if (!disputes.contains(dispute)) {
                 final Optional<Dispute> storedDisputeOptional = findDispute(dispute.getTradeId(), dispute.getTraderId());
                 if (!storedDisputeOptional.isPresent()) {
-                    dispute.setStorage(getDisputeStorage());
+                    dispute.setStorage(disputeStorage);
                     disputes.add(dispute);
                     errorMessage = sendPeerOpenedDisputeMessage(dispute, contractFromOpener, peersPubKeyRing);
                 } else {
@@ -636,7 +652,7 @@ public class DisputeManager implements PersistedDataHost {
             if (!disputes.contains(dispute)) {
                 final Optional<Dispute> storedDisputeOptional = findDispute(dispute.getTradeId(), dispute.getTraderId());
                 if (!storedDisputeOptional.isPresent()) {
-                    dispute.setStorage(getDisputeStorage());
+                    dispute.setStorage(disputeStorage);
                     disputes.add(dispute);
                     Optional<Trade> tradeOptional = tradeManager.getTradeById(dispute.getTradeId());
                     tradeOptional.ifPresent(trade -> trade.setDisputeState(Trade.DisputeState.DISPUTE_STARTED_BY_PEER));
@@ -681,7 +697,7 @@ public class DisputeManager implements PersistedDataHost {
         PubKeyRing receiverPubKeyRing = tuple.second;
 
         if (!dispute.getDisputeCommunicationMessages().contains(disputeCommunicationMessage))
-            dispute.addDisputeMessage(disputeCommunicationMessage);
+            dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
         else
             log.warn("We got a disputeCommunicationMessage what we have already stored. TradeId = " + tradeId);
 
@@ -727,7 +743,7 @@ public class DisputeManager implements PersistedDataHost {
             arbitratorsPubKeyRing = dispute.getArbitratorPubKeyRing();
             DisputeCommunicationMessage disputeCommunicationMessage = disputeResult.getDisputeCommunicationMessage();
             if (!dispute.getDisputeCommunicationMessages().contains(disputeCommunicationMessage))
-                dispute.addDisputeMessage(disputeCommunicationMessage);
+                dispute.addDisputeCommunicationMessage(disputeCommunicationMessage);
             else if (disputeCommunicationMessage != null)
                 log.warn("We got a dispute mail msg what we have already stored. TradeId = " + disputeCommunicationMessage.getTradeId());
 

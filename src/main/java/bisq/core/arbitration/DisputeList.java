@@ -89,7 +89,7 @@ public final class DisputeList implements PersistableEnvelope, PersistedDataHost
         List<Dispute> list = proto.getDisputeList().stream()
                 .map(disputeProto -> Dispute.fromProto(disputeProto, coreProtoResolver))
                 .collect(Collectors.toList());
-        list.stream().forEach(e -> e.setStorage(storage));
+        list.forEach(e -> e.setStorage(storage));
         return new DisputeList(storage, list);
     }
 
@@ -102,7 +102,7 @@ public final class DisputeList implements PersistableEnvelope, PersistedDataHost
         if (!list.contains(dispute)) {
             boolean changed = list.add(dispute);
             if (changed)
-                storage.queueUpForSave();
+                persist();
             return changed;
         } else {
             return false;
@@ -113,8 +113,12 @@ public final class DisputeList implements PersistableEnvelope, PersistedDataHost
         //noinspection SuspiciousMethodCalls
         boolean changed = list.remove(dispute);
         if (changed)
-            storage.queueUpForSave();
+            persist();
         return changed;
+    }
+
+    public void persist() {
+        storage.queueUpForSave();
     }
 
     public int size() {
