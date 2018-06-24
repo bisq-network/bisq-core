@@ -266,7 +266,7 @@ public class DisputeManager implements PersistedDataHost {
                         if (ackMessage.isSuccess())
                             msg.setAcknowledged(true);
                         else
-                            msg.setErrorMessage(ackMessage.getErrorMessage());
+                            msg.setAckError(ackMessage.getErrorMessage());
                     });
             disputes.persist();
 
@@ -336,8 +336,10 @@ public class DisputeManager implements PersistedDataHost {
 
                             @Override
                             public void onFault(String errorMessage) {
-                                log.error("sendEncryptedMailboxMessage failed. " +
-                                        "disputeCommunicationMessage=" + disputeCommunicationMessage);
+                                log.error("sendEncryptedMailboxMessage failed. disputeCommunicationMessage={}, errorMessage={}",
+                                        disputeCommunicationMessage, errorMessage);
+                                disputeCommunicationMessage.setSendMessageError(errorMessage);
+                                disputes.persist();
                                 faultHandler.handleFault("Sending dispute message failed: " +
                                         errorMessage, new MessageDeliveryFailedException());
                             }
@@ -423,9 +425,10 @@ public class DisputeManager implements PersistedDataHost {
 
                         @Override
                         public void onFault(String errorMessage) {
-                            String msg = "sendEncryptedMailboxMessage failed. " +
-                                    "disputeCommunicationMessage=" + disputeCommunicationMessage;
-                            log.error(msg);
+                            log.error("sendEncryptedMailboxMessage failed. disputeCommunicationMessage={}, errorMessage={}",
+                                    disputeCommunicationMessage, errorMessage);
+                            disputeCommunicationMessage.setSendMessageError(errorMessage);
+                            disputes.persist();
                         }
                     }
             );
@@ -481,8 +484,10 @@ public class DisputeManager implements PersistedDataHost {
 
                         @Override
                         public void onFault(String errorMessage) {
-                            log.error("sendEncryptedMailboxMessage failed. disputeCommunicationMessage=" +
-                                    disputeCommunicationMessage);
+                            log.error("sendEncryptedMailboxMessage failed. disputeCommunicationMessage={}, errorMessage={}",
+                                    disputeCommunicationMessage, errorMessage);
+                            disputeCommunicationMessage.setSendMessageError(errorMessage);
+                            disputes.persist();
                         }
                     }
             );
@@ -534,8 +539,10 @@ public class DisputeManager implements PersistedDataHost {
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. disputeResultMessage=" +
-                                disputeResultMessage);
+                        log.error("sendEncryptedMailboxMessage failed. disputeCommunicationMessage={}, disputeResultMessage={}, errorMessage={}",
+                                disputeCommunicationMessage, disputeResultMessage, errorMessage);
+                        disputeCommunicationMessage.setSendMessageError(errorMessage);
+                        disputes.persist();
                     }
                 }
         );
@@ -566,7 +573,8 @@ public class DisputeManager implements PersistedDataHost {
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. message=" + message);
+                        log.error("sendEncryptedMailboxMessage failed. message={}, errorMessage={}",
+                                message, errorMessage);
                     }
                 }
         );
@@ -602,8 +610,8 @@ public class DisputeManager implements PersistedDataHost {
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}", ackMessage,
-                                peersNodeAddress);
+                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}, errorMessage={}", ackMessage,
+                                peersNodeAddress, errorMessage);
                     }
                 }
         );
@@ -862,8 +870,12 @@ public class DisputeManager implements PersistedDataHost {
             success = false;
             throw new RuntimeException(errorMessage);
         } finally {
-            if (arbitratorsPubKeyRing != null)
-                sendAckMessage(disputeResultMessage, arbitratorsPubKeyRing, success, errorMessage);
+            if (arbitratorsPubKeyRing != null) {
+                // We use the disputeCommunicationMessage as we only persist those not the disputeResultMessage.
+                // If we would use the disputeResultMessage we could not lookup for the msg when we receive the AckMessage.
+                DisputeCommunicationMessage disputeCommunicationMessage = disputeResultMessage.getDisputeResult().getDisputeCommunicationMessage();
+                sendAckMessage(disputeCommunicationMessage, arbitratorsPubKeyRing, success, errorMessage);
+            }
         }
     }
 

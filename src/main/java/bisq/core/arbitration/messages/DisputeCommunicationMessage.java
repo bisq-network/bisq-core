@@ -70,7 +70,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
     private final BooleanProperty arrivedProperty;
     private final BooleanProperty storedInMailboxProperty;
     private final BooleanProperty acknowledgedProperty;
-    private final StringProperty errorMessageProperty;
+    private final StringProperty sendMessageErrorProperty;
+    private final StringProperty ackErrorProperty;
 
     transient private WeakReference<Listener> listener;
 
@@ -91,6 +92,7 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 UUID.randomUUID().toString(),
                 Version.getP2PMessageVersion(),
                 false,
+                null,
                 null);
     }
 
@@ -111,7 +113,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                                         String uid,
                                         int messageVersion,
                                         boolean acknowledged,
-                                        @Nullable String errorMessage) {
+                                        @Nullable String sendMessageError,
+                                        @Nullable String ackError) {
         super(messageVersion, uid);
         this.tradeId = tradeId;
         this.traderId = traderId;
@@ -123,7 +126,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
         arrivedProperty = new SimpleBooleanProperty(arrived);
         storedInMailboxProperty = new SimpleBooleanProperty(storedInMailbox);
         acknowledgedProperty = new SimpleBooleanProperty(acknowledged);
-        errorMessageProperty = new SimpleStringProperty(errorMessage);
+        sendMessageErrorProperty = new SimpleStringProperty(sendMessageError);
+        ackErrorProperty = new SimpleStringProperty(ackError);
         notifyChangeListener();
     }
 
@@ -142,7 +146,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 .setIsSystemMessage(isSystemMessage)
                 .setUid(uid)
                 .setAcknowledged(acknowledgedProperty.get());
-        Optional.ofNullable(errorMessageProperty.get()).ifPresent(builder::setErrorMessage);
+        Optional.ofNullable(sendMessageErrorProperty.get()).ifPresent(builder::setSendMessageError);
+        Optional.ofNullable(ackErrorProperty.get()).ifPresent(builder::setAckError);
         return getNetworkEnvelopeBuilder()
                 .setDisputeCommunicationMessage(builder)
                 .build();
@@ -162,7 +167,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 proto.getUid(),
                 messageVersion,
                 proto.getAcknowledged(),
-                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage());
+                proto.getSendMessageError().isEmpty() ? null : proto.getSendMessageError(),
+                proto.getAckError().isEmpty() ? null : proto.getAckError());
         disputeCommunicationMessage.setSystemMessage(proto.getIsSystemMessage());
         return disputeCommunicationMessage;
     }
@@ -212,13 +218,22 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
         return acknowledgedProperty;
     }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessageProperty.set(errorMessage);
+    public void setSendMessageError(String sendMessageError) {
+        this.sendMessageErrorProperty.set(sendMessageError);
         notifyChangeListener();
     }
 
-    public ReadOnlyStringProperty errorMessageProperty() {
-        return errorMessageProperty;
+    public ReadOnlyStringProperty sendMessageErrorProperty() {
+        return sendMessageErrorProperty;
+    }
+
+    public void setAckError(String ackError) {
+        this.ackErrorProperty.set(ackError);
+        notifyChangeListener();
+    }
+
+    public ReadOnlyStringProperty ackErrorProperty() {
+        return ackErrorProperty;
     }
 
     @Override
@@ -251,7 +266,8 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
                 ",\n     DisputeCommunicationMessage.uid='" + uid + '\'' +
                 ",\n     messageVersion=" + messageVersion +
                 ",\n     acknowledgedProperty=" + acknowledgedProperty +
-                ",\n     errorMessageProperty=" + errorMessageProperty +
+                ",\n     sendMessageErrorProperty=" + sendMessageErrorProperty +
+                ",\n     ackErrorProperty=" + ackErrorProperty +
                 "\n} " + super.toString();
     }
 }
