@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.lite.network;
 
-import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.node.messages.GetBsqBlocksResponse;
 import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
 
