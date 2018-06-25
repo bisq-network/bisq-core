@@ -408,24 +408,26 @@ public class StateService {
 
     public Optional<Integer> getLockTime(String txId) {
         Optional<Tx> opTx = getTx(txId);
-        if (!opTx.isPresent()) return Optional.ofNullable(null);
+        if (!opTx.isPresent()) return Optional.empty();
         return getLockTime(opTx.get().getTxOutput(0));
     }
 
     public Optional<TxOutput> getLockedTxOutput(String txId) {
         Optional<Tx> opTx = getTx(txId);
-        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isLockedOutput).findFirst() : null;
+        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isLockedOutput).findFirst() :
+                Optional.empty();
     }
 
     public Optional<Integer> getUnlockBlockHeight(String txId) {
         Optional<Tx> opTx = getTx(txId);
-        if (!opTx.isPresent()) return Optional.ofNullable(null);
+        if (!opTx.isPresent()) return Optional.empty();
         return getUnlockBlockHeight(opTx.get().getTxOutput(0));
     }
 
     public Optional<TxOutput> getUnlockTxOutput(String txId) {
         Optional<Tx> opTx = getTx(txId);
-        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isUnlockOutput).findFirst() : null;
+        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isUnlockOutput).findFirst() :
+                Optional.empty();
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
