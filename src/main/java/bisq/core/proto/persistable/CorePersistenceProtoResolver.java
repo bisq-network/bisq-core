@@ -36,7 +36,7 @@ import bisq.network.p2p.storage.PersistableNetworkPayloadList;
 import bisq.network.p2p.storage.PersistedEntryMap;
 import bisq.network.p2p.storage.SequenceNumberMap;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkProtoResolver;
 import bisq.common.proto.persistable.NavigationPath;
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -54,6 +54,7 @@ import java.io.File;
 
 import lombok.extern.slf4j.Slf4j;
 
+// TODO Use ProtobufferException instead of ProtobufferRuntimeException
 @Slf4j
 public class CorePersistenceProtoResolver extends CoreProtoResolver implements PersistenceProtoResolver {
     private final Provider<BtcWalletService> btcWalletService;
@@ -89,7 +90,7 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                             new Storage<>(storageDir, this),
                             btcWalletService.get());
                 case TRADE_STATISTICS_LIST:
-                    throw new ProtobufferException("TRADE_STATISTICS_LIST is not used anymore");
+                    throw new ProtobufferRuntimeException("TRADE_STATISTICS_LIST is not used anymore");
                 case DISPUTE_LIST:
                     return DisputeList.fromProto(proto.getDisputeList(),
                             this,
@@ -116,11 +117,12 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return ParamChangeEventList.fromProto(proto.getParamChangeEventList());
 
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.PersistableEnvelope). " +
+                            "messageCase=" + proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.PersistableEnvelope is null");
-            throw new ProtobufferException("PB.PersistableEnvelope is null");
+            throw new ProtobufferRuntimeException("PB.PersistableEnvelope is null");
         }
     }
 }

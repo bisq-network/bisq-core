@@ -113,15 +113,16 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
         this.seedNodeAddresses = new HashSet<>(seedNodesRepository.getSeedNodeAddresses());
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public void init() {
         networkNode.addMessageListener(this);
         networkNode.addConnectionListener(this);
         peerManager.addListener(this);
     }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @SuppressWarnings("Duplicates")
     public void shutDown() {
@@ -165,15 +166,13 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     @Override
     public void onDisconnect(CloseConnectionReason closeConnectionReason, Connection connection) {
         Log.traceCall();
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            closeHandler(connection);
+        closeHandler(connection);
 
-            if (peerManager.isNodeBanned(closeConnectionReason, connection)) {
-                connection.getPeersNodeAddressOptional().ifPresent(nodeAddress -> {
-                    seedNodeAddresses.remove(nodeAddress);
-                    removeFromRequestBlocksHandlerMap(nodeAddress);
-                });
-            }
+        if (peerManager.isNodeBanned(closeConnectionReason, connection)) {
+            connection.getPeersNodeAddressOptional().ifPresent(nodeAddress -> {
+                seedNodeAddresses.remove(nodeAddress);
+                removeFromRequestBlocksHandlerMap(nodeAddress);
+            });
         }
     }
 
@@ -189,34 +188,28 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     @Override
     public void onAllConnectionsLost() {
         Log.traceCall();
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            closeAllHandlers();
-            stopRetryTimer();
-            stopped = true;
+        closeAllHandlers();
+        stopRetryTimer();
+        stopped = true;
 
-            tryWithNewSeedNode(lastRequestedBlockHeight);
-        }
+        tryWithNewSeedNode(lastRequestedBlockHeight);
     }
 
     @Override
     public void onNewConnectionAfterAllConnectionsLost() {
         Log.traceCall();
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            closeAllHandlers();
-            stopped = false;
-            tryWithNewSeedNode(lastRequestedBlockHeight);
-        }
+        closeAllHandlers();
+        stopped = false;
+        tryWithNewSeedNode(lastRequestedBlockHeight);
     }
 
     @Override
     public void onAwakeFromStandby() {
         log.info("onAwakeFromStandby");
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.DAO_PHASE2_ACTIVATED) {
-            closeAllHandlers();
-            stopped = false;
-            if (!networkNode.getAllConnections().isEmpty())
-                tryWithNewSeedNode(lastRequestedBlockHeight);
-        }
+        closeAllHandlers();
+        stopped = false;
+        if (!networkNode.getAllConnections().isEmpty())
+            tryWithNewSeedNode(lastRequestedBlockHeight);
     }
 
 
