@@ -387,6 +387,7 @@ public class WalletConfig extends AbstractIdleService {
             vBtcWallet = createOrLoadWallet(vBtcWalletFile, shouldReplayWallet, keyChainGroup, false, seed);
 
             vBtcWallet.allowSpendingUnconfirmedTransactions();
+            vBtcWallet.setRiskAnalyzer(new BisqRiskAnalysis.Analyzer());
 
             if (seed != null)
                 keyChainGroup = new BisqKeyChainGroup(params, new BisqDeterministicKeyChain(seed), false);
@@ -397,6 +398,7 @@ public class WalletConfig extends AbstractIdleService {
             if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
                 vBsqWalletFile = new File(directory, bsqWalletFileName);
                 vBsqWallet = createOrLoadWallet(vBsqWalletFile, shouldReplayWallet, keyChainGroup, true, seed);
+                vBsqWallet.setRiskAnalyzer(new BisqRiskAnalysis.Analyzer());
             }
 
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
