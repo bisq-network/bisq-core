@@ -91,14 +91,14 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelop, Trade trade) {
+    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelope, Trade trade) {
         this.trade = trade;
 
-        if (networkEnvelop instanceof MailboxMessage) {
-            MailboxMessage mailboxMessage = (MailboxMessage) networkEnvelop;
+        if (networkEnvelope instanceof MailboxMessage) {
+            MailboxMessage mailboxMessage = (MailboxMessage) networkEnvelope;
             NodeAddress peerNodeAddress = mailboxMessage.getSenderNodeAddress();
-            if (networkEnvelop instanceof TradeMessage) {
-                TradeMessage tradeMessage = (TradeMessage) networkEnvelop;
+            if (networkEnvelope instanceof TradeMessage) {
+                TradeMessage tradeMessage = (TradeMessage) networkEnvelope;
                 log.info("Received {} as MailboxMessage from {} with tradeId {} and uid {}",
                         tradeMessage.getClass().getSimpleName(), peerNodeAddress, tradeMessage.getTradeId(), tradeMessage.getUid());
                 if (tradeMessage instanceof DepositTxPublishedMessage)

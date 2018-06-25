@@ -130,7 +130,7 @@ public abstract class TradeProtocol {
         }
     }
 
-    protected abstract void doApplyMailboxMessage(NetworkEnvelope networkEnvelop, Trade trade);
+    protected abstract void doApplyMailboxMessage(NetworkEnvelope networkEnvelope, Trade trade);
 
     protected abstract void doHandleDecryptedMessage(TradeMessage tradeMessage, NodeAddress peerNodeAddress);
 

@@ -155,11 +155,11 @@ public class TradeManager implements PersistedDataHost {
         tradableListStorage = new Storage<>(storageDir, persistenceProtoResolver);
 
         p2PService.addDecryptedDirectMessageListener((decryptedMessageWithPubKey, peerNodeAddress) -> {
-            NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
+            NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
 
             // Handler for incoming initial network_messages from taker
-            if (networkEnvelop instanceof PayDepositRequest) {
-                handlePayDepositRequest((PayDepositRequest) networkEnvelop, peerNodeAddress);
+            if (networkEnvelope instanceof PayDepositRequest) {
+                handlePayDepositRequest((PayDepositRequest) networkEnvelope, peerNodeAddress);
             }
         });
 
