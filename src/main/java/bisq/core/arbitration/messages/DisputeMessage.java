@@ -18,6 +18,7 @@
 package bisq.core.arbitration.messages;
 
 import bisq.network.p2p.MailboxMessage;
+import bisq.network.p2p.UidMessage;
 
 import bisq.common.proto.network.NetworkEnvelope;
 
@@ -26,7 +27,7 @@ import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage {
+public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage, UidMessage {
     protected final String uid;
 
     public DisputeMessage(int messageVersion, String uid) {

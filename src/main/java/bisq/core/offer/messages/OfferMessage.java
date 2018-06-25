@@ -18,6 +18,7 @@
 package bisq.core.offer.messages;
 
 import bisq.network.p2p.DirectMessage;
+import bisq.network.p2p.UidMessage;
 
 import bisq.common.proto.network.NetworkEnvelope;
 
@@ -30,7 +31,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
-public abstract class OfferMessage extends NetworkEnvelope implements DirectMessage {
+public abstract class OfferMessage extends NetworkEnvelope implements DirectMessage, UidMessage {
     public final String offerId;
 
     // Added at version 0.7.1. Can be null if we receive the msg from an peer with an older version

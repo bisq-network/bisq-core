@@ -18,6 +18,7 @@
 package bisq.core.trade.messages;
 
 import bisq.network.p2p.DirectMessage;
+import bisq.network.p2p.UidMessage;
 
 import bisq.common.proto.network.NetworkEnvelope;
 
@@ -28,11 +29,13 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
-public abstract class TradeMessage extends NetworkEnvelope implements DirectMessage {
+public abstract class TradeMessage extends NetworkEnvelope implements DirectMessage, UidMessage {
     protected final String tradeId;
+    protected final String uid;
 
-    protected TradeMessage(int messageVersion, String tradeId) {
+    protected TradeMessage(int messageVersion, String tradeId, String uid) {
         super(messageVersion);
         this.tradeId = tradeId;
+        this.uid = uid;
     }
 }

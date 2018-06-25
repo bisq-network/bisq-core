@@ -64,7 +64,6 @@ public final class PayDepositRequest extends TradeMessage {
     private final List<NodeAddress> acceptedMediatorNodeAddresses;
     private final NodeAddress arbitratorNodeAddress;
     private final NodeAddress mediatorNodeAddress;
-    private final String uid;
 
     // added in v 0.6. can be null if we trade with an older peer
     @Nullable
@@ -95,7 +94,7 @@ public final class PayDepositRequest extends TradeMessage {
                              int messageVersion,
                              @Nullable byte[] accountAgeWitnessSignatureOfOfferId,
                              long currentDate) {
-        super(messageVersion, tradeId);
+        super(messageVersion, tradeId, uid);
         this.senderNodeAddress = senderNodeAddress;
         this.tradeAmount = tradeAmount;
         this.tradePrice = tradePrice;
@@ -115,7 +114,6 @@ public final class PayDepositRequest extends TradeMessage {
         this.acceptedMediatorNodeAddresses = acceptedMediatorNodeAddresses;
         this.arbitratorNodeAddress = arbitratorNodeAddress;
         this.mediatorNodeAddress = mediatorNodeAddress;
-        this.uid = uid;
         this.accountAgeWitnessSignatureOfOfferId = accountAgeWitnessSignatureOfOfferId;
         this.currentDate = currentDate;
     }
