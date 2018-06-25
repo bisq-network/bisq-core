@@ -221,10 +221,10 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
             UserThread.runAfter(completeHandler::run, size * 200 + 500, TimeUnit.MILLISECONDS);
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // DecryptedDirectMessageListener implementation
     ///////////////////////////////////////////////////////////////////////////////////////////
-
 
     @Override
     public void onDirectMessage(DecryptedMessageWithPubKey decryptedMessageWithPubKey, NodeAddress peerNodeAddress) {
@@ -238,11 +238,11 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
             AckMessage ackMessage = (AckMessage) networkEnvelope;
             if (ackMessage.getSourceType() == AckMessageSourceType.OFFER_MESSAGE) {
                 if (ackMessage.isSuccess()) {
-                    log.info("Received AckMessage for {} with offerId {}, sourceMsgClassName={} and uid={}",
-                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
+                    log.info("Received AckMessage for {} with offerId {} and uid {}",
+                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getSourceUid());
                 } else {
-                    log.warn("Received AckMessage for {} with error message for offerId {}. ackMessage={}",
-                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage);
+                    log.warn("Received AckMessage with error state for {} with offerId {} and errorMessage={}",
+                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getErrorMessage());
                 }
             }
         }
@@ -514,8 +514,9 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     // OfferPayload Availability
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void handleOfferAvailabilityRequest(OfferAvailabilityRequest message, NodeAddress sender) {
-        log.trace("handleNewMessage: message = " + message.getClass().getSimpleName() + " from " + sender);
+    private void handleOfferAvailabilityRequest(OfferAvailabilityRequest request, NodeAddress peer) {
+        log.info("Received OfferAvailabilityRequest from {} with offerId {} and uid {}",
+                peer, request.getOfferId(), request.getUid());
 
         boolean result = false;
         String errorMessage = null;
@@ -523,29 +524,29 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         if (!p2PService.isBootstrapped()) {
             errorMessage = "We got a handleOfferAvailabilityRequest but we have not bootstrapped yet.";
             log.info(errorMessage);
-            sendAckMessage(message, sender, false, errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
             return;
         }
 
         if (stopped) {
             errorMessage = "We have stopped already. We ignore that handleOfferAvailabilityRequest call.";
             log.debug(errorMessage);
-            sendAckMessage(message, sender, false, errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
             return;
         }
 
         try {
-            Validator.nonEmptyStringOf(message.offerId);
-            checkNotNull(message.getPubKeyRing());
+            Validator.nonEmptyStringOf(request.offerId);
+            checkNotNull(request.getPubKeyRing());
         } catch (Throwable t) {
-            errorMessage = "Message validation failed. Error=" + t.toString() + ", Message=" + message.toString();
+            errorMessage = "Message validation failed. Error=" + t.toString() + ", Message=" + request.toString();
             log.warn(errorMessage);
-            sendAckMessage(message, sender, false, errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
             return;
         }
 
         try {
-            Optional<OpenOffer> openOfferOptional = getOpenOfferById(message.offerId);
+            Optional<OpenOffer> openOfferOptional = getOpenOfferById(request.offerId);
             AvailabilityResult availabilityResult;
             if (openOfferOptional.isPresent()) {
                 if (openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
@@ -559,7 +560,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                             // in trade price between the peers. Also here poor connectivity might cause market price API connection
                             // losses and therefore an outdated market price.
                             try {
-                                offer.checkTradePriceTolerance(message.getTakersTradePrice());
+                                offer.checkTradePriceTolerance(request.getTakersTradePrice());
                             } catch (TradePriceOutOfToleranceException e) {
                                 log.warn("Trade price check failed because takers price is outside out tolerance.");
                                 availabilityResult = AvailabilityResult.PRICE_OUT_OF_TOLERANCE;
@@ -585,21 +586,25 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                 availabilityResult = AvailabilityResult.OFFER_TAKEN;
             }
 
-            OfferAvailabilityResponse offerAvailabilityResponse = new OfferAvailabilityResponse(message.offerId, availabilityResult);
-            log.info("Maker sends OfferAvailabilityResponse to peer {} with offerId {} and uid {}",
-                    sender, offerAvailabilityResponse.getOfferId(), offerAvailabilityResponse.getUid());
-            p2PService.sendEncryptedDirectMessage(sender,
-                    message.getPubKeyRing(),
+            OfferAvailabilityResponse offerAvailabilityResponse = new OfferAvailabilityResponse(request.offerId, availabilityResult);
+            log.info("Send {} with offerId {} and uid {} to peer {}",
+                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getOfferId(),
+                    offerAvailabilityResponse.getUid(), peer);
+            p2PService.sendEncryptedDirectMessage(peer,
+                    request.getPubKeyRing(),
                     offerAvailabilityResponse,
                     new SendDirectMessageListener() {
                         @Override
                         public void onArrived() {
-                            log.trace("OfferAvailabilityResponse successfully arrived at peer");
+                            log.info("{} arrived at peer: offerId={}; uid={}",
+                                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getOfferId(), offerAvailabilityResponse.getUid());
                         }
 
                         @Override
                         public void onFault(String errorMessage) {
-                            log.warn("Sending OfferAvailabilityResponse failed. errorMessage=" + errorMessage);
+                            log.error("Sending {} failed: uid={}; peer={}; error={}",
+                                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getUid(),
+                                    peer, errorMessage);
                         }
                     });
             result = true;
@@ -608,7 +613,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
             log.error(errorMessage);
             t.printStackTrace();
         } finally {
-            sendAckMessage(message, sender, result, errorMessage);
+            sendAckMessage(request, peer, result, errorMessage);
         }
     }
 
@@ -625,7 +630,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
 
         final NodeAddress takersNodeAddress = sender;
         PubKeyRing takersPubKeyRing = message.getPubKeyRing();
-        log.info("Maker sends AckMessage for OfferAvailabilityRequest to peer {} with offerId {} and uid {}",
+        log.info("Send AckMessage for OfferAvailabilityRequest to peer {} with offerId {} and sourceUid {}",
                 takersNodeAddress, offerId, ackMessage.getSourceUid());
         p2PService.sendEncryptedDirectMessage(
                 takersNodeAddress,
@@ -634,13 +639,13 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                 new SendDirectMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.info("AckMessage arrived at takersNodeAddress {}. offerId={}, sourceMsgClassName={}, uid={}",
-                                takersNodeAddress, offerId, ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
+                        log.info("AckMessage for OfferAvailabilityRequest arrived at takersNodeAddress {}. offerId={}, sourceUid={}",
+                                takersNodeAddress, offerId, ackMessage.getSourceUid());
                     }
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedDirectMessage failed. AckMessage={}, takersNodeAddress={}, errorMessage={}",
+                        log.error("AckMessage for OfferAvailabilityRequest failed. AckMessage={}, takersNodeAddress={}, errorMessage={}",
                                 ackMessage, takersNodeAddress, errorMessage);
                     }
                 }

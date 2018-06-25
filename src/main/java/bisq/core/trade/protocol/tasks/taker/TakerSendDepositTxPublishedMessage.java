@@ -21,6 +21,7 @@ import bisq.core.trade.Trade;
 import bisq.core.trade.messages.DepositTxPublishedMessage;
 import bisq.core.trade.protocol.tasks.TradeTask;
 
+import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.SendMailboxMessageListener;
 
 import bisq.common.taskrunner.TaskRunner;
@@ -48,28 +49,34 @@ public class TakerSendDepositTxPublishedMessage extends TradeTask {
                         UUID.randomUUID().toString());
                 trade.setState(Trade.State.TAKER_SENT_DEPOSIT_TX_PUBLISHED_MSG);
 
+                NodeAddress peersNodeAddress = trade.getTradingPeerNodeAddress();
+                log.info("Send {} to peer {}. tradeId={}, uid={}",
+                        message.getClass().getSimpleName(), peersNodeAddress, message.getTradeId(), message.getUid());
                 processModel.getP2PService().sendEncryptedMailboxMessage(
-                        trade.getTradingPeerNodeAddress(),
+                        peersNodeAddress,
                         processModel.getTradingPeer().getPubKeyRing(),
                         message,
                         new SendMailboxMessageListener() {
                             @Override
                             public void onArrived() {
-                                log.info("Message arrived at peer. tradeId={}", id);
+                                log.info("{} arrived at peer {}. tradeId={}, uid={}",
+                                        message.getClass().getSimpleName(), peersNodeAddress, message.getTradeId(), message.getUid());
                                 trade.setState(Trade.State.TAKER_SAW_ARRIVED_DEPOSIT_TX_PUBLISHED_MSG);
                                 complete();
                             }
 
                             @Override
                             public void onStoredInMailbox() {
-                                log.info("Message stored in mailbox. tradeId={}", id);
+                                log.info("{} stored in mailbox for peer {}. tradeId={}, uid={}",
+                                        message.getClass().getSimpleName(), peersNodeAddress, message.getTradeId(), message.getUid());
                                 trade.setState(Trade.State.TAKER_STORED_IN_MAILBOX_DEPOSIT_TX_PUBLISHED_MSG);
                                 complete();
                             }
 
                             @Override
                             public void onFault(String errorMessage) {
-                                log.error("sendEncryptedMailboxMessage failed. message=" + message);
+                                log.error("{} failed: Peer {}. tradeId={}, uid={}, errorMessage={}",
+                                        message.getClass().getSimpleName(), peersNodeAddress, message.getTradeId(), message.getUid(), errorMessage);
                                 trade.setState(Trade.State.TAKER_SEND_FAILED_DEPOSIT_TX_PUBLISHED_MSG);
                                 appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
                                 failed();

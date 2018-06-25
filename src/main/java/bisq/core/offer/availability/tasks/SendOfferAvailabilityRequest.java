@@ -40,19 +40,26 @@ public class SendOfferAvailabilityRequest extends Task<OfferAvailabilityModel> {
             runInterceptHook();
 
             OfferAvailabilityRequest message = new OfferAvailabilityRequest(model.getOffer().getId(), model.getPubKeyRing(), model.getTakersTradePrice());
-            log.info("Taker sends OfferAvailabilityRequest to peer {} with offerId {} and uid {}",
-                    model.getPeerNodeAddress(), message.getOfferId(), message.getUid());
+            log.info("Send {} with offerId {} and uid {} to peer {}",
+                    message.getClass().getSimpleName(), message.getOfferId(),
+                    message.getUid(), model.getPeerNodeAddress());
+
             model.getP2PService().sendEncryptedDirectMessage(model.getPeerNodeAddress(),
                     model.getOffer().getPubKeyRing(),
                     message,
                     new SendDirectMessageListener() {
                         @Override
                         public void onArrived() {
+                            log.info("{} arrived at peer: offerId={}; uid={}",
+                                    message.getClass().getSimpleName(), message.getOfferId(), message.getUid());
                             complete();
                         }
 
                         @Override
                         public void onFault(String errorMessage) {
+                            log.error("Sending {} failed: uid={}; peer={}; error={}",
+                                    message.getClass().getSimpleName(), message.getUid(),
+                                    model.getPeerNodeAddress(), errorMessage);
                             model.getOffer().setState(Offer.State.MAKER_OFFLINE);
                         }
                     }

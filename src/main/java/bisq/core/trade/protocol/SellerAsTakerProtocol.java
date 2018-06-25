@@ -79,12 +79,17 @@ public class SellerAsTakerProtocol extends TradeProtocol implements SellerProtoc
 
         if (networkEnvelop instanceof MailboxMessage) {
             NodeAddress peerNodeAddress = ((MailboxMessage) networkEnvelop).getSenderNodeAddress();
-            if (networkEnvelop instanceof PublishDepositTxRequest)
-                handle((PublishDepositTxRequest) networkEnvelop, peerNodeAddress);
-            else if (networkEnvelop instanceof CounterCurrencyTransferStartedMessage)
-                handle((CounterCurrencyTransferStartedMessage) networkEnvelop, peerNodeAddress);
-            else
-                log.error("We received an unhandled MailboxMessage" + networkEnvelop.toString());
+            if (networkEnvelop instanceof TradeMessage) {
+                TradeMessage tradeMessage = (TradeMessage) networkEnvelop;
+                log.info("Received {} as MailboxMessage from {} with tradeId {} and uid {}",
+                        tradeMessage.getClass().getSimpleName(), peerNodeAddress, tradeMessage.getTradeId(), tradeMessage.getUid());
+                if (tradeMessage instanceof PublishDepositTxRequest)
+                    handle((PublishDepositTxRequest) tradeMessage, peerNodeAddress);
+                else if (tradeMessage instanceof CounterCurrencyTransferStartedMessage)
+                    handle((CounterCurrencyTransferStartedMessage) tradeMessage, peerNodeAddress);
+                else
+                    log.error("We received an unhandled tradeMessage" + tradeMessage.toString());
+            }
         }
     }
 
@@ -127,9 +132,9 @@ public class SellerAsTakerProtocol extends TradeProtocol implements SellerProtoc
         TradeTaskRunner taskRunner = new TradeTaskRunner(sellerAsTakerTrade,
                 () -> {
                     stopTimeout();
-                    handleTaskRunnerSuccess("PublishDepositTxRequest");
+                    handleTaskRunnerSuccess(tradeMessage, "PublishDepositTxRequest");
                 },
-                this::handleTaskRunnerFault);
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
 
         taskRunner.addTasks(
                 TakerProcessPublishDepositTxRequest.class,
@@ -155,8 +160,8 @@ public class SellerAsTakerProtocol extends TradeProtocol implements SellerProtoc
         processModel.setTempTradingPeerNodeAddress(sender);
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(sellerAsTakerTrade,
-                () -> handleTaskRunnerSuccess("CounterCurrencyTransferStartedMessage"),
-                this::handleTaskRunnerFault);
+                () -> handleTaskRunnerSuccess(tradeMessage, "CounterCurrencyTransferStartedMessage"),
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
 
         taskRunner.addTasks(
                 SellerProcessCounterCurrencyTransferStartedMessage.class,
@@ -228,6 +233,9 @@ public class SellerAsTakerProtocol extends TradeProtocol implements SellerProtoc
 
     @Override
     protected void doHandleDecryptedMessage(TradeMessage tradeMessage, NodeAddress sender) {
+        log.info("Received {} from {} with tradeId {} and uid {}",
+                tradeMessage.getClass().getSimpleName(), sender, tradeMessage.getTradeId(), tradeMessage.getUid());
+
         if (tradeMessage instanceof PublishDepositTxRequest) {
             handle((PublishDepositTxRequest) tradeMessage, sender);
         } else if (tradeMessage instanceof CounterCurrencyTransferStartedMessage) {

@@ -83,11 +83,11 @@ public abstract class TradeProtocol {
                             processModel.setPaymentStartedAckMessage(ackMessage);
 
                         if (ackMessage.isSuccess()) {
-                            log.info("Received AckMessage as directMessage with tradeId {}, sourceMsgClassName={} and uid={}",
-                                    ackMessage.getSourceId(), ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
+                            log.info("Received AckMessage for {} from {} with tradeId {} and uid {}",
+                                    ackMessage.getSourceMsgClassName(), peersNodeAddress, ackMessage.getSourceId(), ackMessage.getSourceUid());
                         } else {
-                            log.warn("Received AckMessage as directMessage with error message for tradeId {}. ackMessage={}",
-                                    ackMessage.getSourceId(), ackMessage);
+                            log.warn("Received AckMessage with error state for {} from {} with tradeId {} and errorMessage={}",
+                                    ackMessage.getSourceMsgClassName(), peersNodeAddress, ackMessage.getSourceId(), ackMessage.getErrorMessage());
                         }
                     }
                 }
@@ -153,22 +153,29 @@ public abstract class TradeProtocol {
     }
 
     protected void handleTaskRunnerSuccess(String info) {
+        handleTaskRunnerSuccess(null, info);
+    }
+
+    protected void handleTaskRunnerSuccess(@Nullable TradeMessage tradeMessage, String info) {
         log.debug("handleTaskRunnerSuccess " + info);
 
-        sendAckMessage(true, null);
+        sendAckMessage(tradeMessage, true, null);
     }
 
     protected void handleTaskRunnerFault(String errorMessage) {
+        handleTaskRunnerFault(null, errorMessage);
+    }
+
+    protected void handleTaskRunnerFault(@Nullable TradeMessage tradeMessage, String errorMessage) {
         log.error(errorMessage);
 
-        sendAckMessage(false, errorMessage);
+        sendAckMessage(tradeMessage, false, errorMessage);
 
         cleanupTradableOnFault();
         cleanup();
     }
 
-    private void sendAckMessage(boolean result, @Nullable String errorMessage) {
-        TradeMessage tradeMessage = processModel.getTradeMessage();
+    private void sendAckMessage(@Nullable TradeMessage tradeMessage, boolean result, @Nullable String errorMessage) {
         // We complete at initial protocol setup with the setup listener tasks.
         // Other cases are if we start from an UI event the task runner (payment started, confirmed).
         // In such cases we have not set any tradeMessage and we ignore the sendAckMessage call.
@@ -182,7 +189,7 @@ public abstract class TradeProtocol {
         } else {
             // For direct msg we don't have a mandatory uid so we need to cast to get it
             if (tradeMessage instanceof PayDepositRequest) {
-                sourceUid = ((PayDepositRequest) tradeMessage).getUid();
+                sourceUid = tradeMessage.getUid();
             }
         }
         AckMessage ackMessage = new AckMessage(processModel.getMyNodeAddress(),
@@ -192,30 +199,31 @@ public abstract class TradeProtocol {
                 tradeId,
                 result,
                 errorMessage);
-
+        final NodeAddress peersNodeAddress = trade.getTradingPeerNodeAddress();
+        log.info("Send AckMessage for {} to peer {}. tradeId={}, sourceUid={}",
+                ackMessage.getSourceMsgClassName(), peersNodeAddress, tradeId, sourceUid);
+        String finalSourceUid = sourceUid;
         processModel.getP2PService().sendEncryptedMailboxMessage(
-                trade.getTradingPeerNodeAddress(),
+                peersNodeAddress,
                 processModel.getTradingPeer().getPubKeyRing(),
                 ackMessage,
                 new SendMailboxMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.info("AckMessage arrived at peer {}. tradeId={}, sourceMsgClassName={}, uid={}",
-                                trade.getTradingPeerNodeAddress(), tradeId, ackMessage.getSourceMsgClassName(),
-                                ackMessage.getSourceUid());
+                        log.info("AckMessage for {} arrived at peer {}. tradeId={}, sourceUid={}",
+                                ackMessage.getSourceMsgClassName(), peersNodeAddress, tradeId, finalSourceUid);
                     }
 
                     @Override
                     public void onStoredInMailbox() {
-                        log.info("AckMessage stored in mailbox for peer {}. tradeId={}, sourceMsgClassName={}, uid={}",
-                                trade.getTradingPeerNodeAddress(), tradeId, ackMessage.getSourceMsgClassName(),
-                                ackMessage.getSourceUid());
+                        log.info("AckMessage for {} stored in mailbox for peer {}. tradeId={}, sourceUid={}",
+                                ackMessage.getSourceMsgClassName(), peersNodeAddress, tradeId, finalSourceUid);
                     }
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}", ackMessage,
-                                trade.getTradingPeerNodeAddress());
+                        log.error("AckMessage for {} failed. Peer {}. tradeId={}, sourceUid={}, errorMessage={}",
+                                ackMessage.getSourceMsgClassName(), peersNodeAddress, tradeId, finalSourceUid, errorMessage);
                     }
                 }
         );

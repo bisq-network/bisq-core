@@ -90,7 +90,8 @@ public class PrivateNotificationManager {
         NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
         if (networkEnvelop instanceof PrivateNotificationMessage) {
             PrivateNotificationMessage privateNotificationMessage = (PrivateNotificationMessage) networkEnvelop;
-            log.trace("Received privateNotificationMessage: " + privateNotificationMessage);
+            log.info("Received PrivateNotificationMessage from {} with uid={}",
+                    senderNodeAddress, privateNotificationMessage.getUid());
             if (privateNotificationMessage.getSenderNodeAddress().equals(senderNodeAddress)) {
                 final PrivateNotificationPayload privateNotification = privateNotificationMessage.getPrivateNotificationPayload();
                 if (verifySignature(privateNotification))
@@ -110,16 +111,20 @@ public class PrivateNotificationManager {
         return privateNotificationMessageProperty;
     }
 
-    public boolean sendPrivateNotificationMessageIfKeyIsValid(PrivateNotificationPayload privateNotification, PubKeyRing pubKeyRing, NodeAddress nodeAddress,
+    public boolean sendPrivateNotificationMessageIfKeyIsValid(PrivateNotificationPayload privateNotification, PubKeyRing pubKeyRing, NodeAddress peersNodeAddress,
                                                               String privKeyString, SendMailboxMessageListener sendMailboxMessageListener) {
         boolean isKeyValid = isKeyValid(privKeyString);
         if (isKeyValid) {
             signAndAddSignatureToPrivateNotificationMessage(privateNotification);
-            p2PService.sendEncryptedMailboxMessage(nodeAddress,
+
+            PrivateNotificationMessage message = new PrivateNotificationMessage(privateNotification,
+                    p2PService.getNetworkNode().getNodeAddress(),
+                    UUID.randomUUID().toString());
+            log.info("Send {} to peer {}. uid={}",
+                    message.getClass().getSimpleName(), peersNodeAddress, message.getUid());
+            p2PService.sendEncryptedMailboxMessage(peersNodeAddress,
                     pubKeyRing,
-                    new PrivateNotificationMessage(privateNotification,
-                            p2PService.getNetworkNode().getNodeAddress(),
-                            UUID.randomUUID().toString()),
+                    message,
                     sendMailboxMessageListener);
         }
 

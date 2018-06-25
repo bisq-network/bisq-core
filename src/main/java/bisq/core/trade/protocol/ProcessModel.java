@@ -304,8 +304,6 @@ public class ProcessModel implements Model, PersistablePayload {
         if (ackMessage.isSuccess()) {
             setPaymentStartedMessageState(MessageState.ACKNOWLEDGED);
         } else {
-            log.error("ackMessage for tradeId {}: reported error {}, ackMessage={}", ackMessage.getSourceId(),
-                    ackMessage.getErrorMessage(), ackMessage);
             setPaymentStartedMessageState(MessageState.FAILED);
         }
     }

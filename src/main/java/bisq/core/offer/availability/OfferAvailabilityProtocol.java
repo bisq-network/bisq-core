@@ -72,7 +72,7 @@ public class OfferAvailabilityProtocol {
                 if (networkEnvelope instanceof OfferAvailabilityResponse
                         && model.getOffer().getId().equals(offerMessage.offerId)) {
                     log.trace("handle OfferAvailabilityResponse = " + networkEnvelope.getClass().getSimpleName() + " from " + peersNodeAddress);
-                    handle((OfferAvailabilityResponse) networkEnvelope);
+                    handleOfferAvailabilityResponse((OfferAvailabilityResponse) networkEnvelope, peersNodeAddress);
                 }
             }
         };
@@ -114,7 +114,10 @@ public class OfferAvailabilityProtocol {
     // Incoming message handling
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void handle(OfferAvailabilityResponse message) {
+    private void handleOfferAvailabilityResponse(OfferAvailabilityResponse message, NodeAddress peersNodeAddress) {
+        log.info("Received handleOfferAvailabilityResponse from {} with offerId {} and uid {}",
+                peersNodeAddress, message.getOfferId(), message.getUid());
+
         stopTimeout();
         startTimeout();
         model.setMessage(message);
@@ -172,8 +175,9 @@ public class OfferAvailabilityProtocol {
         String sourceUid = message.getUid();
         final NodeAddress makersNodeAddress = model.getPeerNodeAddress();
         PubKeyRing makersPubKeyRing = model.getOffer().getPubKeyRing();
-        log.info("Taker sends AckMessage for OfferAvailabilityResponse to peer {} with offerId {} and uid {}",
+        log.info("Send AckMessage for OfferAvailabilityResponse to peer {} with offerId {} and sourceUid {}",
                 makersNodeAddress, offerId, sourceUid);
+
         AckMessage ackMessage = new AckMessage(model.getP2PService().getNetworkNode().getNodeAddress(),
                 AckMessageSourceType.OFFER_MESSAGE,
                 message.getClass().getSimpleName(),
@@ -188,13 +192,16 @@ public class OfferAvailabilityProtocol {
                 new SendDirectMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.info("AckMessage arrived at makersNodeAddress {}. offerId={}, sourceMsgClassName={}, uid={}",
-                                makersNodeAddress, offerId, ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
+                        log.info("AckMessage for OfferAvailabilityResponse arrived at makersNodeAddress {}. " +
+                                        "offerId={}, sourceUid={}",
+                                makersNodeAddress, offerId, ackMessage.getSourceUid());
                     }
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedDirectMessage failed. AckMessage={}, makersNodeAddress={}", ackMessage, makersNodeAddress);
+                        log.error("AckMessage for OfferAvailabilityResponse failed. AckMessage={}, " +
+                                        "makersNodeAddress={}, errorMessage={}",
+                                ackMessage, makersNodeAddress, errorMessage);
                     }
                 }
         );
