@@ -189,8 +189,8 @@ public class TradeManager implements PersistedDataHost {
                     AckMessage ackMessage = (AckMessage) networkEnvelope;
                     if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE) {
                         if (ackMessage.isSuccess()) {
-                            log.info("Received mailbox AckMessage with tradeId {} and uid={}",
-                                    ackMessage.getSourceId(), ackMessage.getSourceUid());
+                            log.info("Received mailbox AckMessage with tradeId {}, sourceMsgClassName={} and uid={}",
+                                    ackMessage.getSourceId(), ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
                         } else {
                             log.warn("Received mailbox AckMessage with error message for tradeId {}. ackMessage={}",
                                     ackMessage.getSourceId(), ackMessage);

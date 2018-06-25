@@ -246,14 +246,13 @@ public class DisputeManager implements PersistedDataHost {
         decryptedMailboxMessageWithPubKeys.clear();
     }
 
-    private void processAckMessage(AckMessage networkEnvelope, @Nullable DecryptedMessageWithPubKey decryptedMessageWithPubKey) {
-        AckMessage ackMessage = networkEnvelope;
+    private void processAckMessage(AckMessage ackMessage, @Nullable DecryptedMessageWithPubKey decryptedMessageWithPubKey) {
         if (ackMessage.getSourceType() == AckMessageSourceType.DISPUTE_MESSAGE) {
             boolean isMailboxMessage = decryptedMessageWithPubKey != null;
             String info = isMailboxMessage ? "mailbox message" : "direct message";
             if (ackMessage.isSuccess()) {
-                log.info("Received AckMessage as " + info + " with tradeId {} and uid={}",
-                        ackMessage.getSourceId(), ackMessage.getSourceUid());
+                log.info("Received AckMessage as " + info + " with tradeId {}, sourceMsgClassName={} and uid={}",
+                        ackMessage.getSourceId(), ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
             } else {
                 log.warn("Received AckMessage as " + info + " with error message for tradeId {}. ackMessage={}",
                         ackMessage.getSourceId(), ackMessage);
@@ -599,19 +598,20 @@ public class DisputeManager implements PersistedDataHost {
                 new SendMailboxMessageListener() {
                     @Override
                     public void onArrived() {
-                        log.info("AckMessage arrived at peer {}. tradeId={}, uid={}", peersNodeAddress, tradeId, uid);
+                        log.info("AckMessage arrived at peer {}. tradeId={}, sourceMsgClassName={}, uid={}",
+                                peersNodeAddress, tradeId, ackMessage.getSourceMsgClassName(), uid);
                     }
 
                     @Override
                     public void onStoredInMailbox() {
-                        log.info("AckMessage stored in mailbox for peer {}. tradeId={}, uid={}",
-                                peersNodeAddress, tradeId, uid);
+                        log.info("AckMessage stored in mailbox for peer {}. tradeId={}, sourceMsgClassName={}, uid={}",
+                                peersNodeAddress, tradeId, ackMessage.getSourceMsgClassName(), uid);
                     }
 
                     @Override
                     public void onFault(String errorMessage) {
-                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}, errorMessage={}", ackMessage,
-                                peersNodeAddress, errorMessage);
+                        log.error("sendEncryptedMailboxMessage failed. AckMessage={}, peer={}, errorMessage={}",
+                                ackMessage, peersNodeAddress, errorMessage);
                     }
                 }
         );

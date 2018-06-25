@@ -27,6 +27,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -46,7 +47,12 @@ public final class OfferAvailabilityRequest extends OfferMessage implements Supp
     public OfferAvailabilityRequest(String offerId,
                                     PubKeyRing pubKeyRing,
                                     long takersTradePrice) {
-        this(offerId, pubKeyRing, takersTradePrice, Capabilities.getSupportedCapabilities(), Version.getP2PMessageVersion());
+        this(offerId,
+                pubKeyRing,
+                takersTradePrice,
+                Capabilities.getSupportedCapabilities(),
+                Version.getP2PMessageVersion(),
+                UUID.randomUUID().toString());
     }
 
 
@@ -58,8 +64,9 @@ public final class OfferAvailabilityRequest extends OfferMessage implements Supp
                                      PubKeyRing pubKeyRing,
                                      long takersTradePrice,
                                      @Nullable List<Integer> supportedCapabilities,
-                                     int messageVersion) {
-        super(messageVersion, offerId);
+                                     int messageVersion,
+                                     @Nullable String uid) {
+        super(messageVersion, offerId, uid);
         this.pubKeyRing = pubKeyRing;
         this.takersTradePrice = takersTradePrice;
         this.supportedCapabilities = supportedCapabilities;
@@ -73,6 +80,7 @@ public final class OfferAvailabilityRequest extends OfferMessage implements Supp
                 .setTakersTradePrice(takersTradePrice);
 
         Optional.ofNullable(supportedCapabilities).ifPresent(e -> builder.addAllSupportedCapabilities(supportedCapabilities));
+        Optional.ofNullable(uid).ifPresent(e -> builder.setUid(uid));
 
         return getNetworkEnvelopeBuilder()
                 .setOfferAvailabilityRequest(builder)
@@ -84,6 +92,7 @@ public final class OfferAvailabilityRequest extends OfferMessage implements Supp
                 PubKeyRing.fromProto(proto.getPubKeyRing()),
                 proto.getTakersTradePrice(),
                 proto.getSupportedCapabilitiesList().isEmpty() ? null : proto.getSupportedCapabilitiesList(),
-                messageVersion);
+                messageVersion,
+                proto.getUid().isEmpty() ? null : proto.getUid());
     }
 }

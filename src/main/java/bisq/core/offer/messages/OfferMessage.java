@@ -25,14 +25,21 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import javax.annotation.Nullable;
+
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @ToString
 public abstract class OfferMessage extends NetworkEnvelope implements DirectMessage {
     public final String offerId;
 
-    protected OfferMessage(int messageVersion, String offerId) {
+    // Added at version 0.7.1. Can be null if we receive the msg from an peer with an older version
+    @Nullable
+    protected final String uid;
+
+    protected OfferMessage(int messageVersion, String offerId, @Nullable String uid) {
         super(messageVersion);
         this.offerId = offerId;
+        this.uid = uid;
     }
 }

@@ -24,16 +24,23 @@ import bisq.core.offer.messages.OfferAvailabilityResponse;
 import bisq.core.offer.messages.OfferMessage;
 import bisq.core.util.Validator;
 
+import bisq.network.p2p.AckMessage;
+import bisq.network.p2p.AckMessageSourceType;
 import bisq.network.p2p.DecryptedDirectMessageListener;
+import bisq.network.p2p.NodeAddress;
+import bisq.network.p2p.SendDirectMessageListener;
 
 import bisq.common.Timer;
 import bisq.common.UserThread;
+import bisq.common.crypto.PubKeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.taskrunner.TaskRunner;
 
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 @Slf4j
 public class OfferAvailabilityProtocol {
@@ -58,14 +65,14 @@ public class OfferAvailabilityProtocol {
         this.errorMessageHandler = errorMessageHandler;
 
         decryptedDirectMessageListener = (decryptedMessageWithPubKey, peersNodeAddress) -> {
-            NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
-            if (networkEnvelop instanceof OfferMessage) {
-                OfferMessage offerMessage = (OfferMessage) networkEnvelop;
+            NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
+            if (networkEnvelope instanceof OfferMessage) {
+                OfferMessage offerMessage = (OfferMessage) networkEnvelope;
                 Validator.nonEmptyStringOf(offerMessage.offerId);
-                if (networkEnvelop instanceof OfferAvailabilityResponse
-                        && model.offer.getId().equals(offerMessage.offerId)) {
-                    log.trace("handle OfferAvailabilityResponse = " + networkEnvelop.getClass().getSimpleName() + " from " + peersNodeAddress);
-                    handle((OfferAvailabilityResponse) networkEnvelop);
+                if (networkEnvelope instanceof OfferAvailabilityResponse
+                        && model.getOffer().getId().equals(offerMessage.offerId)) {
+                    log.trace("handle OfferAvailabilityResponse = " + networkEnvelope.getClass().getSimpleName() + " from " + peersNodeAddress);
+                    handle((OfferAvailabilityResponse) networkEnvelope);
                 }
             }
         };
@@ -73,7 +80,7 @@ public class OfferAvailabilityProtocol {
 
     private void cleanup() {
         stopTimeout();
-        model.p2PService.removeDecryptedDirectMessageListener(decryptedDirectMessageListener);
+        model.getP2PService().removeDecryptedDirectMessageListener(decryptedDirectMessageListener);
     }
 
 
@@ -83,18 +90,14 @@ public class OfferAvailabilityProtocol {
 
     public void sendOfferAvailabilityRequest() {
         // reset
-        model.offer.setState(Offer.State.UNKNOWN);
+        model.getOffer().setState(Offer.State.UNKNOWN);
 
-        model.p2PService.addDecryptedDirectMessageListener(decryptedDirectMessageListener);
-        model.setPeerNodeAddress(model.offer.getMakerNodeAddress());
+        model.getP2PService().addDecryptedDirectMessageListener(decryptedDirectMessageListener);
+        model.setPeerNodeAddress(model.getOffer().getMakerNodeAddress());
 
         taskRunner = new TaskRunner<>(model,
-                () -> log.debug("sequence at sendOfferAvailabilityRequest completed"),
-                (errorMessage) -> {
-                    log.error(errorMessage);
-                    stopTimeout();
-                    errorMessageHandler.handleErrorMessage(errorMessage);
-                }
+                () -> handleTaskRunnerSuccess("TaskRunner at sendOfferAvailabilityRequest completed", null),
+                errorMessage -> handleTaskRunnerFault(errorMessage, null)
         );
         taskRunner.addTasks(SendOfferAvailabilityRequest.class);
         startTimeout();
@@ -118,16 +121,12 @@ public class OfferAvailabilityProtocol {
 
         taskRunner = new TaskRunner<>(model,
                 () -> {
-                    log.debug("sequence at handle OfferAvailabilityResponse completed");
+                    handleTaskRunnerSuccess("TaskRunner at handle OfferAvailabilityResponse completed", message);
+
                     stopTimeout();
                     resultHandler.handleResult();
                 },
-                (errorMessage) -> {
-                    log.error(errorMessage);
-                    stopTimeout();
-                    errorMessageHandler.handleErrorMessage(errorMessage);
-                }
-        );
+                errorMessage -> handleTaskRunnerFault(errorMessage, message));
         taskRunner.addTasks(ProcessOfferAvailabilityResponse.class);
         taskRunner.run();
     }
@@ -136,7 +135,7 @@ public class OfferAvailabilityProtocol {
         if (timeoutTimer == null) {
             timeoutTimer = UserThread.runAfter(() -> {
                 log.debug("Timeout reached at " + this);
-                model.offer.setState(Offer.State.MAKER_OFFLINE);
+                model.getOffer().setState(Offer.State.MAKER_OFFLINE);
                 errorMessageHandler.handleErrorMessage("Timeout reached: Peer has not responded.");
             }, TIMEOUT);
         } else {
@@ -149,5 +148,55 @@ public class OfferAvailabilityProtocol {
             timeoutTimer.stop();
             timeoutTimer = null;
         }
+    }
+
+    private void handleTaskRunnerSuccess(String info, @Nullable OfferAvailabilityResponse message) {
+        log.debug("handleTaskRunnerSuccess " + info);
+
+        if (message != null)
+            sendAckMessage(message, true, null);
+    }
+
+    private void handleTaskRunnerFault(String errorMessage, @Nullable OfferAvailabilityResponse message) {
+        log.error(errorMessage);
+
+        stopTimeout();
+        errorMessageHandler.handleErrorMessage(errorMessage);
+
+        if (message != null)
+            sendAckMessage(message, false, errorMessage);
+    }
+
+    private void sendAckMessage(OfferAvailabilityResponse message, boolean result, @Nullable String errorMessage) {
+        String offerId = message.getOfferId();
+        String sourceUid = message.getUid();
+        final NodeAddress makersNodeAddress = model.getPeerNodeAddress();
+        PubKeyRing makersPubKeyRing = model.getOffer().getPubKeyRing();
+        log.info("Taker sends AckMessage for OfferAvailabilityResponse to peer {} with offerId {} and uid {}",
+                makersNodeAddress, offerId, sourceUid);
+        AckMessage ackMessage = new AckMessage(model.getP2PService().getNetworkNode().getNodeAddress(),
+                AckMessageSourceType.OFFER_MESSAGE,
+                message.getClass().getSimpleName(),
+                sourceUid,
+                offerId,
+                result,
+                errorMessage);
+        model.getP2PService().sendEncryptedDirectMessage(
+                makersNodeAddress,
+                makersPubKeyRing,
+                ackMessage,
+                new SendDirectMessageListener() {
+                    @Override
+                    public void onArrived() {
+                        log.info("AckMessage arrived at makersNodeAddress {}. offerId={}, sourceMsgClassName={}, uid={}",
+                                makersNodeAddress, offerId, ackMessage.getSourceMsgClassName(), ackMessage.getSourceUid());
+                    }
+
+                    @Override
+                    public void onFault(String errorMessage) {
+                        log.error("sendEncryptedDirectMessage failed. AckMessage={}, makersNodeAddress={}", ackMessage, makersNodeAddress);
+                    }
+                }
+        );
     }
 }

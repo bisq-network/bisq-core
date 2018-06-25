@@ -119,7 +119,7 @@ public class TakerSendPayDepositRequest extends TradeTask {
                         }
 
                         @Override
-                        public void onFault() {
+                        public void onFault(String errorMessage) {
                             appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
                             failed();
                         }
