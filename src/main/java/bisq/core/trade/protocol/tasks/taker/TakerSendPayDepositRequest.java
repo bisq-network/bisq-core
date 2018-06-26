@@ -106,20 +106,25 @@ public class TakerSendPayDepositRequest extends TradeTask {
                     Version.getP2PMessageVersion(),
                     sig,
                     new Date().getTime());
-
+            log.info("Send {} with offerId {} and uid {} to peer {}",
+                    message.getClass().getSimpleName(), message.getTradeId(),
+                    message.getUid(), trade.getTradingPeerNodeAddress());
             processModel.getP2PService().sendEncryptedDirectMessage(
                     trade.getTradingPeerNodeAddress(),
                     processModel.getTradingPeer().getPubKeyRing(),
                     message,
                     new SendDirectMessageListener() {
-                        @Override
                         public void onArrived() {
-                            log.debug("Message arrived at peer. tradeId={}, message{}", id, message);
+                            log.info("{} arrived at peer: offerId={}; uid={}",
+                                    message.getClass().getSimpleName(), message.getTradeId(), message.getUid());
                             complete();
                         }
 
                         @Override
-                        public void onFault() {
+                        public void onFault(String errorMessage) {
+                            log.error("Sending {} failed: uid={}; peer={}; error={}",
+                                    message.getClass().getSimpleName(), message.getUid(),
+                                    trade.getTradingPeerNodeAddress(), errorMessage);
                             appendToErrorMessage("Sending message failed: message=" + message + "\nerrorMessage=" + errorMessage);
                             failed();
                         }

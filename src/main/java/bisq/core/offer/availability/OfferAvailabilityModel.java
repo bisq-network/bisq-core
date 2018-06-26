@@ -26,17 +26,17 @@ import bisq.network.p2p.P2PService;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.taskrunner.Model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
 
 public class OfferAvailabilityModel implements Model {
-    private static final Logger log = LoggerFactory.getLogger(OfferAvailabilityModel.class);
+    @Getter
+    private final Offer offer;
+    @Getter
+    private final PubKeyRing pubKeyRing; // takers PubKey (my pubkey)
+    @Getter
+    private final P2PService p2PService;
 
-    public final Offer offer;
-    public final PubKeyRing pubKeyRing;
-    public final P2PService p2PService;
-
-    private NodeAddress peerNodeAddress;
+    private NodeAddress peerNodeAddress;  // maker
     private OfferAvailabilityResponse message;
 
     public OfferAvailabilityModel(Offer offer,

@@ -23,6 +23,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.filter.FilterManager;
+import bisq.core.network.MessageState;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.payment.AccountAgeWitnessService;
@@ -35,6 +36,7 @@ import bisq.core.trade.TradeManager;
 import bisq.core.trade.messages.TradeMessage;
 import bisq.core.user.User;
 
+import bisq.network.p2p.AckMessage;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
 import bisq.network.p2p.MailboxMessage;
 import bisq.network.p2p.NodeAddress;
@@ -52,6 +54,9 @@ import com.google.protobuf.ByteString;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.List;
 import java.util.Optional;
@@ -134,6 +139,11 @@ public class ProcessModel implements Model, PersistablePayload {
     @Setter
     private NodeAddress tempTradingPeerNodeAddress;
 
+    // The only trade message where we want to indicate the user the state of the message delivery is the
+    // CounterCurrencyTransferStartedMessage. We persist the state with the processModel.
+    @Setter
+    private ObjectProperty<MessageState> paymentStartedMessageStateProperty = new SimpleObjectProperty<>(MessageState.UNDEFINED);
+
     public ProcessModel() {
     }
 
@@ -151,7 +161,8 @@ public class ProcessModel implements Model, PersistablePayload {
                 .setPubKeyRing(pubKeyRing.toProtoMessage())
                 .setChangeOutputValue(changeOutputValue)
                 .setUseSavingsWallet(useSavingsWallet)
-                .setFundsNeededForTradeAsLong(fundsNeededForTradeAsLong);
+                .setFundsNeededForTradeAsLong(fundsNeededForTradeAsLong)
+                .setPaymentStartedMessageState(paymentStartedMessageStateProperty.get().name());
 
         Optional.ofNullable(takeOfferFeeTxId).ifPresent(builder::setTakeOfferFeeTxId);
         Optional.ofNullable(payoutTxSignature).ifPresent(e -> builder.setPayoutTxSignature(ByteString.copyFrom(payoutTxSignature)));
@@ -194,6 +205,9 @@ public class ProcessModel implements Model, PersistablePayload {
         processModel.setChangeOutputAddress(ProtoUtil.stringOrNullFromProto(proto.getChangeOutputAddress()));
         processModel.setMyMultiSigPubKey(ProtoUtil.byteArrayOrNullFromProto(proto.getMyMultiSigPubKey()));
         processModel.setTempTradingPeerNodeAddress(proto.hasTempTradingPeerNodeAddress() ? NodeAddress.fromProto(proto.getTempTradingPeerNodeAddress()) : null);
+        String paymentStartedMessageState = proto.getPaymentStartedMessageState().isEmpty() ? MessageState.UNDEFINED.name() : proto.getPaymentStartedMessageState();
+        ObjectProperty<MessageState> paymentStartedMessageStateProperty = processModel.getPaymentStartedMessageStateProperty();
+        paymentStartedMessageStateProperty.set(ProtoUtil.enumFromProto(MessageState.class, paymentStartedMessageState));
         return processModel;
     }
 
@@ -284,5 +298,17 @@ public class ProcessModel implements Model, PersistablePayload {
 
     public NodeAddress getMyNodeAddress() {
         return p2PService.getAddress();
+    }
+
+    public void setPaymentStartedAckMessage(AckMessage ackMessage) {
+        if (ackMessage.isSuccess()) {
+            setPaymentStartedMessageState(MessageState.ACKNOWLEDGED);
+        } else {
+            setPaymentStartedMessageState(MessageState.FAILED);
+        }
+    }
+
+    public void setPaymentStartedMessageState(MessageState paymentStartedMessageStateProperty) {
+        this.paymentStartedMessageStateProperty.set(paymentStartedMessageStateProperty);
     }
 }

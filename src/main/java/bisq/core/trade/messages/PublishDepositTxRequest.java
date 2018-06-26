@@ -57,7 +57,6 @@ public final class PublishDepositTxRequest extends TradeMessage implements Mailb
     private final byte[] preparedDepositTx;
     private final List<RawTransactionInput> makerInputs;
     private final NodeAddress senderNodeAddress;
-    private final String uid;
 
     // added in v 0.6. can be null if we trade with an older peer
     @Nullable
@@ -112,7 +111,7 @@ public final class PublishDepositTxRequest extends TradeMessage implements Mailb
                                     int messageVersion,
                                     @Nullable byte[] accountAgeWitnessSignatureOfPreparedDepositTx,
                                     long currentDate) {
-        super(messageVersion, tradeId);
+        super(messageVersion, tradeId, uid);
         this.makerPaymentAccountPayload = makerPaymentAccountPayload;
         this.makerAccountId = makerAccountId;
         this.makerMultiSigPubKey = makerMultiSigPubKey;
@@ -122,7 +121,6 @@ public final class PublishDepositTxRequest extends TradeMessage implements Mailb
         this.preparedDepositTx = preparedDepositTx;
         this.makerInputs = makerInputs;
         this.senderNodeAddress = senderNodeAddress;
-        this.uid = uid;
         this.accountAgeWitnessSignatureOfPreparedDepositTx = accountAgeWitnessSignatureOfPreparedDepositTx;
         this.currentDate = currentDate;
     }
