@@ -27,6 +27,7 @@ import bisq.core.payment.payload.CryptoCurrencyAccountPayload;
 import bisq.core.payment.payload.FasterPaymentsAccountPayload;
 import bisq.core.payment.payload.InteracETransferAccountPayload;
 import bisq.core.payment.payload.MoneyBeamAccountPayload;
+import bisq.core.payment.payload.MoneyGramAccountPayload;
 import bisq.core.payment.payload.NationalBankAccountPayload;
 import bisq.core.payment.payload.OKPayAccountPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
@@ -112,6 +113,8 @@ public class CoreProtoResolver implements ProtoResolver {
                     return CashAppAccountPayload.fromProto(proto);
                 case MONEY_BEAM_ACCOUNT_PAYLOAD:
                     return MoneyBeamAccountPayload.fromProto(proto);
+                case MONEY_GRAM_ACCOUNT_PAYLOAD:
+                    return MoneyGramAccountPayload.fromProto(proto);
                 case VENMO_ACCOUNT_PAYLOAD:
                     return VenmoAccountPayload.fromProto(proto);
                 case POPMONEY_ACCOUNT_PAYLOAD:

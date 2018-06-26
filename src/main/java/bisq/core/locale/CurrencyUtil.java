@@ -178,6 +178,61 @@ public class CurrencyUtil {
         return currencies;
     }
 
+    public static List<TradeCurrency> getAllMoneyGramCurrencies() {
+        ArrayList<TradeCurrency> currencies = new ArrayList<>(Arrays.asList(
+                new FiatCurrency("AED"),
+                new FiatCurrency("AUD"),
+                new FiatCurrency("BND"),
+                new FiatCurrency("CAD"),
+                new FiatCurrency("CHF"),
+                new FiatCurrency("CZK"),
+                new FiatCurrency("DKK"),
+                new FiatCurrency("EUR"),
+                new FiatCurrency("FJD"),
+                new FiatCurrency("GBP"),
+                new FiatCurrency("HKD"),
+                new FiatCurrency("HUF"),
+                new FiatCurrency("IDR"),
+                new FiatCurrency("ILS"),
+                new FiatCurrency("INR"),
+                new FiatCurrency("JPY"),
+                new FiatCurrency("KRW"),
+                new FiatCurrency("KWD"),
+                new FiatCurrency("LKR"),
+                new FiatCurrency("MAD"),
+                new FiatCurrency("MGA"),
+                new FiatCurrency("MXN"),
+                new FiatCurrency("MYR"),
+                new FiatCurrency("NOK"),
+                new FiatCurrency("NZD"),
+                new FiatCurrency("OMR"),
+                new FiatCurrency("PEN"),
+                new FiatCurrency("PGK"),
+                new FiatCurrency("PHP"),
+                new FiatCurrency("PKR"),
+                new FiatCurrency("PLN"),
+                new FiatCurrency("SAR"),
+                new FiatCurrency("SBD"),
+                new FiatCurrency("SCR"),
+                new FiatCurrency("SEK"),
+                new FiatCurrency("SGD"),
+                new FiatCurrency("THB"),
+                new FiatCurrency("TOP"),
+                new FiatCurrency("TRY"),
+                new FiatCurrency("TWD"),
+                new FiatCurrency("USD"),
+                new FiatCurrency("VND"),
+                new FiatCurrency("VUV"),
+                new FiatCurrency("WST"),
+                new FiatCurrency("XOF"),
+                new FiatCurrency("XPF"),
+                new FiatCurrency("ZAR")
+        ));
+
+        currencies.sort(Comparator.comparing(TradeCurrency::getCode));
+        return currencies;
+    }
+
     // https://support.uphold.com/hc/en-us/articles/202473803-Supported-currencies
     public static List<TradeCurrency> getAllUpholdCurrencies() {
         ArrayList<TradeCurrency> currencies = new ArrayList<>(Arrays.asList(
