@@ -33,6 +33,8 @@ import bisq.core.user.Preferences;
 import bisq.core.user.User;
 import bisq.core.util.Validator;
 
+import bisq.network.p2p.AckMessage;
+import bisq.network.p2p.AckMessageSourceType;
 import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.DecryptedDirectMessageListener;
 import bisq.network.p2p.DecryptedMessageWithPubKey;
@@ -45,6 +47,7 @@ import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.crypto.KeyRing;
+import bisq.common.crypto.PubKeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.network.NetworkEnvelope;
@@ -218,19 +221,31 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
             UserThread.runAfter(completeHandler::run, size * 200 + 500, TimeUnit.MILLISECONDS);
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // DecryptedDirectMessageListener implementation
     ///////////////////////////////////////////////////////////////////////////////////////////
-
 
     @Override
     public void onDirectMessage(DecryptedMessageWithPubKey decryptedMessageWithPubKey, NodeAddress peerNodeAddress) {
         // Handler for incoming offer availability requests
         // We get an encrypted message but don't do the signature check as we don't know the peer yet.
         // A basic sig check is in done also at decryption time
-        NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
-        if (networkEnvelop instanceof OfferAvailabilityRequest)
-            handleOfferAvailabilityRequest((OfferAvailabilityRequest) networkEnvelop, peerNodeAddress);
+        NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
+        if (networkEnvelope instanceof OfferAvailabilityRequest) {
+            handleOfferAvailabilityRequest((OfferAvailabilityRequest) networkEnvelope, peerNodeAddress);
+        } else if (networkEnvelope instanceof AckMessage) {
+            AckMessage ackMessage = (AckMessage) networkEnvelope;
+            if (ackMessage.getSourceType() == AckMessageSourceType.OFFER_MESSAGE) {
+                if (ackMessage.isSuccess()) {
+                    log.info("Received AckMessage for {} with offerId {} and uid {}",
+                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getSourceUid());
+                } else {
+                    log.warn("Received AckMessage with error state for {} with offerId {} and errorMessage={}",
+                            ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getErrorMessage());
+                }
+            }
+        }
     }
 
 
@@ -499,83 +514,142 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     // OfferPayload Availability
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void handleOfferAvailabilityRequest(OfferAvailabilityRequest message, NodeAddress sender) {
-        log.trace("handleNewMessage: message = " + message.getClass().getSimpleName() + " from " + sender);
-        if (p2PService.isBootstrapped()) {
-            if (!stopped) {
-                try {
-                    Validator.nonEmptyStringOf(message.offerId);
-                    checkNotNull(message.getPubKeyRing());
-                } catch (Throwable t) {
-                    log.warn("Invalid message " + message.toString());
-                    return;
-                }
+    private void handleOfferAvailabilityRequest(OfferAvailabilityRequest request, NodeAddress peer) {
+        log.info("Received OfferAvailabilityRequest from {} with offerId {} and uid {}",
+                peer, request.getOfferId(), request.getUid());
 
-                Optional<OpenOffer> openOfferOptional = getOpenOfferById(message.offerId);
-                AvailabilityResult availabilityResult;
-                if (openOfferOptional.isPresent()) {
-                    if (openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
-                        final Offer offer = openOfferOptional.get().getOffer();
-                        if (!preferences.getIgnoreTradersList().stream().anyMatch(i -> i.equals(offer.getMakerNodeAddress().getHostNameWithoutPostFix()))) {
-                            availabilityResult = AvailabilityResult.AVAILABLE;
+        boolean result = false;
+        String errorMessage = null;
 
-                            // TODO mediators not impl yet
-                            List<NodeAddress> acceptedArbitrators = user.getAcceptedArbitratorAddresses();
-                            if (acceptedArbitrators != null && !acceptedArbitrators.isEmpty()) {
-                                // Check also tradePrice to avoid failures after taker fee is paid caused by a too big difference
-                                // in trade price between the peers. Also here poor connectivity might cause market price API connection
-                                // losses and therefore an outdated market price.
-                                try {
-                                    offer.checkTradePriceTolerance(message.getTakersTradePrice());
-                                } catch (TradePriceOutOfToleranceException e) {
-                                    log.warn("Trade price check failed because takers price is outside out tolerance.");
-                                    availabilityResult = AvailabilityResult.PRICE_OUT_OF_TOLERANCE;
-                                } catch (MarketPriceNotAvailableException e) {
-                                    log.warn(e.getMessage());
-                                    availabilityResult = AvailabilityResult.MARKET_PRICE_NOT_AVAILABLE;
-                                } catch (Throwable e) {
-                                    log.warn("Trade price check failed. " + e.getMessage());
-                                    availabilityResult = AvailabilityResult.UNKNOWN_FAILURE;
-                                }
-                            } else {
-                                log.warn("acceptedArbitrators is null or empty: acceptedArbitrators=" + acceptedArbitrators);
-                                availabilityResult = AvailabilityResult.NO_ARBITRATORS;
+        if (!p2PService.isBootstrapped()) {
+            errorMessage = "We got a handleOfferAvailabilityRequest but we have not bootstrapped yet.";
+            log.info(errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
+            return;
+        }
+
+        if (stopped) {
+            errorMessage = "We have stopped already. We ignore that handleOfferAvailabilityRequest call.";
+            log.debug(errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
+            return;
+        }
+
+        try {
+            Validator.nonEmptyStringOf(request.offerId);
+            checkNotNull(request.getPubKeyRing());
+        } catch (Throwable t) {
+            errorMessage = "Message validation failed. Error=" + t.toString() + ", Message=" + request.toString();
+            log.warn(errorMessage);
+            sendAckMessage(request, peer, false, errorMessage);
+            return;
+        }
+
+        try {
+            Optional<OpenOffer> openOfferOptional = getOpenOfferById(request.offerId);
+            AvailabilityResult availabilityResult;
+            if (openOfferOptional.isPresent()) {
+                if (openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
+                    final Offer offer = openOfferOptional.get().getOffer();
+                    if (preferences.getIgnoreTradersList().stream().noneMatch(hostName -> hostName.equals(offer.getMakerNodeAddress().getHostNameWithoutPostFix()))) {
+                        availabilityResult = AvailabilityResult.AVAILABLE;
+
+                        List<NodeAddress> acceptedArbitrators = user.getAcceptedArbitratorAddresses();
+                        if (acceptedArbitrators != null && !acceptedArbitrators.isEmpty()) {
+                            // Check also tradePrice to avoid failures after taker fee is paid caused by a too big difference
+                            // in trade price between the peers. Also here poor connectivity might cause market price API connection
+                            // losses and therefore an outdated market price.
+                            try {
+                                offer.checkTradePriceTolerance(request.getTakersTradePrice());
+                            } catch (TradePriceOutOfToleranceException e) {
+                                log.warn("Trade price check failed because takers price is outside out tolerance.");
+                                availabilityResult = AvailabilityResult.PRICE_OUT_OF_TOLERANCE;
+                            } catch (MarketPriceNotAvailableException e) {
+                                log.warn(e.getMessage());
+                                availabilityResult = AvailabilityResult.MARKET_PRICE_NOT_AVAILABLE;
+                            } catch (Throwable e) {
+                                log.warn("Trade price check failed. " + e.getMessage());
+                                availabilityResult = AvailabilityResult.UNKNOWN_FAILURE;
                             }
                         } else {
-                            availabilityResult = AvailabilityResult.USER_IGNORED;
+                            log.warn("acceptedArbitrators is null or empty: acceptedArbitrators=" + acceptedArbitrators);
+                            availabilityResult = AvailabilityResult.NO_ARBITRATORS;
                         }
                     } else {
-                        availabilityResult = AvailabilityResult.OFFER_TAKEN;
+                        availabilityResult = AvailabilityResult.USER_IGNORED;
                     }
                 } else {
-                    log.warn("handleOfferAvailabilityRequest: openOffer not found. That should never happen.");
                     availabilityResult = AvailabilityResult.OFFER_TAKEN;
                 }
-                try {
-                    p2PService.sendEncryptedDirectMessage(sender,
-                            message.getPubKeyRing(),
-                            new OfferAvailabilityResponse(message.offerId, availabilityResult),
-                            new SendDirectMessageListener() {
-                                @Override
-                                public void onArrived() {
-                                    log.trace("OfferAvailabilityResponse successfully arrived at peer");
-                                }
-
-                                @Override
-                                public void onFault() {
-                                    log.debug("Sending OfferAvailabilityResponse failed.");
-                                }
-                            });
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                    log.debug("Exception at handleRequestIsOfferAvailableMessage " + t.getMessage());
-                }
             } else {
-                log.debug("We have stopped already. We ignore that handleOfferAvailabilityRequest call.");
+                log.warn("handleOfferAvailabilityRequest: openOffer not found. That should never happen.");
+                availabilityResult = AvailabilityResult.OFFER_TAKEN;
             }
-        } else {
-            log.info("We got a handleOfferAvailabilityRequest but we have not bootstrapped yet.");
+
+            OfferAvailabilityResponse offerAvailabilityResponse = new OfferAvailabilityResponse(request.offerId, availabilityResult);
+            log.info("Send {} with offerId {} and uid {} to peer {}",
+                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getOfferId(),
+                    offerAvailabilityResponse.getUid(), peer);
+            p2PService.sendEncryptedDirectMessage(peer,
+                    request.getPubKeyRing(),
+                    offerAvailabilityResponse,
+                    new SendDirectMessageListener() {
+                        @Override
+                        public void onArrived() {
+                            log.info("{} arrived at peer: offerId={}; uid={}",
+                                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getOfferId(), offerAvailabilityResponse.getUid());
+                        }
+
+                        @Override
+                        public void onFault(String errorMessage) {
+                            log.error("Sending {} failed: uid={}; peer={}; error={}",
+                                    offerAvailabilityResponse.getClass().getSimpleName(), offerAvailabilityResponse.getUid(),
+                                    peer, errorMessage);
+                        }
+                    });
+            result = true;
+        } catch (Throwable t) {
+            errorMessage = "Exception at handleRequestIsOfferAvailableMessage " + t.getMessage();
+            log.error(errorMessage);
+            t.printStackTrace();
+        } finally {
+            sendAckMessage(request, peer, result, errorMessage);
         }
+    }
+
+    private void sendAckMessage(OfferAvailabilityRequest message, NodeAddress sender, boolean result, String errorMessage) {
+        String offerId = message.getOfferId();
+        String sourceUid = message.getUid();
+        AckMessage ackMessage = new AckMessage(p2PService.getNetworkNode().getNodeAddress(),
+                AckMessageSourceType.OFFER_MESSAGE,
+                message.getClass().getSimpleName(),
+                sourceUid,
+                offerId,
+                result,
+                errorMessage);
+
+        final NodeAddress takersNodeAddress = sender;
+        PubKeyRing takersPubKeyRing = message.getPubKeyRing();
+        log.info("Send AckMessage for OfferAvailabilityRequest to peer {} with offerId {} and sourceUid {}",
+                takersNodeAddress, offerId, ackMessage.getSourceUid());
+        p2PService.sendEncryptedDirectMessage(
+                takersNodeAddress,
+                takersPubKeyRing,
+                ackMessage,
+                new SendDirectMessageListener() {
+                    @Override
+                    public void onArrived() {
+                        log.info("AckMessage for OfferAvailabilityRequest arrived at takersNodeAddress {}. offerId={}, sourceUid={}",
+                                takersNodeAddress, offerId, ackMessage.getSourceUid());
+                    }
+
+                    @Override
+                    public void onFault(String errorMessage) {
+                        log.error("AckMessage for OfferAvailabilityRequest failed. AckMessage={}, takersNodeAddress={}, errorMessage={}",
+                                ackMessage, takersNodeAddress, errorMessage);
+                    }
+                }
+        );
     }
 
 

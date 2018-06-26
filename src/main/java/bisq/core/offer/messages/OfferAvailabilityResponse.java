@@ -30,6 +30,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -46,7 +47,11 @@ public final class OfferAvailabilityResponse extends OfferMessage implements Sup
     private final List<Integer> supportedCapabilities;
 
     public OfferAvailabilityResponse(String offerId, AvailabilityResult availabilityResult) {
-        this(offerId, availabilityResult, Capabilities.getSupportedCapabilities(), Version.getP2PMessageVersion());
+        this(offerId,
+                availabilityResult,
+                Capabilities.getSupportedCapabilities(),
+                Version.getP2PMessageVersion(),
+                UUID.randomUUID().toString());
     }
 
 
@@ -57,8 +62,9 @@ public final class OfferAvailabilityResponse extends OfferMessage implements Sup
     private OfferAvailabilityResponse(String offerId,
                                       AvailabilityResult availabilityResult,
                                       @Nullable List<Integer> supportedCapabilities,
-                                      int messageVersion) {
-        super(messageVersion, offerId);
+                                      int messageVersion,
+                                      @Nullable String uid) {
+        super(messageVersion, offerId, uid);
         this.availabilityResult = availabilityResult;
         this.supportedCapabilities = supportedCapabilities;
     }
@@ -70,6 +76,7 @@ public final class OfferAvailabilityResponse extends OfferMessage implements Sup
                 .setAvailabilityResult(PB.AvailabilityResult.valueOf(availabilityResult.name()));
 
         Optional.ofNullable(supportedCapabilities).ifPresent(e -> builder.addAllSupportedCapabilities(supportedCapabilities));
+        Optional.ofNullable(uid).ifPresent(e -> builder.setUid(uid));
 
         return getNetworkEnvelopeBuilder()
                 .setOfferAvailabilityResponse(builder)
@@ -80,6 +87,7 @@ public final class OfferAvailabilityResponse extends OfferMessage implements Sup
         return new OfferAvailabilityResponse(proto.getOfferId(),
                 ProtoUtil.enumFromProto(AvailabilityResult.class, proto.getAvailabilityResult().name()),
                 proto.getSupportedCapabilitiesList().isEmpty() ? null : proto.getSupportedCapabilitiesList(),
-                messageVersion);
+                messageVersion,
+                proto.getUid().isEmpty() ? null : proto.getUid());
     }
 }

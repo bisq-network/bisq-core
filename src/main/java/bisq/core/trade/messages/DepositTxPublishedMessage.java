@@ -35,7 +35,6 @@ import lombok.Value;
 public final class DepositTxPublishedMessage extends TradeMessage implements MailboxMessage {
     private final byte[] depositTx;
     private final NodeAddress senderNodeAddress;
-    private final String uid;
 
     public DepositTxPublishedMessage(String tradeId,
                                      byte[] depositTx,
@@ -57,10 +56,9 @@ public final class DepositTxPublishedMessage extends TradeMessage implements Mai
                                       NodeAddress senderNodeAddress,
                                       String uid,
                                       int messageVersion) {
-        super(messageVersion, tradeId);
+        super(messageVersion, tradeId, uid);
         this.depositTx = depositTx;
         this.senderNodeAddress = senderNodeAddress;
-        this.uid = uid;
     }
 
 

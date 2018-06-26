@@ -15,27 +15,13 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.trade.messages;
+package bisq.core.network;
 
-import bisq.network.p2p.DirectMessage;
-import bisq.network.p2p.UidMessage;
-
-import bisq.common.proto.network.NetworkEnvelope;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@ToString
-public abstract class TradeMessage extends NetworkEnvelope implements DirectMessage, UidMessage {
-    protected final String tradeId;
-    protected final String uid;
-
-    protected TradeMessage(int messageVersion, String tradeId, String uid) {
-        super(messageVersion);
-        this.tradeId = tradeId;
-        this.uid = uid;
-    }
+public enum MessageState {
+    UNDEFINED,
+    SENT,
+    ARRIVED,
+    STORED_IN_MAILBOX,
+    ACKNOWLEDGED,
+    FAILED
 }

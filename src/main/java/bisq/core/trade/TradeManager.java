@@ -39,12 +39,11 @@ import bisq.core.trade.statistics.TradeStatisticsManager;
 import bisq.core.user.User;
 import bisq.core.util.Validator;
 
+import bisq.network.p2p.AckMessage;
+import bisq.network.p2p.AckMessageSourceType;
 import bisq.network.p2p.BootstrapListener;
-import bisq.network.p2p.DecryptedDirectMessageListener;
-import bisq.network.p2p.DecryptedMessageWithPubKey;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.messaging.DecryptedMailboxListener;
 
 import bisq.common.UserThread;
 import bisq.common.app.Log;
@@ -92,8 +91,6 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class TradeManager implements PersistedDataHost {
     private static final Logger log = LoggerFactory.getLogger(TradeManager.class);
@@ -157,33 +154,35 @@ public class TradeManager implements PersistedDataHost {
 
         tradableListStorage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        p2PService.addDecryptedDirectMessageListener(new DecryptedDirectMessageListener() {
-            @Override
-            public void onDirectMessage(DecryptedMessageWithPubKey decryptedMessageWithPubKey, NodeAddress peerNodeAddress) {
-                NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
+        p2PService.addDecryptedDirectMessageListener((decryptedMessageWithPubKey, peerNodeAddress) -> {
+            NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
 
-                // Handler for incoming initial network_messages from taker
-                if (networkEnvelop instanceof PayDepositRequest) {
-                    log.trace("Received PayDepositRequest: " + networkEnvelop);
-                    handleInitialTakeOfferRequest((PayDepositRequest) networkEnvelop, peerNodeAddress);
-                }
+            // Handler for incoming initial network_messages from taker
+            if (networkEnvelope instanceof PayDepositRequest) {
+                handlePayDepositRequest((PayDepositRequest) networkEnvelope, peerNodeAddress);
             }
         });
 
         // Might get called at startup after HS is published. Can be before or after initPendingTrades.
-        p2PService.addDecryptedMailboxListener(new DecryptedMailboxListener() {
-            @Override
-            public void onMailboxMessageAdded(DecryptedMessageWithPubKey decryptedMessageWithPubKey, NodeAddress senderNodeAddress) {
-                log.debug("onMailboxMessageAdded decryptedMessageWithPubKey: " + decryptedMessageWithPubKey);
-                log.trace("onMailboxMessageAdded senderAddress: " + senderNodeAddress);
-                NetworkEnvelope networkEnvelop = decryptedMessageWithPubKey.getNetworkEnvelope();
-                if (networkEnvelop instanceof TradeMessage) {
-                    log.trace("Received TradeMessage: " + networkEnvelop);
-                    String tradeId = ((TradeMessage) networkEnvelop).getTradeId();
-                    Optional<Trade> tradeOptional = tradableList.stream().filter(e -> e.getId().equals(tradeId)).findAny();
-                    // The mailbox message will be removed inside the tasks after they are processed successfully
-                    if (tradeOptional.isPresent())
-                        tradeOptional.get().addDecryptedMessageWithPubKey(decryptedMessageWithPubKey);
+        p2PService.addDecryptedMailboxListener((decryptedMessageWithPubKey, senderNodeAddress) -> {
+            NetworkEnvelope networkEnvelope = decryptedMessageWithPubKey.getNetworkEnvelope();
+            if (networkEnvelope instanceof TradeMessage) {
+                TradeMessage tradeMessage = (TradeMessage) networkEnvelope;
+                String tradeId = tradeMessage.getTradeId();
+                Optional<Trade> tradeOptional = tradableList.stream().filter(e -> e.getId().equals(tradeId)).findAny();
+                // The mailbox message will be removed inside the tasks after they are processed successfully
+                tradeOptional.ifPresent(trade -> trade.addDecryptedMessageWithPubKey(decryptedMessageWithPubKey));
+            } else if (networkEnvelope instanceof AckMessage) {
+                AckMessage ackMessage = (AckMessage) networkEnvelope;
+                if (ackMessage.getSourceType() == AckMessageSourceType.TRADE_MESSAGE) {
+                    if (ackMessage.isSuccess()) {
+                        log.info("Received AckMessage for {} with tradeId {} and uid {}",
+                                ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getSourceUid());
+                    } else {
+                        log.warn("Received AckMessage with error state for {} with tradeId {} and errorMessage={}",
+                                ackMessage.getSourceMsgClassName(), ackMessage.getSourceId(), ackMessage.getErrorMessage());
+                    }
+                    p2PService.removeEntryFromMailbox(decryptedMessageWithPubKey);
                 }
             }
         });
@@ -194,7 +193,9 @@ public class TradeManager implements PersistedDataHost {
         tradableList = new TradableList<>(tradableListStorage, "PendingTrades");
         tradableList.forEach(trade -> {
             trade.setTransientFields(tradableListStorage, btcWalletService);
-            trade.getOffer().setPriceFeedService(priceFeedService);
+            Offer offer = trade.getOffer();
+            if (offer != null)
+                offer.setPriceFeedService(priceFeedService);
         });
     }
 
@@ -277,22 +278,21 @@ public class TradeManager implements PersistedDataHost {
                 });
     }
 
-    private void handleInitialTakeOfferRequest(TradeMessage message, NodeAddress peerNodeAddress) {
-        log.trace("handleNewMessage: message = " + message.getClass().getSimpleName() + " from " + peerNodeAddress);
+    private void handlePayDepositRequest(PayDepositRequest payDepositRequest, NodeAddress peer) {
+        log.info("Received PayDepositRequest from {} with tradeId {} and uid {}",
+                peer, payDepositRequest.getTradeId(), payDepositRequest.getUid());
+
         try {
-            Validator.nonEmptyStringOf(message.getTradeId());
+            Validator.nonEmptyStringOf(payDepositRequest.getTradeId());
         } catch (Throwable t) {
-            log.warn("Invalid requestDepositTxInputsMessage " + message.toString());
+            log.warn("Invalid requestDepositTxInputsMessage " + payDepositRequest.toString());
             return;
         }
 
-        Optional<OpenOffer> openOfferOptional = openOfferManager.getOpenOfferById(message.getTradeId());
+        Optional<OpenOffer> openOfferOptional = openOfferManager.getOpenOfferById(payDepositRequest.getTradeId());
         if (openOfferOptional.isPresent() && openOfferOptional.get().getState() == OpenOffer.State.AVAILABLE) {
             Offer offer = openOfferOptional.get().getOffer();
             openOfferManager.reserveOpenOffer(openOfferOptional.get());
-
-            checkArgument(message instanceof PayDepositRequest, "message must be PayDepositRequest");
-            PayDepositRequest payDepositRequest = (PayDepositRequest) message;
             Trade trade;
             if (offer.isBuyOffer())
                 trade = new BuyerAsMakerTrade(offer,
@@ -311,7 +311,7 @@ public class TradeManager implements PersistedDataHost {
 
             initTrade(trade, trade.getProcessModel().isUseSavingsWallet(), trade.getProcessModel().getFundsNeededForTradeAsLong());
             tradableList.add(trade);
-            ((MakerTrade) trade).handleTakeOfferRequest(message, peerNodeAddress, errorMessage -> {
+            ((MakerTrade) trade).handleTakeOfferRequest(payDepositRequest, peer, errorMessage -> {
                 if (takeOfferRequestErrorMessageHandler != null)
                     takeOfferRequestErrorMessageHandler.handleErrorMessage(errorMessage);
             });

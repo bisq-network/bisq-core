@@ -166,12 +166,12 @@ public class RequestBlocksHandler implements MessageListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof GetBsqBlocksResponse) {
+    public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
+        if (networkEnvelope instanceof GetBsqBlocksResponse) {
             if (connection.getPeersNodeAddressOptional().isPresent() && connection.getPeersNodeAddressOptional().get().equals(nodeAddress)) {
-                Log.traceCall(networkEnvelop.toString() + "\n\tconnection=" + connection);
+                Log.traceCall(networkEnvelope.toString() + "\n\tconnection=" + connection);
                 if (!stopped) {
-                    GetBsqBlocksResponse getBsqBlocksResponse = (GetBsqBlocksResponse) networkEnvelop;
+                    GetBsqBlocksResponse getBsqBlocksResponse = (GetBsqBlocksResponse) networkEnvelope;
                     if (getBsqBlocksResponse.getRequestNonce() == nonce) {
                         stopTimeoutTimer();
                         checkArgument(connection.getPeersNodeAddressOptional().isPresent(),

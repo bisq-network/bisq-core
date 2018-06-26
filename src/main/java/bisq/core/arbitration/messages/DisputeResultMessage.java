@@ -76,4 +76,19 @@ public final class DisputeResultMessage extends DisputeMessage {
                 proto.getUid(),
                 messageVersion);
     }
+
+    @Override
+    public String getTradeId() {
+        return disputeResult.getTradeId();
+    }
+
+    @Override
+    public String toString() {
+        return "DisputeResultMessage{" +
+                "\n     disputeResult=" + disputeResult +
+                ",\n     senderNodeAddress=" + senderNodeAddress +
+                ",\n     DisputeResultMessage.uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
+    }
 }

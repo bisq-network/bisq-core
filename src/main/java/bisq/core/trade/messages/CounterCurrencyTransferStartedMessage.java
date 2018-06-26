@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
 public final class CounterCurrencyTransferStartedMessage extends TradeMessage implements MailboxMessage {
     private final String buyerPayoutAddress;
     private final NodeAddress senderNodeAddress;
-    private final String uid;
     private final byte[] buyerSignature;
     @Nullable
     private final String counterCurrencyTxId;
@@ -71,12 +70,11 @@ public final class CounterCurrencyTransferStartedMessage extends TradeMessage im
                                                   @Nullable String counterCurrencyTxId,
                                                   String uid,
                                                   int messageVersion) {
-        super(messageVersion, tradeId);
+        super(messageVersion, tradeId, uid);
         this.buyerPayoutAddress = buyerPayoutAddress;
         this.senderNodeAddress = senderNodeAddress;
         this.buyerSignature = buyerSignature;
         this.counterCurrencyTxId = counterCurrencyTxId;
-        this.uid = uid;
     }
 
     @Override

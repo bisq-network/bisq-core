@@ -91,18 +91,23 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelop, Trade trade) {
+    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelope, Trade trade) {
         this.trade = trade;
 
-        if (networkEnvelop instanceof MailboxMessage) {
-            MailboxMessage mailboxMessage = (MailboxMessage) networkEnvelop;
+        if (networkEnvelope instanceof MailboxMessage) {
+            MailboxMessage mailboxMessage = (MailboxMessage) networkEnvelope;
             NodeAddress peerNodeAddress = mailboxMessage.getSenderNodeAddress();
-            if (networkEnvelop instanceof DepositTxPublishedMessage)
-                handle((DepositTxPublishedMessage) networkEnvelop, peerNodeAddress);
-            else if (networkEnvelop instanceof PayoutTxPublishedMessage)
-                handle((PayoutTxPublishedMessage) networkEnvelop, peerNodeAddress);
-            else
-                log.error("We received an unhandled MailboxMessage" + networkEnvelop.toString());
+            if (networkEnvelope instanceof TradeMessage) {
+                TradeMessage tradeMessage = (TradeMessage) networkEnvelope;
+                log.info("Received {} as MailboxMessage from {} with tradeId {} and uid {}",
+                        tradeMessage.getClass().getSimpleName(), peerNodeAddress, tradeMessage.getTradeId(), tradeMessage.getUid());
+                if (tradeMessage instanceof DepositTxPublishedMessage)
+                    handle((DepositTxPublishedMessage) tradeMessage, peerNodeAddress);
+                else if (tradeMessage instanceof PayoutTxPublishedMessage)
+                    handle((PayoutTxPublishedMessage) tradeMessage, peerNodeAddress);
+                else
+                    log.error("We received an unhandled tradeMessage" + tradeMessage.toString());
+            }
         }
     }
 
@@ -112,14 +117,14 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void handleTakeOfferRequest(TradeMessage message, NodeAddress peerNodeAddress, ErrorMessageHandler errorMessageHandler) {
-        Validator.checkTradeId(processModel.getOfferId(), message);
-        checkArgument(message instanceof PayDepositRequest);
-        processModel.setTradeMessage(message);
+    public void handleTakeOfferRequest(TradeMessage tradeMessage, NodeAddress peerNodeAddress, ErrorMessageHandler errorMessageHandler) {
+        Validator.checkTradeId(processModel.getOfferId(), tradeMessage);
+        checkArgument(tradeMessage instanceof PayDepositRequest);
+        processModel.setTradeMessage(tradeMessage);
         processModel.setTempTradingPeerNodeAddress(peerNodeAddress);
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(buyerAsMakerTrade,
-                () -> handleTaskRunnerSuccess("handleTakeOfferRequest"),
+                () -> handleTaskRunnerSuccess(tradeMessage, "handleTakeOfferRequest"),
                 errorMessage -> {
                     errorMessageHandler.handleErrorMessage(errorMessage);
                     handleTaskRunnerFault(errorMessage);
@@ -153,9 +158,9 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(buyerAsMakerTrade,
                 () -> {
-                    handleTaskRunnerSuccess("handle DepositTxPublishedMessage");
+                    handleTaskRunnerSuccess(tradeMessage, "handle DepositTxPublishedMessage");
                 },
-                this::handleTaskRunnerFault);
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
         taskRunner.addTasks(
                 MakerProcessDepositTxPublishedMessage.class,
                 MakerVerifyTakerAccount.class,
@@ -204,13 +209,12 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void handle(PayoutTxPublishedMessage tradeMessage, NodeAddress peerNodeAddress) {
-        log.debug("handle PayoutTxPublishedMessage called");
         processModel.setTradeMessage(tradeMessage);
         processModel.setTempTradingPeerNodeAddress(peerNodeAddress);
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(buyerAsMakerTrade,
-                () -> handleTaskRunnerSuccess("handle PayoutTxPublishedMessage"),
-                this::handleTaskRunnerFault);
+                () -> handleTaskRunnerSuccess(tradeMessage, "handle PayoutTxPublishedMessage"),
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
 
         taskRunner.addTasks(
                 BuyerProcessPayoutTxPublishedMessage.class
@@ -224,11 +228,14 @@ public class BuyerAsMakerProtocol extends TradeProtocol implements BuyerProtocol
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected void doHandleDecryptedMessage(TradeMessage tradeMessage, NodeAddress peerNodeAddress) {
+    protected void doHandleDecryptedMessage(TradeMessage tradeMessage, NodeAddress sender) {
+        log.info("Received {} from {} with tradeId {} and uid {}",
+                tradeMessage.getClass().getSimpleName(), sender, tradeMessage.getTradeId(), tradeMessage.getUid());
+
         if (tradeMessage instanceof DepositTxPublishedMessage) {
-            handle((DepositTxPublishedMessage) tradeMessage, peerNodeAddress);
+            handle((DepositTxPublishedMessage) tradeMessage, sender);
         } else if (tradeMessage instanceof PayoutTxPublishedMessage) {
-            handle((PayoutTxPublishedMessage) tradeMessage, peerNodeAddress);
+            handle((PayoutTxPublishedMessage) tradeMessage, sender);
         } else //noinspection StatementWithEmptyBody
             if (tradeMessage instanceof PayDepositRequest) {
                 // do nothing as we get called the handleTakeOfferRequest method from outside

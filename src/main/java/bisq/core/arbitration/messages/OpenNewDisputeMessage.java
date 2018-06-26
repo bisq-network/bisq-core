@@ -76,4 +76,19 @@ public final class OpenNewDisputeMessage extends DisputeMessage {
                 proto.getUid(),
                 messageVersion);
     }
+
+    @Override
+    public String getTradeId() {
+        return dispute.getTradeId();
+    }
+
+    @Override
+    public String toString() {
+        return "OpenNewDisputeMessage{" +
+                "\n     dispute=" + dispute +
+                ",\n     senderNodeAddress=" + senderNodeAddress +
+                ",\n     OpenNewDisputeMessage.uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
+    }
 }
