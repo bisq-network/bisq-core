@@ -35,6 +35,7 @@ import bisq.core.trade.failed.FailedTradesManager;
 import bisq.core.trade.handlers.TradeResultHandler;
 import bisq.core.trade.messages.PayDepositRequest;
 import bisq.core.trade.messages.TradeMessage;
+import bisq.core.trade.statistics.ReferralIdService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
 import bisq.core.user.User;
 import bisq.core.util.Validator;
@@ -107,6 +108,7 @@ public class TradeManager implements PersistedDataHost {
     private final PriceFeedService priceFeedService;
     private final FilterManager filterManager;
     private final TradeStatisticsManager tradeStatisticsManager;
+    private final ReferralIdService referralIdService;
     private final AccountAgeWitnessService accountAgeWitnessService;
 
     private final Storage<TradableList<Trade>> tradableListStorage;
@@ -135,6 +137,7 @@ public class TradeManager implements PersistedDataHost {
                         PriceFeedService priceFeedService,
                         FilterManager filterManager,
                         TradeStatisticsManager tradeStatisticsManager,
+                        ReferralIdService referralIdService,
                         PersistenceProtoResolver persistenceProtoResolver,
                         AccountAgeWitnessService accountAgeWitnessService,
                         @Named(Storage.STORAGE_DIR) File storageDir) {
@@ -150,6 +153,7 @@ public class TradeManager implements PersistedDataHost {
         this.priceFeedService = priceFeedService;
         this.filterManager = filterManager;
         this.tradeStatisticsManager = tradeStatisticsManager;
+        this.referralIdService = referralIdService;
         this.accountAgeWitnessService = accountAgeWitnessService;
 
         tradableListStorage = new Storage<>(storageDir, persistenceProtoResolver);
@@ -330,6 +334,7 @@ public class TradeManager implements PersistedDataHost {
                 tradeWalletService,
                 this,
                 openOfferManager,
+                referralIdService,
                 user,
                 filterManager,
                 accountAgeWitnessService,

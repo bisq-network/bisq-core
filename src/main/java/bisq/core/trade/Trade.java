@@ -31,6 +31,7 @@ import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.protocol.ProcessModel;
 import bisq.core.trade.protocol.TradeProtocol;
+import bisq.core.trade.statistics.ReferralIdService;
 import bisq.core.user.User;
 
 import bisq.network.p2p.DecryptedMessageWithPubKey;
@@ -485,6 +486,7 @@ public abstract class Trade implements Tradable, Model {
                      TradeWalletService tradeWalletService,
                      TradeManager tradeManager,
                      OpenOfferManager openOfferManager,
+                     ReferralIdService referralIdService,
                      User user,
                      FilterManager filterManager,
                      AccountAgeWitnessService accountAgeWitnessService,
@@ -499,6 +501,7 @@ public abstract class Trade implements Tradable, Model {
                 btcWalletService,
                 bsqWalletService,
                 tradeWalletService,
+                referralIdService,
                 user,
                 filterManager,
                 accountAgeWitnessService,

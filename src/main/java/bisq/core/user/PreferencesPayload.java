@@ -101,6 +101,9 @@ public final class PreferencesPayload implements PersistableEnvelope {
     @Nullable
     String customBridges;
     int bitcoinNodesOptionOrdinal;
+    @Nullable
+    String referralId;
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -160,6 +163,7 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 account -> builder.setSelectedPaymentAccountForCreateOffer(selectedPaymentAccountForCreateOffer.toProtoMessage()));
         Optional.ofNullable(bridgeAddresses).ifPresent(builder::addAllBridgeAddresses);
         Optional.ofNullable(customBridges).ifPresent(builder::setCustomBridges);
+        Optional.ofNullable(referralId).ifPresent(builder::setReferralId);
         return PB.PersistableEnvelope.newBuilder().setPreferencesPayload(builder).build();
     }
 
@@ -213,6 +217,7 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 proto.getBridgeOptionOrdinal(),
                 proto.getTorTransportOrdinal(),
                 ProtoUtil.stringOrNullFromProto(proto.getCustomBridges()),
-                proto.getBitcoinNodesOptionOrdinal());
+                proto.getBitcoinNodesOptionOrdinal(),
+                proto.getReferralId().isEmpty() ? null : proto.getReferralId());
     }
 }
