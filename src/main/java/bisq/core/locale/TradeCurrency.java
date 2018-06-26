@@ -17,7 +17,7 @@
 
 package bisq.core.locale;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -53,7 +53,7 @@ public abstract class TradeCurrency implements PersistablePayload, Comparable<Tr
             case CRYPTO_CURRENCY:
                 return CryptoCurrency.fromProto(proto);
             default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }
     }
 

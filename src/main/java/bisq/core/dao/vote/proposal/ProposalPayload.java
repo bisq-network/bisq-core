@@ -26,7 +26,7 @@ import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.app.Capabilities;
 import bisq.common.crypto.Sig;
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
 import bisq.common.util.Utilities;
 
@@ -144,7 +144,7 @@ public abstract class ProposalPayload implements LazyProcessedPayload, Protected
             case GENERIC_PROPOSAL_PAYLOAD:
                 return GenericProposalPayload.fromProto(proto);
             default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }
     }
 

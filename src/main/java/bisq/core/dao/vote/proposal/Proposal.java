@@ -21,7 +21,7 @@ import bisq.core.dao.vote.proposal.compensation.CompensationRequest;
 import bisq.core.dao.vote.proposal.generic.GenericProposal;
 import bisq.core.dao.vote.result.VoteResult;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -104,7 +104,7 @@ public abstract class Proposal implements PersistablePayload {
             case GENERIC_PROPOSAL:
                 return GenericProposal.fromProto(proto);
             default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }
     }
 
