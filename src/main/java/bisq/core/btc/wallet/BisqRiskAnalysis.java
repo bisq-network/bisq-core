@@ -15,6 +15,23 @@
  * limitations under the License.
  */
 
+/*
+ * This file is part of Bisq.
+ *
+ * Bisq is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * Bisq is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package bisq.core.btc.wallet;
 
 import org.bitcoinj.core.Coin;
@@ -27,7 +44,6 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis;
 import org.bitcoinj.wallet.Wallet;
 
@@ -54,7 +70,7 @@ import static com.google.common.base.Preconditions.checkState;
  * transactions.</p>
  */
 public class BisqRiskAnalysis implements RiskAnalysis {
-    private static final Logger log = LoggerFactory.getLogger(DefaultRiskAnalysis.class);
+    private static final Logger log = LoggerFactory.getLogger(BisqRiskAnalysis.class);
 
     /**
      * Any standard output smaller than this value (in satoshis) will be considered risky, as it's most likely be
@@ -95,14 +111,6 @@ public class BisqRiskAnalysis implements RiskAnalysis {
         // Transactions we create ourselves are, by definition, not at risk of double spending against us.
         if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
             return Result.OK;
-
-        // For Bisq's use cases RBF is not considered risky
-        /*
-        // We consider transactions that opt into replace-by-fee at risk of double spending.
-        if (tx.isOptInFullRBF()) {
-            nonFinal = tx;
-            return Result.NON_FINAL;
-        }*/
 
         if (wallet == null)
             return null;
