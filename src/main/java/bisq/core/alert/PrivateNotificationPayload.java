@@ -66,7 +66,7 @@ public final class PrivateNotificationPayload implements NetworkPayload {
     public static PrivateNotificationPayload fromProto(PB.PrivateNotificationPayload proto) {
         return new PrivateNotificationPayload(proto.getMessage(),
                 proto.getSignatureAsBase64(),
-                proto.getSignatureAsBase64Bytes().toByteArray());
+                proto.getSigPublicKeyBytes().toByteArray());
     }
 
     @Override
@@ -76,7 +76,8 @@ public final class PrivateNotificationPayload implements NetworkPayload {
         return PB.PrivateNotificationPayload.newBuilder()
                 .setMessage(message)
                 .setSignatureAsBase64(signatureAsBase64)
-                .setSigPublicKeyBytes(ByteString.copyFrom(sigPublicKeyBytes)).build();
+                .setSigPublicKeyBytes(ByteString.copyFrom(sigPublicKeyBytes))
+                .build();
     }
 
 
