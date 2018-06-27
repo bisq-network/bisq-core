@@ -27,9 +27,6 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.HashMapChangedListener;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 
 import bisq.common.UserThread;
 import bisq.common.storage.JsonFileManager;
@@ -47,7 +44,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +81,6 @@ public class TradeStatisticsManager {
     private final ReferralIdService referralIdService;
     private final boolean dumpStatistics;
     private final ObservableSet<TradeStatistics2> observableTradeStatisticsSet = FXCollections.observableSet();
-    private final HashSet<TradeStatistics2> tradeStatisticsSet = new HashSet<>();
 
     @Inject
     public TradeStatisticsManager(P2PService p2PService,
@@ -119,29 +114,13 @@ public class TradeStatisticsManager {
                 addToMap((TradeStatistics2) payload, true);
         });
 
-        p2PService.getP2PDataStorage().getPersistableNetworkPayloadList().getMap().values().forEach(e -> {
-            if (e instanceof TradeStatistics2)
-                addToMap((TradeStatistics2) e, false);
-        });
+        Map<String, TradeStatistics2> map = new HashMap<>();
+        p2PService.getP2PDataStorage().getPersistableNetworkPayloadList().getMap().values().stream()
+                .filter(e -> e instanceof TradeStatistics2)
+                .forEach(e -> addToMap((TradeStatistics2) e, map));
+        observableTradeStatisticsSet.addAll(map.values());
 
-        //TODO can be removed after version older than v0.6.0 are not used anymore
-        // We listen to TradeStatistics objects from old clients as well and convert them into TradeStatistics2 objects
-        p2PService.addHashSetChangedListener(new HashMapChangedListener() {
-            @Override
-            public void onAdded(ProtectedStorageEntry data) {
-                final ProtectedStoragePayload protectedStoragePayload = data.getProtectedStoragePayload();
-                if (protectedStoragePayload instanceof TradeStatistics)
-                    p2PService.getP2PDataStorage().addPersistableNetworkPayload(ConvertToTradeStatistics2((TradeStatistics) protectedStoragePayload),
-                            p2PService.getNetworkNode().getNodeAddress(), true, false, false, false);
-            }
-
-            @Override
-            public void onRemoved(ProtectedStorageEntry data) {
-                // We don't remove items
-            }
-        });
-
-        priceFeedService.applyLatestBisqMarketPrice(tradeStatisticsSet);
+        priceFeedService.applyLatestBisqMarketPrice(observableTradeStatisticsSet);
         dump();
 
         // print all currencies sorted by nr. of trades
@@ -181,23 +160,25 @@ public class TradeStatisticsManager {
     }
 
     public void addToMap(TradeStatistics2 tradeStatistics, boolean storeLocally) {
-        if (!tradeStatisticsSet.contains(tradeStatistics)) {
-            boolean itemAlreadyAdded = tradeStatisticsSet.stream()
+        if (!observableTradeStatisticsSet.contains(tradeStatistics)) {
+            boolean itemAlreadyAdded = observableTradeStatisticsSet.stream()
                     .anyMatch(e -> (e.getOfferId().equals(tradeStatistics.getOfferId())));
             if (!itemAlreadyAdded) {
-                tradeStatisticsSet.add(tradeStatistics);
                 observableTradeStatisticsSet.add(tradeStatistics);
-
-                tradeStatistics.getTradePrice().getValue();
-
                 if (storeLocally) {
-                    priceFeedService.applyLatestBisqMarketPrice(tradeStatisticsSet);
+                    priceFeedService.applyLatestBisqMarketPrice(observableTradeStatisticsSet);
                     dump();
                 }
             } else {
                 log.debug("We have already an item with the same offer ID. That might happen if both the maker and the taker published the tradeStatistics");
             }
         }
+    }
+
+    public void addToMap(TradeStatistics2 tradeStatistics, Map<String, TradeStatistics2> map) {
+        TradeStatistics2 prevValue = map.putIfAbsent(tradeStatistics.getOfferId(), tradeStatistics);
+        if (prevValue != null)
+            log.debug("We have already an item with the same offer ID. That might happen if both the maker and the taker published the tradeStatistics");
     }
 
     public ObservableSet<TradeStatistics2> getObservableTradeStatisticsSet() {
@@ -212,7 +193,7 @@ public class TradeStatisticsManager {
             // Need a more scalable solution later when we get more volume.
             // The flag will only be activated by dedicated nodes, so it should not be too critical for the moment, but needs to
             // get improved. Maybe a LevelDB like DB...? Could be impl. in a headless version only.
-            List<TradeStatisticsForJson> list = tradeStatisticsSet.stream().map(TradeStatisticsForJson::new).collect(Collectors.toList());
+            List<TradeStatisticsForJson> list = observableTradeStatisticsSet.stream().map(TradeStatisticsForJson::new).collect(Collectors.toList());
             list.sort((o1, o2) -> (o1.tradeDate < o2.tradeDate ? 1 : (o1.tradeDate == o2.tradeDate ? 0 : -1)));
             TradeStatisticsForJson[] array = new TradeStatisticsForJson[list.size()];
             list.toArray(array);
