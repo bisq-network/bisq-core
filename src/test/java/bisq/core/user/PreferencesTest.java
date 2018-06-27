@@ -67,7 +67,7 @@ public class PreferencesTest {
         storage = mock(Storage.class);
         bisqEnvironment = mock(BisqEnvironment.class);
 
-        preferences = new Preferences(storage, bisqEnvironment,null, null);
+        preferences = new Preferences(storage, bisqEnvironment, null, null, null);
     }
 
     @Test
