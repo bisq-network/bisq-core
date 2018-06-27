@@ -373,13 +373,13 @@ public class BisqSetup {
                 socket = new Socket();
                 socket.connect(new InetSocketAddress(InetAddresses.forString("127.0.0.1"),
                         BisqEnvironment.getBaseCurrencyNetwork().getParameters().getPort()), 5000);
-                log.info("Localhost peer detected.");
+                log.info("Localhost Bitcoin node detected.");
                 UserThread.execute(() -> {
                     bisqEnvironment.setBitcoinLocalhostNodeRunning(true);
                     step3();
                 });
             } catch (Throwable e) {
-                log.info("Localhost peer not detected.");
+                log.info("Localhost Bitcoin node not detected.");
                 UserThread.execute(BisqSetup.this::step3);
             } finally {
                 if (socket != null) {
