@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -51,7 +50,6 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@ToString
 @EqualsAndHashCode
 @Getter
 @Slf4j
@@ -76,6 +74,7 @@ public final class OfferPayload implements ProtectedStoragePayload, ExpirablePay
 
     // Keys for extra map
     public static final String ACCOUNT_AGE_WITNESS_HASH = "accountAgeWitnessHash";
+    public static final String REFERRAL_ID = "referralId";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -368,5 +367,49 @@ public final class OfferPayload implements ProtectedStoragePayload, ExpirablePay
     // so we map here for convenience
     public String getCurrencyCode() {
         return CurrencyUtil.isCryptoCurrency(getBaseCurrencyCode()) ? getBaseCurrencyCode() : getCounterCurrencyCode();
+    }
+
+    @Override
+    public String toString() {
+        return "OfferPayload{" +
+                "\n     id='" + id + '\'' +
+                ",\n     date=" + date +
+                ",\n     ownerNodeAddress=" + ownerNodeAddress +
+                ",\n     pubKeyRing=" + pubKeyRing +
+                ",\n     direction=" + direction +
+                ",\n     price=" + price +
+                ",\n     marketPriceMargin=" + marketPriceMargin +
+                ",\n     useMarketBasedPrice=" + useMarketBasedPrice +
+                ",\n     amount=" + amount +
+                ",\n     minAmount=" + minAmount +
+                ",\n     baseCurrencyCode='" + baseCurrencyCode + '\'' +
+                ",\n     counterCurrencyCode='" + counterCurrencyCode + '\'' +
+                ",\n     arbitratorNodeAddresses=" + arbitratorNodeAddresses +
+                ",\n     mediatorNodeAddresses=" + mediatorNodeAddresses +
+                ",\n     paymentMethodId='" + paymentMethodId + '\'' +
+                ",\n     makerPaymentAccountId='" + makerPaymentAccountId + '\'' +
+                ",\n     offerFeePaymentTxId='" + offerFeePaymentTxId + '\'' +
+                ",\n     countryCode='" + countryCode + '\'' +
+                ",\n     acceptedCountryCodes=" + acceptedCountryCodes +
+                ",\n     bankId='" + bankId + '\'' +
+                ",\n     acceptedBankIds=" + acceptedBankIds +
+                ",\n     versionNr='" + versionNr + '\'' +
+                ",\n     blockHeightAtOfferCreation=" + blockHeightAtOfferCreation +
+                ",\n     txFee=" + txFee +
+                ",\n     makerFee=" + makerFee +
+                ",\n     isCurrencyForMakerFeeBtc=" + isCurrencyForMakerFeeBtc +
+                ",\n     buyerSecurityDeposit=" + buyerSecurityDeposit +
+                ",\n     sellerSecurityDeposit=" + sellerSecurityDeposit +
+                ",\n     maxTradeLimit=" + maxTradeLimit +
+                ",\n     maxTradePeriod=" + maxTradePeriod +
+                ",\n     useAutoClose=" + useAutoClose +
+                ",\n     useReOpenAfterAutoClose=" + useReOpenAfterAutoClose +
+                ",\n     lowerClosePrice=" + lowerClosePrice +
+                ",\n     upperClosePrice=" + upperClosePrice +
+                ",\n     isPrivateOffer=" + isPrivateOffer +
+                ",\n     hashOfChallenge='" + hashOfChallenge + '\'' +
+                ",\n     extraDataMap=" + extraDataMap +
+                ",\n     protocolVersion=" + protocolVersion +
+                "\n}";
     }
 }

@@ -538,6 +538,11 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         persist();
     }
 
+    public void setReferralId(String referralId) {
+        prefPayload.setReferralId(referralId);
+        persist();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getter
@@ -721,6 +726,8 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         void setCustomBridges(String customBridges);
 
         void setBitcoinNodesOptionOrdinal(int bitcoinNodesOption);
+
+        void setReferralId(String referralId);
 
         List<String> getBridgeAddresses();
 

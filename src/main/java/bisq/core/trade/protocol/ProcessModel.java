@@ -34,6 +34,7 @@ import bisq.core.trade.MakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.messages.TradeMessage;
+import bisq.core.trade.statistics.ReferralIdService;
 import bisq.core.user.User;
 
 import bisq.network.p2p.AckMessage;
@@ -83,6 +84,7 @@ public class ProcessModel implements Model, PersistablePayload {
     transient private AccountAgeWitnessService accountAgeWitnessService;
     transient private KeyRing keyRing;
     transient private P2PService p2PService;
+    transient private ReferralIdService referralIdService;
 
     // Transient/Mutable
     transient private Transaction takeOfferFeeTx;
@@ -223,6 +225,7 @@ public class ProcessModel implements Model, PersistablePayload {
                                          BtcWalletService walletService,
                                          BsqWalletService bsqWalletService,
                                          TradeWalletService tradeWalletService,
+                                         ReferralIdService referralIdService,
                                          User user,
                                          FilterManager filterManager,
                                          AccountAgeWitnessService accountAgeWitnessService,
@@ -235,6 +238,7 @@ public class ProcessModel implements Model, PersistablePayload {
         this.btcWalletService = walletService;
         this.bsqWalletService = bsqWalletService;
         this.tradeWalletService = tradeWalletService;
+        this.referralIdService = referralIdService;
         this.user = user;
         this.filterManager = filterManager;
         this.accountAgeWitnessService = accountAgeWitnessService;
