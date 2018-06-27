@@ -88,6 +88,9 @@ public class ModuleForAppWithP2p extends AppModule {
         Boolean useDevMode = environment.getProperty(CommonOptionKeys.USE_DEV_MODE, Boolean.class, false);
         bind(boolean.class).annotatedWith(Names.named(CommonOptionKeys.USE_DEV_MODE)).toInstance(useDevMode);
 
+        String referralId = environment.getProperty(AppOptionKeys.REFERRAL_ID, String.class, "");
+        bind(String.class).annotatedWith(Names.named(AppOptionKeys.REFERRAL_ID)).toInstance(referralId);
+
         // ordering is used for shut down sequence
         install(tradeModule());
         install(encryptionServiceModule());
