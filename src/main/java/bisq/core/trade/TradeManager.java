@@ -45,6 +45,7 @@ import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
 
+import bisq.common.Clock;
 import bisq.common.UserThread;
 import bisq.common.app.Log;
 import bisq.common.crypto.KeyRing;
@@ -67,8 +68,11 @@ import javax.inject.Named;
 import com.google.common.util.concurrent.FutureCallback;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
 
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import org.spongycastle.crypto.params.KeyParameter;
@@ -76,6 +80,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 import java.io.File;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -86,6 +91,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.Getter;
 import lombok.Setter;
 
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +114,7 @@ public class TradeManager implements PersistedDataHost {
     private final FilterManager filterManager;
     private final TradeStatisticsManager tradeStatisticsManager;
     private final AccountAgeWitnessService accountAgeWitnessService;
+    private final Clock clock;
 
     private final Storage<TradableList<Trade>> tradableListStorage;
     private TradableList<Trade> tradableList;
@@ -116,6 +123,8 @@ public class TradeManager implements PersistedDataHost {
     @Setter
     @Nullable
     private ErrorMessageHandler takeOfferRequestErrorMessageHandler;
+    @Getter
+    private final LongProperty numPendingTrades = new SimpleLongProperty();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -137,6 +146,7 @@ public class TradeManager implements PersistedDataHost {
                         TradeStatisticsManager tradeStatisticsManager,
                         PersistenceProtoResolver persistenceProtoResolver,
                         AccountAgeWitnessService accountAgeWitnessService,
+                        Clock clock,
                         @Named(Storage.STORAGE_DIR) File storageDir) {
         this.user = user;
         this.keyRing = keyRing;
@@ -151,6 +161,7 @@ public class TradeManager implements PersistedDataHost {
         this.filterManager = filterManager;
         this.tradeStatisticsManager = tradeStatisticsManager;
         this.accountAgeWitnessService = accountAgeWitnessService;
+        this.clock = clock;
 
         tradableListStorage = new Storage<>(storageDir, persistenceProtoResolver);
 
@@ -217,6 +228,9 @@ public class TradeManager implements PersistedDataHost {
                     initPendingTrades();
                 }
             });
+
+        tradableList.getList().addListener((ListChangeListener<Trade>) change -> onTradesChanged());
+        onTradesChanged();
     }
 
     public void shutDown() {
@@ -257,7 +271,11 @@ public class TradeManager implements PersistedDataHost {
         pendingTradesInitialized.set(true);
     }
 
-    public void cleanUpAddressEntries() {
+    private void onTradesChanged() {
+        this.numPendingTrades.set(tradableList.getList().size());
+    }
+
+    private void cleanUpAddressEntries() {
         Set<String> tradesIdSet = getLockedTradesStream()
                 .map(Trade::getId)
                 .collect(Collectors.toSet());
@@ -562,5 +580,58 @@ public class TradeManager implements PersistedDataHost {
     public Stream<Trade> getLockedTradesStream() {
         return getTradableList().stream()
                 .filter(Trade::isFundsLockedIn);
+    }
+
+    public Set<String> getSetOfAllTradeIds() {
+        Set<String> tradesIdSet = getLockedTradesStream()
+                .filter(Trade::hasFailed)
+                .map(Trade::getId)
+                .collect(Collectors.toSet());
+        tradesIdSet.addAll(failedTradesManager.getLockedTradesStream()
+                .map(Trade::getId)
+                .collect(Collectors.toSet()));
+        tradesIdSet.addAll(closedTradableManager.getLockedTradesStream()
+                .map(e -> {
+                    log.warn("We found a closed trade with locked up funds. " +
+                            "That should never happen. trade ID=" + e.getId());
+                    return e.getId();
+                })
+                .collect(Collectors.toSet()));
+
+        return tradesIdSet;
+    }
+
+    public void applyTradePeriodState() {
+        updateTradePeriodState();
+        clock.addListener(new Clock.Listener() {
+            @Override
+            public void onSecondTick() {
+            }
+
+            @Override
+            public void onMinuteTick() {
+                updateTradePeriodState();
+            }
+
+            @Override
+            public void onMissedSecondTick(long missed) {
+            }
+        });
+    }
+
+    private void updateTradePeriodState() {
+        tradableList.getList().forEach(trade -> {
+            if (!trade.isPayoutPublished()) {
+                Date maxTradePeriodDate = trade.getMaxTradePeriodDate();
+                Date halfTradePeriodDate = trade.getHalfTradePeriodDate();
+                if (maxTradePeriodDate != null && halfTradePeriodDate != null) {
+                    Date now = new Date();
+                    if (now.after(maxTradePeriodDate))
+                        trade.setTradePeriodState(Trade.TradePeriodState.TRADE_PERIOD_OVER);
+                    else if (now.after(halfTradePeriodDate))
+                        trade.setTradePeriodState(Trade.TradePeriodState.SECOND_HALF);
+                }
+            }
+        });
     }
 }

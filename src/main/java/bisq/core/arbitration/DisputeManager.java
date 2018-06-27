@@ -67,6 +67,13 @@ import javax.inject.Named;
 
 import com.google.common.util.concurrent.FutureCallback;
 
+import org.fxmisc.easybind.EasyBind;
+import org.fxmisc.easybind.Subscription;
+
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import java.io.File;
@@ -74,6 +81,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -83,6 +91,8 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import lombok.Getter;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -107,6 +117,10 @@ public class DisputeManager implements PersistedDataHost {
     private final Map<String, Dispute> openDisputes;
     private final Map<String, Dispute> closedDisputes;
     private final Map<String, Timer> delayMsgMap = new HashMap<>();
+
+    private final Map<String, Subscription> disputeIsClosedSubscriptionsMap = new HashMap<>();
+    @Getter
+    private final IntegerProperty numOpenDisputes = new SimpleIntegerProperty();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -184,6 +198,38 @@ public class DisputeManager implements PersistedDataHost {
         tryApplyMessages();
 
         cleanupDisputes();
+
+        disputes.getList().addListener((ListChangeListener<Dispute>) change -> {
+            change.next();
+            onDisputesChangeListener(change.getAddedSubList(), change.getRemoved());
+        });
+        onDisputesChangeListener(disputes.getList(), null);
+    }
+
+    private void onDisputesChangeListener(List<? extends Dispute> addedList, @Nullable List<? extends Dispute> removedList) {
+        if (removedList != null) {
+            removedList.forEach(dispute -> {
+                String id = dispute.getId();
+                if (disputeIsClosedSubscriptionsMap.containsKey(id)) {
+                    disputeIsClosedSubscriptionsMap.get(id).unsubscribe();
+                    disputeIsClosedSubscriptionsMap.remove(id);
+                }
+            });
+        }
+        addedList.forEach(dispute -> {
+            String id = dispute.getId();
+            Subscription disputeStateSubscription = EasyBind.subscribe(dispute.isClosedProperty(),
+                    isClosed -> {
+                        // We get the event before the list gets updated, so we execute on next frame
+                        UserThread.execute(() -> {
+                            int openDisputes = disputes.getList().stream()
+                                    .filter(e -> !e.isClosed())
+                                    .collect(Collectors.toList()).size();
+                            numOpenDisputes.set(openDisputes);
+                        });
+                    });
+            disputeIsClosedSubscriptionsMap.put(id, disputeStateSubscription);
+        });
     }
 
     public void cleanupDisputes() {
