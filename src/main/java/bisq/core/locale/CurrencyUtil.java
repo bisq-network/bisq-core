@@ -21,6 +21,7 @@ import bisq.core.app.BisqEnvironment;
 
 import bisq.asset.Asset;
 import bisq.asset.AssetRegistry;
+import bisq.asset.Coin;
 import bisq.asset.Token;
 import bisq.asset.coins.BSQ;
 
@@ -106,6 +107,7 @@ public class CurrencyUtil {
         List<CryptoCurrency> result = assetRegistry.stream()
                 .filter(CurrencyUtil::assetIsNotBaseCurrency)
                 .filter(CurrencyUtil::excludeBsqUnlessDaoTradingIsActive)
+                .filter(CurrencyUtil::assetMatchesNetwork)
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .sorted(TradeCurrency::compareTo)
                 .collect(Collectors.toList());
@@ -365,6 +367,11 @@ public class CurrencyUtil {
 
     private static boolean assetIsNotBaseCurrency(Asset asset) {
         return !asset.getTickerSymbol().equals(baseCurrencyCode);
+    }
+
+    private static boolean assetMatchesNetwork(Asset asset) {
+        return !(asset instanceof Coin) ||
+                ((Coin) asset).getNetwork().name().equals(BisqEnvironment.getDefaultBaseCurrencyNetwork().getNetwork());
     }
 
     private static CryptoCurrency assetToCryptoCurrency(Asset asset) {
