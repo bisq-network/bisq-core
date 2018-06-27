@@ -96,7 +96,8 @@ public class CoreModule extends AppModule {
         Boolean useDevMode = environment.getProperty(CommonOptionKeys.USE_DEV_MODE, Boolean.class, false);
         bind(boolean.class).annotatedWith(Names.named(CommonOptionKeys.USE_DEV_MODE)).toInstance(useDevMode);
 
-        bindConstant().annotatedWith(named(AppOptionKeys.REFERRAL_ID)).to(environment.getRequiredProperty(AppOptionKeys.REFERRAL_ID));
+        String referralId = environment.getProperty(AppOptionKeys.REFERRAL_ID, String.class, "");
+        bind(String.class).annotatedWith(Names.named(AppOptionKeys.REFERRAL_ID)).toInstance(referralId);
 
         // ordering is used for shut down sequence
         install(tradeModule());
