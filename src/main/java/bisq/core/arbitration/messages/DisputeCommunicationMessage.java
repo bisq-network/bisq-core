@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
-@EqualsAndHashCode(callSuper = true, exclude = {"listener"})
+@EqualsAndHashCode(callSuper = true) // listener is transient and therefore excluded anyway
 @Getter
 @Slf4j
 public final class DisputeCommunicationMessage extends DisputeMessage {

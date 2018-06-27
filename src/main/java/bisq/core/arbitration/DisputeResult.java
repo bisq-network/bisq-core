@@ -40,14 +40,12 @@ import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 @EqualsAndHashCode
 @Getter
-@ToString
 @Slf4j
 public final class DisputeResult implements NetworkPayload {
 
