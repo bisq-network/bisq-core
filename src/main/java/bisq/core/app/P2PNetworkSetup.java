@@ -119,8 +119,8 @@ public class P2PNetworkSetup {
                 // Other disconnects might be caused by peers running an older version
                 if (connection.getPeerType() == Connection.PeerType.SEED_NODE &&
                         closeConnectionReason == CloseConnectionReason.RULE_VIOLATION) {
-                    log.warn("RULE_VIOLATION onDisconnect closeConnectionReason=" + closeConnectionReason);
-                    log.warn("RULE_VIOLATION onDisconnect connection=" + connection);
+                    log.warn("RULE_VIOLATION onDisconnect closeConnectionReason={}, connection={}",
+                            closeConnectionReason, connection);
                 }
             }
 

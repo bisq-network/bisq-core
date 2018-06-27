@@ -174,7 +174,6 @@ public class BisqSetup {
     private MonadicBinding<Boolean> p2pNetworkAndWalletInitialized;
     private Runnable setupCompleteHandler;
 
-
     @Inject
     public BisqSetup(P2PNetworkSetup p2PNetworkSetup,
                      WalletAppSetup walletAppSetup,
@@ -401,7 +400,6 @@ public class BisqSetup {
     }
 
     private void checkCryptoSetup() {
-        BooleanProperty result = new SimpleBooleanProperty();
         // We want to test if the client is compiled with the correct crypto provider (BountyCastle)
         // and if the unlimited Strength for cryptographic keys is set.
         // If users compile themselves they might miss that step and then would get an exception in the trade.
@@ -421,11 +419,8 @@ public class BisqSetup {
                         ((Ping) tuple.getNetworkEnvelope()).getLastRoundTripTime() == payload.getLastRoundTripTime()) {
                     log.debug("Crypto test succeeded");
 
-                    if (Security.getProvider("BC") != null) {
-                        UserThread.execute(() -> result.set(true));
-                    } else {
+                    if (Security.getProvider("BC") == null)
                         throw new CryptoException("Security provider BountyCastle is not available.");
-                    }
                 } else {
                     throw new CryptoException("Payload not correct after decryption");
                 }
@@ -466,9 +461,7 @@ public class BisqSetup {
         // need to store it to not get garbage collected
         p2pNetworkAndWalletInitialized = EasyBind.combine(walletInitialized, p2pNetworkReady,
                 (a, b) -> {
-                    log.info("walletInitialized={}\n" +
-                                    "p2pNetWorkReady={}",
-                            a, b);
+                    log.info("walletInitialized={}, p2pNetWorkReady={}", a, b);
                     return a && b;
                 });
         p2pNetworkAndWalletInitialized.subscribe((observable, oldValue, newValue) -> {
