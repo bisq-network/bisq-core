@@ -24,10 +24,13 @@ import bisq.core.payment.payload.MoneyGramAccountPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.payment.payload.PaymentMethod;
 
+import lombok.EqualsAndHashCode;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+@EqualsAndHashCode(callSuper = true)
 public final class MoneyGramAccount extends PaymentAccount {
 
     @Nullable
