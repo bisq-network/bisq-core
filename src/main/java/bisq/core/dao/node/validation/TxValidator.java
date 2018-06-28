@@ -63,26 +63,27 @@ public class TxValidator {
     // for instance to calculate the total burned BSQ.
     public boolean validate(int blockHeight, Tx tx) {
         final String txId = tx.getId();
-        TxState txState = txInputsIterator.iterate(tx, blockHeight);
-        final boolean bsqInputBalancePositive = txState.isInputValuePositive();
+        ParsingModel parsingModel = txInputsIterator.iterate(tx, blockHeight);
+        //TODO rename  to leftOverBsq
+        final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txOutputsIterator.processOpReturnCandidate(tx, txState);
-            txOutputsIterator.iterate(tx, blockHeight, txState);
+            txOutputsIterator.processOpReturnCandidate(tx, parsingModel);
+            txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
             // Multiple op return outputs are non-standard but to be safe lets check it.
             if (txOutputsIterator.getNumOpReturnOutputs(tx) <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
-                final TxOutput issuanceCandidate = txState.getIssuanceCandidate();
+                final TxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
                 if (issuanceCandidate != null &&
                         stateService.getTxOutputType(issuanceCandidate) == TxOutputType.UNDEFINED) {
                     stateService.setTxOutputType(issuanceCandidate, TxOutputType.BTC_OUTPUT);
                 }
 
                 if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
-                    final TxType txType = getTxType(tx, txState);
+                    final TxType txType = getTxType(tx, parsingModel);
                     stateService.setTxType(txId, txType);
-                    final long burnedFee = txState.getAvailableInputValue();
+                    final long burnedFee = parsingModel.getAvailableInputValue();
                     if (burnedFee > 0)
                         stateService.setBurntFee(txId, burnedFee);
                 } else {
@@ -97,21 +98,22 @@ public class TxValidator {
             }
         }
 
-        return bsqInputBalancePositive || txState.getBurntBondValue() > 0;
+        // TODO || parsingModel.getBurntBondValue() > 0; shoud not be necessy
+        return bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0;
     }
 
     // TODO add tests
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    TxType getTxType(Tx tx, TxState txState) {
+    TxType getTxType(Tx tx, ParsingModel parsingModel) {
         TxType txType;
         // We need to have at least one BSQ output
 
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, txState);
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, parsingModel);
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
-        } else if (txState.getOpReturnTypeCandidate() == null) {
-            final boolean bsqFeesBurnt = txState.isInputValuePositive();
+        } else if (parsingModel.getOpReturnTypeCandidate() == null) {
+            final boolean bsqFeesBurnt = parsingModel.isInputValuePositive();
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -146,12 +148,10 @@ public class TxValidator {
                 txType = TxType.VOTE_REVEAL;
                 break;
             case LOCKUP:
-                // TODO
-                txType = TxType.LOCK_UP;
+                txType = TxType.LOCKUP;
                 break;
             case UNLOCK:
-                // TODO
-                txType = TxType.UN_LOCK;
+                txType = TxType.UNLOCK;
                 break;
             default:
                 log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
@@ -160,24 +160,24 @@ public class TxValidator {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, TxState txState) {
-        if (txState.isBsqOutputFound()) {
+    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, ParsingModel parsingModel) {
+        if (parsingModel.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
-            final OpReturnType opReturnTypeCandidate = txState.getOpReturnTypeCandidate();
-            final OpReturnType verifiedOpReturnType = txState.getVerifiedOpReturnType();
+            final OpReturnType opReturnTypeCandidate = parsingModel.getOpReturnTypeCandidate();
+            final OpReturnType verifiedOpReturnType = parsingModel.getVerifiedOpReturnType();
             if (opReturnTypeCandidate == verifiedOpReturnType) {
                 return Optional.ofNullable(verifiedOpReturnType);
             } else {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + opReturnTypeCandidate +
-                        " / verifiedOpReturnType=" + txState.getVerifiedOpReturnType() +
+                        " / verifiedOpReturnType=" + parsingModel.getVerifiedOpReturnType() +
                         "txId=" + tx.getId();
                 log.error(msg);
             }
         } else {
             final String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
-                    "Burned fee=" + txState.getAvailableInputValue() / 100D + " BSQ. tx=" + tx;
+                    "Burned fee=" + parsingModel.getAvailableInputValue() / 100D + " BSQ. tx=" + tx;
             log.warn(msg);
         }
         return Optional.empty();

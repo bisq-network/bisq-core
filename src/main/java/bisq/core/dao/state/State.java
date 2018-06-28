@@ -82,6 +82,8 @@ public class State implements PersistableEnvelope {
     private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
     private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
+
+    //TODO maps -> use mutable txOutput objects... refactor in new branch
     private final Map<TxOutput.Key, Integer> lockTimeMap;
     private final Map<TxOutput.Key, Integer> unlockBlockHeightMap;
 

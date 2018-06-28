@@ -27,26 +27,16 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 
-import bisq.common.app.Version;
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
 
-import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import java.util.Optional;
-
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -55,8 +45,7 @@ public class UnlockService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final StateService stateService;
-    @Getter
-    private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor

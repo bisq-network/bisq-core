@@ -18,8 +18,6 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.period.DaoPhase;
-import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
@@ -37,9 +35,9 @@ class OpReturnLockupValidator {
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    boolean validate(byte[] opReturnData, int lockTime, int blockHeight, TxState txState) {
-        return txState.getLockupOutput() != null && opReturnData.length == 5 &&
-                lockTime >= stateService.getParamValue(Param.LOCKTIME_MIN, blockHeight) &&
-                lockTime <= stateService.getParamValue(Param.LOCKTIME_MAX, blockHeight);
+    boolean validate(byte[] opReturnData, int lockTime, int blockHeight, ParsingModel parsingModel) {
+        return parsingModel.getLockupOutput() != null && opReturnData.length == 5 &&
+                lockTime >= stateService.getParamValue(Param.LOCK_TIME_MIN, blockHeight) &&
+                lockTime <= stateService.getParamValue(Param.LOCK_TIME_MAX, blockHeight);
     }
 }

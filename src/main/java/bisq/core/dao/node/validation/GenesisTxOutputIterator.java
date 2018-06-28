@@ -38,9 +38,9 @@ public class GenesisTxOutputIterator {
     }
 
     public void iterate(Tx tx) {
-        TxState txState = new TxState(stateService.getGenesisTotalSupply().getValue());
+        ParsingModel parsingModel = new ParsingModel(stateService.getGenesisTotalSupply().getValue());
         for (int i = 0; i < tx.getOutputs().size(); ++i) {
-            genesisTxOutputValidator.validate(tx.getOutputs().get(i), txState);
+            genesisTxOutputValidator.validate(tx.getOutputs().get(i), parsingModel);
         }
     }
 }

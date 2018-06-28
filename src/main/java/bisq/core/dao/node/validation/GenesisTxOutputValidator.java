@@ -35,9 +35,9 @@ public class GenesisTxOutputValidator extends TxOutputValidator {
         super(stateService, opReturnController);
     }
 
-    void validate(TxOutput txOutput, TxState txState) {
-        if (txOutput.getValue() <= txState.getAvailableInputValue()) {
-            txState.subtractFromInputValue(txOutput.getValue());
+    void validate(TxOutput txOutput, ParsingModel parsingModel) {
+        if (txOutput.getValue() <= parsingModel.getAvailableInputValue()) {
+            parsingModel.subtractFromInputValue(txOutput.getValue());
             applyStateChangeForBsqOutput(txOutput, TxOutputType.GENESIS_OUTPUT);
         } else {
             // If we get one output which is not funded sufficiently by the available
@@ -46,7 +46,7 @@ public class GenesisTxOutputValidator extends TxOutputValidator {
             // outputs might get interpreted as BSQ outputs.
             // In fact that cannot happen as the genesis tx is constructed carefully, so
             // it matches exactly the outputs.
-            txState.setAvailableInputValue(0);
+            parsingModel.setAvailableInputValue(0);
 
             applyStateChangeForBtcOutput(txOutput);
             log.warn("BTC output remains in genesis tx.");

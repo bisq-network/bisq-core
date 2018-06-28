@@ -39,12 +39,12 @@ public class TxInputsIterator {
         this.txInputProcessor = txInputProcessor;
     }
 
-    TxState iterate(Tx tx, int blockHeight) {
-        TxState txState = new TxState();
+    ParsingModel iterate(Tx tx, int blockHeight) {
+        ParsingModel parsingModel = new ParsingModel();
         for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
             TxInput input = tx.getInputs().get(inputIndex);
-            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, txState, stateService);
+            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel, stateService);
         }
-        return txState;
+        return parsingModel;
     }
 }

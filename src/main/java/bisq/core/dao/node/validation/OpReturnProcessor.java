@@ -63,23 +63,23 @@ public class OpReturnProcessor {
 
     // We only check partially the rules here as we do not know the BSQ fee at that moment which is always used when
     // we have OP_RETURN data.
-    public void processOpReturnCandidate(TxOutput txOutput, TxState txState) {
+    public void processOpReturnCandidate(TxOutput txOutput, ParsingModel parsingModel) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (txOutput.getValue() == 0 && opReturnData != null && opReturnData.length >= 1) {
             OpReturnType.getOpReturnType(opReturnData[0])
-                    .ifPresent(txState::setOpReturnTypeCandidate);
+                    .ifPresent(parsingModel::setOpReturnTypeCandidate);
         }
     }
 
     public void validate(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
-                         int blockHeight, TxState txState) {
+                         int blockHeight, ParsingModel parsingModel) {
         if (txOutput.getValue() == 0 &&
                 index == tx.getOutputs().size() - 1 &&
                 opReturnData.length >= 1) {
             final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
             if (optionalOpReturnType.isPresent()) {
-                selectValidator(opReturnData, txOutput, tx, bsqFee, blockHeight, txState, optionalOpReturnType.get());
+                selectValidator(opReturnData, txOutput, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
             } else {
                 log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
                         tx, Utils.HEX.encode(opReturnData));
@@ -91,26 +91,22 @@ public class OpReturnProcessor {
     }
 
     private void selectValidator(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight,
-                                 TxState txState, OpReturnType opReturnType) {
+                                 ParsingModel parsingModel, OpReturnType opReturnType) {
         switch (opReturnType) {
             case PROPOSAL:
-                processProposal(opReturnData, txOutput, bsqFee, blockHeight, txState);
+                processProposal(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
                 break;
             case COMPENSATION_REQUEST:
-                processCompensationRequest(opReturnData, txOutput, bsqFee, blockHeight, txState);
+                processCompensationRequest(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
                 break;
             case BLIND_VOTE:
-                processBlindVote(opReturnData, txOutput, bsqFee, blockHeight, txState);
+                processBlindVote(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
                 break;
             case VOTE_REVEAL:
-                processVoteReveal(opReturnData, txOutput, blockHeight, txState);
+                processVoteReveal(opReturnData, txOutput, blockHeight, parsingModel);
                 break;
             case LOCKUP:
-                processLockup(opReturnData, txOutput, blockHeight, txState);
-                break;
-            case UNLOCK:
-                // TODO
-                stateService.setTxOutputType(txOutput, TxOutputType.BOND_UNLOCK_OP_RETURN_OUTPUT);
+                processLockup(opReturnData, txOutput, blockHeight, parsingModel);
                 break;
             default:
                 // Should never happen as long we keep OpReturnType entries in sync with out switch case.
@@ -124,10 +120,10 @@ public class OpReturnProcessor {
         }
     }
 
-    private void processProposal(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, TxState txState) {
-        if (opReturnProposalValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, txState)) {
+    private void processProposal(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        if (opReturnProposalValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
-            txState.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+            parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
         } else {
             log.info("We expected a proposal op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
@@ -135,12 +131,12 @@ public class OpReturnProcessor {
         }
     }
 
-    private void processCompensationRequest(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, TxState txState) {
-        final TxOutput issuanceCandidate = txState.getIssuanceCandidate();
-        if (opReturnCompReqValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, txState)) {
+    private void processCompensationRequest(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        final TxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
+        if (opReturnCompReqValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(issuanceCandidate, TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
-            txState.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+            parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
@@ -152,12 +148,12 @@ public class OpReturnProcessor {
         }
     }
 
-    private void processBlindVote(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, TxState txState) {
-        final TxOutput blindVoteLockStakeOutput = txState.getBlindVoteLockStakeOutput();
-        if (opReturnBlindVoteValidator.validate(opReturnData, bsqFee, blockHeight, txState)) {
+    private void processBlindVote(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        final TxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
+        if (opReturnBlindVoteValidator.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(blindVoteLockStakeOutput, TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
-            txState.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+            parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
@@ -172,11 +168,11 @@ public class OpReturnProcessor {
         }
     }
 
-    private void processVoteReveal(byte[] opReturnData, TxOutput txOutput, int blockHeight, TxState txState) {
-        if (opReturnVoteRevealValidator.validate(opReturnData, blockHeight, txState)) {
+    private void processVoteReveal(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
+        if (opReturnVoteRevealValidator.validate(opReturnData, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-            stateService.setTxOutputType(txState.getVoteRevealUnlockStakeOutput(), TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
-            txState.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+            stateService.setTxOutputType(parsingModel.getVoteRevealUnlockStakeOutput(), TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
+            parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
@@ -186,19 +182,22 @@ public class OpReturnProcessor {
 
             // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration
             // that it is valid BSQ.
-            if (txState.getVoteRevealUnlockStakeOutput() != null)
-                stateService.setTxOutputType(txState.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
+            if (parsingModel.getVoteRevealUnlockStakeOutput() != null)
+                stateService.setTxOutputType(parsingModel.getVoteRevealUnlockStakeOutput(), TxOutputType.BSQ_OUTPUT);
         }
     }
 
-    private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, TxState txState) {
-        final TxOutput lockupCandidate = txState.getLockupOutput();
+    private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
+        final TxOutput lockupCandidate = parsingModel.getLockupOutput();
+
+        // TODO use consensus class to get converted short int
         int lockTime = (opReturnData[2] << 8) | opReturnData[3];
-        if (opReturnLockupValidator.validate(opReturnData, lockTime, blockHeight, txState)) {
-            stateService.setTxOutputType(txOutput, TxOutputType.BOND_LOCK_OP_RETURN_OUTPUT);
-            stateService.setTxOutputType(lockupCandidate, TxOutputType.BOND_LOCK);
+
+        if (opReturnLockupValidator.validate(opReturnData, lockTime, blockHeight, parsingModel)) {
+            stateService.setTxOutputType(txOutput, TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
+            stateService.setTxOutputType(lockupCandidate, TxOutputType.LOCKUP);
             stateService.setLockTime(lockupCandidate, lockTime);
-            txState.setVerifiedOpReturnType(OpReturnType.LOCKUP);
+            parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
         } else {
             log.info("We expected a lockup op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);

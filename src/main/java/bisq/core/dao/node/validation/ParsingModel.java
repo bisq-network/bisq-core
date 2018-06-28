@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
  */
 @Getter
 @Setter
-class TxState {
+class ParsingModel {
     private long availableInputValue = 0;
     private long burntBondValue = 0;
     @Nullable
@@ -50,11 +50,12 @@ class TxState {
     private boolean bsqOutputFound;
 
     @Nullable
-    private TxOutput spentLockedConnectedTxOutput;
+    private TxOutput spentLockedTxOutput;
     private int unlockBlockHeight;
 
+    //TODO ???
     @Nullable
-    private HashSet<TxOutput> spentUnlockedConnectedTxOutputs = new HashSet<>();
+    private Set<TxOutput> spentUnlockedConnectedTxOutputs = new HashSet<>();
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
     // that it is a valid BSQ tx at that moment.
@@ -69,10 +70,10 @@ class TxState {
     private TxInput inputFromBlindVoteStakeOutput;
     private boolean isSingleInputFromBlindVoteStakeOutput;
 
-    TxState() {
+    ParsingModel() {
     }
 
-    TxState(long availableInputValue) {
+    ParsingModel(long availableInputValue) {
         this.availableInputValue = availableInputValue;
     }
 
@@ -90,6 +91,6 @@ class TxState {
 
     public void burnBond(long value) {
         subtractFromInputValue(value);
-        this.burntBondValue += value;
+        burntBondValue += value;
     }
 }

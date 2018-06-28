@@ -28,7 +28,6 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.app.Version;
@@ -41,12 +40,9 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import javafx.beans.value.ChangeListener;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -57,8 +53,7 @@ public class LockupService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final StateService stateService;
-    @Getter
-    private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -77,8 +72,8 @@ public class LockupService {
 
     public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
-        checkArgument(lockTime <= stateService.getParamValue(Param.LOCKTIME_MAX, stateService.getChainHeight()) &&
-                lockTime >= stateService.getParamValue(Param.LOCKTIME_MIN, stateService.getChainHeight()));
+        checkArgument(lockTime <= stateService.getParamValue(Param.LOCK_TIME_MAX, stateService.getChainHeight()) &&
+                lockTime >= stateService.getParamValue(Param.LOCK_TIME_MIN, stateService.getChainHeight()));
         try {
             byte[] opReturnData = getOpReturnData(lockTime);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
@@ -111,16 +106,18 @@ public class LockupService {
         }
     }
 
+    // TODO We should move that to a consensus class
     private byte[] getOpReturnData(int lockTime) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP_VERSION);
+            // TODO  add sub version for lock type (e.g. roles, trade,...)
             outputStream.write(lockTime >>> 8);
             outputStream.write(lockTime);
-            // TODO: handle short data
             // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
             // require by btcd-cli4j
             // Write an extra byte to avoid the asm conversion to int in bitcoind
+            // TODO  remove when sub version is added
             outputStream.write(0);
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -136,10 +133,7 @@ public class LockupService {
         Transaction preparedTx = bsqWalletService.getPreparedLockupTx(lockupAmount);
         Transaction txWithBtcFee = btcWalletService.completePreparedBsqTx(preparedTx, true, opReturnData);
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-
         log.info("Lockup tx: " + transaction);
         return transaction;
     }
-
-
 }

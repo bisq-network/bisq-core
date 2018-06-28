@@ -34,8 +34,8 @@ public enum TxType {
     COMPENSATION_REQUEST(true, true),
     BLIND_VOTE(true, true),
     VOTE_REVEAL(true, false),
-    LOCK_UP(true, false),
-    UN_LOCK(true, false);
+    LOCKUP(true, false),
+    UNLOCK(true, false);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

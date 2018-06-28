@@ -19,11 +19,12 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.TxInput;
+import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
 
-import java.util.Optional;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,48 +41,58 @@ public class TxInputProcessor {
         this.stateService = stateService;
     }
 
-    void process(TxInput txInput, int blockHeight, String txId, int inputIndex, TxState txState,
+    void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel,
                  StateService stateService) {
         this.stateService.getUnspentAndMatureTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
-                    txState.addToInputValue(connectedTxOutput.getValue());
+                    parsingModel.addToInputValue(connectedTxOutput.getValue());
 
-                    // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our txState
+                    // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
-                    if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
-                        if (txState.getInputFromBlindVoteStakeOutput() == null) {
-                            txState.setInputFromBlindVoteStakeOutput(txInput);
-                            txState.setSingleInputFromBlindVoteStakeOutput(true);
+                    TxOutputType connectedTxOutputType = stateService.getTxOutputType(connectedTxOutput);
+                    Set<TxOutput> spentUnlockedConnectedTxOutputs = parsingModel.getSpentUnlockedConnectedTxOutputs();
+                    if (connectedTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
+                        if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
+                            parsingModel.setInputFromBlindVoteStakeOutput(txInput);
+                            parsingModel.setSingleInputFromBlindVoteStakeOutput(true);
                         } else {
                             log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                     "This is not a valid BSQ tx.");
-                            txState.setSingleInputFromBlindVoteStakeOutput(false);
+                            parsingModel.setSingleInputFromBlindVoteStakeOutput(false);
                         }
-                    }
-
-                    if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BOND_LOCK) {
-                        // First check if this is a bond unlock tx, a locked BSQ txOutput is spent
-                        // to a corresponding BOND_UNLOCK txOutput. The BOND_UNLOCK can only be spent after
-                        // lock time blocks has passed.
-                        if (txState.getSpentLockedConnectedTxOutput() == null) {
-                            txState.setSpentLockedConnectedTxOutput(connectedTxOutput);
+                    } else if (connectedTxOutputType == TxOutputType.LOCKUP) {
+                        // A locked BSQ txOutput is spent to a corresponding BOND_UNLOCK
+                        // txOutput. The BOND_UNLOCK can only be spent after lock time
+                        // blocks has passed.
+                        //TODO rename setSpentLockedConnectedTxOutput to setInputFromLockupTxOutput
+                        if (parsingModel.getSpentLockedTxOutput() == null) {
+                            parsingModel.setSpentLockedTxOutput(connectedTxOutput);
                             stateService.getLockTime(connectedTxOutput).ifPresent(lockTime ->
-                                    txState.setUnlockBlockHeight(blockHeight + lockTime));
+                                    parsingModel.setUnlockBlockHeight(blockHeight + lockTime));
                         }
-                    } else if (stateService.getTxOutputType(connectedTxOutput) == TxOutputType.BOND_UNLOCK) {
+
+                        // TODO do we need to check if there is only one?
+                    } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
                         // Spending an unlocked txOutput
-                        txState.getSpentUnlockedConnectedTxOutputs().add(connectedTxOutput);
+                        // Use new method at parsingModel.addSpentUnlockedConnectedTxOutput
+                        spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
                         stateService.getUnlockBlockHeight(connectedTxOutput).ifPresent(unlockBlockHeight -> {
                             // Only count the input as BSQ input if spent after unlock time
+                            //TODO <= or < ?
                             if (blockHeight <= unlockBlockHeight)
-                                txState.burnBond(connectedTxOutput.getValue());
+                                parsingModel.burnBond(connectedTxOutput.getValue());
                         });
+
+                        // TODO do we need to check if there is only one?
                     }
 
-                    if (txState.getSpentLockedConnectedTxOutput() != null)
+                    //TODO ??? should be above? why removeLockTimeTxOutput
+                    if (parsingModel.getSpentLockedTxOutput() != null)
                         stateService.removeLockTimeTxOutput(connectedTxOutput);
-                    txState.getSpentUnlockedConnectedTxOutputs().stream().forEach(txOutput ->
+                    //TODO ???
+                    spentUnlockedConnectedTxOutputs.stream().forEach(txOutput ->
                             stateService.removeUnlockBlockHeightTxOutput(txOutput));
+
                     stateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
                     stateService.removeUnspentTxOutput(connectedTxOutput);
                 });

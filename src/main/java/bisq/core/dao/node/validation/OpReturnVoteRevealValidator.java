@@ -41,10 +41,10 @@ public class OpReturnVoteRevealValidator {
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    boolean validate(byte[] opReturnData, int blockHeight, TxState txState) {
-        return txState.getInputFromBlindVoteStakeOutput() != null &&
-                txState.isSingleInputFromBlindVoteStakeOutput() &&
-                txState.getVoteRevealUnlockStakeOutput() != null &&
+    boolean validate(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
+        return parsingModel.getInputFromBlindVoteStakeOutput() != null &&
+                parsingModel.isSingleInputFromBlindVoteStakeOutput() &&
+                parsingModel.getVoteRevealUnlockStakeOutput() != null &&
                 opReturnData.length == 38 &&
                 periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL);
     }

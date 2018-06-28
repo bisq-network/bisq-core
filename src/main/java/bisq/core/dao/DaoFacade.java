@@ -34,7 +34,6 @@ import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.FilteredBallotListService;
 import bisq.core.dao.voting.ballot.vote.Vote;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
@@ -80,7 +79,6 @@ public class DaoFacade {
     private final MyProposalListService myProposalListService;
     private final StateService stateService;
     private final PeriodService periodService;
-    private final BlindVoteService blindVoteService;
     private final MyBlindVoteListService myBlindVoteListService;
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
@@ -96,7 +94,6 @@ public class DaoFacade {
                      FilteredBallotListService filteredBallotListService,
                      StateService stateService,
                      PeriodService periodService,
-                     BlindVoteService blindVoteService,
                      MyBlindVoteListService myBlindVoteListService,
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService,
@@ -108,7 +105,6 @@ public class DaoFacade {
         this.myProposalListService = myProposalListService;
         this.stateService = stateService;
         this.periodService = periodService;
-        this.blindVoteService = blindVoteService;
         this.myBlindVoteListService = myBlindVoteListService;
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
@@ -287,6 +283,7 @@ public class DaoFacade {
     // Use case: Bonding
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    //TODO maybe merge lockupService and unlockService as bondService?
     // Publish lockup tx
     public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {

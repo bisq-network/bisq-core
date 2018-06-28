@@ -45,25 +45,25 @@ public class TxOutputsIterator {
         this.stateService = stateService;
     }
 
-    void processOpReturnCandidate(Tx tx, TxState txState) {
+    void processOpReturnCandidate(Tx tx, ParsingModel parsingModel) {
         final List<TxOutput> outputs = tx.getOutputs();
 
         // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
         // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
         // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
         // BSQ inputs are not verified yet.
-        // We keep the temporary opReturn type in the txState object.
+        // We keep the temporary opReturn type in the parsingModel object.
         checkArgument(!outputs.isEmpty(), "outputs must not be empty");
         int lastIndex = outputs.size() - 1;
-        txOutputValidator.processOpReturnCandidate(outputs.get(lastIndex), txState);
+        txOutputValidator.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
     }
 
-    void iterate(Tx tx, int blockHeight, TxState txState) {
+    void iterate(Tx tx, int blockHeight, ParsingModel parsingModel) {
         // We use order of output index. An output is a BSQ utxo as long there is enough input value
         final List<TxOutput> outputs = tx.getOutputs();
         // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
         for (int index = 0; index < outputs.size(); index++) {
-            txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, txState);
+            txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, parsingModel);
         }
     }
 

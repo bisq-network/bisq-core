@@ -120,6 +120,9 @@ public class StateService {
         state.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
         state.getLockTimeMap().clear();
         state.getLockTimeMap().putAll(snapshot.getLockTimeMap());
+
+        //TODO missing  state.getUnlockBlockHeightMap()
+
         state.getCycles().clear();
         state.getCycles().addAll(snapshot.getCycles());
         state.getParamChangeByBlockHeightMap().clear();
@@ -430,6 +433,7 @@ public class StateService {
                 Optional.empty();
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // TxInput
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -476,21 +480,24 @@ public class StateService {
     public boolean isTxOutputSpendable(String txId, int index) {
         return getUnspentAndMatureTxOutput(txId, index)
                 .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
-                .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.BOND_LOCK)
+                .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.LOCKUP)
                 .filter(txOutput -> {
-                    if (getTxOutputType(txOutput) != TxOutputType.BOND_UNLOCK) return true;
+                    if (getTxOutputType(txOutput) != TxOutputType.UNLOCK)
+                        return true;
+
                     Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput);
+                    //TODO is getChainHeight() > opUnlockBlockHeight.get() correct?
                     return opUnlockBlockHeight.isPresent() ? getChainHeight() > opUnlockBlockHeight.get() : false;
                 })
                 .isPresent();
     }
 
     public boolean isLockedOutput(TxOutput txOutput) {
-        return getTxOutputType(txOutput) == TxOutputType.BOND_LOCK;
+        return getTxOutputType(txOutput) == TxOutputType.LOCKUP;
     }
 
     public boolean isUnlockOutput(TxOutput txOutput) {
-        return getTxOutputType(txOutput) == TxOutputType.BOND_UNLOCK;
+        return getTxOutputType(txOutput) == TxOutputType.UNLOCK;
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
@@ -505,15 +512,18 @@ public class StateService {
 
     public Set<TxOutput> getLockedInBondOutputs() {
         return getUnspentTxOutputMap().values().stream()
-                .filter(txOutput -> getTxOutputType(txOutput) == TxOutputType.BOND_LOCK)
+                .filter(txOutput -> getTxOutputType(txOutput) == TxOutputType.LOCKUP)
                 .collect(Collectors.toSet());
     }
 
+    // TODO are those in the unlocking period?
     public Set<TxOutput> getUnlockingBondsOutputs() {
         return getUnspentTxOutputMap().values().stream()
                 .filter(txOutput -> {
+                    //TODO duplicate code logic to isTxOutputSpendable
+                    //TODO use comparison to consensus?
                     Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput);
-                    return getTxOutputType(txOutput) == TxOutputType.BOND_UNLOCK &&
+                    return getTxOutputType(txOutput) == TxOutputType.UNLOCK &&
                             (opUnlockBlockHeight.isPresent() ? getChainHeight() <= opUnlockBlockHeight.get() : false);
                 })
                 .collect(Collectors.toSet());

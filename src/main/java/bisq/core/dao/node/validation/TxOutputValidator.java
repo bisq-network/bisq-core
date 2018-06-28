@@ -43,25 +43,28 @@ public class TxOutputValidator {
         this.opReturnProcessor = opReturnProcessor;
     }
 
-    void processOpReturnCandidate(TxOutput txOutput, TxState txState) {
-        opReturnProcessor.processOpReturnCandidate(txOutput, txState);
+    void processOpReturnCandidate(TxOutput txOutput, ParsingModel parsingModel) {
+        opReturnProcessor.processOpReturnCandidate(txOutput, parsingModel);
     }
 
-    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, TxState txState) {
-        final long bsqInputBalanceValue = txState.getAvailableInputValue();
+    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
+        final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
+            if (handleUnlockBondTx(txOutput, index, parsingModel))
+                return;
+
             final long txOutputValue = txOutput.getValue();
-            if (handleUnlockBondTx(txOutput, index, txState)) return;
             if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
-                handleBsqOutput(txOutput, index, txState, txOutputValue);
+                //TODO can handleUnlockBondTx be here?
+                handleBsqOutput(txOutput, index, parsingModel, txOutputValue);
             } else {
-                handleBtcOutput(txOutput, index, txState);
+                handleBtcOutput(txOutput, index, parsingModel);
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnProcessor.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, txState);
+            opReturnProcessor.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, parsingModel);
         }
     }
 
@@ -69,18 +72,18 @@ public class TxOutputValidator {
         return txOutput.getOpReturnData() != null;
     }
 
-    private boolean handleUnlockBondTx(TxOutput txOutput, int index, TxState txState) {
-        if (txState.getSpentLockedConnectedTxOutput() != null) {
+    private boolean handleUnlockBondTx(TxOutput txOutput, int index, ParsingModel parsingModel) {
+        if (parsingModel.getSpentLockedTxOutput() != null) {
             // This is a bond unlock transaction
             if (index == 0) {
                 // All the BSQ from the locked bond txOutput are spent, either burnt or send to bond unlock txOutput
-                txState.subtractFromInputValue(txState.getSpentLockedConnectedTxOutput().getValue());
+                parsingModel.subtractFromInputValue(parsingModel.getSpentLockedTxOutput().getValue());
 
-                // The first txOutput value should match the spent locked connectedTxOutput value
-                if (txState.getSpentLockedConnectedTxOutput().getValue() == txOutput.getValue()) {
-                    applyStateChangeForBsqOutput(txOutput, TxOutputType.BOND_UNLOCK);
-                    stateService.setUnlockBlockHeight(txOutput, txState.getUnlockBlockHeight());
-                    txState.setBsqOutputFound(true);
+                // The first txOutput value must match the spent locked connectedTxOutput value
+                if (parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue()) {
+                    applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
+                    stateService.setUnlockBlockHeight(txOutput, parsingModel.getUnlockBlockHeight());
+                    parsingModel.setBsqOutputFound(true);
                 } else {
                     applyStateChangeForBtcOutput(txOutput);
                 }
@@ -92,49 +95,49 @@ public class TxOutputValidator {
         return false;
     }
 
-    private void handleBsqOutput(TxOutput txOutput, int index, TxState txState, long txOutputValue) {
+    private void handleBsqOutput(TxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
         // Update the input balance.
-        txState.subtractFromInputValue(txOutputValue);
+        parsingModel.subtractFromInputValue(txOutputValue);
 
-        if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
+        if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
             // At a blind vote tx we get the stake at output 0.
             // First output might be vote stake output.
-            txState.setBlindVoteLockStakeOutput(txOutput);
+            parsingModel.setBlindVoteLockStakeOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the txState.
+            // in the parsingModel.
             applyStateChangeForBsqOutput(txOutput, null);
-        } else if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
+        } else if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
             // At a vote reveal tx we get the released stake at output 0.
             // First output might be stake release output.
-            txState.setVoteRevealUnlockStakeOutput(txOutput);
+            parsingModel.setVoteRevealUnlockStakeOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the txState.
+            // in the parsingModel.
             applyStateChangeForBsqOutput(txOutput, null);
-        } else if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.LOCKUP) {
+        } else if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.LOCKUP) {
             // First output might be lockup output.
-            txState.setLockupOutput(txOutput);
+            parsingModel.setLockupOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the txState.
+            // in the parsingModel.
             applyStateChangeForBsqOutput(txOutput, null);
         } else {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }
 
-        txState.setBsqOutputFound(true);
+        parsingModel.setBsqOutputFound(true);
     }
 
-    private void handleBtcOutput(TxOutput txOutput, int index, TxState txState) {
+    private void handleBtcOutput(TxOutput txOutput, int index, ParsingModel parsingModel) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
-        // candidate to the txState and we don't apply the TxOutputType as we do that later as the OpReturn check.
-        if (txState.isInputValuePositive() &&
+        // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
+        if (parsingModel.isInputValuePositive() &&
                 index == 1 &&
-                txState.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
+                parsingModel.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
             // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
-            // into our txState.
-            txState.setIssuanceCandidate(txOutput);
+            // into our parsingModel.
+            parsingModel.setIssuanceCandidate(txOutput);
         } else {
             applyStateChangeForBtcOutput(txOutput);
         }

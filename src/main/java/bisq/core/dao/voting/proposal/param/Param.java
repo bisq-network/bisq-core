@@ -73,8 +73,8 @@ public enum Param {
     PHASE_RESULT(1),        // 1 block
     PHASE_BREAK4(10);        // 10 blocks*/
 
-    LOCKTIME_MIN(0),
-    LOCKTIME_MAX(65535);
+    LOCK_TIME_MIN(0),
+    LOCK_TIME_MAX(65535);
 
     @Getter
     private int defaultValue;

@@ -81,11 +81,12 @@ public class BsqWalletService extends WalletService implements BlockListener {
     @Getter
     private Coin pendingBalance = Coin.ZERO;
     @Getter
-    private Coin lockedInBondsBalance = Coin.ZERO;
-    @Getter
     private Coin lockedForVotingBalance = Coin.ZERO;
     @Getter
+    private Coin lockedInBondsBalance = Coin.ZERO;
+    @Getter
     private Coin unlockingBondsBalance = Coin.ZERO;
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -224,8 +225,9 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        availableBalance = bsqCoinSelector.select(NetworkParameters.MAX_MONEY, wallet.calculateAllSpendCandidates())
-                .valueGathered;
+        availableBalance = bsqCoinSelector.select(NetworkParameters.MAX_MONEY,
+                wallet.calculateAllSpendCandidates()).valueGathered;
+
         if (availableBalance.isNegative())
             availableBalance = Coin.ZERO;
 
@@ -483,20 +485,16 @@ public class BsqWalletService extends WalletService implements BlockListener {
     }
 
     // TODO add tests
-    // target - the amount of BSQ that won't be included in the change output (burnt as fee)
-    private void addInputsAndChangeOutputForTx(Transaction tx, Coin target, BsqCoinSelector bsqCoinSelector)
+    private void addInputsAndChangeOutputForTx(Transaction tx, Coin requiredInput, BsqCoinSelector bsqCoinSelector)
             throws InsufficientBsqException {
-        Coin requiredInput;
         // If our target is less then dust limit we increase it so we are sure to not get any dust output.
-        if (Restrictions.isDust(target))
-            requiredInput = Restrictions.getMinNonDustOutput().add(target);
-        else
-            requiredInput = target;
+        if (Restrictions.isDust(requiredInput))
+            requiredInput = Restrictions.getMinNonDustOutput().add(requiredInput);
 
         CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = this.bsqCoinSelector.getChange(target, coinSelection);
+            Coin change = bsqCoinSelector.getChange(requiredInput, coinSelection);
             if (change.isPositive()) {
                 checkArgument(Restrictions.isAboveDust(change), "We must not get dust output here.");
                 tx.addOutput(change, getUnusedAddress());
@@ -544,8 +542,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     // Lockup bond tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedLockupTx(Coin lockupAmount)
-            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
+    public Transaction getPreparedLockupTx(Coin lockupAmount) throws AddressFormatException, InsufficientBsqException {
         Transaction tx = new Transaction(params);
         checkArgument(Restrictions.isAboveDust(lockupAmount), "The amount is too low (dust limit).");
         tx.addOutput(new TransactionOutput(params, tx, lockupAmount, getUnusedAddress()));
@@ -558,14 +555,13 @@ public class BsqWalletService extends WalletService implements BlockListener {
     // Unlock bond tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Transaction getPreparedUnlockTx(TxOutput lockedTxOutput)
-            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
+    public Transaction getPreparedUnlockTx(TxOutput lockedTxOutput) throws AddressFormatException {
         Transaction tx = new Transaction(params);
-        // Unlocking means spending the full value of the locked txoutput to another txoutput with the same value
+        // Unlocking means spending the full value of the locked txOutput to another txOutput with the same value
         Coin amountToUnlock = Coin.valueOf(lockedTxOutput.getValue());
         checkArgument(Restrictions.isAboveDust(amountToUnlock), "The amount is too low (dust limit).");
         Transaction lockupTx = getTransaction(lockedTxOutput.getTxId());
-        checkNotNull(lockupTx, "blindVoteTx must not be null");
+        checkNotNull(lockupTx, "lockupTx must not be null");
         TransactionOutPoint outPoint = new TransactionOutPoint(params, lockedTxOutput.getIndex(), lockupTx);
         // Input is not signed yet so we use new byte[]{}
         tx.addInput(new TransactionInput(params, tx, new byte[]{}, outPoint, amountToUnlock));
