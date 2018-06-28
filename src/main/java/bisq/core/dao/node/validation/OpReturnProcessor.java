@@ -22,6 +22,7 @@ import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
+import bisq.core.dao.state.blockchain.Util;
 
 import bisq.common.app.DevEnv;
 
@@ -29,6 +30,7 @@ import org.bitcoinj.core.Utils;
 
 import javax.inject.Inject;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -190,8 +192,7 @@ public class OpReturnProcessor {
     private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
         final TxOutput lockupCandidate = parsingModel.getLockupOutput();
 
-        // TODO use consensus class to get converted short int
-        int lockTime = (opReturnData[2] << 8) | opReturnData[3];
+        int lockTime = Util.parseAsInt(Arrays.copyOfRange(opReturnData, 2, 4));
 
         if (opReturnLockupValidator.validate(opReturnData, lockTime, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.LOCKUP_OP_RETURN_OUTPUT);

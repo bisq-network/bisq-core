@@ -18,6 +18,7 @@
 package bisq.core.dao.bonding;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
+import bisq.core.dao.state.blockchain.Util;
 
 import bisq.common.app.Version;
 
@@ -32,13 +33,12 @@ public class BondingConsensus {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP_VERSION);
-            // TODO  add sub version for lock type (e.g. roles, trade,...)
-            outputStream.write(lockTime >>> 8);
-            outputStream.write(lockTime);
+            Util.writeOpReturnData(outputStream, lockTime, 2);
             // TODO: handle short data
             // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
             // require by btcd-cli4j
             // Write an extra byte to avoid the asm conversion to int in bitcoind
+            // TODO  add sub version for lock type (e.g. roles, trade,...)
             // TODO  remove when sub version is added
             outputStream.write(0);
             return outputStream.toByteArray();
