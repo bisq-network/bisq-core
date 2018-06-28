@@ -426,6 +426,7 @@ public class BisqEnvironment extends StandardEnvironment {
         return new PropertiesPropertySource(BISQ_DEFAULT_PROPERTY_SOURCE_NAME, new Properties() {
             {
                 setProperty(CommonOptionKeys.LOG_LEVEL_KEY, logLevel);
+                setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);
 
                 setProperty(NetworkOptionKeys.SEED_NODES_KEY, seedNodes);
                 setProperty(NetworkOptionKeys.MY_ADDRESS, myAddress);
@@ -441,7 +442,6 @@ public class BisqEnvironment extends StandardEnvironment {
                 setProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY, ignoreDevMsg);
                 setProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, useDevPrivilegeKeys);
                 setProperty(AppOptionKeys.REFERRAL_ID, referralId);
-                setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);
                 setProperty(AppOptionKeys.DUMP_STATISTICS, dumpStatistics);
                 setProperty(AppOptionKeys.APP_NAME_KEY, appName);
                 setProperty(AppOptionKeys.MAX_MEMORY, maxMemory);

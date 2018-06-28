@@ -127,8 +127,8 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
-        if (networkEnvelope instanceof GetBsqBlocksRequest) {
-            // We received a GetBsqBlocksRequest from a liteNode
+        if (networkEnvelope instanceof GetBlocksRequest) {
+            // We received a GetBlocksRequest from a liteNode
             Log.traceCall(networkEnvelope.toString() + "\n\tconnection=" + connection);
             if (!stopped) {
                 final String uid = connection.getUid();
@@ -155,7 +155,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                                 }
                             });
                     getBlocksRequestHandlers.put(uid, requestHandler);
-                    requestHandler.onGetBsqBlocksRequest((GetBsqBlocksRequest) networkEnvelope, connection);
+                    requestHandler.onGetBlocksRequest((GetBlocksRequest) networkEnvelope, connection);
                 } else {
                     log.warn("We have already a GetDataRequestHandler for that connection started. " +
                             "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");

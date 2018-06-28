@@ -130,8 +130,6 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                 case MERIT_LIST:
                     return MeritList.fromProto(proto.getMeritList());
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.PersistableEnvelope).\n" +
-                            "messageCase=" + proto.getMessageCase() + "\nproto=" + proto);
                     throw new ProtobufferRuntimeException("Unknown proto message case(PB.PersistableEnvelope). " +
                             "messageCase=" + proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }

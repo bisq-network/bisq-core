@@ -37,7 +37,6 @@ public abstract class DisputeMessage extends NetworkEnvelope implements MailboxM
 
     public abstract String getTradeId();
 
-
     @Override
     public String toString() {
         return "DisputeMessage{" +

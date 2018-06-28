@@ -39,8 +39,6 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
-
 @Slf4j
 @ToString
 /**
@@ -80,7 +78,6 @@ public final class DisputeList implements PersistableEnvelope, PersistedDataHost
                 .addAllDispute(ProtoUtil.collectionToProto(list))).build();
     }
 
-    @Nullable
     public static DisputeList fromProto(PB.DisputeList proto,
                                         CoreProtoResolver coreProtoResolver,
                                         Storage<DisputeList> storage) {

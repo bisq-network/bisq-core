@@ -49,7 +49,6 @@ import bisq.network.p2p.SendMailboxMessageListener;
 
 import bisq.common.Timer;
 import bisq.common.UserThread;
-import bisq.common.app.Log;
 import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.handlers.FaultHandler;
@@ -68,8 +67,6 @@ import com.google.inject.Inject;
 
 import javax.inject.Named;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import org.fxmisc.easybind.EasyBind;
 import org.fxmisc.easybind.Subscription;
 
@@ -83,7 +80,6 @@ import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,8 +93,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
-
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -953,7 +947,7 @@ public class DisputeManager implements PersistedDataHost {
                                 disputeResult.getArbitratorPubKey()
                         );
                         Transaction committedDisputedPayoutTx = tradeWalletService.addTxToWallet(signedDisputedPayoutTx);
-                        tradeWalletService.broadcastTx(committedDisputedPayoutTx, new FutureCallback<Transaction>() {
+                        tradeWalletService.broadcastTx(committedDisputedPayoutTx, new TxBroadcaster.Callback() {
                             @Override
                             public void onSuccess(Transaction transaction) {
                                 // after successful publish we send peer the tx
@@ -971,8 +965,8 @@ public class DisputeManager implements PersistedDataHost {
                             }
 
                             @Override
-                            public void onFailure(@NotNull Throwable t) {
-                                log.error(t.getMessage());
+                            public void onFailure(TxBroadcastException exception) {
+                                log.error(exception.getMessage());
                             }
                         }, 15);
 
