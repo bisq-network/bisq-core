@@ -61,7 +61,7 @@ public enum Param {
     PHASE_VOTE_REVEAL(3),   // 2 days
     PHASE_BREAK3(1),        // 10 blocks
     PHASE_RESULT(1),        // 1 block
-    PHASE_BREAK4(1);        // 10 blocks
+    PHASE_BREAK4(1),        // 10 blocks
 
     /*PHASE_UNDEFINED(0),
     PHASE_PROPOSAL(3456),      // 24 days
@@ -72,6 +72,9 @@ public enum Param {
     PHASE_BREAK3(10),        // 10 blocks
     PHASE_RESULT(1),        // 1 block
     PHASE_BREAK4(10);        // 10 blocks*/
+
+    LOCKTIME_MIN(0),
+    LOCKTIME_MAX(65535);
 
     @Getter
     private int defaultValue;

@@ -53,6 +53,7 @@ public class TxOutputValidator {
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
+            if (handleUnlockBondTx(txOutput, index, txState)) return;
             if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
                 handleBsqOutput(txOutput, index, txState, txOutputValue);
             } else {
@@ -68,12 +69,35 @@ public class TxOutputValidator {
         return txOutput.getOpReturnData() != null;
     }
 
+    private boolean handleUnlockBondTx(TxOutput txOutput, int index, TxState txState) {
+        if (txState.getSpentLockedConnectedTxOutput() != null) {
+            // This is a bond unlock transaction
+            if (index == 0) {
+                // All the BSQ from the locked bond txOutput are spent, either burnt or send to bond unlock txOutput
+                txState.subtractFromInputValue(txState.getSpentLockedConnectedTxOutput().getValue());
+
+                // The first txOutput value should match the spent locked connectedTxOutput value
+                if (txState.getSpentLockedConnectedTxOutput().getValue() == txOutput.getValue()) {
+                    applyStateChangeForBsqOutput(txOutput, TxOutputType.BOND_UNLOCK);
+                    stateService.setUnlockBlockHeight(txOutput, txState.getUnlockBlockHeight());
+                    txState.setBsqOutputFound(true);
+                } else {
+                    applyStateChangeForBtcOutput(txOutput);
+                }
+            } else {
+                applyStateChangeForBtcOutput(txOutput);
+            }
+            return true;
+        }
+        return false;
+    }
+
     private void handleBsqOutput(TxOutput txOutput, int index, TxState txState, long txOutputValue) {
         // Update the input balance.
         txState.subtractFromInputValue(txOutputValue);
 
-        // At a blind vote tx we get the stake at output 0.
         if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
+            // At a blind vote tx we get the stake at output 0.
             // First output might be vote stake output.
             txState.setBlindVoteLockStakeOutput(txOutput);
 
@@ -84,6 +108,13 @@ public class TxOutputValidator {
             // At a vote reveal tx we get the released stake at output 0.
             // First output might be stake release output.
             txState.setVoteRevealUnlockStakeOutput(txOutput);
+
+            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
+            // in the txState.
+            applyStateChangeForBsqOutput(txOutput, null);
+        } else if (index == 0 && txState.getOpReturnTypeCandidate() == OpReturnType.LOCKUP) {
+            // First output might be lockup output.
+            txState.setLockupOutput(txOutput);
 
             // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
             // in the txState.

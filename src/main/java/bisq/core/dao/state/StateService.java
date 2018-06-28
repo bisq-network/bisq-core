@@ -118,6 +118,8 @@ public class StateService {
         state.getTxOutputTypeMap().putAll(snapshot.getTxOutputTypeMap());
         state.getSpentInfoMap().clear();
         state.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
+        state.getLockTimeMap().clear();
+        state.getLockTimeMap().putAll(snapshot.getLockTimeMap());
         state.getCycles().clear();
         state.getCycles().addAll(snapshot.getCycles());
         state.getParamChangeByBlockHeightMap().clear();
@@ -203,8 +205,24 @@ public class StateService {
         state.addIssuance(issuance);
     }
 
+    public void removeLockTimeTxOutput(TxOutput txOutput) {
+        state.removeLockTimeTxOutput(txOutput);
+    }
+
+    public void removeUnlockBlockHeightTxOutput(TxOutput txOutput) {
+        state.removeUnlockBlockHeightTxOutput(txOutput);
+    }
+
     public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
         state.setSpentInfo(txOutput, blockHeight, txId, inputIndex);
+    }
+
+    public void setLockTime(TxOutput txOutput, int lockTime) {
+        state.setLockTime(txOutput, lockTime);
+    }
+
+    public void setUnlockBlockHeight(TxOutput txOutput, int blockHeight) {
+        state.setUnlockBlockHeight(txOutput, blockHeight);
     }
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
@@ -271,6 +289,14 @@ public class StateService {
 
     public Map<TxOutput.Key, TxOutputType> getTxOutputTypeMap() {
         return state.getTxOutputTypeMap();
+    }
+
+    public Map<TxOutput.Key, Integer> getLockTimeMap() {
+        return state.getLockTimeMap();
+    }
+
+    public Map<TxOutput.Key, Integer> getUnlockBlockHeightMap() {
+        return state.getUnlockBlockHeightMap();
     }
 
     // Cycle
@@ -380,6 +406,29 @@ public class StateService {
         return Optional.ofNullable(getTxTypeMap().getOrDefault(txId, null));
     }
 
+    public Optional<Integer> getLockTime(String txId) {
+        Optional<Tx> opTx = getTx(txId);
+        if (!opTx.isPresent()) return Optional.empty();
+        return getLockTime(opTx.get().getTxOutput(0));
+    }
+
+    public Optional<TxOutput> getLockedTxOutput(String txId) {
+        Optional<Tx> opTx = getTx(txId);
+        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isLockedOutput).findFirst() :
+                Optional.empty();
+    }
+
+    public Optional<Integer> getUnlockBlockHeight(String txId) {
+        Optional<Tx> opTx = getTx(txId);
+        if (!opTx.isPresent()) return Optional.empty();
+        return getUnlockBlockHeight(opTx.get().getTxOutput(0));
+    }
+
+    public Optional<TxOutput> getUnlockTxOutput(String txId) {
+        Optional<Tx> opTx = getTx(txId);
+        return opTx.isPresent() ? opTx.get().getOutputs().stream().filter(this::isUnlockOutput).findFirst() :
+                Optional.empty();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // TxInput
@@ -427,7 +476,21 @@ public class StateService {
     public boolean isTxOutputSpendable(String txId, int index) {
         return getUnspentAndMatureTxOutput(txId, index)
                 .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT)
+                .filter(txOutput -> getTxOutputType(txOutput) != TxOutputType.BOND_LOCK)
+                .filter(txOutput -> {
+                    if (getTxOutputType(txOutput) != TxOutputType.BOND_UNLOCK) return true;
+                    Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput);
+                    return opUnlockBlockHeight.isPresent() ? getChainHeight() > opUnlockBlockHeight.get() : false;
+                })
                 .isPresent();
+    }
+
+    public boolean isLockedOutput(TxOutput txOutput) {
+        return getTxOutputType(txOutput) == TxOutputType.BOND_LOCK;
+    }
+
+    public boolean isUnlockOutput(TxOutput txOutput) {
+        return getTxOutputType(txOutput) == TxOutputType.BOND_UNLOCK;
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
@@ -443,6 +506,16 @@ public class StateService {
     public Set<TxOutput> getLockedInBondOutputs() {
         return getUnspentTxOutputMap().values().stream()
                 .filter(txOutput -> getTxOutputType(txOutput) == TxOutputType.BOND_LOCK)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<TxOutput> getUnlockingBondsOutputs() {
+        return getUnspentTxOutputMap().values().stream()
+                .filter(txOutput -> {
+                    Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput);
+                    return getTxOutputType(txOutput) == TxOutputType.BOND_UNLOCK &&
+                            (opUnlockBlockHeight.isPresent() ? getChainHeight() <= opUnlockBlockHeight.get() : false);
+                })
                 .collect(Collectors.toSet());
     }
 
@@ -502,6 +575,14 @@ public class StateService {
         } else {
             return param.getDefaultValue();
         }
+    }
+
+    public Optional<Integer> getLockTime(TxOutput txOutput) {
+        return Optional.ofNullable(getLockTimeMap().get(txOutput.getKey()));
+    }
+
+    public Optional<Integer> getUnlockBlockHeight(TxOutput txOutput) {
+        return Optional.ofNullable(getUnlockBlockHeightMap().get(txOutput.getKey()));
     }
 }
 

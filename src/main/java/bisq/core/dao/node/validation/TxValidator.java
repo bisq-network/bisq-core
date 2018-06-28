@@ -97,7 +97,7 @@ public class TxValidator {
             }
         }
 
-        return bsqInputBalancePositive;
+        return bsqInputBalancePositive || txState.getBurntBondValue() > 0;
     }
 
     // TODO add tests
@@ -145,7 +145,7 @@ public class TxValidator {
             case VOTE_REVEAL:
                 txType = TxType.VOTE_REVEAL;
                 break;
-            case LOCK_UP:
+            case LOCKUP:
                 // TODO
                 txType = TxType.LOCK_UP;
                 break;

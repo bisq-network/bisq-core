@@ -23,5 +23,6 @@ public interface BsqBalanceListener {
     void onUpdateBalances(Coin confirmedBalance,
                           Coin pendingBalance,
                           Coin lockedForVotingBalance,
-                          Coin lockedInBondsBalance);
+                          Coin lockedInBondsBalance,
+                          Coin unlockingBondsBalance);
 }
