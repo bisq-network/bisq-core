@@ -17,10 +17,13 @@
 
 package bisq.core.dao.node.validation;
 
+import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import javax.inject.Inject;
+
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,8 +38,12 @@ class OpReturnLockupValidator {
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    boolean validate(byte[] opReturnData, int lockTime, int blockHeight, ParsingModel parsingModel) {
+    boolean validate(byte[] opReturnData, Optional<LockupType> lockupType, int lockTime, int blockHeight,
+                     ParsingModel parsingModel) {
+        // TODO: Handle all lockuptypes
+        boolean lockupTypeOk = lockupType.isPresent() && lockupType.get() == LockupType.DEFAULT;
         return parsingModel.getLockupOutput() != null && opReturnData.length == 5 &&
+                lockupTypeOk &&
                 lockTime >= stateService.getParamValue(Param.LOCK_TIME_MIN, blockHeight) &&
                 lockTime <= stateService.getParamValue(Param.LOCK_TIME_MAX, blockHeight);
     }

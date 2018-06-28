@@ -17,6 +17,7 @@
 
 package bisq.core.dao.bonding;
 
+import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Util;
 
@@ -29,18 +30,15 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BondingConsensus {
+    // TODO  add choice of sub version for lock type (e.g. roles, trade,...)
     public static byte[] getLockupOpReturnData(int lockTime) throws IOException {
+        // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
+        // require by btcd-cli4j, avoid opreturns with 4 bytes or less
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP_VERSION);
+            outputStream.write(LockupType.DEFAULT.getType());
             Util.writeOpReturnData(outputStream, lockTime, 2);
-            // TODO: handle short data
-            // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
-            // require by btcd-cli4j
-            // Write an extra byte to avoid the asm conversion to int in bitcoind
-            // TODO  add sub version for lock type (e.g. roles, trade,...)
-            // TODO  remove when sub version is added
-            outputStream.write(0);
             return outputStream.toByteArray();
         } catch (IOException e) {
             // Not expected to happen ever

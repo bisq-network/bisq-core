@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
+import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
@@ -192,9 +193,10 @@ public class OpReturnProcessor {
     private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
         final TxOutput lockupCandidate = parsingModel.getLockupOutput();
 
-        int lockTime = Util.parseAsInt(Arrays.copyOfRange(opReturnData, 2, 4));
+        Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
+        int lockTime = Util.parseAsInt(Arrays.copyOfRange(opReturnData, 3, 5));
 
-        if (opReturnLockupValidator.validate(opReturnData, lockTime, blockHeight, parsingModel)) {
+        if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(lockupCandidate, TxOutputType.LOCKUP);
             stateService.setLockTime(lockupCandidate, lockTime);
