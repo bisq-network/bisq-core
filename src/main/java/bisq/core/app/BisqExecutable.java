@@ -291,7 +291,7 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
                 description("Override hard coded seed nodes as comma separated list: E.g. rxdkppp3vicnbgqt.onion:8002, mfla72c4igh5ta2t.onion:8002", ""))
                 .withRequiredArg();
         parser.accepts(NetworkOptionKeys.MY_ADDRESS,
-                description("My own onion address (used for botstrap nodes to exclude itself)", ""))
+                description("My own onion address (used for bootstrap nodes to exclude itself)", ""))
                 .withRequiredArg();
         parser.accepts(NetworkOptionKeys.BAN_LIST,
                 description("Nodes to exclude from network connections.", ""))
@@ -347,6 +347,9 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
                         "(This is for developers only!)", false))
                 .withRequiredArg()
                 .ofType(boolean.class);
+        parser.accepts(AppOptionKeys.REFERRAL_ID,
+                description("Optional Referral ID (e.g. for API users or pro market makers)", ""))
+                .withRequiredArg();
         parser.accepts(CommonOptionKeys.USE_DEV_MODE,
                 description("Enables dev mode which is used for convenience for developer testing", false))
                 .withRequiredArg()

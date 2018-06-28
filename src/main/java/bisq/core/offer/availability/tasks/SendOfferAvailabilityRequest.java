@@ -26,12 +26,10 @@ import bisq.network.p2p.SendDirectMessageListener;
 import bisq.common.taskrunner.Task;
 import bisq.common.taskrunner.TaskRunner;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SendOfferAvailabilityRequest extends Task<OfferAvailabilityModel> {
-    private static final Logger log = LoggerFactory.getLogger(SendOfferAvailabilityRequest.class);
-
     public SendOfferAvailabilityRequest(TaskRunner taskHandler, OfferAvailabilityModel model) {
         super(taskHandler, model);
     }
@@ -41,23 +39,33 @@ public class SendOfferAvailabilityRequest extends Task<OfferAvailabilityModel> {
         try {
             runInterceptHook();
 
-            model.p2PService.sendEncryptedDirectMessage(model.getPeerNodeAddress(),
-                    model.offer.getPubKeyRing(),
-                    new OfferAvailabilityRequest(model.offer.getId(), model.pubKeyRing, model.getTakersTradePrice()),
+            OfferAvailabilityRequest message = new OfferAvailabilityRequest(model.getOffer().getId(), model.getPubKeyRing(), model.getTakersTradePrice());
+            log.info("Send {} with offerId {} and uid {} to peer {}",
+                    message.getClass().getSimpleName(), message.getOfferId(),
+                    message.getUid(), model.getPeerNodeAddress());
+
+            model.getP2PService().sendEncryptedDirectMessage(model.getPeerNodeAddress(),
+                    model.getOffer().getPubKeyRing(),
+                    message,
                     new SendDirectMessageListener() {
                         @Override
                         public void onArrived() {
+                            log.info("{} arrived at peer: offerId={}; uid={}",
+                                    message.getClass().getSimpleName(), message.getOfferId(), message.getUid());
                             complete();
                         }
 
                         @Override
-                        public void onFault() {
-                            model.offer.setState(Offer.State.MAKER_OFFLINE);
+                        public void onFault(String errorMessage) {
+                            log.error("Sending {} failed: uid={}; peer={}; error={}",
+                                    message.getClass().getSimpleName(), message.getUid(),
+                                    model.getPeerNodeAddress(), errorMessage);
+                            model.getOffer().setState(Offer.State.MAKER_OFFLINE);
                         }
                     }
             );
         } catch (Throwable t) {
-            model.offer.setErrorMessage("An error occurred.\n" +
+            model.getOffer().setErrorMessage("An error occurred.\n" +
                     "Error message:\n"
                     + t.getMessage());
 

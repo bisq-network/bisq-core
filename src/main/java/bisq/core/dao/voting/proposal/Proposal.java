@@ -19,11 +19,11 @@ package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -107,7 +107,7 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
            /* case GENERIC_PROPOSAL:
                 return GenericProposal.fromProto(proto);*/
             default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }
     }
 

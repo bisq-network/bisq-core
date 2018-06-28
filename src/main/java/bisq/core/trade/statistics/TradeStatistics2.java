@@ -96,7 +96,8 @@ public final class TradeStatistics2 implements LazyProcessedPayload, Persistable
                             Price tradePrice,
                             Coin tradeAmount,
                             Date tradeDate,
-                            String depositTxId) {
+                            String depositTxId,
+                            Map<String, String> extraDataMap) {
         this(offerPayload.getDirection(),
                 offerPayload.getBaseCurrencyCode(),
                 offerPayload.getCounterCurrencyCode(),
@@ -112,7 +113,7 @@ public final class TradeStatistics2 implements LazyProcessedPayload, Persistable
                 tradeDate.getTime(),
                 depositTxId,
                 null,
-                null);
+                extraDataMap);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -256,5 +257,27 @@ public final class TradeStatistics2 implements LazyProcessedPayload, Persistable
             return new Volume(new AltcoinExchangeRate((Altcoin) getTradePrice().getMonetary()).coinToAltcoin(getTradeAmount()));
         else
             return new Volume(new ExchangeRate((Fiat) getTradePrice().getMonetary()).coinToFiat(getTradeAmount()));
+    }
+
+    @Override
+    public String toString() {
+        return "TradeStatistics2{" +
+                "\n     direction=" + direction +
+                ",\n     baseCurrency='" + baseCurrency + '\'' +
+                ",\n     counterCurrency='" + counterCurrency + '\'' +
+                ",\n     offerPaymentMethod='" + offerPaymentMethod + '\'' +
+                ",\n     offerDate=" + offerDate +
+                ",\n     offerUseMarketBasedPrice=" + offerUseMarketBasedPrice +
+                ",\n     offerMarketPriceMargin=" + offerMarketPriceMargin +
+                ",\n     offerAmount=" + offerAmount +
+                ",\n     offerMinAmount=" + offerMinAmount +
+                ",\n     offerId='" + offerId + '\'' +
+                ",\n     tradePrice=" + tradePrice +
+                ",\n     tradeAmount=" + tradeAmount +
+                ",\n     tradeDate=" + tradeDate +
+                ",\n     depositTxId='" + depositTxId + '\'' +
+                ",\n     hash=" + Utilities.bytesAsHexString(hash) +
+                ",\n     extraDataMap=" + extraDataMap +
+                "\n}";
     }
 }

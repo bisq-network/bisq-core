@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.ballot.vote;
 
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -39,7 +39,7 @@ public abstract class Vote implements PersistablePayload, NetworkPayload {
             case LONG_VOTE:
                 return LongVote.fromProto(proto);
             default:
-                throw new ProtobufferException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }
     }
 

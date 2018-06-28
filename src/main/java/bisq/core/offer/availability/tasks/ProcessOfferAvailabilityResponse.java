@@ -25,12 +25,7 @@ import bisq.core.offer.messages.OfferAvailabilityResponse;
 import bisq.common.taskrunner.Task;
 import bisq.common.taskrunner.TaskRunner;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ProcessOfferAvailabilityResponse extends Task<OfferAvailabilityModel> {
-    private static final Logger log = LoggerFactory.getLogger(ProcessOfferAvailabilityResponse.class);
-
     public ProcessOfferAvailabilityResponse(TaskRunner taskHandler, OfferAvailabilityModel model) {
         super(taskHandler, model);
     }
@@ -41,18 +36,18 @@ public class ProcessOfferAvailabilityResponse extends Task<OfferAvailabilityMode
             runInterceptHook();
             OfferAvailabilityResponse offerAvailabilityResponse = model.getMessage();
 
-            if (model.offer.getState() != Offer.State.REMOVED) {
+            if (model.getOffer().getState() != Offer.State.REMOVED) {
                 if (offerAvailabilityResponse.getAvailabilityResult() == AvailabilityResult.AVAILABLE) {
-                    model.offer.setState(Offer.State.AVAILABLE);
+                    model.getOffer().setState(Offer.State.AVAILABLE);
                 } else {
-                    model.offer.setState(Offer.State.NOT_AVAILABLE);
+                    model.getOffer().setState(Offer.State.NOT_AVAILABLE);
                     failed("Take offer attempt rejected because of: " + offerAvailabilityResponse.getAvailabilityResult());
                 }
             }
 
             complete();
         } catch (Throwable t) {
-            model.offer.setErrorMessage("An error occurred.\n" +
+            model.getOffer().setErrorMessage("An error occurred.\n" +
                     "Error message:\n"
                     + t.getMessage());
 

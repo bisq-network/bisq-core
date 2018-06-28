@@ -22,7 +22,7 @@ import bisq.core.offer.OpenOffer;
 import bisq.core.proto.CoreProtoResolver;
 
 import bisq.common.proto.ProtoUtil;
-import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistableEnvelope;
 import bisq.common.storage.Storage;
 
@@ -104,7 +104,7 @@ public final class TradableList<T extends Tradable> implements PersistableEnvelo
                             return SellerAsTakerTrade.fromProto(tradable.getSellerAsTakerTrade(), storage, btcWalletService, coreProtoResolver);
                         default:
                             log.error("Unknown messageCase. tradable.getMessageCase() = " + tradable.getMessageCase());
-                            throw new ProtobufferException("Unknown messageCase. tradable.getMessageCase() = " + tradable.getMessageCase());
+                            throw new ProtobufferRuntimeException("Unknown messageCase. tradable.getMessageCase() = " + tradable.getMessageCase());
                     }
                 })
                 .collect(Collectors.toList());

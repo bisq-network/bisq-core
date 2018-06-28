@@ -42,6 +42,7 @@ import bisq.core.trade.messages.PayoutTxPublishedMessage;
 import bisq.core.trade.messages.PublishDepositTxRequest;
 import bisq.core.trade.statistics.TradeStatistics;
 
+import bisq.network.p2p.AckMessage;
 import bisq.network.p2p.CloseConnectionMessage;
 import bisq.network.p2p.PrefixedSealedAndSignedMessage;
 import bisq.network.p2p.peers.getdata.messages.GetDataResponse;
@@ -61,6 +62,7 @@ import bisq.network.p2p.storage.payload.ProtectedMailboxStorageEntry;
 import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
 
 import bisq.common.proto.ProtobufferException;
+import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.network.NetworkProtoResolver;
@@ -71,6 +73,7 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
+// TODO Use ProtobufferException instead of ProtobufferRuntimeException
 @Slf4j
 public class CoreNetworkProtoResolver extends CoreProtoResolver implements NetworkProtoResolver {
 
@@ -79,7 +82,7 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
     }
 
     @Override
-    public NetworkEnvelope fromProto(PB.NetworkEnvelope proto) {
+    public NetworkEnvelope fromProto(PB.NetworkEnvelope proto) throws ProtobufferException {
         if (proto != null) {
             final int messageVersion = proto.getMessageVersion();
             switch (proto.getMessageCase()) {
@@ -152,8 +155,11 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
 
                 case ADD_PERSISTABLE_NETWORK_PAYLOAD_MESSAGE:
                     return AddPersistableNetworkPayloadMessage.fromProto(proto.getAddPersistableNetworkPayloadMessage(), this, messageVersion);
+                case ACK_MESSAGE:
+                    return AckMessage.fromProto(proto.getAckMessage(), messageVersion);
                 default:
-                    throw new ProtobufferException("Unknown proto message case (PB.NetworkEnvelope). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferException("Unknown proto message case (PB.NetworkEnvelope). messageCase=" +
+                            proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.NetworkEnvelope is null");
@@ -169,11 +175,12 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case PROTECTED_STORAGE_ENTRY:
                     return ProtectedStorageEntry.fromProto(proto.getProtectedStorageEntry(), this);
                 default:
-                    throw new ProtobufferException("Unknown proto message case(PB.StorageEntryWrapper). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case(PB.StorageEntryWrapper). " +
+                            "messageCase=" + proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.StorageEntryWrapper is null");
-            throw new ProtobufferException("PB.StorageEntryWrapper is null");
+            throw new ProtobufferRuntimeException("PB.StorageEntryWrapper is null");
         }
     }
 
@@ -198,11 +205,12 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case TEMP_PROPOSAL_PAYLOAD:
                     return TempProposalPayload.fromProto(proto.getTempProposalPayload());
                 default:
-                    throw new ProtobufferException("Unknown proto message case (PB.StoragePayload). messageCase=" + proto.getMessageCase());
+                    throw new ProtobufferRuntimeException("Unknown proto message case (PB.StoragePayload). messageCase="
+                            + proto.getMessageCase() + "; proto raw data=" + proto.toString());
             }
         } else {
             log.error("PersistableEnvelope.fromProto: PB.StoragePayload is null");
-            throw new ProtobufferException("PB.StoragePayload is null");
+            throw new ProtobufferRuntimeException("PB.StoragePayload is null");
         }
     }
 }

@@ -110,15 +110,18 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
         this.peerManager = peerManager;
         // seedNodeAddresses can be empty (in case there is only 1 seed node, the seed node starting up has no other seed nodes)
         this.seedNodeAddresses = new HashSet<>(seedNodesRepository.getSeedNodeAddresses());
-
-        networkNode.addMessageListener(this);
-        networkNode.addConnectionListener(this);
-        peerManager.addListener(this);
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void init() {
+        networkNode.addMessageListener(this);
+        networkNode.addConnectionListener(this);
+        peerManager.addListener(this);
+    }
 
     @SuppressWarnings("Duplicates")
     public void shutDown() {
@@ -214,9 +217,9 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onMessage(NetworkEnvelope networkEnvelop, Connection connection) {
-        if (networkEnvelop instanceof NewBlockBroadcastMessage) {
-            listeners.forEach(listener -> listener.onNewBlockReceived((NewBlockBroadcastMessage) networkEnvelop));
+    public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
+        if (networkEnvelope instanceof NewBsqBlockBroadcastMessage) {
+            listeners.forEach(listener -> listener.onNewBlockReceived((NewBsqBlockBroadcastMessage) networkEnvelope));
         }
     }
 

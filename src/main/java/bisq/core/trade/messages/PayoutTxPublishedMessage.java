@@ -36,7 +36,6 @@ import lombok.Value;
 public final class PayoutTxPublishedMessage extends TradeMessage implements MailboxMessage {
     private final byte[] payoutTx;
     private final NodeAddress senderNodeAddress;
-    private final String uid;
 
     public PayoutTxPublishedMessage(String tradeId,
                                     byte[] payoutTx,
@@ -59,10 +58,9 @@ public final class PayoutTxPublishedMessage extends TradeMessage implements Mail
                                      NodeAddress senderNodeAddress,
                                      String uid,
                                      int messageVersion) {
-        super(messageVersion, tradeId);
+        super(messageVersion, tradeId, uid);
         this.payoutTx = payoutTx;
         this.senderNodeAddress = senderNodeAddress;
-        this.uid = uid;
     }
 
     @Override

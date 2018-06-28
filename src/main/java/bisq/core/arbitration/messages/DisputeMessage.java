@@ -18,21 +18,31 @@
 package bisq.core.arbitration.messages;
 
 import bisq.network.p2p.MailboxMessage;
+import bisq.network.p2p.UidMessage;
 
 import bisq.common.proto.network.NetworkEnvelope;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
-@ToString
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage {
+public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage, UidMessage {
     protected final String uid;
 
     public DisputeMessage(int messageVersion, String uid) {
         super(messageVersion);
         this.uid = uid;
+    }
+
+    public abstract String getTradeId();
+
+
+    @Override
+    public String toString() {
+        return "DisputeMessage{" +
+                "\n     uid='" + uid + '\'' +
+                ",\n     messageVersion=" + messageVersion +
+                "\n} " + super.toString();
     }
 }

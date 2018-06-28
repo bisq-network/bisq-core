@@ -68,6 +68,8 @@ public class PaymentAccountFactory {
                 return new CashDepositAccount();
             case PaymentMethod.BLOCK_CHAINS_ID:
                 return new CryptoCurrencyAccount();
+            case PaymentMethod.MONEY_GRAM_ID:
+                return new MoneyGramAccount();
             case PaymentMethod.WESTERN_UNION_ID:
                 return new WesternUnionAccount();
             default:

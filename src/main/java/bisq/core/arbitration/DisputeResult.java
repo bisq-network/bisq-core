@@ -21,6 +21,7 @@ import bisq.core.arbitration.messages.DisputeCommunicationMessage;
 
 import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.network.NetworkPayload;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -39,14 +40,12 @@ import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
 @EqualsAndHashCode
 @Getter
-@ToString
 @Slf4j
 public final class DisputeResult implements NetworkPayload {
 
@@ -232,5 +231,26 @@ public final class DisputeResult implements NetworkPayload {
 
     public Date getCloseDate() {
         return new Date(closeDate);
+    }
+
+    @Override
+    public String toString() {
+        return "DisputeResult{" +
+                "\n     tradeId='" + tradeId + '\'' +
+                ",\n     traderId=" + traderId +
+                ",\n     winner=" + winner +
+                ",\n     reasonOrdinal=" + reasonOrdinal +
+                ",\n     tamperProofEvidenceProperty=" + tamperProofEvidenceProperty +
+                ",\n     idVerificationProperty=" + idVerificationProperty +
+                ",\n     screenCastProperty=" + screenCastProperty +
+                ",\n     summaryNotesProperty=" + summaryNotesProperty +
+                ",\n     disputeCommunicationMessage=" + disputeCommunicationMessage +
+                ",\n     arbitratorSignature=" + Utilities.bytesAsHexString(arbitratorSignature) +
+                ",\n     buyerPayoutAmount=" + buyerPayoutAmount +
+                ",\n     sellerPayoutAmount=" + sellerPayoutAmount +
+                ",\n     arbitratorPubKey=" + Utilities.bytesAsHexString(arbitratorPubKey) +
+                ",\n     closeDate=" + closeDate +
+                ",\n     isLoserPublisher=" + isLoserPublisher +
+                "\n}";
     }
 }

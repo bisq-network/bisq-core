@@ -17,6 +17,7 @@
 
 package bisq.core.user;
 
+import bisq.core.app.AppOptionKeys;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 import bisq.core.btc.BitcoinNodes;
@@ -140,6 +141,7 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
     private final BisqEnvironment bisqEnvironment;
     private final String btcNodesFromOptions;
     private final String useTorFlagFromOptions;
+    private final String referralIdFromOptions;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -152,12 +154,14 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
     public Preferences(Storage<PreferencesPayload> storage,
                        BisqEnvironment bisqEnvironment,
                        @Named(BtcOptionKeys.BTC_NODES) String btcNodesFromOptions,
-                       @Named(BtcOptionKeys.USE_TOR_FOR_BTC) String useTorFlagFromOptions) {
+                       @Named(BtcOptionKeys.USE_TOR_FOR_BTC) String useTorFlagFromOptions,
+                       @Named(AppOptionKeys.REFERRAL_ID) String referralId) {
 
         this.storage = storage;
         this.bisqEnvironment = bisqEnvironment;
         this.btcNodesFromOptions = btcNodesFromOptions;
         this.useTorFlagFromOptions = useTorFlagFromOptions;
+        this.referralIdFromOptions = referralId;
 
         useAnimationsProperty.addListener((ov) -> {
             prefPayload.setUseAnimations(useAnimationsProperty.get());
@@ -272,6 +276,8 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
             setBitcoinNodes(btcNodesFromOptions);
             setBitcoinNodesOptionOrdinal(BitcoinNodes.BitcoinNodesOption.CUSTOM.ordinal());
         }
+        if (referralIdFromOptions != null && !referralIdFromOptions.isEmpty())
+            setReferralId(referralIdFromOptions);
 
         initialReadDone = true;
         persist();
@@ -538,6 +544,11 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         persist();
     }
 
+    public void setReferralId(String referralId) {
+        prefPayload.setReferralId(referralId);
+        persist();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getter
@@ -721,6 +732,8 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         void setCustomBridges(String customBridges);
 
         void setBitcoinNodesOptionOrdinal(int bitcoinNodesOption);
+
+        void setReferralId(String referralId);
 
         List<String> getBridgeAddresses();
 

@@ -21,6 +21,7 @@ import bisq.core.app.BisqEnvironment;
 
 import bisq.asset.Asset;
 import bisq.asset.AssetRegistry;
+import bisq.asset.Coin;
 import bisq.asset.Token;
 import bisq.asset.coins.BSQ;
 
@@ -106,6 +107,7 @@ public class CurrencyUtil {
         List<CryptoCurrency> result = assetRegistry.stream()
                 .filter(CurrencyUtil::assetIsNotBaseCurrency)
                 .filter(CurrencyUtil::excludeBsqUnlessDaoTradingIsActive)
+                .filter(CurrencyUtil::assetMatchesNetwork)
                 .map(CurrencyUtil::assetToCryptoCurrency)
                 .sorted(TradeCurrency::compareTo)
                 .collect(Collectors.toList());
@@ -174,6 +176,61 @@ public class CurrencyUtil {
                 new FiatCurrency("HKD"),
                 new FiatCurrency("CNY")
         ));
+        currencies.sort(Comparator.comparing(TradeCurrency::getCode));
+        return currencies;
+    }
+
+    public static List<TradeCurrency> getAllMoneyGramCurrencies() {
+        ArrayList<TradeCurrency> currencies = new ArrayList<>(Arrays.asList(
+                new FiatCurrency("AED"),
+                new FiatCurrency("AUD"),
+                new FiatCurrency("BND"),
+                new FiatCurrency("CAD"),
+                new FiatCurrency("CHF"),
+                new FiatCurrency("CZK"),
+                new FiatCurrency("DKK"),
+                new FiatCurrency("EUR"),
+                new FiatCurrency("FJD"),
+                new FiatCurrency("GBP"),
+                new FiatCurrency("HKD"),
+                new FiatCurrency("HUF"),
+                new FiatCurrency("IDR"),
+                new FiatCurrency("ILS"),
+                new FiatCurrency("INR"),
+                new FiatCurrency("JPY"),
+                new FiatCurrency("KRW"),
+                new FiatCurrency("KWD"),
+                new FiatCurrency("LKR"),
+                new FiatCurrency("MAD"),
+                new FiatCurrency("MGA"),
+                new FiatCurrency("MXN"),
+                new FiatCurrency("MYR"),
+                new FiatCurrency("NOK"),
+                new FiatCurrency("NZD"),
+                new FiatCurrency("OMR"),
+                new FiatCurrency("PEN"),
+                new FiatCurrency("PGK"),
+                new FiatCurrency("PHP"),
+                new FiatCurrency("PKR"),
+                new FiatCurrency("PLN"),
+                new FiatCurrency("SAR"),
+                new FiatCurrency("SBD"),
+                new FiatCurrency("SCR"),
+                new FiatCurrency("SEK"),
+                new FiatCurrency("SGD"),
+                new FiatCurrency("THB"),
+                new FiatCurrency("TOP"),
+                new FiatCurrency("TRY"),
+                new FiatCurrency("TWD"),
+                new FiatCurrency("USD"),
+                new FiatCurrency("VND"),
+                new FiatCurrency("VUV"),
+                new FiatCurrency("WST"),
+                new FiatCurrency("XOF"),
+                new FiatCurrency("XPF"),
+                new FiatCurrency("ZAR")
+        ));
+
         currencies.sort(Comparator.comparing(TradeCurrency::getCode));
         return currencies;
     }
@@ -310,6 +367,11 @@ public class CurrencyUtil {
 
     private static boolean assetIsNotBaseCurrency(Asset asset) {
         return !asset.getTickerSymbol().equals(baseCurrencyCode);
+    }
+
+    private static boolean assetMatchesNetwork(Asset asset) {
+        return !(asset instanceof Coin) ||
+                ((Coin) asset).getNetwork().name().equals(BisqEnvironment.getDefaultBaseCurrencyNetwork().getNetwork());
     }
 
     private static CryptoCurrency assetToCryptoCurrency(Asset asset) {

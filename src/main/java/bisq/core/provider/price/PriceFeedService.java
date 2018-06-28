@@ -51,10 +51,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -302,7 +302,7 @@ public class PriceFeedService {
             return new Date();
     }
 
-    public void applyLatestBisqMarketPrice(HashSet<TradeStatistics2> tradeStatisticsSet) {
+    public void applyLatestBisqMarketPrice(Set<TradeStatistics2> tradeStatisticsSet) {
         // takes about 10 ms for 5000 items
         Map<String, List<TradeStatistics2>> mapByCurrencyCode = new HashMap<>();
         tradeStatisticsSet.forEach(e -> {

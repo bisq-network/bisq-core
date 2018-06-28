@@ -58,6 +58,7 @@ import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.SealedAndSigned;
+import bisq.common.proto.ProtobufferException;
 import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
@@ -169,7 +170,6 @@ public class BisqSetup {
     @SuppressWarnings("FieldCanBeLocal")
     private MonadicBinding<Boolean> p2pNetworkAndWalletInitialized;
     private List<BisqSetupCompleteListener> bisqSetupCompleteListeners = new ArrayList<>();
-
 
     @Inject
     public BisqSetup(P2PNetworkSetup p2PNetworkSetup,
@@ -372,13 +372,13 @@ public class BisqSetup {
                 socket = new Socket();
                 socket.connect(new InetSocketAddress(InetAddresses.forString("127.0.0.1"),
                         BisqEnvironment.getBaseCurrencyNetwork().getParameters().getPort()), 5000);
-                log.info("Localhost peer detected.");
+                log.info("Localhost Bitcoin node detected.");
                 UserThread.execute(() -> {
                     bisqEnvironment.setBitcoinLocalhostNodeRunning(true);
                     step3();
                 });
             } catch (Throwable e) {
-                log.info("Localhost peer not detected.");
+                log.info("Localhost Bitcoin node not detected.");
                 UserThread.execute(BisqSetup.this::step3);
             } finally {
                 if (socket != null) {
@@ -400,7 +400,6 @@ public class BisqSetup {
     }
 
     private void checkCryptoSetup() {
-        BooleanProperty result = new SimpleBooleanProperty();
         // We want to test if the client is compiled with the correct crypto provider (BountyCastle)
         // and if the unlimited Strength for cryptographic keys is set.
         // If users compile themselves they might miss that step and then would get an exception in the trade.
@@ -420,15 +419,12 @@ public class BisqSetup {
                         ((Ping) tuple.getNetworkEnvelope()).getLastRoundTripTime() == payload.getLastRoundTripTime()) {
                     log.debug("Crypto test succeeded");
 
-                    if (Security.getProvider("BC") != null) {
-                        UserThread.execute(() -> result.set(true));
-                    } else {
+                    if (Security.getProvider("BC") == null)
                         throw new CryptoException("Security provider BountyCastle is not available.");
-                    }
                 } else {
                     throw new CryptoException("Payload not correct after decryption");
                 }
-            } catch (CryptoException e) {
+            } catch (CryptoException | ProtobufferException e) {
                 e.printStackTrace();
                 String msg = Res.get("popup.warning.cryptoTestFailed", e.getMessage());
                 log.error(msg);
@@ -465,9 +461,7 @@ public class BisqSetup {
         // need to store it to not get garbage collected
         p2pNetworkAndWalletInitialized = EasyBind.combine(walletInitialized, p2pNetworkReady,
                 (a, b) -> {
-                    log.info("walletInitialized={}\n" +
-                                    "p2pNetWorkReady={}",
-                            a, b);
+                    log.info("walletInitialized={}, p2pNetWorkReady={}", a, b);
                     return a && b;
                 });
         p2pNetworkAndWalletInitialized.subscribe((observable, oldValue, newValue) -> {

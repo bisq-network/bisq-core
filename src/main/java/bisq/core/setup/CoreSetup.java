@@ -61,7 +61,7 @@ public class CoreSetup {
     private static void setupLog(BisqEnvironment bisqEnvironment) {
         String logPath = Paths.get(bisqEnvironment.getProperty(AppOptionKeys.APP_DATA_DIR_KEY), "bisq").toString();
         Log.setup(logPath);
-        log.info("Log files under: " + logPath);
+        log.info("\n\n\nLog files under: " + logPath);
         Utilities.printSysInfo();
         Log.setLevel(Level.toLevel(bisqEnvironment.getRequiredProperty(CommonOptionKeys.LOG_LEVEL_KEY)));
     }

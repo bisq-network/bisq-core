@@ -85,16 +85,24 @@ public class SellerAsMakerProtocol extends TradeProtocol implements SellerProtoc
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelop, Trade trade) {
+    public void doApplyMailboxMessage(NetworkEnvelope networkEnvelope, Trade trade) {
         this.trade = trade;
 
-        NodeAddress peerNodeAddress = ((MailboxMessage) networkEnvelop).getSenderNodeAddress();
-        if (networkEnvelop instanceof DepositTxPublishedMessage)
-            handle((DepositTxPublishedMessage) networkEnvelop, peerNodeAddress);
-        else if (networkEnvelop instanceof CounterCurrencyTransferStartedMessage)
-            handle((CounterCurrencyTransferStartedMessage) networkEnvelop, peerNodeAddress);
-        else
-            log.error("We received an unhandled MailboxMessage" + networkEnvelop.toString());
+        if (networkEnvelope instanceof MailboxMessage) {
+            NodeAddress peerNodeAddress = ((MailboxMessage) networkEnvelope).getSenderNodeAddress();
+            if (networkEnvelope instanceof TradeMessage) {
+                TradeMessage tradeMessage = (TradeMessage) networkEnvelope;
+                log.info("Received {} as MailboxMessage from {} with tradeId {} and uid {}",
+                        tradeMessage.getClass().getSimpleName(), peerNodeAddress, tradeMessage.getTradeId(), tradeMessage.getUid());
+
+                if (tradeMessage instanceof DepositTxPublishedMessage)
+                    handle((DepositTxPublishedMessage) tradeMessage, peerNodeAddress);
+                else if (tradeMessage instanceof CounterCurrencyTransferStartedMessage)
+                    handle((CounterCurrencyTransferStartedMessage) tradeMessage, peerNodeAddress);
+                else
+                    log.error("We received an unhandled tradeMessage" + tradeMessage.toString());
+            }
+        }
     }
 
 
@@ -103,17 +111,17 @@ public class SellerAsMakerProtocol extends TradeProtocol implements SellerProtoc
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void handleTakeOfferRequest(TradeMessage message, NodeAddress sender, ErrorMessageHandler errorMessageHandler) {
-        Validator.checkTradeId(processModel.getOfferId(), message);
-        checkArgument(message instanceof PayDepositRequest);
-        processModel.setTradeMessage(message);
+    public void handleTakeOfferRequest(TradeMessage tradeMessage, NodeAddress sender, ErrorMessageHandler errorMessageHandler) {
+        Validator.checkTradeId(processModel.getOfferId(), tradeMessage);
+        checkArgument(tradeMessage instanceof PayDepositRequest);
+        processModel.setTradeMessage(tradeMessage);
         processModel.setTempTradingPeerNodeAddress(sender);
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(sellerAsMakerTrade,
-                () -> handleTaskRunnerSuccess("handleTakeOfferRequest"),
+                () -> handleTaskRunnerSuccess(tradeMessage, "handleTakeOfferRequest"),
                 errorMessage -> {
                     errorMessageHandler.handleErrorMessage(errorMessage);
-                    handleTaskRunnerFault(errorMessage);
+                    handleTaskRunnerFault(tradeMessage, errorMessage);
                 });
 
         taskRunner.addTasks(
@@ -146,9 +154,9 @@ public class SellerAsMakerProtocol extends TradeProtocol implements SellerProtoc
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(sellerAsMakerTrade,
                 () -> {
-                    handleTaskRunnerSuccess("DepositTxPublishedMessage");
+                    handleTaskRunnerSuccess(tradeMessage, "DepositTxPublishedMessage");
                 },
-                this::handleTaskRunnerFault);
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
 
         taskRunner.addTasks(
                 MakerProcessDepositTxPublishedMessage.class,
@@ -169,8 +177,8 @@ public class SellerAsMakerProtocol extends TradeProtocol implements SellerProtoc
         processModel.setTempTradingPeerNodeAddress(sender);
 
         TradeTaskRunner taskRunner = new TradeTaskRunner(sellerAsMakerTrade,
-                () -> handleTaskRunnerSuccess("CounterCurrencyTransferStartedMessage"),
-                this::handleTaskRunnerFault);
+                () -> handleTaskRunnerSuccess(tradeMessage, "CounterCurrencyTransferStartedMessage"),
+                errorMessage -> handleTaskRunnerFault(tradeMessage, errorMessage));
 
         taskRunner.addTasks(
                 SellerProcessCounterCurrencyTransferStartedMessage.class,
@@ -241,6 +249,9 @@ public class SellerAsMakerProtocol extends TradeProtocol implements SellerProtoc
 
     @Override
     protected void doHandleDecryptedMessage(TradeMessage tradeMessage, NodeAddress sender) {
+        log.info("Received {} from {} with tradeId {} and uid {}",
+                tradeMessage.getClass().getSimpleName(), sender, tradeMessage.getTradeId(), tradeMessage.getUid());
+
         if (tradeMessage instanceof DepositTxPublishedMessage) {
             handle((DepositTxPublishedMessage) tradeMessage, sender);
         } else if (tradeMessage instanceof CounterCurrencyTransferStartedMessage) {

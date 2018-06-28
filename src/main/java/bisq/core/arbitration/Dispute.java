@@ -60,6 +60,7 @@ public final class Dispute implements NetworkPayload {
     private final int traderId;
     private final boolean disputeOpenerIsBuyer;
     private final boolean disputeOpenerIsMaker;
+    // PubKeyRing of trader who opened the dispute
     private final PubKeyRing traderPubKeyRing;
     private final long tradeDate;
     private final Contract contract;
@@ -246,7 +247,7 @@ public final class Dispute implements NetworkPayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addDisputeMessage(DisputeCommunicationMessage disputeCommunicationMessage) {
+    public void addDisputeCommunicationMessage(DisputeCommunicationMessage disputeCommunicationMessage) {
         if (!disputeCommunicationMessages.contains(disputeCommunicationMessage)) {
             disputeCommunicationMessages.add(disputeCommunicationMessage);
             storage.queueUpForSave();
