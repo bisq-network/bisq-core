@@ -81,6 +81,7 @@ public class OpReturnProcessor {
             if (optionalOpReturnType.isPresent()) {
                 selectValidator(opReturnData, txOutput, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
             } else {
+                // TODO add exception or set undefined...
                 log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
                         tx, Utils.HEX.encode(opReturnData));
             }

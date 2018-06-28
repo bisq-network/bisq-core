@@ -27,6 +27,7 @@ import lombok.Getter;
  */
 
 public enum OpReturnType {
+    //TODO add undefined ?
     PROPOSAL((byte) 0x10),
     COMPENSATION_REQUEST((byte) 0x11),
     BLIND_VOTE((byte) 0x12),

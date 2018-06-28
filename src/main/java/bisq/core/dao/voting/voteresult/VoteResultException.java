@@ -20,11 +20,9 @@ package bisq.core.dao.voting.voteresult;
 import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 
 import lombok.Getter;
-import lombok.ToString;
 
 import javax.annotation.Nullable;
 
-@ToString
 public class VoteResultException extends Exception {
     @Getter
     @Nullable
