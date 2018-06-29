@@ -34,16 +34,16 @@ public class LanguageUtil {
             "el", // Greek
             "es", // Spanish
             "pt", // Portuguese / Brazil
-            "sr",  // Serbian
-            "zh",  // Chinese
+            "sr", // Serbian
+            "zh", // Chinese
             "hu", // Hungarian
             "ro", // Romanian
             "ru", // Russian
-            "fr", // French
-            "tr" // Turkish
+            "fr"  // French
 
             /*
             // not translated yet
+            "tr" // Turkish
             "it", // Italian
             "ja", // Japanese
             "iw", // Hebrew
