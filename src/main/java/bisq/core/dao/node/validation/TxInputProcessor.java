@@ -18,6 +18,7 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
@@ -93,7 +94,7 @@ public class TxInputProcessor {
                     spentUnlockedConnectedTxOutputs.stream().forEach(txOutput ->
                             stateService.removeUnlockBlockHeightTxOutput(txOutput));
 
-                    stateService.setSpentInfo(connectedTxOutput, blockHeight, txId, inputIndex);
+                    stateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
                     stateService.removeUnspentTxOutput(connectedTxOutput);
                 });
     }

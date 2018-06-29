@@ -216,8 +216,8 @@ public class StateService {
         state.removeUnlockBlockHeightTxOutput(txOutput);
     }
 
-    public void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
-        state.setSpentInfo(txOutput, blockHeight, txId, inputIndex);
+    public void setSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
+        state.setSpentInfo(txOutputKey, spentInfo);
     }
 
     public void setLockTime(TxOutput txOutput, int lockTime) {

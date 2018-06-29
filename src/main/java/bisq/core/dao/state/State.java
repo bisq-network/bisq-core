@@ -278,8 +278,8 @@ public class State implements PersistableEnvelope {
         unlockBlockHeightMap.remove(txOutput.getKey());
     }
 
-    void setSpentInfo(TxOutput txOutput, int blockHeight, String txId, int inputIndex) {
-        spentInfoMap.put(txOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
+    void setSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
+        spentInfoMap.put(txOutputKey, spentInfo);
     }
 
     void setLockTime(TxOutput txOutput, int lockTime) {
