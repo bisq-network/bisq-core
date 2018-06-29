@@ -171,7 +171,6 @@ public class BisqSetup {
     private MonadicBinding<Boolean> p2pNetworkAndWalletInitialized;
     private List<BisqSetupCompleteListener> bisqSetupCompleteListeners = new ArrayList<>();
 
-
     @Inject
     public BisqSetup(P2PNetworkSetup p2PNetworkSetup,
                      WalletAppSetup walletAppSetup,

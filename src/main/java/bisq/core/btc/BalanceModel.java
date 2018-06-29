@@ -74,6 +74,7 @@ public class BalanceModel {
         updateAvailableBalance();
         updateReservedBalance();
         updateLockedBalance();
+        // TODO add lockingBalance
     }
 
     private void updateAvailableBalance() {
