@@ -484,17 +484,20 @@ public class BsqWalletService extends WalletService implements BlockListener {
         return tx;
     }
 
-    // TODO add tests
-    private void addInputsAndChangeOutputForTx(Transaction tx, Coin requiredInput, BsqCoinSelector bsqCoinSelector)
+    private void addInputsAndChangeOutputForTx(Transaction tx, Coin fee, BsqCoinSelector bsqCoinSelector)
             throws InsufficientBsqException {
-        // If our target is less then dust limit we increase it so we are sure to not get any dust output.
-        if (Restrictions.isDust(requiredInput))
-            requiredInput = Restrictions.getMinNonDustOutput().add(requiredInput);
+        Coin requiredInput;
+        // If our fee is less then dust limit we increase it so we are sure to not get any dust output.
+        if (Restrictions.isDust(fee))
+            requiredInput = Restrictions.getMinNonDustOutput().add(fee);
+        else
+            requiredInput = fee;
 
         CoinSelection coinSelection = bsqCoinSelector.select(requiredInput, wallet.calculateAllSpendCandidates());
         coinSelection.gathered.forEach(tx::addInput);
         try {
-            Coin change = bsqCoinSelector.getChange(requiredInput, coinSelection);
+            // TODO why is fee passed to getChange ???
+            Coin change = this.bsqCoinSelector.getChange(fee, coinSelection);
             if (change.isPositive()) {
                 checkArgument(Restrictions.isAboveDust(change), "We must not get dust output here.");
                 tx.addOutput(change, getUnusedAddress());
