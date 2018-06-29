@@ -20,9 +20,8 @@ package bisq.core.dao.state;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
+import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.voting.proposal.param.ParamChangeMap;
@@ -43,6 +42,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -56,39 +56,62 @@ public class State implements PersistableEnvelope {
     // Static
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static final int ISSUANCE_MATURITY = 144 * 30; // 30 days
-    public static final Coin GENESIS_TOTAL_SUPPLY = Coin.parseCoin("2.5");
+    private static final Coin GENESIS_TOTAL_SUPPLY = Coin.parseCoin("2.5");
 
-    //mainnet
+    static Coin getGenesisTotalSupply() {
+        return GENESIS_TOTAL_SUPPLY;
+    }
+
+    //TODO not sure if we will use that
+    private static final int ISSUANCE_MATURITY = 144 * 30; // 30 days
+
+    static int getIssuanceMaturity() {
+        return ISSUANCE_MATURITY;
+    }
+
+    // mainnet
     // this tx has a lot of outputs
     // https://blockchain.info/de/tx/ee921650ab3f978881b8fe291e0c025e0da2b7dc684003d7a03d9649dfee2e15
     // BLOCK_HEIGHT 411779
     // 411812 has 693 recursions
     // block 376078 has 2843 recursions and caused once a StackOverflowError, a second run worked. Took 1,2 sec.
 
+    public static String getDefaultGenesisTxId() {
+        return DEFAULT_GENESIS_TX_ID;
+    }
+
+    public static int getDefaultGenesisBlockHeight() {
+        return DEFAULT_GENESIS_BLOCK_HEIGHT;
+    }
+
     // BTC MAIN NET
     // new: --genesisBlockHeight=524717 --genesisTxId=81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e
-    public static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
-    public static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
+    private static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
+    private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
 
 
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Fields
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Getter
     private final String genesisTxId;
+    @Getter
     private final int genesisBlockHeight;
+    @Getter
     private int chainHeight;
+    @Getter
     private final LinkedList<Block> blocks;
-    private final Map<String, TxType> txTypeMap; // key is txId
-    private final Map<String, Long> burntFeeMap; // key is txId
+    @Getter
+    private final LinkedList<Cycle> cycles;
+    @Getter
+    private final Map<String, MutableTx> mutableTxMap; // key is txId
+    @Getter
     private final Map<String, Issuance> issuanceMap; // key is txId
-    private final Map<TxOutput.Key, TxOutput> unspentTxOutputMap;
-    private final Map<TxOutput.Key, TxOutputType> txOutputTypeMap;
+    @Getter
     private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
 
-    //TODO maps -> use mutable txOutput objects... refactor in new branch
-    private final Map<TxOutput.Key, Integer> lockTimeMap;
-    private final Map<TxOutput.Key, Integer> unlockBlockHeightMap;
-
-    private final LinkedList<Cycle> cycles;
-
+    // TODO might get refactored later when working on params
     private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;
 
 
@@ -103,15 +126,10 @@ public class State implements PersistableEnvelope {
                 genesisBlockHeight,
                 genesisBlockHeight,
                 new LinkedList<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
                 new LinkedList<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
                 new HashMap<>()
         );
     }
@@ -125,29 +143,19 @@ public class State implements PersistableEnvelope {
                   int genesisBlockHeight,
                   int chainHeight,
                   LinkedList<Block> blocks,
-                  Map<String, TxType> txTypeMap,
-                  Map<String, Long> burntFeeMap,
-                  Map<String, Issuance> issuanceMap,
-                  Map<TxOutput.Key, TxOutput> unspentTxOutputMap,
-                  Map<TxOutput.Key, TxOutputType> txOutputTypeMap,
-                  Map<TxOutput.Key, SpentInfo> spentInfoMap,
-                  Map<TxOutput.Key, Integer> lockTimeMap,
-                  Map<TxOutput.Key, Integer> unlockBlockHeightMap,
                   LinkedList<Cycle> cycles,
+                  Map<String, MutableTx> mutableTxMap,
+                  Map<String, Issuance> issuanceMap,
+                  Map<TxOutput.Key, SpentInfo> spentInfoMap,
                   Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
         this.chainHeight = chainHeight;
         this.blocks = blocks;
-        this.txTypeMap = txTypeMap;
-        this.burntFeeMap = burntFeeMap;
-        this.issuanceMap = issuanceMap;
-        this.unspentTxOutputMap = unspentTxOutputMap;
-        this.txOutputTypeMap = txOutputTypeMap;
-        this.spentInfoMap = spentInfoMap;
-        this.lockTimeMap = lockTimeMap;
-        this.unlockBlockHeightMap = unlockBlockHeightMap;
         this.cycles = cycles;
+        this.mutableTxMap = mutableTxMap;
+        this.issuanceMap = issuanceMap;
+        this.spentInfoMap = spentInfoMap;
         this.paramChangeByBlockHeightMap = paramChangeByBlockHeightMap;
     }
 
@@ -162,23 +170,16 @@ public class State implements PersistableEnvelope {
                 .setGenesisBlockHeight(genesisBlockHeight)
                 .setChainHeight(chainHeight)
                 .addAllBlocks(blocks.stream().map(Block::toProtoMessage).collect(Collectors.toList()))
-                .putAllTxTypeMap(txTypeMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())))
-                .putAllBurntFeeMap(burntFeeMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
+                .putAllMutableTxMap(mutableTxMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> {
+                            Tx tx = e.getValue().getTx();
+                            return tx.getId();
+                        }, e -> e.getValue().toProtoMessage())))
                 .putAllIssuanceMap(issuanceMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
-                .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
-                .putAllTxOutputTypeMap(txOutputTypeMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
-                .putAllLockTimeMap(lockTimeMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)))
-                .putAllUnlockBlockHeightMap(unlockBlockHeightMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)))
-                .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
                 .putAllParamChangeByBlockHeight(paramChangeByBlockHeightMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())));
         return builder;
@@ -188,58 +189,30 @@ public class State implements PersistableEnvelope {
         LinkedList<Block> blocks = proto.getBlocksList().stream()
                 .map(Block::fromProto)
                 .collect(Collectors.toCollection(LinkedList::new));
-        Map<String, TxType> txTypeMap = proto.getTxTypeMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> TxType.fromProto(e.getValue())));
-        Map<String, Long> burntFeeMap = proto.getBurntFeeMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
-        Map<TxOutput.Key, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
-        Map<TxOutput.Key, TxOutputType> txOutputTypeMap = proto.getTxOutputTypeMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> TxOutputType.fromProto(e.getValue())));
-        Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
-        Map<TxOutput.Key, Integer> lockTimeMap = proto.getLockTimeMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), Map.Entry::getValue));
-        Map<TxOutput.Key, Integer> unlockBlockHeightMap = proto.getUnlockBlockHeightMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), Map.Entry::getValue));
         final LinkedList<Cycle> cycles = proto.getCyclesList().stream()
                 .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
+        Map<String, MutableTx> mutableTxMap = proto.getMutableTxMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> MutableTx.fromProto(e.getValue())));
+        Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
+        Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
         Map<Integer, ParamChangeMap> paramChangeListMap = proto.getParamChangeByBlockHeightMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> ParamChangeMap.fromProto(e.getValue())));
         return new State(proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
                 proto.getChainHeight(),
                 blocks,
-                txTypeMap,
-                burntFeeMap,
-                issuanceMap,
-                unspentTxOutputMap,
-                txOutputTypeMap,
-                spentInfoMap,
-                lockTimeMap,
-                unlockBlockHeightMap,
                 cycles,
+                mutableTxMap,
+                issuanceMap,
+                spentInfoMap,
                 paramChangeListMap);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Clone
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    State getClone() {
-        return (State) State.fromProto(getStateBuilder().build());
-    }
-
-    State getClone(State snapshotCandidate) {
-        return (State) State.fromProto(snapshotCandidate.getStateBuilder().build());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Package scope write access
+    // Package scope access
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     void setChainHeight(int chainHeight) {
@@ -250,122 +223,35 @@ public class State implements PersistableEnvelope {
         blocks.add(block);
     }
 
-    void setTxType(String txId, TxType txType) {
-        txTypeMap.put(txId, txType);
+    public void putMutableTx(String txId, MutableTx mutableTx) {
+        mutableTxMap.put(txId, mutableTx);
     }
 
-    void setBurntFee(String txId, long burnedFee) {
-        burntFeeMap.put(txId, burnedFee);
-    }
-
-    void addUnspentTxOutput(TxOutput txOutput) {
-        unspentTxOutputMap.put(txOutput.getKey(), txOutput);
-    }
-
-    void removeUnspentTxOutput(TxOutput txOutput) {
-        unspentTxOutputMap.remove(txOutput.getKey());
+    void putSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
+        spentInfoMap.put(txOutputKey, spentInfo);
     }
 
     void addIssuance(Issuance issuance) {
         issuanceMap.put(issuance.getTxId(), issuance);
     }
 
-    void removeLockTimeTxOutput(TxOutput txOutput) {
-        lockTimeMap.remove(txOutput.getKey());
-    }
-
-    void removeUnlockBlockHeightTxOutput(TxOutput txOutput) {
-        unlockBlockHeightMap.remove(txOutput.getKey());
-    }
-
-    void setSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
-        spentInfoMap.put(txOutputKey, spentInfo);
-    }
-
-    void setLockTime(TxOutput txOutput, int lockTime) {
-        lockTimeMap.put(txOutput.getKey(), lockTime);
-    }
-
-    void setUnlockBlockHeight(TxOutput txOutput, int unlockBlockHeight) {
-        unlockBlockHeightMap.put(txOutput.getKey(), unlockBlockHeight);
-    }
-
-    void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        txOutputTypeMap.put(txOutput.getKey(), txOutputType);
-    }
-
     void addCycle(Cycle cycle) {
         cycles.add(cycle);
     }
 
+
+    State getClone() {
+        return (State) State.fromProto(getStateBuilder().build());
+    }
+
+    State getClone(State snapshotCandidate) {
+        return (State) State.fromProto(snapshotCandidate.getStateBuilder().build());
+    }
+
+
+    // TODO might get refactored later when working on params
     public void setParamChangeMap(int blockHeight, ParamChangeMap paramChangeMap) {
         paramChangeByBlockHeightMap.put(blockHeight, paramChangeMap);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Package scope getters
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    int getIssuanceMaturity() {
-        return ISSUANCE_MATURITY;
-    }
-
-    Coin getGenesisTotalSupply() {
-        return GENESIS_TOTAL_SUPPLY;
-    }
-
-
-    String getGenesisTxId() {
-        return genesisTxId;
-    }
-
-    int getGenesisBlockHeight() {
-        return genesisBlockHeight;
-    }
-
-    int getChainHeight() {
-        return chainHeight;
-    }
-
-    LinkedList<Block> getBlocks() {
-        return blocks;
-    }
-
-    Map<String, TxType> getTxTypeMap() {
-        return txTypeMap;
-    }
-
-    Map<String, Long> getBurntFeeMap() {
-        return burntFeeMap;
-    }
-
-    Map<String, Issuance> getIssuanceMap() {
-        return issuanceMap;
-    }
-
-    Map<TxOutput.Key, TxOutput> getUnspentTxOutputMap() {
-        return unspentTxOutputMap;
-    }
-
-    Map<TxOutput.Key, TxOutputType> getTxOutputTypeMap() {
-        return txOutputTypeMap;
-    }
-
-    Map<TxOutput.Key, SpentInfo> getSpentInfoMap() {
-        return spentInfoMap;
-    }
-
-    Map<TxOutput.Key, Integer> getLockTimeMap() {
-        return lockTimeMap;
-    }
-
-    Map<TxOutput.Key, Integer> getUnlockBlockHeightMap() {
-        return unlockBlockHeightMap;
-    }
-
-    LinkedList<Cycle> getCycles() {
-        return cycles;
     }
 
     Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap() {

@@ -229,7 +229,7 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
                     myCompensationProposalTxIs.add(proposal.getTxId());
                 }
             });
-            MeritList meritList = new MeritList(stateService.getIssuanceMap().values().stream()
+            MeritList meritList = new MeritList(stateService.getIssuanceSet().stream()
                     .map(issuance -> {
                         // We check if it is our proposal
                         if (!myCompensationProposalTxIs.contains(issuance.getTxId()))

@@ -82,7 +82,7 @@ public class TxOutputValidator {
                 // The first txOutput value must match the spent locked connectedTxOutput value
                 if (parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue()) {
                     applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
-                    stateService.setUnlockBlockHeight(txOutput, parsingModel.getUnlockBlockHeight());
+                    stateService.setUnlockBlockHeight(txOutput.getTxId(), parsingModel.getUnlockBlockHeight());
                     parsingModel.setBsqOutputFound(true);
                 } else {
                     applyStateChangeForBtcOutput(txOutput);
@@ -144,9 +144,9 @@ public class TxOutputValidator {
     }
 
     protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
+        stateService.addUnspentTxOutput(txOutput);
         if (txOutputType != null)
             stateService.setTxOutputType(txOutput, txOutputType);
-        stateService.addUnspentTxOutput(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {

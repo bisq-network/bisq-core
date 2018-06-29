@@ -77,7 +77,7 @@ public class SnapshotManager {
         checkNotNull(storage, "storage must not be null");
         State persisted = storage.initAndGetPersisted(state, 100);
         if (persisted != null) {
-            log.info("applySnapshot persisted.chainHeadHeight=" + stateService.getBlockFromState(persisted).getLast().getHeight());
+            log.info("applySnapshot persisted.chainHeadHeight=" + stateService.getBlocksFromState(persisted).getLast().getHeight());
             stateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");

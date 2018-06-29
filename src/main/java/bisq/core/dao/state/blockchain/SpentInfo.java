@@ -23,6 +23,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import lombok.Value;
 
+// Only used for json export
 @Value
 public class SpentInfo implements PersistablePayload {
     private final long blockHeight;

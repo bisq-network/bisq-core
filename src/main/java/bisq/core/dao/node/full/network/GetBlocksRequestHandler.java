@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -88,7 +89,7 @@ class GetBlocksRequestHandler {
 
     public void onGetBlocksRequest(GetBlocksRequest getBlocksRequest, final Connection connection) {
         Log.traceCall(getBlocksRequest + "\n\tconnection=" + connection);
-        List<Block> blocks = stateService.getClonedBlocksFrom(getBlocksRequest.getFromBlockHeight());
+        List<Block> blocks = new LinkedList<>(stateService.getBlocksFromBlockHeight(getBlocksRequest.getFromBlockHeight()));
         final GetBlocksResponse getBlocksResponse = new GetBlocksResponse(blocks, getBlocksRequest.getNonce());
         log.debug("getBlocksResponse " + getBlocksResponse.getRequestNonce());
 

@@ -176,7 +176,7 @@ public class VoteResultConsensus {
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
                     blindVoteTxId + "not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();
-            Optional<TxType> optionalTxType = stateService.getTxType(blindVoteTx.getId());
+            Optional<TxType> optionalTxType = stateService.getOptionalTxType(blindVoteTx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == TxType.BLIND_VOTE,
                     "blindVoteTx must have type BLIND_VOTE");

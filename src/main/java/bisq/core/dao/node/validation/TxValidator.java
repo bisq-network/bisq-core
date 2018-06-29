@@ -67,6 +67,7 @@ public class TxValidator {
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
+            stateService.addMutableTx(tx);
             txOutputsIterator.processOpReturnCandidate(tx, parsingModel);
             txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
@@ -83,9 +84,9 @@ public class TxValidator {
                 if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
                     final TxType txType = getTxType(tx, parsingModel);
                     stateService.setTxType(txId, txType);
-                    final long burnedFee = parsingModel.getAvailableInputValue();
-                    if (burnedFee > 0)
-                        stateService.setBurntFee(txId, burnedFee);
+                    final long burntFee = parsingModel.getAvailableInputValue();
+                    if (burntFee > 0)
+                        stateService.setBurntFee(txId, burntFee);
                 } else {
                     String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
@@ -171,8 +172,8 @@ public class TxValidator {
             } else {
                 final String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + opReturnTypeCandidate +
-                        " / verifiedOpReturnType=" + parsingModel.getVerifiedOpReturnType() +
-                        "txId=" + tx.getId();
+                        ", verifiedOpReturnType=" + parsingModel.getVerifiedOpReturnType() +
+                        ", txId=" + tx.getId();
                 log.error(msg);
             }
         } else {

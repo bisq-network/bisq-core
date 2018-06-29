@@ -330,7 +330,7 @@ public class DaoFacade {
     }
 
     public Set<Tx> getFeeTxs() {
-        return stateService.getFeeTxs();
+        return stateService.getBurntFeeTxs();
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
@@ -346,7 +346,7 @@ public class DaoFacade {
     }
 
     public long getTotalIssuedAmountFromCompRequests() {
-        return stateService.getTotalIssuedAmountFromCompRequests();
+        return stateService.getTotalIssuedAmount();
     }
 
     public long getBlockTime(int issuanceBlockHeight) {
@@ -365,7 +365,11 @@ public class DaoFacade {
         return stateService.hasTxBurntFee(hashAsString);
     }
 
-    public Optional<TxType> getTxType(String txId) {
+    public Optional<TxType> getOptionalTxType(String txId) {
+        return stateService.getOptionalTxType(txId);
+    }
+
+    public TxType getTxType(String txId) {
         return stateService.getTxType(txId);
     }
 
@@ -374,7 +378,7 @@ public class DaoFacade {
     }
 
     public Set<TxOutput> getLockedInBondOutputs() {
-        return stateService.getLockedInBondOutputs();
+        return stateService.getLockupTxOutputs();
     }
 
     public boolean containsTx(String txId) {

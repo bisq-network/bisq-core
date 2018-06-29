@@ -44,7 +44,7 @@ public class TxInputProcessor {
 
     void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel,
                  StateService stateService) {
-        this.stateService.getUnspentAndMatureTxOutput(txInput.getConnectedTxOutputKey())
+        this.stateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
                     parsingModel.addToInputValue(connectedTxOutput.getValue());
 
@@ -68,7 +68,7 @@ public class TxInputProcessor {
                         //TODO rename setSpentLockedConnectedTxOutput to setInputFromLockupTxOutput
                         if (parsingModel.getSpentLockedTxOutput() == null) {
                             parsingModel.setSpentLockedTxOutput(connectedTxOutput);
-                            stateService.getLockTime(connectedTxOutput).ifPresent(lockTime ->
+                            stateService.getLockTime(connectedTxOutput.getTxId()).ifPresent(lockTime ->
                                     parsingModel.setUnlockBlockHeight(blockHeight + lockTime));
                         }
 
@@ -76,8 +76,9 @@ public class TxInputProcessor {
                     } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
                         // Spending an unlocked txOutput
                         // Use new method at parsingModel.addSpentUnlockedConnectedTxOutput
-                        spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
-                        stateService.getUnlockBlockHeight(connectedTxOutput).ifPresent(unlockBlockHeight -> {
+                        if (spentUnlockedConnectedTxOutputs != null)
+                            spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
+                        stateService.getUnlockBlockHeight(connectedTxOutput.getTxId()).ifPresent(unlockBlockHeight -> {
                             // Only count the input as BSQ input if spent after unlock time
                             //TODO <= or < ?
                             if (blockHeight <= unlockBlockHeight)
@@ -89,10 +90,11 @@ public class TxInputProcessor {
 
                     //TODO ??? should be above? why removeLockTimeTxOutput
                     if (parsingModel.getSpentLockedTxOutput() != null)
-                        stateService.removeLockTimeTxOutput(connectedTxOutput);
+                        stateService.removeLockTimeTxOutput(connectedTxOutput.getTxId());
                     //TODO ???
-                    spentUnlockedConnectedTxOutputs.stream().forEach(txOutput ->
-                            stateService.removeUnlockBlockHeightTxOutput(txOutput));
+                    assert spentUnlockedConnectedTxOutputs != null;
+                    spentUnlockedConnectedTxOutputs.forEach(txOutput ->
+                            stateService.removeUnlockBlockHeightTxOutput(txOutput.getTxId()));
 
                     stateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
                     stateService.removeUnspentTxOutput(connectedTxOutput);

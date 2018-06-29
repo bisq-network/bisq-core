@@ -120,13 +120,13 @@ public class JsonBlockChainExporter {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
                 final State stateClone = stateService.getClone();
-                Map<String, Tx> txMap = stateService.getBlockFromState(stateClone).stream()
+                Map<String, Tx> txMap = stateService.getBlocksFromState(stateClone).stream()
                         .filter(Objects::nonNull)
                         .flatMap(block -> block.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));
                 for (Tx tx : txMap.values()) {
                     String txId = tx.getId();
-                    final Optional<TxType> optionalTxType = stateService.getTxType(txId);
+                    final Optional<TxType> optionalTxType = stateService.getOptionalTxType(txId);
                     if (optionalTxType.isPresent()) {
                         JsonTxType txType = optionalTxType.get() != TxType.UNDEFINED_TX_TYPE ?
                                 JsonTxType.valueOf(optionalTxType.get().name()) : null;

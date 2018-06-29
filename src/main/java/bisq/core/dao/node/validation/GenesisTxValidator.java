@@ -42,6 +42,7 @@ public class GenesisTxValidator {
         final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
                 tx.getId().equals(stateService.getGenesisTxId());
         if (isValid) {
+            stateService.addMutableTx(tx);
             genesisTxOutputIterator.iterate(tx);
             stateService.setTxType(tx.getId(), TxType.GENESIS);
         }

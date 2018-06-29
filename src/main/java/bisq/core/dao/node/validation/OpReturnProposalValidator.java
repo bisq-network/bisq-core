@@ -46,8 +46,14 @@ public class OpReturnProposalValidator {
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     boolean validate(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
+        if (!isInPhase)
+            log.warn("isInPhase={}", isInPhase);
+        boolean isFeeCorrect = bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
+        if (!isFeeCorrect)
+            log.warn("isFeeCorrect={}", isFeeCorrect);
         return opReturnData.length == 22 &&
-                bsqFee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
+                isFeeCorrect &&
+                isInPhase;
     }
 }

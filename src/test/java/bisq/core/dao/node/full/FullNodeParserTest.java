@@ -128,12 +128,12 @@ public class FullNodeParserTest {
             // Results are returned in the order they're recorded, so in this case for the first call to
             // getSpendableTxOutput("tx1", 0) the return value will be Optional.empty()
             // for the second call the return is Optional.of(new TxOutput(0,... and so on
-            stateService.getUnspentAndMatureTxOutput(new TxOutput.Key("tx1", 0));
+            stateService.getUnspentTxOutput(new TxOutput.Key("tx1", 0));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout1", null, null, null, height));
             result = Optional.of(new TxOutput(0, 0, "txout1", null, null, null, height));
 
-            stateService.getUnspentAndMatureTxOutput(new TxOutput.Key("tx1", 1));
+            stateService.getUnspentTxOutput(new TxOutput.Key("tx1", 1));
             result = Optional.of(new TxOutput(0, 0, "txout2", null, null, null, height));
             result = Optional.empty();
             result = Optional.of(new TxOutput(0, 100, "txout2", null, null, null, height));
