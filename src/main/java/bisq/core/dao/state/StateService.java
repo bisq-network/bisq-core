@@ -261,8 +261,8 @@ public class StateService {
 
     // We must add the tx before accessing any other fields inside a MutableTx as the immutable tx will be added to the
     // block only after parsing of the tx is complete and if it was a BSQ tx.
-    public void addMutableTx(Tx tx) {
-        state.putMutableTx(tx.getId(), new MutableTx(tx));
+    public void addMutableTx(MutableTx mutableTx) {
+        state.putMutableTx(mutableTx.getTx().getId(), mutableTx);
     }
 
     private Optional<MutableTx> getOptionalMutableTx(String txId) {
@@ -278,10 +278,6 @@ public class StateService {
     // TxType (from MutableTx)
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setTxType(String txId, TxType txType) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setTxType(txType));
-    }
-
     public Optional<TxType> getOptionalTxType(String txId) {
         return getOptionalMutableTx(txId).map(MutableTx::getTxType);
     }
@@ -294,10 +290,6 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // BurntFee (from MutableTx)
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void setBurntFee(String txId, long burntFee) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setBurntFee(burntFee));
-    }
 
     public long getBurntFee(String txId) {
         return getOptionalMutableTx(txId).map(MutableTx::getBurntFee).orElse(0L);
@@ -564,10 +556,6 @@ public class StateService {
     }
 
     // LockTime
-    public void setLockTime(String txId, int lockTime) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(lockTime));
-    }
-
     public Optional<Integer> getLockTime(String txId) {
         int lockTime = getOptionalMutableTx(txId).map(MutableTx::getLockTime).orElse(-1);
         return lockTime < 0 ? Optional.empty() : Optional.of(lockTime);
@@ -575,14 +563,10 @@ public class StateService {
 
     //TODO sq: is that needed?
     public void removeLockTimeTxOutput(String txId) {
-        setLockTime(txId, -1);
+        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(-1));
     }
 
     // UnlockBlockHeight
-    public void setUnlockBlockHeight(String txId, int blockHeight) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(blockHeight));
-    }
-
     public Optional<Integer> getUnlockBlockHeight(String txId) {
         int unLockBlockHeight = getOptionalMutableTx(txId).map(MutableTx::getUnlockBlockHeight).orElse(0);
         return unLockBlockHeight <= 0 ? Optional.empty() : Optional.of(unLockBlockHeight);
@@ -590,7 +574,7 @@ public class StateService {
 
     //TODO sq: is that needed?
     public void removeUnlockBlockHeightTxOutput(String txId) {
-        setUnlockBlockHeight(txId, 0);
+        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(0));
     }
 
     public Set<TxOutput> getUnlockingTxOutputs() {

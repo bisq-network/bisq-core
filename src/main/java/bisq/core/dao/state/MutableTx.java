@@ -49,7 +49,7 @@ public class MutableTx {
     private int lockTime = -1;
     private int unlockBlockHeight = 0;
 
-    MutableTx(Tx tx) {
+    public MutableTx(Tx tx) {
         this.tx = tx;
     }
 

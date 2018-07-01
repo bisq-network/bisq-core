@@ -200,7 +200,7 @@ public class OpReturnProcessor {
         if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(lockupCandidate, TxOutputType.LOCKUP);
-            stateService.setLockTime(lockupCandidate.getTxId(), lockTime);
+            parsingModel.getMutableTx().setLockTime(lockTime);
             parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
         } else {
             log.info("We expected a lockup op_return data but it did not " +

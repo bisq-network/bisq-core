@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
+import bisq.core.dao.state.MutableTx;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
@@ -62,12 +63,18 @@ public class TxValidator {
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
     public boolean validate(int blockHeight, Tx tx) {
-        final String txId = tx.getId();
+        MutableTx mutableTx = new MutableTx(tx);
         ParsingModel parsingModel = txInputsIterator.iterate(tx, blockHeight);
+
+        // We could pass mutableTx also to the sub validators but as long we have not refactored the validators to pure
+        // functions lets use the parsingModel.
+        parsingModel.setMutableTx(mutableTx);
+
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            stateService.addMutableTx(tx);
+            stateService.addMutableTx(mutableTx);
+
             txOutputsIterator.processOpReturnCandidate(tx, parsingModel);
             txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
@@ -83,17 +90,17 @@ public class TxValidator {
 
                 if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
                     final TxType txType = getTxType(tx, parsingModel);
-                    stateService.setTxType(txId, txType);
+                    mutableTx.setTxType(txType);
                     final long burntFee = parsingModel.getAvailableInputValue();
                     if (burntFee > 0)
-                        stateService.setBurntFee(txId, burntFee);
+                        mutableTx.setBurntFee(burntFee);
                 } else {
                     String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
                 }
             } else {
                 // We don't consider a tx with multiple OpReturn outputs valid.
-                stateService.setTxType(txId, TxType.INVALID);
+                mutableTx.setTxType(TxType.INVALID);
                 String msg = "Invalid tx. We have multiple opReturn outputs. tx=" + tx;
                 log.warn(msg);
             }

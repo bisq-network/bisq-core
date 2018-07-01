@@ -82,7 +82,7 @@ public class TxOutputValidator {
                 // The first txOutput value must match the spent locked connectedTxOutput value
                 if (parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue()) {
                     applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
-                    stateService.setUnlockBlockHeight(txOutput.getTxId(), parsingModel.getUnlockBlockHeight());
+                    parsingModel.getMutableTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
                     parsingModel.setBsqOutputFound(true);
                 } else {
                     applyStateChangeForBtcOutput(txOutput);

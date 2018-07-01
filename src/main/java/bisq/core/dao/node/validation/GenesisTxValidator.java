@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
+import bisq.core.dao.state.MutableTx;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxType;
@@ -42,9 +43,11 @@ public class GenesisTxValidator {
         final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
                 tx.getId().equals(stateService.getGenesisTxId());
         if (isValid) {
-            stateService.addMutableTx(tx);
+            MutableTx mutableTx = new MutableTx(tx);
+            mutableTx.setTxType(TxType.GENESIS);
+            stateService.addMutableTx(mutableTx);
+
             genesisTxOutputIterator.iterate(tx);
-            stateService.setTxType(tx.getId(), TxType.GENESIS);
         }
         return isValid;
     }
