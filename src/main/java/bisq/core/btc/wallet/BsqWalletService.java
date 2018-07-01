@@ -215,12 +215,12 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        lockedInBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
+        lockedInBondsBalance = Coin.valueOf(stateService.getLockedInBondOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingTxOutputs().stream()
+        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingBondsOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -388,7 +388,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
         if (output.isMineOrWatched(wallet) && isConfirmed && txOptional.isPresent()) {
             // The index of the BSQ tx outputs are the same as the bitcoinj tx outputs
             TxOutput txOutput = txOptional.get().getOutputs().get(0);
-            if (stateService.isLockupOutput(txOutput)) {
+            if (stateService.isLockedOutput(txOutput)) {
                 //TODO check why values are not the same
                 if (txOutput.getValue() != output.getValue().value) {
                     log.warn("getValueLockedUpInBond: Value of BSQ output do not match BitcoinJ tx output. " +
@@ -479,12 +479,12 @@ public class BsqWalletService extends WalletService implements BlockListener {
     // As the fee amount will be missing in the output those BSQ fees are burned.
     public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
-        addInputsAndChangeOutputForFeeTx(tx, fee, bsqCoinSelector);
+        addInputsAndChangeOutputForTx(tx, fee, bsqCoinSelector);
         // printTx("getPreparedFeeTx", tx);
         return tx;
     }
 
-    private void addInputsAndChangeOutputForFeeTx(Transaction tx, Coin fee, BsqCoinSelector bsqCoinSelector)
+    private void addInputsAndChangeOutputForTx(Transaction tx, Coin fee, BsqCoinSelector bsqCoinSelector)
             throws InsufficientBsqException {
         Coin requiredInput;
         // If our fee is less then dust limit we increase it so we are sure to not get any dust output.
@@ -517,7 +517,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     public Transaction getPreparedBlindVoteTx(Coin fee, Coin stake) throws InsufficientBsqException {
         Transaction tx = new Transaction(params);
         tx.addOutput(new TransactionOutput(params, tx, stake, getUnusedAddress()));
-        addInputsAndChangeOutputForFeeTx(tx, fee.add(stake), bsqCoinSelector);
+        addInputsAndChangeOutputForTx(tx, fee.add(stake), bsqCoinSelector);
         //printTx("getPreparedBlindVoteTx", tx);
         return tx;
     }
@@ -549,8 +549,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
         Transaction tx = new Transaction(params);
         checkArgument(Restrictions.isAboveDust(lockupAmount), "The amount is too low (dust limit).");
         tx.addOutput(new TransactionOutput(params, tx, lockupAmount, getUnusedAddress()));
-        // TODO sq: not sure if that method is right for you...
-        addInputsAndChangeOutputForFeeTx(tx, lockupAmount, bsqCoinSelector);
+        addInputsAndChangeOutputForTx(tx, lockupAmount, bsqCoinSelector);
         printTx("prepareLockupTx", tx);
         return tx;
     }

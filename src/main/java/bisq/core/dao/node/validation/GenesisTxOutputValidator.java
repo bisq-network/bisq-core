@@ -29,10 +29,11 @@ import lombok.extern.slf4j.Slf4j;
  * Checks if an output is a BSQ output and apply state change.
  */
 @Slf4j
-public class GenesisTxOutputValidator extends TxOutputValidator {
+public class GenesisTxOutputValidator extends TxOutputProcessor {
     @Inject
-    public GenesisTxOutputValidator(StateService stateService, OpReturnProcessor opReturnController) {
-        super(stateService, opReturnController);
+    public GenesisTxOutputValidator(StateService stateService) {
+        // We don't use a OpReturnProcessor here, so we pass null
+        super(stateService, null);
     }
 
     void validate(TxOutput txOutput, ParsingModel parsingModel) {

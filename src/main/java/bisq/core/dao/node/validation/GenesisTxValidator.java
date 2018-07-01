@@ -24,31 +24,48 @@ import bisq.core.dao.state.blockchain.TxType;
 
 import javax.inject.Inject;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import javax.annotation.Nullable;
+
 /**
  * Verifies if a given transaction is a BSQ genesis transaction.
  */
 public class GenesisTxValidator {
 
     private final StateService stateService;
-    private final GenesisTxOutputIterator genesisTxOutputIterator;
+    private final GenesisTxOutputValidator genesisTxOutputValidator;
 
     @Inject
     public GenesisTxValidator(StateService stateService,
-                              GenesisTxOutputIterator genesisTxOutputIterator) {
+                              GenesisTxOutputValidator genesisTxOutputValidator) {
         this.stateService = stateService;
-        this.genesisTxOutputIterator = genesisTxOutputIterator;
+        this.genesisTxOutputValidator = genesisTxOutputValidator;
     }
 
     public boolean validate(Tx tx, int blockHeight) {
-        final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
-                tx.getId().equals(stateService.getGenesisTxId());
-        if (isValid) {
+        TxType txType = getTxType(tx, blockHeight);
+        boolean isGenesis = TxType.GENESIS == txType;
+        if (isGenesis){
             MutableTx mutableTx = new MutableTx(tx);
             mutableTx.setTxType(TxType.GENESIS);
             stateService.addMutableTx(mutableTx);
-
-            genesisTxOutputIterator.iterate(tx);
         }
-        return isValid;
+        return isGenesis;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    TxType getTxType(Tx tx, int blockHeight) {
+        final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
+                tx.getId().equals(stateService.getGenesisTxId());
+        if (isValid) {
+            ParsingModel parsingModel = new ParsingModel(stateService.getGenesisTotalSupply().getValue());
+            for (int i = 0; i < tx.getOutputs().size(); ++i) {
+                genesisTxOutputValidator.validate(tx.getOutputs().get(i), parsingModel);
+            }
+            return TxType.GENESIS;
+        }
+        return null;
     }
 }
