@@ -35,7 +35,6 @@ import bisq.core.dao.node.validation.OpReturnProcessor;
 import bisq.core.dao.node.validation.OpReturnProposalValidator;
 import bisq.core.dao.node.validation.OpReturnVoteRevealValidator;
 import bisq.core.dao.node.validation.TxInputProcessor;
-import bisq.core.dao.node.validation.TxInputsIterator;
 import bisq.core.dao.node.validation.TxOutputValidator;
 import bisq.core.dao.node.validation.TxOutputsIterator;
 import bisq.core.dao.node.validation.TxValidator;
@@ -111,7 +110,6 @@ public class DaoModule extends AppModule {
         bind(GenesisTxOutputIterator.class).in(Singleton.class);
         bind(GenesisTxOutputValidator.class).in(Singleton.class);
         bind(TxValidator.class).in(Singleton.class);
-        bind(TxInputsIterator.class).in(Singleton.class);
         bind(TxInputProcessor.class).in(Singleton.class);
         bind(TxOutputsIterator.class).in(Singleton.class);
         bind(TxOutputValidator.class).in(Singleton.class);

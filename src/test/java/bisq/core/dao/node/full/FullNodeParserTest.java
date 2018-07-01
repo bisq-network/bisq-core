@@ -20,7 +20,6 @@ package bisq.core.dao.node.full;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
-import bisq.core.dao.node.validation.TxInputsIterator;
 import bisq.core.dao.node.validation.TxOutputsIterator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
@@ -75,8 +74,6 @@ public class FullNodeParserTest {
     StateService stateService;
 
     // Used by txValidator
-    @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxInputsIterator txInputsIterator;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     TxOutputsIterator txOutputsIterator;
 

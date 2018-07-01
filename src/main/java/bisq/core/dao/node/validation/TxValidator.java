@@ -20,6 +20,7 @@ package bisq.core.dao.node.validation;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
@@ -43,15 +44,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class TxValidator {
 
     private final StateService stateService;
-    private final TxInputsIterator txInputsIterator;
+    private TxInputProcessor txInputProcessor;
     private final TxOutputsIterator txOutputsIterator;
 
     @Inject
     public TxValidator(StateService stateService,
-                       TxInputsIterator txInputsIterator,
+                       TxInputProcessor txInputProcessor,
                        TxOutputsIterator txOutputsIterator) {
         this.stateService = stateService;
-        this.txInputsIterator = txInputsIterator;
+        this.txInputProcessor = txInputProcessor;
         this.txOutputsIterator = txOutputsIterator;
     }
 
@@ -63,7 +64,11 @@ public class TxValidator {
     // for instance to calculate the total burned BSQ.
     public boolean validate(int blockHeight, Tx tx) {
         final String txId = tx.getId();
-        ParsingModel parsingModel = txInputsIterator.iterate(tx, blockHeight);
+        ParsingModel parsingModel = new ParsingModel();
+        for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
+            TxInput input = tx.getInputs().get(inputIndex);
+            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel, stateService);
+        }
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
