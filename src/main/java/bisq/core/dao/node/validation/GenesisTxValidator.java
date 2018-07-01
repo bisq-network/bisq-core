@@ -23,6 +23,10 @@ import bisq.core.dao.state.blockchain.TxType;
 
 import javax.inject.Inject;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import javax.annotation.Nullable;
+
 /**
  * Verifies if a given transaction is a BSQ genesis transaction.
  */
@@ -39,6 +43,16 @@ public class GenesisTxValidator {
     }
 
     public boolean validate(Tx tx, int blockHeight) {
+        TxType txType = getTxType(tx, blockHeight);
+        boolean isGenesis = TxType.GENESIS == txType;
+        if (isGenesis)
+            stateService.setTxType(tx.getId(), TxType.GENESIS);
+        return isGenesis;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    TxType getTxType(Tx tx, int blockHeight) {
         final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
                 tx.getId().equals(stateService.getGenesisTxId());
         if (isValid) {
@@ -46,8 +60,8 @@ public class GenesisTxValidator {
             for (int i = 0; i < tx.getOutputs().size(); ++i) {
                 genesisTxOutputValidator.validate(tx.getOutputs().get(i), parsingModel);
             }
-            stateService.setTxType(tx.getId(), TxType.GENESIS);
+            return TxType.GENESIS;
         }
-        return isValid;
+        return null;
     }
 }
