@@ -20,7 +20,6 @@ package bisq.core.dao.node.full;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
-import bisq.core.dao.node.validation.TxOutputsIterator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
@@ -72,10 +71,6 @@ public class FullNodeParserTest {
 
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     StateService stateService;
-
-    // Used by txValidator
-    @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxOutputsIterator txOutputsIterator;
 
     // @Injectable are mocked resources used to for injecting into @Tested classes
     // The naming of these resources doesn't matter, any resource that fits will be used for injection

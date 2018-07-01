@@ -31,6 +31,7 @@ import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,16 +45,16 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class TxValidator {
 
     private final StateService stateService;
-    private TxInputProcessor txInputProcessor;
-    private final TxOutputsIterator txOutputsIterator;
+    private final TxInputProcessor txInputProcessor;
+    private final TxOutputValidator txOutputValidator;
 
     @Inject
     public TxValidator(StateService stateService,
                        TxInputProcessor txInputProcessor,
-                       TxOutputsIterator txOutputsIterator) {
+                       TxOutputValidator txOutputValidator) {
         this.stateService = stateService;
         this.txInputProcessor = txInputProcessor;
-        this.txOutputsIterator = txOutputsIterator;
+        this.txOutputValidator = txOutputValidator;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -72,11 +73,29 @@ public class TxValidator {
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            txOutputsIterator.processOpReturnCandidate(tx, parsingModel);
-            txOutputsIterator.iterate(tx, blockHeight, parsingModel);
+            //txOutputsIterator.processOpReturnCandidate(tx, parsingModel);
 
-            // Multiple op return outputs are non-standard but to be safe lets check it.
-            if (txOutputsIterator.getNumOpReturnOutputs(tx) <= 1) {
+            final List<TxOutput> outputs = tx.getOutputs();
+            // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
+            // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
+            // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
+            // BSQ inputs are not verified yet.
+            // We keep the temporary opReturn type in the parsingModel object.
+            checkArgument(!outputs.isEmpty(), "outputs must not be empty");
+            int lastIndex = outputs.size() - 1;
+            txOutputValidator.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
+
+            // txOutputsIterator.iterate(tx, blockHeight, parsingModel);
+
+            // We use order of output index. An output is a BSQ utxo as long there is enough input value
+            // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
+            for (int index = 0; index < outputs.size(); index++) {
+                txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, parsingModel);
+            }
+
+            // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
+            long numOpReturnOutputs = tx.getOutputs().stream().filter(txOutputValidator::isOpReturnOutput).count();
+            if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
                 final TxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
@@ -85,7 +104,9 @@ public class TxValidator {
                     stateService.setTxOutputType(issuanceCandidate, TxOutputType.BTC_OUTPUT);
                 }
 
-                if (!txOutputsIterator.isAnyTxOutputTypeUndefined(tx)) {
+                boolean isAnyTxOutputTypeUndefined = tx.getOutputs().stream()
+                        .anyMatch(txOutput -> TxOutputType.UNDEFINED == stateService.getTxOutputType(txOutput));
+                if (!isAnyTxOutputTypeUndefined) {
                     final TxType txType = getTxType(tx, parsingModel);
                     stateService.setTxType(txId, txType);
                     final long burnedFee = parsingModel.getAvailableInputValue();
