@@ -46,15 +46,15 @@ public class TxValidator {
 
     private final StateService stateService;
     private final TxInputProcessor txInputProcessor;
-    private final TxOutputValidator txOutputValidator;
+    private final TxOutputProcessor txOutputProcessor;
 
     @Inject
     public TxValidator(StateService stateService,
                        TxInputProcessor txInputProcessor,
-                       TxOutputValidator txOutputValidator) {
+                       TxOutputProcessor txOutputProcessor) {
         this.stateService = stateService;
         this.txInputProcessor = txInputProcessor;
-        this.txOutputValidator = txOutputValidator;
+        this.txOutputProcessor = txOutputProcessor;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -83,18 +83,18 @@ public class TxValidator {
             // We keep the temporary opReturn type in the parsingModel object.
             checkArgument(!outputs.isEmpty(), "outputs must not be empty");
             int lastIndex = outputs.size() - 1;
-            txOutputValidator.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
+            txOutputProcessor.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
 
             // txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
             // We use order of output index. An output is a BSQ utxo as long there is enough input value
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
-                txOutputValidator.processTxOutput(tx, outputs.get(index), index, blockHeight, parsingModel);
+                txOutputProcessor.processTxOutput(tx, outputs.get(index), index, blockHeight, parsingModel);
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
-            long numOpReturnOutputs = tx.getOutputs().stream().filter(txOutputValidator::isOpReturnOutput).count();
+            long numOpReturnOutputs = tx.getOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.

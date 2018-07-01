@@ -33,12 +33,12 @@ import javax.annotation.Nullable;
  * Checks if an output is a BSQ output and apply state change.
  */
 @Slf4j
-public class TxOutputValidator {
+public class TxOutputProcessor {
     private final StateService stateService;
     private final OpReturnProcessor opReturnProcessor;
 
     @Inject
-    public TxOutputValidator(StateService stateService, OpReturnProcessor opReturnProcessor) {
+    public TxOutputProcessor(StateService stateService, OpReturnProcessor opReturnProcessor) {
         this.stateService = stateService;
         this.opReturnProcessor = opReturnProcessor;
     }
