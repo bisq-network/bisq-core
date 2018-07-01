@@ -29,20 +29,23 @@ import javax.inject.Inject;
 public class GenesisTxValidator {
 
     private final StateService stateService;
-    private final GenesisTxOutputIterator genesisTxOutputIterator;
+    private final GenesisTxOutputValidator genesisTxOutputValidator;
 
     @Inject
     public GenesisTxValidator(StateService stateService,
-                              GenesisTxOutputIterator genesisTxOutputIterator) {
+                              GenesisTxOutputValidator genesisTxOutputValidator) {
         this.stateService = stateService;
-        this.genesisTxOutputIterator = genesisTxOutputIterator;
+        this.genesisTxOutputValidator = genesisTxOutputValidator;
     }
 
     public boolean validate(Tx tx, int blockHeight) {
         final boolean isValid = blockHeight == stateService.getGenesisBlockHeight() &&
                 tx.getId().equals(stateService.getGenesisTxId());
         if (isValid) {
-            genesisTxOutputIterator.iterate(tx);
+            ParsingModel parsingModel = new ParsingModel(stateService.getGenesisTotalSupply().getValue());
+            for (int i = 0; i < tx.getOutputs().size(); ++i) {
+                genesisTxOutputValidator.validate(tx.getOutputs().get(i), parsingModel);
+            }
             stateService.setTxType(tx.getId(), TxType.GENESIS);
         }
         return isValid;
