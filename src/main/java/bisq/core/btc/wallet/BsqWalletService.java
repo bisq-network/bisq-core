@@ -214,13 +214,12 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
-
-        lockedInBondsBalance = Coin.valueOf(stateService.getLockedInBondOutputs().stream()
+        lockedInBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingBondsOutputs().stream()
+        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -388,7 +387,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
         if (output.isMineOrWatched(wallet) && isConfirmed && txOptional.isPresent()) {
             // The index of the BSQ tx outputs are the same as the bitcoinj tx outputs
             TxOutput txOutput = txOptional.get().getOutputs().get(0);
-            if (stateService.isLockedOutput(txOutput)) {
+            if (stateService.isLockupOutput(txOutput)) {
                 //TODO check why values are not the same
                 if (txOutput.getValue() != output.getValue().value) {
                     log.warn("getValueLockedUpInBond: Value of BSQ output do not match BitcoinJ tx output. " +
