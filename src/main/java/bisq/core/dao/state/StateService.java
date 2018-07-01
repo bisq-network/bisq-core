@@ -496,7 +496,7 @@ public class StateService {
         return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
     }
 
-    public Optional<TxOutput> getLockedTxOutput(String txId) {
+    public Optional<TxOutput> getLockupTxOutput(String txId) {
         Optional<Tx> optionalTx = getTx(txId);
         return optionalTx.isPresent() ? optionalTx.get().getTxOutputs().stream()
                 .filter(this::isLockupOutput)
