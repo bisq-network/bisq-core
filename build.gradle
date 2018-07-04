@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'network.bisq'
-version = '-SNAPSHOT'
+version = '0.7.1'
 
 sourceCompatibility = 1.8
 
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     compile 'network.bisq:bisq-assets:0.7.2'
-    compile 'network.bisq:bisq-p2p:-SNAPSHOT'
+    compile 'network.bisq:bisq-p2p:0.7.1'
     compile 'net.sf.jopt-simple:jopt-simple:5.0.3'
     compile('network.bisq.btcd-cli4j:btcd-cli4j-core:29f99be') {
         exclude(module: 'slf4j-api')
