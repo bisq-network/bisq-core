@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.MutableTx;
+import bisq.core.dao.state.blockchain.MutableTx;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;

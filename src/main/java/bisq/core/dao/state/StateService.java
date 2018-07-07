@@ -18,6 +18,8 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.MutableTx;
+import bisq.core.dao.state.blockchain.MutableTxOutput;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
