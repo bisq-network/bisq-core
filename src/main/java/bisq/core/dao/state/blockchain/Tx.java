@@ -17,63 +17,54 @@
 
 package bisq.core.dao.state.blockchain;
 
-import bisq.common.app.Version;
-import bisq.common.proto.persistable.PersistablePayload;
-
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.Data;
+import lombok.experimental.Delegate;
 
-import javax.annotation.concurrent.Immutable;
+import javax.annotation.Nullable;
 
-@Immutable
-@Slf4j
-@Value
-public class Tx implements PersistablePayload {
-
+/**
+ * Transaction containing BSQ specific data. The raw blockchain specific tx data are in the rawTx object.
+ * We use lombok for convenience to delegate access to the data inside the rawTx.
+ *
+ * We are storing the txOutputs twice atm. We might optimize that to remove the rawTx and clone the fields here.
+ */
+@Data
+public class Tx {
     public static Tx clone(Tx tx) {
-        final ImmutableList<TxInput> inputs = ImmutableList.copyOf(tx.getInputs().stream()
-                .map(TxInput::clone)
-                .collect(Collectors.toList()));
-        final ImmutableList<TxOutput> outputs = ImmutableList.copyOf(tx.getOutputs().stream()
-                .map(TxOutput::clone)
-                .collect(Collectors.toList()));
-        return new Tx(tx.getTxVersion(),
-                tx.getId(),
-                tx.getBlockHeight(),
-                tx.getBlockHash(),
-                tx.getTime(),
-                inputs,
-                outputs);
+        return new Tx(tx.getRawTx(),
+                tx.getTxType(),
+                tx.getTxOutputs(),
+                tx.getBurntFee(),
+                tx.getLockTime(),
+                tx.getUnlockBlockHeight());
     }
 
-    private final String txVersion;
-    private final String id;
-    private final int blockHeight;
-    private final String blockHash;
-    private final long time;
-    private final ImmutableList<TxInput> inputs;
-    private final ImmutableList<TxOutput> outputs;
+    private interface ExcludesDelegateMethods<T> {
+        PB.Tx toProtoMessage();
+    }
 
-    public Tx(String id,
-              int blockHeight,
-              String blockHash,
-              long time,
-              ImmutableList<TxInput> inputs,
-              ImmutableList<TxOutput> outputs) {
-        this(Version.BSQ_TX_VERSION,
-                id,
-                blockHeight,
-                blockHash,
-                time,
-                inputs,
-                outputs);
+    @Delegate(excludes = Tx.ExcludesDelegateMethods.class)
+    private final RawTx rawTx;
+
+    @Nullable
+    private TxType txType = null;
+    private ImmutableList<TxOutput> txOutputs;
+    private long burntFee = 0L;
+    // If not set it is -1. LockTime of 0 is a valid value.
+    private int lockTime = -1;
+    private int unlockBlockHeight = 0;
+
+    public Tx(RawTx rawTx) {
+        this.rawTx = rawTx;
+        txOutputs = ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TxOutput::new).collect(Collectors.toList()));
     }
 
 
@@ -81,80 +72,43 @@ public class Tx implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Tx(String txVersion,
-               String id,
-               int blockHeight,
-               String blockHash,
-               long time,
-               ImmutableList<TxInput> inputs,
-               ImmutableList<TxOutput> outputs) {
-        this.txVersion = txVersion;
-        this.id = id;
-        this.blockHeight = blockHeight;
-        this.blockHash = blockHash;
-        this.time = time;
-        this.inputs = inputs;
-        this.outputs = outputs;
+    private Tx(RawTx rawTx,
+               @Nullable TxType txType,
+               ImmutableList<TxOutput> txOutputs,
+               long burntFee,
+               int lockTime,
+               int unlockBlockHeight) {
+        this.rawTx = rawTx;
+        this.txType = txType;
+        this.txOutputs = txOutputs;
+        this.burntFee = burntFee;
+        this.lockTime = lockTime;
+        this.unlockBlockHeight = unlockBlockHeight;
     }
 
     public PB.Tx toProtoMessage() {
         final PB.Tx.Builder builder = PB.Tx.newBuilder()
-                .setTxVersion(txVersion)
-                .setId(id)
-                .setBlockHeight(blockHeight)
-                .setBlockHash(blockHash)
-                .setTime(time)
-                .addAllInputs(inputs.stream()
-                        .map(TxInput::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .addAllOutputs(outputs.stream()
+                .setTx(rawTx.toProtoMessage())
+                .addAllTxOutputs(txOutputs.stream()
                         .map(TxOutput::toProtoMessage)
-                        .collect(Collectors.toList()));
-
+                        .collect(Collectors.toList()))
+                .setBurntFee(burntFee)
+                .setLockTime(lockTime)
+                .setUnlockBlockHeight(unlockBlockHeight);
+        Optional.ofNullable(txType).ifPresent(txType -> builder.setTxType(txType.toProtoMessage()));
         return builder.build();
     }
 
     public static Tx fromProto(PB.Tx proto) {
-        return new Tx(proto.getTxVersion(),
-                proto.getId(),
-                proto.getBlockHeight(),
-                proto.getBlockHash(),
-                proto.getTime(),
-                proto.getInputsList().isEmpty() ?
+        return new Tx(RawTx.fromProto(proto.getTx()),
+                TxType.fromProto(proto.getTxType()),
+                proto.getTxOutputsList().isEmpty() ?
                         ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getInputsList().stream()
-                                .map(TxInput::fromProto)
-                                .collect(Collectors.toList())),
-                proto.getOutputsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getOutputsList().stream()
+                        ImmutableList.copyOf(proto.getTxOutputsList().stream()
                                 .map(TxOutput::fromProto)
-                                .collect(Collectors.toList())));
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Utils
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public TxOutput getTxOutput(int index) {
-        return outputs.get(index);
-    }
-
-    public TxOutput getLastOutput() {
-        return getOutputs().get(getOutputs().size() - 1);
-    }
-
-    @Override
-    public String toString() {
-        return "Tx{" +
-                "\n     txVersion='" + txVersion + '\'' +
-                ",\n     id='" + id + '\'' +
-                ",\n     blockHeight=" + blockHeight +
-                ",\n     blockHash='" + blockHash + '\'' +
-                ",\n     time=" + time +
-                ",\n     inputs=" + inputs +
-                ",\n     outputs=" + outputs +
-                "\n}";
+                                .collect(Collectors.toList())),
+                proto.getBurntFee(),
+                proto.getLockTime(),
+                proto.getUnlockBlockHeight());
     }
 }

@@ -30,7 +30,7 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * An input is really just a reference to the spending output. It gets identified by the
- * txId and the index of that output. We use TxOutput.Key to encapsulate that.
+ * txId and the index of that output. We use TxOutputKey to encapsulate that.
  */
 @Immutable
 @Value
@@ -79,8 +79,8 @@ public class TxInput implements PersistablePayload {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public TxOutput.Key getConnectedTxOutputKey() {
-        return new TxOutput.Key(connectedTxOutputTxId, connectedTxOutputIndex);
+    public TxOutputKey getConnectedTxOutputKey() {
+        return new TxOutputKey(connectedTxOutputTxId, connectedTxOutputIndex);
     }
 
     @Override

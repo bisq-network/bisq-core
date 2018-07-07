@@ -17,67 +17,28 @@
 
 package bisq.core.dao.state.blockchain;
 
-import bisq.core.dao.node.btcd.PubKeyScript;
-
-import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.JsonExclude;
-import bisq.common.util.Utilities;
-
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.ByteString;
+import lombok.Data;
+import lombok.experimental.Delegate;
 
-import java.util.Optional;
-
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
-
-@Immutable
-@Value
-@Slf4j
-public class TxOutput implements PersistablePayload {
-
-    public static TxOutput clone(TxOutput txOutput) {
-        return new TxOutput(txOutput.getIndex(),
-                txOutput.getValue(),
-                txOutput.getTxId(),
-                txOutput.getPubKeyScript(),
-                txOutput.getAddress(),
-                txOutput.getOpReturnData(),
-                txOutput.getBlockHeight());
+/**
+ * TxOutput containing BSQ specific data. The raw blockchain specific TxOutput data are in the rawTxOutput object.
+ * We use lombok for convenience to delegate access to the data inside the rawTxOutput.
+ */
+@Data
+public class TxOutput {
+    private interface ExcludesDelegateMethods<T> {
+        PB.TxOutput toProtoMessage();
     }
 
-    private final int index;
-    private final long value;
-    private final String txId;
+    @Delegate(excludes = TxOutput.ExcludesDelegateMethods.class)
+    private final RawTxOutput rawTxOutput;
+    private TxOutputType txOutputType = TxOutputType.UNDEFINED;
+    private boolean isUnspent = false;
 
-    // Only set if dumpBlockchainData is true
-    @Nullable
-    private final PubKeyScript pubKeyScript;
-    @Nullable
-    private final String address;
-    @Nullable
-    @JsonExclude
-    private final byte[] opReturnData;
-    private final int blockHeight;
-
-    public TxOutput(int index,
-                    long value,
-                    String txId,
-                    @Nullable PubKeyScript pubKeyScript,
-                    @Nullable String address,
-                    @Nullable byte[] opReturnData,
-                    int blockHeight) {
-        this.index = index;
-        this.value = value;
-        this.txId = txId;
-        this.pubKeyScript = pubKeyScript;
-        this.address = address;
-        this.opReturnData = opReturnData;
-        this.blockHeight = blockHeight;
+    public TxOutput(RawTxOutput rawTxOutput) {
+        this.rawTxOutput = rawTxOutput;
     }
 
 
@@ -85,75 +46,32 @@ public class TxOutput implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private TxOutput(RawTxOutput rawTxOutput, TxOutputType txOutputType, boolean isUnspent) {
+        this.rawTxOutput = rawTxOutput;
+        this.txOutputType = txOutputType;
+        this.isUnspent = isUnspent;
+    }
+
     public PB.TxOutput toProtoMessage() {
         final PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
-                .setIndex(index)
-                .setValue(value)
-                .setTxId(txId)
-                .setBlockHeight(blockHeight);
-
-        Optional.ofNullable(pubKeyScript).ifPresent(e -> builder.setPubKeyScript(pubKeyScript.toProtoMessage()));
-        Optional.ofNullable(address).ifPresent(e -> builder.setAddress(address));
-        Optional.ofNullable(opReturnData).ifPresent(e -> builder.setOpReturnData(ByteString.copyFrom(opReturnData)));
-
+                .setRawTxOutput(rawTxOutput.toProtoMessage())
+                .setTxOutputType(txOutputType.toProtoMessage())
+                .setIsUnspent(isUnspent);
         return builder.build();
     }
 
     public static TxOutput fromProto(PB.TxOutput proto) {
-        return new TxOutput(proto.getIndex(),
-                proto.getValue(),
-                proto.getTxId(),
-                proto.hasPubKeyScript() ? PubKeyScript.fromProto(proto.getPubKeyScript()) : null,
-                proto.getAddress().isEmpty() ? null : proto.getAddress(),
-                proto.getOpReturnData().isEmpty() ? null : proto.getOpReturnData().toByteArray(),
-                proto.getBlockHeight());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Util
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public Key getKey() {
-        return new Key(txId, index);
+        return new TxOutput(RawTxOutput.fromProto(proto.getRawTxOutput()),
+                TxOutputType.fromProto(proto.getTxOutputType()),
+                proto.getIsUnspent());
     }
 
     @Override
     public String toString() {
         return "TxOutput{" +
-                "\n     index=" + index +
-                ",\n     value=" + value +
-                ",\n     txId='" + txId + '\'' +
-                ",\n     pubKeyScript=" + pubKeyScript +
-                ",\n     address='" + address + '\'' +
-                ",\n     opReturnData=" + Utilities.bytesAsHexString(opReturnData) +
-                ",\n     blockHeight=" + blockHeight +
+                "\n     rawTxOutput=" + rawTxOutput +
+                ",\n     txOutputType=" + txOutputType +
+                ",\n     isUnspent=" + isUnspent +
                 "\n}";
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Inner class
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Value
-    public static class Key {
-        private final String txId;
-        private final int index;
-
-        public Key(String txId, int index) {
-            this.txId = txId;
-            this.index = index;
-        }
-
-        @Override
-        public String toString() {
-            return txId + ":" + index;
-        }
-
-        public static Key getKeyFromString(String keyAsString) {
-            final String[] tokens = keyAsString.split(":");
-            return new Key(tokens[0], Integer.valueOf(tokens[1]));
-        }
     }
 }

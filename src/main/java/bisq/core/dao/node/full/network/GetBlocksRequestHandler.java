@@ -21,6 +21,7 @@ import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
@@ -37,6 +38,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,7 +92,8 @@ class GetBlocksRequestHandler {
     public void onGetBlocksRequest(GetBlocksRequest getBlocksRequest, final Connection connection) {
         Log.traceCall(getBlocksRequest + "\n\tconnection=" + connection);
         List<Block> blocks = new LinkedList<>(stateService.getBlocksFromBlockHeight(getBlocksRequest.getFromBlockHeight()));
-        final GetBlocksResponse getBlocksResponse = new GetBlocksResponse(blocks, getBlocksRequest.getNonce());
+        List<RawBlock> rawBlocks = blocks.stream().map(RawBlock::fromBlock).collect(Collectors.toList());
+        final GetBlocksResponse getBlocksResponse = new GetBlocksResponse(rawBlocks, getBlocksRequest.getNonce());
         log.debug("getBlocksResponse " + getBlocksResponse.getRequestNonce());
 
         if (timeoutTimer == null) {

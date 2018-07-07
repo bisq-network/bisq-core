@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.messages;
 
-import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.DirectMessage;
 import bisq.network.p2p.ExtendedDataSizePermission;
@@ -37,10 +37,10 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public final class GetBlocksResponse extends NetworkEnvelope implements DirectMessage, ExtendedDataSizePermission {
-    private final List<Block> blocks;
+    private final List<RawBlock> blocks;
     private final int requestNonce;
 
-    public GetBlocksResponse(List<Block> blocks, int requestNonce) {
+    public GetBlocksResponse(List<RawBlock> blocks, int requestNonce) {
         this(blocks, requestNonce, Version.getP2PMessageVersion());
     }
 
@@ -49,7 +49,7 @@ public final class GetBlocksResponse extends NetworkEnvelope implements DirectMe
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private GetBlocksResponse(List<Block> blocks, int requestNonce, int messageVersion) {
+    private GetBlocksResponse(List<RawBlock> blocks, int requestNonce, int messageVersion) {
         super(messageVersion);
         this.blocks = blocks;
         this.requestNonce = requestNonce;
@@ -59,18 +59,18 @@ public final class GetBlocksResponse extends NetworkEnvelope implements DirectMe
     public PB.NetworkEnvelope toProtoNetworkEnvelope() {
         return getNetworkEnvelopeBuilder()
                 .setGetBlocksResponse(PB.GetBlocksResponse.newBuilder()
-                        .addAllBlocks(blocks.stream()
-                                .map(Block::toProtoMessage)
+                        .addAllRawBlocks(blocks.stream()
+                                .map(RawBlock::toProtoMessage)
                                 .collect(Collectors.toList()))
                         .setRequestNonce(requestNonce))
                 .build();
     }
 
     public static NetworkEnvelope fromProto(PB.GetBlocksResponse proto, int messageVersion) {
-        return new GetBlocksResponse(proto.getBlocksList().isEmpty() ?
+        return new GetBlocksResponse(proto.getRawBlocksList().isEmpty() ?
                 new ArrayList<>() :
-                proto.getBlocksList().stream()
-                        .map(Block::fromProto)
+                proto.getRawBlocksList().stream()
+                        .map(RawBlock::fromProto)
                         .collect(Collectors.toList()),
                 proto.getRequestNonce(),
                 messageVersion);

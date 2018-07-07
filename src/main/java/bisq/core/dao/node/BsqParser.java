@@ -21,6 +21,7 @@ import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 
@@ -76,40 +77,39 @@ public abstract class BsqParser {
 
     protected void checkForGenesisTx(int blockHeight,
                                      List<Tx> bsqTxsInBlock,
-                                     Tx tx) {
-        if (genesisTxValidator.validate(tx, blockHeight))
-            bsqTxsInBlock.add(tx);
+                                     RawTx rawTx) {
+        genesisTxValidator.findGenesisTx(rawTx, blockHeight).ifPresent(bsqTxsInBlock::add);
     }
 
     // Performance-wise the recursion does not hurt (e.g. 5-20 ms).
     // The RPC requestTransaction is the bottleneck.
     protected void recursiveFindBsqTxs(List<Tx> bsqTxsInBlock,
-                                       List<Tx> txs,
+                                       List<RawTx> rawTxList,
                                        int blockHeight,
                                        int recursionCounter,
                                        int maxRecursions) {
         // The set of txIds of txs which are used for inputs of another tx in same block
-        Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(txs);
+        Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(rawTxList);
 
-        List<Tx> txsWithoutInputsFromSameBlock = new ArrayList<>();
-        List<Tx> txsWithInputsFromSameBlock = new ArrayList<>();
+        List<RawTx> txsWithoutInputsFromSameBlock = new ArrayList<>();
+        List<RawTx> txsWithInputsFromSameBlock = new ArrayList<>();
 
         // First we find the txs which have no intra-block inputs
         outerLoop:
-        for (Tx tx : txs) {
-            for (TxInput input : tx.getInputs()) {
+        for (RawTx rawTx : rawTxList) {
+            for (TxInput input : rawTx.getTxInputs()) {
                 if (intraBlockSpendingTxIdSet.contains(input.getConnectedTxOutputTxId())) {
                     // We have an input from one of the intra-block-transactions, so we cannot process that tx now.
                     // We add the tx for later parsing to the txsWithInputsFromSameBlock and move to the next tx.
-                    txsWithInputsFromSameBlock.add(tx);
+                    txsWithInputsFromSameBlock.add(rawTx);
                     continue outerLoop;
                 }
             }
             // If we have not found any tx input pointing to anther tx in the same block we add it to our
             // txsWithoutInputsFromSameBlock.
-            txsWithoutInputsFromSameBlock.add(tx);
+            txsWithoutInputsFromSameBlock.add(rawTx);
         }
-        checkArgument(txsWithInputsFromSameBlock.size() + txsWithoutInputsFromSameBlock.size() == txs.size(),
+        checkArgument(txsWithInputsFromSameBlock.size() + txsWithoutInputsFromSameBlock.size() == rawTxList.size(),
                 "txsWithInputsFromSameBlock.size + txsWithoutInputsFromSameBlock.size != transactions.size");
 
         // Usual values is up to 25
@@ -126,9 +126,9 @@ public abstract class BsqParser {
         }
 
         // we check if we have any valid BSQ from that tx set
-        bsqTxsInBlock.addAll(txsWithoutInputsFromSameBlock.stream()
-                .filter(tx -> txValidator.validate(blockHeight, tx))
-                .collect(Collectors.toList()));
+        txsWithoutInputsFromSameBlock.forEach(rawTx ->
+                txValidator.validate(blockHeight, rawTx).ifPresent(bsqTxsInBlock::add)
+        );
 
         log.debug("Parsing of all txsWithoutInputsFromSameBlock is done.");
 
@@ -150,10 +150,10 @@ public abstract class BsqParser {
         }
     }
 
-    private Set<String> getIntraBlockSpendingTxIdSet(List<Tx> txs) {
-        Set<String> txIdSet = txs.stream().map(Tx::getId).collect(Collectors.toSet());
+    private Set<String> getIntraBlockSpendingTxIdSet(List<RawTx> rawTxList) {
+        Set<String> txIdSet = rawTxList.stream().map(RawTx::getId).collect(Collectors.toSet());
         Set<String> intraBlockSpendingTxIdSet = new HashSet<>();
-        txs.forEach(tx -> tx.getInputs().stream()
+        rawTxList.forEach(tx -> tx.getTxInputs().stream()
                 .filter(input -> txIdSet.contains(input.getConnectedTxOutputTxId()))
                 .forEach(input -> intraBlockSpendingTxIdSet.add(input.getConnectedTxOutputTxId())));
         return intraBlockSpendingTxIdSet;

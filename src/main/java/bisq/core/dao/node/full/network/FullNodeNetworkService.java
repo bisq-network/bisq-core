@@ -21,6 +21,7 @@ import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -96,7 +97,8 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     public void publishNewBlock(Block block) {
         log.info("Publish new block at height={} and block hash={}", block.getHeight(), block.getHash());
-        final NewBlockBroadcastMessage newBlockBroadcastMessage = new NewBlockBroadcastMessage(block);
+        RawBlock rawBlock = RawBlock.fromBlock(block);
+        final NewBlockBroadcastMessage newBlockBroadcastMessage = new NewBlockBroadcastMessage(rawBlock);
         broadcaster.broadcast(newBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
     }
 

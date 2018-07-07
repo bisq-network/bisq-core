@@ -65,7 +65,7 @@ public class IssuanceService {
                     if (optionalTx.isPresent()) {
                         Tx tx = optionalTx.get();
                         // We use key from first input
-                        TxInput txInput = tx.getInputs().get(0);
+                        TxInput txInput = tx.getTxInputs().get(0);
                         String pubKey = txInput.getPubKey();
                         Issuance issuance = new Issuance(tx.getId(), chainHeight, amount, pubKey);
                         stateService.addIssuance(issuance);

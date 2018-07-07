@@ -19,10 +19,10 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.node.btcd.PubKeyScript;
-import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.RawBlock;
+import bisq.core.dao.state.blockchain.RawTx;
+import bisq.core.dao.state.blockchain.RawTxOutput;
 import bisq.core.dao.state.blockchain.TxInput;
-import bisq.core.dao.state.blockchain.TxOutput;
 
 import bisq.common.UserThread;
 import bisq.common.handlers.ResultHandler;
@@ -34,7 +34,6 @@ import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
 import com.neemre.btcdcli4j.core.client.BtcdClientImpl;
-import com.neemre.btcdcli4j.core.domain.RawBlock;
 import com.neemre.btcdcli4j.core.domain.RawTransaction;
 import com.neemre.btcdcli4j.core.domain.Transaction;
 import com.neemre.btcdcli4j.core.domain.enums.ScriptTypes;
@@ -156,18 +155,18 @@ public class RpcService {
         });
     }
 
-    void addNewBtcBlockHandler(Consumer<Block> btcBlockHandler,
+    void addNewBtcBlockHandler(Consumer<RawBlock> btcBlockHandler,
                                Consumer<Throwable> errorHandler) {
         daemon.addBlockListener(new BlockListener() {
             @Override
-            public void blockDetected(RawBlock rawBlock) {
+            public void blockDetected(com.neemre.btcdcli4j.core.domain.RawBlock rawBlock) {
                 try {
                     log.info("New block received: height={}, id={}", rawBlock.getHeight(), rawBlock.getHash());
-                    List<Tx> txList = rawBlock.getTx().stream()
+                    List<RawTx> txList = rawBlock.getTx().stream()
                             .map(e -> getTxFromRawTransaction(e, rawBlock))
                             .collect(Collectors.toList());
                     UserThread.execute(() -> {
-                        btcBlockHandler.accept(new Block(rawBlock.getHeight(),
+                        btcBlockHandler.accept(new RawBlock(rawBlock.getHeight(),
                                 rawBlock.getTime(),
                                 rawBlock.getHash(),
                                 rawBlock.getPreviousBlockHash(),
@@ -194,27 +193,27 @@ public class RpcService {
     }
 
     void requestBtcBlock(int blockHeight,
-                         Consumer<Block> resultHandler,
+                         Consumer<RawBlock> resultHandler,
                          Consumer<Throwable> errorHandler) {
-        ListenableFuture<Block> future = executor.submit(() -> {
+        ListenableFuture<RawBlock> future = executor.submit(() -> {
             long startTs = System.currentTimeMillis();
             String blockHash = client.getBlockHash(blockHeight);
-            RawBlock rawBlock = client.getBlock(blockHash, 2);
-            List<Tx> txList = rawBlock.getTx().stream()
-                    .map(e -> getTxFromRawTransaction(e, rawBlock))
+            com.neemre.btcdcli4j.core.domain.RawBlock rawBtcBlock = client.getBlock(blockHash, 2);
+            List<RawTx> txList = rawBtcBlock.getTx().stream()
+                    .map(e -> getTxFromRawTransaction(e, rawBtcBlock))
                     .collect(Collectors.toList());
             log.info("requestBtcBlock with all txs took {} ms at blockHeight {}; txList.size={}",
                     System.currentTimeMillis() - startTs, blockHeight, txList.size());
-            return new Block(rawBlock.getHeight(),
-                    rawBlock.getTime(),
-                    rawBlock.getHash(),
-                    rawBlock.getPreviousBlockHash(),
+            return new RawBlock(rawBtcBlock.getHeight(),
+                    rawBtcBlock.getTime(),
+                    rawBtcBlock.getHash(),
+                    rawBtcBlock.getPreviousBlockHash(),
                     ImmutableList.copyOf(txList));
         });
 
-        Futures.addCallback(future, new FutureCallback<Block>() {
+        Futures.addCallback(future, new FutureCallback<RawBlock>() {
             @Override
-            public void onSuccess(Block block) {
+            public void onSuccess(RawBlock block) {
                 UserThread.execute(() -> resultHandler.accept(block));
             }
 
@@ -230,12 +229,12 @@ public class RpcService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Tx getTxFromRawTransaction(RawTransaction rawTransaction, RawBlock rawBlock) {
-        String txId = rawTransaction.getTxId();
-        long blockTime = rawBlock.getTime() * 1000; // We convert block time to ms
-        int blockHeight = rawBlock.getHeight();
-        String blockHash = rawBlock.getHash();
-        final List<TxInput> txInputs = rawTransaction.getVIn()
+    private RawTx getTxFromRawTransaction(RawTransaction rawBtcTx, com.neemre.btcdcli4j.core.domain.RawBlock rawBtcBlock) {
+        String txId = rawBtcTx.getTxId();
+        long blockTime = rawBtcBlock.getTime() * 1000; // We convert block time to ms
+        int blockHeight = rawBtcBlock.getHeight();
+        String blockHash = rawBtcBlock.getHash();
+        final List<TxInput> txInputs = rawBtcTx.getVIn()
                 .stream()
                 .filter(rawInput -> rawInput != null && rawInput.getVOut() != null && rawInput.getTxId() != null)
                 .map(rawInput -> {
@@ -251,18 +250,18 @@ public class RpcService {
                         pubKeyAsHex = null;
                         log.warn("pubKeyAsHex is not set as we received a not supported sigScript " +
                                         "(segWit or patToPubKey tx). asm={},  txId={}",
-                                rawInput.getScriptSig().getAsm(), rawTransaction.getTxId());
+                                rawInput.getScriptSig().getAsm(), rawBtcTx.getTxId());
                     }
                     return new TxInput(rawInput.getTxId(), rawInput.getVOut(), pubKeyAsHex);
                 })
                 .collect(Collectors.toList());
 
-        final List<TxOutput> txOutputs = rawTransaction.getVOut()
+        final List<RawTxOutput> txOutputs = rawBtcTx.getVOut()
                 .stream()
                 .filter(e -> e != null && e.getN() != null && e.getValue() != null && e.getScriptPubKey() != null)
-                .map(rawOutput -> {
+                .map(rawBtcTxOutput -> {
                             byte[] opReturnData = null;
-                            final com.neemre.btcdcli4j.core.domain.PubKeyScript scriptPubKey = rawOutput.getScriptPubKey();
+                    final com.neemre.btcdcli4j.core.domain.PubKeyScript scriptPubKey = rawBtcTxOutput.getScriptPubKey();
                             if (ScriptTypes.NULL_DATA.equals(scriptPubKey.getType()) && scriptPubKey.getAsm() != null) {
                                 String[] chunks = scriptPubKey.getAsm().split(" ");
                                 // We get on testnet a lot of "OP_RETURN 0" data, so we filter those away
@@ -281,9 +280,9 @@ public class RpcService {
                             String address = scriptPubKey.getAddresses() != null &&
                                     scriptPubKey.getAddresses().size() == 1 ? scriptPubKey.getAddresses().get(0) : null;
                             final PubKeyScript pubKeyScript = dumpBlockchainData ? new PubKeyScript(scriptPubKey) : null;
-                            return new TxOutput(rawOutput.getN(),
-                                    rawOutput.getValue().movePointRight(8).longValue(),
-                                    rawTransaction.getTxId(),
+                    return new RawTxOutput(rawBtcTxOutput.getN(),
+                            rawBtcTxOutput.getValue().movePointRight(8).longValue(),
+                            rawBtcTx.getTxId(),
                                     pubKeyScript,
                                     address,
                                     opReturnData,
@@ -292,7 +291,7 @@ public class RpcService {
                 )
                 .collect(Collectors.toList());
 
-        return new Tx(txId,
+        return new RawTx(txId,
                 blockHeight,
                 blockHash,
                 blockTime,

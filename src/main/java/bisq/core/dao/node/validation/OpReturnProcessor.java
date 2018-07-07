@@ -78,7 +78,7 @@ public class OpReturnProcessor {
     public void validate(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
         if (txOutput.getValue() == 0 &&
-                index == tx.getOutputs().size() - 1 &&
+                index == tx.getTxOutputs().size() - 1 &&
                 opReturnData.length >= 1) {
             final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
             if (optionalOpReturnType.isPresent()) {
@@ -200,7 +200,7 @@ public class OpReturnProcessor {
         if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             stateService.setTxOutputType(txOutput, TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
             stateService.setTxOutputType(lockupCandidate, TxOutputType.LOCKUP);
-            parsingModel.getMutableTx().setLockTime(lockTime);
+            parsingModel.getTx().setLockTime(lockTime);
             parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
         } else {
             log.info("We expected a lockup op_return data but it did not " +

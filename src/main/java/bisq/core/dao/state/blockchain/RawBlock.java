@@ -31,20 +31,29 @@ import lombok.Value;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * A block derived from the BTC blockchain and filtered for BSQ relevant transactions. The transactions are already
- * verified and contain BSQ specific data.
- * We don't store the rawBlock here as we don't want to persist all the tx data twice (RawTx and Tx list).
- * A common super class should be used for reducing code duplications of the fields.
+ * A block derived from the BTC blockchain and filtered for BSQ relevant transactions, though the transactions are not
+ * verified at that stage. That block is passed to lite nodes over the P2P network. The validation is done by the lite
+ * nodes themselves but the transactions are already filtered for BSQ only transactions to keep bandwidth requirements
+ * low.
  */
 @Immutable
 @Value
-public class Block implements PersistablePayload {
+public class RawBlock implements PersistablePayload {
 
-    public static Block clone(Block block) {
-        final ImmutableList<Tx> txs = ImmutableList.copyOf(block.getTxs().stream()
-                .map(Tx::clone)
+    public static RawBlock clone(RawBlock block) {
+        final ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getRawTxs().stream()
+                .map(RawTx::clone)
                 .collect(Collectors.toList()));
-        return new Block(block.getHeight(),
+        return new RawBlock(block.getHeight(),
+                block.getTime(),
+                block.getHash(),
+                block.getPreviousBlockHash(),
+                txs);
+    }
+
+    public static RawBlock fromBlock(Block block) {
+        ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getTxs().stream().map(Tx::getRawTx).collect(Collectors.toList()));
+        return new RawBlock(block.getHeight(),
                 block.getTime(),
                 block.getHash(),
                 block.getPreviousBlockHash(),
@@ -55,14 +64,14 @@ public class Block implements PersistablePayload {
     private final long time; // in seconds!
     private final String hash;
     private final String previousBlockHash;
-    private final ImmutableList<Tx> txs;
+    private final ImmutableList<RawTx> rawTxs;
 
-    public Block(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
+    public RawBlock(int height, long time, String hash, String previousBlockHash, ImmutableList<RawTx> rawTxs) {
         this.height = height;
         this.time = time;
         this.hash = hash;
         this.previousBlockHash = previousBlockHash;
-        this.txs = txs;
+        this.rawTxs = rawTxs;
     }
 
 
@@ -70,27 +79,27 @@ public class Block implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.Block toProtoMessage() {
-        return PB.Block.newBuilder()
+    public PB.RawBlock toProtoMessage() {
+        return PB.RawBlock.newBuilder()
                 .setHeight(height)
                 .setTime(time)
                 .setHash(hash)
                 .setPreviousBlockHash(previousBlockHash)
-                .addAllTxs(txs.stream()
-                        .map(Tx::toProtoMessage)
+                .addAllRawTxs(rawTxs.stream()
+                        .map(RawTx::toProtoMessage)
                         .collect(Collectors.toList()))
                 .build();
     }
 
-    public static Block fromProto(PB.Block proto) {
-        return new Block(proto.getHeight(),
+    public static RawBlock fromProto(PB.RawBlock proto) {
+        return new RawBlock(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
-                proto.getTxsList().isEmpty() ?
+                proto.getRawTxsList().isEmpty() ?
                         ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getTxsList().stream()
-                                .map(Tx::fromProto)
+                        ImmutableList.copyOf(proto.getRawTxsList().stream()
+                                .map(RawTx::fromProto)
                                 .collect(Collectors.toList())));
     }
 
@@ -101,12 +110,12 @@ public class Block implements PersistablePayload {
 
     @Override
     public String toString() {
-        return "Block{" +
+        return "RawBlock{" +
                 "\n     height=" + height +
                 ",\n     time=" + time +
                 ",\n     hash='" + hash + '\'' +
                 ",\n     previousBlockHash='" + previousBlockHash + '\'' +
-                ",\n     txs=" + txs +
+                ",\n     rawTxs=" + rawTxs +
                 "\n}";
     }
 }

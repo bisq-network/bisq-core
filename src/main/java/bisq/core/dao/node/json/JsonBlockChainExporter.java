@@ -131,7 +131,7 @@ public class JsonBlockChainExporter {
                         JsonTxType txType = optionalTxType.get() != TxType.UNDEFINED_TX_TYPE ?
                                 JsonTxType.valueOf(optionalTxType.get().name()) : null;
                         List<JsonTxOutput> outputs = new ArrayList<>();
-                        tx.getOutputs().forEach(txOutput -> {
+                        tx.getTxOutputs().forEach(txOutput -> {
                             final Optional<SpentInfo> optionalSpentInfo = stateService.getSpentInfo(txOutput);
                             final boolean isBsqOutput = stateService.isBsqTxOutputType(txOutput);
                             final PubKeyScript pubKeyScript = txOutput.getPubKeyScript();
@@ -155,7 +155,7 @@ public class JsonBlockChainExporter {
                         });
 
 
-                        List<JsonTxInput> inputs = tx.getInputs().stream()
+                        List<JsonTxInput> inputs = tx.getTxInputs().stream()
                                 .map(txInput -> {
                                     Optional<TxOutput> optionalTxOutput = stateService.getConnectedTxOutput(txInput);
                                     if (optionalTxOutput.isPresent()) {

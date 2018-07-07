@@ -19,10 +19,9 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.blockchain.MutableTx;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.voting.proposal.param.ParamChangeMap;
@@ -106,11 +105,11 @@ public class State implements PersistableEnvelope {
     @Getter
     private final LinkedList<Cycle> cycles;
     @Getter
-    private final Map<String, MutableTx> mutableTxMap; // key is txId
+    private final Map<String, Tx> mutableTxMap; // key is txId // TODO remove
     @Getter
     private final Map<String, Issuance> issuanceMap; // key is txId
     @Getter
-    private final Map<TxOutput.Key, SpentInfo> spentInfoMap;
+    private final Map<TxOutputKey, SpentInfo> spentInfoMap;
 
     // TODO might get refactored later when working on params
     private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;
@@ -145,9 +144,9 @@ public class State implements PersistableEnvelope {
                   int chainHeight,
                   LinkedList<Block> blocks,
                   LinkedList<Cycle> cycles,
-                  Map<String, MutableTx> mutableTxMap,
+                  Map<String, Tx> mutableTxMap,
                   Map<String, Issuance> issuanceMap,
-                  Map<TxOutput.Key, SpentInfo> spentInfoMap,
+                  Map<TxOutputKey, SpentInfo> spentInfoMap,
                   Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
@@ -172,9 +171,9 @@ public class State implements PersistableEnvelope {
                 .setChainHeight(chainHeight)
                 .addAllBlocks(blocks.stream().map(Block::toProtoMessage).collect(Collectors.toList()))
                 .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
-                .putAllMutableTxMap(mutableTxMap.entrySet().stream()
+                .putAllTxMap(mutableTxMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> {
-                            Tx tx = e.getValue().getTx();
+                            Tx tx = e.getValue();
                             return tx.getId();
                         }, e -> e.getValue().toProtoMessage())))
                 .putAllIssuanceMap(issuanceMap.entrySet().stream()
@@ -192,12 +191,12 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toCollection(LinkedList::new));
         final LinkedList<Cycle> cycles = proto.getCyclesList().stream()
                 .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
-        Map<String, MutableTx> mutableTxMap = proto.getMutableTxMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> MutableTx.fromProto(e.getValue())));
+        Map<String, Tx> mutableTxMap = proto.getTxMapMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> Tx.fromProto(e.getValue())));
         Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
-        Map<TxOutput.Key, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> TxOutput.Key.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
+        Map<TxOutputKey, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
         Map<Integer, ParamChangeMap> paramChangeListMap = proto.getParamChangeByBlockHeightMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> ParamChangeMap.fromProto(e.getValue())));
         return new State(proto.getGenesisTxId(),
@@ -224,11 +223,11 @@ public class State implements PersistableEnvelope {
         blocks.add(block);
     }
 
-    public void putMutableTx(String txId, MutableTx mutableTx) {
-        mutableTxMap.put(txId, mutableTx);
+    public void putMutableTx(String txId, Tx tx) {
+        mutableTxMap.put(txId, tx);
     }
 
-    void putSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
+    void putSpentInfo(TxOutputKey txOutputKey, SpentInfo spentInfo) {
         spentInfoMap.put(txOutputKey, spentInfo);
     }
 

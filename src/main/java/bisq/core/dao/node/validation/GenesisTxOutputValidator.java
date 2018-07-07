@@ -37,8 +37,9 @@ public class GenesisTxOutputValidator extends TxOutputProcessor {
     }
 
     void validate(TxOutput txOutput, ParsingModel parsingModel) {
-        if (txOutput.getValue() <= parsingModel.getAvailableInputValue()) {
-            parsingModel.subtractFromInputValue(txOutput.getValue());
+        long value = txOutput.getRawTxOutput().getValue();
+        if (value <= parsingModel.getAvailableInputValue()) {
+            parsingModel.subtractFromInputValue(value);
             applyStateChangeForBsqOutput(txOutput, TxOutputType.GENESIS_OUTPUT);
         } else {
             // If we get one output which is not funded sufficiently by the available

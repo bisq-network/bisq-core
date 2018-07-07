@@ -15,24 +15,27 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.validation;
+package bisq.core.dao.state.blockchain;
 
-import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.blockchain.RawBlock;
-
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
-public class InvalidBlockException extends Exception {
+public class TxOutputKey {
+    private final String txId;
+    private final int index;
 
-    private final RawBlock receivedBlock;
-    private final Block ownBlock;
+    public TxOutputKey(String txId, int index) {
+        this.txId = txId;
+        this.index = index;
+    }
 
-    public InvalidBlockException(String msg, RawBlock receivedBlock, Block ownBlock) {
-        super(msg);
-        this.receivedBlock = receivedBlock;
-        this.ownBlock = ownBlock;
+    @Override
+    public String toString() {
+        return txId + ":" + index;
+    }
+
+    public static TxOutputKey getKeyFromString(String keyAsString) {
+        final String[] tokens = keyAsString.split(":");
+        return new TxOutputKey(tokens[0], Integer.valueOf(tokens[1]));
     }
 }

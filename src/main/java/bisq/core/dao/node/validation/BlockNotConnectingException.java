@@ -17,16 +17,16 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import lombok.Getter;
 
 @Getter
 public class BlockNotConnectingException extends Exception {
 
-    private Block block;
+    private RawBlock rawBlock;
 
-    public BlockNotConnectingException(Block block) {
-        this.block = block;
+    public BlockNotConnectingException(RawBlock rawBlock) {
+        this.rawBlock = rawBlock;
     }
 }

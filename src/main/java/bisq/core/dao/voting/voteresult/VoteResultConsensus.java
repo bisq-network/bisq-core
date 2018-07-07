@@ -155,7 +155,7 @@ public class VoteResultConsensus {
             throws VoteResultException {
         try {
             // We use the stake output of the blind vote tx as first input
-            final TxInput stakeIxInput = voteRevealTx.getInputs().get(0);
+            final TxInput stakeIxInput = voteRevealTx.getTxInputs().get(0);
             Optional<TxOutput> optionalBlindVoteStakeOutput = stateService.getConnectedTxOutput(stakeIxInput);
             checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must not be present");
             final TxOutput blindVoteStakeOutput = optionalBlindVoteStakeOutput.get();

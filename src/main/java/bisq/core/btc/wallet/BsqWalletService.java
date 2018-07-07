@@ -312,7 +312,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                         // We cannot make that findTx call outside of the loop as the parent tx can change at each iteration
                         Optional<Tx> txOptional = stateService.getTx(parentTransaction.getHash().toString());
                         if (txOptional.isPresent()) {
-                            TxOutput txOutput = txOptional.get().getOutputs().get(connectedOutput.getIndex());
+                            TxOutput txOutput = txOptional.get().getTxOutputs().get(connectedOutput.getIndex());
                             if (stateService.isBsqTxOutputType(txOutput)) {
                                 //TODO check why values are not the same
                                 if (txOutput.getValue() != connectedOutput.getValue().value)
@@ -351,7 +351,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 if (isConfirmed) {
                     if (txOptional.isPresent()) {
                         // The index of the BSQ tx outputs are the same like the bitcoinj tx outputs
-                        TxOutput txOutput = txOptional.get().getOutputs().get(i);
+                        TxOutput txOutput = txOptional.get().getTxOutputs().get(i);
                         if (stateService.isBsqTxOutputType(txOutput)) {
                             //TODO check why values are not the same
                             if (txOutput.getValue() != output.getValue().value) {
@@ -386,7 +386,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                         TransactionConfidence.ConfidenceType.BUILDING;
         if (output.isMineOrWatched(wallet) && isConfirmed && txOptional.isPresent()) {
             // The index of the BSQ tx outputs are the same as the bitcoinj tx outputs
-            TxOutput txOutput = txOptional.get().getOutputs().get(0);
+            TxOutput txOutput = txOptional.get().getTxOutputs().get(0);
             if (stateService.isLockupOutput(txOutput)) {
                 //TODO check why values are not the same
                 if (txOutput.getValue() != output.getValue().value) {

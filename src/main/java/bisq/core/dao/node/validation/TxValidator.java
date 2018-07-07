@@ -18,8 +18,8 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.MutableTx;
 import bisq.core.dao.state.blockchain.OpReturnType;
+import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -64,24 +64,24 @@ public class TxValidator {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public boolean validate(int blockHeight, Tx tx) {
-        MutableTx mutableTx = new MutableTx(tx);
+    public Optional<Tx> validate(int blockHeight, RawTx rawTx) {
+        Tx tx = new Tx(rawTx);
         ParsingModel parsingModel = new ParsingModel();
 
-        // We could pass mutableTx also to the sub validators but as long we have not refactored the validators to pure
+        // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
-        parsingModel.setMutableTx(mutableTx);
+        parsingModel.setTx(tx);
 
-        for (int inputIndex = 0; inputIndex < tx.getInputs().size(); inputIndex++) {
-            TxInput input = tx.getInputs().get(inputIndex);
+        for (int inputIndex = 0; inputIndex < tx.getTxInputs().size(); inputIndex++) {
+            TxInput input = tx.getTxInputs().get(inputIndex);
             txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel, stateService);
         }
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            stateService.addMutableTx(mutableTx);
+            stateService.addTx(tx);
 
-            final List<TxOutput> outputs = tx.getOutputs();
+            final List<TxOutput> outputs = tx.getTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
             // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
@@ -100,7 +100,7 @@ public class TxValidator {
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
-            long numOpReturnOutputs = tx.getOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
+            long numOpReturnOutputs = tx.getTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
@@ -110,28 +110,31 @@ public class TxValidator {
                     stateService.setTxOutputType(issuanceCandidate, TxOutputType.BTC_OUTPUT);
                 }
 
-                boolean isAnyTxOutputTypeUndefined = tx.getOutputs().stream()
+                boolean isAnyTxOutputTypeUndefined = tx.getTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == stateService.getTxOutputType(txOutput));
                 if (!isAnyTxOutputTypeUndefined) {
                     final TxType txType = getTxType(tx, parsingModel);
-                    mutableTx.setTxType(txType);
+                    tx.setTxType(txType);
                     final long burntFee = parsingModel.getAvailableInputValue();
                     if (burntFee > 0)
-                        mutableTx.setBurntFee(burntFee);
+                        tx.setBurntFee(burntFee);
                 } else {
                     String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
                 }
             } else {
                 // We don't consider a tx with multiple OpReturn outputs valid.
-                mutableTx.setTxType(TxType.INVALID);
+                tx.setTxType(TxType.INVALID);
                 String msg = "Invalid tx. We have multiple opReturn outputs. tx=" + tx;
                 log.warn(msg);
             }
         }
 
         // TODO || parsingModel.getBurntBondValue() > 0; shoud not be necessy
-        return bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0;
+        if (bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0)
+            return Optional.of(tx);
+        else
+            return Optional.empty();
     }
 
     // TODO add tests
@@ -164,8 +167,8 @@ public class TxValidator {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
-                checkArgument(tx.getOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
-                final TxOutput issuanceTxOutput = tx.getOutputs().get(1);
+                checkArgument(tx.getTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
+                final TxOutput issuanceTxOutput = tx.getTxOutputs().get(1);
                 checkArgument(stateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;

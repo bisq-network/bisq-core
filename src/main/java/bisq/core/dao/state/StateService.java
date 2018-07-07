@@ -18,12 +18,11 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.blockchain.MutableTx;
-import bisq.core.dao.state.blockchain.MutableTxOutput;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Issuance;
@@ -253,48 +252,45 @@ public class StateService {
 
     public Optional<TxOutput> getConnectedTxOutput(TxInput txInput) {
         return getTx(txInput.getConnectedTxOutputTxId())
-                .map(tx -> tx.getOutputs().get(txInput.getConnectedTxOutputIndex()));
+                .map(tx -> tx.getTxOutputs().get(txInput.getConnectedTxOutputIndex()));
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // MutableTx
+    // Tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // We must add the tx before accessing any other fields inside a MutableTx as the immutable tx will be added to the
+    // We must add the tx before accessing any other fields inside a Tx as the immutable tx will be added to the
     // block only after parsing of the tx is complete and if it was a BSQ tx.
-    public void addMutableTx(MutableTx mutableTx) {
-        state.putMutableTx(mutableTx.getTx().getId(), mutableTx);
+    public void addTx(Tx tx) {
+        state.putMutableTx(tx.getRawTx().getId(), tx);
     }
 
-    private Optional<MutableTx> getOptionalMutableTx(String txId) {
-        return Optional.ofNullable(state.getMutableTxMap().get(txId));
-    }
 
-    private Stream<MutableTx> getMutableTxMapStream() {
+    private Stream<Tx> getTxMapStream() {
         return state.getMutableTxMap().values().stream();
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // TxType (from MutableTx)
+    // TxType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Optional<TxType> getOptionalTxType(String txId) {
-        return getOptionalMutableTx(txId).map(MutableTx::getTxType);
+        return getTx(txId).map(Tx::getTxType);
     }
 
     public TxType getTxType(String txId) {
-        return getOptionalMutableTx(txId).map(MutableTx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
+        return getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // BurntFee (from MutableTx)
+    // BurntFee
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public long getBurntFee(String txId) {
-        return getOptionalMutableTx(txId).map(MutableTx::getBurntFee).orElse(0L);
+        return getTx(txId).map(Tx::getBurntFee).orElse(0L);
     }
 
     public boolean hasTxBurntFee(String txId) {
@@ -302,63 +298,56 @@ public class StateService {
     }
 
     public long getTotalBurntFee() {
-        return getMutableTxMapStream()
-                .mapToLong(MutableTx::getBurntFee)
+        return getTxMapStream()
+                .mapToLong(Tx::getBurntFee)
                 .sum();
     }
 
     public Set<Tx> getBurntFeeTxs() {
-        return getMutableTxMapStream()
-                .filter(mutableTx -> mutableTx.getBurntFee() > 0)
-                .map(MutableTx::getTx)
+        return getTxMapStream()
+                .filter(tx -> tx.getBurntFee() > 0)
                 .collect(Collectors.toSet());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // MutableTxOutput (from MutableTx)
+    // TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Optional<MutableTxOutput> getOptionalMutableTxOutput(TxOutput txOutput) {
-        Optional<Map<Integer, MutableTxOutput>> optional = getOptionalMutableTx(txOutput.getTxId()).map(MutableTx::getMutableTxOutputMap);
-        if (optional.isPresent()) {
-            Map<Integer, MutableTxOutput> mutableTxOutputMap = optional.get();
-            mutableTxOutputMap.putIfAbsent(txOutput.getIndex(), new MutableTxOutput(txOutput));
-            return Optional.of(mutableTxOutputMap.get(txOutput.getIndex()));
-        } else {
-            return Optional.empty();
-        }
+    //TODO remove
+    private Optional<TxOutput> getOptionalTxOutput(TxOutput txOutput) {
+        return Optional.of(txOutput);
     }
 
-    private Stream<MutableTxOutput> getMutableTxOutputStream() {
-        return getMutableTxMapStream()
-                .flatMap(mutableTx -> mutableTx.getMutableTxOutputMap().values().stream());
+    private Stream<TxOutput> getTxOutputStream() {
+        return getTxMapStream()
+                .flatMap(tx -> tx.getTxOutputs().stream());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // UnspentTxOutput (from MutableTxOutput)
+    // UnspentTxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void addUnspentTxOutput(TxOutput txOutput) {
-        getOptionalMutableTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(true));
+        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(true));
     }
 
     public void removeUnspentTxOutput(TxOutput txOutput) {
-        getOptionalMutableTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(false));
+        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(false));
     }
 
     public boolean isUnspent(TxOutput txOutput) {
-        return getOptionalMutableTxOutput(txOutput).map(MutableTxOutput::isUnspent).orElse(false);
+        return getOptionalTxOutput(txOutput).map(TxOutput::isUnspent).orElse(false);
     }
 
     public boolean isTxOutputSpendable(String txId, int index) {
-        TxOutput.Key key = new TxOutput.Key(txId, index);
+        TxOutputKey key = new TxOutputKey(txId, index);
         if (!getUnspentMutableTxOutputMap().containsKey(key))
             return false;
 
-        MutableTxOutput mutableTxOutput = getUnspentMutableTxOutputMap().get(key);
-        TxOutputType txOutputType = mutableTxOutput.getTxOutputType();
+        TxOutput txOutput = getUnspentMutableTxOutputMap().get(key);
+        TxOutputType txOutputType = txOutput.getTxOutputType();
         if (txOutputType == null)
             return false;
 
@@ -383,7 +372,7 @@ public class StateService {
             case LOCKUP_OP_RETURN_OUTPUT:
                 return true;
             case UNLOCK:
-                Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(mutableTxOutput.getTxOutput().getTxId());
+                Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput.getRawTxOutput().getTxId());
                 //TODO SQ: is getChainHeight() > opUnlockBlockHeight.get() correct?
                 return opUnlockBlockHeight.isPresent() && getChainHeight() > opUnlockBlockHeight.get();
             case INVALID_OUTPUT:
@@ -397,45 +386,43 @@ public class StateService {
         return new HashSet<>(getUnspentTxOutputMap().values());
     }
 
-    public Optional<TxOutput> getUnspentTxOutput(TxOutput.Key key) {
+    public Optional<TxOutput> getUnspentTxOutput(TxOutputKey key) {
         return Optional.ofNullable(getUnspentTxOutputMap().getOrDefault(key, null));
     }
 
-    private Map<TxOutput.Key, TxOutput> getUnspentTxOutputMap() {
-        return getMutableTxOutputStream()
-                .filter(MutableTxOutput::isUnspent)
-                .map(MutableTxOutput::getTxOutput)
+    private Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
+        return getTxOutputStream()
+                .filter(TxOutput::isUnspent)
                 .collect(Collectors.toMap(TxOutput::getKey, v -> v));
     }
 
-    private Map<TxOutput.Key, MutableTxOutput> getUnspentMutableTxOutputMap() {
-        return getMutableTxOutputStream()
-                .filter(MutableTxOutput::isUnspent)
-                .collect(Collectors.toMap(mutableTxOutput -> mutableTxOutput.getTxOutput().getKey(),
+    private Map<TxOutputKey, TxOutput> getUnspentMutableTxOutputMap() {
+        return getTxOutputStream()
+                .filter(TxOutput::isUnspent)
+                .collect(Collectors.toMap(TxOutput::getKey,
                         mutableTxOutput -> mutableTxOutput));
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // TxOutputType(from MutableTxOutput)
+    // TxOutputType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        getOptionalMutableTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setTxOutputType(txOutputType));
+        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setTxOutputType(txOutputType));
     }
 
     /**
      * @param txOutput The txOutput we want to look up.
-     * @return the TxOutputType of MutableTxOutput entry. Return TxOutputType.UNDEFINED if not set.
+     * @return the TxOutputType of TxOutput entry. Return TxOutputType.UNDEFINED if not set.
      */
     public TxOutputType getTxOutputType(TxOutput txOutput) {
-        return getOptionalMutableTxOutput(txOutput).map(MutableTxOutput::getTxOutputType).orElse(TxOutputType.UNDEFINED);
+        return getOptionalTxOutput(txOutput).map(TxOutput::getTxOutputType).orElse(TxOutputType.UNDEFINED);
     }
 
     private Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
-        return getMutableTxOutputStream()
-                .filter(mutableTxOutput -> mutableTxOutput.getTxOutputType() == txOutputType)
-                .map(MutableTxOutput::getTxOutput)
+        return getTxOutputStream()
+                .filter(txOutput -> txOutput.getTxOutputType() == txOutputType)
                 .collect(Collectors.toSet());
     }
 
@@ -471,7 +458,7 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // TxOutputType(from MutableTxOutput) - Voting
+    // TxOutputType - Voting
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
@@ -484,7 +471,7 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // TxOutputType(from MutableTxOutput) - Issuance
+    // TxOutputType - Issuance
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Set<TxOutput> getIssuanceCandidateTxOutputs() {
@@ -546,7 +533,7 @@ public class StateService {
 
     public Optional<TxOutput> getLockedTxOutput(String txId) {
         Optional<Tx> optionalTx = getTx(txId);
-        return optionalTx.isPresent() ? optionalTx.get().getOutputs().stream()
+        return optionalTx.isPresent() ? optionalTx.get().getTxOutputs().stream()
                 .filter(this::isLockupOutput)
                 .findFirst() :
                 Optional.empty();
@@ -559,37 +546,36 @@ public class StateService {
 
     // LockTime
     public Optional<Integer> getLockTime(String txId) {
-        int lockTime = getOptionalMutableTx(txId).map(MutableTx::getLockTime).orElse(-1);
+        int lockTime = getTx(txId).map(Tx::getLockTime).orElse(-1);
         return lockTime < 0 ? Optional.empty() : Optional.of(lockTime);
     }
 
     //TODO sq: is that needed?
     public void removeLockTimeTxOutput(String txId) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(-1));
+        getTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(-1));
     }
 
     // UnlockBlockHeight
     public Optional<Integer> getUnlockBlockHeight(String txId) {
-        int unLockBlockHeight = getOptionalMutableTx(txId).map(MutableTx::getUnlockBlockHeight).orElse(0);
+        int unLockBlockHeight = getTx(txId).map(Tx::getUnlockBlockHeight).orElse(0);
         return unLockBlockHeight <= 0 ? Optional.empty() : Optional.of(unLockBlockHeight);
     }
 
     //TODO sq: is that needed?
     public void removeUnlockBlockHeightTxOutput(String txId) {
-        getOptionalMutableTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(0));
+        getTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(0));
     }
 
     public Set<TxOutput> getUnlockingTxOutputs() {
-        return getMutableTxOutputStream()
-                .filter(mutableTxOutput -> mutableTxOutput.getTxOutputType() == TxOutputType.UNLOCK)
-                .filter(mutableTxOutput -> {
+        return getTxOutputStream()
+                .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.UNLOCK)
+                .filter(txOutput -> {
                     //TODO duplicate code logic to isTxOutputSpendable
                     //TODO use comparison to consensus?
-                    return getUnlockBlockHeight(mutableTxOutput.getTxOutput().getTxId())
+                    return getUnlockBlockHeight(txOutput.getRawTxOutput().getTxId())
                             .filter(unLockBlockHeight -> getChainHeight() <= unLockBlockHeight)
                             .isPresent();
                 })
-                .map(MutableTxOutput::getTxOutput)
                 .collect(Collectors.toSet());
     }
 
@@ -621,7 +607,7 @@ public class StateService {
     // SpentInfo
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setSpentInfo(TxOutput.Key txOutputKey, SpentInfo spentInfo) {
+    public void setSpentInfo(TxOutputKey txOutputKey, SpentInfo spentInfo) {
         state.putSpentInfo(txOutputKey, spentInfo);
     }
 

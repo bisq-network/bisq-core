@@ -18,11 +18,13 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.MutableTx;
+import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxType;
 
 import javax.inject.Inject;
+
+import java.util.Optional;
 
 /**
  * Verifies if a given transaction is a BSQ genesis transaction.
@@ -39,19 +41,21 @@ public class GenesisTxValidator {
         this.genesisTxOutputValidator = genesisTxOutputValidator;
     }
 
-    public boolean validate(Tx tx, int blockHeight) {
+    public Optional<Tx> findGenesisTx(RawTx rawTx, int blockHeight) {
         boolean isGenesis = blockHeight == stateService.getGenesisBlockHeight() &&
-                tx.getId().equals(stateService.getGenesisTxId());
+                rawTx.getId().equals(stateService.getGenesisTxId());
+        Tx tx = null;
         if (isGenesis) {
-            MutableTx mutableTx = new MutableTx(tx);
-            mutableTx.setTxType(TxType.GENESIS);
-            stateService.addMutableTx(mutableTx);
+            tx = new Tx(rawTx);
+            tx.setTxType(TxType.GENESIS);
+            stateService.addTx(tx);
 
             ParsingModel parsingModel = new ParsingModel(stateService.getGenesisTotalSupply().getValue());
-            for (int i = 0; i < tx.getOutputs().size(); ++i) {
-                genesisTxOutputValidator.validate(tx.getOutputs().get(i), parsingModel);
+            for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
+                genesisTxOutputValidator.validate(tx.getTxOutputs().get(i), parsingModel);
             }
         }
-        return isGenesis;
+
+        return Optional.ofNullable(tx);
     }
 }

@@ -25,6 +25,8 @@ import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
+import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
@@ -57,15 +59,16 @@ public class LiteNodeParser extends BsqParser {
     // The block we received from the seed node is already filtered for valid bsq txs but we want to verify ourselves
     // again. So we run the parsing with that filtered tx list and add a new block with our own verified tx list as
     // well we write the mutual state during parsing to the state model.
-    void parseBlock(Block receivedBlock) throws BlockNotConnectingException, InvalidBlockException {
+    void parseBlock(RawBlock receivedBlock) throws BlockNotConnectingException, InvalidBlockException {
         int blockHeight = receivedBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
-        List<Tx> txList = new ArrayList<>(receivedBlock.getTxs());
+        List<RawTx> txList = new ArrayList<>(receivedBlock.getRawTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
-        if (blockValidator.validate(receivedBlock)) {
+        if (blockValidator.isBlockNotAlreadyAdded(receivedBlock)) {
+            blockValidator.validate(receivedBlock);
             int oldChainHeight = stateService.getChainHeight();
             stateService.setNewBlockHeight(receivedBlock.getHeight());
-            receivedBlock.getTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
+            receivedBlock.getRawTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
             recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
             final Block ownBlock = new Block(blockHeight, receivedBlock.getTime(), receivedBlock.getHash(),
                     receivedBlock.getPreviousBlockHash(), ImmutableList.copyOf(bsqTxsInBlock));

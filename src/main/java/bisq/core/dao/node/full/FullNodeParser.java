@@ -24,6 +24,8 @@ import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
+import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
@@ -62,29 +64,34 @@ public class FullNodeParser extends BsqParser {
 
     /**
      *
-     * @param btcBlock  Contains all transactions of a BTC block
+     * @param rawBlock  Contains all transactions of a BTC block
      * @return bsqBlock: Is a clone of btcBlock but filtered so it contains only bsq transactions
      * @throws BlockNotConnectingException If new block does not connect to previous block
      */
-    Block parseBlock(Block btcBlock) throws BlockNotConnectingException {
-        final int blockHeight = btcBlock.getHeight();
+    Block parseBlock(RawBlock rawBlock) throws BlockNotConnectingException {
+        blockValidator.validate(rawBlock);
+
+        final int blockHeight = rawBlock.getHeight();
         stateService.setNewBlockHeight(blockHeight);
 
         long startTs = System.currentTimeMillis();
-        List<Tx> bsqTxs = getBsqTxsFromBlock(btcBlock);
+        List<Tx> bsqTxs = getBsqTxsFromBlock(rawBlock);
 
-        final Block bsqBlock = new Block(blockHeight,
-                btcBlock.getTime(),
-                btcBlock.getHash(),
-                btcBlock.getPreviousBlockHash(),
+        final Block block = new Block(blockHeight,
+                rawBlock.getTime(),
+                rawBlock.getHash(),
+                rawBlock.getPreviousBlockHash(),
                 ImmutableList.copyOf(bsqTxs));
 
-        if (blockValidator.validate(bsqBlock))
-            stateService.addNewBlock(bsqBlock);
+        // TODO needed?
+        if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
+            stateService.addNewBlock(block);
 
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
                 System.currentTimeMillis() - startTs, blockHeight, bsqTxs.size());
-        return bsqBlock;
+
+        //TODO do we want to return the block in case we had it already?
+        return block;
     }
 
 
@@ -92,16 +99,16 @@ public class FullNodeParser extends BsqParser {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private List<Tx> getBsqTxsFromBlock(Block block) {
-        int blockHeight = block.getHeight();
+    private List<Tx> getBsqTxsFromBlock(RawBlock rawBlock) {
+        int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 
         // We use a list as we want to maintain sorting of tx intra-block dependency
         List<Tx> bsqTxsInBlock = new ArrayList<>();
 
         // We check first for genesis tx
-        for (Tx tx : block.getTxs()) {
-            checkForGenesisTx(blockHeight, bsqTxsInBlock, tx);
+        for (RawTx rawTx : rawBlock.getRawTxs()) {
+            checkForGenesisTx(blockHeight, bsqTxsInBlock, rawTx);
         }
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
@@ -111,9 +118,9 @@ public class FullNodeParser extends BsqParser {
         // one get resolved.
         // Lately there is a patter with 24 iterations observed
         long startTs = System.currentTimeMillis();
-        recursiveFindBsqTxs(bsqTxsInBlock, block.getTxs(), blockHeight, 0, 5300);
+        recursiveFindBsqTxs(bsqTxsInBlock, rawBlock.getRawTxs(), blockHeight, 0, 5300);
         log.debug("recursiveFindBsqTxs took {} ms",
-                block.getTxs().size(), System.currentTimeMillis() - startTs);
+                rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
         return bsqTxsInBlock;
     }
 }

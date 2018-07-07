@@ -19,6 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import javax.inject.Inject;
 
@@ -39,33 +40,30 @@ public class BlockValidator {
         this.stateService = stateService;
     }
 
-    public boolean validate(Block block) throws BlockNotConnectingException {
+    public void validate(RawBlock rawBlock) throws BlockNotConnectingException {
         LinkedList<Block> blocks = stateService.getBlocks();
-        if (!blocks.contains(block)) {
-            if (isBlockConnecting(block, blocks)) {
-                return true;
-            } else {
-                final Block last = blocks.getLast();
-                log.warn("addBlock called with a not connecting block. New block:\n" +
-                                "height()={}, hash()={}, lastBlock.height()={}, lastBlock.hash()={}",
-                        block.getHeight(),
-                        block.getHash(),
-                        last != null ? last.getHeight() : "null",
-                        last != null ? last.getHash() : "null");
-                throw new BlockNotConnectingException(block);
-            }
-        } else {
-            log.warn("We got that block already. Ignore the call. blockHeight={}", block.getHeight());
-            return false;
+        if (!isBlockConnecting(rawBlock, blocks)) {
+            final Block last = blocks.getLast();
+            log.warn("addBlock called with a not connecting block. New block:\n" +
+                            "height()={}, hash()={}, lastBlock.height()={}, lastBlock.hash()={}",
+                    rawBlock.getHeight(),
+                    rawBlock.getHash(),
+                    last != null ? last.getHeight() : "null",
+                    last != null ? last.getHash() : "null");
+            throw new BlockNotConnectingException(rawBlock);
         }
     }
 
-    private boolean isBlockConnecting(Block block, LinkedList<Block> blocks) {
+    public boolean isBlockNotAlreadyAdded(RawBlock rawBlock) {
+        return stateService.getBlockAtHeight(rawBlock.getHeight()) == null;
+    }
+
+    private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {
         // Case 1: blocks is empty
         // Case 2: blocks not empty. Last block must match new blocks getPreviousBlockHash and
         // height of last block +1 must be new blocks height
         return blocks.isEmpty() ||
-                (blocks.getLast().getHash().equals(block.getPreviousBlockHash()) &&
-                        blocks.getLast().getHeight() + 1 == block.getHeight());
+                (blocks.getLast().getHash().equals(rawBlock.getPreviousBlockHash()) &&
+                        blocks.getLast().getHeight() + 1 == rawBlock.getHeight());
     }
 }

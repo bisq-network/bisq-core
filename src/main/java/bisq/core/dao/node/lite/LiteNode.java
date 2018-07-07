@@ -25,7 +25,7 @@ import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.network.Connection;
@@ -130,7 +130,7 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We received the missing blocks
-    private void onRequestedBlocksReceived(List<Block> blockList) {
+    private void onRequestedBlocksReceived(List<RawBlock> blockList) {
         if (!blockList.isEmpty())
             log.info("We received blocks from height {} to {}", blockList.get(0).getHeight(),
                     blockList.get(blockList.size() - 1).getHeight());
@@ -147,15 +147,16 @@ public class LiteNode extends BsqNode {
     }
 
     // We received a new block
-    private void onNewBlockReceived(Block block) {
+    private void onNewBlockReceived(RawBlock block) {
         log.info("onNewBlockReceived: block at height {}", block.getHeight());
         parseBlock(block);
     }
 
-    private void parseBlock(Block block) {
+    private void parseBlock(RawBlock rawBlock) {
         try {
-            if (!stateService.containsBlock(block))
-                liteNodeParser.parseBlock(block);
+            // TODO check for more
+            if (stateService.getBlockAtHeight(rawBlock.getHeight()) == null)
+                liteNodeParser.parseBlock(rawBlock);
         } catch (BlockNotConnectingException | InvalidBlockException throwable) {
             if (throwable instanceof BlockNotConnectingException) {
                 startReOrgFromLastSnapshot();
