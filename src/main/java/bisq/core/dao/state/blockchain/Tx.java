@@ -34,7 +34,8 @@ import javax.annotation.Nullable;
  * Transaction containing BSQ specific data. The raw blockchain specific tx data are in the rawTx object.
  * We use lombok for convenience to delegate access to the data inside the rawTx.
  *
- * We are storing the txOutputs twice atm. We might optimize that to remove the rawTx and clone the fields here.
+ * We are storing the txOutputs twice atm. We might optimize that to remove the rawTx and clone the fields here. But for
+ * now we prefer ot have a less complex structure.
  */
 @Data
 public class Tx {

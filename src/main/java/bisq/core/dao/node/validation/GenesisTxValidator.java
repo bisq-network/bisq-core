@@ -44,17 +44,16 @@ public class GenesisTxValidator {
     public Optional<Tx> getGenesisTx(RawTx rawTx, int blockHeight) {
         boolean isGenesis = blockHeight == stateService.getGenesisBlockHeight() &&
                 rawTx.getId().equals(stateService.getGenesisTxId());
-        Tx tx = null;
         if (isGenesis) {
-            tx = new Tx(rawTx);
+            Tx tx = new Tx(rawTx);
             tx.setTxType(TxType.GENESIS);
-
             ParsingModel parsingModel = new ParsingModel(stateService.getGenesisTotalSupply().getValue());
             for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
                 genesisTxOutputValidator.validate(tx.getTxOutputs().get(i), parsingModel);
             }
+            return Optional.of(tx);
+        } else {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(tx);
     }
 }

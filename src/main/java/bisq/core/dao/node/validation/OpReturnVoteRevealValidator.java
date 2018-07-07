@@ -43,7 +43,7 @@ public class OpReturnVoteRevealValidator {
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     boolean validate(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
         return parsingModel.getInputFromBlindVoteStakeOutput() != null &&
-                parsingModel.isSingleInputFromBlindVoteStakeOutput() &&
+                parsingModel.isValidInputFromBlindVoteStakeOutput() &&
                 parsingModel.getVoteRevealUnlockStakeOutput() != null &&
                 opReturnData.length == 38 &&
                 periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL);

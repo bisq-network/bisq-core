@@ -54,46 +54,43 @@ public class TxInputProcessor {
                     if (connectedTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                         if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
                             parsingModel.setInputFromBlindVoteStakeOutput(txInput);
-                            parsingModel.setSingleInputFromBlindVoteStakeOutput(true);
+                            // At the end of the parsing the OpReturnVoteRevealValidator will verify that
+                            // this property is true, otherwise the tx will be considered invalid.
+                            parsingModel.setValidInputFromBlindVoteStakeOutput(true);
                         } else {
                             log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                     "This is not a valid BSQ tx.");
-                            parsingModel.setSingleInputFromBlindVoteStakeOutput(false);
+                            parsingModel.setValidInputFromBlindVoteStakeOutput(false);
                         }
                     } else if (connectedTxOutputType == TxOutputType.LOCKUP) {
-                        // A locked BSQ txOutput is spent to a corresponding BOND_UNLOCK
-                        // txOutput. The BOND_UNLOCK can only be spent after lock time
-                        // blocks has passed.
-                        //TODO rename setSpentLockedConnectedTxOutput to setInputFromLockupTxOutput
+                        // A locked BSQ txOutput is spent to a corresponding UNLOCK
+                        // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
                         if (parsingModel.getSpentLockedTxOutput() == null) {
                             parsingModel.setSpentLockedTxOutput(connectedTxOutput);
                             stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
                                     parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
                         }
 
-                        // TODO do we need to check if there is only one?
                     } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
                         // Spending an unlocked txOutput
-                        // Use new method at parsingModel.addSpentUnlockedConnectedTxOutput
                         if (spentUnlockedConnectedTxOutputs != null)
                             spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
 
                         stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx -> {
+                            // TODO SQ: we could use a second lookup for the lockTime in the LOCK tx instead of storing
+                            // the unlockBlockHeight
                             // Only count the input as BSQ input if spent after unlock time
                             //TODO <= or < ?
                             if (blockHeight <= tx.getUnlockBlockHeight())
                                 parsingModel.burnBond(connectedTxOutput.getValue());
                         });
-
-                        // TODO do we need to check if there is only one?
                     }
 
-                    //TODO ??? should be above? why removeLockTimeTxOutput
-                    //TODO
+                    //TODO SQ: why we need to reset locktime?
                    /* if (parsingModel.getSpentLockedTxOutput() != null)
-                        stateService.removeLockTimeTxOutput(connectedTxOutput.getTxId());
-                    //TODO ???
-                    if (spentUnlockedConnectedTxOutputs != null)
+                        stateService.removeLockTimeTxOutput(connectedTxOutput.getTxId());*/
+                    //TODO SQ: why we need to reset BlockHeight?
+                   /* if (spentUnlockedConnectedTxOutputs != null)
                         spentUnlockedConnectedTxOutputs.forEach(txOutput ->
                                 stateService.removeUnlockBlockHeightTxOutput(txOutput.getTxId()));*/
 

@@ -150,65 +150,50 @@ public class OpReturnProcessor {
     }
 
     private void processBlindVote(byte[] opReturnData, TxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        final TxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
         if (opReturnBlindVoteValidator.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
-            if (blindVoteLockStakeOutput != null)
-                blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
 
-            //TODO does it makes the tx invalid if we set opReturn type to INVALID_OUTPUT?
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-
-            // We don't want to burn the BlindVoteLockStakeOutput. We verified it at the output
-            // iteration that it is valid BSQ so we set TxOutputType.BSQ_OUTPUT.
+            TxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
             if (blindVoteLockStakeOutput != null)
-                blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
+                blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
         }
     }
 
     private void processVoteReveal(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
-        TxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
         if (opReturnVoteRevealValidator.validate(opReturnData, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
-            if (voteRevealUnlockStakeOutput != null)
-                voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
 
-            //TODO does it makes the tx invalid if we set opReturn type to INVALID_OUTPUT?
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
-
-            // We don't want to burn the VoteRevealUnlockStakeOutput. We verified it at the output iteration
-            // that it is valid BSQ.
+            TxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
             if (voteRevealUnlockStakeOutput != null)
-                voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BSQ_OUTPUT);
+                voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
         }
     }
 
     private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
-        final TxOutput lockupCandidate = parsingModel.getLockupOutput();
-
         Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
         int lockTime = Util.parseAsInt(Arrays.copyOfRange(opReturnData, 3, 5));
 
         if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
-            if (lockupCandidate != null)
-                lockupCandidate.setTxOutputType(TxOutputType.LOCKUP);
-            parsingModel.getTx().setLockTime(lockTime);
             parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
+            parsingModel.getTx().setLockTime(lockTime);
         } else {
             log.info("We expected a lockup op_return data but it did not " +
                     "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
             txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
 
             // If the opReturn is invalid the lockup candidate cannot become BSQ, so we set it to BTC
+            TxOutput lockupCandidate = parsingModel.getLockupOutput();
             if (lockupCandidate != null)
                 lockupCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
         }

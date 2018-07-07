@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Checks if an output is a BSQ output and apply state change.
  */
@@ -52,12 +54,10 @@ public class TxOutputProcessor {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
-            if (handleUnlockBondTx(txOutput, index, parsingModel))
-                return;
-
             final long txOutputValue = txOutput.getValue();
-            if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
-                //TODO can handleUnlockBondTx be here?
+            if (isUnlockBondTx(txOutput, index, parsingModel)) {
+                handleUnlockBondTx(txOutput, parsingModel);
+            } else if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
                 handleBsqOutput(txOutput, index, parsingModel, txOutputValue);
             } else {
                 handleBtcOutput(txOutput, index, parsingModel);
@@ -72,56 +72,39 @@ public class TxOutputProcessor {
         return txOutput.getOpReturnData() != null;
     }
 
-    private boolean handleUnlockBondTx(TxOutput txOutput, int index, ParsingModel parsingModel) {
-        if (parsingModel.getSpentLockedTxOutput() != null) {
-            // This is a bond unlock transaction
-            if (index == 0) {
-                // All the BSQ from the locked bond txOutput are spent, either burnt or send to bond unlock txOutput
-                parsingModel.subtractFromInputValue(parsingModel.getSpentLockedTxOutput().getValue());
+    private boolean isUnlockBondTx(TxOutput txOutput, int index, ParsingModel parsingModel) {
+        // We require that the input value is exact the available value and the output value
+        return parsingModel.getSpentLockedTxOutput() != null &&
+                index == 0 &&
+                parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue() &&
+                parsingModel.getAvailableInputValue() == txOutput.getValue();
+    }
 
-                // The first txOutput value must match the spent locked connectedTxOutput value
-                if (parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue()) {
-                    applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
-                    parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
-                    parsingModel.setBsqOutputFound(true);
-                } else {
-                    applyStateChangeForBtcOutput(txOutput);
-                }
-            } else {
-                applyStateChangeForBtcOutput(txOutput);
-            }
-            return true;
-        }
-        return false;
+    private void handleUnlockBondTx(TxOutput txOutput, ParsingModel parsingModel) {
+        TxOutput spentLockedTxOutput = parsingModel.getSpentLockedTxOutput();
+        checkNotNull(spentLockedTxOutput, "spentLockedTxOutput must not nbe null");
+        parsingModel.subtractFromInputValue(spentLockedTxOutput.getValue());
+
+        applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
+        parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
+        parsingModel.setBsqOutputFound(true);
     }
 
     private void handleBsqOutput(TxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
         // Update the input balance.
         parsingModel.subtractFromInputValue(txOutputValue);
 
-        if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.BLIND_VOTE) {
-            // At a blind vote tx we get the stake at output 0.
-            // First output might be vote stake output.
+        boolean isFirstOutput = index == 0;
+        OpReturnType candidate = parsingModel.getOpReturnTypeCandidate();
+        if (isFirstOutput && candidate == OpReturnType.BLIND_VOTE) {
             parsingModel.setBlindVoteLockStakeOutput(txOutput);
-
-            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the parsingModel.
-            applyStateChangeForBsqOutput(txOutput, null);
-        } else if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.VOTE_REVEAL) {
-            // At a vote reveal tx we get the released stake at output 0.
-            // First output might be stake release output.
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
+        } else if (isFirstOutput && candidate == OpReturnType.VOTE_REVEAL) {
             parsingModel.setVoteRevealUnlockStakeOutput(txOutput);
-
-            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the parsingModel.
-            applyStateChangeForBsqOutput(txOutput, null);
-        } else if (index == 0 && parsingModel.getOpReturnTypeCandidate() == OpReturnType.LOCKUP) {
-            // First output might be lockup output.
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
+        } else if (isFirstOutput && candidate == OpReturnType.LOCKUP) {
             parsingModel.setLockupOutput(txOutput);
-
-            // We don't set the txOutputType yet as we have not fully validated the tx but keep the candidate
-            // in the parsingModel.
-            applyStateChangeForBsqOutput(txOutput, null);
+            applyStateChangeForBsqOutput(txOutput, TxOutputType.LOCKUP);
         } else {
             applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
         }

@@ -501,26 +501,28 @@ public class StateService {
     }
 
     // LockTime
+    // TODO SQ: should we use Optional for integers as well or better a default value like 0 or -1?
     public Optional<Integer> getLockTime(String txId) {
         int lockTime = getTx(txId).map(Tx::getLockTime).orElse(-1);
         return lockTime < 0 ? Optional.empty() : Optional.of(lockTime);
     }
 
     //TODO sq: is that needed?
-    public void removeLockTimeTxOutput(String txId) {
+  /*  public void removeLockTimeTxOutput(String txId) {
         getTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(-1));
-    }
+    }*/
 
     // UnlockBlockHeight
+    // TODO SQ: should we use Optional for integers as well or better a default value like 0 or -1?
     public Optional<Integer> getUnlockBlockHeight(String txId) {
         int unLockBlockHeight = getTx(txId).map(Tx::getUnlockBlockHeight).orElse(0);
         return unLockBlockHeight <= 0 ? Optional.empty() : Optional.of(unLockBlockHeight);
     }
 
     //TODO sq: is that needed?
-    public void removeUnlockBlockHeightTxOutput(String txId) {
+   /* public void removeUnlockBlockHeightTxOutput(String txId) {
         getTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(0));
-    }
+    }*/
 
     public Set<TxOutput> getUnlockingTxOutputs() {
         return getTxOutputStream()
@@ -528,7 +530,7 @@ public class StateService {
                 .filter(txOutput -> {
                     //TODO duplicate code logic to isTxOutputSpendable
                     //TODO use comparison to consensus?
-                    return getUnlockBlockHeight(txOutput.getRawTxOutput().getTxId())
+                    return getUnlockBlockHeight(txOutput.getTxId())
                             .filter(unLockBlockHeight -> getChainHeight() <= unLockBlockHeight)
                             .isPresent();
                 })

@@ -70,7 +70,7 @@ class ParsingModel {
     private OpReturnType verifiedOpReturnType;
     @Nullable
     private TxInput inputFromBlindVoteStakeOutput;
-    private boolean isSingleInputFromBlindVoteStakeOutput;
+    private boolean isValidInputFromBlindVoteStakeOutput;
 
     ParsingModel() {
     }
