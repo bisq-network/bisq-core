@@ -17,6 +17,7 @@
 
 package bisq.core.dao.state;
 
+import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
@@ -223,7 +224,7 @@ public class StateService {
     }
 
     public Coin getGenesisTotalSupply() {
-        return state.getGenesisTotalSupply();
+        return State.getGenesisTotalSupply();
     }
 
     public Optional<Tx> getGenesisTx() {
@@ -369,8 +370,8 @@ public class StateService {
                 return true;
             case UNLOCK:
                 Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput.getTxId());
-                //TODO SQ: is getChainHeight() > opUnlockBlockHeight.get() correct?
-                return opUnlockBlockHeight.isPresent() && getChainHeight() > opUnlockBlockHeight.get();
+                return opUnlockBlockHeight.isPresent() &&
+                        BondingConsensus.isUnlockSpendableInNextBlock(opUnlockBlockHeight.get(), getChainHeight());
             case INVALID_OUTPUT:
                 return false;
             default:
@@ -523,21 +524,14 @@ public class StateService {
         return unLockBlockHeight <= 0 ? Optional.empty() : Optional.of(unLockBlockHeight);
     }
 
-    //TODO sq: is that needed?
-   /* public void removeUnlockBlockHeightTxOutput(String txId) {
-        getTx(txId).ifPresent(mutableTx -> mutableTx.setUnlockBlockHeight(0));
-    }*/
-
+    // Return UNLOCK TxOutputs that are not yet spendable
     public Set<TxOutput> getUnlockingTxOutputs() {
         return getTxOutputStream()
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.UNLOCK)
-                .filter(txOutput -> {
-                    //TODO duplicate code logic to isTxOutputSpendable
-                    //TODO use comparison to consensus?
-                    return getUnlockBlockHeight(txOutput.getTxId())
-                            .filter(unLockBlockHeight -> getChainHeight() <= unLockBlockHeight)
-                            .isPresent();
-                })
+                .filter(txOutput -> getUnlockBlockHeight(txOutput.getTxId())
+                        .filter(unLockBlockHeight ->
+                                !BondingConsensus.isUnlockSpendableInNextBlock(unLockBlockHeight, getChainHeight()))
+                        .isPresent())
                 .collect(Collectors.toSet());
     }
 

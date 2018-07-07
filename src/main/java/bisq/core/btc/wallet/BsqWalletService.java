@@ -215,6 +215,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .mapToLong(TxOutput::getValue)
                 .sum());
         lockedInBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
+                .filter(txOutput -> stateService.isUnspent(txOutput.getKey()))
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
