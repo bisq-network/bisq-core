@@ -18,6 +18,7 @@
 package bisq.core.btc.wallet;
 
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 
 import org.bitcoinj.core.TransactionOutput;
 
@@ -43,6 +44,6 @@ public class BsqCoinSelector extends BisqDefaultCoinSelector {
     protected boolean isTxOutputSpendable(TransactionOutput output) {
         // output.getParentTransaction() cannot be null as it is checked in calling method
         return output.getParentTransaction() != null &&
-                stateService.isTxOutputSpendable(output.getParentTransaction().getHashAsString(), output.getIndex());
+                stateService.isTxOutputSpendable(new TxOutputKey(output.getParentTransaction().getHashAsString(), output.getIndex()));
     }
 }

@@ -26,6 +26,7 @@ import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -370,11 +371,11 @@ public class DaoFacade {
     }
 
     public TxType getTxType(String txId) {
-        return stateService.getTxType(txId);
+        return stateService.getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
     }
 
     public boolean isTxOutputSpendable(String txId, int index) {
-        return stateService.isTxOutputSpendable(txId, index);
+        return stateService.isTxOutputSpendable(new TxOutputKey(txId, index));
     }
 
     public Set<TxOutput> getLockedInBondOutputs() {

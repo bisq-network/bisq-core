@@ -76,7 +76,7 @@ public class StateService {
 
     public void start() {
         final int genesisBlockHeight = state.getGenesisBlockHeight();
-        state.addCycle(cycleService.getFirstCycle(genesisBlockHeight));
+        state.getCycles().add(cycleService.getFirstCycle(genesisBlockHeight));
         state.setChainHeight(genesisBlockHeight);
     }
 
@@ -88,7 +88,7 @@ public class StateService {
     public void setNewBlockHeight(int blockHeight) {
         if (blockHeight != state.getGenesisBlockHeight())
             cycleService.maybeCreateNewCycle(blockHeight, getCycles(), state.getParamChangeByBlockHeightMap())
-                    .ifPresent(state::addCycle);
+                    .ifPresent(state.getCycles()::add);
 
         state.setChainHeight(blockHeight);
         chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
@@ -112,8 +112,8 @@ public class StateService {
         state.getCycles().clear();
         state.getCycles().addAll(snapshot.getCycles());
 
-        state.getMutableTxMap().clear();
-        state.getMutableTxMap().putAll(snapshot.getMutableTxMap());
+        state.getUnspentTxOutputMap().clear();
+        state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
 
         state.getIssuanceMap().clear();
         state.getIssuanceMap().putAll(snapshot.getIssuanceMap());
@@ -161,7 +161,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void addNewBlock(Block block) {
-        state.addBlock(block);
+        state.getBlocks().add(block);
         blockListeners.forEach(l -> l.onBlockAdded(block));
         log.info("New Block added at blockHeight " + block.getHeight());
     }
@@ -170,8 +170,15 @@ public class StateService {
         return state.getBlocks();
     }
 
-    public Block getLastBlock() {
-        return getBlocks().getLast();
+    public Optional<Block> getLastBlock() {
+        if (!getBlocks().isEmpty())
+            return Optional.of(getBlocks().getLast());
+        else
+            return Optional.empty();
+    }
+
+    public int getBlockHeightOfLastBlock() {
+        return getLastBlock().map(Block::getHeight).orElse(0);
     }
 
     public Optional<Block> getBlockAtHeight(int height) {
@@ -224,18 +231,6 @@ public class StateService {
     // Tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Optional<Tx> getTx(String txId) {
-        return Optional.ofNullable(getTxMap().get(txId));
-    }
-
-    public Set<Tx> getTxs() {
-        return getTxStream().collect(Collectors.toSet());
-    }
-
-    public boolean containsTx(String txId) {
-        return getTx(txId).isPresent();
-    }
-
     private Stream<Tx> getTxStream() {
         return getBlocks().stream()
                 .flatMap(block -> block.getTxs().stream());
@@ -245,30 +240,16 @@ public class StateService {
         return getTxStream().collect(Collectors.toMap(Tx::getId, tx -> tx));
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // TxInput
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public Optional<TxOutput> getConnectedTxOutput(TxInput txInput) {
-        return getTx(txInput.getConnectedTxOutputTxId())
-                .map(tx -> tx.getTxOutputs().get(txInput.getConnectedTxOutputIndex()));
+    public Set<Tx> getTxs() {
+        return getTxStream().collect(Collectors.toSet());
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Tx
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // We must add the tx before accessing any other fields inside a Tx as the immutable tx will be added to the
-    // block only after parsing of the tx is complete and if it was a BSQ tx.
-    public void addTx(Tx tx) {
-        state.putMutableTx(tx.getRawTx().getId(), tx);
+    public Optional<Tx> getTx(String txId) {
+        return Optional.ofNullable(getTxMap().get(txId));
     }
 
-
-    private Stream<Tx> getTxMapStream() {
-        return state.getMutableTxMap().values().stream();
+    public boolean containsTx(String txId) {
+        return getTx(txId).isPresent();
     }
 
 
@@ -278,10 +259,6 @@ public class StateService {
 
     public Optional<TxType> getOptionalTxType(String txId) {
         return getTx(txId).map(Tx::getTxType);
-    }
-
-    public TxType getTxType(String txId) {
-        return getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
     }
 
 
@@ -298,15 +275,24 @@ public class StateService {
     }
 
     public long getTotalBurntFee() {
-        return getTxMapStream()
+        return getTxStream()
                 .mapToLong(Tx::getBurntFee)
                 .sum();
     }
 
     public Set<Tx> getBurntFeeTxs() {
-        return getTxMapStream()
+        return getTxStream()
                 .filter(tx -> tx.getBurntFee() > 0)
                 .collect(Collectors.toSet());
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // TxInput
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Optional<TxOutput> getConnectedTxOutput(TxInput txInput) {
+        return getTx(txInput.getConnectedTxOutputTxId())
+                .map(tx -> tx.getTxOutputs().get(txInput.getConnectedTxOutputIndex()));
     }
 
 
@@ -314,13 +300,8 @@ public class StateService {
     // TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    //TODO remove
-    private Optional<TxOutput> getOptionalTxOutput(TxOutput txOutput) {
-        return Optional.of(txOutput);
-    }
-
     private Stream<TxOutput> getTxOutputStream() {
-        return getTxMapStream()
+        return getTxStream()
                 .flatMap(tx -> tx.getTxOutputs().stream());
     }
 
@@ -329,29 +310,40 @@ public class StateService {
     // UnspentTxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
+        return state.getUnspentTxOutputMap();
+    }
+
     public void addUnspentTxOutput(TxOutput txOutput) {
-        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(true));
+        getUnspentTxOutputMap().put(txOutput.getKey(), txOutput);
     }
 
     public void removeUnspentTxOutput(TxOutput txOutput) {
-        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setUnspent(false));
+        getUnspentTxOutputMap().remove(txOutput.getKey());
     }
 
-    public boolean isUnspent(TxOutput txOutput) {
-        return getOptionalTxOutput(txOutput).map(TxOutput::isUnspent).orElse(false);
+    public boolean isUnspent(TxOutputKey key) {
+        return getUnspentTxOutputMap().containsKey(key);
     }
 
-    public boolean isTxOutputSpendable(String txId, int index) {
-        TxOutputKey key = new TxOutputKey(txId, index);
-        if (!getUnspentMutableTxOutputMap().containsKey(key))
+    public Set<TxOutput> getUnspentTxOutputs() {
+        return new HashSet<>(getUnspentTxOutputMap().values());
+    }
+
+    public Optional<TxOutput> getUnspentTxOutput(TxOutputKey key) {
+        return Optional.ofNullable(getUnspentTxOutputMap().getOrDefault(key, null));
+    }
+
+    public boolean isTxOutputSpendable(TxOutputKey key) {
+        Optional<TxOutput> optionalTxOutput = getUnspentTxOutput(key);
+        if (!optionalTxOutput.isPresent())
             return false;
 
-        TxOutput txOutput = getUnspentMutableTxOutputMap().get(key);
-        TxOutputType txOutputType = txOutput.getTxOutputType();
-        if (txOutputType == null)
+        if (!isUnspent(key))
             return false;
 
-        switch (txOutputType) {
+        TxOutput txOutput = optionalTxOutput.get();
+        switch (txOutput.getTxOutputType()) {
             case UNDEFINED:
                 return false;
             case GENESIS_OUTPUT:
@@ -372,7 +364,7 @@ public class StateService {
             case LOCKUP_OP_RETURN_OUTPUT:
                 return true;
             case UNLOCK:
-                Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput.getRawTxOutput().getTxId());
+                Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput.getTxId());
                 //TODO SQ: is getChainHeight() > opUnlockBlockHeight.get() correct?
                 return opUnlockBlockHeight.isPresent() && getChainHeight() > opUnlockBlockHeight.get();
             case INVALID_OUTPUT:
@@ -382,43 +374,10 @@ public class StateService {
         }
     }
 
-    public Set<TxOutput> getUnspentTxOutputs() {
-        return new HashSet<>(getUnspentTxOutputMap().values());
-    }
-
-    public Optional<TxOutput> getUnspentTxOutput(TxOutputKey key) {
-        return Optional.ofNullable(getUnspentTxOutputMap().getOrDefault(key, null));
-    }
-
-    private Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
-        return getTxOutputStream()
-                .filter(TxOutput::isUnspent)
-                .collect(Collectors.toMap(TxOutput::getKey, v -> v));
-    }
-
-    private Map<TxOutputKey, TxOutput> getUnspentMutableTxOutputMap() {
-        return getTxOutputStream()
-                .filter(TxOutput::isUnspent)
-                .collect(Collectors.toMap(TxOutput::getKey,
-                        mutableTxOutput -> mutableTxOutput));
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // TxOutputType
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void setTxOutputType(TxOutput txOutput, TxOutputType txOutputType) {
-        getOptionalTxOutput(txOutput).ifPresent(mutableTxOutput -> mutableTxOutput.setTxOutputType(txOutputType));
-    }
-
-    /**
-     * @param txOutput The txOutput we want to look up.
-     * @return the TxOutputType of TxOutput entry. Return TxOutputType.UNDEFINED if not set.
-     */
-    public TxOutputType getTxOutputType(TxOutput txOutput) {
-        return getOptionalTxOutput(txOutput).map(TxOutput::getTxOutputType).orElse(TxOutputType.UNDEFINED);
-    }
 
     private Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
         return getTxOutputStream()
@@ -427,7 +386,7 @@ public class StateService {
     }
 
     public boolean isBsqTxOutputType(TxOutput txOutput) {
-        final TxOutputType txOutputType = getTxOutputType(txOutput);
+        final TxOutputType txOutputType = txOutput.getTxOutputType();
         switch (txOutputType) {
             case UNDEFINED:
                 return false;
@@ -462,7 +421,9 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
-        return getTxOutputsByTxOutputType(TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
+        return getTxOutputsByTxOutputType(TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT).stream()
+                .filter(txOutput -> isUnspent(txOutput.getKey()))
+                .collect(Collectors.toSet());
     }
 
     public Set<TxOutput> getVoteRevealOpReturnTxOutputs() {
@@ -484,11 +445,18 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void addIssuance(Issuance issuance) {
-        state.addIssuance(issuance);
+        state.getIssuanceMap().put(issuance.getTxId(), issuance);
     }
 
     public Set<Issuance> getIssuanceSet() {
         return new HashSet<>(state.getIssuanceMap().values());
+    }
+
+    private Optional<Issuance> getIssuance(String txId) {
+        if (state.getIssuanceMap().containsKey(txId))
+            return Optional.of(state.getIssuanceMap().get(txId));
+        else
+            return Optional.empty();
     }
 
     public boolean isIssuanceTx(String txId) {
@@ -499,13 +467,6 @@ public class StateService {
         return getIssuance(txId)
                 .map(Issuance::getChainHeight)
                 .orElse(0);
-    }
-
-    private Optional<Issuance> getIssuance(String txId) {
-        if (state.getIssuanceMap().containsKey(txId))
-            return Optional.of(state.getIssuanceMap().get(txId));
-        else
-            return Optional.empty();
     }
 
     public long getTotalIssuedAmount() {
@@ -528,7 +489,7 @@ public class StateService {
     }
 
     public boolean isLockupOutput(TxOutput txOutput) {
-        return getTxOutputType(txOutput) == TxOutputType.LOCKUP;
+        return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
     }
 
     public Optional<TxOutput> getLockedTxOutput(String txId) {
@@ -537,11 +498,6 @@ public class StateService {
                 .filter(this::isLockupOutput)
                 .findFirst() :
                 Optional.empty();
-    }
-
-    // Unlock
-    public boolean isUnlockOutput(TxOutput txOutput) {
-        return getTxOutputType(txOutput) == TxOutputType.UNLOCK;
     }
 
     // LockTime
@@ -586,7 +542,7 @@ public class StateService {
 
     // TODO WIP
     public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
-        state.setParamChangeMap(chainHeight, paramChangeMap);
+        state.getParamChangeByBlockHeightMap().put(chainHeight, paramChangeMap);
     }
 
     public Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap() {
@@ -608,7 +564,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setSpentInfo(TxOutputKey txOutputKey, SpentInfo spentInfo) {
-        state.putSpentInfo(txOutputKey, spentInfo);
+        state.getSpentInfoMap().put(txOutputKey, spentInfo);
     }
 
     public Optional<SpentInfo> getSpentInfo(TxOutput txOutput) {

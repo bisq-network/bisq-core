@@ -98,8 +98,8 @@ public class FullNodeParserTest {
     @Injectable
     BlockValidator blockValidator;
 
-    //TODO temp deactivated
-    //@Test
+    //FIXME
+    @Test
     public void testIsBsqTx() {
         // Setup a basic transaction with two inputs
         int height = 200;
@@ -134,11 +134,11 @@ public class FullNodeParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txValidator.validate(height, rawTx).isPresent());
+        assertFalse(txValidator.getBsqTx(height, rawTx).isPresent());
         // Second time there is BSQ in the first txout
-        assertTrue(txValidator.validate(height, rawTx).isPresent());
+        assertTrue(txValidator.getBsqTx(height, rawTx).isPresent());
         // Third time there is BSQ in the second txout
-        assertTrue(txValidator.validate(height, rawTx).isPresent());
+        assertTrue(txValidator.getBsqTx(height, rawTx).isPresent());
     }
 
     @Test

@@ -84,7 +84,7 @@ public class FullNodeParser extends BsqParser {
                 ImmutableList.copyOf(bsqTxs));
 
         // TODO needed?
-        if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
+        if (!blockValidator.isBlockAlreadyAdded(rawBlock))
             stateService.addNewBlock(block);
 
         log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
@@ -108,7 +108,8 @@ public class FullNodeParser extends BsqParser {
 
         // We check first for genesis tx
         for (RawTx rawTx : rawBlock.getRawTxs()) {
-            checkForGenesisTx(blockHeight, bsqTxsInBlock, rawTx);
+            if (genesisFoundAndAdded(blockHeight, bsqTxsInBlock, rawTx))
+                break;
         }
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.

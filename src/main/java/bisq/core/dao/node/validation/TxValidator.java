@@ -64,7 +64,7 @@ public class TxValidator {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public Optional<Tx> validate(int blockHeight, RawTx rawTx) {
+    public Optional<Tx> getBsqTx(int blockHeight, RawTx rawTx) {
         Tx tx = new Tx(rawTx);
         ParsingModel parsingModel = new ParsingModel();
 
@@ -74,13 +74,12 @@ public class TxValidator {
 
         for (int inputIndex = 0; inputIndex < tx.getTxInputs().size(); inputIndex++) {
             TxInput input = tx.getTxInputs().get(inputIndex);
-            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel, stateService);
+            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel);
         }
+
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            stateService.addTx(tx);
-
             final List<TxOutput> outputs = tx.getTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
@@ -106,12 +105,12 @@ public class TxValidator {
                 // we set it to an BTC_OUTPUT.
                 final TxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
                 if (issuanceCandidate != null &&
-                        stateService.getTxOutputType(issuanceCandidate) == TxOutputType.UNDEFINED) {
-                    stateService.setTxOutputType(issuanceCandidate, TxOutputType.BTC_OUTPUT);
+                        issuanceCandidate.getTxOutputType() == TxOutputType.UNDEFINED) {
+                    issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
                 }
 
                 boolean isAnyTxOutputTypeUndefined = tx.getTxOutputs().stream()
-                        .anyMatch(txOutput -> TxOutputType.UNDEFINED == stateService.getTxOutputType(txOutput));
+                        .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
                     final TxType txType = getTxType(tx, parsingModel);
                     tx.setTxType(txType);
@@ -169,7 +168,7 @@ public class TxValidator {
             case COMPENSATION_REQUEST:
                 checkArgument(tx.getTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
                 final TxOutput issuanceTxOutput = tx.getTxOutputs().get(1);
-                checkArgument(stateService.getTxOutputType(issuanceTxOutput) == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;
                 break;

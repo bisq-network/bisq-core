@@ -159,7 +159,7 @@ public class VoteResultConsensus {
             Optional<TxOutput> optionalBlindVoteStakeOutput = stateService.getConnectedTxOutput(stakeIxInput);
             checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must not be present");
             final TxOutput blindVoteStakeOutput = optionalBlindVoteStakeOutput.get();
-            checkArgument(stateService.getTxOutputType(blindVoteStakeOutput) == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
+            checkArgument(blindVoteStakeOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
                     "blindVoteStakeOutput must have type BLIND_VOTE_LOCK_STAKE_OUTPUT");
             return blindVoteStakeOutput;
         } catch (Throwable t) {

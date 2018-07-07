@@ -64,11 +64,14 @@ public class LiteNodeParser extends BsqParser {
         log.debug("Parse block at height={} ", blockHeight);
         List<RawTx> txList = new ArrayList<>(receivedBlock.getRawTxs());
         List<Tx> bsqTxsInBlock = new ArrayList<>();
-        if (blockValidator.isBlockNotAlreadyAdded(receivedBlock)) {
+        if (!blockValidator.isBlockAlreadyAdded(receivedBlock)) {
             blockValidator.validate(receivedBlock);
             int oldChainHeight = stateService.getChainHeight();
             stateService.setNewBlockHeight(receivedBlock.getHeight());
-            receivedBlock.getRawTxs().forEach(tx -> checkForGenesisTx(blockHeight, bsqTxsInBlock, tx));
+            for (RawTx rawTx : receivedBlock.getRawTxs()) {
+                if (genesisFoundAndAdded(blockHeight, bsqTxsInBlock, rawTx))
+                    break;
+            }
             recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
             final Block ownBlock = new Block(blockHeight, receivedBlock.getTime(), receivedBlock.getHash(),
                     receivedBlock.getPreviousBlockHash(), ImmutableList.copyOf(bsqTxsInBlock));

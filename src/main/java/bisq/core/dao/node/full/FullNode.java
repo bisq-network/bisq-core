@@ -109,10 +109,9 @@ public class FullNode extends BsqNode {
 
         if (parseBlockchainComplete) {
             addBlockHandler();
-
-            final int lastBlockHeight = stateService.getLastBlock().getHeight();
-            log.info("onP2PNetworkReady: We run parseBlocksIfNewBlockAvailable with latest block height {}.", lastBlockHeight);
-            parseBlocksIfNewBlockAvailable(lastBlockHeight);
+            int blockHeightOfLastBlock = stateService.getBlockHeightOfLastBlock();
+            log.info("onP2PNetworkReady: We run parseBlocksIfNewBlockAvailable with latest block height {}.", blockHeightOfLastBlock);
+            parseBlocksIfNewBlockAvailable(blockHeightOfLastBlock);
         }
     }
 
@@ -188,8 +187,8 @@ public class FullNode extends BsqNode {
                         parseBlocksIfNewBlockAvailable(chainHeadHeight);
                     }, throwable -> {
                         if (throwable instanceof BlockNotConnectingException) {
-                            final int lastBlockHeight = stateService.getLastBlock().getHeight();
-                            requestChainHeadHeightAndParseBlocks(lastBlockHeight);
+                            int blockHeightOfLastBlock = stateService.getBlockHeightOfLastBlock();
+                            requestChainHeadHeightAndParseBlocks(blockHeightOfLastBlock);
                         } else {
                             handleError(throwable);
                         }

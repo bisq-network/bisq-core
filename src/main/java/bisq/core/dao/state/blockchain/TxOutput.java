@@ -35,7 +35,6 @@ public class TxOutput {
     @Delegate(excludes = TxOutput.ExcludesDelegateMethods.class)
     private final RawTxOutput rawTxOutput;
     private TxOutputType txOutputType = TxOutputType.UNDEFINED;
-    private boolean isUnspent = false;
 
     public TxOutput(RawTxOutput rawTxOutput) {
         this.rawTxOutput = rawTxOutput;
@@ -46,24 +45,21 @@ public class TxOutput {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private TxOutput(RawTxOutput rawTxOutput, TxOutputType txOutputType, boolean isUnspent) {
+    private TxOutput(RawTxOutput rawTxOutput, TxOutputType txOutputType) {
         this.rawTxOutput = rawTxOutput;
         this.txOutputType = txOutputType;
-        this.isUnspent = isUnspent;
     }
 
     public PB.TxOutput toProtoMessage() {
         final PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
                 .setRawTxOutput(rawTxOutput.toProtoMessage())
-                .setTxOutputType(txOutputType.toProtoMessage())
-                .setIsUnspent(isUnspent);
+                .setTxOutputType(txOutputType.toProtoMessage());
         return builder.build();
     }
 
     public static TxOutput fromProto(PB.TxOutput proto) {
         return new TxOutput(RawTxOutput.fromProto(proto.getRawTxOutput()),
-                TxOutputType.fromProto(proto.getTxOutputType()),
-                proto.getIsUnspent());
+                TxOutputType.fromProto(proto.getTxOutputType()));
     }
 
     @Override
@@ -71,7 +67,6 @@ public class TxOutput {
         return "TxOutput{" +
                 "\n     rawTxOutput=" + rawTxOutput +
                 ",\n     txOutputType=" + txOutputType +
-                ",\n     isUnspent=" + isUnspent +
                 "\n}";
     }
 }

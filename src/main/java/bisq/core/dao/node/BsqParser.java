@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,10 +76,14 @@ public abstract class BsqParser {
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected void checkForGenesisTx(int blockHeight,
-                                     List<Tx> bsqTxsInBlock,
-                                     RawTx rawTx) {
-        genesisTxValidator.findGenesisTx(rawTx, blockHeight).ifPresent(bsqTxsInBlock::add);
+    protected boolean genesisFoundAndAdded(int blockHeight,
+                                           List<Tx> bsqTxsInBlock,
+                                           RawTx rawTx) {
+        Optional<Tx> optionalTx = genesisTxValidator.getGenesisTx(rawTx, blockHeight);
+        boolean isGenesis = optionalTx.isPresent();
+        if (isGenesis)
+            bsqTxsInBlock.add(optionalTx.get());
+        return isGenesis;
     }
 
     // Performance-wise the recursion does not hurt (e.g. 5-20 ms).
@@ -127,7 +132,7 @@ public abstract class BsqParser {
 
         // we check if we have any valid BSQ from that tx set
         txsWithoutInputsFromSameBlock.forEach(rawTx ->
-                txValidator.validate(blockHeight, rawTx).ifPresent(bsqTxsInBlock::add)
+                txValidator.getBsqTx(blockHeight, rawTx).ifPresent(bsqTxsInBlock::add)
         );
 
         log.debug("Parsing of all txsWithoutInputsFromSameBlock is done.");

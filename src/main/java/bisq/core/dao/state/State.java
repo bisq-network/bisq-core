@@ -20,7 +20,7 @@ package bisq.core.dao.state;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
-import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.Cycle;
@@ -104,14 +104,20 @@ public class State implements PersistableEnvelope {
     private final LinkedList<Block> blocks;
     @Getter
     private final LinkedList<Cycle> cycles;
+    // We need to maintain the UTXO map here because during parsing the state of UTXo might change and we want to access
+    // the actual state change which happens during parsing a block and not the after the final block gets added to the
+    // state. If we would access a isUnspent property in TxOutput we would not see that as the block (tx and txOutput)
+    // is not added to the state during parsing.
     @Getter
-    private final Map<String, Tx> mutableTxMap; // key is txId // TODO remove
+    private final Map<TxOutputKey, TxOutput> unspentTxOutputMap;
     @Getter
     private final Map<String, Issuance> issuanceMap; // key is txId
     @Getter
     private final Map<TxOutputKey, SpentInfo> spentInfoMap;
 
+
     // TODO might get refactored later when working on params
+    @Getter
     private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;
 
 
@@ -144,7 +150,7 @@ public class State implements PersistableEnvelope {
                   int chainHeight,
                   LinkedList<Block> blocks,
                   LinkedList<Cycle> cycles,
-                  Map<String, Tx> mutableTxMap,
+                  Map<TxOutputKey, TxOutput> unspentTxOutputMap,
                   Map<String, Issuance> issuanceMap,
                   Map<TxOutputKey, SpentInfo> spentInfoMap,
                   Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
@@ -153,7 +159,7 @@ public class State implements PersistableEnvelope {
         this.chainHeight = chainHeight;
         this.blocks = blocks;
         this.cycles = cycles;
-        this.mutableTxMap = mutableTxMap;
+        this.unspentTxOutputMap = unspentTxOutputMap;
         this.issuanceMap = issuanceMap;
         this.spentInfoMap = spentInfoMap;
         this.paramChangeByBlockHeightMap = paramChangeByBlockHeightMap;
@@ -171,11 +177,8 @@ public class State implements PersistableEnvelope {
                 .setChainHeight(chainHeight)
                 .addAllBlocks(blocks.stream().map(Block::toProtoMessage).collect(Collectors.toList()))
                 .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
-                .putAllTxMap(mutableTxMap.entrySet().stream()
-                        .collect(Collectors.toMap(e -> {
-                            Tx tx = e.getValue();
-                            return tx.getId();
-                        }, e -> e.getValue().toProtoMessage())))
+                .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toProtoMessage())))
                 .putAllIssuanceMap(issuanceMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
@@ -191,8 +194,8 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toCollection(LinkedList::new));
         final LinkedList<Cycle> cycles = proto.getCyclesList().stream()
                 .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
-        Map<String, Tx> mutableTxMap = proto.getTxMapMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> Tx.fromProto(e.getValue())));
+        Map<TxOutputKey, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
         Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         Map<TxOutputKey, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
@@ -204,7 +207,7 @@ public class State implements PersistableEnvelope {
                 proto.getChainHeight(),
                 blocks,
                 cycles,
-                mutableTxMap,
+                unspentTxOutputMap,
                 issuanceMap,
                 spentInfoMap,
                 paramChangeListMap);
@@ -219,42 +222,11 @@ public class State implements PersistableEnvelope {
         this.chainHeight = chainHeight;
     }
 
-    void addBlock(Block block) {
-        blocks.add(block);
-    }
-
-    public void putMutableTx(String txId, Tx tx) {
-        mutableTxMap.put(txId, tx);
-    }
-
-    void putSpentInfo(TxOutputKey txOutputKey, SpentInfo spentInfo) {
-        spentInfoMap.put(txOutputKey, spentInfo);
-    }
-
-    void addIssuance(Issuance issuance) {
-        issuanceMap.put(issuance.getTxId(), issuance);
-    }
-
-    void addCycle(Cycle cycle) {
-        cycles.add(cycle);
-    }
-
-
     State getClone() {
         return (State) State.fromProto(getStateBuilder().build());
     }
 
     State getClone(State snapshotCandidate) {
         return (State) State.fromProto(snapshotCandidate.getStateBuilder().build());
-    }
-
-
-    // TODO might get refactored later when working on params
-    public void setParamChangeMap(int blockHeight, ParamChangeMap paramChangeMap) {
-        paramChangeByBlockHeightMap.put(blockHeight, paramChangeMap);
-    }
-
-    Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap() {
-        return paramChangeByBlockHeightMap;
     }
 }

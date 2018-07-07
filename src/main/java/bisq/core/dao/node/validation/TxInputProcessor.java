@@ -42,15 +42,14 @@ public class TxInputProcessor {
         this.stateService = stateService;
     }
 
-    void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel,
-                 StateService stateService) {
-        this.stateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
+    void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
+        stateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
                     parsingModel.addToInputValue(connectedTxOutput.getValue());
 
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
-                    TxOutputType connectedTxOutputType = stateService.getTxOutputType(connectedTxOutput);
+                    TxOutputType connectedTxOutputType = connectedTxOutput.getTxOutputType();
                     Set<TxOutput> spentUnlockedConnectedTxOutputs = parsingModel.getSpentUnlockedConnectedTxOutputs();
                     if (connectedTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                         if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
@@ -68,8 +67,8 @@ public class TxInputProcessor {
                         //TODO rename setSpentLockedConnectedTxOutput to setInputFromLockupTxOutput
                         if (parsingModel.getSpentLockedTxOutput() == null) {
                             parsingModel.setSpentLockedTxOutput(connectedTxOutput);
-                            stateService.getLockTime(connectedTxOutput.getTxId()).ifPresent(lockTime ->
-                                    parsingModel.setUnlockBlockHeight(blockHeight + lockTime));
+                            stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
+                                    parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
                         }
 
                         // TODO do we need to check if there is only one?
@@ -78,10 +77,11 @@ public class TxInputProcessor {
                         // Use new method at parsingModel.addSpentUnlockedConnectedTxOutput
                         if (spentUnlockedConnectedTxOutputs != null)
                             spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
-                        stateService.getUnlockBlockHeight(connectedTxOutput.getTxId()).ifPresent(unlockBlockHeight -> {
+
+                        stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx -> {
                             // Only count the input as BSQ input if spent after unlock time
                             //TODO <= or < ?
-                            if (blockHeight <= unlockBlockHeight)
+                            if (blockHeight <= tx.getUnlockBlockHeight())
                                 parsingModel.burnBond(connectedTxOutput.getValue());
                         });
 
@@ -89,12 +89,13 @@ public class TxInputProcessor {
                     }
 
                     //TODO ??? should be above? why removeLockTimeTxOutput
-                    if (parsingModel.getSpentLockedTxOutput() != null)
+                    //TODO
+                   /* if (parsingModel.getSpentLockedTxOutput() != null)
                         stateService.removeLockTimeTxOutput(connectedTxOutput.getTxId());
                     //TODO ???
-                    assert spentUnlockedConnectedTxOutputs != null;
-                    spentUnlockedConnectedTxOutputs.forEach(txOutput ->
-                            stateService.removeUnlockBlockHeightTxOutput(txOutput.getTxId()));
+                    if (spentUnlockedConnectedTxOutputs != null)
+                        spentUnlockedConnectedTxOutputs.forEach(txOutput ->
+                                stateService.removeUnlockBlockHeightTxOutput(txOutput.getTxId()));*/
 
                     stateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
                     stateService.removeUnspentTxOutput(connectedTxOutput);
