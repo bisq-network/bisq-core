@@ -154,8 +154,7 @@ public class LiteNode extends BsqNode {
 
     private void parseBlock(RawBlock rawBlock) {
         try {
-            // TODO check for more
-            if (stateService.getBlockAtHeight(rawBlock.getHeight()) == null)
+            if (!stateService.getBlockAtHeight(rawBlock.getHeight()).isPresent())
                 liteNodeParser.parseBlock(rawBlock);
         } catch (BlockNotConnectingException | InvalidBlockException throwable) {
             if (throwable instanceof BlockNotConnectingException) {

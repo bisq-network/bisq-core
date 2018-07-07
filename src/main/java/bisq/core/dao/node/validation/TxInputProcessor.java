@@ -50,7 +50,6 @@ public class TxInputProcessor {
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
                     TxOutputType connectedTxOutputType = connectedTxOutput.getTxOutputType();
-                    Set<TxOutput> spentUnlockedConnectedTxOutputs = parsingModel.getSpentUnlockedConnectedTxOutputs();
                     if (connectedTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
                         if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
                             parsingModel.setInputFromBlindVoteStakeOutput(txInput);
@@ -73,6 +72,7 @@ public class TxInputProcessor {
 
                     } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
                         // Spending an unlocked txOutput
+                        Set<TxOutput> spentUnlockedConnectedTxOutputs = parsingModel.getSpentUnlockedConnectedTxOutputs();
                         if (spentUnlockedConnectedTxOutputs != null)
                             spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
 

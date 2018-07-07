@@ -33,8 +33,6 @@ import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,31 +64,19 @@ public class LiteNodeParser extends BsqParser {
         List<Tx> bsqTxsInBlock = new ArrayList<>();
         if (!blockValidator.isBlockAlreadyAdded(receivedBlock)) {
             blockValidator.validate(receivedBlock);
-            int oldChainHeight = stateService.getChainHeight();
             stateService.setNewBlockHeight(receivedBlock.getHeight());
             for (RawTx rawTx : receivedBlock.getRawTxs()) {
                 if (genesisFoundAndAdded(blockHeight, bsqTxsInBlock, rawTx))
                     break;
             }
             recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
-            final Block ownBlock = new Block(blockHeight, receivedBlock.getTime(), receivedBlock.getHash(),
-                    receivedBlock.getPreviousBlockHash(), ImmutableList.copyOf(bsqTxsInBlock));
+            final Block ownBlock = new Block(blockHeight,
+                    receivedBlock.getTime(),
+                    receivedBlock.getHash(),
+                    receivedBlock.getPreviousBlockHash(),
+                    ImmutableList.copyOf(bsqTxsInBlock));
 
-            // Check if the blocks are the same
-            if (receivedBlock.equals(ownBlock)) {
-                stateService.addNewBlock(ownBlock);
-            } else {
-                // We revert the chain height
-                // TODO test if that has any unwanted effects
-                stateService.setNewBlockHeight(oldChainHeight);
-
-                final String msg = "The block we received from the seed node is different than the block we created by our " +
-                        "own parsing.\nBlock from seed node=" + receivedBlock + "\nBlock from own parsing={}" + ownBlock;
-                log.warn(msg);
-                String diff = StringUtils.difference(receivedBlock.toString(), ownBlock.toString());
-                log.warn("diff: " + diff);
-                throw new InvalidBlockException(msg, receivedBlock, ownBlock);
-            }
+            stateService.addNewBlock(ownBlock);
         }
     }
 }
