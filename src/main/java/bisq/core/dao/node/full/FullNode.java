@@ -133,12 +133,14 @@ public class FullNode extends BsqNode {
     private void addBlockHandler() {
         if (!addBlockHandlerAdded) {
             addBlockHandlerAdded = true;
-            rpcService.addNewBtcBlockHandler(btcBlock -> {
-                        try {
-                            Block bsqBlock = fullNodeParser.parseBlock(btcBlock);
-                            onNewBlock(bsqBlock);
-                        } catch (BlockNotConnectingException throwable) {
-                            handleError(throwable);
+            rpcService.addNewBtcBlockHandler(rawBlock -> {
+                        if (!isBlockAlreadyAdded(rawBlock)) {
+                            try {
+                                Block block = fullNodeParser.parseBlock(rawBlock);
+                                onNewBlock(block);
+                            } catch (BlockNotConnectingException throwable) {
+                                handleError(throwable);
+                            }
                         }
                     },
                     this::handleError);
@@ -214,21 +216,23 @@ public class FullNode extends BsqNode {
                             Consumer<Block> newBlockHandler, ResultHandler resultHandler,
                             Consumer<Throwable> errorHandler) {
         rpcService.requestBtcBlock(blockHeight,
-                btcBlock -> {
-                    try {
-                        Block bsqBlock = fullNodeParser.parseBlock(btcBlock);
-                        newBlockHandler.accept(bsqBlock);
+                rawBlock -> {
+                    if (!isBlockAlreadyAdded(rawBlock)) {
+                        try {
+                            Block block = fullNodeParser.parseBlock(rawBlock);
+                            newBlockHandler.accept(block);
 
-                        // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
-                        if (blockHeight < chainHeadHeight) {
-                            final int newBlockHeight = blockHeight + 1;
-                            parseBlock(newBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
-                        } else {
-                            // We are done
-                            resultHandler.handleResult();
+                            // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight
+                            if (blockHeight < chainHeadHeight) {
+                                final int newBlockHeight = blockHeight + 1;
+                                parseBlock(newBlockHeight, chainHeadHeight, newBlockHandler, resultHandler, errorHandler);
+                            } else {
+                                // We are done
+                                resultHandler.handleResult();
+                            }
+                        } catch (BlockNotConnectingException e) {
+                            errorHandler.accept(e);
                         }
-                    } catch (BlockNotConnectingException e) {
-                        errorHandler.accept(e);
                     }
                 },
                 errorHandler);

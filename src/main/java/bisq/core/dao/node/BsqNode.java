@@ -19,6 +19,7 @@ package bisq.core.dao.node;
 
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
@@ -165,6 +166,10 @@ public abstract class BsqNode {
     protected void startReOrgFromLastSnapshot() {
         applySnapshot();
         startParseBlocks();
+    }
+
+    protected boolean isBlockAlreadyAdded(RawBlock rawBlock) {
+        return stateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
 

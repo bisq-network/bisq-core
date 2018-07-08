@@ -154,16 +154,14 @@ public class VoteResultService {
                 byte[] majorityBlindVoteListHash = getMajorityBlindVoteListHash(stakeByHashOfBlindVoteListMap);
 
                 // Is our local list matching the majority data view?
-                final boolean isBlindVoteListMatchingMajority = isBlindVoteListMatchingMajority(majorityBlindVoteListHash);
-
-                if (isBlindVoteListMatchingMajority) {
+                if (isBlindVoteListMatchingMajority(majorityBlindVoteListHash)) {
                     //TODO should we write the decryptedVotes here into the state?
 
                     List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight);
+                    List<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
+                    applyAcceptedProposals(acceptedEvaluatedProposals, chainHeight);
 
-                    applyAcceptedProposals(getAcceptedEvaluatedProposals(evaluatedProposals), chainHeight);
-
-                    this.allEvaluatedProposals.addAll(evaluatedProposals);
+                    allEvaluatedProposals.addAll(evaluatedProposals);
                     log.info("processAllVoteResults completed");
                 } else {
                     log.warn("Our list of received blind votes do not match the list from the majority of voters.");
@@ -182,10 +180,16 @@ public class VoteResultService {
                 .map(txOutput -> {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
+                    Optional<Tx> optionalVoteRevealTx = stateService.getTx(voteRevealTxId);
+                    if (!optionalVoteRevealTx.isPresent()) {
+                        log.error("optionalVoteRevealTx is not present. voteRevealTxId={}", voteRevealTxId);
+                        return null;
+                    }
+
+                    Tx voteRevealTx = optionalVoteRevealTx.get();
                     try {
                         byte[] hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
                         SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
-                        Tx voteRevealTx = stateService.getTx(voteRevealTxId).get();
                         TxOutput blindVoteStakeOutput = VoteResultConsensus.getConnectedBlindVoteStakeOutput(voteRevealTx, stateService);
                         long blindVoteStake = blindVoteStakeOutput.getValue();
                         Tx blindVoteTx = VoteResultConsensus.getBlindVoteTx(blindVoteStakeOutput, stateService, periodService, chainHeight);
@@ -196,7 +200,7 @@ public class VoteResultService {
                         Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteList);
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
-                            VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptVotes(blindVote.getEncryptedVotes(), secretKey);
+                            VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptedVotes(blindVote.getEncryptedVotes(), secretKey);
                             MeritList meritList = VoteResultConsensus.getDecryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
 
                             // We lookup for the proposals we have in our local list which match the txId from the
@@ -231,7 +235,6 @@ public class VoteResultService {
                 .collect(Collectors.toMap(VoteWithProposalTxId::getProposalTxId, VoteWithProposalTxId::getVote));
 
         Map<String, Ballot> ballotByTxIdMap = ballotListService.getBallotList().stream()
-                .filter(ballot -> ballot.getVote() != null)
                 .collect(Collectors.toMap(Ballot::getProposalTxId, ballot -> ballot));
 
         List<String> missing = new ArrayList<>();
@@ -240,7 +243,9 @@ public class VoteResultService {
                     final String txId = e.getKey();
                     if (ballotByTxIdMap.containsKey(txId)) {
                         final Ballot ballot = ballotByTxIdMap.get(txId);
-                        return new Ballot(ballot.getProposal(), e.getValue());
+                        // We apply the vote from our decrypted votes
+                        Vote vote = e.getValue();
+                        return new Ballot(ballot.getProposal(), vote);
                     } else {
                         missing.add(txId);
                         return null;

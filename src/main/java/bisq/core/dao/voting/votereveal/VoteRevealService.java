@@ -27,7 +27,6 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -35,7 +34,6 @@ import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
-import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
@@ -55,9 +53,6 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
-import java.util.Optional;
-import java.util.Set;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,10 +64,12 @@ import lombok.extern.slf4j.Slf4j;
 // majority data view can broadcast. That way it will become a very unlikely case that a node is missing
 // data.
 
+/**
+ * Publishes voteRevealTx. Republishes also all blindVotes of that cycle to add more resilience.
+ */
 @Slf4j
 public class VoteRevealService {
     private final StateService stateService;
-    private final MyBlindVoteListService myBlindVoteListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
@@ -92,7 +89,6 @@ public class VoteRevealService {
 
     @Inject
     public VoteRevealService(StateService stateService,
-                             MyBlindVoteListService myBlindVoteListService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
                              PeriodService periodService,
@@ -102,7 +98,6 @@ public class VoteRevealService {
                              P2PService p2PService,
                              WalletsManager walletsManager) {
         this.stateService = stateService;
-        this.myBlindVoteListService = myBlindVoteListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
         this.periodService = periodService;
@@ -181,9 +176,8 @@ public class VoteRevealService {
 
         // We search for my unspent stake output.
         // myVote is already tested if it is in current cycle at maybeRevealVotes
-        final Set<TxOutput> blindVoteStakeTxOutputs = stateService.getUnspentBlindVoteStakeTxOutputs();
         // We expect that the blind vote tx and stake output is available. If not we throw an exception.
-        TxOutput stakeTxOutput = blindVoteStakeTxOutputs.stream()
+        TxOutput stakeTxOutput = stateService.getUnspentBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId()))
                 .findFirst()
                 .orElseThrow(() -> new VoteRevealException("stakeTxOutput is not found for myVote.", myVote));
@@ -192,52 +186,51 @@ public class VoteRevealService {
         if (periodService.isTxInCorrectCycle(stakeTxOutput.getTxId(), chainHeight)) {
             Transaction voteRevealTx = getVoteRevealTx(stakeTxOutput, opReturnData);
             log.info("voteRevealTx={}", voteRevealTx);
-            walletsManager.publishAndCommitBsqTx(voteRevealTx, new TxBroadcaster.Callback() {
-                @Override
-                public void onSuccess(Transaction transaction) {
-                    log.info("voteRevealTx successfully broadcasted.");
-                    myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
-                }
+            publishTx(myVote, voteRevealTx);
 
-                @Override
-                public void onTimeout(TxBroadcastTimeoutException exception) {
-                    log.error(exception.toString());
-                    // TODO handle
-                    voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
-                            exception, voteRevealTx));
-                }
-
-                @Override
-                public void onTxMalleability(TxMalleabilityException exception) {
-                    log.error(exception.toString());
-                    // TODO handle
-                    voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
-                            exception, voteRevealTx));
-                }
-
-                @Override
-                public void onFailure(TxBroadcastException exception) {
-                    log.error(exception.toString());
-                    // TODO handle
-                    voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
-                            exception, voteRevealTx));
-                }
-            });
-
-            // We publish all our blindVotes to a append-only data store. Even we have no feature to remove a already
-            // published blind vote it could have been removed technically and we want to keep that option open in case
-            // we support that one day. So we did not want to use the append only data store in the first event when we
-            // created the blind votes but used the normal protected data store. Now after the reveal removal of any
-            // blind vote would nto make sense and we want to guarantee that the data is immutably persisted.
-            // From now on we only access blind vote data from that append only data store.
+            // Just for additional resilience we republish our blind votes
             final MyBlindVoteList sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
-            publishToAppendOnlyDataStore(sortedBlindVoteListOfCycle);
+            rePublishBlindVotePayload(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";
             log.error("{}. chainHeight={},  blindVoteTxId()={}", msg, chainHeight, myVote.getTxId());
             voteRevealExceptions.add(new VoteRevealException(msg,
                     stakeTxOutput.getTxId()));
         }
+    }
+
+    private void publishTx(MyVote myVote, Transaction voteRevealTx) {
+        walletsManager.publishAndCommitBsqTx(voteRevealTx, new TxBroadcaster.Callback() {
+            @Override
+            public void onSuccess(Transaction transaction) {
+                log.info("voteRevealTx successfully broadcasted.");
+                myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
+            }
+
+            @Override
+            public void onTimeout(TxBroadcastTimeoutException exception) {
+                log.error(exception.toString());
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
+            }
+
+            @Override
+            public void onTxMalleability(TxMalleabilityException exception) {
+                log.error(exception.toString());
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
+            }
+
+            @Override
+            public void onFailure(TxBroadcastException exception) {
+                log.error(exception.toString());
+                // TODO handle
+                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
+                        exception, voteRevealTx));
+            }
+        });
     }
 
     private Transaction getVoteRevealTx(TxOutput stakeTxOutput, byte[] opReturnData)
@@ -247,18 +240,14 @@ public class VoteRevealService {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void publishToAppendOnlyDataStore(MyBlindVoteList blindVotes) {
-        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(blindVoteService.getTriggerHeight());
-        if (optionalBlock.isPresent()) {
-            String blockHash = optionalBlock.get().getHash();
-            blindVotes.stream()
-                    .filter(blindVoteValidator::isValidAndConfirmed)
-                    .map(BlindVotePayload::new)
-                    .forEach(appendOnlyPayload -> {
-                        boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
-                        if (!success)
-                            log.warn("publishToAppendOnlyDataStore failed for blindVote " + appendOnlyPayload.getBlindVote());
-                    });
-        }
+    private void rePublishBlindVotePayload(MyBlindVoteList blindVotes) {
+        blindVotes.stream()
+                .filter(blindVoteValidator::isValidAndConfirmed)
+                .map(BlindVotePayload::new)
+                .forEach(blindVotePayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(blindVotePayload, true);
+                    if (!success)
+                        log.warn("publishToAppendOnlyDataStore failed for blindVote " + blindVotePayload.getBlindVote());
+                });
     }
 }

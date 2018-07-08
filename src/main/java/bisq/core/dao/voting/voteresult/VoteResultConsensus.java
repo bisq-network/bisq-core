@@ -60,7 +60,7 @@ public class VoteResultConsensus {
         return Encryption.decrypt(encryptedVotes, secretKey);
     }
 
-    public static VoteWithProposalTxIdList getDecryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws VoteResultException {
+    public static VoteWithProposalTxIdList getDecryptedVotes(byte[] encryptedVotes, SecretKey secretKey) throws VoteResultException {
         try {
             final byte[] decrypted = decryptVotes(encryptedVotes, secretKey);
             return VoteWithProposalTxIdList.getVoteWithProposalTxIdListFromBytes(decrypted);

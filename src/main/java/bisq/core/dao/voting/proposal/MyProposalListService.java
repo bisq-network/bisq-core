@@ -54,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Publishes proposal tx and proposalPayload to p2p network.
  * Allow removal of proposal if in proposal phase.
- * Maintains MyProposalList for own proposals.
+ * Maintains myProposalList for own proposals.
  * Triggers republishing of my proposals at startup.
  */
 @Slf4j

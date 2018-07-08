@@ -34,7 +34,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Value
 public class Issuance implements PersistablePayload, NetworkPayload {
-    private final String txId;
+    private final String txId; // comp. request txId
     private final int chainHeight;
     private final long amount;
     @Nullable

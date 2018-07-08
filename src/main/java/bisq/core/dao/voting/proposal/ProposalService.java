@@ -46,7 +46,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Maintains protectedStoreList and protectedStoreList.
+ * Maintains protectedStoreList and appendOnlyStoreList.
  * Republishes protectedStoreList to append-only data store when entering the break before the blind vote phase.
  */
 @Slf4j

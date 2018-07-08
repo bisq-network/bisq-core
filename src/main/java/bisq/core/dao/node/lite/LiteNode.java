@@ -153,17 +153,18 @@ public class LiteNode extends BsqNode {
     }
 
     private void parseBlock(RawBlock rawBlock) {
-        try {
-            if (!stateService.getBlockAtHeight(rawBlock.getHeight()).isPresent())
+        if (!isBlockAlreadyAdded(rawBlock)) {
+            try {
                 liteNodeParser.parseBlock(rawBlock);
-        } catch (BlockNotConnectingException | InvalidBlockException throwable) {
-            if (throwable instanceof BlockNotConnectingException) {
-                startReOrgFromLastSnapshot();
-            } else {
-                log.error(throwable.toString());
-                throwable.printStackTrace();
-                if (errorMessageHandler != null)
-                    errorMessageHandler.handleErrorMessage(throwable.toString());
+            } catch (BlockNotConnectingException | InvalidBlockException throwable) {
+                if (throwable instanceof BlockNotConnectingException) {
+                    startReOrgFromLastSnapshot();
+                } else {
+                    log.error(throwable.toString());
+                    throwable.printStackTrace();
+                    if (errorMessageHandler != null)
+                        errorMessageHandler.handleErrorMessage(throwable.toString());
+                }
             }
         }
     }

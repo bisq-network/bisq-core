@@ -38,6 +38,7 @@ import bisq.core.dao.voting.merit.Merit;
 import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.myvote.MyVoteListService;
 import bisq.core.dao.voting.proposal.MyProposalListService;
+import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 
@@ -67,7 +68,6 @@ import javax.crypto.SecretKey;
 
 import java.io.IOException;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -80,7 +80,7 @@ import javax.annotation.Nullable;
 
 /**
  * Publishes blind vote tx and blind vote payload to p2p network.
- * Maintains MyBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup during blind
+ * Maintains myBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup during blind
  * vote phase of current cycle.
  */
 @Slf4j
@@ -178,95 +178,22 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService, proposalValidator);
-            final VoteWithProposalTxIdList voteWithProposalTxIdList = getSortedVoteWithProposalTxIdList(sortedBallotList);
-            log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
-
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            byte[] encryptedVotes = BlindVoteConsensus.getEncryptedVotes(voteWithProposalTxIdList, secretKey);
-
-            final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedVotes);
-            log.info("Sha256Ripemd160 hash of encryptedVotes: " + Utilities.bytesAsHexString(hash));
-            byte[] opReturnData = BlindVoteConsensus.getOpReturnData(hash);
-
-            final Transaction blindVoteTx = getBlindVoteTx(stake, getBlindVoteFee(), opReturnData);
-            log.info("blindVoteTx={}", blindVoteTx);
-            walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
-                @Override
-                public void onSuccess(Transaction transaction) {
-                    resultHandler.handleResult();
-                }
-
-                @Override
-                public void onTimeout(TxBroadcastTimeoutException exception) {
-                    // TODO handle
-                    // We need to handle cases where a timeout happens and
-                    // the tx might get broadcasted at a later restart!
-                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
-                    exceptionHandler.handleException(exception);
-                }
-
-                @Override
-                public void onTxMalleability(TxMalleabilityException exception) {
-                    // TODO handle
-                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
-                    exceptionHandler.handleException(exception);
-                }
-
-                @Override
-                public void onFailure(TxBroadcastException exception) {
-                    // TODO handle
-                    // We need to be sure that in case of a failed tx the locked stake gets unlocked!
-                    exceptionHandler.handleException(exception);
-                }
-            });
-
-            // Create a lookup map for own comp. requests
+            BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService, proposalValidator);
+            byte[] encryptedVotes = getEncryptedVotes(sortedBallotList, secretKey);
+            byte[] opReturnData = getOpReturnData(encryptedVotes);
+            Transaction blindVoteTx = getBlindVoteTx(stake, getBlindVoteFee(), opReturnData);
             String blindVoteTxId = blindVoteTx.getHashAsString();
-            Set<String> myCompensationProposalTxIs = new HashSet<>();
-            myProposalListService.getList().forEach(proposal -> {
-                if (proposal instanceof CompensationProposal) {
-                    myCompensationProposalTxIs.add(proposal.getTxId());
-                }
-            });
-            MeritList meritList = new MeritList(stateService.getIssuanceSet().stream()
-                    .map(issuance -> {
-                        // We check if it is our proposal
-                        if (!myCompensationProposalTxIs.contains(issuance.getTxId()))
-                            return null;
+            publishTx(resultHandler, exceptionHandler, blindVoteTx);
 
-                        String pubKey = issuance.getPubKey();
-                        if (pubKey == null) {
-                            log.error("We did not find have a pubKey in our issuance object. " +
-                                            "txId={}, issuance={}",
-                                    issuance.getTxId(), issuance);
-                            return null;
-                        }
-
-                        DeterministicKey key = bsqWalletService.findKeyFromPubKey(Utilities.decodeFromHex(pubKey));
-                        if (key == null) {
-                            log.error("We did not find the key for our compensation request. txId={}",
-                                    issuance.getTxId());
-                            return null;
-                        }
-
-                        // We sign the txId so we be sure that the signature could not be used by anyone else
-                        // In the verification the txId will be checked as well.
-                        ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
-                        byte[] signatureAsBytes = signature.toCanonicalised().encodeToDER();
-                        return new Merit(issuance, signatureAsBytes);
-
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList()));
-            byte[] encryptedMeritList = BlindVoteConsensus.getEncryptedMeritList(meritList, secretKey);
+            byte[] encryptedMeritList = getEncryptedMeritList(blindVoteTxId, secretKey);
 
             // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
             // blind vote stored and broadcasted to the p2p network. The tx might get re-broadcasted at a restart and
             // in worst case if it does not succeed the blind vote will be ignored anyway.
             // Inconsistently propagated blind votes in the p2p network could have potentially worse effects.
             BlindVote blindVote = new BlindVote(encryptedVotes, blindVoteTxId, stake.value, encryptedMeritList);
-            addToList(blindVote);
+            addBlindVoteToList(blindVote);
 
             addToP2PNetwork(blindVote, errorMessage -> {
                 log.error(errorMessage);
@@ -286,6 +213,93 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private byte[] getOpReturnData(byte[] encryptedVotes) throws IOException {
+        // We cannot use hash of whole blindVote data because we create the merit signature with the blindVoteTxId
+        // So we use the encryptedVotes for the hash only.
+        final byte[] hash = BlindVoteConsensus.getHashOfEncryptedProposalList(encryptedVotes);
+        log.info("Sha256Ripemd160 hash of encryptedVotes: " + Utilities.bytesAsHexString(hash));
+        return BlindVoteConsensus.getOpReturnData(hash);
+    }
+
+    private byte[] getEncryptedVotes(BallotList sortedBallotList, SecretKey secretKey) throws CryptoException {
+        final VoteWithProposalTxIdList voteWithProposalTxIdList = getSortedVoteWithProposalTxIdList(sortedBallotList);
+        log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
+        return BlindVoteConsensus.getEncryptedVotes(voteWithProposalTxIdList, secretKey);
+    }
+
+    private byte[] getEncryptedMeritList(String blindVoteTxId, SecretKey secretKey) throws CryptoException {
+        // Create a lookup set for own comp. requests
+        Set<String> myCompensationProposalTxIs = myProposalListService.getList().stream()
+                .filter(proposal -> proposal instanceof CompensationProposal)
+                .map(Proposal::getTxId)
+                .collect(Collectors.toSet());
+
+        MeritList meritList = new MeritList(stateService.getIssuanceSet().stream()
+                .map(issuance -> {
+                    // We check if it is our proposal
+                    if (!myCompensationProposalTxIs.contains(issuance.getTxId()))
+                        return null;
+
+                    String pubKey = issuance.getPubKey();
+                    if (pubKey == null) {
+                        log.error("We did not find have a pubKey in our issuance object. " +
+                                "txId={}, issuance={}", issuance.getTxId(), issuance);
+                        return null;
+                    }
+
+                    DeterministicKey key = bsqWalletService.findKeyFromPubKey(Utilities.decodeFromHex(pubKey));
+                    if (key == null) {
+                        log.error("We did not find the key for our compensation request. txId={}",
+                                issuance.getTxId());
+                        return null;
+                    }
+
+                    // We sign the txId so we be sure that the signature could not be used by anyone else
+                    // In the verification the txId will be checked as well.
+                    ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
+                    byte[] signatureAsBytes = signature.toCanonicalised().encodeToDER();
+                    return new Merit(issuance, signatureAsBytes);
+
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
+        return BlindVoteConsensus.getEncryptedMeritList(meritList, secretKey);
+    }
+
+    private void publishTx(ResultHandler resultHandler, ExceptionHandler exceptionHandler, Transaction blindVoteTx) {
+        log.info("blindVoteTx={}", blindVoteTx.toString());
+        walletsManager.publishAndCommitBsqTx(blindVoteTx, new TxBroadcaster.Callback() {
+            @Override
+            public void onSuccess(Transaction transaction) {
+                log.info("BlindVote tx published. txId={}", transaction.getHashAsString());
+                resultHandler.handleResult();
+            }
+
+            @Override
+            public void onTimeout(TxBroadcastTimeoutException exception) {
+                // TODO handle
+                // We need to handle cases where a timeout happens and
+                // the tx might get broadcasted at a later restart!
+                // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                exceptionHandler.handleException(exception);
+            }
+
+            @Override
+            public void onTxMalleability(TxMalleabilityException exception) {
+                // TODO handle
+                // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                exceptionHandler.handleException(exception);
+            }
+
+            @Override
+            public void onFailure(TxBroadcastException exception) {
+                // TODO handle
+                // We need to be sure that in case of a failed tx the locked stake gets unlocked!
+                exceptionHandler.handleException(exception);
+            }
+        });
+    }
 
     private Transaction getBlindVoteTx(Coin stake, Coin fee, byte[] opReturnData)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
@@ -316,20 +330,21 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
     }
 
     private void addToP2PNetwork(BlindVote blindVote, @Nullable ErrorMessageHandler errorMessageHandler) {
-        BlindVotePayload appendOnlyPayload = new BlindVotePayload(blindVote);
-        boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
+        BlindVotePayload blindVotePayload = new BlindVotePayload(blindVote);
+        boolean success = p2PService.addPersistableNetworkPayload(blindVotePayload, true);
 
         if (success) {
-            log.debug("We added a blindVote to the P2P network. blindVote=" + blindVote);
+            log.info("We added a blindVotePayload to the P2P network as append only data. blindVoteTxId={}",
+                    blindVote.getTxId());
         } else {
-            final String msg = "Adding of blindVote to P2P network failed. blindVote=" + blindVote;
+            final String msg = "Adding of blindVotePayload to P2P network failed. blindVoteTxId=" + blindVote.getTxId();
             log.error(msg);
             if (errorMessageHandler != null)
                 errorMessageHandler.handleErrorMessage(msg);
         }
     }
 
-    private void addToList(BlindVote blindVote) {
+    private void addBlindVoteToList(BlindVote blindVote) {
         if (!BlindVoteUtils.containsBlindVote(blindVote, myBlindVoteList.getList())) {
             myBlindVoteList.add(blindVote);
             persist();
