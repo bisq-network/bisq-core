@@ -17,6 +17,8 @@
 
 package bisq.core.trade.protocol.tasks.seller;
 
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.tasks.TradeTask;
 
@@ -25,11 +27,7 @@ import bisq.common.taskrunner.TaskRunner;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -56,7 +54,7 @@ public class SellerBroadcastPayoutTx extends TradeTask {
                 complete();
             } else {
                 processModel.getTradeWalletService().broadcastTx(payoutTx,
-                        new FutureCallback<Transaction>() {
+                        new TxBroadcaster.Callback() {
                             @Override
                             public void onSuccess(Transaction transaction) {
                                 if (!completed) {
@@ -69,10 +67,10 @@ public class SellerBroadcastPayoutTx extends TradeTask {
                             }
 
                             @Override
-                            public void onFailure(@NotNull Throwable t) {
+                            public void onFailure(TxBroadcastException exception) {
                                 if (!completed) {
-                                    log.error("BroadcastTx failed. Error:" + t.getMessage());
-                                    failed(t);
+                                    log.error("BroadcastTx failed. Error:" + exception.getMessage());
+                                    failed(exception);
                                 } else {
                                     log.warn("We got the onFailure callback called after the timeout has been triggered a complete().");
                                 }

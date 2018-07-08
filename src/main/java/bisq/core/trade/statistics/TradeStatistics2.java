@@ -183,7 +183,7 @@ public final class TradeStatistics2 implements LazyProcessedPayload, Persistable
     }
 
 
-    public PB.TradeStatistics2 toProtoTradeStatistics() {
+    public PB.TradeStatistics2 toProtoTradeStatistics2() {
         return toProtoMessage().getTradeStatistics2();
     }
 

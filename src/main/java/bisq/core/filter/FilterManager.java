@@ -55,6 +55,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import java.lang.reflect.Method;
@@ -90,7 +91,7 @@ public class FilterManager {
     private final ProvidersRepository providersRepository;
     private boolean ignoreDevMsg;
     private final ObjectProperty<Filter> filterProperty = new SimpleObjectProperty<>();
-    private final List<Listener> listeners = new ArrayList<>();
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
     private final String pubKeyAsHex;
     private ECKey filterSigningKey;

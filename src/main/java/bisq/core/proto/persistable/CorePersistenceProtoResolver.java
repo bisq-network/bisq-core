@@ -25,16 +25,17 @@ import bisq.core.dao.param.ParamChangeEventList;
 import bisq.core.dao.vote.blindvote.BlindVoteList;
 import bisq.core.dao.vote.myvote.MyVoteList;
 import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.TradableList;
+import bisq.core.trade.statistics.TradeStatistics2Store;
 import bisq.core.user.PreferencesPayload;
 import bisq.core.user.UserPayload;
 
 import bisq.network.p2p.peers.peerexchange.PeerList;
-import bisq.network.p2p.storage.PersistableNetworkPayloadList;
-import bisq.network.p2p.storage.PersistedEntryMap;
-import bisq.network.p2p.storage.SequenceNumberMap;
+import bisq.network.p2p.storage.persistence.PersistableNetworkPayloadList;
+import bisq.network.p2p.storage.persistence.SequenceNumberMap;
 
 import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkProtoResolver;
@@ -77,9 +78,6 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
             switch (proto.getMessageCase()) {
                 case SEQUENCE_NUMBER_MAP:
                     return SequenceNumberMap.fromProto(proto.getSequenceNumberMap());
-                case PERSISTED_ENTRY_MAP:
-                    return PersistedEntryMap.fromProto(proto.getPersistedEntryMap().getPersistedEntryMapMap(),
-                            networkProtoResolver);
                 case PEER_LIST:
                     return PeerList.fromProto(proto.getPeerList());
                 case ADDRESS_ENTRY_LIST:
@@ -107,6 +105,10 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return BsqBlockChain.fromProto(proto.getBsqBlockChain());
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
+                case ACCOUNT_AGE_WITNESS_STORE:
+                    return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
+                case TRADE_STATISTICS2_STORE:
+                    return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
                 case PROPOSAL_LIST:
                     return ProposalList.fromProto(proto.getProposalList());
                 case MY_VOTE_LIST:

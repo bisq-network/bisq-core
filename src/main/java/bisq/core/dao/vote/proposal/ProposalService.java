@@ -43,8 +43,6 @@ import org.bitcoinj.core.Transaction;
 
 import com.google.inject.Inject;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import javafx.beans.value.ChangeListener;
 
 import javafx.collections.FXCollections;
@@ -57,10 +55,6 @@ import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -187,7 +181,8 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
     public void publishProposal(Proposal proposal, ResultHandler resultHandler, ErrorMessageHandler errorMessageHandler) {
         final Transaction proposalTx = proposal.getTx();
         checkNotNull(proposalTx, "proposal.getTx() at publishProposal must not be null");
-        walletsManager.publishAndCommitBsqTx(proposalTx, new FutureCallback<Transaction>() {
+        // TODO not updated to TxBroadcaster changes because not in sync with voting branch anyway
+        /* walletsManager.publishAndCommitBsqTx(proposalTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction transaction) {
                 try {
@@ -222,7 +217,7 @@ public class ProposalService implements PersistedDataHost, HashMapChangedListene
             public void onFailure(@NotNull Throwable t) {
                 errorMessageHandler.handleErrorMessage(t.toString());
             }
-        });
+        });*/
     }
 
     public boolean removeProposal(Proposal proposal) {

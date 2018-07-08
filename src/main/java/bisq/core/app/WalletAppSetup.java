@@ -38,7 +38,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -130,10 +129,10 @@ public class WalletAppSetup {
                         if (exception instanceof TimeoutException) {
                             getWalletServiceErrorMsg().set(Res.get("mainView.walletServiceErrorMsg.timeout"));
                         } else if (exception.getCause() instanceof BlockStoreException) {
-                            if (exception.getCause().getCause() instanceof ChainFileLockedException) {
-                                Objects.requireNonNull(chainFileLockedExceptionHandler).accept(Res.get("popup.warning.startupFailed.twoInstances"));
-                            } else {
-                                Objects.requireNonNull(spvFileCorruptedHandler).accept(Res.get("error.spvFileCorrupted", exception.getMessage()));
+                            if (exception.getCause().getCause() instanceof ChainFileLockedException && chainFileLockedExceptionHandler != null) {
+                                chainFileLockedExceptionHandler.accept(Res.get("popup.warning.startupFailed.twoInstances"));
+                            } else if (spvFileCorruptedHandler != null) {
+                                spvFileCorruptedHandler.accept(Res.get("error.spvFileCorrupted", exception.getMessage()));
                             }
                         } else {
                             getWalletServiceErrorMsg().set(Res.get("mainView.walletServiceErrorMsg.connectionError", exception.toString()));
@@ -155,7 +154,8 @@ public class WalletAppSetup {
                         walletPasswordHandler.run();
                     } else {
                         if (preferences.isResyncSpvRequested()) {
-                            Objects.requireNonNull(showFirstPopupIfResyncSPVRequestedHandler).run();
+                            if (showFirstPopupIfResyncSPVRequestedHandler != null)
+                                showFirstPopupIfResyncSPVRequestedHandler.run();
                         } else {
                             walletInitializedHandler.run();
                         }

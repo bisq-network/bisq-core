@@ -55,6 +55,8 @@ import joptsimple.OptionSet;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -197,11 +199,16 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     }
 
     protected void applyInjector() {
-        DevEnv.setup(injector);
+        setupDevEnv();
 
         setCorruptedDataBaseFilesHandler();
 
         setupPersistedDataHosts(injector);
+    }
+
+    protected void setupDevEnv() {
+        DevEnv.setDevMode(injector.getInstance(Key.get(Boolean.class, Names.named(CommonOptionKeys.USE_DEV_MODE))));
+        DevEnv.setDaoActivated(injector.getInstance(Key.get(Boolean.class, Names.named(DaoOptionKeys.DAO_ACTIVATED))));
     }
 
     private void setCorruptedDataBaseFilesHandler() {
@@ -214,6 +221,16 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     }
 
     protected abstract void startApplication();
+
+    // Once the application is ready we get that callback and we start the setup
+    protected void onApplicationStarted() {
+        startAppSetup();
+    }
+
+    protected void startAppSetup() {
+        BisqSetup bisqSetup = injector.getInstance(BisqSetup.class);
+        bisqSetup.start();
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -399,6 +416,10 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
         parser.accepts(DaoOptionKeys.GENESIS_BLOCK_HEIGHT,
                 description("Genesis transaction block height when not using the hard coded one", ""))
                 .withRequiredArg();
+        parser.accepts(DaoOptionKeys.DAO_ACTIVATED,
+                description("Developer flag. If true it enables dao phase 2 features.", false))
+                .withRequiredArg()
+                .ofType(boolean.class);
     }
 
     public static BisqEnvironment getBisqEnvironment(OptionSet options) {
