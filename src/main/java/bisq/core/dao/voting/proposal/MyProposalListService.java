@@ -150,6 +150,8 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
+                log.info("Proposal tx has been published. TxId={}, proposalUid={}",
+                        transaction.getHashAsString(), proposal.getUid());
                 resultHandler.handleResult();
             }
 
@@ -217,7 +219,7 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
     private void addToP2PNetworkAsProtectedData(Proposal proposal, ErrorMessageHandler errorMessageHandler) {
         final boolean success = addToP2PNetworkAsProtectedData(proposal);
         if (success) {
-            log.debug("We added a proposal to the P2P network. proposal=" + proposal);
+            log.info("TempProposalPayload has been added to P2P network. ProposalUid={}", proposal.getUid());
         } else {
             final String msg = "Adding of proposal to P2P network failed. proposal=" + proposal;
             log.error(msg);

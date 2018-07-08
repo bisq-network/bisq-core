@@ -140,7 +140,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             // We only republish if we are not still parsing old blocks
             if (parsingComplete) {
                 // We use first block of break1 for the block hash
-                final int heightOfFirstBlockOfBreak = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
+                int heightOfFirstBlockOfBreak = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
                 stateService.getBlockAtHeight(heightOfFirstBlockOfBreak)
                         .ifPresent(firstBlockInBreak -> publishToAppendOnlyDataStore(firstBlockInBreak.getHash()));
             }
