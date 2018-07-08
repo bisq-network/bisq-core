@@ -60,18 +60,22 @@ public class BallotListService implements PersistedDataHost {
         proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalPayload>) c -> {
             c.next();
             if (c.wasAdded())
-                c.getAddedSubList().stream()
-                        .map(ProposalPayload::getProposal)
-                        .filter(proposal -> !BallotUtils.listContainsProposal(proposal, ballotList.getList()))
-                        .forEach(proposal -> {
-                            log.info("We add a proposal to a new ballot. Vote is null at that moment.proposalUid={}",
-                                    proposal.getUid());
-                            Ballot ballot = new Ballot(proposal);
-                            ballotList.add(ballot);
-                            listeners.forEach(l -> l.onListChanged(ballotList.getList()));
-                            persist();
-                        });
+                handleNewProposalPayloads(c.getAddedSubList());
         });
+    }
+
+    private void handleNewProposalPayloads(List<? extends ProposalPayload> proposalPayloads) {
+        proposalPayloads.stream()
+                .map(ProposalPayload::getProposal)
+                .filter(proposal -> !BallotUtils.listContainsProposal(proposal, ballotList.getList()))
+                .forEach(proposal -> {
+                    log.info("We add a proposal to a new ballot. Vote is null at that moment.proposalUid={}",
+                            proposal.getUid());
+                    Ballot ballot = new Ballot(proposal);
+                    ballotList.add(ballot);
+                    listeners.forEach(l -> l.onListChanged(ballotList.getList()));
+                    persist();
+                });
     }
 
 
