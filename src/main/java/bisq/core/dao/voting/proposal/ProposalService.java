@@ -133,9 +133,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     @Override
     public void onBlockAdded(Block block) {
-        // We need to do that after parsing the block to have the txs available
-        // We will use the 10th block of break1 phase to avoid re-org issues.
-        int heightForRepublishing = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1) + 1 /* + 9*/;
+        int heightForRepublishing = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are not still parsing old blocks
             if (parsingComplete)
@@ -188,10 +186,13 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         protectedStoreList.stream()
                 .filter(proposalValidator::isValidAndConfirmed)
                 .map(ProposalPayload::new)
-                .forEach(appendOnlyPayload -> {
-                    boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
-                    if (!success)
-                        log.warn("publishToAppendOnlyDataStore failed for proposal " + appendOnlyPayload.getProposal());
+                .forEach(proposalPayload -> {
+                    boolean success = p2PService.addPersistableNetworkPayload(proposalPayload, true);
+                    if (success)
+                        log.info("We published a ProposalPayload to the P2P network as append-only data. proposalUid={}",
+                                proposalPayload.getProposal().getUid());
+                    else
+                        log.warn("publishToAppendOnlyDataStore failed for proposal " + proposalPayload.getProposal());
                 });
     }
 
@@ -199,17 +200,19 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof TempProposalPayload) {
             final Proposal proposal = ((TempProposalPayload) protectedStoragePayload).getProposal();
-
             // We do not validate phase, cycle and confirmation yet as the tx might be not available/confirmed yet.
             // Though we check if we are in the proposal phase. During parsing we might miss proposals but we will
             // handle that in the node to request again the p2p network data so we get added potentially missed data
-            if (proposalValidator.isValidOrUnconfirmed(proposal)) {
-                if (!protectedStoreList.contains(proposal))
+            if (!protectedStoreList.contains(proposal)) {
+                if (proposalValidator.isValidOrUnconfirmed(proposal)) {
                     protectedStoreList.add(proposal);
-            } else {
-                //TODO called at startup when we are not in cycle of proposal
-                log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
-                        proposal.getTxId(), stateService.getChainHeight());
+                    log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalUid={}",
+                            proposal.getUid());
+                } else {
+                    //TODO called at startup when we are not in cycle of proposal
+                    log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                            proposal.getTxId(), stateService.getChainHeight());
+                }
             }
         }
     }
@@ -232,13 +235,17 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
         if (persistableNetworkPayload instanceof ProposalPayload) {
             ProposalPayload proposalPayload = (ProposalPayload) persistableNetworkPayload;
-            if (proposalValidator.isValidAndConfirmed(proposalPayload.getProposal())) {
-                if (!appendOnlyStoreList.contains(proposalPayload))
+            if (!appendOnlyStoreList.contains(proposalPayload)) {
+                Proposal proposal = proposalPayload.getProposal();
+                if (proposalValidator.isValidAndConfirmed(proposal)) {
                     appendOnlyStoreList.add(proposalPayload);
-            } else {
-                log.warn("We received a invalid append-only proposal from the P2P network. " +
-                                "Proposal.txId={}, blockHeight={}",
-                        proposalPayload.getProposal().getTxId(), stateService.getChainHeight());
+                    log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalUid={}",
+                            proposal.getUid());
+                } else {
+                    log.warn("We received a invalid append-only proposal from the P2P network. " +
+                                    "Proposal.txId={}, blockHeight={}",
+                            proposal.getTxId(), stateService.getChainHeight());
+                }
             }
         }
     }
