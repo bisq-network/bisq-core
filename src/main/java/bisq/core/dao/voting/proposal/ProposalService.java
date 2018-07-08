@@ -138,12 +138,8 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         int heightForRepublishing = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1) + 1 /* + 9*/;
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are not still parsing old blocks
-            if (parsingComplete) {
-                // We use first block of break1 for the block hash
-                int heightOfFirstBlockOfBreak = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
-                stateService.getBlockAtHeight(heightOfFirstBlockOfBreak)
-                        .ifPresent(firstBlockInBreak -> publishToAppendOnlyDataStore(firstBlockInBreak.getHash()));
-            }
+            if (parsingComplete)
+                publishToAppendOnlyDataStore();
 
             fillListFromAppendOnlyDataStore();
         }
@@ -188,10 +184,10 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     }
 
 
-    private void publishToAppendOnlyDataStore(String blockHash) {
+    private void publishToAppendOnlyDataStore() {
         protectedStoreList.stream()
                 .filter(proposalValidator::isValidAndConfirmed)
-                .map(proposal -> new ProposalPayload(proposal, blockHash))
+                .map(ProposalPayload::new)
                 .forEach(appendOnlyPayload -> {
                     boolean success = p2PService.addPersistableNetworkPayload(appendOnlyPayload, true);
                     if (!success)
@@ -236,20 +232,13 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
         if (persistableNetworkPayload instanceof ProposalPayload) {
             ProposalPayload proposalPayload = (ProposalPayload) persistableNetworkPayload;
-            int blockHeightOfBreakStart = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
-            if (proposalValidator.hasCorrectBlockHash(proposalPayload, blockHeightOfBreakStart, stateService)) {
-                if (proposalValidator.isValidAndConfirmed(proposalPayload.getProposal())) {
-                    if (!appendOnlyStoreList.contains(proposalPayload))
-                        appendOnlyStoreList.add(proposalPayload);
-                } else {
-                    log.warn("We received a invalid append-only proposal from the P2P network. " +
-                                    "Proposal.txId={}, blockHeight={}",
-                            proposalPayload.getProposal().getTxId(), stateService.getChainHeight());
-                }
+            if (proposalValidator.isValidAndConfirmed(proposalPayload.getProposal())) {
+                if (!appendOnlyStoreList.contains(proposalPayload))
+                    appendOnlyStoreList.add(proposalPayload);
             } else {
-                //TODO called at startup when we are not in cycle of proposal
-                log.debug("We received an invalid proposalPayload. payload={}, blockHeightOfBreakStart={}",
-                        proposalPayload, blockHeightOfBreakStart);
+                log.warn("We received a invalid append-only proposal from the P2P network. " +
+                                "Proposal.txId={}, blockHeight={}",
+                        proposalPayload.getProposal().getTxId(), stateService.getChainHeight());
             }
         }
     }

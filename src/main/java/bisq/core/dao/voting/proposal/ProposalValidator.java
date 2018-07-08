@@ -18,14 +18,10 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
-
-import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
 
@@ -113,27 +109,6 @@ public class ProposalValidator {
                 log.debug("proposal is unconfirmed and we are in proposal phase: txId={}", txId);
             return inPhase;
         } else {
-            return false;
-        }
-    }
-
-    public boolean hasCorrectBlockHash(ProposalPayload appendOnlyPayload,
-                                       int blockHeightOfBreakStart,
-                                       StateService stateService) {
-        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(blockHeightOfBreakStart);
-        if (optionalBlock.isPresent()) {
-            final String blockHash = Utilities.encodeToHex(appendOnlyPayload.getBlockHash());
-            final boolean hasCorrectBlockHash = blockHash.equals(optionalBlock.get().getHash());
-            if (!hasCorrectBlockHash) {
-                //TODO called at startup when we are not in cycle of proposal
-                log.debug("ProposalPayload has not correct block hash. blockHeightOfBreakStart={}",
-                        blockHeightOfBreakStart);
-                return false;
-            }
-
-            return true;
-        } else {
-            log.debug("block at blockHeightOfBreakStart is not present.");
             return false;
         }
     }
