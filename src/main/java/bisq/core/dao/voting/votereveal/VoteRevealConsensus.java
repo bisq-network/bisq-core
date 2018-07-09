@@ -44,7 +44,7 @@ public class VoteRevealConsensus {
     public static byte[] getOpReturnData(byte[] hashOfBlindVoteList, SecretKey secretKey) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.VOTE_REVEAL.getType());
-            outputStream.write(Version.VOTE_REVEAL_VERSION);
+            outputStream.write(Version.VOTE_REVEAL);
             outputStream.write(hashOfBlindVoteList);     // hash is 20 bytes
             outputStream.write(secretKey.getEncoded()); // encoded secretKey has 16 bytes
             return outputStream.toByteArray();

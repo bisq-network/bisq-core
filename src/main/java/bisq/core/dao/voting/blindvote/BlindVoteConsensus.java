@@ -100,7 +100,7 @@ public class BlindVoteConsensus {
     public static byte[] getOpReturnData(byte[] hash) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.BLIND_VOTE.getType());
-            outputStream.write(Version.BLIND_VOTE_VERSION);
+            outputStream.write(Version.BLIND_VOTE);
             outputStream.write(hash);
             final byte[] bytes = outputStream.toByteArray();
             log.info("OpReturnData: " + Utilities.bytesAsHexString(bytes));

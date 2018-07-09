@@ -57,7 +57,7 @@ public final class ParamProposal extends Proposal {
                 link,
                 param,
                 paramValue,
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.COMPENSATION_REQUEST,
                 new Date().getTime(),
                 "");
     }

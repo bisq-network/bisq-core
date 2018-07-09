@@ -63,7 +63,7 @@ public final class CompensationProposal extends Proposal {
                 link,
                 bsqAddress,
                 requestedBsq.value,
-                Version.COMPENSATION_REQUEST_VERSION,
+                Version.COMPENSATION_REQUEST,
                 new Date().getTime(),
                 "");
     }

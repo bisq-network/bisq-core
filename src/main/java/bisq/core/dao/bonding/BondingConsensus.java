@@ -36,7 +36,7 @@ public class BondingConsensus {
         // require by btcd-cli4j, avoid opreturns with 4 bytes or less
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
-            outputStream.write(Version.LOCKUP_VERSION);
+            outputStream.write(Version.LOCKUP);
             outputStream.write(LockupType.DEFAULT.getType());
             Util.writeOpReturnData(outputStream, lockTime, 2);
             return outputStream.toByteArray();

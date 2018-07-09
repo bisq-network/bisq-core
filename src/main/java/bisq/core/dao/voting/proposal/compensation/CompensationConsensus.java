@@ -41,7 +41,7 @@ public class CompensationConsensus {
     public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.COMPENSATION_REQUEST.getType());
-            outputStream.write(Version.COMPENSATION_REQUEST_VERSION);
+            outputStream.write(Version.COMPENSATION_REQUEST);
             outputStream.write(hashOfPayload);
             return outputStream.toByteArray();
         } catch (IOException e) {
