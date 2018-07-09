@@ -23,6 +23,7 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
 
 import bisq.common.app.Version;
+import bisq.common.proto.ProtoUtil;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -57,7 +58,7 @@ public final class ChangeParamProposal extends Proposal {
                 link,
                 param,
                 paramValue,
-                Version.COMPENSATION_REQUEST,
+                Version.PROPOSAL,
                 new Date().getTime(),
                 "");
     }
@@ -92,22 +93,21 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        //TODO
-        final PB.CompensationProposal.Builder compensationRequestProposalBuilder = PB.CompensationProposal.newBuilder()/*
-                .setBsqAddress(bsqAddress)
-                .setRequestedBsq(requestedBsq)*/;
-        return super.getProposalBuilder().setCompensationProposal(compensationRequestProposalBuilder);
+        final PB.ChangeParamProposal.Builder builder = PB.ChangeParamProposal.newBuilder()
+                .setParam(param.name())
+                .setParamValue(paramValue);
+        return super.getProposalBuilder().setChangeParamProposal(builder);
     }
 
     public static ChangeParamProposal fromProto(PB.Proposal proto) {
-        final PB.CompensationProposal compensationRequestProposa = proto.getCompensationProposal();
+        final PB.ChangeParamProposal proposalProto = proto.getChangeParamProposal();
         return new ChangeParamProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                null, //TODO
-                0,//TODO
+                ProtoUtil.enumFromProto(Param.class, proposalProto.getParam()),
+                proposalProto.getParamValue(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -134,7 +134,7 @@ public final class ChangeParamProposal extends Proposal {
     }
 
     public TxType getTxType() {
-        return TxType.COMPENSATION_REQUEST;
+        return TxType.PROPOSAL;
     }
 
     public TxOutputType getTxOutputType() {

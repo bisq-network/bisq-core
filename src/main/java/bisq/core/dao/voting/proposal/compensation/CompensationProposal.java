@@ -98,21 +98,21 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        final PB.CompensationProposal.Builder compensationRequestProposalBuilder = PB.CompensationProposal.newBuilder()
+        final PB.CompensationProposal.Builder builder = PB.CompensationProposal.newBuilder()
                 .setBsqAddress(bsqAddress)
                 .setRequestedBsq(requestedBsq);
-        return super.getProposalBuilder().setCompensationProposal(compensationRequestProposalBuilder);
+        return super.getProposalBuilder().setCompensationProposal(builder);
     }
 
     public static CompensationProposal fromProto(PB.Proposal proto) {
-        final PB.CompensationProposal compensationRequestProposa = proto.getCompensationProposal();
+        final PB.CompensationProposal proposalProto = proto.getCompensationProposal();
         return new CompensationProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                compensationRequestProposa.getBsqAddress(),
-                compensationRequestProposa.getRequestedBsq(),
+                proposalProto.getBsqAddress(),
+                proposalProto.getRequestedBsq(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
