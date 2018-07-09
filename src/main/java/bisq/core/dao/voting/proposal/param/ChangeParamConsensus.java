@@ -27,7 +27,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ParamConsensus {
+public class ChangeParamConsensus {
     public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.PROPOSAL.getType());

@@ -37,14 +37,14 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates ParamProposal and transaction.
+ * Creates ChangeParamProposal and transaction.
  */
 @Slf4j
-public class ParamProposalService {
+public class ChangeParamProposalService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final StateService stateService;
-    private final ParamValidator paramValidator;
+    private final ChangeParamValidator changeParamValidator;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -52,14 +52,14 @@ public class ParamProposalService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ParamProposalService(BsqWalletService bsqWalletService,
-                                BtcWalletService btcWalletService,
-                                StateService stateService,
-                                ParamValidator paramValidator) {
+    public ChangeParamProposalService(BsqWalletService bsqWalletService,
+                                      BtcWalletService btcWalletService,
+                                      StateService stateService,
+                                      ChangeParamValidator changeParamValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.stateService = stateService;
-        this.paramValidator = paramValidator;
+        this.changeParamValidator = changeParamValidator;
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
@@ -72,7 +72,7 @@ public class ParamProposalService {
             WalletException {
 
         // As we don't know the txId we create a temp object with txId set to an empty string.
-        ParamProposal proposal = new ParamProposal(
+        ChangeParamProposal proposal = new ChangeParamProposal(
                 name,
                 title,
                 description,
@@ -83,14 +83,14 @@ public class ParamProposalService {
 
         Transaction transaction = getTransaction(proposal);
 
-        final ParamProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final ChangeParamProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
     // We have txId set to null in proposal as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction getTransaction(ParamProposal proposal)
+    private Transaction getTransaction(ChangeParamProposal proposal)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(stateService, stateService.getChainHeight());
@@ -98,21 +98,21 @@ public class ParamProposalService {
 
         // payload does not have txId at that moment
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
-        byte[] opReturnData = ParamConsensus.getOpReturnData(hashOfPayload);
+        byte[] opReturnData = ChangeParamConsensus.getOpReturnData(hashOfPayload);
 
         final Transaction txWithBtcFee = btcWalletService.completePreparedGenericProposalTx(preparedBurnFeeTx,
                 opReturnData);
 
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-        log.info("ParamProposal tx: " + transaction);
+        log.info("ChangeParamProposal tx: " + transaction);
         return transaction;
     }
 
-    private void validate(ParamProposal proposal) throws ValidationException {
-        paramValidator.validateDataFields(proposal);
+    private void validate(ChangeParamProposal proposal) throws ValidationException {
+        changeParamValidator.validateDataFields(proposal);
     }
 
-    private ParamProposal getProposalWithTxId(ParamProposal proposal, String txId) {
-        return (ParamProposal) proposal.cloneWithTxId(txId);
+    private ChangeParamProposal getProposalWithTxId(ChangeParamProposal proposal, String txId) {
+        return (ChangeParamProposal) proposal.cloneWithTxId(txId);
     }
 }

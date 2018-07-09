@@ -39,17 +39,17 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class ParamProposal extends Proposal {
+public final class ChangeParamProposal extends Proposal {
 
     private final Param param;
     private final long paramValue;
 
-    public ParamProposal(String name,
-                         String title,
-                         String description,
-                         String link,
-                         Param param,
-                         long paramValue) {
+    public ChangeParamProposal(String name,
+                               String title,
+                               String description,
+                               String link,
+                               Param param,
+                               long paramValue) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
@@ -67,16 +67,16 @@ public final class ParamProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ParamProposal(String uid,
-                          String name,
-                          String title,
-                          String description,
-                          String link,
-                          Param param,
-                          long paramValue,
-                          byte version,
-                          long creationDate,
-                          String txId) {
+    private ChangeParamProposal(String uid,
+                                String name,
+                                String title,
+                                String description,
+                                String link,
+                                Param param,
+                                long paramValue,
+                                byte version,
+                                long creationDate,
+                                String txId) {
         super(uid,
                 name,
                 title,
@@ -99,9 +99,9 @@ public final class ParamProposal extends Proposal {
         return super.getProposalBuilder().setCompensationProposal(compensationRequestProposalBuilder);
     }
 
-    public static ParamProposal fromProto(PB.Proposal proto) {
+    public static ChangeParamProposal fromProto(PB.Proposal proto) {
         final PB.CompensationProposal compensationRequestProposa = proto.getCompensationProposal();
-        return new ParamProposal(proto.getUid(),
+        return new ChangeParamProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
@@ -143,7 +143,7 @@ public final class ParamProposal extends Proposal {
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new ParamProposal(getUid(),
+        return new ChangeParamProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -157,7 +157,7 @@ public final class ParamProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new ParamProposal(getUid(),
+        return new ChangeParamProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -171,7 +171,7 @@ public final class ParamProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "ParamProposal{" +
+        return "ChangeParamProposal{" +
                 "\n     param=" + param +
                 ",\n     paramValue=" + paramValue +
                 "\n} " + super.toString();

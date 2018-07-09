@@ -55,8 +55,8 @@ import bisq.core.dao.voting.proposal.ProposalService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.proposal.compensation.CompensationValidator;
-import bisq.core.dao.voting.proposal.param.ParamProposalService;
-import bisq.core.dao.voting.proposal.param.ParamValidator;
+import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
+import bisq.core.dao.voting.proposal.param.ChangeParamValidator;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStorageService;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalStore;
 import bisq.core.dao.voting.proposal.storage.temp.TempProposalStorageService;
@@ -131,8 +131,8 @@ public class DaoModule extends AppModule {
         bind(CompensationValidator.class).in(Singleton.class);
         bind(CompensationProposalService.class).in(Singleton.class);
 
-        bind(ParamValidator.class).in(Singleton.class);
-        bind(ParamProposalService.class).in(Singleton.class);
+        bind(ChangeParamValidator.class).in(Singleton.class);
+        bind(ChangeParamProposalService.class).in(Singleton.class);
 
         // Ballot
         bind(BallotListService.class).in(Singleton.class);

@@ -28,10 +28,10 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ParamValidator extends ProposalValidator {
+public class ChangeParamValidator extends ProposalValidator {
 
     @Inject
-    public ParamValidator(StateService stateService, PeriodService periodService) {
+    public ChangeParamValidator(StateService stateService, PeriodService periodService) {
         super(stateService, periodService);
     }
 
@@ -40,7 +40,7 @@ public class ParamValidator extends ProposalValidator {
         try {
             super.validateDataFields(proposal);
 
-            ParamProposal paramProposal = (ParamProposal) proposal;
+            ChangeParamProposal changeParamProposal = (ChangeParamProposal) proposal;
             //TODO
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);

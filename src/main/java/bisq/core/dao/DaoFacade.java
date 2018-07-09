@@ -44,8 +44,8 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
+import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
 import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.proposal.param.ParamProposalService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
@@ -85,7 +85,7 @@ public class DaoFacade {
     private final MyBlindVoteListService myBlindVoteListService;
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
-    private final ParamProposalService paramProposalService;
+    private final ChangeParamProposalService changeParamProposalService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
 
@@ -101,7 +101,7 @@ public class DaoFacade {
                      MyBlindVoteListService myBlindVoteListService,
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService,
-                     ParamProposalService paramProposalService,
+                     ChangeParamProposalService changeParamProposalService,
                      LockupService lockupService,
                      UnlockService unlockService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -113,7 +113,7 @@ public class DaoFacade {
         this.myBlindVoteListService = myBlindVoteListService;
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
-        this.paramProposalService = paramProposalService;
+        this.changeParamProposalService = changeParamProposalService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
@@ -176,7 +176,7 @@ public class DaoFacade {
                                                                    long paramValue)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
-        return paramProposalService.createProposalWithTransaction(name,
+        return changeParamProposalService.createProposalWithTransaction(name,
                 title,
                 description,
                 link,
