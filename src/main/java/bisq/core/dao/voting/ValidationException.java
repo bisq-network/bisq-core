@@ -27,6 +27,15 @@ public class ValidationException extends Exception {
         super(cause);
     }
 
+    public ValidationException(String message) {
+        super(message);
+    }
+
+    public ValidationException(String message, Throwable throwable) {
+        super(message, throwable);
+
+    }
+
     public ValidationException(String message, Tx tx) {
         super(message);
         this.tx = tx;

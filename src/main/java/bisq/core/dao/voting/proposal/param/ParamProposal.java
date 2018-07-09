@@ -15,22 +15,16 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.compensation;
+package bisq.core.dao.voting.proposal.param;
 
-import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
-import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.app.Version;
 
 import io.bisq.generated.protobuffer.PB;
-
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.AddressFormatException;
-import org.bitcoinj.core.Coin;
 
 import java.util.Date;
 import java.util.UUID;
@@ -45,24 +39,24 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class CompensationProposal extends Proposal {
+public final class ParamProposal extends Proposal {
 
-    private final long requestedBsq;
-    private final String bsqAddress;
+    private final Param param;
+    private final long paramValue;
 
-    public CompensationProposal(String name,
-                                String title,
-                                String description,
-                                String link,
-                                Coin requestedBsq,
-                                String bsqAddress) {
+    public ParamProposal(String name,
+                         String title,
+                         String description,
+                         String link,
+                         Param param,
+                         long paramValue) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
                 description,
                 link,
-                bsqAddress,
-                requestedBsq.value,
+                param,
+                paramValue,
                 Version.COMPENSATION_REQUEST_VERSION,
                 new Date().getTime(),
                 "");
@@ -73,16 +67,16 @@ public final class CompensationProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationProposal(String uid,
-                                 String name,
-                                 String title,
-                                 String description,
-                                 String link,
-                                 String bsqAddress,
-                                 long requestedBsq,
-                                 byte version,
-                                 long creationDate,
-                                 String txId) {
+    private ParamProposal(String uid,
+                          String name,
+                          String title,
+                          String description,
+                          String link,
+                          Param param,
+                          long paramValue,
+                          byte version,
+                          long creationDate,
+                          String txId) {
         super(uid,
                 name,
                 title,
@@ -92,27 +86,28 @@ public final class CompensationProposal extends Proposal {
                 creationDate,
                 txId);
 
-        this.requestedBsq = requestedBsq;
-        this.bsqAddress = bsqAddress;
+        this.param = param;
+        this.paramValue = paramValue;
     }
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        final PB.CompensationProposal.Builder compensationRequestProposalBuilder = PB.CompensationProposal.newBuilder()
+        //TODO
+        final PB.CompensationProposal.Builder compensationRequestProposalBuilder = PB.CompensationProposal.newBuilder()/*
                 .setBsqAddress(bsqAddress)
-                .setRequestedBsq(requestedBsq);
+                .setRequestedBsq(requestedBsq)*/;
         return super.getProposalBuilder().setCompensationProposal(compensationRequestProposalBuilder);
     }
 
-    public static CompensationProposal fromProto(PB.Proposal proto) {
+    public static ParamProposal fromProto(PB.Proposal proto) {
         final PB.CompensationProposal compensationRequestProposa = proto.getCompensationProposal();
-        return new CompensationProposal(proto.getUid(),
+        return new ParamProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                compensationRequestProposa.getBsqAddress(),
-                compensationRequestProposa.getRequestedBsq(),
+                null, //TODO
+                0,//TODO
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -125,27 +120,17 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.COMPENSATION_REQUEST;
+        return ProposalType.CHANGE_PARAM;
     }
 
     @Override
     public Param getQuorumParam() {
-        return Param.QUORUM_COMP_REQUEST;
+        return Param.QUORUM_CHANGE_PARAM;
     }
 
     @Override
     public Param getThresholdParam() {
-        return Param.THRESHOLD_COMP_REQUEST;
-    }
-
-    public Coin getRequestedBsq() {
-        return Coin.valueOf(requestedBsq);
-    }
-
-    public Address getAddress() throws AddressFormatException {
-        // Remove leading 'B'
-        String underlyingBtcAddress = bsqAddress.substring(1, bsqAddress.length());
-        return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
+        return Param.THRESHOLD_CHANGE_PARAM;
     }
 
     public TxType getTxType() {
@@ -158,13 +143,13 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new CompensationProposal(getUid(),
+        return new ParamProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getBsqAddress(),
-                getRequestedBsq().value,
+                getParam(),
+                getParamValue(),
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
@@ -172,13 +157,13 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new CompensationProposal(getUid(),
+        return new ParamProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getBsqAddress(),
-                getRequestedBsq().value,
+                getParam(),
+                getParamValue(),
                 getVersion(),
                 getCreationDate().getTime(),
                 "");
@@ -186,9 +171,9 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "CompensationProposal{" +
-                "\n     requestedBsq=" + requestedBsq +
-                ",\n     bsqAddress='" + bsqAddress + '\'' +
+        return "ParamProposal{" +
+                "\n     param=" + param +
+                ",\n     paramValue=" + paramValue +
                 "\n} " + super.toString();
     }
 }
