@@ -553,7 +553,7 @@ public class StateService {
 
     public long getParamValue(Param param, int blockHeight) {
         if (state.getParamChangeByBlockHeightMap().containsKey(blockHeight)) {
-            final ParamChangeMap paramChangeMap = state.getParamChangeByBlockHeightMap().get(blockHeight);
+            ParamChangeMap paramChangeMap = state.getParamChangeByBlockHeightMap().get(blockHeight);
             return paramChangeMap.getMap().get(param);
         } else {
             return param.getDefaultValue();

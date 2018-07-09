@@ -19,6 +19,7 @@ package bisq.core.dao.state.ext;
 
 import bisq.core.dao.voting.proposal.param.Param;
 
+import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -45,16 +46,23 @@ public class ParamChangeMap implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    /*
+    PB definition:
+    message ParamChangeMap {
+        map<string, int64> map = 1; // key is enum name, value is paramValue as long
+    }
+    */
+
     @Override
     public PB.ParamChangeMap toProtoMessage() {
         return PB.ParamChangeMap.newBuilder()
                 .putAllMap(map.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().ordinal(), Map.Entry::getValue)))
+                        .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue)))
                 .build();
     }
 
     public static ParamChangeMap fromProto(PB.ParamChangeMap proto) {
         return new ParamChangeMap(proto.getMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> Param.values()[e.getKey()], Map.Entry::getValue)));
+                .collect(Collectors.toMap(e -> ProtoUtil.enumFromProto(Param.class, e.getKey()), Map.Entry::getValue)));
     }
 }

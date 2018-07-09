@@ -51,7 +51,7 @@ public class CycleService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles, Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap) {
+    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles, Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
@@ -65,7 +65,7 @@ public class CycleService {
             final Cycle previousCycle = cycles.getLast();
             // We create the new cycle as clone of the previous cycle and only if there have been change events we use
             // the new values from the change event.
-            cycle = createNewCycle(blockHeight, previousCycle, getParamChangeByBlockHeightMap);
+            cycle = createNewCycle(blockHeight, previousCycle, paramChangeByBlockHeightMap);
         }
         return Optional.ofNullable(cycle);
     }
@@ -87,12 +87,12 @@ public class CycleService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap) {
+    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
         // We take result from the vote result phase
         final int heightOfVoteResultPhase = previousCycle.getFirstBlockOfPhase(DaoPhase.Phase.RESULT);
         List<DaoPhase> daoPhaseListFromParamChange = null;
-        if (getParamChangeByBlockHeightMap.containsKey(heightOfVoteResultPhase)) {
-            ParamChangeMap paramChangeMap = getParamChangeByBlockHeightMap.get(heightOfVoteResultPhase);
+        if (paramChangeByBlockHeightMap.containsKey(heightOfVoteResultPhase)) {
+            ParamChangeMap paramChangeMap = paramChangeByBlockHeightMap.get(heightOfVoteResultPhase);
             daoPhaseListFromParamChange = paramChangeMap.getMap().entrySet().stream()
                     .map(e -> getPhase(e.getKey(), e.getValue()))
                     .collect(Collectors.toList());
