@@ -15,18 +15,24 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.param;
+package bisq.core.dao.state.ext;
 
 import lombok.Getter;
 
 /**
  * All parameters in the Bisq DAO which can be changed by voting.
  * We will add more on demand.
+ * We need to support updates with new types in future. We use in the persisted data only the enum name, thus the names
+ * must not change once the dao has started. Default values must not be changed as well.
+ * For parameter which are used by Bisq users (trade fee,...) we have more strict requirements for backward compatibility.
+ * Parameters which are only used in proposals and voting are less strict limited as we can require that those users are
+ * using the latest software version.
  */
 public enum Param {
     // Trade fees in BSQ
     MIN_MAKER_FEE_IN_BSQ(5),
     MIN_TAKER_FEE_IN_BSQ(5),
+    // That fee should be changed to % fee to be less dependent on btc price
     DEFAULT_MAKER_FEE_IN_BSQ(200), // about 2 USD at 1 BSQ = 1 USD for a 1 BTC trade
     DEFAULT_TAKER_FEE_IN_BSQ(200),
 
@@ -43,8 +49,8 @@ public enum Param {
     // Quorum for voting in BSQ stake
     QUORUM_PROPOSAL(100),           // 10 000 BSQ  TODO change low dev value
     QUORUM_COMP_REQUEST(100),       // 10 000 BSQ  TODO change low dev value
-    QUORUM_CHANGE_PARAM(10000000),  // 100 000 BSQ
-    QUORUM_REMOVE_ASSET(1000000),   // 10 000 BSQ
+    QUORUM_CHANGE_PARAM(100),       // 100 000 BSQ TODO change low dev value
+    QUORUM_REMOVE_ASSET(100),       // 10 000 BSQ  TODO change low dev value
 
     // Threshold for voting in % with precision of 2 (e.g. 5000 -> 50.00%)
     THRESHOLD_PROPOSAL(5_000),          // 50%
@@ -73,6 +79,7 @@ public enum Param {
     PHASE_RESULT(1),        // 1 block
     PHASE_BREAK4(10);        // 10 blocks*/
 
+    //TODO SQ: do we need to set a min value? is max value is max int value it is also not needed to set it as param
     LOCK_TIME_MIN(0),
     LOCK_TIME_MAX(65535);
 

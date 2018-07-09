@@ -22,6 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;

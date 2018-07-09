@@ -20,7 +20,7 @@ package bisq.core.dao.state.period;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.state.ext.Param;
 
 import com.google.inject.Inject;
 

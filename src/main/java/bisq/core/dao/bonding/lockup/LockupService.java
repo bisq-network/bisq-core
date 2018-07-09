@@ -28,7 +28,7 @@ import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.state.ext.Param;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;

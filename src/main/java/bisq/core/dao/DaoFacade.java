@@ -28,6 +28,7 @@ import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
@@ -45,7 +46,6 @@ import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
-import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;

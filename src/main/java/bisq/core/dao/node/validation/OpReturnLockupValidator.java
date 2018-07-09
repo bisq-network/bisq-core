@@ -19,7 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.StateService;
-import bisq.core.dao.voting.proposal.param.Param;
+import bisq.core.dao.state.ext.Param;
 
 import javax.inject.Inject;
 

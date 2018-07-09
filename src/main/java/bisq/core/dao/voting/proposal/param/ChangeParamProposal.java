@@ -19,6 +19,7 @@ package bisq.core.dao.voting.proposal.param;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
 

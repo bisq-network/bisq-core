@@ -19,10 +19,10 @@ package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
-import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
