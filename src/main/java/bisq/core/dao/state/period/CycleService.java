@@ -17,33 +17,54 @@
 
 package bisq.core.dao.state.period;
 
-import bisq.core.dao.state.ext.ParamChangeMap;
+import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import com.google.inject.Inject;
 
+import javax.inject.Named;
+
 import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CycleService {
-    private int genesisBlockHeight;
+public class CycleService implements ChainHeightListener {
+    private final StateService stateService;
+    private final int genesisBlockHeight;
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CycleService() {
+    public CycleService(StateService stateService,
+                        @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+        this.stateService = stateService;
+        this.genesisBlockHeight = genesisBlockHeight;
+
+        stateService.addChainHeightListener(this);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // ChainHeightListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onChainHeightChanged(int blockHeight) {
+        if (blockHeight != genesisBlockHeight)
+            maybeCreateNewCycle(blockHeight, stateService.getCycles())
+                    .ifPresent(stateService.getCycles()::add);
     }
 
 
@@ -51,7 +72,11 @@ public class CycleService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles, Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
+    public void start() {
+        stateService.getCycles().add(getFirstCycle());
+    }
+
+    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
@@ -65,14 +90,13 @@ public class CycleService {
             final Cycle previousCycle = cycles.getLast();
             // We create the new cycle as clone of the previous cycle and only if there have been change events we use
             // the new values from the change event.
-            cycle = createNewCycle(blockHeight, previousCycle, paramChangeByBlockHeightMap);
+            cycle = createNewCycle(blockHeight, previousCycle);
         }
         return Optional.ofNullable(cycle);
     }
 
 
-    public Cycle getFirstCycle(int genesisBlockHeight) {
-        this.genesisBlockHeight = genesisBlockHeight;
+    public Cycle getFirstCycle() {
         // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
         // as onAllServicesInitialized might get called after the parser has started.
         // We add the default values from the Param enum to our StateChangeEvent list.
@@ -87,39 +111,22 @@ public class CycleService {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Cycle createNewCycle(int blockHeight, Cycle previousCycle, Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
-        // We take result from the vote result phase
-        final int heightOfVoteResultPhase = previousCycle.getFirstBlockOfPhase(DaoPhase.Phase.RESULT);
-        List<DaoPhase> daoPhaseListFromParamChange = null;
-        if (paramChangeByBlockHeightMap.containsKey(heightOfVoteResultPhase)) {
-            ParamChangeMap paramChangeMap = paramChangeByBlockHeightMap.get(heightOfVoteResultPhase);
-            daoPhaseListFromParamChange = paramChangeMap.getMap().entrySet().stream()
-                    .map(e -> getPhase(e.getKey(), e.getValue()))
-                    .collect(Collectors.toList());
-        }
-        List<DaoPhase> daoPhaseList = new ArrayList<>();
-        for (int i = 0; i < previousCycle.getDaoPhaseList().size(); i++) {
-            DaoPhase daoPhase = previousCycle.getDaoPhaseList().get(i);
-            // If we have a change event for that daoPhase we use the new wrapper. Otherwise we use the same as in the
-            // previous cycle.
-            if (daoPhaseListFromParamChange != null &&
-                    isPhaseInList(daoPhaseListFromParamChange, daoPhase.getPhase()))
-                daoPhaseList.add(daoPhaseListFromParamChange.get(i));
-            else
-                daoPhaseList.add(daoPhase);
-        }
+    private Cycle createNewCycle(int blockHeight, Cycle previousCycle) {
+        List<DaoPhase> daoPhaseList = previousCycle.getDaoPhaseList().stream()
+                .map(daoPhase -> {
+                    DaoPhase.Phase phase = daoPhase.getPhase();
+                    try {
+                        Param param = Param.valueOf("PHASE_" + phase.name());
+                        long value = stateService.getParamValue(param, blockHeight);
+                        return new DaoPhase(phase, (int) value);
+                    } catch (Throwable ignore) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         return new Cycle(blockHeight, ImmutableList.copyOf(daoPhaseList));
-    }
-
-    private boolean isPhaseInList(List<DaoPhase> list, DaoPhase.Phase phase) {
-        return list.stream().anyMatch(p -> p.getPhase() == phase);
-    }
-
-    private DaoPhase getPhase(Param param, long value) {
-        final String paramName = param.name();
-        final String paramPhase = paramName.replace("PHASE_", "");
-        final DaoPhase.Phase phase = DaoPhase.Phase.valueOf(paramPhase);
-        return new DaoPhase(phase, (int) value);
     }
 
     private boolean isFirstBlockAfterPreviousCycle(int height, LinkedList<Cycle> cycles) {
@@ -133,7 +140,7 @@ public class CycleService {
     private DaoPhase getPhaseWithDefaultDuration(DaoPhase.Phase phase) {
         return Arrays.stream(Param.values())
                 .filter(param -> isParamMatchingPhase(param, phase))
-                .map(param -> new DaoPhase(phase, param.getDefaultValue()))
+                .map(param -> new DaoPhase(phase, (int) param.getDefaultValue()))
                 .findAny()
                 .orElse(new DaoPhase(phase, 0)); // We will always have a default value defined
     }

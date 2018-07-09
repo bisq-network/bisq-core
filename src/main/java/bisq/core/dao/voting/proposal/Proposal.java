@@ -21,6 +21,7 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.proto.ProtobufferRuntimeException;
@@ -104,8 +105,13 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
         switch (proto.getMessageCase()) {
             case COMPENSATION_PROPOSAL:
                 return CompensationProposal.fromProto(proto);
-           /* case GENERIC_PROPOSAL:
-                return GenericProposal.fromProto(proto);*/
+            case GENERIC_PROPOSAL:
+                throw new ProtobufferRuntimeException("Not implemented yet: " + proto.getMessageCase());
+            case CHANGE_PARAM_PROPOSAL:
+                return ChangeParamProposal.fromProto(proto);
+            case REMOVE_ALTCOIN_PROPOSAL:
+                throw new ProtobufferRuntimeException("Not implemented yet: " + proto.getMessageCase());
+            case MESSAGE_NOT_SET:
             default:
                 throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
         }

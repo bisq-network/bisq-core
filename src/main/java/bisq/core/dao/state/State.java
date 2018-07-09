@@ -23,7 +23,7 @@ import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.ext.Issuance;
-import bisq.core.dao.state.ext.ParamChangeMap;
+import bisq.core.dao.state.ext.ParamChange;
 import bisq.core.dao.state.period.Cycle;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -37,8 +37,10 @@ import org.bitcoinj.core.Coin;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -115,10 +117,8 @@ public class State implements PersistableEnvelope {
     @Getter
     private final Map<TxOutputKey, SpentInfo> spentInfoMap;
 
-
-    // TODO might get refactored later when working on params
     @Getter
-    private final Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap;
+    private final List<ParamChange> paramChangeList;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -136,7 +136,7 @@ public class State implements PersistableEnvelope {
                 new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
-                new HashMap<>()
+                new ArrayList<>()
         );
     }
 
@@ -153,7 +153,7 @@ public class State implements PersistableEnvelope {
                   Map<TxOutputKey, TxOutput> unspentTxOutputMap,
                   Map<String, Issuance> issuanceMap,
                   Map<TxOutputKey, SpentInfo> spentInfoMap,
-                  Map<Integer, ParamChangeMap> paramChangeByBlockHeightMap) {
+                  List<ParamChange> paramChangeList) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
         this.chainHeight = chainHeight;
@@ -162,7 +162,7 @@ public class State implements PersistableEnvelope {
         this.unspentTxOutputMap = unspentTxOutputMap;
         this.issuanceMap = issuanceMap;
         this.spentInfoMap = spentInfoMap;
-        this.paramChangeByBlockHeightMap = paramChangeByBlockHeightMap;
+        this.paramChangeList = paramChangeList;
     }
 
     @Override
@@ -183,8 +183,7 @@ public class State implements PersistableEnvelope {
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), entry -> entry.getValue().toProtoMessage())))
-                .putAllParamChangeByBlockHeight(paramChangeByBlockHeightMap.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toProtoMessage())));
+                .addAllParamChangeList(paramChangeList.stream().map(ParamChange::toProtoMessage).collect(Collectors.toList()));
         return builder;
     }
 
@@ -200,8 +199,8 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         Map<TxOutputKey, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
-        Map<Integer, ParamChangeMap> paramChangeListMap = proto.getParamChangeByBlockHeightMap().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> ParamChangeMap.fromProto(e.getValue())));
+        final List<ParamChange> paramChangeList = proto.getParamChangeListList().stream()
+                .map(ParamChange::fromProto).collect(Collectors.toCollection(ArrayList::new));
         return new State(proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
                 proto.getChainHeight(),
@@ -210,7 +209,7 @@ public class State implements PersistableEnvelope {
                 unspentTxOutputMap,
                 issuanceMap,
                 spentInfoMap,
-                paramChangeListMap);
+                paramChangeList);
     }
 
 

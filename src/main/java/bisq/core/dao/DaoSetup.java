@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
@@ -38,6 +39,7 @@ public class DaoSetup {
     private final BsqNode bsqNode;
     private final ProposalService proposalService;
     private final StateService stateService;
+    private final CycleService cycleService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
     private final BallotListService ballotListService;
@@ -47,6 +49,7 @@ public class DaoSetup {
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
                     StateService stateService,
+                    CycleService cycleService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
                     BallotListService ballotListService,
@@ -54,6 +57,7 @@ public class DaoSetup {
                     MyBlindVoteListService myBlindVoteListService,
                     ProposalService proposalService) {
         this.stateService = stateService;
+        this.cycleService = cycleService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
         this.ballotListService = ballotListService;
@@ -68,6 +72,7 @@ public class DaoSetup {
         bsqNode.setErrorMessageHandler(errorMessageHandler);
 
         stateService.start();
+        cycleService.start();
         proposalService.start();
         voteRevealService.start();
         ballotListService.start();

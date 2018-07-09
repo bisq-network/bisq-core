@@ -17,52 +17,44 @@
 
 package bisq.core.dao.state.ext;
 
-import bisq.core.dao.voting.proposal.param.Param;
-
-import bisq.common.proto.ProtoUtil;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
 
-// PB does not support lists inside a map so we use that wrapper class.
 @Immutable
 @Value
-public class ParamChangeMap implements PersistablePayload {
-    private final Map<Param, Long> map;
+public class ParamChange implements PersistablePayload {
+    private final String paramName;
+    private final long value;
+    private final int activationHeight;
 
-    public ParamChangeMap(Map<Param, Long> map) {
-        this.map = map;
+    public ParamChange(String paramName, long value, int activationHeight) {
+        this.paramName = paramName;
+        this.value = value;
+        this.activationHeight = activationHeight;
     }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    /*
-    PB definition:
-    message ParamChangeMap {
-        map<string, int64> map = 1; // key is enum name, value is paramValue as long
-    }
-    */
 
     @Override
-    public PB.ParamChangeMap toProtoMessage() {
-        return PB.ParamChangeMap.newBuilder()
-                .putAllMap(map.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue)))
+    public PB.ParamChange toProtoMessage() {
+        return PB.ParamChange.newBuilder()
+                .setParam(paramName)
+                .setParamValue(value)
+                .setActivationHeight(activationHeight)
                 .build();
     }
 
-    public static ParamChangeMap fromProto(PB.ParamChangeMap proto) {
-        return new ParamChangeMap(proto.getMapMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> ProtoUtil.enumFromProto(Param.class, e.getKey()), Map.Entry::getValue)));
+    public static ParamChange fromProto(PB.ParamChange proto) {
+        return new ParamChange(proto.getParam(),
+                proto.getParamValue(),
+                proto.getActivationHeight());
     }
 }

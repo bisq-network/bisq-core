@@ -39,6 +39,7 @@ import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -428,13 +429,21 @@ public class VoteResultService {
     private void applyAcceptedProposal(Proposal proposal, int chainHeight) {
         if (proposal instanceof CompensationProposal) {
             issuanceService.issueBsq((CompensationProposal) proposal, chainHeight);
-        } /*else if (evaluatedProposal instanceof GenericProposal) {
-            //TODO impl
-        } else if (evaluatedProposal instanceof ParamChangeProposal) {
-            //TODO impl -> add to state
-        } else if (evaluatedProposal instanceof RemoveAssetProposalPayload) {
-            //TODO impl
-        }*/
+        } else if (proposal instanceof ChangeParamProposal) {
+            ChangeParamProposal changeParamProposal = (ChangeParamProposal) proposal;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n################################################################################\n");
+            sb.append("We changed a parameter. ProposalTxId=").append(changeParamProposal.getTxId())
+                    .append("\nfor changeParamProposal with UID ").append(changeParamProposal.getUid())
+                    .append("\nParam: ").append(changeParamProposal.getParam().name())
+                    .append(" new value: ").append(changeParamProposal.getParamValue())
+                    .append("\n################################################################################\n");
+            log.info(sb.toString());
+
+            stateService.setNewParam(periodService.getChainHeight(), changeParamProposal.getParam(),
+                    changeParamProposal.getParamValue());
+        }
     }
 
     private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {

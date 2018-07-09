@@ -26,15 +26,16 @@ import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Issuance;
-import bisq.core.dao.state.ext.ParamChangeMap;
+import bisq.core.dao.state.ext.ParamChange;
 import bisq.core.dao.state.period.Cycle;
-import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.proposal.param.Param;
 
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StateService {
     private final State state;
-    private final CycleService cycleService;
 
     private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
     private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
@@ -62,11 +62,10 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public StateService(State state, CycleService cycleService) {
+    public StateService(State state) {
         super();
 
         this.state = state;
-        this.cycleService = cycleService;
     }
 
 
@@ -75,9 +74,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        final int genesisBlockHeight = state.getGenesisBlockHeight();
-        state.getCycles().add(cycleService.getFirstCycle(genesisBlockHeight));
-        state.setChainHeight(genesisBlockHeight);
+        state.setChainHeight(state.getGenesisBlockHeight());
     }
 
 
@@ -86,10 +83,6 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setNewBlockHeight(int blockHeight) {
-        if (blockHeight != state.getGenesisBlockHeight())
-            cycleService.maybeCreateNewCycle(blockHeight, getCycles(), state.getParamChangeByBlockHeightMap())
-                    .ifPresent(state.getCycles()::add);
-
         state.setChainHeight(blockHeight);
         chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
     }
@@ -121,8 +114,8 @@ public class StateService {
         state.getSpentInfoMap().clear();
         state.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
 
-        state.getParamChangeByBlockHeightMap().clear();
-        state.getParamChangeByBlockHeightMap().putAll(snapshot.getParamChangeByBlockHeightMap());
+        state.getParamChangeList().clear();
+        state.getParamChangeList().addAll(snapshot.getParamChangeList());
     }
 
     public State getClone() {
@@ -153,6 +146,17 @@ public class StateService {
 
     public Cycle getCurrentCycle() {
         return getCycles().getLast();
+    }
+
+    public Optional<Cycle> getCycle(int height) {
+        return getCycles().stream()
+                .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
+                .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
+                .findAny();
+    }
+
+    public Optional<Integer> getStartHeightOfNextCycle(int blockHeight) {
+        return getCycle(blockHeight).map(cycle -> cycle.getHeightOfLastBlock() + 1);
     }
 
 
@@ -542,22 +546,33 @@ public class StateService {
     // Param
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO WIP
-    public void setParamChangeMap(int chainHeight, ParamChangeMap paramChangeMap) {
-        state.getParamChangeByBlockHeightMap().put(chainHeight, paramChangeMap);
-    }
-
-    public Map<Integer, ParamChangeMap> getParamChangeByBlockHeightMap() {
-        return state.getParamChangeByBlockHeightMap();
+    public void setNewParam(int blockHeight, Param param, long paramValue) {
+        List<ParamChange> paramChangeList = state.getParamChangeList();
+        getStartHeightOfNextCycle(blockHeight)
+                .ifPresent(heightOfNewCycle -> {
+                    ParamChange paramChange = new ParamChange(param.name(), paramValue, heightOfNewCycle);
+                    paramChangeList.add(paramChange);
+                    // Addition with older height should not be possible but to ensure correct sorting lets run a sort.
+                    paramChangeList.sort(Comparator.comparingInt(ParamChange::getActivationHeight));
+                    log.error("Parameter changed: {}", paramChange);
+                });
     }
 
     public long getParamValue(Param param, int blockHeight) {
-        if (state.getParamChangeByBlockHeightMap().containsKey(blockHeight)) {
-            ParamChangeMap paramChangeMap = state.getParamChangeByBlockHeightMap().get(blockHeight);
-            return paramChangeMap.getMap().get(param);
-        } else {
-            return param.getDefaultValue();
+        List<ParamChange> paramChangeList = new ArrayList<>(state.getParamChangeList());
+        if (!paramChangeList.isEmpty()) {
+            // List is sorted by height, we start from latest entries to find most recent entry.
+            for (int i = paramChangeList.size() - 1; i >= 0; i--) {
+                ParamChange paramChange = paramChangeList.get(i);
+                if (paramChange.getParamName().equals(param.name()) &&
+                        blockHeight >= paramChange.getActivationHeight()) {
+                    return paramChange.getValue();
+                }
+            }
         }
+
+        // If no value found we use default values
+        return param.getDefaultValue();
     }
 
 
@@ -601,6 +616,5 @@ public class StateService {
     public void removeParseBlockChainListener(ParseBlockChainListener listener) {
         parseBlockChainListeners.remove(listener);
     }
-
 }
 

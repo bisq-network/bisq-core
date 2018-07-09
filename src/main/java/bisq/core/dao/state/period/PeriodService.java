@@ -79,10 +79,7 @@ public final class PeriodService {
     }
 
     public Optional<Cycle> getCycle(int height) {
-        return getCycles().stream()
-                .filter(cycle -> cycle.getHeightOfFirstBlock() <= height)
-                .filter(cycle -> cycle.getHeightOfLastBlock() >= height)
-                .findAny();
+        return stateService.getCycle(height);
     }
 
     public boolean isInPhase(int height, DaoPhase.Phase phase) {

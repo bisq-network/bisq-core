@@ -52,7 +52,7 @@ public enum Param {
     THRESHOLD_CHANGE_PARAM(7_500),      // 75% -> that might change the THRESHOLD_CHANGE_PARAM and QUORUM_CHANGE_PARAM!
     THRESHOLD_REMOVE_ASSET(5_000),      // 50%
 
-    // Period phase
+    // Period phase (16 blocks atm)
     PHASE_UNDEFINED(0),
     PHASE_PROPOSAL(3),      // 24 days
     PHASE_BREAK1(2),        // 10 blocks
@@ -77,7 +77,7 @@ public enum Param {
     LOCK_TIME_MAX(65535);
 
     @Getter
-    private int defaultValue;
+    private long defaultValue;
 
     /**
      * @param defaultValue for param. If not set it is -1.
