@@ -26,10 +26,10 @@ import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Issuance;
+import bisq.core.dao.state.ext.ParamChangeMap;
 import bisq.core.dao.state.period.Cycle;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
 import org.bitcoinj.core.Coin;
 

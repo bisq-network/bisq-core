@@ -23,8 +23,8 @@ import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.ext.Issuance;
+import bisq.core.dao.state.ext.ParamChangeMap;
 import bisq.core.dao.state.period.Cycle;
-import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
 

@@ -17,8 +17,8 @@
 
 package bisq.core.dao.state.period;
 
+import bisq.core.dao.state.ext.ParamChangeMap;
 import bisq.core.dao.voting.proposal.param.Param;
-import bisq.core.dao.voting.proposal.param.ParamChangeMap;
 
 import com.google.inject.Inject;
 

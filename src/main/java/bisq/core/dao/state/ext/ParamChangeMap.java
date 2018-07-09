@@ -15,7 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.param;
+package bisq.core.dao.state.ext;
+
+import bisq.core.dao.voting.proposal.param.Param;
 
 import bisq.common.proto.persistable.PersistablePayload;
 
