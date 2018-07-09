@@ -242,7 +242,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                     log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalUid={}",
                             proposal.getUid());
                 } else {
-                    log.warn("We received a invalid append-only proposal from the P2P network. " +
+                    log.debug("We received a invalid append-only proposal from the P2P network. " +
                                     "Proposal.txId={}, blockHeight={}",
                             proposal.getTxId(), stateService.getChainHeight());
                 }

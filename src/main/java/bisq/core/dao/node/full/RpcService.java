@@ -248,8 +248,8 @@ public class RpcService {
                         // it is in the output already.
                         // Bitcoin Core creates payToPubKey tx when spending mined coins (regtest)...
                         pubKeyAsHex = null;
-                        log.warn("pubKeyAsHex is not set as we received a not supported sigScript " +
-                                        "(segWit or patToPubKey tx). asm={},  txId={}",
+                        log.debug("pubKeyAsHex is not set as we received a not supported sigScript " +
+                                        "(segWit or payToPubKey tx). asm={},  txId={}",
                                 rawInput.getScriptSig().getAsm(), rawBtcTx.getTxId());
                     }
                     return new TxInput(rawInput.getTxId(), rawInput.getVOut(), pubKeyAsHex);
