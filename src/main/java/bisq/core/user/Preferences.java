@@ -559,6 +559,11 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         persist();
     }
 
+    public void setUseTradeNotifications(boolean value) {
+        prefPayload.setUseTradeNotifications(value);
+        persist();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getter
@@ -748,6 +753,8 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         void setPhoneKeyAndToken(String phoneKeyAndToken);
 
         void setUseSoundForMobileNotifications(boolean value);
+
+        void setUseTradeNotifications(boolean value);
 
         List<String> getBridgeAddresses();
 

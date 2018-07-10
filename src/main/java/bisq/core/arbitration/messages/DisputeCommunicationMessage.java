@@ -22,6 +22,7 @@ import bisq.core.arbitration.Attachment;
 import bisq.network.p2p.NodeAddress;
 
 import bisq.common.app.Version;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -239,6 +240,10 @@ public final class DisputeCommunicationMessage extends DisputeMessage {
     @Override
     public String getTradeId() {
         return tradeId;
+    }
+
+    public String getShortId() {
+        return Utilities.getShortId(tradeId);
     }
 
     public void addWeakMessageStateListener(Listener listener) {

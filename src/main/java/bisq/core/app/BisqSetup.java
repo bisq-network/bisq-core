@@ -32,6 +32,7 @@ import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.dao.DaoSetup;
 import bisq.core.filter.FilterManager;
 import bisq.core.locale.Res;
+import bisq.core.notifications.MobileNotificationService;
 import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.payment.AccountAgeWitnessService;
@@ -129,6 +130,7 @@ public class BisqSetup {
     private final KeyRing keyRing;
     private final BisqEnvironment bisqEnvironment;
     private final AccountAgeWitnessService accountAgeWitnessService;
+    private final MobileNotificationService mobileNotificationService;
     private final BSFormatter formatter;
     @Getter
     @Setter
@@ -200,6 +202,7 @@ public class BisqSetup {
                      KeyRing keyRing,
                      BisqEnvironment bisqEnvironment,
                      AccountAgeWitnessService accountAgeWitnessService,
+                     MobileNotificationService mobileNotificationService,
                      BSFormatter formatter) {
         this.p2PNetworkSetup = p2PNetworkSetup;
         this.walletAppSetup = walletAppSetup;
@@ -227,6 +230,7 @@ public class BisqSetup {
         this.keyRing = keyRing;
         this.bisqEnvironment = bisqEnvironment;
         this.accountAgeWitnessService = accountAgeWitnessService;
+        this.mobileNotificationService = mobileNotificationService;
         this.formatter = formatter;
     }
 
@@ -591,6 +595,8 @@ public class BisqSetup {
                     Objects.requireNonNull(filterWarningHandler).accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.priceRelay")));
             }
         });
+
+        mobileNotificationService.init();
 
         allBasicServicesInitialized = true;
     }

@@ -106,6 +106,7 @@ public final class PreferencesPayload implements PersistableEnvelope {
     @Nullable
     String phoneKeyAndToken;
     boolean useSoundForMobileNotifications = true;
+    boolean useTradeNotifications = true;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +157,8 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 .setBridgeOptionOrdinal(bridgeOptionOrdinal)
                 .setTorTransportOrdinal(torTransportOrdinal)
                 .setBitcoinNodesOptionOrdinal(bitcoinNodesOptionOrdinal)
-                .setUseSoundForMobileNotifications(useSoundForMobileNotifications);
+                .setUseSoundForMobileNotifications(useSoundForMobileNotifications)
+                .setUseTradeNotifications(useTradeNotifications);
         Optional.ofNullable(backupDirectory).ifPresent(builder::setBackupDirectory);
         Optional.ofNullable(preferredTradeCurrency).ifPresent(e -> builder.setPreferredTradeCurrency((PB.TradeCurrency) e.toProtoMessage()));
         Optional.ofNullable(offerBookChartScreenCurrencyCode).ifPresent(builder::setOfferBookChartScreenCurrencyCode);
@@ -226,6 +228,7 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 proto.getBitcoinNodesOptionOrdinal(),
                 proto.getReferralId().isEmpty() ? null : proto.getReferralId(),
                 proto.getPhoneKeyAndToken().isEmpty() ? null : proto.getPhoneKeyAndToken(),
-                proto.getUseSoundForMobileNotifications());
+                proto.getUseSoundForMobileNotifications(),
+                proto.getUseTradeNotifications());
     }
 }

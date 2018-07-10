@@ -1,5 +1,7 @@
 package bisq.core.notifications;
 
+import bisq.common.util.JsonExclude;
+
 import java.util.Date;
 
 import lombok.Value;
@@ -10,27 +12,23 @@ public class MobileMessage {
     private String txId;
     private String title;
     private String message;
+    @JsonExclude
+    private MobileMessageType msgType;
     private String type;
     private String actionRequired;
     private int version;
 
-    public MobileMessage(String title, String message, MobileMessageType type) {
-        this.title = title;
-        this.message = message;
-        this.type = type.name();
-
-        txId = "";
-        actionRequired = "";
-        date = new Date().getTime();
-        version = 1;
+    public MobileMessage(String title, String message, MobileMessageType msgType) {
+        this(title, message, "", msgType);
     }
 
-    public MobileMessage(String title, String message, String txId, MobileMessageType type) {
+    public MobileMessage(String title, String message, String txId, MobileMessageType msgType) {
         this.title = title;
         this.message = message;
         this.txId = txId;
-        this.type = type.name();
+        this.msgType = msgType;
 
+        type = msgType.name();
         actionRequired = "";
         date = new Date().getTime();
         version = 1;

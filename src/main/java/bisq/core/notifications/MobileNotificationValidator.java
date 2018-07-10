@@ -28,6 +28,9 @@ public class MobileNotificationValidator {
     }
 
     public boolean isValid(String keyAndToken) {
+        if (keyAndToken == null)
+            return false;
+
         String[] tokens = keyAndToken.split(MobileModel.PHONE_SEPARATOR_ESCAPED);
         if (tokens.length != 3) {
             log.error("invalid Bisq MobileModel ID format: not three sections separated by " + MobileModel.PHONE_SEPARATOR_WRITING);
