@@ -103,6 +103,9 @@ public final class PreferencesPayload implements PersistableEnvelope {
     int bitcoinNodesOptionOrdinal;
     @Nullable
     String referralId;
+    @Nullable
+    String phoneKeyAndToken;
+    boolean useSoundForMobileNotifications = true;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +155,8 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 .setPayFeeInBtc(payFeeInBtc)
                 .setBridgeOptionOrdinal(bridgeOptionOrdinal)
                 .setTorTransportOrdinal(torTransportOrdinal)
-                .setBitcoinNodesOptionOrdinal(bitcoinNodesOptionOrdinal);
+                .setBitcoinNodesOptionOrdinal(bitcoinNodesOptionOrdinal)
+                .setUseSoundForMobileNotifications(useSoundForMobileNotifications);
         Optional.ofNullable(backupDirectory).ifPresent(builder::setBackupDirectory);
         Optional.ofNullable(preferredTradeCurrency).ifPresent(e -> builder.setPreferredTradeCurrency((PB.TradeCurrency) e.toProtoMessage()));
         Optional.ofNullable(offerBookChartScreenCurrencyCode).ifPresent(builder::setOfferBookChartScreenCurrencyCode);
@@ -164,6 +168,8 @@ public final class PreferencesPayload implements PersistableEnvelope {
         Optional.ofNullable(bridgeAddresses).ifPresent(builder::addAllBridgeAddresses);
         Optional.ofNullable(customBridges).ifPresent(builder::setCustomBridges);
         Optional.ofNullable(referralId).ifPresent(builder::setReferralId);
+        Optional.ofNullable(phoneKeyAndToken).ifPresent(builder::setPhoneKeyAndToken);
+
         return PB.PersistableEnvelope.newBuilder().setPreferencesPayload(builder).build();
     }
 
@@ -218,6 +224,8 @@ public final class PreferencesPayload implements PersistableEnvelope {
                 proto.getTorTransportOrdinal(),
                 ProtoUtil.stringOrNullFromProto(proto.getCustomBridges()),
                 proto.getBitcoinNodesOptionOrdinal(),
-                proto.getReferralId().isEmpty() ? null : proto.getReferralId());
+                proto.getReferralId().isEmpty() ? null : proto.getReferralId(),
+                proto.getPhoneKeyAndToken().isEmpty() ? null : proto.getPhoneKeyAndToken(),
+                proto.getUseSoundForMobileNotifications());
     }
 }

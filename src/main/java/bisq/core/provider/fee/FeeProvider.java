@@ -18,9 +18,8 @@
 package bisq.core.provider.fee;
 
 import bisq.core.provider.HttpClientProvider;
+import bisq.core.provider.PriceNodeHttpClient;
 import bisq.core.provider.ProvidersRepository;
-
-import bisq.network.http.HttpClient;
 
 import bisq.common.app.Version;
 import bisq.common.util.Tuple2;
@@ -41,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FeeProvider extends HttpClientProvider {
 
     @Inject
-    public FeeProvider(HttpClient httpClient, ProvidersRepository providersRepository) {
+    public FeeProvider(PriceNodeHttpClient httpClient, ProvidersRepository providersRepository) {
         super(httpClient, providersRepository.getBaseUrl(), false);
     }
 
