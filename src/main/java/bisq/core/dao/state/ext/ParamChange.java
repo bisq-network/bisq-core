@@ -47,14 +47,14 @@ public class ParamChange implements PersistablePayload {
     @Override
     public PB.ParamChange toProtoMessage() {
         return PB.ParamChange.newBuilder()
-                .setParam(paramName)
+                .setParamName(paramName)
                 .setParamValue(value)
                 .setActivationHeight(activationHeight)
                 .build();
     }
 
     public static ParamChange fromProto(PB.ParamChange proto) {
-        return new ParamChange(proto.getParam(),
+        return new ParamChange(proto.getParamName(),
                 proto.getParamValue(),
                 proto.getActivationHeight());
     }
