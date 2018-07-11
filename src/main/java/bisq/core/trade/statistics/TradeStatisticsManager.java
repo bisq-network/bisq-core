@@ -128,23 +128,6 @@ public class TradeStatisticsManager {
                 .forEach(e -> addToMap((TradeStatistics2) e, map));
         observableTradeStatisticsSet.addAll(map.values());
 
-        //TODO can be removed after version older than v0.6.0 are not used anymore
-        // We listen to TradeStatistics objects from old clients as well and convert them into TradeStatistics2 objects
-        p2PService.addHashSetChangedListener(new HashMapChangedListener() {
-            @Override
-            public void onAdded(ProtectedStorageEntry data) {
-                final ProtectedStoragePayload protectedStoragePayload = data.getProtectedStoragePayload();
-                if (protectedStoragePayload instanceof TradeStatistics)
-                    p2PService.getP2PDataStorage().addPersistableNetworkPayload(ConvertToTradeStatistics2((TradeStatistics) protectedStoragePayload),
-                            p2PService.getNetworkNode().getNodeAddress(), true, false, false, false);
-            }
-
-            @Override
-            public void onRemoved(ProtectedStorageEntry data) {
-                // We don't remove items
-            }
-        });
-
         priceFeedService.applyLatestBisqMarketPrice(observableTradeStatisticsSet);
         dump();
 

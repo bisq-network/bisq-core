@@ -75,6 +75,7 @@ public class TradeStatistics2Store implements PersistableEnvelope {
                 .map(TradeStatistics2::fromProto).collect(Collectors.toList());
         return new TradeStatistics2Store(list);
     }
+
     public boolean containsKey(P2PDataStorage.ByteArray hash) {
         return map.containsKey(hash);
     }
