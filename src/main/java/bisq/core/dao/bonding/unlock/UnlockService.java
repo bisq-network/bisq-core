@@ -65,7 +65,7 @@ public class UnlockService {
     public void publishUnlockTx(String lockedTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
         try {
-            TxOutput lockedTxOutput = stateService.getLockedTxOutput(lockedTxId).get();
+            TxOutput lockedTxOutput = stateService.getLockupTxOutput(lockedTxId).get();
             final Transaction unlockTx = getUnlockTx(lockedTxOutput);
 
             walletsManager.publishAndCommitBsqTx(unlockTx, new TxBroadcaster.Callback() {
@@ -104,6 +104,4 @@ public class UnlockService {
         log.info("Unlock tx: " + transaction);
         return transaction;
     }
-
-
 }

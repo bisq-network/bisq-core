@@ -47,4 +47,12 @@ public class BondingConsensus {
             throw e;
         }
     }
+
+    public static boolean isUnlockSpendableInNextBlock(long unlockBlockHeight, long checkBlockHeight) {
+        return isUnlockSpendable(unlockBlockHeight, checkBlockHeight + 1);
+    }
+
+    public static boolean isUnlockSpendable(long unlockBlockHeight, long checkBlockHeight) {
+        return checkBlockHeight >= unlockBlockHeight;
+    }
 }
