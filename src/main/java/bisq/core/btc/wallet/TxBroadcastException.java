@@ -15,33 +15,34 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.arbitration.messages;
+package bisq.core.btc.wallet;
 
-import bisq.network.p2p.MailboxMessage;
-import bisq.network.p2p.UidMessage;
-
-import bisq.common.proto.network.NetworkEnvelope;
-
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@EqualsAndHashCode(callSuper = true)
-@Getter
-public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage, UidMessage {
-    protected final String uid;
+import javax.annotation.Nullable;
 
-    public DisputeMessage(int messageVersion, String uid) {
-        super(messageVersion);
-        this.uid = uid;
+public class TxBroadcastException extends Exception {
+    @Getter
+    @Nullable
+    private String txId;
+
+    public TxBroadcastException(String message) {
+        super(message);
     }
 
-    public abstract String getTradeId();
+    public TxBroadcastException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public TxBroadcastException(String message, String txId) {
+        super(message);
+        this.txId = txId;
+    }
 
     @Override
     public String toString() {
-        return "DisputeMessage{" +
-                "\n     uid='" + uid + '\'' +
-                ",\n     messageVersion=" + messageVersion +
+        return "TxBroadcastException{" +
+                "\n     txId='" + txId + '\'' +
                 "\n} " + super.toString();
     }
 }

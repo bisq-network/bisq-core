@@ -322,12 +322,9 @@ public abstract class WalletService {
     // Broadcast tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void broadcastTx(Transaction tx, FutureCallback<Transaction> callback) {
-        Broadcaster.broadcastTx(wallet, walletsSetup.getPeerGroup(), tx, callback);
-    }
 
-    public void broadcastTx(Transaction tx, FutureCallback<Transaction> callback, int timeoutInSec) {
-        Broadcaster.broadcastTx(wallet, walletsSetup.getPeerGroup(), tx, callback, timeoutInSec);
+    public void broadcastTx(Transaction tx, TxBroadcaster.Callback callback) {
+        TxBroadcaster.broadcastTx(wallet, walletsSetup.getPeerGroup(), tx, callback);
     }
 
 
@@ -566,10 +563,12 @@ public abstract class WalletService {
         return wallet.freshKey(purpose);
     }
 
+    @Nullable
     public DeterministicKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
         return wallet.getActiveKeychain().findKeyFromPubHash(pubKeyHash);
     }
 
+    @Nullable
     public DeterministicKey findKeyFromPubKey(byte[] pubKey) {
         return wallet.getActiveKeychain().findKeyFromPubKey(pubKey);
     }

@@ -22,6 +22,8 @@ import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletService;
 import bisq.core.trade.Trade;
 import bisq.core.trade.protocol.ArbitratorSelectionRule;
@@ -36,11 +38,7 @@ import bisq.common.taskrunner.TaskRunner;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Transaction;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -86,7 +84,7 @@ public class CreateTakerFeeTx extends TradeTask {
                         trade.getTakerFee(),
                         trade.getTxFee(),
                         selectedArbitrator.getBtcAddress(),
-                        new FutureCallback<Transaction>() {
+                        new TxBroadcaster.Callback() {
                             @Override
                             public void onSuccess(Transaction transaction) {
                                 // we delay one render frame to be sure we don't get called before the method call has
@@ -106,9 +104,9 @@ public class CreateTakerFeeTx extends TradeTask {
                             }
 
                             @Override
-                            public void onFailure(@NotNull Throwable t) {
+                            public void onFailure(TxBroadcastException exception) {
                                 if (!completed) {
-                                    failed(t);
+                                    failed(exception);
                                 } else {
                                     log.warn("We got the onFailure callback called after the timeout has been triggered a complete().");
                                 }
@@ -132,7 +130,7 @@ public class CreateTakerFeeTx extends TradeTask {
                 // if it gets committed 2 times
                 tradeWalletService.commitTx(tradeWalletService.getClonedTransaction(signedTx));
 
-                bsqWalletService.broadcastTx(signedTx, new FutureCallback<Transaction>() {
+                bsqWalletService.broadcastTx(signedTx, new TxBroadcaster.Callback() {
                     @Override
                     public void onSuccess(@Nullable Transaction transaction) {
                         if (!completed) {
@@ -151,14 +149,14 @@ public class CreateTakerFeeTx extends TradeTask {
                     }
 
                     @Override
-                    public void onFailure(@NotNull Throwable t) {
+                    public void onFailure(TxBroadcastException exception) {
                         if (!completed) {
-                            log.error(t.toString());
-                            t.printStackTrace();
+                            log.error(exception.toString());
+                            exception.printStackTrace();
                             trade.setErrorMessage("An error occurred.\n" +
                                     "Error message:\n"
-                                    + t.getMessage());
-                            failed(t);
+                                    + exception.getMessage());
+                            failed(exception);
                         } else {
                             log.warn("We got the onFailure callback called after the timeout has been triggered a complete().");
                         }

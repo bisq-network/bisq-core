@@ -62,7 +62,6 @@ public class AccountAgeWitness implements LazyProcessedPayload, PersistableNetwo
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-
     @Override
     public PB.PersistableNetworkPayload toProtoMessage() {
         final PB.AccountAgeWitness.Builder builder = PB.AccountAgeWitness.newBuilder()

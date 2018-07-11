@@ -27,6 +27,7 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
 import bisq.network.p2p.P2PService;
+import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.UserThread;
 import bisq.common.storage.JsonFileManager;
@@ -85,6 +86,8 @@ public class TradeStatisticsManager {
     @Inject
     public TradeStatisticsManager(P2PService p2PService,
                                   PriceFeedService priceFeedService,
+                                  TradeStatistics2StorageService tradeStatistics2StorageService,
+                                  AppendOnlyDataStoreService appendOnlyDataStoreService,
                                   ReferralIdService referralIdService,
                                   @Named(Storage.STORAGE_DIR) File storageDir,
                                   @Named(AppOptionKeys.DUMP_STATISTICS) boolean dumpStatistics) {
@@ -93,6 +96,8 @@ public class TradeStatisticsManager {
         this.referralIdService = referralIdService;
         this.dumpStatistics = dumpStatistics;
         jsonFileManager = new JsonFileManager(storageDir);
+
+        appendOnlyDataStoreService.addService(tradeStatistics2StorageService);
     }
 
     public void onAllServicesInitialized() {
@@ -109,13 +114,13 @@ public class TradeStatisticsManager {
             jsonFileManager.writeToDisc(Utilities.objectToJson(cryptoCurrencyList), "crypto_currency_list");
         }
 
-        p2PService.getP2PDataStorage().addPersistableNetworkPayloadMapListener(payload -> {
+        p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(payload -> {
             if (payload instanceof TradeStatistics2)
                 addToMap((TradeStatistics2) payload, true);
         });
 
         Map<String, TradeStatistics2> map = new HashMap<>();
-        p2PService.getP2PDataStorage().getPersistableNetworkPayloadList().getMap().values().stream()
+        p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().stream()
                 .filter(e -> e instanceof TradeStatistics2)
                 .forEach(e -> addToMap((TradeStatistics2) e, map));
         observableTradeStatisticsSet.addAll(map.values());

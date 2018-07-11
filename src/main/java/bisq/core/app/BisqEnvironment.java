@@ -27,6 +27,7 @@ import bisq.core.filter.FilterManager;
 import bisq.network.NetworkOptionKeys;
 
 import bisq.common.CommonOptionKeys;
+import bisq.common.app.DevEnv;
 import bisq.common.app.Version;
 import bisq.common.crypto.KeyStorage;
 import bisq.common.storage.Storage;
@@ -109,12 +110,7 @@ public class BisqEnvironment extends StandardEnvironment {
 
     public static boolean isDAOActivatedAndBaseCurrencySupportingBsq() {
         //noinspection ConstantConditions,PointlessBooleanExpression
-        return isDAOEnabled() && isBaseCurrencySupportingBsq();
-    }
-
-    public static boolean isDAOEnabled() {
-        //noinspection ConstantConditions,PointlessBooleanExpression
-        return !getBaseCurrencyNetwork().isMainnet() && isBaseCurrencySupportingBsq();
+        return DevEnv.isDaoActivated() && isBaseCurrencySupportingBsq();
     }
 
     public static boolean isBaseCurrencySupportingBsq() {
@@ -195,7 +191,7 @@ public class BisqEnvironment extends StandardEnvironment {
     protected final String btcNodes, seedNodes, ignoreDevMsg, useDevPrivilegeKeys, useDevMode, useTorForBtc, rpcUser, rpcPassword,
             rpcPort, rpcBlockNotificationPort, dumpBlockchainData, fullDaoNode,
             myAddress, banList, dumpStatistics, maxMemory, socks5ProxyBtcAddress,
-            socks5ProxyHttpAddress, useAllProvidedNodes, numConnectionForBtc, genesisTxId, genesisBlockHeight, referralId;
+            socks5ProxyHttpAddress, useAllProvidedNodes, numConnectionForBtc, genesisTxId, genesisBlockHeight, referralId, daoActivated;
 
 
     public BisqEnvironment(OptionSet options) {
@@ -288,6 +284,9 @@ public class BisqEnvironment extends StandardEnvironment {
                 "";
         genesisBlockHeight = commandLineProperties.containsProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) ?
                 (String) commandLineProperties.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) :
+                "";
+        daoActivated = commandLineProperties.containsProperty(DaoOptionKeys.DAO_ACTIVATED) ?
+                (String) commandLineProperties.getProperty(DaoOptionKeys.DAO_ACTIVATED) :
                 "";
 
         btcNodes = commandLineProperties.containsProperty(BtcOptionKeys.BTC_NODES) ?
@@ -419,6 +418,7 @@ public class BisqEnvironment extends StandardEnvironment {
         return new PropertiesPropertySource(BISQ_DEFAULT_PROPERTY_SOURCE_NAME, new Properties() {
             {
                 setProperty(CommonOptionKeys.LOG_LEVEL_KEY, logLevel);
+                setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);
 
                 setProperty(NetworkOptionKeys.SEED_NODES_KEY, seedNodes);
                 setProperty(NetworkOptionKeys.MY_ADDRESS, myAddress);
@@ -432,7 +432,6 @@ public class BisqEnvironment extends StandardEnvironment {
                 setProperty(AppOptionKeys.IGNORE_DEV_MSG_KEY, ignoreDevMsg);
                 setProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, useDevPrivilegeKeys);
                 setProperty(AppOptionKeys.REFERRAL_ID, referralId);
-                setProperty(CommonOptionKeys.USE_DEV_MODE, useDevMode);
                 setProperty(AppOptionKeys.DUMP_STATISTICS, dumpStatistics);
                 setProperty(AppOptionKeys.APP_NAME_KEY, appName);
                 setProperty(AppOptionKeys.MAX_MEMORY, maxMemory);
@@ -447,6 +446,7 @@ public class BisqEnvironment extends StandardEnvironment {
                 setProperty(DaoOptionKeys.FULL_DAO_NODE, fullDaoNode);
                 setProperty(DaoOptionKeys.GENESIS_TX_ID, genesisTxId);
                 setProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, genesisBlockHeight);
+                setProperty(DaoOptionKeys.DAO_ACTIVATED, daoActivated);
 
                 setProperty(BtcOptionKeys.BTC_NODES, btcNodes);
                 setProperty(BtcOptionKeys.USE_TOR_FOR_BTC, useTorForBtc);

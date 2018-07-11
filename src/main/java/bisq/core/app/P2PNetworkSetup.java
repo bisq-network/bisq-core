@@ -37,7 +37,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import lombok.Getter;
@@ -206,7 +205,8 @@ public class P2PNetworkSetup {
 
             @Override
             public void onRequestCustomBridges() {
-                Objects.requireNonNull(displayTorNetworkSettingsHandler).accept(true);
+                if (displayTorNetworkSettingsHandler != null)
+                    displayTorNetworkSettingsHandler.accept(true);
             }
         });
 

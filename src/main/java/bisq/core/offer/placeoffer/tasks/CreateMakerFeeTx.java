@@ -22,6 +22,8 @@ import bisq.core.btc.AddressEntry;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
+import bisq.core.btc.wallet.TxBroadcastException;
+import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.WalletService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.placeoffer.PlaceOfferModel;
@@ -36,12 +38,8 @@ import bisq.common.taskrunner.TaskRunner;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Transaction;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -88,15 +86,15 @@ public class CreateMakerFeeTx extends Task<PlaceOfferModel> {
                         offer.getMakerFee(),
                         offer.getTxFee(),
                         selectedArbitrator.getBtcAddress(),
-                        new FutureCallback<Transaction>() {
+                        new TxBroadcaster.Callback() {
                             @Override
                             public void onSuccess(Transaction transaction) {
                                 // we delay one render frame to be sure we don't get called before the method call has
                                 // returned (tradeFeeTx would be null in that case)
                                 UserThread.execute(() -> {
                                     if (!completed) {
-                                        offer.setOfferFeePaymentTxId(transaction.getHashAsString());
-                                        model.setTransaction(transaction);
+                                        offer.setOfferFeePaymentTxId(tradeFeeTx.getHashAsString());
+                                        model.setTransaction(tradeFeeTx);
                                         walletService.swapTradeEntryToAvailableEntry(id, AddressEntry.Context.OFFER_FUNDING);
 
                                         model.getOffer().setState(Offer.State.OFFER_FEE_PAID);
@@ -109,9 +107,9 @@ public class CreateMakerFeeTx extends Task<PlaceOfferModel> {
                             }
 
                             @Override
-                            public void onFailure(@NotNull Throwable t) {
+                            public void onFailure(TxBroadcastException exception) {
                                 if (!completed) {
-                                    failed(t);
+                                    failed(exception);
                                 } else {
                                     log.warn("We got the onFailure callback called after the timeout has been triggered a complete().");
                                 }
@@ -135,7 +133,7 @@ public class CreateMakerFeeTx extends Task<PlaceOfferModel> {
                 // if it gets committed 2 times
                 tradeWalletService.commitTx(tradeWalletService.getClonedTransaction(signedTx));
 
-                bsqWalletService.broadcastTx(signedTx, new FutureCallback<Transaction>() {
+                bsqWalletService.broadcastTx(signedTx, new TxBroadcaster.Callback() {
                     @Override
                     public void onSuccess(@Nullable Transaction transaction) {
                         if (transaction != null) {
@@ -152,13 +150,13 @@ public class CreateMakerFeeTx extends Task<PlaceOfferModel> {
                     }
 
                     @Override
-                    public void onFailure(@NotNull Throwable t) {
-                        log.error(t.toString());
-                        t.printStackTrace();
+                    public void onFailure(TxBroadcastException exception) {
+                        log.error(exception.toString());
+                        exception.printStackTrace();
                         offer.setErrorMessage("An error occurred.\n" +
                                 "Error message:\n"
-                                + t.getMessage());
-                        failed(t);
+                                + exception.getMessage());
+                        failed(exception);
                     }
                 });
             }

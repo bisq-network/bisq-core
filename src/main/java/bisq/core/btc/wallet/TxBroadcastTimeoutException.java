@@ -15,33 +15,34 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.arbitration.messages;
+package bisq.core.btc.wallet;
 
-import bisq.network.p2p.MailboxMessage;
-import bisq.network.p2p.UidMessage;
+import org.bitcoinj.core.Transaction;
 
-import bisq.common.proto.network.NetworkEnvelope;
-
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@EqualsAndHashCode(callSuper = true)
-@Getter
-public abstract class DisputeMessage extends NetworkEnvelope implements MailboxMessage, UidMessage {
-    protected final String uid;
+import javax.annotation.Nullable;
 
-    public DisputeMessage(int messageVersion, String uid) {
-        super(messageVersion);
-        this.uid = uid;
+
+public class TxBroadcastTimeoutException extends TxBroadcastException {
+    @Getter
+    @Nullable
+    private final Transaction localTx;
+    @Getter
+    private int delay;
+
+    public TxBroadcastTimeoutException(Transaction localTx, int delay) {
+        super("The transaction was not broadcasted in " + delay +
+                "seconds. txId=" + localTx.getHashAsString());
+        this.localTx = localTx;
+        this.delay = delay;
     }
-
-    public abstract String getTradeId();
 
     @Override
     public String toString() {
-        return "DisputeMessage{" +
-                "\n     uid='" + uid + '\'' +
-                ",\n     messageVersion=" + messageVersion +
+        return "TxBroadcastTimeoutException{" +
+                "\n     localTx=" + localTx +
+                ",\n     delay=" + delay +
                 "\n} " + super.toString();
     }
 }

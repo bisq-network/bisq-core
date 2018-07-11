@@ -59,10 +59,6 @@ import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
-
 /**
  * Creates and published blind vote objects and maintains list.
  */
@@ -150,7 +146,9 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
         byte[] encryptedProposals = BlindVoteConsensus.getEncryptedProposalList(proposalList, secretKey);
         byte[] opReturnData = BlindVoteConsensus.getOpReturnData(encryptedProposals);
         final Transaction blindVoteTx = getBlindVoteTx(stake, opReturnData);
-        walletsManager.publishAndCommitBsqTx(blindVoteTx, new FutureCallback<Transaction>() {
+
+        // TODO not updated to TxBroadcaster changes because not in sync with voting branch anyway
+       /* walletsManager.publishAndCommitBsqTx(blindVoteTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction result) {
                 //TODO set a flag once the tx was successfully broadcasted
@@ -163,7 +161,7 @@ public class BlindVoteService implements PersistedDataHost, HashMapChangedListen
                 //TODO handle error
                 callback.onFailure(t);
             }
-        });
+        });*/
 
         // We cannot apply the state change only if we get the tx successfully broadcasted.
         // In case the broadcast fails or timed out we might get the tx broadcasted at another startup

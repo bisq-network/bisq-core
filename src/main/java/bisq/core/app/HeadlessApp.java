@@ -15,14 +15,17 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.btc.wallet;
+package bisq.core.app;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.InsufficientMoneyException;
+import bisq.common.setup.GracefulShutDownHandler;
+import bisq.common.setup.UncaughtExceptionHandler;
 
-public class InsufficientBsqException extends InsufficientMoneyException {
+import com.google.inject.Injector;
 
-    public InsufficientBsqException(Coin missing) {
-        super(missing, "Insufficient BSQ,  missing " + missing.value / 100D + " BSQ");
-    }
+public interface HeadlessApp extends UncaughtExceptionHandler, BisqSetup.BisqSetupCompleteListener {
+    void setGracefulShutDownHandler(GracefulShutDownHandler gracefulShutDownHandler);
+
+    void setInjector(Injector injector);
+
+    void startApplication();
 }
