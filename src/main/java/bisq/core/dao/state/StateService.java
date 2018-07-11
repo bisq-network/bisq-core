@@ -488,13 +488,32 @@ public class StateService {
 
     // TODO WIP
 
-    // Lockup
+    // Terminology
+    // Lockup - txOutputs of LOCKUP type
+    // Unlocking - UNLOCK txOutputs that are not yet spendable due to lock time
+    // Unlocked - UNLOCK txOutputs that are spendable since the lock time has passed
+
     public Set<TxOutput> getLockupTxOutputs() {
         return getTxOutputsByTxOutputType(TxOutputType.LOCKUP);
     }
 
+    public boolean isLockupOutput(TxOutputKey key) {
+        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
+        return opTxOutput.isPresent() && isLockupOutput(opTxOutput.get());
+    }
+
     public boolean isLockupOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
+    }
+
+    public boolean isUnlockingOutput(TxOutputKey key) {
+        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
+        return opTxOutput.isPresent() && isUnlockingOutput(opTxOutput.get());
+    }
+
+    public boolean isUnlockingOutput(TxOutput txOutput) {
+        return txOutput.getTxOutputType() != TxOutputType.UNLOCK ||
+                isTxOutputSpendable(new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()));
     }
 
     public Optional<TxOutput> getLockupTxOutput(String txId) {

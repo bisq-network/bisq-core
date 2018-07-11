@@ -26,6 +26,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -194,16 +195,32 @@ public class BsqWalletService extends WalletService implements BlockListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void updateBsqBalance() {
-        pendingBalance = Coin.valueOf(getTransactions(false).stream()
-                .flatMap(tx -> tx.getOutputs().stream())
-                .filter(out -> {
-                    final Transaction parentTx = out.getParentTransaction();
-                    return parentTx != null &&
-                            out.isMine(wallet) &&
-                            parentTx.getConfidence().getConfidenceType() == PENDING;
-                })
-                .mapToLong(out -> out.getValue().value)
-                .sum());
+        pendingBalance = Coin.valueOf(
+                getTransactions(false).stream()
+                        .filter(tx -> tx.getConfidence().getConfidenceType() == PENDING)
+                        .mapToLong(tx -> {
+                            // Sum up outputs into BSQ wallet and subtract the inputs using lockup or unlocking
+                            // outputs since those inputs will be accounted for in lockedInBondsBalance and
+                            // unlockingBondsBalance
+                            long outputs = tx.getOutputs().stream()
+                                    .filter(out -> out.isMine(wallet))
+                                    .mapToLong(out -> out.getValue().value)
+                                    .sum();
+                            long lockedInputs = tx.getInputs().stream()
+                                    .filter(in -> {
+                                        TxOutputKey key = new TxOutputKey(in.getConnectedOutput()
+                                                .getParentTransaction().getHashAsString(),
+                                                in.getConnectedOutput().getIndex());
+                                        return (in.getConnectedOutput().isMine(wallet)
+                                                && stateService.isLockupOutput(key)
+                                                && stateService.isUnlockingOutput(key));
+                                    })
+                                    .mapToLong(in -> in.getValue().value)
+                                    .sum();
+                            return outputs - lockedInputs;
+                        })
+                        .sum()
+        );
 
         Set<String> confirmedTxIdSet = getTransactions(false).stream()
                 .filter(tx -> tx.getConfidence().getConfidenceType() == BUILDING)
