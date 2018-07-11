@@ -95,8 +95,7 @@ public class SetupUtils {
             final String postFix = "_" + baseCurrencyNetwork.getCurrencyCode() + "_"
                     + baseCurrencyNetwork.getNetwork();
             long ts = new Date().getTime();
-            p2PDataStorage.readFromResources(P2PDataStorage.PERSISTABLE_NETWORK_PAYLOAD_MAP_FILE_NAME, postFix);
-            p2PDataStorage.readFromResources(P2PDataStorage.PERSISTED_ENTRY_MAP_FILE_NAME, postFix);
+            p2PDataStorage.readFromResources(postFix);
             log.info("readFromResources took {} ms", (new Date().getTime() - ts));
             UserThread.execute(() -> result.set(true));
         });

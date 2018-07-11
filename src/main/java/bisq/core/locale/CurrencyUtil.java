@@ -127,7 +127,7 @@ public class CurrencyUtil {
 
     public static List<CryptoCurrency> getMainCryptoCurrencies() {
         final List<CryptoCurrency> result = new ArrayList<>();
-        if (DevEnv.DAO_TRADING_ACTIVATED)
+        if (DevEnv.isDaoTradingActivated())
             result.add(new CryptoCurrency("BSQ", "BSQ"));
         if (!baseCurrencyCode.equals("BTC"))
             result.add(new CryptoCurrency("BTC", "Bitcoin"));
@@ -379,7 +379,7 @@ public class CurrencyUtil {
     }
 
     private static boolean excludeBsqUnlessDaoTradingIsActive(Asset asset) {
-        return (!(asset instanceof BSQ) || (DevEnv.DAO_TRADING_ACTIVATED
+        return (!(asset instanceof BSQ) || (DevEnv.isDaoTradingActivated()
                 && ((BSQ) asset).getNetwork().name().equals(BisqEnvironment.getBaseCurrencyNetwork().getNetwork())));
     }
 }

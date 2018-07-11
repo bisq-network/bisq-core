@@ -15,21 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.app;
+package bisq.core.app.misc;
 
 import bisq.core.alert.AlertModule;
+import bisq.core.app.AppOptionKeys;
+import bisq.core.app.BisqEnvironment;
 import bisq.core.arbitration.ArbitratorModule;
 import bisq.core.btc.BitcoinModule;
 import bisq.core.dao.DaoModule;
 import bisq.core.filter.FilterModule;
 import bisq.core.network.p2p.seed.DefaultSeedNodeRepository;
 import bisq.core.network.p2p.seed.SeedNodeAddressLookup;
-import bisq.core.notifications.MobileMessageEncryption;
-import bisq.core.notifications.MobileModel;
-import bisq.core.notifications.MobileNotificationService;
-import bisq.core.notifications.MobileNotificationValidator;
 import bisq.core.offer.OfferModule;
-import bisq.core.presentation.CorePresentationModule;
 import bisq.core.proto.network.CoreNetworkProtoResolver;
 import bisq.core.proto.persistable.CorePersistenceProtoResolver;
 import bisq.core.trade.TradeModule;
@@ -48,7 +45,6 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.KeyStorage;
 import bisq.common.proto.network.NetworkProtoResolver;
 import bisq.common.proto.persistable.PersistenceProtoResolver;
-import bisq.common.storage.CorruptedDatabaseFilesHandler;
 import bisq.common.storage.Storage;
 
 import org.springframework.core.env.Environment;
@@ -60,27 +56,24 @@ import java.io.File;
 
 import static com.google.inject.name.Names.named;
 
-public class CoreModule extends AppModule {
+public class ModuleForAppWithP2p extends AppModule {
 
-    public CoreModule(Environment environment) {
+    public ModuleForAppWithP2p(Environment environment) {
         super(environment);
     }
 
     @Override
     protected void configure() {
-        bind(BisqSetup.class).in(Singleton.class);
-        bind(P2PNetworkSetup.class).in(Singleton.class);
-        bind(WalletAppSetup.class).in(Singleton.class);
-
-        bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
+        configEnvironment();
 
         bind(KeyStorage.class).in(Singleton.class);
         bind(KeyRing.class).in(Singleton.class);
         bind(User.class).in(Singleton.class);
         bind(Clock.class).in(Singleton.class);
+        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
+        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
         bind(Preferences.class).in(Singleton.class);
         bind(BridgeAddressProvider.class).to(Preferences.class).in(Singleton.class);
-        bind(CorruptedDatabaseFilesHandler.class).in(Singleton.class);
 
         bind(SeedNodeAddressLookup.class).in(Singleton.class);
         bind(SeedNodeRepository.class).to(DefaultSeedNodeRepository.class).in(Singleton.class);
@@ -91,9 +84,6 @@ public class CoreModule extends AppModule {
         File keyStorageDir = new File(environment.getRequiredProperty(KeyStorage.KEY_STORAGE_DIR));
         bind(File.class).annotatedWith(named(KeyStorage.KEY_STORAGE_DIR)).toInstance(keyStorageDir);
 
-        bind(NetworkProtoResolver.class).to(CoreNetworkProtoResolver.class).in(Singleton.class);
-        bind(PersistenceProtoResolver.class).to(CorePersistenceProtoResolver.class).in(Singleton.class);
-
         Boolean useDevPrivilegeKeys = environment.getProperty(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS, Boolean.class, false);
         bind(boolean.class).annotatedWith(Names.named(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS)).toInstance(useDevPrivilegeKeys);
 
@@ -102,11 +92,6 @@ public class CoreModule extends AppModule {
 
         String referralId = environment.getProperty(AppOptionKeys.REFERRAL_ID, String.class, "");
         bind(String.class).annotatedWith(Names.named(AppOptionKeys.REFERRAL_ID)).toInstance(referralId);
-
-        bind(MobileNotificationService.class).in(Singleton.class);
-        bind(MobileMessageEncryption.class).in(Singleton.class);
-        bind(MobileNotificationValidator.class).in(Singleton.class);
-        bind(MobileModel.class).in(Singleton.class);
 
         // ordering is used for shut down sequence
         install(tradeModule());
@@ -118,46 +103,45 @@ public class CoreModule extends AppModule {
         install(daoModule());
         install(alertModule());
         install(filterModule());
-        install(corePresentationModule());
     }
 
-    private TradeModule tradeModule() {
+    protected void configEnvironment() {
+        bind(BisqEnvironment.class).toInstance((BisqEnvironment) environment);
+    }
+
+    protected TradeModule tradeModule() {
         return new TradeModule(environment);
     }
 
-    private EncryptionServiceModule encryptionServiceModule() {
+    protected EncryptionServiceModule encryptionServiceModule() {
         return new EncryptionServiceModule(environment);
     }
 
-    private ArbitratorModule arbitratorModule() {
+    protected ArbitratorModule arbitratorModule() {
         return new ArbitratorModule(environment);
     }
 
-    private AlertModule alertModule() {
+    protected AlertModule alertModule() {
         return new AlertModule(environment);
     }
 
-    private FilterModule filterModule() {
+    protected FilterModule filterModule() {
         return new FilterModule(environment);
     }
 
-    private OfferModule offerModule() {
+    protected OfferModule offerModule() {
         return new OfferModule(environment);
     }
 
-    private P2PModule p2pModule() {
+    protected P2PModule p2pModule() {
         return new P2PModule(environment);
     }
 
-    private BitcoinModule bitcoinModule() {
+    protected BitcoinModule bitcoinModule() {
         return new BitcoinModule(environment);
     }
 
-    private DaoModule daoModule() {
+    protected DaoModule daoModule() {
         return new DaoModule(environment);
-    }
-
-    private CorePresentationModule corePresentationModule() {
-        return new CorePresentationModule(environment);
     }
 }

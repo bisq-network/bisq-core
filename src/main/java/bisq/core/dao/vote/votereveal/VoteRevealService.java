@@ -41,8 +41,6 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import com.google.common.util.concurrent.FutureCallback;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -55,10 +53,6 @@ import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
 
 //TODO case that user misses reveal phase not impl. yet
 
@@ -190,8 +184,8 @@ public class VoteRevealService implements BsqBlockChain.Listener {
         // 8 seconds.
         //TODO add timeout error to broadcaster API
         myVoteService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
-
-        walletsManager.publishAndCommitBsqTx(voteRevealTx, new FutureCallback<Transaction>() {
+        // TODO not updated to TxBroadcaster changes because not in sync with voting branch anyway
+      /*  walletsManager.publishAndCommitBsqTx(voteRevealTx, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(@Nullable Transaction result) {
                 log.info("Reveal vote tx successfully broadcasted. txID={}", voteRevealTx.getHashAsString());
@@ -201,7 +195,7 @@ public class VoteRevealService implements BsqBlockChain.Listener {
             public void onFailure(@NotNull Throwable t) {
                 voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.", t, voteRevealTx));
             }
-        });
+        });*/
     }
 
     private List<BlindVote> getBlindVoteListForCurrentCycle() {

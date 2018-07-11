@@ -17,6 +17,8 @@
 
 package bisq.core.app;
 
+import bisq.core.CoreModule;
+
 import bisq.common.UserThread;
 import bisq.common.app.AppModule;
 import bisq.common.setup.CommonSetup;
@@ -31,16 +33,16 @@ import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BisqCoreAppMain extends BisqExecutable {
-    private BisqCoreApp application;
+public class BisqHeadlessAppMain extends BisqExecutable {
+    protected HeadlessApp headlessApp;
 
     public static void main(String[] args) throws Exception {
         if (BisqExecutable.setupInitialOptionParser(args)) {
             // For some reason the JavaFX launch process results in us losing the thread context class loader: reset it.
             // In order to work around a bug in JavaFX 8u25 and below, you must include the following code as the first line of your realMain method:
-            Thread.currentThread().setContextClassLoader(BisqCoreAppMain.class.getClassLoader());
+            Thread.currentThread().setContextClassLoader(BisqHeadlessAppMain.class.getClassLoader());
 
-            new BisqCoreAppMain().execute(args);
+            new BisqHeadlessAppMain().execute(args);
         }
     }
 
@@ -66,8 +68,8 @@ public class BisqCoreAppMain extends BisqExecutable {
 
     @Override
     protected void launchApplication() {
-        application = new BisqCoreApp();
-        CommonSetup.setup(BisqCoreAppMain.this.application);
+        headlessApp = new BisqHeadlessApp();
+        CommonSetup.setup(BisqHeadlessAppMain.this.headlessApp);
 
         UserThread.execute(this::onApplicationLaunched);
     }
@@ -75,7 +77,7 @@ public class BisqCoreAppMain extends BisqExecutable {
     @Override
     protected void onApplicationLaunched() {
         super.onApplicationLaunched();
-        application.setGracefulShutDownHandler(this);
+        headlessApp.setGracefulShutDownHandler(this);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -91,18 +93,19 @@ public class BisqCoreAppMain extends BisqExecutable {
     protected void applyInjector() {
         super.applyInjector();
 
-        application.setInjector(injector);
+        headlessApp.setInjector(injector);
     }
 
     @Override
     protected void startApplication() {
         // We need to be in user thread! We mapped at launchApplication already...
-        application.startApplication();
+        headlessApp.startApplication();
 
-
+        // In headless mode we don't have an async behaviour so we trigger the setup by calling onApplicationStarted
+        onApplicationStarted();
     }
 
-    protected void keepRunning() {
+    private void keepRunning() {
         while (true) {
             try {
                 Thread.sleep(Long.MAX_VALUE);
