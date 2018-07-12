@@ -416,33 +416,6 @@ public class BsqWalletService extends WalletService implements BlockListener {
         return result;
     }
 
-    public Coin getValueLockedUpInBond(Transaction transaction) throws ScriptException {
-        Coin result = Coin.ZERO;
-        final String txId = transaction.getHashAsString();
-        Optional<Tx> txOptional = stateService.getTx(txId);
-        // Only the first output can be locked
-        TransactionOutput output = transaction.getOutputs().get(0);
-        final boolean isConfirmed = output.getParentTransaction() != null &&
-                output.getParentTransaction().getConfidence().getConfidenceType() ==
-                        TransactionConfidence.ConfidenceType.BUILDING;
-        if (output.isMineOrWatched(wallet) && isConfirmed && txOptional.isPresent()) {
-            // The index of the BSQ tx outputs are the same as the bitcoinj tx outputs
-            TxOutput txOutput = txOptional.get().getTxOutputs().get(0);
-            if (stateService.isLockupOutput(txOutput)) {
-                //TODO check why values are not the same
-                if (txOutput.getValue() != output.getValue().value) {
-                    log.warn("getValueLockedUpInBond: Value of BSQ output do not match BitcoinJ tx output. " +
-                                    "txOutput.getValue()={}, output.getValue().value={}, txId={}",
-                            txOutput.getValue(), output.getValue().value, txId);
-                }
-
-                // If it is a valid BSQ output we add it
-                result = result.add(Coin.valueOf(txOutput.getValue()));
-            }
-        }
-        return result;
-    }
-
     public Optional<Transaction> isWalletTransaction(String txId) {
         return getWalletTransactions().stream().filter(e -> e.getHashAsString().equals(txId)).findAny();
     }
