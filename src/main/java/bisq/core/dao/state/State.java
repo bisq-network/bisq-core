@@ -113,6 +113,11 @@ public class State implements PersistableEnvelope {
     @Getter
     private final Map<TxOutputKey, TxOutput> unspentTxOutputMap;
     @Getter
+    private final Map<TxOutputKey, TxOutput> nonBsqTxOutputMap;
+    // TODO SQ i prepared the map for the confist. requests
+    @Getter
+    private final Map<TxOutputKey, TxOutput> confiscatedTxOutputMap;
+    @Getter
     private final Map<String, Issuance> issuanceMap; // key is txId
     @Getter
     private final Map<TxOutputKey, SpentInfo> spentInfoMap;
@@ -136,6 +141,8 @@ public class State implements PersistableEnvelope {
                 new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
                 new ArrayList<>()
         );
     }
@@ -151,6 +158,8 @@ public class State implements PersistableEnvelope {
                   LinkedList<Block> blocks,
                   LinkedList<Cycle> cycles,
                   Map<TxOutputKey, TxOutput> unspentTxOutputMap,
+                  Map<TxOutputKey, TxOutput> nonBsqTxOutputMap,
+                  Map<TxOutputKey, TxOutput> confiscatedTxOutputMap,
                   Map<String, Issuance> issuanceMap,
                   Map<TxOutputKey, SpentInfo> spentInfoMap,
                   List<ParamChange> paramChangeList) {
@@ -160,6 +169,8 @@ public class State implements PersistableEnvelope {
         this.blocks = blocks;
         this.cycles = cycles;
         this.unspentTxOutputMap = unspentTxOutputMap;
+        this.nonBsqTxOutputMap = nonBsqTxOutputMap;
+        this.confiscatedTxOutputMap = confiscatedTxOutputMap;
         this.issuanceMap = issuanceMap;
         this.spentInfoMap = spentInfoMap;
         this.paramChangeList = paramChangeList;
@@ -179,6 +190,10 @@ public class State implements PersistableEnvelope {
                 .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
                 .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
                         .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toProtoMessage())))
+                .putAllUnspentTxOutputMap(nonBsqTxOutputMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toProtoMessage())))
+                .putAllUnspentTxOutputMap(confiscatedTxOutputMap.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toProtoMessage())))
                 .putAllIssuanceMap(issuanceMap.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toProtoMessage())))
                 .putAllSpentInfoMap(spentInfoMap.entrySet().stream()
@@ -195,6 +210,10 @@ public class State implements PersistableEnvelope {
                 .map(Cycle::fromProto).collect(Collectors.toCollection(LinkedList::new));
         Map<TxOutputKey, TxOutput> unspentTxOutputMap = proto.getUnspentTxOutputMapMap().entrySet().stream()
                 .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
+        Map<TxOutputKey, TxOutput> nonBsqTxOutputMap = proto.getNonBsqTxOutputMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
+        Map<TxOutputKey, TxOutput> confiscatedTxOutputMap = proto.getConfiscatedTxOutputMapMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> TxOutput.fromProto(e.getValue())));
         Map<String, Issuance> issuanceMap = proto.getIssuanceMapMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         Map<TxOutputKey, SpentInfo> spentInfoMap = proto.getSpentInfoMapMap().entrySet().stream()
@@ -207,6 +226,8 @@ public class State implements PersistableEnvelope {
                 blocks,
                 cycles,
                 unspentTxOutputMap,
+                nonBsqTxOutputMap,
+                confiscatedTxOutputMap,
                 issuanceMap,
                 spentInfoMap,
                 paramChangeList);

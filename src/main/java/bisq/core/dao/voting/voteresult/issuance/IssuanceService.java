@@ -29,7 +29,6 @@ import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import javax.inject.Inject;
 
 import java.util.Optional;
-import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,17 +51,16 @@ public class IssuanceService {
     }
 
     public void issueBsq(CompensationProposal compensationProposal, int chainHeight) {
-        final Set<TxOutput> compReqIssuanceTxOutputs = stateService.getIssuanceCandidateTxOutputs();
-        compReqIssuanceTxOutputs.stream()
+        stateService.getIssuanceCandidateTxOutputs().stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
                     // We don't check atm if the output is unspent. We cannot use the bsqWallet as that would not
                     // reflect our current block state (could have been spent at later block which is valid and
                     // bsqWallet would show that spent state). We would need to support a spent status for the outputs
                     // which are interpreted as BTC like a not yet accepted comp. request is.
-                    long amount = compensationProposal.getRequestedBsq().value;
                     Optional<Tx> optionalTx = stateService.getTx(compensationProposal.getTxId());
                     if (optionalTx.isPresent()) {
+                        long amount = compensationProposal.getRequestedBsq().value;
                         Tx tx = optionalTx.get();
                         // We use key from first input
                         TxInput txInput = tx.getTxInputs().get(0);

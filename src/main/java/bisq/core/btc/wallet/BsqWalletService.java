@@ -26,7 +26,6 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -74,7 +73,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 @Slf4j
 public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final BisqDefaultCoinSelector satoshiCoinSelector;
+    private final NonBsqCoinSelector nonBsqCoinSelector;
     private final StateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
@@ -85,7 +84,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     @Getter
     private Coin availableBalance = Coin.ZERO;
     @Getter
-    private Coin pendingBalance = Coin.ZERO;
+    private Coin unverifiedBalance = Coin.ZERO;
     @Getter
     private Coin lockedForVotingBalance = Coin.ZERO;
     @Getter
@@ -101,6 +100,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     @Inject
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
+                            NonBsqCoinSelector nonBsqCoinSelector,
                             StateService stateService,
                             Preferences preferences,
                             FeeService feeService) {
@@ -109,14 +109,8 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 feeService);
 
         this.bsqCoinSelector = bsqCoinSelector;
+        this.nonBsqCoinSelector = nonBsqCoinSelector;
         this.stateService = stateService;
-
-        satoshiCoinSelector = new BisqDefaultCoinSelector() {
-            @Override
-            boolean isTxOutputSpendable(TransactionOutput output) {
-                return true;
-            }
-        };
 
         if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
             walletsSetup.addSetupCompletedHandler(() -> {
@@ -207,7 +201,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void updateBsqBalance() {
-        pendingBalance = Coin.valueOf(
+        unverifiedBalance = Coin.valueOf(
                 getTransactions(false).stream()
                         .filter(tx -> tx.getConfidence().getConfidenceType() == PENDING)
                         .mapToLong(tx -> {
@@ -218,18 +212,37 @@ public class BsqWalletService extends WalletService implements BlockListener {
                                     .filter(out -> out.isMine(wallet))
                                     .mapToLong(out -> out.getValue().value)
                                     .sum();
-                            long lockedInputs = tx.getInputs().stream()
+                            // TODO SQ: I think that can never be > 0 as the state does not know about pending txs.
+                           /* long lockedInputs = tx.getInputs().stream()
                                     .filter(in -> {
-                                        TxOutputKey key = new TxOutputKey(in.getConnectedOutput()
-                                                .getParentTransaction().getHashAsString(),
-                                                in.getConnectedOutput().getIndex());
-                                        return (in.getConnectedOutput().isMine(wallet)
-                                                && stateService.isLockupOutput(key)
-                                                && stateService.isUnlockingOutput(key));
+                                        TransactionOutput connectedOutput = in.getConnectedOutput();
+                                        if (connectedOutput != null) {
+                                            Transaction parentTransaction = connectedOutput.getParentTransaction();
+                                            if (parentTransaction != null) {
+                                                TxOutputKey key = new TxOutputKey(parentTransaction.getHashAsString(),
+                                                        connectedOutput.getIndex());
+
+                                                log.error("connectedOutput.isMine(wallet) " + connectedOutput.isMine(wallet));
+                                                log.error("stateService.isLockupOutput(key) " + stateService.isLockupOutput(key));
+                                                log.error("stateService.isUnlockingOutput(key) " + stateService.isUnlockingOutput(key));
+
+                                                return (connectedOutput.isMine(wallet)
+                                                        && (stateService.isLockupOutput(key)
+                                                        || stateService.isUnlockingOutput(key)));
+
+                                                // TODO SQ I think that is wrong isLockupOutput and isUnlockingOutput
+                                                // are exclusive
+                                                *//*return (connectedOutput.isMine(wallet)
+                                                        && stateService.isLockupOutput(key)
+                                                        && stateService.isUnlockingOutput(key));*//*
+                                            }
+                                        }
+                                        return false;
                                     })
-                                    .mapToLong(in -> in.getValue().value)
+                                    .mapToLong(in -> in != null ? in.getValue().value : 0)
                                     .sum();
-                            return outputs - lockedInputs;
+                            log.error("lockedInputs " + lockedInputs);*/
+                            return outputs /*- lockedInputs*/;
                         })
                         .sum()
         );
@@ -249,7 +262,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        unlockingBondsBalance = Coin.valueOf(stateService.getUnlockingTxOutputs().stream()
+        unlockingBondsBalance = Coin.valueOf(stateService.getUnspentUnlockingTxOutputsStream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -260,11 +273,10 @@ public class BsqWalletService extends WalletService implements BlockListener {
         if (availableBalance.isNegative())
             availableBalance = Coin.ZERO;
 
-        Coin totalSatoshiBalance = satoshiCoinSelector.select(NetworkParameters.MAX_MONEY,
+        availableNonBsqBalance = nonBsqCoinSelector.select(NetworkParameters.MAX_MONEY,
                 wallet.calculateAllSpendCandidates()).valueGathered;
-        availableNonBsqBalance = totalSatoshiBalance.subtract(availableBalance);
 
-        bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, availableNonBsqBalance, pendingBalance,
+        bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, availableNonBsqBalance, unverifiedBalance,
                 lockedForVotingBalance, lockedInBondsBalance, unlockingBondsBalance));
     }
 
@@ -452,7 +464,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
 
         checkWalletConsistency(wallet);
         verifyTransaction(tx);
-        //printTx("BSQ wallet: Signed Tx", tx);
+        printTx("BSQ wallet: Signed Tx", tx);
         return tx;
     }
 
@@ -487,6 +499,38 @@ public class BsqWalletService extends WalletService implements BlockListener {
         sendRequest.signInputs = false;
         sendRequest.ensureMinRequiredFee = false;
         sendRequest.changeAddress = getUnusedAddress();
+        try {
+            wallet.completeTx(sendRequest);
+        } catch (InsufficientMoneyException e) {
+            throw new InsufficientBsqException(e.missing);
+        }
+        checkWalletConsistency(wallet);
+        verifyTransaction(tx);
+        // printTx("prepareSendTx", tx);
+        return tx;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Send BTC (non-BSQ) with BTC fee (e.g. the issuance output from a  lost comp. request)
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public Transaction getPreparedSendBtcTx(String receiverAddress, Coin receiverAmount)
+            throws AddressFormatException, InsufficientBsqException, WalletException, TransactionVerificationException {
+        Transaction tx = new Transaction(params);
+        checkArgument(Restrictions.isAboveDust(receiverAmount),
+                "The amount is too low (dust limit).");
+        tx.addOutput(receiverAmount, Address.fromBase58(params, receiverAddress));
+
+        SendRequest sendRequest = SendRequest.forTx(tx);
+        sendRequest.fee = Coin.ZERO;
+        sendRequest.feePerKb = Coin.ZERO;
+        sendRequest.ensureMinRequiredFee = false;
+        sendRequest.aesKey = aesKey;
+        sendRequest.shuffleOutputs = false;
+        sendRequest.signInputs = false;
+        sendRequest.ensureMinRequiredFee = false;
+        sendRequest.changeAddress = getUnusedAddress();
+        sendRequest.coinSelector = nonBsqCoinSelector;
         try {
             wallet.completeTx(sendRequest);
         } catch (InsufficientMoneyException e) {

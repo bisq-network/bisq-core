@@ -27,8 +27,6 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.bonding.BondingConsensus;
-import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.ext.Param;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
@@ -50,7 +48,6 @@ public class LockupService {
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final StateService stateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -60,18 +57,16 @@ public class LockupService {
     @Inject
     public LockupService(WalletsManager walletsManager,
                          BsqWalletService bsqWalletService,
-                         BtcWalletService btcWalletService,
-                         StateService stateService) {
+                         BtcWalletService btcWalletService) {
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.stateService = stateService;
     }
 
     public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
-        checkArgument(lockTime <= stateService.getParamValue(Param.LOCK_TIME_MAX, stateService.getChainHeight()) &&
-                lockTime >= stateService.getParamValue(Param.LOCK_TIME_MIN, stateService.getChainHeight()));
+        checkArgument(lockTime <= BondingConsensus.getMaxLockTime() &&
+                lockTime >= BondingConsensus.getMinLockTime(), "lockTime not in rage");
         try {
             byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);

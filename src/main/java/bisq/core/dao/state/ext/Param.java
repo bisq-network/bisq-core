@@ -69,7 +69,7 @@ public enum Param {
     PHASE_VOTE_REVEAL(3),   // 2 days
     PHASE_BREAK3(1),        // 10 blocks
     PHASE_RESULT(1),        // 1 block
-    PHASE_BREAK4(1),        // 10 blocks
+    PHASE_BREAK4(1);        // 10 blocks
 
     /*PHASE_UNDEFINED(0),
     PHASE_PROPOSAL(3456),      // 24 days
@@ -80,10 +80,6 @@ public enum Param {
     PHASE_BREAK3(10),        // 10 blocks
     PHASE_RESULT(1),        // 1 block
     PHASE_BREAK4(10);        // 10 blocks*/
-
-    //TODO SQ: do we need to set a min value? is max value is max int value it is also not needed to set it as param
-    LOCK_TIME_MIN(0),
-    LOCK_TIME_MAX(65535);
 
     @Getter
     private long defaultValue;

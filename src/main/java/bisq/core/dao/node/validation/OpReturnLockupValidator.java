@@ -17,9 +17,8 @@
 
 package bisq.core.dao.node.validation;
 
+import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.bonding.lockup.LockupType;
-import bisq.core.dao.state.StateService;
-import bisq.core.dao.state.ext.Param;
 
 import javax.inject.Inject;
 
@@ -29,11 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class OpReturnLockupValidator {
-    private final StateService stateService;
 
     @Inject
-    public OpReturnLockupValidator(StateService stateService) {
-        this.stateService = stateService;
+    public OpReturnLockupValidator() {
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
@@ -44,7 +41,7 @@ class OpReturnLockupValidator {
         boolean lockupTypeOk = lockupType.isPresent() && lockupType.get() == LockupType.DEFAULT;
         return parsingModel.getLockupOutput() != null && opReturnData.length == 5 &&
                 lockupTypeOk &&
-                lockTime >= stateService.getParamValue(Param.LOCK_TIME_MIN, blockHeight) &&
-                lockTime <= stateService.getParamValue(Param.LOCK_TIME_MAX, blockHeight);
+                lockTime >= BondingConsensus.getMinLockTime() &&
+                lockTime <= BondingConsensus.getMaxLockTime();
     }
 }

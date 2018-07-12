@@ -26,7 +26,6 @@ import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.period.DaoPhase;
@@ -367,6 +366,18 @@ public class DaoFacade {
         return stateService.getTotalBurntFee();
     }
 
+    public long getTotalLockedUpAmount() {
+        return stateService.getTotalLockedUpAmount();
+    }
+
+    public long getTotalAmountOfUnLockingTxOutputs() {
+        return stateService.getTotalAmountOfUnLockingTxOutputs();
+    }
+
+    public long getTotalAmountOfUnLockedTxOutputs() {
+        return stateService.getTotalAmountOfUnLockedTxOutputs();
+    }
+
     public long getTotalIssuedAmountFromCompRequests() {
         return stateService.getTotalIssuedAmount();
     }
@@ -393,22 +404,6 @@ public class DaoFacade {
 
     public TxType getTxType(String txId) {
         return stateService.getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
-    }
-
-    public boolean isTxOutputSpendable(String txId, int index) {
-        return stateService.isTxOutputSpendable(new TxOutputKey(txId, index));
-    }
-
-    public Set<TxOutput> getLockedInBondOutputs() {
-        return stateService.getLockupTxOutputs();
-    }
-
-    public boolean containsTx(String txId) {
-        return stateService.containsTx(txId);
-    }
-
-    public boolean isBsqTxOutputType(TxOutput txOutput) {
-        return stateService.isBsqTxOutputType(txOutput);
     }
 
     public boolean isInPhaseButNotLastBlock(DaoPhase.Phase phase) {

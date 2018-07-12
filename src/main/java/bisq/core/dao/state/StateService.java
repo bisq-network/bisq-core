@@ -49,6 +49,8 @@ import java.util.stream.Stream;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Slf4j
 public class StateService {
     private final State state;
@@ -310,6 +312,10 @@ public class StateService {
                 .flatMap(tx -> tx.getTxOutputs().stream());
     }
 
+    public boolean existsTxOutput(TxOutputKey key) {
+        return getTxOutputStream().anyMatch(txOutput -> txOutput.getKey().equals(key));
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // UnspentTxOutput
@@ -340,14 +346,14 @@ public class StateService {
     }
 
     public boolean isTxOutputSpendable(TxOutputKey key) {
-        Optional<TxOutput> optionalTxOutput = getUnspentTxOutput(key);
-        if (!optionalTxOutput.isPresent())
-            return false;
-
         if (!isUnspent(key))
             return false;
 
+        Optional<TxOutput> optionalTxOutput = getUnspentTxOutput(key);
+        // The above isUnspent call satisfies optionalTxOutput.isPresent()
+        checkArgument(optionalTxOutput.isPresent(), "optionalTxOutput must be present");
         TxOutput txOutput = optionalTxOutput.get();
+
         switch (txOutput.getTxOutputType()) {
             case UNDEFINED:
                 return false;
@@ -369,9 +375,7 @@ public class StateService {
             case LOCKUP_OP_RETURN_OUTPUT:
                 return true;
             case UNLOCK:
-                Optional<Integer> opUnlockBlockHeight = getUnlockBlockHeight(txOutput.getTxId());
-                return opUnlockBlockHeight.isPresent() &&
-                        BondingConsensus.isUnlockSpendableInNextBlock(opUnlockBlockHeight.get(), getChainHeight());
+                return isLockTimeOverForUnlockTxOutput(txOutput);
             case INVALID_OUTPUT:
                 return false;
             default:
@@ -384,7 +388,7 @@ public class StateService {
     // TxOutputType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
+    public Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
         return getTxOutputStream()
                 .filter(txOutput -> txOutput.getTxOutputType() == txOutputType)
                 .collect(Collectors.toSet());
@@ -483,75 +487,113 @@ public class StateService {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Bond
+    // Non-BSQ
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO WIP
+    public void addNonBsqTxOutput(TxOutput txOutput) {
+        checkArgument(txOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
+                "txOutput must be type ISSUANCE_CANDIDATE_OUTPUT");
+        state.getNonBsqTxOutputMap().put(txOutput.getKey(), txOutput);
+    }
+
+    public Optional<TxOutput> getBtcTxOutput(TxOutputKey key) {
+        // Issuance candidates which did not got accepted in voting are covered here
+        Map<TxOutputKey, TxOutput> nonBsqTxOutputMap = state.getNonBsqTxOutputMap();
+        if (nonBsqTxOutputMap.containsKey(key))
+            return Optional.of(nonBsqTxOutputMap.get(key));
+
+        // We might have also outputs of type BTC_OUTPUT
+        return getTxOutputsByTxOutputType(TxOutputType.BTC_OUTPUT).stream()
+                .filter(output -> output.getKey().equals(key))
+                .findAny();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Bond
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Terminology
     // Lockup - txOutputs of LOCKUP type
     // Unlocking - UNLOCK txOutputs that are not yet spendable due to lock time
     // Unlocked - UNLOCK txOutputs that are spendable since the lock time has passed
+    // LockTime - 0 means that the funds are spendable at the same block of the UNLOCK tx. For the user that is not
+    // supported as we do not expose unconfirmed BSQ txs so lockTime of 1 is the smallest the use can actually use.
+
+    // LockTime
+    public Optional<Integer> getLockTime(String txId) {
+        return getTx(txId).map(Tx::getLockTime);
+    }
+
+    // Lockup
+    public boolean isLockupOutput(TxOutput txOutput) {
+        return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
+    }
 
     public Set<TxOutput> getLockupTxOutputs() {
         return getTxOutputsByTxOutputType(TxOutputType.LOCKUP);
     }
 
-    public boolean isLockupOutput(TxOutputKey key) {
-        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
-        return opTxOutput.isPresent() && isLockupOutput(opTxOutput.get());
-    }
-
-    public boolean isLockupOutput(TxOutput txOutput) {
-        return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
-    }
-
-    public boolean isUnlockingOutput(TxOutputKey key) {
-        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
-        return opTxOutput.isPresent() && isUnlockingOutput(opTxOutput.get());
-    }
-
-    public boolean isUnlockingOutput(TxOutput txOutput) {
-        return txOutput.getTxOutputType() != TxOutputType.UNLOCK ||
-                isTxOutputSpendable(new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()));
-    }
-
     public Optional<TxOutput> getLockupTxOutput(String txId) {
-        Optional<Tx> optionalTx = getTx(txId);
-        return optionalTx.isPresent() ? optionalTx.get().getTxOutputs().stream()
+        return getTx(txId).flatMap(tx -> tx.getTxOutputs().stream()
                 .filter(this::isLockupOutput)
-                .findFirst() :
-                Optional.empty();
+                .findFirst());
     }
 
-    // LockTime
-    // TODO SQ: should we use Optional for integers as well or better a default value like 0 or -1?
-    public Optional<Integer> getLockTime(String txId) {
-        int lockTime = getTx(txId).map(Tx::getLockTime).orElse(-1);
-        return lockTime < 0 ? Optional.empty() : Optional.of(lockTime);
+    // Returns amount of all LOCKUP txOutputs (they might have been unlocking or unlocked in the meantime)
+    public long getTotalAmountOfLockedUpTxOutputs() {
+        return getLockupTxOutputs().stream()
+                .mapToLong(TxOutput::getValue)
+                .sum();
     }
 
-    //TODO sq: is that needed?
-  /*  public void removeLockTimeTxOutput(String txId) {
-        getTx(txId).ifPresent(mutableTx -> mutableTx.setLockTime(-1));
-    }*/
+    // Returns the current locked up amount (excluding unlocking and unlocked)
+    public long getTotalLockedUpAmount() {
+        return getTotalAmountOfLockedUpTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
+    }
 
-    // UnlockBlockHeight
-    // TODO SQ: should we use Optional for integers as well or better a default value like 0 or -1?
+
+    // Unlock
+    private boolean isUnlockOutput(TxOutput txOutput) {
+        return txOutput.getTxOutputType() == TxOutputType.UNLOCK;
+    }
+
+    // Unlocking
+    // Return UNLOCK TxOutputs that are not yet spendable as lockTime is not over
+    public Stream<TxOutput> getUnspentUnlockingTxOutputsStream() {
+        return getTxOutputsByTxOutputType(TxOutputType.UNLOCK).stream()
+                .filter(txOutput -> isUnspent(txOutput.getKey()))
+                .filter(txOutput -> !isLockTimeOverForUnlockTxOutput(txOutput));
+    }
+
+    public long getTotalAmountOfUnLockingTxOutputs() {
+        return getUnspentUnlockingTxOutputsStream()
+                .mapToLong(TxOutput::getValue)
+                .sum();
+    }
+
+    // Unlocked
     public Optional<Integer> getUnlockBlockHeight(String txId) {
-        int unLockBlockHeight = getTx(txId).map(Tx::getUnlockBlockHeight).orElse(0);
-        return unLockBlockHeight <= 0 ? Optional.empty() : Optional.of(unLockBlockHeight);
+        return getTx(txId).map(Tx::getUnlockBlockHeight);
     }
 
-    // Return UNLOCK TxOutputs that are not yet spendable
-    public Set<TxOutput> getUnlockingTxOutputs() {
-        return getTxOutputStream()
-                .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.UNLOCK)
-                .filter(txOutput -> getUnlockBlockHeight(txOutput.getTxId())
-                        .filter(unLockBlockHeight ->
-                                !BondingConsensus.isUnlockSpendableInNextBlock(unLockBlockHeight, getChainHeight()))
-                        .isPresent())
-                .collect(Collectors.toSet());
+    private boolean isLockTimeOverForUnlockTxOutput(TxOutput unlockTxOutput) {
+        checkArgument(isUnlockOutput(unlockTxOutput), "txOutput must be of type UNLOCK");
+        return getUnlockBlockHeight(unlockTxOutput.getTxId())
+                .map(unlockBlockHeight -> BondingConsensus.isLockTimeOver(unlockBlockHeight, getChainHeight()))
+                .orElse(false);
+    }
+
+    // We don't care here about the unspent state
+    public Stream<TxOutput> getUnlockedTxOutputsStream() {
+        return getTxOutputsByTxOutputType(TxOutputType.UNLOCK).stream()
+                .filter(this::isLockTimeOverForUnlockTxOutput);
+    }
+
+    public long getTotalAmountOfUnLockedTxOutputs() {
+        return getUnlockedTxOutputsStream()
+                .mapToLong(TxOutput::getValue)
+                .sum();
     }
 
 
@@ -567,7 +609,6 @@ public class StateService {
                     paramChangeList.add(paramChange);
                     // Addition with older height should not be possible but to ensure correct sorting lets run a sort.
                     paramChangeList.sort(Comparator.comparingInt(ParamChange::getActivationHeight));
-                    log.error("Parameter changed: {}", paramChange);
                 });
     }
 

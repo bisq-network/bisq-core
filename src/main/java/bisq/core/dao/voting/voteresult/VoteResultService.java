@@ -171,6 +171,11 @@ public class VoteResultService {
             } else {
                 log.info("There have not been any votes in that cycle. chainHeight={}", chainHeight);
             }
+
+            // Those which did not get accepted will be added to the nonBsq map
+            stateService.getIssuanceCandidateTxOutputs().stream()
+                    .filter(txOutput -> !stateService.isIssuanceTx(txOutput.getTxId()))
+                    .forEach(stateService::addNonBsqTxOutput);
         }
     }
 

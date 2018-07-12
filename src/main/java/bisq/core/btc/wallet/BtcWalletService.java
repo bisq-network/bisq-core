@@ -517,7 +517,7 @@ public class BtcWalletService extends WalletService {
         checkWalletConsistency(wallet);
         verifyTransaction(resultTx);
 
-        printTx("BTC wallet: Signed tx", resultTx);
+        // printTx("BTC wallet: Signed tx", resultTx);
         return resultTx;
     }
 

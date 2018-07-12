@@ -26,14 +26,20 @@ import bisq.common.app.Version;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BondingConsensus {
-    // TODO  add choice of sub version for lock type (e.g. roles, trade,...)
+    @Getter
+    private static int minLockTime = 1;
+    @Getter
+    private static int maxLockTime = 65535;
+
+    // TODO SQ: add choice of sub version for lock type (e.g. roles, trade,...)
     public static byte[] getLockupOpReturnData(int lockTime) throws IOException {
-        // Pushdata of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
-        // require by btcd-cli4j, avoid opreturns with 4 bytes or less
+        // PushData of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
+        // require by btcd-cli4j, avoid opReturns with 4 bytes or less
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP);
@@ -48,11 +54,7 @@ public class BondingConsensus {
         }
     }
 
-    public static boolean isUnlockSpendableInNextBlock(long unlockBlockHeight, long checkBlockHeight) {
-        return isUnlockSpendable(unlockBlockHeight, checkBlockHeight + 1);
-    }
-
-    public static boolean isUnlockSpendable(long unlockBlockHeight, long checkBlockHeight) {
-        return checkBlockHeight >= unlockBlockHeight;
+    public static boolean isLockTimeOver(long unlockBlockHeight, long currentBlockHeight) {
+        return currentBlockHeight >= unlockBlockHeight;
     }
 }
