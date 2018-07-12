@@ -56,6 +56,9 @@ public class TxOutputProcessor {
         if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
             if (isUnlockBondTx(txOutput, index, parsingModel)) {
+                // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
+                // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
+                // output to not be BSQ output at all
                 handleUnlockBondTx(txOutput, parsingModel);
             } else if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
                 handleBsqOutput(txOutput, index, parsingModel, txOutputValue);

@@ -57,7 +57,7 @@ class ParsingModel {
 
     //TODO ???
     @Nullable
-    private Set<TxOutput> spentUnlockedConnectedTxOutputs = new HashSet<>();
+    private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
 
     // That will be set preliminary at first parsing the last output. Not guaranteed
     // that it is a valid BSQ tx at that moment.

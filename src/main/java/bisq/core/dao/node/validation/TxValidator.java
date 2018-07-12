@@ -130,6 +130,11 @@ public class TxValidator {
         }
 
         // TODO || parsingModel.getBurntBondValue() > 0; shoud not be necessy
+        // How should we consider the burnt BSQ from spending a LOCKUP tx with the wrong format.
+        // Example: LOCKUP txOutput is 1000 satoshi but first txOutput in spending tx is 900
+        // satoshi, this burns the 1000 satoshi and is currently not considered in the
+        // bsqInputBalancePositive, hence the need to check for parsingModel.getBurntBondValue
+        // Perhaps adding boolean parsingModel.isBSQTx and checking for that would be better?
         if (bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0)
             return Optional.of(tx);
         else
