@@ -74,14 +74,14 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 @Slf4j
 public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
-    private final BisqDefaultCoinSelector btcCoinSelector;
+    private final BisqDefaultCoinSelector satoshiCoinSelector;
     private final StateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
     // balance of non BSQ satoshis
     @Getter
-    private Coin btcBalance = Coin.ZERO;
+    private Coin availableNonBsqBalance = Coin.ZERO;
     @Getter
     private Coin availableBalance = Coin.ZERO;
     @Getter
@@ -111,7 +111,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
         this.bsqCoinSelector = bsqCoinSelector;
         this.stateService = stateService;
 
-        btcCoinSelector = new BisqDefaultCoinSelector() {
+        satoshiCoinSelector = new BisqDefaultCoinSelector() {
             @Override
             boolean isTxOutputSpendable(TransactionOutput output) {
                 return true;
@@ -260,11 +260,11 @@ public class BsqWalletService extends WalletService implements BlockListener {
         if (availableBalance.isNegative())
             availableBalance = Coin.ZERO;
 
-        Coin totalSatoshiBalance = btcCoinSelector.select(NetworkParameters.MAX_MONEY,
+        Coin totalSatoshiBalance = satoshiCoinSelector.select(NetworkParameters.MAX_MONEY,
                 wallet.calculateAllSpendCandidates()).valueGathered;
-        btcBalance = totalSatoshiBalance.subtract(availableBalance);
+        availableNonBsqBalance = totalSatoshiBalance.subtract(availableBalance);
 
-        bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, pendingBalance,
+        bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, availableNonBsqBalance, pendingBalance,
                 lockedForVotingBalance, lockedInBondsBalance, unlockingBondsBalance));
     }
 

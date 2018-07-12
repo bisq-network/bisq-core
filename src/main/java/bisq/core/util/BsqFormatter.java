@@ -101,4 +101,10 @@ public class BsqFormatter extends BSFormatter {
             return "";
         }
     }
+
+
+    public String formatSatoshi(long satoshi) {
+        return satoshi + " BTC Satoshi";
+    }
+
 }
