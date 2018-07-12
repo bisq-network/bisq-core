@@ -37,6 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.Immutable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
@@ -94,20 +96,35 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
+        String name;
+        try {
+            name = param.name();
+        } catch (Throwable t) {
+            log.error("getProposalBuilder: " + t.toString());
+            name = Param.UNDEFINED.name();
+        }
         final PB.ChangeParamProposal.Builder builder = PB.ChangeParamProposal.newBuilder()
-                .setParam(param.name())
+                .setParam(name)
                 .setParamValue(paramValue);
         return super.getProposalBuilder().setChangeParamProposal(builder);
     }
 
     public static ChangeParamProposal fromProto(PB.Proposal proto) {
         final PB.ChangeParamProposal proposalProto = proto.getChangeParamProposal();
+        Param param;
+        try {
+            param = ProtoUtil.enumFromProto(Param.class, proposalProto.getParam());
+            checkNotNull(param, "param must not be null");
+        } catch (Throwable t) {
+            log.error("fromProto: " + t.toString());
+            param = Param.UNDEFINED;
+        }
         return new ChangeParamProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                ProtoUtil.enumFromProto(Param.class, proposalProto.getParam()),
+                param,
                 proposalProto.getParamValue(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),

@@ -24,15 +24,17 @@ import lombok.Getter;
  * We will add more on demand.
  * We need to support updates with new types in future. We use in the persisted data only the enum name, thus the names
  * must not change once the dao has started. Default values must not be changed as well.
- * For parameter which are used by Bisq users (trade fee,...) we have more strict requirements for backward compatibility.
+ * For parameters which are used by Bisq users (trade fee,...) we have more strict requirements for backward compatibility.
  * Parameters which are only used in proposals and voting are less strict limited as we can require that those users are
  * using the latest software version.
+ * The UNDEFINED entry is used as fallback for error cases and will get ignored.
  */
 public enum Param {
+    UNDEFINED(-1),
     // Trade fees in BSQ
     MIN_MAKER_FEE_IN_BSQ(5),
     MIN_TAKER_FEE_IN_BSQ(5),
-    // That fee should be changed to % fee to be less dependent on btc price
+    // TODO That fee should be changed to % fee to be less dependent on btc price
     DEFAULT_MAKER_FEE_IN_BSQ(200), // about 2 USD at 1 BSQ = 1 USD for a 1 BTC trade
     DEFAULT_TAKER_FEE_IN_BSQ(200),
 
