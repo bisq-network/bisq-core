@@ -74,10 +74,15 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 @Slf4j
 public class BsqWalletService extends WalletService implements BlockListener {
     private final BsqCoinSelector bsqCoinSelector;
+    private final BisqDefaultCoinSelector btcCoinSelector;
     private final StateService stateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
+    // balance of non BSQ satoshis
+    @Getter
+    private Coin btcBalance = Coin.ZERO;
+    @Getter
     private Coin availableBalance = Coin.ZERO;
     @Getter
     private Coin pendingBalance = Coin.ZERO;
@@ -105,6 +110,13 @@ public class BsqWalletService extends WalletService implements BlockListener {
 
         this.bsqCoinSelector = bsqCoinSelector;
         this.stateService = stateService;
+
+        btcCoinSelector = new BisqDefaultCoinSelector() {
+            @Override
+            boolean isTxOutputSpendable(TransactionOutput output) {
+                return true;
+            }
+        };
 
         if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
             walletsSetup.addSetupCompletedHandler(() -> {
@@ -248,6 +260,10 @@ public class BsqWalletService extends WalletService implements BlockListener {
         if (availableBalance.isNegative())
             availableBalance = Coin.ZERO;
 
+        Coin totalSatoshiBalance = btcCoinSelector.select(NetworkParameters.MAX_MONEY,
+                wallet.calculateAllSpendCandidates()).valueGathered;
+        btcBalance = totalSatoshiBalance.subtract(availableBalance);
+
         bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, pendingBalance,
                 lockedForVotingBalance, lockedInBondsBalance, unlockingBondsBalance));
     }
@@ -258,11 +274,6 @@ public class BsqWalletService extends WalletService implements BlockListener {
 
     public void removeBsqBalanceListener(BsqBalanceListener listener) {
         bsqBalanceListeners.remove(listener);
-    }
-
-    @Override
-    public Coin getAvailableBalance() {
-        return availableBalance;
     }
 
 
