@@ -26,6 +26,7 @@ import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 
@@ -212,8 +213,8 @@ public class BsqWalletService extends WalletService implements BlockListener {
                                     .filter(out -> out.isMine(wallet))
                                     .mapToLong(out -> out.getValue().value)
                                     .sum();
-                            // TODO SQ: I think that can never be > 0 as the state does not know about pending txs.
-                           /* long lockedInputs = tx.getInputs().stream()
+                            // Account for spending of locked connectedOutputs
+                            long lockedInputs = tx.getInputs().stream()
                                     .filter(in -> {
                                         TransactionOutput connectedOutput = in.getConnectedOutput();
                                         if (connectedOutput != null) {
@@ -222,27 +223,16 @@ public class BsqWalletService extends WalletService implements BlockListener {
                                                 TxOutputKey key = new TxOutputKey(parentTransaction.getHashAsString(),
                                                         connectedOutput.getIndex());
 
-                                                log.error("connectedOutput.isMine(wallet) " + connectedOutput.isMine(wallet));
-                                                log.error("stateService.isLockupOutput(key) " + stateService.isLockupOutput(key));
-                                                log.error("stateService.isUnlockingOutput(key) " + stateService.isUnlockingOutput(key));
-
                                                 return (connectedOutput.isMine(wallet)
                                                         && (stateService.isLockupOutput(key)
                                                         || stateService.isUnlockingOutput(key)));
-
-                                                // TODO SQ I think that is wrong isLockupOutput and isUnlockingOutput
-                                                // are exclusive
-                                                *//*return (connectedOutput.isMine(wallet)
-                                                        && stateService.isLockupOutput(key)
-                                                        && stateService.isUnlockingOutput(key));*//*
                                             }
                                         }
                                         return false;
                                     })
                                     .mapToLong(in -> in != null ? in.getValue().value : 0)
                                     .sum();
-                            log.error("lockedInputs " + lockedInputs);*/
-                            return outputs /*- lockedInputs*/;
+                            return outputs - lockedInputs;
                         })
                         .sum()
         );
