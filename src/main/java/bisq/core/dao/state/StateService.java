@@ -546,7 +546,7 @@ public class StateService {
     }
 
     // Returns amount of all LOCKUP txOutputs (they might have been unlocking or unlocked in the meantime)
-    public long getTotalAmountOfLockedUpTxOutputs() {
+    public long getTotalAmountOfLockupTxOutputs() {
         return getLockupTxOutputs().stream()
                 .mapToLong(TxOutput::getValue)
                 .sum();
@@ -554,7 +554,7 @@ public class StateService {
 
     // Returns the current locked up amount (excluding unlocking and unlocked)
     public long getTotalLockupAmount() {
-        return getTotalAmountOfLockedUpTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
+        return getTotalAmountOfLockupTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
     }
 
 

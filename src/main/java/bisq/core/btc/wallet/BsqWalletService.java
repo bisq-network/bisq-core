@@ -89,7 +89,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
     @Getter
     private Coin lockedForVotingBalance = Coin.ZERO;
     @Getter
-    private Coin lockedInBondsBalance = Coin.ZERO;
+    private Coin lockupBondsBalance = Coin.ZERO;
     @Getter
     private Coin unlockingBondsBalance = Coin.ZERO;
 
@@ -207,7 +207,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                         .filter(tx -> tx.getConfidence().getConfidenceType() == PENDING)
                         .mapToLong(tx -> {
                             // Sum up outputs into BSQ wallet and subtract the inputs using lockup or unlocking
-                            // outputs since those inputs will be accounted for in lockedInBondsBalance and
+                            // outputs since those inputs will be accounted for in lockupBondsBalance and
                             // unlockingBondsBalance
                             long outputs = tx.getOutputs().stream()
                                     .filter(out -> out.isMine(wallet))
@@ -246,7 +246,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
-        lockedInBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
+        lockupBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
                 .filter(txOutput -> stateService.isUnspent(txOutput.getKey()))
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
@@ -267,7 +267,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 wallet.calculateAllSpendCandidates()).valueGathered;
 
         bsqBalanceListeners.forEach(e -> e.onUpdateBalances(availableBalance, availableNonBsqBalance, unverifiedBalance,
-                lockedForVotingBalance, lockedInBondsBalance, unlockingBondsBalance));
+                lockedForVotingBalance, lockupBondsBalance, unlockingBondsBalance));
     }
 
     public void addBsqBalanceListener(BsqBalanceListener listener) {
