@@ -553,7 +553,7 @@ public class StateService {
     }
 
     // Returns the current locked up amount (excluding unlocking and unlocked)
-    public long getTotalLockedUpAmount() {
+    public long getTotalLockupAmount() {
         return getTotalAmountOfLockedUpTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
     }
 
