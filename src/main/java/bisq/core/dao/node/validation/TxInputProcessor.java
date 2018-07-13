@@ -62,7 +62,7 @@ public class TxInputProcessor {
                             parsingModel.setValidInputFromBlindVoteStakeOutput(false);
                         }
                     } else if (connectedTxOutputType == TxOutputType.LOCKUP) {
-                        // A locked BSQ txOutput is spent to a corresponding UNLOCK
+                        // A LOCKUP BSQ txOutput is spent to a corresponding UNLOCK
                         // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
                         if (parsingModel.getSpentLockupTxOutput() == null) {
                             parsingModel.setSpentLockupTxOutput(connectedTxOutput);
@@ -76,12 +76,9 @@ public class TxInputProcessor {
                         if (spentUnlockConnectedTxOutputs != null)
                             spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
-                        stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx -> {
-                            // TODO SQ: we could use a second lookup for the lockTime in the LOCK tx instead of storing
-                            // the unlockBlockHeight
+                        stateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                             // Only count the input as BSQ input if spent after unlock time
-                            //TODO <= or < ?
-                            if (blockHeight <= tx.getUnlockBlockHeight())
+                            if (blockHeight < unlockTx.getUnlockBlockHeight())
                                 parsingModel.burnBond(connectedTxOutput.getValue());
                         });
                     }
