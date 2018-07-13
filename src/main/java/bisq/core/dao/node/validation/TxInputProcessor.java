@@ -64,8 +64,8 @@ public class TxInputProcessor {
                     } else if (connectedTxOutputType == TxOutputType.LOCKUP) {
                         // A locked BSQ txOutput is spent to a corresponding UNLOCK
                         // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
-                        if (parsingModel.getSpentLockedTxOutput() == null) {
-                            parsingModel.setSpentLockedTxOutput(connectedTxOutput);
+                        if (parsingModel.getSpentLockupTxOutput() == null) {
+                            parsingModel.setSpentLockupTxOutput(connectedTxOutput);
                             stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
                                     parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
                         }
