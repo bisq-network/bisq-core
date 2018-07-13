@@ -25,17 +25,28 @@ import lombok.Value;
 public class EvaluatedProposal {
     private final boolean isAccepted;
     private final ProposalVoteResult proposalVoteResult;
-    private final long quorum;
+    private final long requiredQuorum;
     private final long requiredVoteThreshold;
 
-    public EvaluatedProposal(boolean isAccepted, ProposalVoteResult proposalVoteResult, long quorum, long requiredVoteThreshold) {
+    public EvaluatedProposal(boolean isAccepted, ProposalVoteResult proposalVoteResult, long requiredQuorum, long requiredVoteThreshold) {
         this.isAccepted = isAccepted;
         this.proposalVoteResult = proposalVoteResult;
-        this.quorum = quorum;
+        this.requiredQuorum = requiredQuorum;
         this.requiredVoteThreshold = requiredVoteThreshold;
     }
 
     public Proposal getProposal() {
         return proposalVoteResult.getProposal();
+    }
+
+
+    @Override
+    public String toString() {
+        return "EvaluatedProposal{" +
+                "\n     isAccepted=" + isAccepted +
+                ",\n     proposalVoteResult=" + proposalVoteResult +
+                ",\n     requiredQuorum=" + requiredQuorum +
+                ",\n     requiredVoteThreshold=" + requiredVoteThreshold +
+                "\n}";
     }
 }

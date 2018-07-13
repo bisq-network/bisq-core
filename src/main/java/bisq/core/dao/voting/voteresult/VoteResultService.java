@@ -20,6 +20,7 @@ package bisq.core.dao.voting.voteresult;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.ext.ParamChange;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.Ballot;
@@ -55,6 +56,8 @@ import javax.crypto.SecretKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -428,27 +431,67 @@ public class VoteResultService {
     }
 
     private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        evaluatedProposals.forEach(p -> applyAcceptedProposal(p.getProposal(), chainHeight));
+        evaluatedProposals.stream()
+                .map(EvaluatedProposal::getProposal)
+                .filter(proposal -> proposal instanceof CompensationProposal)
+                .forEach(proposal -> issuanceService.issueBsq((CompensationProposal) proposal, chainHeight));
+
+        Map<String, List<EvaluatedProposal>> evaluatedProposalsByParam = new HashMap<>();
+        evaluatedProposals.forEach(evaluatedProposal -> {
+            if (evaluatedProposal.getProposal() instanceof ChangeParamProposal) {
+                ChangeParamProposal changeParamProposal = (ChangeParamProposal) evaluatedProposal.getProposal();
+                ParamChange paramChange = getParamChange(changeParamProposal, chainHeight);
+                if (paramChange != null) {
+                    String key = paramChange.getParamName();
+                    evaluatedProposalsByParam.putIfAbsent(key, new ArrayList<>());
+                    evaluatedProposalsByParam.get(key).add(evaluatedProposal);
+                }
+            }
+        });
+
+        evaluatedProposalsByParam.forEach((key, list) -> {
+            if (list.size() == 1) {
+                applyAcceptedChangeParamProposal((ChangeParamProposal) list.get(0).getProposal(), chainHeight);
+            } else if (list.size() > 1) {
+                // We got multiple proposals for the same parameter. We check which one got the higher stake and that
+                // one will be the winner. If both have same stake none will be the winner.
+                list.sort(Comparator.comparing(ev -> ev.getProposalVoteResult().getStakeOfAcceptedVotes()));
+                Collections.reverse(list);
+                EvaluatedProposal first = list.get(0);
+                EvaluatedProposal second = list.get(1);
+                if (first.getProposalVoteResult().getStakeOfAcceptedVotes() >
+                        second.getProposalVoteResult().getStakeOfAcceptedVotes()) {
+                    applyAcceptedChangeParamProposal((ChangeParamProposal) first.getProposal(), chainHeight);
+                } else {
+                    // Rare case that both have the same stake. We don't need to check for a third entry as if 2 have
+                    // the same we are already in the abort case to reject all proposals with that param
+                    log.warn("We got the rare case that multiple changeParamProposals have received the same stake. " +
+                            "None will be accepted in such a case.\n" +
+                            "EvaluatedProposal={}", list);
+                }
+            }
+        });
     }
 
-    private void applyAcceptedProposal(Proposal proposal, int chainHeight) {
-        if (proposal instanceof CompensationProposal) {
-            issuanceService.issueBsq((CompensationProposal) proposal, chainHeight);
-        } else if (proposal instanceof ChangeParamProposal) {
-            ChangeParamProposal changeParamProposal = (ChangeParamProposal) proposal;
+    private void applyAcceptedChangeParamProposal(ChangeParamProposal changeParamProposal, int chainHeight) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n################################################################################\n");
+        sb.append("We changed a parameter. ProposalTxId=").append(changeParamProposal.getTxId())
+                .append("\nfor changeParamProposal with UID ").append(changeParamProposal.getUid())
+                .append("\nParam: ").append(changeParamProposal.getParam().name())
+                .append(" new value: ").append(changeParamProposal.getParamValue())
+                .append("\n################################################################################\n");
+        log.info(sb.toString());
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("\n################################################################################\n");
-            sb.append("We changed a parameter. ProposalTxId=").append(changeParamProposal.getTxId())
-                    .append("\nfor changeParamProposal with UID ").append(changeParamProposal.getUid())
-                    .append("\nParam: ").append(changeParamProposal.getParam().name())
-                    .append(" new value: ").append(changeParamProposal.getParamValue())
-                    .append("\n################################################################################\n");
-            log.info(sb.toString());
+        stateService.setNewParam(chainHeight, changeParamProposal.getParam(),
+                changeParamProposal.getParamValue());
+    }
 
-            stateService.setNewParam(periodService.getChainHeight(), changeParamProposal.getParam(),
-                    changeParamProposal.getParamValue());
-        }
+    private ParamChange getParamChange(ChangeParamProposal changeParamProposal, int chainHeight) {
+        return stateService.getStartHeightOfNextCycle(chainHeight)
+                .map(heightOfNewCycle -> new ParamChange(changeParamProposal.getParam().name(),
+                        changeParamProposal.getParamValue(), heightOfNewCycle))
+                .orElse(null);
     }
 
     private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {

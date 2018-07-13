@@ -32,4 +32,13 @@ public class ProposalVoteResult {
         this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
         this.stakeOfRejectedVotes = stakeOfRejectedVotes;
     }
+
+    @Override
+    public String toString() {
+        return "ProposalVoteResult{" +
+                "\n     proposal=" + proposal +
+                ",\n     stakeOfAcceptedVotes=" + stakeOfAcceptedVotes +
+                ",\n     stakeOfRejectedVotes=" + stakeOfRejectedVotes +
+                "\n}";
+    }
 }
