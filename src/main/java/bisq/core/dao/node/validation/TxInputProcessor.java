@@ -71,10 +71,10 @@ public class TxInputProcessor {
                         }
 
                     } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
-                        // Spending an unlocked txOutput
-                        Set<TxOutput> spentUnlockedConnectedTxOutputs = parsingModel.getSpentUnlockedConnectedTxOutputs();
-                        if (spentUnlockedConnectedTxOutputs != null)
-                            spentUnlockedConnectedTxOutputs.add(connectedTxOutput);
+                        // This txInput is Spending an UNLOCK txOutput
+                        Set<TxOutput> spentUnlockConnectedTxOutputs = parsingModel.getSpentUnlockConnectedTxOutputs();
+                        if (spentUnlockConnectedTxOutputs != null)
+                            spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
                         stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx -> {
                             // TODO SQ: we could use a second lookup for the lockTime in the LOCK tx instead of storing
@@ -85,14 +85,6 @@ public class TxInputProcessor {
                                 parsingModel.burnBond(connectedTxOutput.getValue());
                         });
                     }
-
-                    //TODO SQ: why we need to reset locktime?
-                   /* if (parsingModel.getSpentLockedTxOutput() != null)
-                        stateService.removeLockTimeTxOutput(connectedTxOutput.getTxId());*/
-                    //TODO SQ: why we need to reset BlockHeight?
-                   /* if (spentUnlockedConnectedTxOutputs != null)
-                        spentUnlockedConnectedTxOutputs.forEach(txOutput ->
-                                stateService.removeUnlockBlockHeightTxOutput(txOutput.getTxId()));*/
 
                     stateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
                     stateService.removeUnspentTxOutput(connectedTxOutput);
