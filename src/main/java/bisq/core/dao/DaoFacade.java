@@ -312,9 +312,9 @@ public class DaoFacade {
     }
 
     // Publish unlock tx
-    public void publishUnlockTx(String lockedTxId, ResultHandler resultHandler,
+    public void publishUnlockTx(String lockupTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
-        unlockService.publishUnlockTx(lockedTxId, resultHandler, exceptionHandler);
+        unlockService.publishUnlockTx(lockupTxId, resultHandler, exceptionHandler);
     }
 
 
@@ -362,12 +362,16 @@ public class DaoFacade {
         return stateService.getTxs();
     }
 
+    public Optional<TxOutput> getLockupTxOutput(String txId) {
+        return stateService.getLockupTxOutput(txId);
+    }
+
     public long getTotalBurntFee() {
         return stateService.getTotalBurntFee();
     }
 
-    public long getTotalLockedUpAmount() {
-        return stateService.getTotalLockedUpAmount();
+    public long getTotalLockupAmount() {
+        return stateService.getTotalLockupAmount();
     }
 
     public long getTotalAmountOfUnLockingTxOutputs() {
@@ -388,6 +392,10 @@ public class DaoFacade {
 
     public int getIssuanceBlockHeight(String txId) {
         return stateService.getIssuanceBlockHeight(txId);
+    }
+
+    public Optional<Integer> getLockTime(String txId) {
+        return stateService.getLockTime(txId);
     }
 
     public boolean isIssuanceTx(String txId) {

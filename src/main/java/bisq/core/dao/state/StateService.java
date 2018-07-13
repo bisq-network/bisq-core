@@ -526,6 +526,11 @@ public class StateService {
     }
 
     // Lockup
+    public boolean isLockupOutput(TxOutputKey key) {
+        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
+        return opTxOutput.isPresent() && isLockupOutput(opTxOutput.get());
+    }
+
     public boolean isLockupOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
     }
@@ -541,15 +546,15 @@ public class StateService {
     }
 
     // Returns amount of all LOCKUP txOutputs (they might have been unlocking or unlocked in the meantime)
-    public long getTotalAmountOfLockedUpTxOutputs() {
+    public long getTotalAmountOfLockupTxOutputs() {
         return getLockupTxOutputs().stream()
                 .mapToLong(TxOutput::getValue)
                 .sum();
     }
 
     // Returns the current locked up amount (excluding unlocking and unlocked)
-    public long getTotalLockedUpAmount() {
-        return getTotalAmountOfLockedUpTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
+    public long getTotalLockupAmount() {
+        return getTotalAmountOfLockupTxOutputs() - getTotalAmountOfUnLockingTxOutputs() - getTotalAmountOfUnLockedTxOutputs();
     }
 
 
@@ -570,6 +575,16 @@ public class StateService {
         return getUnspentUnlockingTxOutputsStream()
                 .mapToLong(TxOutput::getValue)
                 .sum();
+    }
+
+    public boolean isUnlockingOutput(TxOutputKey key) {
+        Optional<TxOutput> opTxOutput = getUnspentTxOutput(key);
+        return opTxOutput.isPresent() && isUnlockingOutput(opTxOutput.get());
+    }
+
+    public boolean isUnlockingOutput(TxOutput txOutput) {
+        return txOutput.getTxOutputType() != TxOutputType.UNLOCK ||
+                isTxOutputSpendable(new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()));
     }
 
     // Unlocked

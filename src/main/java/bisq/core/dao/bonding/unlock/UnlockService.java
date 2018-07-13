@@ -62,11 +62,11 @@ public class UnlockService {
         this.stateService = stateService;
     }
 
-    public void publishUnlockTx(String lockedTxId, ResultHandler resultHandler,
+    public void publishUnlockTx(String lockupTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
         try {
-            TxOutput lockedTxOutput = stateService.getLockupTxOutput(lockedTxId).get();
-            final Transaction unlockTx = getUnlockTx(lockedTxOutput);
+            TxOutput lockupTxOutput = stateService.getLockupTxOutput(lockupTxId).get();
+            final Transaction unlockTx = getUnlockTx(lockupTxOutput);
 
             walletsManager.publishAndCommitBsqTx(unlockTx, new TxBroadcaster.Callback() {
                 @Override
@@ -95,9 +95,9 @@ public class UnlockService {
         }
     }
 
-    private Transaction getUnlockTx(TxOutput lockedTxOutput)
+    private Transaction getUnlockTx(TxOutput lockupTxOutput)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
-        Transaction preparedTx = bsqWalletService.getPreparedUnlockTx(lockedTxOutput);
+        Transaction preparedTx = bsqWalletService.getPreparedUnlockTx(lockupTxOutput);
         Transaction txWithBtcFee = btcWalletService.completePreparedBsqTx(preparedTx, true, null);
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
 

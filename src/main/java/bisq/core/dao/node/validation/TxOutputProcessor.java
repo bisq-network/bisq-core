@@ -77,16 +77,16 @@ public class TxOutputProcessor {
 
     private boolean isUnlockBondTx(TxOutput txOutput, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
-        return parsingModel.getSpentLockedTxOutput() != null &&
+        return parsingModel.getSpentLockupTxOutput() != null &&
                 index == 0 &&
-                parsingModel.getSpentLockedTxOutput().getValue() == txOutput.getValue() &&
+                parsingModel.getSpentLockupTxOutput().getValue() == txOutput.getValue() &&
                 parsingModel.getAvailableInputValue() == txOutput.getValue();
     }
 
     private void handleUnlockBondTx(TxOutput txOutput, ParsingModel parsingModel) {
-        TxOutput spentLockedTxOutput = parsingModel.getSpentLockedTxOutput();
-        checkNotNull(spentLockedTxOutput, "spentLockedTxOutput must not nbe null");
-        parsingModel.subtractFromInputValue(spentLockedTxOutput.getValue());
+        TxOutput spentLockupTxOutput = parsingModel.getSpentLockupTxOutput();
+        checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
+        parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
 
         applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
         parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());

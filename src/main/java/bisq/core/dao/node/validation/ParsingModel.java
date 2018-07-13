@@ -52,7 +52,7 @@ class ParsingModel {
     private boolean bsqOutputFound;
 
     @Nullable
-    private TxOutput spentLockedTxOutput;
+    private TxOutput spentLockupTxOutput;
     private int unlockBlockHeight;
 
     //TODO ???
