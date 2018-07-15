@@ -41,8 +41,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public class MobileNotificationService {
@@ -109,7 +107,7 @@ public class MobileNotificationService {
             preferences.setPhoneKeyAndToken(keyAndToken);
             if (!setupConfirmationSent) {
                 try {
-                    sendConfirmationMessage(useSoundProperty.get());
+                    sendConfirmationMessage();
                     setupConfirmationSent = true;
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -120,7 +118,7 @@ public class MobileNotificationService {
 
     public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
         if (mobileModel.getKey() != null) {
-            boolean doSend = false;
+            boolean doSend;
             switch (message.getMobileMessageType()) {
                 case SETUP_CONFIRMATION:
                     doSend = true;
@@ -149,8 +147,8 @@ public class MobileNotificationService {
                 log.error("json " + json);
 
                 // What is ptext? bom byte? https://en.wikipedia.org/wiki/Byte_order_mark
-                byte[] ptext = json.getBytes(ISO_8859_1);
-                json = new String(ptext, UTF_8);
+              /*  byte[] ptext = json.getBytes(ISO_8859_1);
+                json = new String(ptext, UTF_8);*/
 
                 StringBuilder padded = new StringBuilder(json);
                 while (padded.length() % 16 != 0) {
@@ -186,7 +184,7 @@ public class MobileNotificationService {
     }
 
 
-    private void sendConfirmationMessage(boolean useSound) throws Exception {
+    private void sendConfirmationMessage() throws Exception {
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.SETUP_CONFIRMATION);
