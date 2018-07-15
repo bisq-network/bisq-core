@@ -20,17 +20,44 @@ package bisq.core.dao.voting.voteresult;
 import bisq.core.dao.voting.proposal.Proposal;
 
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
+@Slf4j
 public class ProposalVoteResult {
     private final Proposal proposal;
     private final long stakeOfAcceptedVotes;
     private final long stakeOfRejectedVotes;
+    private final int numAcceptedVotes;
+    private final int numRejectedVotes;
+    private final int numIgnoredVotes;
 
-    ProposalVoteResult(Proposal proposal, long stakeOfAcceptedVotes, long stakeOfRejectedVotes) {
+    ProposalVoteResult(Proposal proposal, long stakeOfAcceptedVotes, long stakeOfRejectedVotes,
+                       int numAcceptedVotes, int numRejectedVotes, int numIgnoredVotes) {
         this.proposal = proposal;
         this.stakeOfAcceptedVotes = stakeOfAcceptedVotes;
         this.stakeOfRejectedVotes = stakeOfRejectedVotes;
+        this.numAcceptedVotes = numAcceptedVotes;
+        this.numRejectedVotes = numRejectedVotes;
+        this.numIgnoredVotes = numIgnoredVotes;
+    }
+
+    public int getNumActiveVotes() {
+        return numAcceptedVotes + numRejectedVotes;
+    }
+
+    public long getQuorum() {
+        log.info("Quorum: proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}",
+                proposal.getTxId(), getTotalStake(), stakeOfAcceptedVotes, stakeOfRejectedVotes);
+        return getTotalStake();
+    }
+
+    public long getTotalStake() {
+        return stakeOfAcceptedVotes + stakeOfRejectedVotes;
+    }
+
+    public long getThreshold() {
+        return stakeOfAcceptedVotes * 10_000 / getTotalStake();
     }
 
     @Override
@@ -39,6 +66,9 @@ public class ProposalVoteResult {
                 "\n     proposal=" + proposal +
                 ",\n     stakeOfAcceptedVotes=" + stakeOfAcceptedVotes +
                 ",\n     stakeOfRejectedVotes=" + stakeOfRejectedVotes +
+                ",\n     numAcceptedVotes=" + numAcceptedVotes +
+                ",\n     numRejectedVotes=" + numRejectedVotes +
+                ",\n     numIgnoredVotes=" + numIgnoredVotes +
                 "\n}";
     }
 }

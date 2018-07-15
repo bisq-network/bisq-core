@@ -42,6 +42,7 @@ public class CycleService implements ChainHeightListener {
     private final StateService stateService;
     private final int genesisBlockHeight;
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -102,8 +103,23 @@ public class CycleService implements ChainHeightListener {
         // We add the default values from the Param enum to our StateChangeEvent list.
         List<DaoPhase> daoPhasesWithDefaultDuration = Arrays.stream(DaoPhase.Phase.values())
                 .map(this::getPhaseWithDefaultDuration)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
         return new Cycle(genesisBlockHeight, ImmutableList.copyOf(daoPhasesWithDefaultDuration));
+    }
+
+    public int getCycleIndex(Cycle cycle) {
+        return (cycle.getHeightOfFirstBlock() - genesisBlockHeight) / cycle.getDuration();
+    }
+
+    public boolean isTxInCycle(Cycle cycle, String txId) {
+        return stateService.getTx(txId).filter(tx -> isBlockHeightInCycle(tx.getBlockHeight(), cycle)).isPresent();
+    }
+
+    public boolean isBlockHeightInCycle(int blockHeight, Cycle cycle) {
+        return blockHeight >= cycle.getHeightOfFirstBlock() &&
+                blockHeight <= cycle.getHeightOfLastBlock();
     }
 
 
@@ -137,16 +153,15 @@ public class CycleService implements ChainHeightListener {
                 .isPresent();
     }
 
-    private DaoPhase getPhaseWithDefaultDuration(DaoPhase.Phase phase) {
+    private Optional<DaoPhase> getPhaseWithDefaultDuration(DaoPhase.Phase phase) {
         return Arrays.stream(Param.values())
                 .filter(param -> isParamMatchingPhase(param, phase))
                 .map(param -> new DaoPhase(phase, (int) param.getDefaultValue()))
-                .findAny()
-                .orElse(new DaoPhase(phase, 0)); // We will always have a default value defined
+                .findAny(); // We will always have a default value defined
     }
 
     private boolean isParamMatchingPhase(Param param, DaoPhase.Phase phase) {
-        return param.name().replace("PHASE_", "").equals(phase.name());
+        return param.name().contains("PHASE_") && param.name().replace("PHASE_", "").equals(phase.name());
     }
 
     private Optional<Cycle> getCycle(int height, LinkedList<Cycle> cycles) {

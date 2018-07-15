@@ -91,6 +91,9 @@ public class VoteResultService {
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
     // Use a list to have order by cycle
+
+    // TODO persist, PB
+    @Getter
     private final List<EvaluatedProposal> allEvaluatedProposals = new ArrayList<>();
 
 
@@ -351,18 +354,14 @@ public class VoteResultService {
             long requiredVoteThreshold = stateService.getParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
-            long stakeOfAcceptedVotes = proposalVoteResult.getStakeOfAcceptedVotes();
-            long stakeOfRejectedVotes = proposalVoteResult.getStakeOfRejectedVotes();
-            long totalStake = stakeOfAcceptedVotes + stakeOfRejectedVotes;
-
-            log.info("proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}, " +
-                            "required requiredQuorum: {}, requiredVoteThreshold: {}",
-                    proposal.getTxId(), totalStake, stakeOfAcceptedVotes, stakeOfRejectedVotes, requiredVoteThreshold, requiredQuorum);
-            if (totalStake >= requiredQuorum) {
+            long reachedQuorum = proposalVoteResult.getQuorum();
+            log.info("proposalTxId: {}, required requiredQuorum: {}, requiredVoteThreshold: {}",
+                    proposal.getTxId(), requiredVoteThreshold, requiredQuorum);
+            if (reachedQuorum >= requiredQuorum) {
                 // We multiply by 10000 as we use a long for reachedThreshold and we want precision of 2 with
                 // a % value. E.g. 50% is 50.00. We represent 1.0000 for 100%, so 10000 is the long value to reach the
                 // required precision.
-                long reachedThreshold = stakeOfAcceptedVotes * 10_000 / totalStake;
+                long reachedThreshold = proposalVoteResult.getThreshold();
 
                 log.info("reached threshold: {} %, required threshold: {} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold e.g. 50% is not enough but 50.01%
@@ -375,7 +374,7 @@ public class VoteResultService {
                 }
             } else {
                 evaluatedProposals.add(new EvaluatedProposal(false, proposalVoteResult, requiredQuorum, requiredVoteThreshold));
-                log.warn("Proposal did not reach the requiredQuorum. totalStake={}, requiredQuorum={}", totalStake, requiredQuorum);
+                log.warn("Proposal did not reach the requiredQuorum. reachedQuorum={}, requiredQuorum={}", reachedQuorum, requiredQuorum);
             }
         });
         return evaluatedProposals;
@@ -400,6 +399,9 @@ public class VoteResultService {
     }
 
     private ProposalVoteResult getResultPerProposal(List<VoteWithStake> voteWithStakeList, Proposal proposal) {
+        int numAcceptedVotes = 0;
+        int numRejectedVotes = 0;
+        int numIgnoredVotes = 0;
         long stakeOfAcceptedVotes = 0;
         long stakeOfRejectedVotes = 0;
 
@@ -417,17 +419,20 @@ public class VoteResultService {
                     BooleanVote result = (BooleanVote) vote;
                     if (result.isAccepted()) {
                         stakeOfAcceptedVotes += combinedStake;
+                        numAcceptedVotes++;
                     } else {
                         stakeOfRejectedVotes += combinedStake;
+                        numRejectedVotes++;
                     }
                 } else if (vote instanceof LongVote) {
                     //TODO impl
                 }
             } else {
+                numIgnoredVotes++;
                 log.debug("Voter ignored proposal");
             }
         }
-        return new ProposalVoteResult(proposal, stakeOfAcceptedVotes, stakeOfRejectedVotes);
+        return new ProposalVoteResult(proposal, stakeOfAcceptedVotes, stakeOfRejectedVotes, numAcceptedVotes, numRejectedVotes, numIgnoredVotes);
     }
 
     private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {

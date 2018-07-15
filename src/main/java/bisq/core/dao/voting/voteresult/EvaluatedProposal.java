@@ -26,13 +26,13 @@ public class EvaluatedProposal {
     private final boolean isAccepted;
     private final ProposalVoteResult proposalVoteResult;
     private final long requiredQuorum;
-    private final long requiredVoteThreshold;
+    private final long requiredThreshold;
 
-    public EvaluatedProposal(boolean isAccepted, ProposalVoteResult proposalVoteResult, long requiredQuorum, long requiredVoteThreshold) {
+    public EvaluatedProposal(boolean isAccepted, ProposalVoteResult proposalVoteResult, long requiredQuorum, long requiredThreshold) {
         this.isAccepted = isAccepted;
         this.proposalVoteResult = proposalVoteResult;
         this.requiredQuorum = requiredQuorum;
-        this.requiredVoteThreshold = requiredVoteThreshold;
+        this.requiredThreshold = requiredThreshold;
     }
 
     public Proposal getProposal() {
@@ -46,7 +46,7 @@ public class EvaluatedProposal {
                 "\n     isAccepted=" + isAccepted +
                 ",\n     proposalVoteResult=" + proposalVoteResult +
                 ",\n     requiredQuorum=" + requiredQuorum +
-                ",\n     requiredVoteThreshold=" + requiredVoteThreshold +
+                ",\n     requiredThreshold=" + requiredThreshold +
                 "\n}";
     }
 }

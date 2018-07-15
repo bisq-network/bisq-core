@@ -75,4 +75,13 @@ public class DaoPhase implements PersistablePayload {
     public static DaoPhase fromProto(PB.DaoPhase proto) {
         return new DaoPhase(Phase.values()[proto.getPhaseOrdinal()], proto.getDuration());
     }
+
+
+    @Override
+    public String toString() {
+        return "DaoPhase{" +
+                "\n     phase=" + phase +
+                ",\n     duration=" + duration +
+                "\n}";
+    }
 }

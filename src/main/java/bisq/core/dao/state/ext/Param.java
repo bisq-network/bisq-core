@@ -30,7 +30,7 @@ import lombok.Getter;
  * The UNDEFINED entry is used as fallback for error cases and will get ignored.
  */
 public enum Param {
-    UNDEFINED(-1),
+    UNDEFINED(0),
     // Trade fees in BSQ
     MIN_MAKER_FEE_IN_BSQ(5),
     MIN_TAKER_FEE_IN_BSQ(5),
@@ -85,7 +85,7 @@ public enum Param {
     private long defaultValue;
 
     /**
-     * @param defaultValue for param. If not set it is -1.
+     * @param defaultValue for param. If not set it is 0.
      */
     Param(int defaultValue) {
         this.defaultValue = defaultValue;

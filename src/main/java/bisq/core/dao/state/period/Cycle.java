@@ -119,7 +119,7 @@ public class Cycle implements PersistablePayload {
         return getPhaseWrapper(phase).map(DaoPhase::getDuration).orElse(0);
     }
 
-    private int getDuration() {
+    public int getDuration() {
         return daoPhaseList.stream().mapToInt(DaoPhase::getDuration).sum();
     }
 
