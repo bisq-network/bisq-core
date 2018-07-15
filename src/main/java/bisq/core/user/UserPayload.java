@@ -21,6 +21,8 @@ import bisq.core.alert.Alert;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.arbitration.Mediator;
 import bisq.core.filter.Filter;
+import bisq.core.notifications.alerts.market.MarketAlertFilter;
+import bisq.core.notifications.alerts.price.PriceAlertFilter;
 import bisq.core.payment.PaymentAccount;
 import bisq.core.proto.CoreProtoResolver;
 
@@ -69,6 +71,11 @@ public class UserPayload implements PersistableEnvelope {
     @Nullable
     private List<Mediator> acceptedMediators = new ArrayList<>();
 
+    //TODO Add PB
+    private List<MarketAlertFilter> marketAlertFilters = new ArrayList<>();
+    @Nullable
+    private PriceAlertFilter priceAlertFilter;
+
     public UserPayload() {
     }
 
@@ -98,6 +105,8 @@ public class UserPayload implements PersistableEnvelope {
         Optional.ofNullable(acceptedMediators)
                 .ifPresent(e -> builder.addAllAcceptedMediators(ProtoUtil.collectionToProto(acceptedMediators,
                         message -> ((PB.StoragePayload) message).getMediator())));
+        Optional.ofNullable(priceAlertFilter).ifPresent(priceAlertFilter -> builder.setPriceAlertFilter(priceAlertFilter.toProtoMessage()));
+        //TODO marketAlertFilters
         return PB.PersistableEnvelope.newBuilder().setUserPayload(builder).build();
     }
 
@@ -119,7 +128,8 @@ public class UserPayload implements PersistableEnvelope {
                         .collect(Collectors.toList())),
                 proto.getAcceptedMediatorsList().isEmpty() ? new ArrayList<>() : new ArrayList<>(proto.getAcceptedMediatorsList().stream()
                         .map(Mediator::fromProto)
-                        .collect(Collectors.toList()))
-        );
+                        .collect(Collectors.toList())),
+                new ArrayList<>(), //TODO
+                PriceAlertFilter.fromProto(proto.getPriceAlertFilter()));
     }
 }

@@ -17,25 +17,12 @@
 
 package bisq.core.notifications;
 
-import bisq.core.arbitration.Dispute;
-import bisq.core.arbitration.DisputeManager;
-import bisq.core.arbitration.messages.DisputeCommunicationMessage;
-import bisq.core.notifications.presentation.MarketAlerts;
-import bisq.core.offer.Offer;
-import bisq.core.offer.OfferBookService;
-import bisq.core.offer.OpenOffer;
-import bisq.core.offer.OpenOfferManager;
-import bisq.core.trade.Trade;
-import bisq.core.trade.TradeManager;
 import bisq.core.user.Preferences;
 
 import bisq.network.NetworkOptionKeys;
 import bisq.network.http.HttpClient;
-import bisq.network.p2p.P2PService;
 
 import bisq.common.app.Version;
-import bisq.common.crypto.KeyRing;
-import bisq.common.crypto.PubKeyRing;
 
 import com.google.gson.Gson;
 
@@ -47,10 +34,6 @@ import org.apache.commons.codec.binary.Hex;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-
-import javafx.collections.ListChangeListener;
 
 import java.util.UUID;
 
@@ -73,9 +56,6 @@ public class MobileNotificationService {
     private final MobileNotificationValidator mobileNotificationValidator;
     private final HttpClient httpClient;
     private final MobileModel mobileModel;
-    private final PubKeyRing pubKeyRing;
-    private final P2PService p2PService;
-    private final MarketAlerts marketAlerts;
 
     @Getter
     private boolean setupConfirmationSent;
@@ -83,6 +63,10 @@ public class MobileNotificationService {
     private BooleanProperty useSoundProperty = new SimpleBooleanProperty();
     @Getter
     private BooleanProperty useTradeNotificationsProperty = new SimpleBooleanProperty();
+    @Getter
+    private BooleanProperty useMarketNotificationsProperty = new SimpleBooleanProperty();
+    @Getter
+    private BooleanProperty usePriceNotificationsProperty = new SimpleBooleanProperty();
 
     @Inject
     public MobileNotificationService(Preferences preferences,
@@ -90,184 +74,18 @@ public class MobileNotificationService {
                                      MobileNotificationValidator mobileNotificationValidator,
                                      MobileModel mobileModel,
                                      HttpClient httpClient,
-                                     OpenOfferManager openOfferManager,
-                                     OfferBookService offerBookService,
-                                     TradeManager tradeManager,
-                                     DisputeManager disputeManager,
-                                     KeyRing keyRing,
-                                     P2PService p2PService,
-                                     MarketAlerts marketAlerts,
                                      @Named(NetworkOptionKeys.USE_LOCALHOST_FOR_P2P) Boolean useLocalHost) {
         this.preferences = preferences;
         this.mobileMessageEncryption = mobileMessageEncryption;
         this.mobileNotificationValidator = mobileNotificationValidator;
         this.httpClient = httpClient;
         this.mobileModel = mobileModel;
-        this.pubKeyRing = keyRing.getPubKeyRing();
-        this.p2PService = p2PService;
-        this.marketAlerts = marketAlerts;
 
         httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
         httpClient.setIgnoreSocks5Proxy(false);
-
-        openOfferManager.getObservableList().addListener((ListChangeListener<OpenOffer>) c -> {
-            c.next();
-            if (c.wasRemoved())
-                c.getRemoved().forEach(this::onOpenOfferRemoved);
-        });
-        openOfferManager.getObservableList().forEach(this::onOpenOfferRemoved);
-
-        offerBookService.addOfferBookChangedListener(new OfferBookService.OfferBookChangedListener() {
-            @Override
-            public void onAdded(Offer offer) {
-                onOfferAdded(offer);
-            }
-
-            @Override
-            public void onRemoved(Offer offer) {
-                onOfferRemoved(offer);
-            }
-        });
-        offerBookService.getOffers().forEach(this::onOfferAdded);
-
-        tradeManager.getTradableList().addListener((ListChangeListener<Trade>) c -> {
-            c.next();
-            if (c.wasAdded()) {
-                c.getAddedSubList().forEach(this::setTradePhaseListener);
-            }
-        });
-        tradeManager.getTradableList().forEach(this::setTradePhaseListener);
-
-
-        disputeManager.getDisputesAsObservableList().addListener((ListChangeListener<Dispute>) c -> {
-            c.next();
-            if (c.wasAdded()) {
-                c.getAddedSubList().forEach(this::setDisputeListener);
-            }
-        });
-        disputeManager.getDisputesAsObservableList().forEach(this::setDisputeListener);
     }
 
-    private void onOfferAdded(Offer offer) {
-        String msg = "A new offer arrived which matches your filter criteria" + offer.getPrice();
-        MobileMessage message = new MobileMessage("Offer got taken",
-                msg,
-                offer.getShortId(),
-                MobileMessageType.TRADE);
-        try {
-            sendMessage(message, useSoundProperty.get());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void onOfferRemoved(Offer offer) {
-
-    }
-
-    private void onOpenOfferRemoved(OpenOffer openOffer) {
-        //TODO use weak ref or remove listener
-        log.info("We got a offer removed. id={}, state={}", openOffer.getId(), openOffer.getState());
-        if (openOffer.getState() == OpenOffer.State.RESERVED) {
-            String msg = "A trader has taken your open offer with ID " + openOffer.getShortId();
-            MobileMessage message = new MobileMessage("Offer got taken",
-                    msg,
-                    openOffer.getShortId(),
-                    MobileMessageType.TRADE);
-            try {
-                sendMessage(message, useSoundProperty.get());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void setTradePhaseListener(Trade trade) {
-        //TODO use weak ref or remove listener
-        log.info("We got a new trade. id={}", trade.getId());
-        trade.statePhaseProperty().addListener(new ChangeListener<Trade.Phase>() {
-            @Override
-            public void changed(ObservableValue<? extends Trade.Phase> observable, Trade.Phase oldValue, Trade.Phase newValue) {
-                String msg = null;
-                log.error("phase " + newValue);
-                switch (newValue) {
-                    case INIT:
-                    case TAKER_FEE_PUBLISHED:
-                    case DEPOSIT_PUBLISHED:
-                        break;
-                    case DEPOSIT_CONFIRMED:
-                        if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getBuyerPubKeyRing()))
-                            msg = "The trade with ID " + trade.getShortId() + " is confirmed.";
-                        break;
-                    case FIAT_SENT:
-                        // We only notify the seller
-                        if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getSellerPubKeyRing()))
-                            msg = "The BTC buyer has started the payment for the trade with ID " + trade.getShortId() + ".";
-                        break;
-                    case FIAT_RECEIVED:
-                        break;
-                    case PAYOUT_PUBLISHED:
-                        // We only notify the buyer
-                        if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getBuyerPubKeyRing()))
-                            msg = "The trade with ID " + trade.getShortId() + " is completed.";
-                        break;
-                    case WITHDRAWN:
-                        break;
-                }
-                if (msg != null) {
-                    MobileMessage message = new MobileMessage("Trade state event",
-                            msg,
-                            trade.getShortId(),
-                            MobileMessageType.TRADE);
-                    try {
-                        sendMessage(message, useSoundProperty.get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
-
-    private void setDisputeListener(Dispute dispute) {
-        //TODO use weak ref or remove listener
-        log.info("We got a dispute added. id={}, tradeId={}", dispute.getId(), dispute.getTradeId());
-        dispute.getDisputeCommunicationMessages().addListener(new ListChangeListener<DisputeCommunicationMessage>() {
-            @Override
-            public void onChanged(Change<? extends DisputeCommunicationMessage> c) {
-                log.info("We got a DisputeCommunicationMessage added. id={}, tradeId={}", dispute.getId(), dispute.getTradeId());
-                c.next();
-                if (c.wasAdded()) {
-                    c.getAddedSubList().forEach(e -> setDisputeCommunicationMessage(e));
-                }
-            }
-        });
-        if (!dispute.getDisputeCommunicationMessages().isEmpty())
-            setDisputeCommunicationMessage(dispute.getDisputeCommunicationMessages().get(0));
-    }
-
-    private void setDisputeCommunicationMessage(DisputeCommunicationMessage disputeMsg) {
-        // TODO we need to prevent to send msg for old dispute messages again at restart
-        // Maybe we need a new property in DisputeCommunicationMessage
-        // As key is not set in initial iterations it seems we dont need an extra handling.
-        // the mailbox msg is set a bit later so that triggers a notification, but not the old messages.
-
-        // We only send msg in case we are not the sender
-        if (!disputeMsg.getSenderNodeAddress().equals(p2PService.getAddress())) {
-            String msg = "A dispute message for trade with ID " + disputeMsg.getShortId() + " arrived";
-            MobileMessage message = new MobileMessage("Offer got taken",
-                    msg,
-                    disputeMsg.getShortId(),
-                    MobileMessageType.DISPUTE);
-            try {
-                sendMessage(message, useSoundProperty.get());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void init() {
+    public void onAllServicesInitialized() {
         String keyAndToken = preferences.getPhoneKeyAndToken();
         if (mobileNotificationValidator.isValid(keyAndToken)) {
             setupConfirmationSent = true;
@@ -275,7 +93,13 @@ public class MobileNotificationService {
             mobileMessageEncryption.setKey(mobileModel.getKey());
         }
         useTradeNotificationsProperty.set(preferences.isUseTradeNotifications());
+        useMarketNotificationsProperty.set(preferences.isUseMarketNotifications());
+        usePriceNotificationsProperty.set(preferences.isUsePriceNotifications());
         useSoundProperty.set(preferences.isUseSoundForMobileNotifications());
+    }
+
+    public void sendMessage(MobileMessage message) throws Exception {
+        sendMessage(message, useSoundProperty.get());
     }
 
     public void applyKeyAndToken(String keyAndToken) {
@@ -294,12 +118,6 @@ public class MobileNotificationService {
         }
     }
 
-    public void reset() {
-        mobileModel.reset();
-        preferences.setPhoneKeyAndToken(null);
-        setupConfirmationSent = false;
-    }
-
     public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
         if (mobileModel.getKey() != null) {
             boolean doSend = false;
@@ -307,12 +125,16 @@ public class MobileNotificationService {
                 case SETUP_CONFIRMATION:
                     doSend = true;
                     break;
+                case OFFER:
                 case TRADE:
                 case DISPUTE:
                     doSend = useTradeNotificationsProperty.get();
                     break;
-                case FINANCIAL:
-                    // TODO not impl
+                case PRICE:
+                    doSend = usePriceNotificationsProperty.get();
+                    break;
+                case MARKET:
+                    doSend = useMarketNotificationsProperty.get();
                     break;
                 case ERASE:
                     doSend = true;
@@ -350,12 +172,19 @@ public class MobileNotificationService {
         }
     }
 
-    public void sendWipeOutMessage() throws Exception {
+    public void sendEraseMessage() throws Exception {
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.ERASE);
         sendMessage(message, false);
     }
+
+    public void reset() {
+        mobileModel.reset();
+        preferences.setPhoneKeyAndToken(null);
+        setupConfirmationSent = false;
+    }
+
 
     private void sendConfirmationMessage(boolean useSound) throws Exception {
         MobileMessage message = new MobileMessage("",
@@ -386,12 +215,16 @@ public class MobileNotificationService {
         msg = msg + MobileModel.PHONE_SEPARATOR_WRITING + iv + MobileModel.PHONE_SEPARATOR_WRITING + cipher;
         boolean isAndroid = mobileModel.getOs() == MobileModel.OS.ANDROID;
         boolean isProduction = mobileModel.getOs() == MobileModel.OS.IOS;
+        // TODO iPhone 6 seems to not support isContentAvailable and cannot receive msg if in background mode ;-(
+        // We need to add the phone version at pairing
+        boolean isContentAvailable = false;
         checkNotNull(mobileModel.getToken(), "mobileModel.getToken() must not be null");
         String tokenAsHex = Hex.encodeHexString(mobileModel.getToken().getBytes("UTF-8"));
         String msgAsHex = Hex.encodeHexString(msg.getBytes("UTF-8"));
         String param = "relay?" +
                 "isAndroid=" + isAndroid +
                 "&isProduction=" + isProduction +
+                "&isContentAvailable=" + isContentAvailable +
                 "&snd=" + useSound +
                 "&token=" + tokenAsHex + "&" +
                 "msg=" + msgAsHex;

@@ -15,17 +15,29 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.notifications.presentation;
+package bisq.core.notifications.alerts.market;
 
+import bisq.core.notifications.MobileMessage;
+import bisq.core.notifications.MobileMessageType;
+import bisq.core.notifications.MobileNotificationService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferBookService;
+import bisq.core.user.User;
 
 import javax.inject.Inject;
 
 public class MarketAlerts {
+    private final OfferBookService offerBookService;
+    private final MobileNotificationService mobileNotificationService;
+
     @Inject
-    public MarketAlerts(
-            OfferBookService offerBookService) {
+    public MarketAlerts(OfferBookService offerBookService, MobileNotificationService mobileNotificationService,
+                        User user) {
+        this.offerBookService = offerBookService;
+        this.mobileNotificationService = mobileNotificationService;
+    }
+
+    public void onAllServicesInitialized() {
         offerBookService.addOfferBookChangedListener(new OfferBookService.OfferBookChangedListener() {
             @Override
             public void onAdded(Offer offer) {
@@ -34,26 +46,21 @@ public class MarketAlerts {
 
             @Override
             public void onRemoved(Offer offer) {
-                onOfferRemoved(offer);
             }
         });
         offerBookService.getOffers().forEach(this::onOfferAdded);
     }
 
     private void onOfferAdded(Offer offer) {
-       /* String msg = "A new offer arrived which matches your filter criteria" + offer.getPrice();
+        String msg = "A new offer arrived which matches your filter criteria" + offer.getPrice();
         MobileMessage message = new MobileMessage("Offer got taken",
                 msg,
                 offer.getShortId(),
                 MobileMessageType.TRADE);
         try {
-            sendMessage(message, useSoundProperty.get());
+            mobileNotificationService.sendMessage(message);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
-    }
-
-    private void onOfferRemoved(Offer offer) {
-
+        }
     }
 }

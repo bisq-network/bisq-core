@@ -23,6 +23,8 @@ import bisq.core.arbitration.Mediator;
 import bisq.core.filter.Filter;
 import bisq.core.locale.LanguageUtil;
 import bisq.core.locale.TradeCurrency;
+import bisq.core.notifications.alerts.market.MarketAlertFilter;
+import bisq.core.notifications.alerts.price.PriceAlertFilter;
 import bisq.core.payment.PaymentAccount;
 
 import bisq.network.p2p.NodeAddress;
@@ -108,11 +110,11 @@ public final class User implements PersistedDataHost {
             userPayload.setCurrentPaymentAccount(currentPaymentAccountProperty.get());
             persist();
         });
-
     }
 
     private void persist() {
-        storage.queueUpForSave(userPayload);
+        if (storage != null)
+            storage.queueUpForSave(userPayload);
     }
 
 
@@ -134,10 +136,7 @@ public final class User implements PersistedDataHost {
             Optional<Arbitrator> arbitratorOptional = acceptedArbitrators.stream()
                     .filter(e -> e.getNodeAddress().equals(nodeAddress))
                     .findFirst();
-            if (arbitratorOptional.isPresent())
-                return arbitratorOptional.get();
-            else
-                return null;
+            return arbitratorOptional.orElse(null);
         } else {
             return null;
         }
@@ -150,10 +149,7 @@ public final class User implements PersistedDataHost {
             Optional<Mediator> mediatorOptionalOptional = acceptedMediators.stream()
                     .filter(e -> e.getNodeAddress().equals(nodeAddress))
                     .findFirst();
-            if (mediatorOptionalOptional.isPresent())
-                return mediatorOptionalOptional.get();
-            else
-                return null;
+            return mediatorOptionalOptional.orElse(null);
         } else {
             return null;
         }
@@ -321,6 +317,25 @@ public final class User implements PersistedDataHost {
         persist();
     }
 
+    public void addMarketAlertFilter(MarketAlertFilter filter) {
+        getMarketAlertFilters().add(filter);
+        persist();
+    }
+
+    public void removeMarketAlertFilter(MarketAlertFilter filter) {
+        getMarketAlertFilters().remove(filter);
+        persist();
+    }
+
+    public void setPriceAlertFilter(PriceAlertFilter filter) {
+        userPayload.setPriceAlertFilter(filter);
+        persist();
+    }
+
+    public void removePriceAlertFilter() {
+        userPayload.setPriceAlertFilter(null);
+        persist();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Getters
@@ -331,10 +346,7 @@ public final class User implements PersistedDataHost {
         Optional<PaymentAccount> optional = userPayload.getPaymentAccounts() != null ?
                 userPayload.getPaymentAccounts().stream().filter(e -> e.getId().equals(paymentAccountId)).findAny() :
                 Optional.<PaymentAccount>empty();
-        if (optional.isPresent())
-            return optional.get();
-        else
-            return null;
+        return optional.orElse(null);
     }
 
     public String getAccountId() {
@@ -413,5 +425,14 @@ public final class User implements PersistedDataHost {
 
     public boolean isMyOwnRegisteredMediator(Mediator mediator) {
         return mediator.equals(userPayload.getRegisteredMediator());
+    }
+
+    public List<MarketAlertFilter> getMarketAlertFilters() {
+        return userPayload.getMarketAlertFilters();
+    }
+
+    @Nullable
+    public PriceAlertFilter getPriceAlertFilter() {
+        return userPayload.getPriceAlertFilter();
     }
 }

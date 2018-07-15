@@ -15,14 +15,15 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.notifications;
+package bisq.core.notifications.alerts.market;
 
-public enum MobileMessageType {
-    SETUP_CONFIRMATION,
-    OFFER,
-    TRADE,
-    DISPUTE,
-    PRICE,
-    MARKET,
-    ERASE
+import bisq.core.payment.PaymentAccount;
+
+import lombok.Value;
+
+@Value
+public class MarketAlertFilter {
+    PaymentAccount paymentAccount;
+    long high;
+    long low;
 }

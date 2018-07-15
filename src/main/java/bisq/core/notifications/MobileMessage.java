@@ -2,6 +2,8 @@ package bisq.core.notifications;
 
 import bisq.common.util.JsonExclude;
 
+import java.util.Date;
+
 import lombok.Value;
 
 @Value
@@ -28,7 +30,7 @@ public class MobileMessage {
 
         this.type = mobileMessageType.name();
         actionRequired = "";
-        sentDate = 0;//new Date().getTime();
+        sentDate = new Date().getTime();
         version = 1;
     }
 }
