@@ -17,6 +17,7 @@
 
 package bisq.core.notifications.alerts.market;
 
+import bisq.core.locale.Res;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
 import bisq.core.notifications.MobileNotificationService;
@@ -25,6 +26,8 @@ import bisq.core.offer.OfferBookService;
 import bisq.core.user.User;
 
 import javax.inject.Inject;
+
+import java.util.UUID;
 
 public class MarketAlerts {
     private final OfferBookService offerBookService;
@@ -52,15 +55,23 @@ public class MarketAlerts {
     }
 
     private void onOfferAdded(Offer offer) {
-        String msg = "A new offer arrived which matches your filter criteria" + offer.getPrice();
-        MobileMessage message = new MobileMessage("Offer got taken",
-                msg,
-                offer.getShortId(),
+        String shortId = offer.getShortId();
+        MobileMessage message = new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
+                Res.get("account.notifications.marketAlert.message.msg", offer.getPrice()),
+                shortId,
                 MobileMessageType.TRADE);
         try {
             mobileNotificationService.sendMessage(message);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static MobileMessage getTestMsg() {
+        String shortId = UUID.randomUUID().toString().substring(0, 8);
+        return new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
+                Res.get("account.notifications.marketAlert.message.msg", "5644.34 BTC/USD"),
+                shortId,
+                MobileMessageType.MARKET);
     }
 }

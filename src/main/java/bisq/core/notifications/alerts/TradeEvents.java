@@ -17,6 +17,7 @@
 
 package bisq.core.notifications.alerts;
 
+import bisq.core.locale.Res;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
 import bisq.core.notifications.MobileNotificationService;
@@ -28,10 +29,11 @@ import bisq.common.crypto.PubKeyRing;
 
 import javax.inject.Inject;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-
 import javafx.collections.ListChangeListener;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,13 +61,12 @@ public class TradeEvents {
     }
 
     private void setTradePhaseListener(Trade trade) {
-        //TODO use weak ref or remove listener
         log.info("We got a new trade. id={}", trade.getId());
-        trade.statePhaseProperty().addListener(new ChangeListener<Trade.Phase>() {
-            @Override
-            public void changed(ObservableValue<? extends Trade.Phase> observable, Trade.Phase oldValue, Trade.Phase newValue) {
+        if (!trade.isPayoutPublished()) {
+            trade.statePhaseProperty().addListener((observable, oldValue, newValue) -> {
                 String msg = null;
-                log.error("phase " + newValue);
+                log.error("setTradePhaseListener phase " + newValue);
+                String shortId = trade.getShortId();
                 switch (newValue) {
                     case INIT:
                     case TAKER_FEE_PUBLISHED:
@@ -73,35 +74,54 @@ public class TradeEvents {
                         break;
                     case DEPOSIT_CONFIRMED:
                         if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getBuyerPubKeyRing()))
-                            msg = "The trade with ID " + trade.getShortId() + " is confirmed.";
+                            msg = Res.get("account.notifications.trade.message.msg.conf", shortId);
                         break;
                     case FIAT_SENT:
                         // We only notify the seller
                         if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getSellerPubKeyRing()))
-                            msg = "The BTC buyer has started the payment for the trade with ID " + trade.getShortId() + ".";
+                            msg = Res.get("account.notifications.trade.message.msg.started", shortId);
                         break;
                     case FIAT_RECEIVED:
                         break;
                     case PAYOUT_PUBLISHED:
                         // We only notify the buyer
                         if (trade.getContract() != null && pubKeyRing.equals(trade.getContract().getBuyerPubKeyRing()))
-                            msg = "The trade with ID " + trade.getShortId() + " is completed.";
+                            msg = Res.get("account.notifications.trade.message.msg.completed", shortId);
                         break;
                     case WITHDRAWN:
                         break;
                 }
                 if (msg != null) {
-                    MobileMessage message = new MobileMessage("Trade state event",
+                    MobileMessage message = new MobileMessage(Res.get("account.notifications.trade.message.title"),
                             msg,
-                            trade.getShortId(),
+                            shortId,
                             MobileMessageType.TRADE);
                     try {
                         mobileNotificationService.sendMessage(message);
                     } catch (Exception e) {
+                        log.error(e.toString());
                         e.printStackTrace();
                     }
                 }
-            }
-        });
+            });
+        }
+    }
+
+    public static List<MobileMessage> getTestMsgs() {
+        String shortId = UUID.randomUUID().toString().substring(0, 8);
+        List<MobileMessage> list = new ArrayList<>();
+        list.add(new MobileMessage(Res.get("account.notifications.trade.message.title"),
+                Res.get("account.notifications.trade.message.msg.conf", shortId),
+                shortId,
+                MobileMessageType.TRADE));
+        list.add(new MobileMessage(Res.get("account.notifications.trade.message.title"),
+                Res.get("account.notifications.trade.message.msg.started", shortId),
+                shortId,
+                MobileMessageType.TRADE));
+        list.add(new MobileMessage(Res.get("account.notifications.trade.message.title"),
+                Res.get("account.notifications.trade.message.msg.completed", shortId),
+                shortId,
+                MobileMessageType.TRADE));
+        return list;
     }
 }

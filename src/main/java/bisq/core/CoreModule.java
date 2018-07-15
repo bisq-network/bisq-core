@@ -34,7 +34,7 @@ import bisq.core.notifications.MobileModel;
 import bisq.core.notifications.MobileNotificationService;
 import bisq.core.notifications.MobileNotificationValidator;
 import bisq.core.notifications.alerts.DisputeMsgEvents;
-import bisq.core.notifications.alerts.OpenOfferTakenEvents;
+import bisq.core.notifications.alerts.MyOfferTakenEvents;
 import bisq.core.notifications.alerts.TradeEvents;
 import bisq.core.notifications.alerts.market.MarketAlerts;
 import bisq.core.notifications.alerts.price.PriceAlert;
@@ -117,7 +117,7 @@ public class CoreModule extends AppModule {
         bind(MobileMessageEncryption.class).in(Singleton.class);
         bind(MobileNotificationValidator.class).in(Singleton.class);
         bind(MobileModel.class).in(Singleton.class);
-        bind(OpenOfferTakenEvents.class).in(Singleton.class);
+        bind(MyOfferTakenEvents.class).in(Singleton.class);
         bind(TradeEvents.class).in(Singleton.class);
         bind(DisputeMsgEvents.class).in(Singleton.class);
         bind(PriceAlert.class).in(Singleton.class);

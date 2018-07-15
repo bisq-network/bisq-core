@@ -18,6 +18,7 @@
 package bisq.core.notifications.alerts.price;
 
 import bisq.core.locale.CurrencyUtil;
+import bisq.core.locale.Res;
 import bisq.core.monetary.Altcoin;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
@@ -33,17 +34,14 @@ import org.bitcoinj.utils.Fiat;
 
 import javax.inject.Inject;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PriceAlert {
-    private PriceFeedService priceFeedService;
-    private MobileNotificationService mobileNotificationService;
-    private User user;
-    private BSFormatter formatter;
+    private final PriceFeedService priceFeedService;
+    private final MobileNotificationService mobileNotificationService;
+    private final User user;
+    private final BSFormatter formatter;
 
     @Inject
     public PriceAlert(PriceFeedService priceFeedService, MobileNotificationService mobileNotificationService, User user, BSFormatter formatter) {
@@ -54,12 +52,7 @@ public class PriceAlert {
     }
 
     public void onAllServicesInitialized() {
-        priceFeedService.updateCounterProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                update();
-            }
-        });
+        priceFeedService.updateCounterProperty().addListener((observable, oldValue, newValue) -> update());
     }
 
     public void update() {
@@ -72,19 +65,12 @@ public class PriceAlert {
                 double priceAsDouble = marketPrice.getPrice();
                 long priceAsLong = MathUtils.roundDoubleToLong(MathUtils.scaleUpByPowerOf10(priceAsDouble, exp));
                 String currencyName = CurrencyUtil.getNameByCode(currencyCode);
-                String dir = "";
-                boolean sendNotification = false;
-                if (priceAsLong > filter.getHigh()) {
-                    dir = "above";
-                    sendNotification = true;
-                } else if (priceAsLong < filter.getLow()) {
-                    dir = "below";
-                    sendNotification = true;
-                }
-                if (sendNotification) {
-
-                    String msg = currencyName + " price is " + dir + " " + formatter.formatMarketPrice(priceAsDouble, currencyCode) + " " + formatter.getCurrencyPair(currencyCode);
-                    MobileMessage message = new MobileMessage("Price alert for " + currencyName,
+                if (priceAsLong > filter.getHigh() || priceAsLong < filter.getLow()) {
+                    String msg = Res.get("account.notifications.priceAlert.message.msg",
+                            currencyName,
+                            formatter.formatMarketPrice(priceAsDouble, currencyCode),
+                            formatter.getCurrencyPair(currencyCode));
+                    MobileMessage message = new MobileMessage(Res.get("account.notifications.priceAlert.message.title", currencyName),
                             msg,
                             MobileMessageType.PRICE);
                     log.error(msg);
@@ -100,5 +86,17 @@ public class PriceAlert {
                 }
             }
         }
+    }
+
+    public static MobileMessage getTestMsg() {
+        String currencyCode = "USD";
+        String currencyName = CurrencyUtil.getNameByCode(currencyCode);
+        String msg = Res.get("account.notifications.priceAlert.message.msg",
+                currencyName,
+                "6023.34",
+                "BTC/USD");
+        return new MobileMessage(Res.get("account.notifications.priceAlert.message.title", currencyName),
+                msg,
+                MobileMessageType.PRICE);
     }
 }

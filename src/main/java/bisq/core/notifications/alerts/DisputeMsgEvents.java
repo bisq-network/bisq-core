@@ -20,6 +20,7 @@ package bisq.core.notifications.alerts;
 import bisq.core.arbitration.Dispute;
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+import bisq.core.locale.Res;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
 import bisq.core.notifications.MobileNotificationService;
@@ -29,6 +30,8 @@ import bisq.network.p2p.P2PService;
 import javax.inject.Inject;
 
 import javafx.collections.ListChangeListener;
+
+import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,16 +84,25 @@ public class DisputeMsgEvents {
 
         // We only send msg in case we are not the sender
         if (!disputeMsg.getSenderNodeAddress().equals(p2PService.getAddress())) {
-            String msg = "A dispute message for trade with ID " + disputeMsg.getShortId() + " arrived";
-            MobileMessage message = new MobileMessage("Offer got taken",
-                    msg,
-                    disputeMsg.getShortId(),
+            String shortId = disputeMsg.getShortId();
+            MobileMessage message = new MobileMessage(Res.get("account.notifications.dispute.message.title"),
+                    Res.get("account.notifications.dispute.message.msg", shortId),
+                    shortId,
                     MobileMessageType.DISPUTE);
             try {
                 mobileNotificationService.sendMessage(message);
             } catch (Exception e) {
+                log.error(e.toString());
                 e.printStackTrace();
             }
         }
+    }
+
+    public static MobileMessage getTestMsg() {
+        String shortId = UUID.randomUUID().toString().substring(0, 8);
+        return new MobileMessage(Res.get("account.notifications.dispute.message.title"),
+                Res.get("account.notifications.dispute.message.msg", shortId),
+                shortId,
+                MobileMessageType.DISPUTE);
     }
 }

@@ -17,6 +17,7 @@
 
 package bisq.core.notifications.alerts;
 
+import bisq.core.locale.Res;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
 import bisq.core.notifications.MobileNotificationService;
@@ -27,15 +28,22 @@ import javax.inject.Inject;
 
 import javafx.collections.ListChangeListener;
 
+import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class OpenOfferTakenEvents {
-    private MobileNotificationService mobileNotificationService;
+public class MyOfferTakenEvents {
+    private final OpenOfferManager openOfferManager;
+    private final MobileNotificationService mobileNotificationService;
 
     @Inject
-    public OpenOfferTakenEvents(OpenOfferManager openOfferManager, MobileNotificationService mobileNotificationService) {
+    public MyOfferTakenEvents(OpenOfferManager openOfferManager, MobileNotificationService mobileNotificationService) {
+        this.openOfferManager = openOfferManager;
         this.mobileNotificationService = mobileNotificationService;
+    }
+
+    public void onAllServicesInitialized() {
         openOfferManager.getObservableList().addListener((ListChangeListener<OpenOffer>) c -> {
             c.next();
             if (c.wasRemoved())
@@ -47,20 +55,25 @@ public class OpenOfferTakenEvents {
     private void onOpenOfferRemoved(OpenOffer openOffer) {
         log.info("We got a offer removed. id={}, state={}", openOffer.getId(), openOffer.getState());
         if (openOffer.getState() == OpenOffer.State.RESERVED) {
-            String msg = "A trader has taken your offer with ID " + openOffer.getShortId();
-            MobileMessage message = new MobileMessage("Offer got taken",
-                    msg,
-                    openOffer.getShortId(),
-                    MobileMessageType.TRADE);
+            String shortId = openOffer.getShortId();
+            MobileMessage message = new MobileMessage(Res.get("account.notifications.offer.message.title"),
+                    Res.get("account.notifications.offer.message.msg", shortId),
+                    shortId,
+                    MobileMessageType.OFFER);
             try {
                 mobileNotificationService.sendMessage(message);
             } catch (Exception e) {
+                log.error(e.toString());
                 e.printStackTrace();
             }
         }
     }
 
-    public void onAllServicesInitialized() {
-
+    public static MobileMessage getTestMsg() {
+        String shortId = UUID.randomUUID().toString().substring(0, 8);
+        return new MobileMessage(Res.get("account.notifications.offer.message.title"),
+                Res.get("account.notifications.offer.message.msg", shortId),
+                shortId,
+                MobileMessageType.OFFER);
     }
 }

@@ -34,7 +34,7 @@ import bisq.core.filter.FilterManager;
 import bisq.core.locale.Res;
 import bisq.core.notifications.MobileNotificationService;
 import bisq.core.notifications.alerts.DisputeMsgEvents;
-import bisq.core.notifications.alerts.OpenOfferTakenEvents;
+import bisq.core.notifications.alerts.MyOfferTakenEvents;
 import bisq.core.notifications.alerts.TradeEvents;
 import bisq.core.notifications.alerts.market.MarketAlerts;
 import bisq.core.notifications.alerts.price.PriceAlert;
@@ -141,7 +141,7 @@ public class BisqSetup {
     private final BisqEnvironment bisqEnvironment;
     private final AccountAgeWitnessService accountAgeWitnessService;
     private final MobileNotificationService mobileNotificationService;
-    private final OpenOfferTakenEvents openOfferTakenEvents;
+    private final MyOfferTakenEvents myOfferTakenEvents;
     private final TradeEvents tradeEvents;
     private final DisputeMsgEvents disputeMsgEvents;
     private final PriceAlert priceAlert;
@@ -210,7 +210,7 @@ public class BisqSetup {
                      BisqEnvironment bisqEnvironment,
                      AccountAgeWitnessService accountAgeWitnessService,
                      MobileNotificationService mobileNotificationService,
-                     OpenOfferTakenEvents openOfferTakenEvents,
+                     MyOfferTakenEvents myOfferTakenEvents,
                      TradeEvents tradeEvents,
                      DisputeMsgEvents disputeMsgEvents,
                      PriceAlert priceAlert,
@@ -245,7 +245,7 @@ public class BisqSetup {
         this.bisqEnvironment = bisqEnvironment;
         this.accountAgeWitnessService = accountAgeWitnessService;
         this.mobileNotificationService = mobileNotificationService;
-        this.openOfferTakenEvents = openOfferTakenEvents;
+        this.myOfferTakenEvents = myOfferTakenEvents;
         this.tradeEvents = tradeEvents;
         this.disputeMsgEvents = disputeMsgEvents;
         this.priceAlert = priceAlert;
@@ -629,7 +629,7 @@ public class BisqSetup {
         });
 
         mobileNotificationService.onAllServicesInitialized();
-        openOfferTakenEvents.onAllServicesInitialized();
+        myOfferTakenEvents.onAllServicesInitialized();
         tradeEvents.onAllServicesInitialized();
         disputeMsgEvents.onAllServicesInitialized();
         priceAlert.onAllServicesInitialized();
