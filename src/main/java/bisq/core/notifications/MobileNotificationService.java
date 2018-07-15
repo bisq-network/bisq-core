@@ -20,6 +20,9 @@ package bisq.core.notifications;
 import bisq.core.arbitration.Dispute;
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.arbitration.messages.DisputeCommunicationMessage;
+import bisq.core.notifications.presentation.MarketAlerts;
+import bisq.core.offer.Offer;
+import bisq.core.offer.OfferBookService;
 import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.Trade;
@@ -72,6 +75,8 @@ public class MobileNotificationService {
     private final MobileModel mobileModel;
     private final PubKeyRing pubKeyRing;
     private final P2PService p2PService;
+    private final MarketAlerts marketAlerts;
+
     @Getter
     private boolean setupConfirmationSent;
     @Getter
@@ -86,10 +91,12 @@ public class MobileNotificationService {
                                      MobileModel mobileModel,
                                      HttpClient httpClient,
                                      OpenOfferManager openOfferManager,
+                                     OfferBookService offerBookService,
                                      TradeManager tradeManager,
                                      DisputeManager disputeManager,
                                      KeyRing keyRing,
                                      P2PService p2PService,
+                                     MarketAlerts marketAlerts,
                                      @Named(NetworkOptionKeys.USE_LOCALHOST_FOR_P2P) Boolean useLocalHost) {
         this.preferences = preferences;
         this.mobileMessageEncryption = mobileMessageEncryption;
@@ -98,17 +105,30 @@ public class MobileNotificationService {
         this.mobileModel = mobileModel;
         this.pubKeyRing = keyRing.getPubKeyRing();
         this.p2PService = p2PService;
+        this.marketAlerts = marketAlerts;
 
         httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
         httpClient.setIgnoreSocks5Proxy(false);
 
         openOfferManager.getObservableList().addListener((ListChangeListener<OpenOffer>) c -> {
             c.next();
-            if (c.wasRemoved()) {
-                c.getRemoved().forEach(this::setOpenOfferListener);
+            if (c.wasRemoved())
+                c.getRemoved().forEach(this::onOpenOfferRemoved);
+        });
+        openOfferManager.getObservableList().forEach(this::onOpenOfferRemoved);
+
+        offerBookService.addOfferBookChangedListener(new OfferBookService.OfferBookChangedListener() {
+            @Override
+            public void onAdded(Offer offer) {
+                onOfferAdded(offer);
+            }
+
+            @Override
+            public void onRemoved(Offer offer) {
+                onOfferRemoved(offer);
             }
         });
-        openOfferManager.getObservableList().forEach(this::setOpenOfferListener);
+        offerBookService.getOffers().forEach(this::onOfferAdded);
 
         tradeManager.getTradableList().addListener((ListChangeListener<Trade>) c -> {
             c.next();
@@ -128,7 +148,24 @@ public class MobileNotificationService {
         disputeManager.getDisputesAsObservableList().forEach(this::setDisputeListener);
     }
 
-    private void setOpenOfferListener(OpenOffer openOffer) {
+    private void onOfferAdded(Offer offer) {
+        String msg = "A new offer arrived which matches your filter criteria" + offer.getPrice();
+        MobileMessage message = new MobileMessage("Offer got taken",
+                msg,
+                offer.getShortId(),
+                MobileMessageType.TRADE);
+        try {
+            sendMessage(message, useSoundProperty.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void onOfferRemoved(Offer offer) {
+
+    }
+
+    private void onOpenOfferRemoved(OpenOffer openOffer) {
         //TODO use weak ref or remove listener
         log.info("We got a offer removed. id={}, state={}", openOffer.getId(), openOffer.getState());
         if (openOffer.getState() == OpenOffer.State.RESERVED) {
@@ -266,7 +303,7 @@ public class MobileNotificationService {
     public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
         if (mobileModel.getKey() != null) {
             boolean doSend = false;
-            switch (message.getMsgType()) {
+            switch (message.getMobileMessageType()) {
                 case SETUP_CONFIRMATION:
                     doSend = true;
                     break;
@@ -324,7 +361,7 @@ public class MobileNotificationService {
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.SETUP_CONFIRMATION);
-        sendMessage(message, false);
+        sendMessage(message, true);
     }
 
     private void doSendMessage(String iv, String cipher, boolean useSound) throws Exception {

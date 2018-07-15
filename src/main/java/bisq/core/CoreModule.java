@@ -33,6 +33,7 @@ import bisq.core.notifications.MobileMessageEncryption;
 import bisq.core.notifications.MobileModel;
 import bisq.core.notifications.MobileNotificationService;
 import bisq.core.notifications.MobileNotificationValidator;
+import bisq.core.notifications.presentation.MarketAlerts;
 import bisq.core.offer.OfferModule;
 import bisq.core.presentation.CorePresentationModule;
 import bisq.core.proto.network.CoreNetworkProtoResolver;
@@ -112,6 +113,7 @@ public class CoreModule extends AppModule {
         bind(MobileMessageEncryption.class).in(Singleton.class);
         bind(MobileNotificationValidator.class).in(Singleton.class);
         bind(MobileModel.class).in(Singleton.class);
+        bind(MarketAlerts.class).in(Singleton.class);
 
         // ordering is used for shut down sequence
         install(tradeModule());

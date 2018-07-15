@@ -2,35 +2,33 @@ package bisq.core.notifications;
 
 import bisq.common.util.JsonExclude;
 
-import java.util.Date;
-
 import lombok.Value;
 
 @Value
 public class MobileMessage {
-    private long date;
+    private long sentDate;
     private String txId;
     private String title;
     private String message;
     @JsonExclude
-    private MobileMessageType msgType;
+    transient private MobileMessageType mobileMessageType;
     private String type;
     private String actionRequired;
     private int version;
 
-    public MobileMessage(String title, String message, MobileMessageType msgType) {
-        this(title, message, "", msgType);
+    public MobileMessage(String title, String message, MobileMessageType mobileMessageType) {
+        this(title, message, "", mobileMessageType);
     }
 
-    public MobileMessage(String title, String message, String txId, MobileMessageType msgType) {
+    public MobileMessage(String title, String message, String txId, MobileMessageType mobileMessageType) {
         this.title = title;
         this.message = message;
         this.txId = txId;
-        this.msgType = msgType;
+        this.mobileMessageType = mobileMessageType;
 
-        type = msgType.name();
+        this.type = mobileMessageType.name();
         actionRequired = "";
-        date = new Date().getTime();
+        sentDate = 0;//new Date().getTime();
         version = 1;
     }
 }
