@@ -54,6 +54,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -347,10 +348,13 @@ public class MobileNotificationService {
         }
         msg = msg + MobileModel.PHONE_SEPARATOR_WRITING + iv + MobileModel.PHONE_SEPARATOR_WRITING + cipher;
         boolean isAndroid = mobileModel.getOs() == MobileModel.OS.ANDROID;
+        boolean isProduction = mobileModel.getOs() == MobileModel.OS.IOS;
+        checkNotNull(mobileModel.getToken(), "mobileModel.getToken() must not be null");
         String tokenAsHex = Hex.encodeHexString(mobileModel.getToken().getBytes("UTF-8"));
         String msgAsHex = Hex.encodeHexString(msg.getBytes("UTF-8"));
         String param = "relay?" +
                 "isAndroid=" + isAndroid +
+                "&isProduction=" + isProduction +
                 "&snd=" + useSound +
                 "&token=" + tokenAsHex + "&" +
                 "msg=" + msgAsHex;
