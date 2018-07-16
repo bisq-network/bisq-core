@@ -2,6 +2,8 @@ package bisq.core.notifications;
 
 import javax.inject.Inject;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +38,7 @@ public class MobileModel {
     private String key;
     @Nullable
     private String token;
-    private boolean isContentAvailable;
+    private boolean isContentAvailable = true;
 
     @Inject
     public MobileModel() {
@@ -63,7 +65,12 @@ public class MobileModel {
         else if (magic.equals(OS.ANDROID.getMagicString()))
             os = OS.ANDROID;
 
+        descriptor = "iPhone 8 Plus";
+        isContentAvailable = parseDescriptor(descriptor);
+    }
 
+    @VisibleForTesting
+    boolean parseDescriptor(String descriptor) {
         // phone descriptors
         /*
         iPod Touch 5
@@ -99,26 +106,30 @@ public class MobileModel {
         iPad Pro 12.9 Inch 2. Generation
         iPad Pro 10.5 Inch
         */
+        // iPhone 6 does not support isContentAvailable, iPhone 7 does.
+        // We don't know for other versions, but lets assume all above iPhone 6 are ok.
         if (descriptor != null) {
+            if (descriptor.equals("iPhone 6"))
+                return false;
+
             String[] descriptorTokens = descriptor.split(" ");
             if (descriptorTokens.length >= 1) {
                 String model = descriptorTokens[0];
-                if ((model.equals("iPhone"))) {
+                if (model.equals("iPhone")) {
                     String versionString = descriptorTokens[1];
                     versionString = versionString.substring(0, 1);
+                    if (versionString.equals("X") || versionString.equals("SE"))
+                        return true;
                     try {
                         int version = Integer.parseInt(versionString);
-                        // iPhone 6 does not support isContentAvailable, iPhone 7 does.
-                        // We don't know for other versions, but lets assume all below iPhone 7 are failing.
-                        // SE we don't know as well
-                        isContentAvailable = version > 6;
+                        return version > 5;
                     } catch (Throwable ignore) {
                     }
                 } else {
-                    isContentAvailable = (model.equals("iPad")) && descriptorTokens[1].equals("Pro");
+                    return (model.equals("iPad")) && descriptorTokens[1].equals("Pro");
                 }
             }
         }
-        isContentAvailable = false;
+        return false;
     }
 }
