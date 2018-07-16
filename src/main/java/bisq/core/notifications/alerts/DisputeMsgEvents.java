@@ -46,9 +46,8 @@ public class DisputeMsgEvents {
         this.disputeManager = disputeManager;
         this.p2PService = p2PService;
         this.mobileNotificationService = mobileNotificationService;
-    }
 
-    public void onAllServicesInitialized() {
+        // We need to handle it here in the constructor otherwise we get repeated the messages sent.
         disputeManager.getDisputesAsObservableList().addListener((ListChangeListener<Dispute>) c -> {
             c.next();
             if (c.wasAdded()) {
@@ -56,6 +55,10 @@ public class DisputeMsgEvents {
             }
         });
         disputeManager.getDisputesAsObservableList().forEach(this::setDisputeListener);
+    }
+
+    // We ignore that onAllServicesInitialized here
+    public void onAllServicesInitialized() {
     }
 
     private void setDisputeListener(Dispute dispute) {
@@ -71,9 +74,10 @@ public class DisputeMsgEvents {
                 }
             }
         });
+
         //TODO test
-        //  if (dispute.getDisputeCommunicationMessages().size() == 1)
-        //     setDisputeCommunicationMessage(dispute.getDisputeCommunicationMessages().get(0));
+        if (!dispute.getDisputeCommunicationMessages().isEmpty())
+            setDisputeCommunicationMessage(dispute.getDisputeCommunicationMessages().get(0));
     }
 
     public void setDisputeCommunicationMessage(DisputeCommunicationMessage disputeMsg) {

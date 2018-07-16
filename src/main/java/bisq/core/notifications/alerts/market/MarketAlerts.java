@@ -17,27 +17,48 @@
 
 package bisq.core.notifications.alerts.market;
 
+import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.Res;
+import bisq.core.monetary.Altcoin;
+import bisq.core.monetary.Price;
 import bisq.core.notifications.MobileMessage;
 import bisq.core.notifications.MobileMessageType;
 import bisq.core.notifications.MobileNotificationService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferBookService;
+import bisq.core.offer.OfferPayload;
+import bisq.core.payment.payload.PaymentMethod;
+import bisq.core.provider.price.MarketPrice;
+import bisq.core.provider.price.PriceFeedService;
 import bisq.core.user.User;
+import bisq.core.util.BSFormatter;
+
+import bisq.common.util.MathUtils;
+
+import org.bitcoinj.utils.Fiat;
 
 import javax.inject.Inject;
 
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MarketAlerts {
     private final OfferBookService offerBookService;
     private final MobileNotificationService mobileNotificationService;
+    private final User user;
+    private final PriceFeedService priceFeedService;
+    private BSFormatter formatter;
 
     @Inject
     public MarketAlerts(OfferBookService offerBookService, MobileNotificationService mobileNotificationService,
-                        User user) {
+                        User user, PriceFeedService priceFeedService, BSFormatter formatter) {
         this.offerBookService = offerBookService;
         this.mobileNotificationService = mobileNotificationService;
+        this.user = user;
+        this.priceFeedService = priceFeedService;
+        this.formatter = formatter;
     }
 
     public void onAllServicesInitialized() {
@@ -52,18 +73,94 @@ public class MarketAlerts {
             }
         });
         offerBookService.getOffers().forEach(this::onOfferAdded);
+
+        user.getPaymentAccounts().forEach(e -> {
+            user.addMarketAlertFilter(new MarketAlertFilter(e, 200, 500));
+        });
     }
 
     private void onOfferAdded(Offer offer) {
-        String shortId = offer.getShortId();
-        MobileMessage message = new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
-                Res.get("account.notifications.marketAlert.message.msg", offer.getPrice()),
-                shortId,
-                MobileMessageType.TRADE);
-        try {
-            mobileNotificationService.sendMessage(message);
-        } catch (Exception e) {
-            e.printStackTrace();
+        String currencyCode = offer.getCurrencyCode();
+        MarketPrice marketPrice = priceFeedService.getMarketPrice(currencyCode);
+        Price offerPrice = offer.getPrice();
+        if (marketPrice != null && offerPrice != null) {
+            boolean isSellOffer = offer.getDirection() == OfferPayload.Direction.SELL;
+            String shortId = offer.getShortId();
+            boolean isFiatCurrency = CurrencyUtil.isFiatCurrency(currencyCode);
+            user.getMarketAlertFilters().stream()
+                    .filter(filter -> {
+                        PaymentMethod paymentMethod = filter.getPaymentAccount().getPaymentMethod();
+                        return offer.getPaymentMethod().equals(paymentMethod);
+                    })
+                    .forEach(filter -> {
+                        int highPercentage = filter.getHighPercentage();
+                        int lowPercentage = -1 * filter.getLowPercentage();
+                        double marketPriceAsDouble1 = marketPrice.getPrice();
+                        int precision = CurrencyUtil.isCryptoCurrency(currencyCode) ?
+                                Altcoin.SMALLEST_UNIT_EXPONENT :
+                                Fiat.SMALLEST_UNIT_EXPONENT;
+                        double marketPriceAsDouble = MathUtils.scaleUpByPowerOf10(marketPriceAsDouble1, precision);
+                        double offerPriceValue = offerPrice.getValue();
+                        double ratio = offerPriceValue / marketPriceAsDouble;
+                        ratio = 1 - ratio;
+                        if (isFiatCurrency && isSellOffer)
+                            ratio *= -1;
+                        else if (!isFiatCurrency && !isSellOffer)
+                            ratio *= -1;
+
+                        ratio = ratio * 10000;
+                        log.error("ratio={}, lowPercentage={}, highPercentage={}, res={}, " +
+                                        "marketPrice={}, offerPrice={}",
+                                ratio, lowPercentage, highPercentage,
+                                (ratio > highPercentage || ratio < lowPercentage),
+                                marketPrice, offerPrice);
+
+                        if (ratio > highPercentage || ratio < lowPercentage) {
+                            String direction = isSellOffer ? Res.get("shared.sell") : Res.get("shared.buy");
+                            String marketDir;
+                            if (isFiatCurrency) {
+                                if (isSellOffer) {
+                                    marketDir = ratio > 0 ?
+                                            Res.get("account.notifications.marketAlert.message.msg.above") :
+                                            Res.get("account.notifications.marketAlert.message.msg.below");
+                                } else {
+                                    marketDir = ratio < 0 ?
+                                            Res.get("account.notifications.marketAlert.message.msg.above") :
+                                            Res.get("account.notifications.marketAlert.message.msg.below");
+                                }
+                            } else {
+                                if (isSellOffer) {
+                                    marketDir = ratio < 0 ?
+                                            Res.get("account.notifications.marketAlert.message.msg.above") :
+                                            Res.get("account.notifications.marketAlert.message.msg.below");
+                                } else {
+                                    marketDir = ratio > 0 ?
+                                            Res.get("account.notifications.marketAlert.message.msg.above") :
+                                            Res.get("account.notifications.marketAlert.message.msg.below");
+                                }
+                            }
+
+                            ratio = Math.abs(ratio);
+                            String msg = Res.get("account.notifications.marketAlert.message.msg",
+                                    direction,
+                                    formatter.getCurrencyPair(currencyCode),
+                                    formatter.formatPrice(offerPrice),
+                                    formatter.formatToPercentWithSymbol(ratio / 10000d),
+                                    marketDir,
+                                    Res.get(offer.getPaymentMethod().getId()),
+                                    shortId);
+                            log.error(msg);
+                            MobileMessage message = new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
+                                    msg,
+                                    shortId,
+                                    MobileMessageType.MARKET);
+                            try {
+                                mobileNotificationService.sendMessage(message);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
         }
     }
 

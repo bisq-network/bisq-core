@@ -21,9 +21,10 @@ import bisq.core.payment.PaymentAccount;
 
 import lombok.Value;
 
+// TODO persist
 @Value
 public class MarketAlertFilter {
     PaymentAccount paymentAccount;
-    long high;
-    long low;
+    int highPercentage; // 100 for 1.00%
+    int lowPercentage;
 }
