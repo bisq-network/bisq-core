@@ -21,26 +21,19 @@ import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxInput;
-
-import bisq.common.app.DevEnv;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.Immutable;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Base class for lite node parser and full node parser. Iterates blocks to find BSQ relevant transactions.
@@ -50,8 +43,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 @Immutable
 public abstract class BsqParser {
+    //public static StringBuilder sb1 = new StringBuilder();
+    //public static StringBuilder sb2 = new StringBuilder();
+
     protected final BlockValidator blockValidator;
-    private final GenesisTxValidator genesisTxValidator;
+    protected final GenesisTxValidator genesisTxValidator;
     private final TxValidator txValidator;
     protected final StateService stateService;
 
@@ -76,23 +72,81 @@ public abstract class BsqParser {
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected boolean genesisFoundAndAdded(int blockHeight,
-                                           List<Tx> bsqTxsInBlock,
-                                           RawTx rawTx) {
-        Optional<Tx> optionalTx = genesisTxValidator.getGenesisTx(rawTx, blockHeight);
-        boolean isGenesis = optionalTx.isPresent();
-        if (isGenesis)
-            bsqTxsInBlock.add(optionalTx.get());
-        return isGenesis;
+    protected void maybeAddGenesisTx(RawBlock rawBlock, int blockHeight, Block block) {
+        // We don't use streams here as we want to break as soon we found the genesis
+        for (RawTx rawTx : rawBlock.getRawTxs()) {
+            Optional<Tx> optionalTx = genesisTxValidator.getGenesisTx(rawTx, blockHeight);
+            if (optionalTx.isPresent()) {
+                block.getTxs().add(optionalTx.get());
+                break;
+            }
+        }
     }
 
+    protected void parseBsqTxs(Block block, List<RawTx> rawTxList) {
+        // sb1.append("\nblock ").append(block.getHeight()).append("\n");
+        //sb1.append(Joiner.on("\n").join(rawTxList.stream().map(RawTx::getId).collect(Collectors.toList())));
+
+        rawTxList.forEach(rawTx -> txValidator.getBsqTx(rawTx).ifPresent(tx -> block.getTxs().add(tx)));
+    }
+
+    /*protected void recursiveFindBsqTxs1(Block block,
+                                        List<RawTx> rawTxList,
+                                        int recursionCounter,
+                                        int maxRecursions) {
+        if (recursionCounter == 0) {
+            sb2.append("\nblock ").append(block.getHeight()).append("\n");
+        }
+        // The set of txIds of txs which are used for inputs of another tx in same block
+        Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(rawTxList);
+
+        List<RawTx> txsWithoutInputsFromSameBlock = new ArrayList<>();
+        List<RawTx> txsWithInputsFromSameBlock = new ArrayList<>();
+
+        // First we find the txs which have no intra-block inputs
+        outerLoop:
+        for (RawTx rawTx : rawTxList) {
+            for (TxInput input : rawTx.getTxInputs()) {
+                if (intraBlockSpendingTxIdSet.contains(input.getConnectedTxOutputTxId())) {
+                    // We have an input from one of the intra-block-transactions, so we cannot process that tx now.
+                    // We add the tx for later parsing to the txsWithInputsFromSameBlock and move to the next tx.
+                    txsWithInputsFromSameBlock.add(rawTx);
+                    continue outerLoop;
+                }
+            }
+            // If we have not found any tx input pointing to anther tx in the same block we add it to our
+            // txsWithoutInputsFromSameBlock.
+            txsWithoutInputsFromSameBlock.add(rawTx);
+        }
+
+
+        sb2.append(Joiner.on("\n").join(txsWithoutInputsFromSameBlock.stream().map(RawTx::getId).collect(Collectors.toList()))).append(" #" + recursionCounter + "\n");
+       *//* txsWithoutInputsFromSameBlock.forEach(rawTx -> {
+                    txValidator.getBsqTx(rawTx).ifPresent(tx -> block.getTxs().add(tx));
+                }
+        );*//*
+
+        if (!txsWithInputsFromSameBlock.isEmpty()) {
+            if (recursionCounter < maxRecursions) {
+                recursiveFindBsqTxs1(block, txsWithInputsFromSameBlock,
+                        ++recursionCounter, maxRecursions);
+            }
+        } else {
+            log.debug("We have no more txsWithInputsFromSameBlock.");
+        }
+    }
+
+    // TODO check with mainnet and testnet data if the sorting is required. txs should be sorted already by dependency
     // Performance-wise the recursion does not hurt (e.g. 5-20 ms).
     // The RPC requestTransaction is the bottleneck.
-    protected void recursiveFindBsqTxs(List<Tx> bsqTxsInBlock,
+    // There are some blocks with testing the dependency chains like block 130768 where at each iteration only
+    // one get resolved.
+    protected void recursiveFindBsqTxs(Block block,
                                        List<RawTx> rawTxList,
-                                       int blockHeight,
                                        int recursionCounter,
                                        int maxRecursions) {
+        if (recursionCounter > 20)
+            log.error("recursiveFindBsqTxs: recursionCounter={}, height={}, txs={}", recursionCounter, block.getHeight(), block.getTxs().size());
         // The set of txIds of txs which are used for inputs of another tx in same block
         Set<String> intraBlockSpendingTxIdSet = getIntraBlockSpendingTxIdSet(rawTxList);
 
@@ -124,7 +178,7 @@ public abstract class BsqParser {
         // Seems btc core delivers tx list sorted by dependency graph. -> TODO verify and test
         if (recursionCounter > 1000) {
             log.warn("Unusual high recursive calls at resolveConnectedTxs. recursionCounter=" + recursionCounter);
-            log.warn("blockHeight=" + blockHeight);
+            log.warn("blockHeight=" + rawTxList.get(0).getBlockHeight());
             log.warn("txsWithoutInputsFromSameBlock.size " + txsWithoutInputsFromSameBlock.size());
             log.warn("txsWithInputsFromSameBlock.size " + txsWithInputsFromSameBlock.size());
             //  log.warn("txsWithInputsFromSameBlock " + txsWithInputsFromSameBlock.stream().map(e->e.getId()).collect(Collectors.toList()));
@@ -132,7 +186,7 @@ public abstract class BsqParser {
 
         // we check if we have any valid BSQ from that tx set
         txsWithoutInputsFromSameBlock.forEach(rawTx ->
-                txValidator.getBsqTx(blockHeight, rawTx).ifPresent(bsqTxsInBlock::add)
+                txValidator.getBsqTx(rawTx).ifPresent(tx -> block.getTxs().add(tx))
         );
 
         log.debug("Parsing of all txsWithoutInputsFromSameBlock is done.");
@@ -142,7 +196,7 @@ public abstract class BsqParser {
         // optimize here and need to iterate further.
         if (!txsWithInputsFromSameBlock.isEmpty()) {
             if (recursionCounter < maxRecursions) {
-                recursiveFindBsqTxs(bsqTxsInBlock, txsWithInputsFromSameBlock, blockHeight,
+                recursiveFindBsqTxs(block, txsWithInputsFromSameBlock,
                         ++recursionCounter, maxRecursions);
             } else {
                 final String msg = "We exceeded our max. recursions for resolveConnectedTxs.\n" +
@@ -162,5 +216,5 @@ public abstract class BsqParser {
                 .filter(input -> txIdSet.contains(input.getConnectedTxOutputTxId()))
                 .forEach(input -> intraBlockSpendingTxIdSet.add(input.getConnectedTxOutputTxId())));
         return intraBlockSpendingTxIdSet;
-    }
+    }*/
 }

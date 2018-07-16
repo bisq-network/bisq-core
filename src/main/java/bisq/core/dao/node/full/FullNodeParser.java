@@ -25,15 +25,10 @@ import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
-import bisq.core.dao.state.blockchain.RawTx;
-import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.ArrayList;
-import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,23 +69,26 @@ public class FullNodeParser extends BsqParser {
         final int blockHeight = rawBlock.getHeight();
         stateService.setNewBlockHeight(blockHeight);
 
-        long startTs = System.currentTimeMillis();
-        List<Tx> bsqTxs = getBsqTxsFromBlock(rawBlock);
-
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
                 rawBlock.getHash(),
                 rawBlock.getPreviousBlockHash(),
-                ImmutableList.copyOf(bsqTxs));
+                new ArrayList<>());
 
         // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))
             stateService.addNewBlock(block);
 
-        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
-                System.currentTimeMillis() - startTs, blockHeight, bsqTxs.size());
+        long startTs = System.currentTimeMillis();
+        parseTxs(rawBlock, block);
 
-        //TODO do we want to return the block in case we had it already?
+        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
+                System.currentTimeMillis() - startTs, blockHeight, block.getTxs().size());
+
+        //log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
+        //log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
+        //Utilities.copyToClipboard(BsqParser.sb1.toString() + "\n\n\n" + BsqParser.sb2.toString());
+
         return block;
     }
 
@@ -99,18 +97,11 @@ public class FullNodeParser extends BsqParser {
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private List<Tx> getBsqTxsFromBlock(RawBlock rawBlock) {
+    private void parseTxs(RawBlock rawBlock, Block block) {
         int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
 
-        // We use a list as we want to maintain sorting of tx intra-block dependency
-        List<Tx> bsqTxsInBlock = new ArrayList<>();
-
-        // We check first for genesis tx
-        for (RawTx rawTx : rawBlock.getRawTxs()) {
-            if (genesisFoundAndAdded(blockHeight, bsqTxsInBlock, rawTx))
-                break;
-        }
+        maybeAddGenesisTx(rawBlock, blockHeight, block);
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).
@@ -119,9 +110,11 @@ public class FullNodeParser extends BsqParser {
         // one get resolved.
         // Lately there is a patter with 24 iterations observed
         long startTs = System.currentTimeMillis();
-        recursiveFindBsqTxs(bsqTxsInBlock, rawBlock.getRawTxs(), blockHeight, 0, 5300);
+        // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
+        // recursiveFindBsqTxs1(block, rawBlock.getRawTxs(), 0, 10000);
+        parseBsqTxs(block, rawBlock.getRawTxs());
+
         log.debug("recursiveFindBsqTxs took {} ms",
                 rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
-        return bsqTxsInBlock;
     }
 }

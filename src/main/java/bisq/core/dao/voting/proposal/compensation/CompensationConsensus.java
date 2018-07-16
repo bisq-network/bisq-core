@@ -31,11 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CompensationConsensus {
     public static Coin getMinCompensationRequestAmount() {
-        return Coin.valueOf(5_000); // 50 BSQ
+        return Coin.valueOf(1_000); // 10 BSQ
     }
 
     public static Coin getMaxCompensationRequestAmount() {
-        return Coin.valueOf(5_000_000); // 50 000 BSQ
+        return Coin.valueOf(10_000_000); // 100 000 BSQ
     }
 
     public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {

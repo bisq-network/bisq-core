@@ -32,8 +32,7 @@ public enum OpReturnType {
     COMPENSATION_REQUEST((byte) 0x11),
     BLIND_VOTE((byte) 0x12),
     VOTE_REVEAL((byte) 0x13),
-    LOCKUP((byte) 0x14),
-    UNLOCK((byte) 0x15);
+    LOCKUP((byte) 0x14);
 
     @Getter
     private byte type;

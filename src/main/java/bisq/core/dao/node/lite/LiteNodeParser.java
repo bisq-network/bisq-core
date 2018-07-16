@@ -26,15 +26,10 @@ import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
-import bisq.core.dao.state.blockchain.RawTx;
-import bisq.core.dao.state.blockchain.Tx;
 
 import javax.inject.Inject;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.ArrayList;
-import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,24 +52,23 @@ public class LiteNodeParser extends BsqParser {
     // The block we received from the seed node is already filtered for valid bsq txs but we want to verify ourselves
     // again. So we run the parsing with that filtered tx list and add a new block with our own verified tx list as
     // well we write the mutual state during parsing to the state model.
-    void parseBlock(RawBlock receivedBlock) throws BlockNotConnectingException, InvalidBlockException {
-        int blockHeight = receivedBlock.getHeight();
+    void parseBlock(RawBlock rawBlock) throws BlockNotConnectingException, InvalidBlockException {
+        int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
-        List<RawTx> txList = new ArrayList<>(receivedBlock.getRawTxs());
-        List<Tx> bsqTxsInBlock = new ArrayList<>();
-        blockValidator.validate(receivedBlock);
-        stateService.setNewBlockHeight(receivedBlock.getHeight());
-        for (RawTx rawTx : receivedBlock.getRawTxs()) {
-            if (genesisFoundAndAdded(blockHeight, bsqTxsInBlock, rawTx))
-                break;
-        }
-        recursiveFindBsqTxs(bsqTxsInBlock, txList, blockHeight, 0, 5300);
-        final Block ownBlock = new Block(blockHeight,
-                receivedBlock.getTime(),
-                receivedBlock.getHash(),
-                receivedBlock.getPreviousBlockHash(),
-                ImmutableList.copyOf(bsqTxsInBlock));
+        blockValidator.validate(rawBlock);
+        stateService.setNewBlockHeight(rawBlock.getHeight());
 
-        stateService.addNewBlock(ownBlock);
+        final Block block = new Block(blockHeight,
+                rawBlock.getTime(),
+                rawBlock.getHash(),
+                rawBlock.getPreviousBlockHash(),
+                new ArrayList<>());
+
+        maybeAddGenesisTx(rawBlock, blockHeight, block);
+
+        // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
+        parseBsqTxs(block, rawBlock.getRawTxs());
+
+        stateService.addNewBlock(block);
     }
 }

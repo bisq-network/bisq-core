@@ -88,9 +88,14 @@ public class State implements PersistableEnvelope {
 
     // BTC MAIN NET
     // new: --genesisBlockHeight=524717 --genesisTxId=81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e
-    private static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
-    private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
+    //  private static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
+    // private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
 
+    private static final String DEFAULT_GENESIS_TX_ID = "81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e";
+    private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 524717; // 2018-05-27
+
+    // private static final String DEFAULT_GENESIS_TX_ID = "--";
+    //private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 499000; // recursive test 137298, 499000 dec 2017
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Fields

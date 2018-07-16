@@ -160,6 +160,10 @@ public abstract class BsqNode {
         log.info("onParseBlockChainComplete");
         parseBlockchainComplete = true;
         stateService.onParseBlockChainComplete();
+
+        // log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
+        // log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
+        // Utilities.copyToClipboard(BsqParser.sb1.toString() + "\n\n\n" + BsqParser.sb2.toString());
     }
 
     @SuppressWarnings("WeakerAccess")

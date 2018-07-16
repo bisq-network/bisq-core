@@ -64,7 +64,8 @@ public class TxValidator {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public Optional<Tx> getBsqTx(int blockHeight, RawTx rawTx) {
+    public Optional<Tx> getBsqTx(RawTx rawTx) {
+        int blockHeight = rawTx.getBlockHeight();
         Tx tx = new Tx(rawTx);
         ParsingModel parsingModel = new ParsingModel();
 
@@ -147,7 +148,6 @@ public class TxValidator {
     TxType getTxType(Tx tx, ParsingModel parsingModel) {
         TxType txType;
         // We need to have at least one BSQ output
-
         Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, parsingModel);
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
@@ -156,6 +156,8 @@ public class TxValidator {
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
+            } else if (tx.getTxOutputs().get(0).getTxOutputType() == TxOutputType.UNLOCK) {
+                txType = TxType.UNLOCK;
             } else {
                 // No burned fee and no opReturn.
                 txType = TxType.TRANSFER_BSQ;
@@ -164,6 +166,7 @@ public class TxValidator {
             // We got some OP_RETURN type candidate but it failed at validation
             txType = TxType.INVALID;
         }
+
         return txType;
     }
 
@@ -188,9 +191,6 @@ public class TxValidator {
                 break;
             case LOCKUP:
                 txType = TxType.LOCKUP;
-                break;
-            case UNLOCK:
-                txType = TxType.UNLOCK;
                 break;
             default:
                 log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
