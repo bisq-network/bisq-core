@@ -26,6 +26,7 @@ import bisq.core.dao.state.ChainHeightListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.period.DaoPhase;
@@ -417,4 +418,9 @@ public class DaoFacade {
     public boolean isInPhaseButNotLastBlock(DaoPhase.Phase phase) {
         return periodService.isInPhaseButNotLastBlock(phase);
     }
+
+    public boolean isUnspent(TxOutputKey key) {
+        return stateService.isUnspent(key);
+    }
+
 }
