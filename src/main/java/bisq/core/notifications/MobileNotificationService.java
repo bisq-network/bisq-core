@@ -117,6 +117,8 @@ public class MobileNotificationService {
     }
 
     public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
+        log.error("sendMessage\n" +
+                "Title: " + message.getTitle() + "\nMessage: " + message.getMessage());
         if (mobileModel.getKey() != null) {
             boolean doSend;
             switch (message.getMobileMessageType()) {
@@ -144,7 +146,7 @@ public class MobileNotificationService {
                 log.info("sendMessage message={}", message);
                 Gson gson = new Gson();
                 String json = gson.toJson(message);
-                log.error("json " + json);
+                log.info("json " + json);
 
                 // What is ptext? bom byte? https://en.wikipedia.org/wiki/Byte_order_mark
               /*  byte[] ptext = json.getBytes(ISO_8859_1);

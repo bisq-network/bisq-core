@@ -109,12 +109,6 @@ public class MarketAlerts {
                             ratio *= -1;
 
                         ratio = ratio * 10000;
-                        log.error("ratio={}, lowPercentage={}, highPercentage={}, res={}, " +
-                                        "marketPrice={}, offerPrice={}",
-                                ratio, lowPercentage, highPercentage,
-                                (ratio > highPercentage || ratio < lowPercentage),
-                                marketPrice, offerPrice);
-
                         if (ratio > highPercentage || ratio < lowPercentage) {
                             String direction = isSellOffer ? Res.get("shared.sell") : Res.get("shared.buy");
                             String marketDir;
@@ -149,7 +143,6 @@ public class MarketAlerts {
                                     marketDir,
                                     Res.get(offer.getPaymentMethod().getId()),
                                     shortId);
-                            log.error(msg);
                             MobileMessage message = new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
                                     msg,
                                     shortId,
@@ -167,7 +160,9 @@ public class MarketAlerts {
     public static MobileMessage getTestMsg() {
         String shortId = UUID.randomUUID().toString().substring(0, 8);
         return new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
-                Res.get("account.notifications.marketAlert.message.msg", "5644.34 BTC/USD"),
+                "A new 'sell BTC/USD' offer with price 6019.2744 (5.36% below market price) and payment method " +
+                        "'Perfect Money' was published to the Bisq offerbook.\n" +
+                        "Offer ID: wygiaw.",
                 shortId,
                 MobileMessageType.MARKET);
     }
