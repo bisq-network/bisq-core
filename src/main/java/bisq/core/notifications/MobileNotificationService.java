@@ -53,6 +53,7 @@ public class MobileNotificationService {
     private final MobileMessageEncryption mobileMessageEncryption;
     private final MobileNotificationValidator mobileNotificationValidator;
     private final HttpClient httpClient;
+    @Getter
     private final MobileModel mobileModel;
 
     @Getter
@@ -212,19 +213,17 @@ public class MobileNotificationService {
             default:
                 throw new RuntimeException("No mobileModel OS set");
         }
-        msg = msg + MobileModel.PHONE_SEPARATOR_WRITING + iv + MobileModel.PHONE_SEPARATOR_WRITING + cipher;
+        msg += MobileModel.PHONE_SEPARATOR_WRITING + iv + MobileModel.PHONE_SEPARATOR_WRITING + cipher;
         boolean isAndroid = mobileModel.getOs() == MobileModel.OS.ANDROID;
         boolean isProduction = mobileModel.getOs() == MobileModel.OS.IOS;
-        // TODO iPhone 6 seems to not support isContentAvailable and cannot receive msg if in background mode ;-(
-        // We need to add the phone version at pairing
-        boolean isContentAvailable = false;
+
         checkNotNull(mobileModel.getToken(), "mobileModel.getToken() must not be null");
         String tokenAsHex = Hex.encodeHexString(mobileModel.getToken().getBytes("UTF-8"));
         String msgAsHex = Hex.encodeHexString(msg.getBytes("UTF-8"));
         String param = "relay?" +
                 "isAndroid=" + isAndroid +
                 "&isProduction=" + isProduction +
-                "&isContentAvailable=" + isContentAvailable +
+                "&isContentAvailable=" + mobileModel.isContentAvailable() +
                 "&snd=" + useSound +
                 "&token=" + tokenAsHex + "&" +
                 "msg=" + msgAsHex;
@@ -237,5 +236,65 @@ public class MobileNotificationService {
         String result = httpClient.requestWithGET(param, "User-Agent", "bisq/" +
                 Version.VERSION + ", uid:" + httpClient.getUid());
         log.info("result: " + result);
+    }
+
+    private boolean isContentAvailable() {
+        // phone descriptors
+        /*
+        iPod Touch 5
+        iPod Touch 6
+        iPhone 4
+        iPhone 4s
+        iPhone 5
+        iPhone 5c
+        iPhone 5s
+        iPhone 6
+        iPhone 6 Plus
+        iPhone 6s
+        iPhone 6s Plus
+        iPhone 7
+        iPhone 7 Plus
+        iPhone SE
+        iPhone 8
+        iPhone 8 Plus
+        iPhone X
+        iPad 2
+        iPad 3
+        iPad 4
+        iPad Air
+        iPad Air 2
+        iPad 5
+        iPad 6
+        iPad Mini
+        iPad Mini 2
+        iPad Mini 3
+        iPad Mini 4
+        iPad Pro 9.7 Inch
+        iPad Pro 12.9 Inch
+        iPad Pro 12.9 Inch 2. Generation
+        iPad Pro 10.5 Inch
+        */
+        if (mobileModel.getDescriptor() != null) {
+
+            String[] tokens = mobileModel.getDescriptor().split(" ");
+            if (tokens.length >= 1) {
+                String model = tokens[0];
+                if ((model.equals("iPhone"))) {
+                    String versionString = tokens[1];
+                    versionString = versionString.substring(0, 1);
+                    try {
+                        int version = Integer.parseInt(versionString);
+                        // iPhone 6 does not support isContentAvailable, iPhone 7 does.
+                        // We don't know for other versions, but lets assume all below iPhone 7 are failing.
+                        // SE we don't know as well
+                        return version > 6;
+                    } catch (Throwable ignore) {
+                    }
+                } else {
+                    return (model.equals("iPad")) && tokens[1].equals("Pro");
+                }
+            }
+        }
+        return false;
     }
 }

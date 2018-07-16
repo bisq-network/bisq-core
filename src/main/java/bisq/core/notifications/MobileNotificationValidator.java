@@ -32,24 +32,27 @@ public class MobileNotificationValidator {
             return false;
 
         String[] tokens = keyAndToken.split(MobileModel.PHONE_SEPARATOR_ESCAPED);
-        if (tokens.length != 3) {
-            log.error("invalid Bisq MobileModel ID format: not three sections separated by " + MobileModel.PHONE_SEPARATOR_WRITING);
+        if (tokens.length != 4) {
+            log.error("invalid pairing ID format: not 4 sections separated by " + MobileModel.PHONE_SEPARATOR_WRITING);
             return false;
         }
-        if (tokens[1].length() != 32) {
-            log.error("invalid Bisq MobileModel ID format: key not 32 bytes");
+        String magic = tokens[0];
+        String key = tokens[2];
+        String phoneId = tokens[3];
+
+        if (key.length() != 32) {
+            log.error("invalid pairing ID format: key not 32 bytes");
             return false;
         }
-        String token0 = tokens[0];
-        String token2 = tokens[2];
-        if (token0.equals(MobileModel.OS.IOS.getMagicString()) ||
-                token0.equals(MobileModel.OS.IOS_DEV.getMagicString())) {
-            if (token2.length() != 64) {
+
+        if (magic.equals(MobileModel.OS.IOS.getMagicString()) ||
+                magic.equals(MobileModel.OS.IOS_DEV.getMagicString())) {
+            if (phoneId.length() != 64) {
                 log.error("invalid Bisq MobileModel ID format: iOS token not 64 bytes");
                 return false;
             }
-        } else if (token0.equals(MobileModel.OS.ANDROID.getMagicString())) {
-            if (token2.length() < 32) {
+        } else if (magic.equals(MobileModel.OS.ANDROID.getMagicString())) {
+            if (phoneId.length() < 32) {
                 log.error("invalid Bisq MobileModel ID format: Android token too short (<32 bytes)");
                 return false;
             }
