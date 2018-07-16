@@ -170,6 +170,7 @@ public class StateService {
     public void addNewBlock(Block block) {
         state.getBlocks().add(block);
         blockListeners.forEach(l -> l.onBlockAdded(block));
+
         log.info("New Block added at blockHeight " + block.getHeight());
     }
 

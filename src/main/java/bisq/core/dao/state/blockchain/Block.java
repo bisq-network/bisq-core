@@ -30,10 +30,10 @@ import java.util.stream.Collectors;
 import lombok.Value;
 
 /**
- * A block derived from the BTC blockchain and filtered for BSQ relevant transactions. The transactions are already
- * verified and contain BSQ specific data.
+ * A block derived from the BTC blockchain and filtered for BSQ relevant transactions. The transactions are
+ * verified and contain BSQ specific data. The transactions gets added at parsing.
  * We don't store the rawBlock here as we don't want to persist all the tx data twice (RawTx and Tx list).
- * A common super class should be used for reducing code duplications of the fields.
+ * A common super class could be used for reducing code duplications of the fields.
  */
 @Value
 public class Block implements PersistablePayload {
@@ -55,18 +55,22 @@ public class Block implements PersistablePayload {
     private final String previousBlockHash;
     private final List<Tx> txs;
 
-    public Block(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
-        this.height = height;
-        this.time = time;
-        this.hash = hash;
-        this.previousBlockHash = previousBlockHash;
-        this.txs = txs;
+    public Block(int height, long time, String hash, String previousBlockHash) {
+        this(height, time, hash, previousBlockHash, new ArrayList<>());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private Block(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
+        this.height = height;
+        this.time = time;
+        this.hash = hash;
+        this.previousBlockHash = previousBlockHash;
+        this.txs = txs;
+    }
 
     public PB.Block toProtoMessage() {
         return PB.Block.newBuilder()

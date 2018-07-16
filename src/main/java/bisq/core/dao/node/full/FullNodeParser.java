@@ -28,8 +28,6 @@ import bisq.core.dao.state.blockchain.RawBlock;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -72,8 +70,7 @@ public class FullNodeParser extends BsqParser {
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
                 rawBlock.getHash(),
-                rawBlock.getPreviousBlockHash(),
-                new ArrayList<>());
+                rawBlock.getPreviousBlockHash());
 
         // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))

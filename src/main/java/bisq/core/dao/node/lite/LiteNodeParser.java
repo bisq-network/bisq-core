@@ -29,8 +29,6 @@ import bisq.core.dao.state.blockchain.RawBlock;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -61,14 +59,14 @@ public class LiteNodeParser extends BsqParser {
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
                 rawBlock.getHash(),
-                rawBlock.getPreviousBlockHash(),
-                new ArrayList<>());
+                rawBlock.getPreviousBlockHash());
+
+        if (!blockValidator.isBlockAlreadyAdded(rawBlock))
+            stateService.addNewBlock(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);
 
         // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
         parseBsqTxs(block, rawBlock.getRawTxs());
-
-        stateService.addNewBlock(block);
     }
 }
