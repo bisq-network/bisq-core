@@ -24,11 +24,10 @@ import io.bisq.generated.protobuffer.PB;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.Value;
-
-import javax.annotation.concurrent.Immutable;
 
 /**
  * A block derived from the BTC blockchain and filtered for BSQ relevant transactions. The transactions are already
@@ -36,7 +35,6 @@ import javax.annotation.concurrent.Immutable;
  * We don't store the rawBlock here as we don't want to persist all the tx data twice (RawTx and Tx list).
  * A common super class should be used for reducing code duplications of the fields.
  */
-@Immutable
 @Value
 public class Block implements PersistablePayload {
 
@@ -55,9 +53,9 @@ public class Block implements PersistablePayload {
     private final long time; // in seconds!
     private final String hash;
     private final String previousBlockHash;
-    private final ImmutableList<Tx> txs;
+    private final List<Tx> txs;
 
-    public Block(int height, long time, String hash, String previousBlockHash, ImmutableList<Tx> txs) {
+    public Block(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
         this.height = height;
         this.time = time;
         this.hash = hash;
@@ -88,8 +86,8 @@ public class Block implements PersistablePayload {
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
                 proto.getTxsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getTxsList().stream()
+                        new ArrayList<>() :
+                        new ArrayList<>(proto.getTxsList().stream()
                                 .map(Tx::fromProto)
                                 .collect(Collectors.toList())));
     }
