@@ -74,9 +74,10 @@ public class MarketAlerts {
         });
         offerBookService.getOffers().forEach(this::onOfferAdded);
 
-        user.getPaymentAccounts().forEach(e -> {
+        // TODO for dev testing
+        /*user.getPaymentAccounts().forEach(e -> {
             user.addMarketAlertFilter(new MarketAlertFilter(e, 200, 500));
-        });
+        });*/
     }
 
     private void onOfferAdded(Offer offer) {
