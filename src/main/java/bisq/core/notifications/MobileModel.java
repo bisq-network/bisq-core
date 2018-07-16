@@ -65,7 +65,6 @@ public class MobileModel {
         else if (magic.equals(OS.ANDROID.getMagicString()))
             os = OS.ANDROID;
 
-        descriptor = "iPhone 8 Plus";
         isContentAvailable = parseDescriptor(descriptor);
     }
 
