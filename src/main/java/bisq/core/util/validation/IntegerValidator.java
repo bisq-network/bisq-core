@@ -47,7 +47,6 @@ public class IntegerValidator extends InputValidator {
             return new ValidationResult(false, Res.get("validation.btc.toLarge", maxValue));
 
         return validationResult;
-
     }
 
     private boolean isBelowMinValue(int intValue) {

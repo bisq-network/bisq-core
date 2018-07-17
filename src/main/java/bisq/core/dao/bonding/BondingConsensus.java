@@ -31,8 +31,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BondingConsensus {
+    // In the UI we don't allow 0 as that would mean that the tx gets spent
+    // in the same block as the unspent tx and we don't support unconfirmed txs in the DAO. Technically though 0
+    // works as well.
     @Getter
     private static int minLockTime = 1;
+
+    // Max value is max of a short int as we use only 2 bytes in the opReturn for the lockTime
     @Getter
     private static int maxLockTime = 65535;
 
