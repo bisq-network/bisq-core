@@ -44,6 +44,7 @@ import bisq.core.dao.voting.proposal.MyProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
+import bisq.core.dao.voting.proposal.burnbond.BurnBondProposalService;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
 
@@ -86,6 +87,7 @@ public class DaoFacade {
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
     private final ChangeParamProposalService changeParamProposalService;
+    private final BurnBondProposalService burnBondPRoposalService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
 
@@ -102,6 +104,7 @@ public class DaoFacade {
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService,
                      ChangeParamProposalService changeParamProposalService,
+                     BurnBondProposalService burnBondPRoposalService,
                      LockupService lockupService,
                      UnlockService unlockService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -114,6 +117,7 @@ public class DaoFacade {
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
         this.changeParamProposalService = changeParamProposalService;
+        this.burnBondPRoposalService = burnBondPRoposalService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
@@ -206,6 +210,20 @@ public class DaoFacade {
                 link,
                 param,
                 paramValue);
+    }
+
+    public ProposalWithTransaction getBurnBondProposalWithTransaction(String name,
+                                                                      String title,
+                                                                      String description,
+                                                                      String link,
+                                                                      String bondId)
+            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+            WalletException {
+        return burnBondPRoposalService.createProposalWithTransaction(name,
+                title,
+                description,
+                link,
+                bondId);
     }
 
     // Show fee

@@ -58,6 +58,7 @@ public class TxInputProcessor {
                         case BTC_OUTPUT:
                         case PROPOSAL_OP_RETURN_OUTPUT:
                         case COMP_REQ_OP_RETURN_OUTPUT:
+                        case BURN_BOND_OP_RETURN_OUTPUT:
                         case ISSUANCE_CANDIDATE_OUTPUT:
                             break;
                         case BLIND_VOTE_LOCK_STAKE_OUTPUT:
