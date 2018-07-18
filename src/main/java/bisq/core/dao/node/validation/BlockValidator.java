@@ -54,8 +54,8 @@ public class BlockValidator {
         }
     }
 
-    public boolean isBlockAlreadyAdded(RawBlock rawBlock) {
-        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+    public boolean isBlockNotAlreadyAdded(RawBlock rawBlock) {
+        return !bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
     private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {

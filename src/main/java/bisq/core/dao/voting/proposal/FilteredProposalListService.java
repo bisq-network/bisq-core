@@ -59,7 +59,7 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
     private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(allProposals);
     @Getter
     private final FilteredList<Proposal> closedProposals = new FilteredList<>(allProposals);
-    private List<Proposal> myUnconfirmedProposals = new ArrayList<>();
+    private final List<Proposal> myUnconfirmedProposals = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

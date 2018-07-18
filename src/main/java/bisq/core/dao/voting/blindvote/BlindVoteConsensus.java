@@ -89,8 +89,7 @@ public class BlindVoteConsensus {
 
     public static byte[] getEncryptedMeritList(MeritList meritList, SecretKey secretKey) throws CryptoException {
         final byte[] bytes = meritList.toProtoMessage().toByteArray();
-        final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
-        return encrypted;
+        return Encryption.encrypt(bytes, secretKey);
     }
 
     public static byte[] getHashOfEncryptedProposalList(byte[] encryptedProposalList) {

@@ -90,7 +90,7 @@ public class CycleService implements BsqStateListener {
         bsqStateService.getCycles().add(getFirstCycle());
     }
 
-    public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles) {
+    private Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles) {
         // We want to set the correct phase and cycle before we start parsing a new block.
         // For Genesis block we did it already in the start method.
         // We copy over the phases from the current block as we get the phase only set in
@@ -110,7 +110,7 @@ public class CycleService implements BsqStateListener {
     }
 
 
-    public Cycle getFirstCycle() {
+    private Cycle getFirstCycle() {
         // We want to have the initial data set up before the genesis tx gets parsed so we do it here in the constructor
         // as onAllServicesInitialized might get called after the parser has started.
         // We add the default values from the Param enum to our StateChangeEvent list.
@@ -130,7 +130,7 @@ public class CycleService implements BsqStateListener {
         return bsqStateService.getTx(txId).filter(tx -> isBlockHeightInCycle(tx.getBlockHeight(), cycle)).isPresent();
     }
 
-    public boolean isBlockHeightInCycle(int blockHeight, Cycle cycle) {
+    private boolean isBlockHeightInCycle(int blockHeight, Cycle cycle) {
         return blockHeight >= cycle.getHeightOfFirstBlock() &&
                 blockHeight <= cycle.getHeightOfLastBlock();
     }

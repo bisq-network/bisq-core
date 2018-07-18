@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ProposalUtils {
+class ProposalUtils {
     public static boolean containsProposal(Proposal proposal, List<Proposal> proposals) {
         return findProposalInList(proposal, proposals).isPresent();
     }
 
-    public static Optional<Proposal> findProposalInList(Proposal proposal, List<Proposal> proposals) {
+    private static Optional<Proposal> findProposalInList(Proposal proposal, List<Proposal> proposals) {
         return proposals.stream()
                 .filter(p -> p.equals(proposal))
                 .findAny();
@@ -45,7 +45,7 @@ public class ProposalUtils {
         return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, bsqStateService);
     }
 
-    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
+    private static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
         return periodService.isInPhase(tx.getBlockHeight(), DaoPhase.Phase.PROPOSAL) &&
                 periodService.isTxInCorrectCycle(tx.getBlockHeight(), bsqStateService.getChainHeight());
     }

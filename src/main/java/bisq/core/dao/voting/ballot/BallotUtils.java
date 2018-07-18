@@ -29,12 +29,12 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BallotUtils {
+class BallotUtils {
     public static boolean listContainsProposal(Proposal proposal, List<Ballot> ballotList) {
         return findProposalInBallotList(proposal, ballotList).isPresent();
     }
 
-    public static Optional<Ballot> findProposalInBallotList(Proposal proposal, List<Ballot> ballotList) {
+    private static Optional<Ballot> findProposalInBallotList(Proposal proposal, List<Ballot> ballotList) {
         return ballotList.stream()
                 .filter(ballot -> ballot.getProposal().equals(proposal))
                 .findAny();
@@ -46,7 +46,7 @@ public class BallotUtils {
         return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, bsqStateService);
     }
 
-    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
+    private static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
         return periodService.isInPhase(tx.getBlockHeight(), DaoPhase.Phase.PROPOSAL) &&
                 periodService.isTxInCorrectCycle(tx.getBlockHeight(), bsqStateService.getChainHeight());
     }

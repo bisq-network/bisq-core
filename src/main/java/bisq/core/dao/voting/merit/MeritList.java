@@ -53,7 +53,7 @@ public class MeritList extends PersistableList<Merit> implements VoteConsensusCr
         return getBuilder().build();
     }
 
-    public PB.MeritList.Builder getBuilder() {
+    private PB.MeritList.Builder getBuilder() {
         return PB.MeritList.newBuilder()
                 .addAllMerit(getList().stream()
                         .map(Merit::toProtoMessage)

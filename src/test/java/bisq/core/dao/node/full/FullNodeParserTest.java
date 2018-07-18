@@ -134,11 +134,11 @@ public class FullNodeParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txValidator.getBsqTx(height, rawTx).isPresent());
+        assertFalse(txValidator.getBsqTx(rawTx).isPresent());
         // Second time there is BSQ in the first txout
-        assertTrue(txValidator.getBsqTx(height, rawTx).isPresent());
+        assertTrue(txValidator.getBsqTx(rawTx).isPresent());
         // Third time there is BSQ in the second txout
-        assertTrue(txValidator.getBsqTx(height, rawTx).isPresent());
+        assertTrue(txValidator.getBsqTx(rawTx).isPresent());
     }
 
     @Test

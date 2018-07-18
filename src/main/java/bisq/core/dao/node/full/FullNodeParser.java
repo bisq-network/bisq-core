@@ -73,7 +73,7 @@ public class FullNodeParser extends BsqParser {
                 rawBlock.getPreviousBlockHash());
 
         // TODO needed?
-        if (!blockValidator.isBlockAlreadyAdded(rawBlock))
+        if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
             bsqStateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);

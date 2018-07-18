@@ -64,7 +64,6 @@ public class JsonBlockChainExporter {
     private final boolean dumpBlockchainData;
 
     private final ListeningExecutorService executor = Utilities.getListeningExecutorService("JsonExporter", 1, 1, 1200);
-    private File txDir, txOutputDir, blockchainDir;
     private JsonFileManager txFileManager, txOutputFileManager, jsonFileManager;
 
     @Inject
@@ -79,9 +78,9 @@ public class JsonBlockChainExporter {
 
     private void init(@Named(Storage.STORAGE_DIR) File storageDir, @Named(DaoOptionKeys.DUMP_BLOCKCHAIN_DATA) boolean dumpBlockchainData) {
         if (dumpBlockchainData) {
-            txDir = new File(Paths.get(storageDir.getAbsolutePath(), "tx").toString());
-            txOutputDir = new File(Paths.get(storageDir.getAbsolutePath(), "txo").toString());
-            blockchainDir = new File(Paths.get(storageDir.getAbsolutePath(), "all").toString());
+            File txDir = new File(Paths.get(storageDir.getAbsolutePath(), "tx").toString());
+            File txOutputDir = new File(Paths.get(storageDir.getAbsolutePath(), "txo").toString());
+            File blockchainDir = new File(Paths.get(storageDir.getAbsolutePath(), "all").toString());
             try {
                 if (txDir.exists())
                     FileUtil.deleteDirectory(txDir);
@@ -127,9 +126,9 @@ public class JsonBlockChainExporter {
                 for (Tx tx : txMap.values()) {
                     String txId = tx.getId();
                     final Optional<TxType> optionalTxType = bsqStateService.getOptionalTxType(txId);
-                    if (optionalTxType.isPresent()) {
-                        JsonTxType txType = optionalTxType.get() != TxType.UNDEFINED_TX_TYPE ?
-                                JsonTxType.valueOf(optionalTxType.get().name()) : null;
+                    optionalTxType.ifPresent(txType1 -> {
+                        JsonTxType txType = txType1 != TxType.UNDEFINED_TX_TYPE ?
+                                JsonTxType.valueOf(txType1.name()) : null;
                         List<JsonTxOutput> outputs = new ArrayList<>();
                         tx.getTxOutputs().forEach(txOutput -> {
                             final Optional<SpentInfo> optionalSpentInfo = bsqStateService.getSpentInfo(txOutput);
@@ -163,9 +162,9 @@ public class JsonBlockChainExporter {
                                         final boolean isBsqOutput = bsqStateService.isBsqTxOutputType(connectedTxOutput);
                                         return new JsonTxInput(txInput.getConnectedTxOutputIndex(),
                                                 txInput.getConnectedTxOutputTxId(),
-                                                connectedTxOutput != null ? connectedTxOutput.getValue() : 0,
-                                                connectedTxOutput != null && isBsqOutput,
-                                                connectedTxOutput != null ? connectedTxOutput.getAddress() : null,
+                                                connectedTxOutput.getValue(),
+                                                isBsqOutput,
+                                                connectedTxOutput.getAddress(),
                                                 tx.getTime());
                                     } else {
                                         return null;
@@ -185,7 +184,7 @@ public class JsonBlockChainExporter {
                                 bsqStateService.getBurntFee(tx.getId()));
 
                         txFileManager.writeToDisc(Utilities.objectToJson(jsonTx), txId);
-                    }
+                    });
                 }
 
                 jsonFileManager.writeToDisc(Utilities.objectToJson(bsqStateClone), "BsqStateService");

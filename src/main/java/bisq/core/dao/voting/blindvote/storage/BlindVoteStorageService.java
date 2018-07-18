@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BlindVoteStorageService extends StoreService<BlindVoteStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "BlindVoteStore";
+    private static final String FILE_NAME = "BlindVoteStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

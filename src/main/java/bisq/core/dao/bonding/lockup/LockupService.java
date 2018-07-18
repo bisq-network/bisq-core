@@ -71,6 +71,7 @@ public class LockupService {
             byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
 
+            //noinspection Duplicates
             walletsManager.publishAndCommitBsqTx(lockupTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {

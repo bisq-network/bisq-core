@@ -49,7 +49,7 @@ public enum ScriptType {
 
 
     @JsonValue
-    public String getName() {
+    private String getName() {
         return name;
     }
 

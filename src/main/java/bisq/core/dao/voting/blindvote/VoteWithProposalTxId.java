@@ -55,7 +55,7 @@ public class VoteWithProposalTxId implements PersistablePayload {
     }
 
     @NotNull
-    public PB.VoteWithProposalTxId.Builder getBuilder() {
+    private PB.VoteWithProposalTxId.Builder getBuilder() {
         final PB.VoteWithProposalTxId.Builder builder = PB.VoteWithProposalTxId.newBuilder()
                 .setProposalTxId(proposalTxId);
         Optional.ofNullable(vote).ifPresent(e -> builder.setVote((PB.Vote) e.toProtoMessage()));

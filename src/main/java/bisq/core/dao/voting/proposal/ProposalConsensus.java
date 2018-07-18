@@ -62,6 +62,7 @@ public class ProposalConsensus {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static int getMaxLengthDescriptionText() {
         return 100;
     }

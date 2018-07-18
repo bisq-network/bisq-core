@@ -42,6 +42,7 @@ public class TxInputProcessor {
         this.bsqStateService = bsqStateService;
     }
 
+    @SuppressWarnings("IfCanBeSwitch")
     void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
         bsqStateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
@@ -50,37 +51,57 @@ public class TxInputProcessor {
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
                     TxOutputType connectedTxOutputType = connectedTxOutput.getTxOutputType();
-                    if (connectedTxOutputType == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT) {
-                        if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
-                            parsingModel.setInputFromBlindVoteStakeOutput(txInput);
-                            // At the end of the parsing the OpReturnVoteRevealValidator will verify that
-                            // this property is true, otherwise the tx will be considered invalid.
-                            parsingModel.setValidInputFromBlindVoteStakeOutput(true);
-                        } else {
-                            log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
-                                    "This is not a valid BSQ tx.");
-                            parsingModel.setValidInputFromBlindVoteStakeOutput(false);
-                        }
-                    } else if (connectedTxOutputType == TxOutputType.LOCKUP) {
-                        // A LOCKUP BSQ txOutput is spent to a corresponding UNLOCK
-                        // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
-                        if (parsingModel.getSpentLockupTxOutput() == null) {
-                            parsingModel.setSpentLockupTxOutput(connectedTxOutput);
-                            bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
-                                    parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
-                        }
+                    switch (connectedTxOutputType) {
+                        case UNDEFINED:
+                        case GENESIS_OUTPUT:
+                        case BSQ_OUTPUT:
+                        case BTC_OUTPUT:
+                        case PROPOSAL_OP_RETURN_OUTPUT:
+                        case COMP_REQ_OP_RETURN_OUTPUT:
+                        case ISSUANCE_CANDIDATE_OUTPUT:
+                            break;
+                        case BLIND_VOTE_LOCK_STAKE_OUTPUT:
+                            if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
+                                parsingModel.setInputFromBlindVoteStakeOutput(txInput);
+                                // At the end of the parsing the OpReturnVoteRevealValidator will verify that
+                                // this property is true, otherwise the tx will be considered invalid.
+                                parsingModel.setValidInputFromBlindVoteStakeOutput(true);
+                            } else {
+                                log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
+                                        "This is not a valid BSQ tx.");
+                                parsingModel.setValidInputFromBlindVoteStakeOutput(false);
+                            }
+                            break;
+                        case BLIND_VOTE_OP_RETURN_OUTPUT:
+                        case VOTE_REVEAL_UNLOCK_STAKE_OUTPUT:
+                        case VOTE_REVEAL_OP_RETURN_OUTPUT:
+                            break;
+                        case LOCKUP:
+                            // A LOCKUP BSQ txOutput is spent to a corresponding UNLOCK
+                            // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
+                            if (parsingModel.getSpentLockupTxOutput() == null) {
+                                parsingModel.setSpentLockupTxOutput(connectedTxOutput);
+                                bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
+                                        parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
+                            }
+                            break;
+                        case LOCKUP_OP_RETURN_OUTPUT:
+                            break;
+                        case UNLOCK:
+                            // This txInput is Spending an UNLOCK txOutput
+                            Set<TxOutput> spentUnlockConnectedTxOutputs = parsingModel.getSpentUnlockConnectedTxOutputs();
+                            if (spentUnlockConnectedTxOutputs != null)
+                                spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
-                    } else if (connectedTxOutputType == TxOutputType.UNLOCK) {
-                        // This txInput is Spending an UNLOCK txOutput
-                        Set<TxOutput> spentUnlockConnectedTxOutputs = parsingModel.getSpentUnlockConnectedTxOutputs();
-                        if (spentUnlockConnectedTxOutputs != null)
-                            spentUnlockConnectedTxOutputs.add(connectedTxOutput);
-
-                        bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
-                            // Only count the input as BSQ input if spent after unlock time
-                            if (blockHeight < unlockTx.getUnlockBlockHeight())
-                                parsingModel.burnBond(connectedTxOutput.getValue());
-                        });
+                            bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
+                                // Only count the input as BSQ input if spent after unlock time
+                                if (blockHeight < unlockTx.getUnlockBlockHeight())
+                                    parsingModel.burnBond(connectedTxOutput.getValue());
+                            });
+                            break;
+                        case INVALID_OUTPUT:
+                        default:
+                            break;
                     }
 
                     bsqStateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));

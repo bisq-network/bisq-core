@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalStorageService extends StoreService<ProposalStore, PersistableNetworkPayload> {
-    public static final String FILE_NAME = "ProposalStore";
+    private static final String FILE_NAME = "ProposalStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

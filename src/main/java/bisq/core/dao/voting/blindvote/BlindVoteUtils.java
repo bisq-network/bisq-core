@@ -28,7 +28,7 @@ public class BlindVoteUtils {
         return findBlindVoteInList(blindVote, blindVoteList).isPresent();
     }
 
-    public static Optional<BlindVote> findBlindVoteInList(BlindVote blindVote, List<BlindVote> blindVoteList) {
+    private static Optional<BlindVote> findBlindVoteInList(BlindVote blindVote, List<BlindVote> blindVoteList) {
         return blindVoteList.stream()
                 .filter(vote -> vote.equals(blindVote))
                 .findAny();

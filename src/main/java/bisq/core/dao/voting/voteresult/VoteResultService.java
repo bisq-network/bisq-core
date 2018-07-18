@@ -29,7 +29,6 @@ import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.ballot.vote.BooleanVote;
-import bisq.core.dao.voting.ballot.vote.LongVote;
 import bisq.core.dao.voting.ballot.vote.Vote;
 import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
@@ -300,7 +299,7 @@ public class VoteResultService implements BsqStateListener {
         Map<byte[], Long> map = new HashMap<>();
         decryptedVotes.forEach(decryptedVote -> {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
-            map.computeIfAbsent(hash, e -> 0L);
+            map.putIfAbsent(hash, 0L);
             long aggregatedStake = map.get(hash);
             long meritStake = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(), decryptedVote.getMeritList(), bsqStateService);
             long stake = decryptedVote.getStake();
@@ -328,7 +327,7 @@ public class VoteResultService implements BsqStateListener {
         log.info("myBlindVoteListHash " + Utilities.bytesAsHexString(myBlindVoteListHash));
         boolean matches = Arrays.equals(majorityVoteListHash, myBlindVoteListHash);
         if (!matches) {
-            log.warn("myBlindVoteListHash does not match with majorityVoteListHash. We try permutating our list to " +
+            log.warn("myBlindVoteListHash does not match with majorityVoteListHash. We try permuting our list to " +
                     "find a matching variant");
             // Each voter has re-published his blind vote list when broadcasting the reveal tx so it should have a very
             // high change that we have received all blind votes which have been used by the majority of the
@@ -449,9 +448,9 @@ public class VoteResultService implements BsqStateListener {
                         stakeOfRejectedVotes += combinedStake;
                         numRejectedVotes++;
                     }
-                } else if (vote instanceof LongVote) {
-                    //TODO impl
-                }
+                } /*else if (vote instanceof LongVote) {
+                    //not used yet
+                }*/
             } else {
                 numIgnoredVotes++;
                 log.debug("Voter ignored proposal");

@@ -72,7 +72,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     private final PublicKey signaturePubKey;
 
     private final MyProposalList myProposalList = new MyProposalList();
-    private ChangeListener<Number> numConnectedPeersListener;
+    private final ChangeListener<Number> numConnectedPeersListener;
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
 

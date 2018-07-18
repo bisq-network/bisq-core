@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public abstract class BsqNode {
 
-    protected final P2PService p2PService;
+    private final P2PService p2PService;
     protected final BsqStateService bsqStateService;
     private final String genesisTxId;
     private final int genesisBlockHeight;

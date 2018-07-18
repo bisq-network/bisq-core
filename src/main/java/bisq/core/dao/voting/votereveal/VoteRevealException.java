@@ -25,6 +25,7 @@ import lombok.Getter;
 
 import javax.annotation.Nullable;
 
+@SuppressWarnings("SameParameterValue")
 public class VoteRevealException extends Exception {
     @Getter
     @Nullable

@@ -35,7 +35,6 @@ import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
 import com.neemre.btcdcli4j.core.client.BtcdClientImpl;
 import com.neemre.btcdcli4j.core.domain.RawTransaction;
-import com.neemre.btcdcli4j.core.domain.Transaction;
 import com.neemre.btcdcli4j.core.domain.enums.ScriptTypes;
 import com.neemre.btcdcli4j.daemon.BtcdDaemon;
 import com.neemre.btcdcli4j.daemon.BtcdDaemonImpl;
@@ -299,9 +298,9 @@ public class RpcService {
                 ImmutableList.copyOf(txOutputs));
     }
 
-    private Transaction requestTx(String txId) throws BitcoindException, CommunicationException {
+   /* private Transaction requestTx(String txId) throws BitcoindException, CommunicationException {
         return client.getTransaction(txId);
-    }
+    }*/
 
   /*  private void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
         try {

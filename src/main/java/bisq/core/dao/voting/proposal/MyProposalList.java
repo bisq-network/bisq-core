@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class MyProposalList extends PersistableList<Proposal> implements VoteConsensusCritical {
 
-    public MyProposalList(List<Proposal> list) {
+    private MyProposalList(List<Proposal> list) {
         super(list);
     }
 
@@ -50,7 +50,7 @@ public class MyProposalList extends PersistableList<Proposal> implements VoteCon
         return PB.PersistableEnvelope.newBuilder().setMyProposalList(getBuilder()).build();
     }
 
-    public PB.MyProposalList.Builder getBuilder() {
+    private PB.MyProposalList.Builder getBuilder() {
         return PB.MyProposalList.newBuilder()
                 .addAllProposal(getList().stream()
                         .map(Proposal::toProtoMessage)

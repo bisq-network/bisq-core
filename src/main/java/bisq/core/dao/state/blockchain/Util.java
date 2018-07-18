@@ -30,8 +30,8 @@ public class Util {
 
     public static int parseAsInt(byte[] opReturnData) {
         int result = 0;
-        for (int i = 0; i < opReturnData.length; ++i) {
-            result = (result << 8) | opReturnData[i];
+        for (byte anOpReturnData : opReturnData) {
+            result = (result << 8) | anOpReturnData;
         }
         return result;
     }

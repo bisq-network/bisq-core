@@ -44,7 +44,7 @@ public class BlindVoteValidator {
         this.periodService = periodService;
     }
 
-    public boolean areDataFieldsValid(BlindVote blindVote) {
+    private boolean areDataFieldsValid(BlindVote blindVote) {
         try {
             validateDataFields(blindVote);
             return true;
@@ -76,6 +76,7 @@ public class BlindVoteValidator {
         return isValid(blindVote, false);
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     private boolean isValid(BlindVote blindVote, boolean allowUnconfirmed) {
         if (!areDataFieldsValid(blindVote)) {
             log.warn("blindVote is invalid. blindVote={}", blindVote);

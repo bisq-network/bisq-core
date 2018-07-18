@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TempProposalStorageService extends StoreService<TempProposalStore, ProtectedStorageEntry> {
-    public static final String FILE_NAME = "TempProposalStore";
+    private static final String FILE_NAME = "TempProposalStore";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

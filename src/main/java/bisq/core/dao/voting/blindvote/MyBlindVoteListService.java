@@ -97,7 +97,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     private final MyVoteListService myVoteListService;
     private final MyProposalListService myProposalListService;
     private final ProposalValidator proposalValidator;
-    private ChangeListener<Number> numConnectedPeersListener;
+    private final ChangeListener<Number> numConnectedPeersListener;
     @Getter
     private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
 

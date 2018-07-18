@@ -58,7 +58,7 @@ public final class PeriodService {
         return bsqStateService.getChainHeight();
     }
 
-    public Optional<Tx> getOptionalTx(String txId) {
+    private Optional<Tx> getOptionalTx(String txId) {
         return bsqStateService.getTx(txId);
     }
 
@@ -78,7 +78,7 @@ public final class PeriodService {
                 .isPresent();
     }
 
-    public Optional<Cycle> getCycle(int height) {
+    private Optional<Cycle> getCycle(int height) {
         return bsqStateService.getCycle(height);
     }
 
@@ -113,7 +113,7 @@ public final class PeriodService {
                 .isPresent();
     }
 
-    public boolean isTxInPastCycle(int txHeight, int chainHeadHeight) {
+    private boolean isTxInPastCycle(int txHeight, int chainHeadHeight) {
         return getCycle(txHeight)
                 .filter(cycle -> chainHeadHeight > cycle.getHeightOfLastBlock())
                 .isPresent();

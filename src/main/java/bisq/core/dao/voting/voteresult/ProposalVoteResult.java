@@ -52,7 +52,7 @@ public class ProposalVoteResult {
         return getTotalStake();
     }
 
-    public long getTotalStake() {
+    private long getTotalStake() {
         return stakeOfAcceptedVotes + stakeOfRejectedVotes;
     }
 

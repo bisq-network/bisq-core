@@ -37,7 +37,7 @@ class OpReturnLockupValidator {
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     boolean validate(byte[] opReturnData, Optional<LockupType> lockupType, int lockTime, int blockHeight,
                      ParsingModel parsingModel) {
-        // TODO: Handle all lockuptypes
+        // TODO: Handle all lockupTypes
         boolean lockupTypeOk = lockupType.isPresent() && lockupType.get() == LockupType.DEFAULT;
         return parsingModel.getLockupOutput() != null && opReturnData.length == 5 &&
                 lockupTypeOk &&

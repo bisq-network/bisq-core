@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
@@ -45,15 +44,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class TxValidator {
 
-    private final BsqStateService bsqStateService;
     private final TxInputProcessor txInputProcessor;
     private final TxOutputProcessor txOutputProcessor;
 
     @Inject
-    public TxValidator(BsqStateService bsqStateService,
-                       TxInputProcessor txInputProcessor,
+    public TxValidator(TxInputProcessor txInputProcessor,
                        TxOutputProcessor txOutputProcessor) {
-        this.bsqStateService = bsqStateService;
         this.txInputProcessor = txInputProcessor;
         this.txOutputProcessor = txOutputProcessor;
     }
@@ -130,7 +126,7 @@ public class TxValidator {
             }
         }
 
-        // TODO || parsingModel.getBurntBondValue() > 0; shoud not be necessy
+        // TODO || parsingModel.getBurntBondValue() > 0; should not be necessary
         // How should we consider the burnt BSQ from spending a LOCKUP tx with the wrong format.
         // Example: LOCKUP txOutput is 1000 satoshi but first txOutput in spending tx is 900
         // satoshi, this burns the 1000 satoshi and is currently not considered in the

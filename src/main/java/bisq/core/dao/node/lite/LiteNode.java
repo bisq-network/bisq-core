@@ -22,7 +22,6 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
-import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.blockchain.RawBlock;
@@ -156,15 +155,13 @@ public class LiteNode extends BsqNode {
         if (!isBlockAlreadyAdded(rawBlock)) {
             try {
                 liteNodeParser.parseBlock(rawBlock);
-            } catch (BlockNotConnectingException | InvalidBlockException throwable) {
-                if (throwable instanceof BlockNotConnectingException) {
-                    startReOrgFromLastSnapshot();
-                } else {
-                    log.error(throwable.toString());
-                    throwable.printStackTrace();
-                    if (errorMessageHandler != null)
-                        errorMessageHandler.handleErrorMessage(throwable.toString());
-                }
+            } catch (BlockNotConnectingException throwable) {
+                startReOrgFromLastSnapshot();
+            } catch (Throwable throwable) {
+                log.error(throwable.toString());
+                throwable.printStackTrace();
+                if (errorMessageHandler != null)
+                    errorMessageHandler.handleErrorMessage(throwable.toString());
             }
         }
     }

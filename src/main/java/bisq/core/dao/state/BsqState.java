@@ -119,7 +119,7 @@ public class BsqState implements PersistableEnvelope {
     private final Map<TxOutputKey, TxOutput> unspentTxOutputMap;
     @Getter
     private final Map<TxOutputKey, TxOutput> nonBsqTxOutputMap;
-    // TODO SQ i prepared the map for the confist. requests
+    // TODO SQ i prepared the map for the confiscation requests
     @Getter
     private final Map<TxOutputKey, TxOutput> confiscatedTxOutputMap;
     @Getter

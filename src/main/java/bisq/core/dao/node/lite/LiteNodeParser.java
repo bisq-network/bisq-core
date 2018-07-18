@@ -21,7 +21,6 @@ import bisq.core.dao.node.BsqParser;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
-import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -50,7 +49,7 @@ public class LiteNodeParser extends BsqParser {
     // The block we received from the seed node is already filtered for valid bsq txs but we want to verify ourselves
     // again. So we run the parsing with that filtered tx list and add a new block with our own verified tx list as
     // well we write the mutual state during parsing to the state model.
-    void parseBlock(RawBlock rawBlock) throws BlockNotConnectingException, InvalidBlockException {
+    void parseBlock(RawBlock rawBlock) throws BlockNotConnectingException {
         int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
         blockValidator.validate(rawBlock);
@@ -62,7 +61,7 @@ public class LiteNodeParser extends BsqParser {
                 rawBlock.getPreviousBlockHash());
 
         // TODO needed?
-        if (!blockValidator.isBlockAlreadyAdded(rawBlock))
+        if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
             bsqStateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);

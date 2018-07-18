@@ -184,7 +184,7 @@ public class BsqStateService {
         return bsqState.getBlocks();
     }
 
-    public Optional<Block> getLastBlock() {
+    private Optional<Block> getLastBlock() {
         if (!getBlocks().isEmpty())
             return Optional.of(getBlocks().getLast());
         else
@@ -395,7 +395,7 @@ public class BsqStateService {
     // TxOutputType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
+    private Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
         return getTxOutputStream()
                 .filter(txOutput -> txOutput.getTxOutputType() == txOutputType)
                 .collect(Collectors.toSet());
@@ -538,7 +538,7 @@ public class BsqStateService {
         return opTxOutput.isPresent() && isLockupOutput(opTxOutput.get());
     }
 
-    public boolean isLockupOutput(TxOutput txOutput) {
+    private boolean isLockupOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
     }
 
@@ -553,7 +553,7 @@ public class BsqStateService {
     }
 
     // Returns amount of all LOCKUP txOutputs (they might have been unlocking or unlocked in the meantime)
-    public long getTotalAmountOfLockupTxOutputs() {
+    private long getTotalAmountOfLockupTxOutputs() {
         return getLockupTxOutputs().stream()
                 .mapToLong(TxOutput::getValue)
                 .sum();
@@ -589,13 +589,13 @@ public class BsqStateService {
         return opTxOutput.isPresent() && isUnlockingOutput(opTxOutput.get());
     }
 
-    public boolean isUnlockingOutput(TxOutput txOutput) {
+    private boolean isUnlockingOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() != TxOutputType.UNLOCK ||
                 isTxOutputSpendable(new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()));
     }
 
     // Unlocked
-    public Optional<Integer> getUnlockBlockHeight(String txId) {
+    private Optional<Integer> getUnlockBlockHeight(String txId) {
         return getTx(txId).map(Tx::getUnlockBlockHeight);
     }
 
@@ -607,7 +607,7 @@ public class BsqStateService {
     }
 
     // We don't care here about the unspent state
-    public Stream<TxOutput> getUnlockedTxOutputsStream() {
+    private Stream<TxOutput> getUnlockedTxOutputsStream() {
         return getTxOutputsByTxOutputType(TxOutputType.UNLOCK).stream()
                 .filter(this::isLockTimeOverForUnlockTxOutput);
     }

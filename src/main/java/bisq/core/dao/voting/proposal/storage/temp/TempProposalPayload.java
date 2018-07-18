@@ -85,9 +85,9 @@ public class TempProposalPayload implements LazyProcessedPayload, ProtectedStora
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    protected TempProposalPayload(Proposal proposal,
-                                  byte[] ownerPubPubKeyEncoded,
-                                  @Nullable Map<String, String> extraDataMap) {
+    private TempProposalPayload(Proposal proposal,
+                                byte[] ownerPubPubKeyEncoded,
+                                @Nullable Map<String, String> extraDataMap) {
         this.proposal = proposal;
         this.ownerPubKeyEncoded = ownerPubPubKeyEncoded;
         this.extraDataMap = extraDataMap;
@@ -95,7 +95,7 @@ public class TempProposalPayload implements LazyProcessedPayload, ProtectedStora
         ownerPubKey = Sig.getPublicKeyFromBytes(ownerPubKeyEncoded);
     }
 
-    public PB.TempProposalPayload.Builder getTempProposalPayloadBuilder() {
+    private PB.TempProposalPayload.Builder getTempProposalPayloadBuilder() {
         final PB.TempProposalPayload.Builder builder = PB.TempProposalPayload.newBuilder()
                 .setProposal(proposal.getProposalBuilder())
                 .setOwnerPubKeyEncoded(ByteString.copyFrom(ownerPubKeyEncoded));

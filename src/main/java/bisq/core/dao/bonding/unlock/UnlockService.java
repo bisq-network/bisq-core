@@ -68,6 +68,7 @@ public class UnlockService {
             TxOutput lockupTxOutput = bsqStateService.getLockupTxOutput(lockupTxId).get();
             final Transaction unlockTx = getUnlockTx(lockupTxOutput);
 
+            //noinspection Duplicates
             walletsManager.publishAndCommitBsqTx(unlockTx, new TxBroadcaster.Callback() {
                 @Override
                 public void onSuccess(Transaction transaction) {
@@ -89,7 +90,6 @@ public class UnlockService {
                     exceptionHandler.handleException(exception);
                 }
             });
-
         } catch (TransactionVerificationException | InsufficientMoneyException | WalletException exception) {
             exceptionHandler.handleException(exception);
         }

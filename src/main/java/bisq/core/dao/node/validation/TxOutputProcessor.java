@@ -129,14 +129,14 @@ public class TxOutputProcessor {
         }
     }
 
-    protected void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
+    void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
         if (txOutputType != null)
             txOutput.setTxOutputType(txOutputType);
 
         bsqStateService.addUnspentTxOutput(txOutput);
     }
 
-    protected void applyStateChangeForBtcOutput(TxOutput txOutput) {
+    void applyStateChangeForBtcOutput(TxOutput txOutput) {
         txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
     }
 }

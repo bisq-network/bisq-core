@@ -47,7 +47,7 @@ public abstract class BsqParser {
     //public static StringBuilder sb2 = new StringBuilder();
 
     protected final BlockValidator blockValidator;
-    protected final GenesisTxValidator genesisTxValidator;
+    private final GenesisTxValidator genesisTxValidator;
     private final TxValidator txValidator;
     protected final BsqStateService bsqStateService;
 

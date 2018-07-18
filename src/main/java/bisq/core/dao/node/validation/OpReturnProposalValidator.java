@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class OpReturnProposalValidator {
-    protected final PeriodService periodService;
-    protected final BsqStateService bsqStateService;
+    private final PeriodService periodService;
+    private final BsqStateService bsqStateService;
 
 
     @Inject

@@ -57,14 +57,14 @@ public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTx
         return getBuilder().build();
     }
 
-    public PB.VoteWithProposalTxIdList.Builder getBuilder() {
+    private PB.VoteWithProposalTxIdList.Builder getBuilder() {
         return PB.VoteWithProposalTxIdList.newBuilder()
                 .addAllItem(getList().stream()
                         .map(VoteWithProposalTxId::toProtoMessage)
                         .collect(Collectors.toList()));
     }
 
-    public static VoteWithProposalTxIdList fromProto(PB.VoteWithProposalTxIdList proto) {
+    private static VoteWithProposalTxIdList fromProto(PB.VoteWithProposalTxIdList proto) {
         final ArrayList<VoteWithProposalTxId> list = proto.getItemList().stream()
                 .map(VoteWithProposalTxId::fromProto).collect(Collectors.toCollection(ArrayList::new));
         return new VoteWithProposalTxIdList(list);
