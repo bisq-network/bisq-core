@@ -41,7 +41,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Value
 @Slf4j
-public class RawTxOutput implements PersistablePayload {
+public final class RawTxOutput implements PersistablePayload {
 
     public static RawTxOutput clone(RawTxOutput txOutput) {
         return new RawTxOutput(txOutput.getIndex(),

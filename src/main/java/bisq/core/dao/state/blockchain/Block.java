@@ -36,7 +36,7 @@ import lombok.Value;
  * A common super class could be used for reducing code duplications of the fields.
  */
 @Value
-public class Block implements PersistablePayload {
+public final class Block implements PersistablePayload {
 
     public static Block clone(Block block) {
         final ImmutableList<Tx> txs = ImmutableList.copyOf(block.getTxs().stream()

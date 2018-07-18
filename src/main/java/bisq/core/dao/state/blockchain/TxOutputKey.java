@@ -20,7 +20,7 @@ package bisq.core.dao.state.blockchain;
 import lombok.Value;
 
 @Value
-public class TxOutputKey {
+public final class TxOutputKey {
     private final String txId;
     private final int index;
 

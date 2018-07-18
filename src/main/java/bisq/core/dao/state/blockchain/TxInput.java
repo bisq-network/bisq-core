@@ -36,7 +36,7 @@ import javax.annotation.concurrent.Immutable;
 @Value
 @EqualsAndHashCode
 @Slf4j
-public class TxInput implements PersistablePayload {
+public final class TxInput implements PersistablePayload {
 
     public static TxInput clone(TxInput txInput) {
         return new TxInput(txInput.getConnectedTxOutputTxId(),

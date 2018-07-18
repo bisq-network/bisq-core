@@ -38,7 +38,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Slf4j
 @Value
-public class RawTx implements PersistablePayload {
+public final class RawTx implements PersistablePayload {
 
     public static RawTx clone(RawTx tx) {
         final ImmutableList<TxInput> txInputs = ImmutableList.copyOf(tx.getTxInputs().stream()

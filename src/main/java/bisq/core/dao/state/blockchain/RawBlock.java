@@ -38,7 +38,7 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 @Value
-public class RawBlock implements PersistablePayload {
+public final class RawBlock implements PersistablePayload {
 
     public static RawBlock clone(RawBlock block) {
         final ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getRawTxs().stream()

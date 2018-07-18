@@ -25,7 +25,7 @@ import lombok.Value;
 
 // Only used for json export
 @Value
-public class SpentInfo implements PersistablePayload {
+public final class SpentInfo implements PersistablePayload {
     private final long blockHeight;
     // Spending tx
     private final String txId;
