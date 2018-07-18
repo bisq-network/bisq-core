@@ -20,7 +20,7 @@ package bisq.core.proto.persistable;
 import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.state.State;
+import bisq.core.dao.state.BsqState;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.BlindVoteStore;
@@ -118,7 +118,7 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                 case TEMP_PROPOSAL_STORE:
                     return TempProposalStore.fromProto(proto.getTempProposalStore(), networkProtoResolver);
                 case STATE:
-                    return State.fromProto(proto.getState());
+                    return BsqState.fromProto(proto.getState());
                 case MY_PROPOSAL_LIST:
                     return MyProposalList.fromProto(proto.getMyProposalList());
                 case BALLOT_LIST:

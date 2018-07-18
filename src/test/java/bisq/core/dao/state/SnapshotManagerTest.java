@@ -34,14 +34,14 @@ import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({State.class, StateService.class, PersistenceProtoResolver.class, File.class})
+@PrepareForTest({BsqState.class, StateService.class, PersistenceProtoResolver.class, File.class})
 public class SnapshotManagerTest {
 
     private SnapshotManager snapshotManager;
 
     @Before
     public void setup() {
-        snapshotManager = new SnapshotManager(mock(State.class),
+        snapshotManager = new SnapshotManager(mock(BsqState.class),
                 mock(StateService.class),
                 mock(PersistenceProtoResolver.class),
                 mock(File.class));

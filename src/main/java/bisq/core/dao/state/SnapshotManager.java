@@ -34,24 +34,24 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Manages snapshots of State.
+ * Manages snapshots of BsqState.
  */
 @Slf4j
 public class SnapshotManager implements BsqStateListener {
     private static final int SNAPSHOT_GRID = 11000;
 
-    private final State state;
+    private final BsqState bsqState;
     private final StateService stateService;
-    private final Storage<State> storage;
+    private final Storage<BsqState> storage;
 
-    private State snapshotCandidate;
+    private BsqState snapshotCandidate;
 
     @Inject
-    public SnapshotManager(State state,
+    public SnapshotManager(BsqState bsqState,
                            StateService stateService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
-        this.state = state;
+        this.bsqState = bsqState;
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
@@ -80,12 +80,12 @@ public class SnapshotManager implements BsqStateListener {
             // At trigger event we store the latest snapshotCandidate to disc
             if (snapshotCandidate != null) {
                 // We clone because storage is in a threaded context
-                final State cloned = state.getClone(snapshotCandidate);
+                final BsqState cloned = bsqState.getClone(snapshotCandidate);
                 storage.queueUpForSave(cloned);
                 log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
             }
             // Now we clone and keep it in memory for the next trigger
-            snapshotCandidate = state.getClone();
+            snapshotCandidate = bsqState.getClone();
             // don't access cloned anymore with methods as locks are transient!
             log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
         }
@@ -102,7 +102,7 @@ public class SnapshotManager implements BsqStateListener {
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
-        State persisted = storage.initAndGetPersisted(state, 100);
+        BsqState persisted = storage.initAndGetPersisted(bsqState, 100);
         if (persisted != null) {
             log.info("applySnapshot persisted.chainHeadHeight=" + stateService.getBlocksFromState(persisted).getLast().getHeight());
             stateService.applySnapshot(persisted);

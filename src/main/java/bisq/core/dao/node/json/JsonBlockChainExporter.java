@@ -19,7 +19,7 @@ package bisq.core.dao.node.json;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.node.btcd.PubKeyScript;
-import bisq.core.dao.state.State;
+import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
@@ -119,8 +119,8 @@ public class JsonBlockChainExporter {
     public void maybeExport() {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
-                final State stateClone = stateService.getClone();
-                Map<String, Tx> txMap = stateService.getBlocksFromState(stateClone).stream()
+                final BsqState bsqStateClone = stateService.getClone();
+                Map<String, Tx> txMap = stateService.getBlocksFromState(bsqStateClone).stream()
                         .filter(Objects::nonNull)
                         .flatMap(block -> block.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));
@@ -188,7 +188,7 @@ public class JsonBlockChainExporter {
                     }
                 }
 
-                jsonFileManager.writeToDisc(Utilities.objectToJson(stateClone), "StateService");
+                jsonFileManager.writeToDisc(Utilities.objectToJson(bsqStateClone), "StateService");
                 return null;
             });
 

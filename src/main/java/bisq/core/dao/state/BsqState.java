@@ -52,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
  * Root class for mutable state of the DAO.
  */
 @Slf4j
-public class State implements PersistableEnvelope {
+public class BsqState implements PersistableEnvelope {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Static
@@ -136,8 +136,8 @@ public class State implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public State(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
-                 @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
+    public BsqState(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
+                    @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this(genesisTxId,
                 genesisBlockHeight,
                 genesisBlockHeight,
@@ -157,17 +157,17 @@ public class State implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private State(String genesisTxId,
-                  int genesisBlockHeight,
-                  int chainHeight,
-                  LinkedList<Block> blocks,
-                  LinkedList<Cycle> cycles,
-                  Map<TxOutputKey, TxOutput> unspentTxOutputMap,
-                  Map<TxOutputKey, TxOutput> nonBsqTxOutputMap,
-                  Map<TxOutputKey, TxOutput> confiscatedTxOutputMap,
-                  Map<String, Issuance> issuanceMap,
-                  Map<TxOutputKey, SpentInfo> spentInfoMap,
-                  List<ParamChange> paramChangeList) {
+    private BsqState(String genesisTxId,
+                     int genesisBlockHeight,
+                     int chainHeight,
+                     LinkedList<Block> blocks,
+                     LinkedList<Cycle> cycles,
+                     Map<TxOutputKey, TxOutput> unspentTxOutputMap,
+                     Map<TxOutputKey, TxOutput> nonBsqTxOutputMap,
+                     Map<TxOutputKey, TxOutput> confiscatedTxOutputMap,
+                     Map<String, Issuance> issuanceMap,
+                     Map<TxOutputKey, SpentInfo> spentInfoMap,
+                     List<ParamChange> paramChangeList) {
         this.genesisTxId = genesisTxId;
         this.genesisBlockHeight = genesisBlockHeight;
         this.chainHeight = chainHeight;
@@ -225,7 +225,7 @@ public class State implements PersistableEnvelope {
                 .collect(Collectors.toMap(e -> TxOutputKey.getKeyFromString(e.getKey()), e -> SpentInfo.fromProto(e.getValue())));
         final List<ParamChange> paramChangeList = proto.getParamChangeListList().stream()
                 .map(ParamChange::fromProto).collect(Collectors.toCollection(ArrayList::new));
-        return new State(proto.getGenesisTxId(),
+        return new BsqState(proto.getGenesisTxId(),
                 proto.getGenesisBlockHeight(),
                 proto.getChainHeight(),
                 blocks,
@@ -247,11 +247,11 @@ public class State implements PersistableEnvelope {
         this.chainHeight = chainHeight;
     }
 
-    State getClone() {
-        return (State) State.fromProto(getStateBuilder().build());
+    BsqState getClone() {
+        return (BsqState) BsqState.fromProto(getStateBuilder().build());
     }
 
-    State getClone(State snapshotCandidate) {
-        return (State) State.fromProto(snapshotCandidate.getStateBuilder().build());
+    BsqState getClone(BsqState snapshotCandidate) {
+        return (BsqState) BsqState.fromProto(snapshotCandidate.getStateBuilder().build());
     }
 }

@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
 public class StateService {
-    private final State state;
+    private final BsqState bsqState;
     private final List<BsqStateListener> bsqStateListeners = new CopyOnWriteArrayList<>();
 
 
@@ -62,10 +62,10 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public StateService(State state) {
+    public StateService(BsqState bsqState) {
         super();
 
-        this.state = state;
+        this.bsqState = bsqState;
     }
 
 
@@ -74,7 +74,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        state.setChainHeight(state.getGenesisBlockHeight());
+        bsqState.setChainHeight(bsqState.getGenesisBlockHeight());
     }
 
 
@@ -82,34 +82,34 @@ public class StateService {
     // Snapshot
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void applySnapshot(State snapshot) {
-        state.setChainHeight(snapshot.getChainHeight());
+    public void applySnapshot(BsqState snapshot) {
+        bsqState.setChainHeight(snapshot.getChainHeight());
 
-        state.getBlocks().clear();
-        state.getBlocks().addAll(snapshot.getBlocks());
+        bsqState.getBlocks().clear();
+        bsqState.getBlocks().addAll(snapshot.getBlocks());
 
-        state.getCycles().clear();
-        state.getCycles().addAll(snapshot.getCycles());
+        bsqState.getCycles().clear();
+        bsqState.getCycles().addAll(snapshot.getCycles());
 
-        state.getUnspentTxOutputMap().clear();
-        state.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
+        bsqState.getUnspentTxOutputMap().clear();
+        bsqState.getUnspentTxOutputMap().putAll(snapshot.getUnspentTxOutputMap());
 
-        state.getIssuanceMap().clear();
-        state.getIssuanceMap().putAll(snapshot.getIssuanceMap());
+        bsqState.getIssuanceMap().clear();
+        bsqState.getIssuanceMap().putAll(snapshot.getIssuanceMap());
 
-        state.getSpentInfoMap().clear();
-        state.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
+        bsqState.getSpentInfoMap().clear();
+        bsqState.getSpentInfoMap().putAll(snapshot.getSpentInfoMap());
 
-        state.getParamChangeList().clear();
-        state.getParamChangeList().addAll(snapshot.getParamChangeList());
+        bsqState.getParamChangeList().clear();
+        bsqState.getParamChangeList().addAll(snapshot.getParamChangeList());
     }
 
-    public State getClone() {
-        return state.getClone();
+    public BsqState getClone() {
+        return bsqState.getClone();
     }
 
-    public LinkedList<Block> getBlocksFromState(State state) {
-        return new LinkedList<>(state.getBlocks());
+    public LinkedList<Block> getBlocksFromState(BsqState bsqState) {
+        return new LinkedList<>(bsqState.getBlocks());
     }
 
 
@@ -118,7 +118,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public int getChainHeight() {
-        return state.getChainHeight();
+        return bsqState.getChainHeight();
     }
 
 
@@ -127,7 +127,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public LinkedList<Cycle> getCycles() {
-        return state.getCycles();
+        return bsqState.getCycles();
     }
 
     public Cycle getCurrentCycle() {
@@ -157,13 +157,13 @@ public class StateService {
 
     // First we get the blockHeight set
     public void onNewBlockHeight(int blockHeight) {
-        state.setChainHeight(blockHeight);
+        bsqState.setChainHeight(blockHeight);
         bsqStateListeners.forEach(listener -> listener.onNewBlockHeight(blockHeight));
     }
 
     // Second we get the block added with empty txs
     public void onNewBlockWithEmptyTxs(Block block) {
-        state.getBlocks().add(block);
+        bsqState.getBlocks().add(block);
         bsqStateListeners.forEach(l -> l.onEmptyBlockAdded(block));
 
         log.info("New Block added at blockHeight " + block.getHeight());
@@ -181,7 +181,7 @@ public class StateService {
 
 
     public LinkedList<Block> getBlocks() {
-        return state.getBlocks();
+        return bsqState.getBlocks();
     }
 
     public Optional<Block> getLastBlock() {
@@ -225,15 +225,15 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public String getGenesisTxId() {
-        return state.getGenesisTxId();
+        return bsqState.getGenesisTxId();
     }
 
     public int getGenesisBlockHeight() {
-        return state.getGenesisBlockHeight();
+        return bsqState.getGenesisBlockHeight();
     }
 
     public Coin getGenesisTotalSupply() {
-        return State.getGenesisTotalSupply();
+        return BsqState.getGenesisTotalSupply();
     }
 
     public Optional<Tx> getGenesisTx() {
@@ -329,7 +329,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
-        return state.getUnspentTxOutputMap();
+        return bsqState.getUnspentTxOutputMap();
     }
 
     public void addUnspentTxOutput(TxOutput txOutput) {
@@ -461,16 +461,16 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void addIssuance(Issuance issuance) {
-        state.getIssuanceMap().put(issuance.getTxId(), issuance);
+        bsqState.getIssuanceMap().put(issuance.getTxId(), issuance);
     }
 
     public Set<Issuance> getIssuanceSet() {
-        return new HashSet<>(state.getIssuanceMap().values());
+        return new HashSet<>(bsqState.getIssuanceMap().values());
     }
 
     private Optional<Issuance> getIssuance(String txId) {
-        if (state.getIssuanceMap().containsKey(txId))
-            return Optional.of(state.getIssuanceMap().get(txId));
+        if (bsqState.getIssuanceMap().containsKey(txId))
+            return Optional.of(bsqState.getIssuanceMap().get(txId));
         else
             return Optional.empty();
     }
@@ -500,12 +500,12 @@ public class StateService {
     public void addNonBsqTxOutput(TxOutput txOutput) {
         checkArgument(txOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                 "txOutput must be type ISSUANCE_CANDIDATE_OUTPUT");
-        state.getNonBsqTxOutputMap().put(txOutput.getKey(), txOutput);
+        bsqState.getNonBsqTxOutputMap().put(txOutput.getKey(), txOutput);
     }
 
     public Optional<TxOutput> getBtcTxOutput(TxOutputKey key) {
         // Issuance candidates which did not got accepted in voting are covered here
-        Map<TxOutputKey, TxOutput> nonBsqTxOutputMap = state.getNonBsqTxOutputMap();
+        Map<TxOutputKey, TxOutput> nonBsqTxOutputMap = bsqState.getNonBsqTxOutputMap();
         if (nonBsqTxOutputMap.containsKey(key))
             return Optional.of(nonBsqTxOutputMap.get(key));
 
@@ -638,7 +638,7 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setNewParam(int blockHeight, Param param, long paramValue) {
-        List<ParamChange> paramChangeList = state.getParamChangeList();
+        List<ParamChange> paramChangeList = bsqState.getParamChangeList();
         getStartHeightOfNextCycle(blockHeight)
                 .ifPresent(heightOfNewCycle -> {
                     ParamChange paramChange = new ParamChange(param.name(), paramValue, heightOfNewCycle);
@@ -649,7 +649,7 @@ public class StateService {
     }
 
     public long getParamValue(Param param, int blockHeight) {
-        List<ParamChange> paramChangeList = new ArrayList<>(state.getParamChangeList());
+        List<ParamChange> paramChangeList = new ArrayList<>(bsqState.getParamChangeList());
         if (!paramChangeList.isEmpty()) {
             // List is sorted by height, we start from latest entries to find most recent entry.
             for (int i = paramChangeList.size() - 1; i >= 0; i--) {
@@ -671,11 +671,11 @@ public class StateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void setSpentInfo(TxOutputKey txOutputKey, SpentInfo spentInfo) {
-        state.getSpentInfoMap().put(txOutputKey, spentInfo);
+        bsqState.getSpentInfoMap().put(txOutputKey, spentInfo);
     }
 
     public Optional<SpentInfo> getSpentInfo(TxOutput txOutput) {
-        return Optional.ofNullable(state.getSpentInfoMap().getOrDefault(txOutput.getKey(), null));
+        return Optional.ofNullable(bsqState.getSpentInfoMap().getOrDefault(txOutput.getKey(), null));
     }
 
 
