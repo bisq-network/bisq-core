@@ -606,6 +606,20 @@ public class StateService {
                 .filter(this::isLockTimeOverForUnlockTxOutput);
     }
 
+    // TODO SQ
+    /*public boolean isSpentByUnlockTx(TxOutput txOutput) {
+        log.error("txOutput " + txOutput.getTxId());
+        boolean present = getSpentInfo(txOutput)
+                .map(spentInfo -> {
+                    log.error("spentInfo " + spentInfo);
+                    return getTx(spentInfo.getTxId());
+                })
+                .filter(Optional::isPresent)
+                .isPresent();
+        log.error("isSpentByUnlockTx present={}", present);
+        return present;
+    }*/
+
     public long getTotalAmountOfUnLockedTxOutputs() {
         return getUnlockedTxOutputsStream()
                 .mapToLong(TxOutput::getValue)

@@ -219,7 +219,9 @@ public class BsqWalletService extends WalletService implements BlockListener {
                                         TransactionOutput connectedOutput = in.getConnectedOutput();
                                         if (connectedOutput != null) {
                                             Transaction parentTransaction = connectedOutput.getParentTransaction();
-                                            if (parentTransaction != null) {
+                                            // TODO SQ
+                                            if (parentTransaction != null/* &&
+                                                    parentTransaction.getConfidence().getConfidenceType() == BUILDING*/) {
                                                 TxOutputKey key = new TxOutputKey(parentTransaction.getHashAsString(),
                                                         connectedOutput.getIndex());
 
@@ -236,7 +238,6 @@ public class BsqWalletService extends WalletService implements BlockListener {
                         })
                         .sum()
         );
-
         Set<String> confirmedTxIdSet = getTransactions(false).stream()
                 .filter(tx -> tx.getConfidence().getConfidenceType() == BUILDING)
                 .map(Transaction::getHashAsString)
@@ -248,6 +249,7 @@ public class BsqWalletService extends WalletService implements BlockListener {
                 .sum());
         lockupBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
                 .filter(txOutput -> stateService.isUnspent(txOutput.getKey()))
+                /*.filter(txOutput -> !stateService.isSpentByUnlockTx(txOutput))*/ // TODO SQ
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());

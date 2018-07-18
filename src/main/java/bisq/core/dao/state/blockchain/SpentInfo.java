@@ -27,6 +27,7 @@ import lombok.Value;
 @Value
 public class SpentInfo implements PersistablePayload {
     private final long blockHeight;
+    // Spending tx
     private final String txId;
     private final int inputIndex;
 
