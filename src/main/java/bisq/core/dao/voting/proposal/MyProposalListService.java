@@ -24,7 +24,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -65,7 +65,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     }
 
     private final P2PService p2PService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final WalletsManager walletsManager;
     private final Storage<MyProposalList> storage;
@@ -82,13 +82,13 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
 
     @Inject
     public MyProposalListService(P2PService p2PService,
-                                 StateService stateService,
+                                 BsqStateService bsqStateService,
                                  PeriodService periodService,
                                  WalletsManager walletsManager,
                                  Storage<MyProposalList> storage,
                                  KeyRing keyRing) {
         this.p2PService = p2PService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.walletsManager = walletsManager;
         this.storage = storage;
@@ -96,7 +96,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
 
         numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -186,7 +186,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     }
 
     public boolean remove(Proposal proposal) {
-        if (ProposalUtils.canRemoveProposal(proposal, stateService, periodService)) {
+        if (ProposalUtils.canRemoveProposal(proposal, bsqStateService, periodService)) {
             boolean success = p2PService.removeData(new TempProposalPayload(proposal, signaturePubKey), true);
             if (!success)
                 log.warn("Removal of proposal from p2p network failed. proposal={}", proposal);

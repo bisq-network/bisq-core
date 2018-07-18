@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.voteresult;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -100,9 +100,9 @@ public class VoteResultConsensus {
         return weightedAmount;
     }
 
-    public static long getMeritStake(String blindVoteTxId, MeritList meritList, StateService stateService) {
+    public static long getMeritStake(String blindVoteTxId, MeritList meritList, BsqStateService bsqStateService) {
         int blocksPerYear = 50_000; // 51264;
-        int currentChainHeight = stateService.getChainHeight();
+        int currentChainHeight = bsqStateService.getChainHeight();
         return meritList.getList().stream()
                 .filter(merit -> {
                     String pubKeyAsHex = merit.getIssuance().getPubKey();
@@ -151,12 +151,12 @@ public class VoteResultConsensus {
         return Encryption.getSecretKeyFromBytes(secretKeyAsBytes);
     }
 
-    public static TxOutput getConnectedBlindVoteStakeOutput(Tx voteRevealTx, StateService stateService)
+    public static TxOutput getConnectedBlindVoteStakeOutput(Tx voteRevealTx, BsqStateService bsqStateService)
             throws VoteResultException {
         try {
             // We use the stake output of the blind vote tx as first input
             final TxInput stakeIxInput = voteRevealTx.getTxInputs().get(0);
-            Optional<TxOutput> optionalBlindVoteStakeOutput = stateService.getConnectedTxOutput(stakeIxInput);
+            Optional<TxOutput> optionalBlindVoteStakeOutput = bsqStateService.getConnectedTxOutput(stakeIxInput);
             checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must not be present");
             final TxOutput blindVoteStakeOutput = optionalBlindVoteStakeOutput.get();
             checkArgument(blindVoteStakeOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
@@ -167,16 +167,16 @@ public class VoteResultConsensus {
         }
     }
 
-    public static Tx getBlindVoteTx(TxOutput blindVoteStakeOutput, StateService stateService,
+    public static Tx getBlindVoteTx(TxOutput blindVoteStakeOutput, BsqStateService bsqStateService,
                                     PeriodService periodService, int chainHeight)
             throws VoteResultException {
         try {
             String blindVoteTxId = blindVoteStakeOutput.getTxId();
-            Optional<Tx> optionalBlindVoteTx = stateService.getTx(blindVoteTxId);
+            Optional<Tx> optionalBlindVoteTx = bsqStateService.getTx(blindVoteTxId);
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
                     blindVoteTxId + "not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();
-            Optional<TxType> optionalTxType = stateService.getOptionalTxType(blindVoteTx.getId());
+            Optional<TxType> optionalTxType = bsqStateService.getOptionalTxType(blindVoteTx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");
             checkArgument(optionalTxType.get() == TxType.BLIND_VOTE,
                     "blindVoteTx must have type BLIND_VOTE");

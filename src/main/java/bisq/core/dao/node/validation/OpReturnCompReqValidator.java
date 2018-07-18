@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.PeriodService;
 
@@ -33,8 +33,8 @@ public class OpReturnCompReqValidator extends OpReturnProposalValidator {
 
     @Inject
     public OpReturnCompReqValidator(PeriodService periodService,
-                                    StateService stateService) {
-        super(periodService, stateService);
+                                    BsqStateService bsqStateService) {
+        super(periodService, bsqStateService);
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make

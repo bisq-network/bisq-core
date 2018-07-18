@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.blindvote;
 
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.blindvote.storage.BlindVoteStorageService;
@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final P2PService p2PService;
     private final BlindVoteValidator blindVoteValidator;
 
@@ -55,17 +55,17 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteService(StateService stateService,
+    public BlindVoteService(BsqStateService bsqStateService,
                             P2PService p2PService,
                             BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             BlindVoteValidator blindVoteValidator) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.p2PService = p2PService;
         this.blindVoteValidator = blindVoteValidator;
 
         appendOnlyDataStoreService.addService(blindVoteStorageService);
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
 
@@ -88,7 +88,7 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
 
     @Override
     public void onParseBlockChainComplete() {
-        stateService.removeBsqStateListener(this);
+        bsqStateService.removeBsqStateListener(this);
         fillListFromAppendOnlyDataStore();
     }
 

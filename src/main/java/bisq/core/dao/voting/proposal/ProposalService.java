@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -53,7 +53,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     private final P2PService p2PService;
     private final PeriodService periodService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final ProposalValidator proposalValidator;
 
     // Proposals we receive in the proposal phase. They can be removed in that phase. That list must not be used for
@@ -81,17 +81,17 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                            TempProposalStorageService tempProposalStorageService,
                            AppendOnlyDataStoreService appendOnlyDataStoreService,
                            ProtectedDataStoreService protectedDataStoreService,
-                           StateService stateService,
+                           BsqStateService bsqStateService,
                            ProposalValidator proposalValidator) {
         this.p2PService = p2PService;
         this.periodService = periodService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.proposalValidator = proposalValidator;
 
         appendOnlyDataStoreService.addService(proposalStorageService);
         protectedDataStoreService.addService(tempProposalStorageService);
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
 
         p2PService.addHashSetChangedListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
@@ -122,7 +122,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     @Override
     public void onParseTxsComplete(Block block) {
-        int heightForRepublishing = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
+        int heightForRepublishing = periodService.getFirstBlockOfPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.BREAK1);
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are not still parsing old blocks
             if (parsingComplete)
@@ -136,7 +136,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     public void onParseBlockChainComplete() {
         parsingComplete = true;
 
-        stateService.removeBsqStateListener(this);
+        bsqStateService.removeBsqStateListener(this);
 
         // Fill the lists with the data we have collected in out stores.
         fillListFromProtectedStore();
@@ -211,7 +211,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 } else {
                     //TODO called at startup when we are not in cycle of proposal
                     log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
-                            proposal.getTxId(), stateService.getChainHeight());
+                            proposal.getTxId(), bsqStateService.getChainHeight());
                 }
             }
         }
@@ -222,12 +222,12 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         if (protectedStoragePayload instanceof TempProposalPayload) {
             final Proposal proposal = ((TempProposalPayload) protectedStoragePayload).getProposal();
             // We allow removal only if we are in the proposal phase.
-            if (periodService.isInPhase(stateService.getChainHeight(), DaoPhase.Phase.PROPOSAL)) {
+            if (periodService.isInPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.PROPOSAL)) {
                 if (protectedStoreList.contains(proposal))
                     protectedStoreList.remove(proposal);
             } else {
                 log.warn("We received a remove request outside the PROPOSAL phase. " +
-                        "Proposal.txId={}, blockHeight={}", proposal.getTxId(), stateService.getChainHeight());
+                        "Proposal.txId={}, blockHeight={}", proposal.getTxId(), bsqStateService.getChainHeight());
             }
         }
     }
@@ -244,7 +244,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 } else {
                     log.debug("We received a invalid append-only proposal from the P2P network. " +
                                     "Proposal.txId={}, blockHeight={}",
-                            proposal.getTxId(), stateService.getChainHeight());
+                            proposal.getTxId(), bsqStateService.getChainHeight());
                 }
             }
         }

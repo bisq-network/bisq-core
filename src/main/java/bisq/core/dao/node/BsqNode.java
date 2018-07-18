@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node;
 
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.P2PService;
@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 public abstract class BsqNode {
 
     protected final P2PService p2PService;
-    protected final StateService stateService;
+    protected final BsqStateService bsqStateService;
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
@@ -59,14 +59,14 @@ public abstract class BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BsqNode(StateService stateService,
+    public BsqNode(BsqStateService bsqStateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
         this.p2PService = p2PService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
 
-        genesisTxId = stateService.getGenesisTxId();
-        genesisBlockHeight = stateService.getGenesisBlockHeight();
+        genesisTxId = bsqStateService.getGenesisTxId();
+        genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
         this.snapshotManager = snapshotManager;
 
         p2PServiceListener = new P2PServiceListener() {
@@ -140,7 +140,7 @@ public abstract class BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, stateService.getChainHeight());
+        final int startBlockHeight = Math.max(genesisBlockHeight, bsqStateService.getChainHeight());
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -149,7 +149,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                stateService.getChainHeight());
+                bsqStateService.getChainHeight());
 
         return startBlockHeight;
     }
@@ -159,7 +159,7 @@ public abstract class BsqNode {
     protected void onParseBlockChainComplete() {
         log.info("onParseBlockChainComplete");
         parseBlockchainComplete = true;
-        stateService.onParseBlockChainComplete();
+        bsqStateService.onParseBlockChainComplete();
 
         // log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
         // log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
@@ -173,7 +173,7 @@ public abstract class BsqNode {
     }
 
     protected boolean isBlockAlreadyAdded(RawBlock rawBlock) {
-        return stateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
 

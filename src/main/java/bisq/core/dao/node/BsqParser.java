@@ -20,7 +20,7 @@ package bisq.core.dao.node;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 import bisq.core.dao.state.blockchain.RawTx;
@@ -49,7 +49,7 @@ public abstract class BsqParser {
     protected final BlockValidator blockValidator;
     protected final GenesisTxValidator genesisTxValidator;
     private final TxValidator txValidator;
-    protected final StateService stateService;
+    protected final BsqStateService bsqStateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -61,11 +61,11 @@ public abstract class BsqParser {
     public BsqParser(BlockValidator blockValidator,
                      GenesisTxValidator genesisTxValidator,
                      TxValidator txValidator,
-                     StateService stateService) {
+                     BsqStateService bsqStateService) {
         this.blockValidator = blockValidator;
         this.genesisTxValidator = genesisTxValidator;
         this.txValidator = txValidator;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////

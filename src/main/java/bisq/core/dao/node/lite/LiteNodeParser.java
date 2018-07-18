@@ -23,7 +23,7 @@ import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.InvalidBlockException;
 import bisq.core.dao.node.validation.TxValidator;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 
@@ -43,8 +43,8 @@ public class LiteNodeParser extends BsqParser {
     public LiteNodeParser(BlockValidator blockValidator,
                           GenesisTxValidator genesisTxValidator,
                           TxValidator txValidator,
-                          StateService stateService) {
-        super(blockValidator, genesisTxValidator, txValidator, stateService);
+                          BsqStateService bsqStateService) {
+        super(blockValidator, genesisTxValidator, txValidator, bsqStateService);
     }
 
     // The block we received from the seed node is already filtered for valid bsq txs but we want to verify ourselves
@@ -54,7 +54,7 @@ public class LiteNodeParser extends BsqParser {
         int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
         blockValidator.validate(rawBlock);
-        stateService.onNewBlockHeight(rawBlock.getHeight());
+        bsqStateService.onNewBlockHeight(rawBlock.getHeight());
 
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
@@ -63,13 +63,13 @@ public class LiteNodeParser extends BsqParser {
 
         // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))
-            stateService.onNewBlockWithEmptyTxs(block);
+            bsqStateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);
 
         // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
         parseBsqTxs(block, rawBlock.getRawTxs());
 
-        stateService.onParseBlockComplete(block);
+        bsqStateService.onParseBlockComplete(block);
     }
 }

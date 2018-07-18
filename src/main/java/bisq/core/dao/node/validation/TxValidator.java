@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
@@ -45,15 +45,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class TxValidator {
 
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final TxInputProcessor txInputProcessor;
     private final TxOutputProcessor txOutputProcessor;
 
     @Inject
-    public TxValidator(StateService stateService,
+    public TxValidator(BsqStateService bsqStateService,
                        TxInputProcessor txInputProcessor,
                        TxOutputProcessor txOutputProcessor) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.txInputProcessor = txInputProcessor;
         this.txOutputProcessor = txOutputProcessor;
     }

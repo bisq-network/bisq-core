@@ -27,7 +27,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
@@ -71,7 +71,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class VoteRevealService implements BsqStateListener {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
@@ -90,7 +90,7 @@ public class VoteRevealService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public VoteRevealService(StateService stateService,
+    public VoteRevealService(BsqStateService bsqStateService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
                              PeriodService periodService,
@@ -99,7 +99,7 @@ public class VoteRevealService implements BsqStateListener {
                              BtcWalletService btcWalletService,
                              P2PService p2PService,
                              WalletsManager walletsManager) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
         this.periodService = periodService;
@@ -115,7 +115,7 @@ public class VoteRevealService implements BsqStateListener {
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -124,7 +124,7 @@ public class VoteRevealService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeRevealVotes(stateService.getChainHeight());
+        maybeRevealVotes(bsqStateService.getChainHeight());
     }
 
     public byte[] getHashOfBlindVoteList() {
@@ -202,7 +202,7 @@ public class VoteRevealService implements BsqStateListener {
         // We search for my unspent stake output.
         // myVote is already tested if it is in current cycle at maybeRevealVotes
         // We expect that the blind vote tx and stake output is available. If not we throw an exception.
-        TxOutput stakeTxOutput = stateService.getUnspentBlindVoteStakeTxOutputs().stream()
+        TxOutput stakeTxOutput = bsqStateService.getUnspentBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> txOutput.getTxId().equals(myVote.getTxId()))
                 .findFirst()
                 .orElseThrow(() -> new VoteRevealException("stakeTxOutput is not found for myVote.", myVote));

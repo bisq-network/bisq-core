@@ -22,7 +22,7 @@ import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 
@@ -46,8 +46,8 @@ public class FullNodeParser extends BsqParser {
     public FullNodeParser(BlockValidator blockValidator,
                           GenesisTxValidator genesisTxValidator,
                           TxValidator txValidator,
-                          StateService stateService) {
-        super(blockValidator, genesisTxValidator, txValidator, stateService);
+                          BsqStateService bsqStateService) {
+        super(blockValidator, genesisTxValidator, txValidator, bsqStateService);
     }
 
 
@@ -65,7 +65,7 @@ public class FullNodeParser extends BsqParser {
         blockValidator.validate(rawBlock);
 
         final int blockHeight = rawBlock.getHeight();
-        stateService.onNewBlockHeight(blockHeight);
+        bsqStateService.onNewBlockHeight(blockHeight);
 
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
@@ -74,7 +74,7 @@ public class FullNodeParser extends BsqParser {
 
         // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))
-            stateService.onNewBlockWithEmptyTxs(block);
+            bsqStateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);
 
@@ -92,7 +92,7 @@ public class FullNodeParser extends BsqParser {
         log.debug("parseBsqTxs took {} ms",
                 rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
-        stateService.onParseBlockComplete(block);
+        bsqStateService.onParseBlockComplete(block);
 
         //log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
         //log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));

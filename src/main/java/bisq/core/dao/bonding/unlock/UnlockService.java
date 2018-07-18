@@ -26,7 +26,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.TxOutput;
 
 import bisq.common.handlers.ExceptionHandler;
@@ -44,7 +44,7 @@ public class UnlockService {
     private final WalletsManager walletsManager;
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -55,17 +55,17 @@ public class UnlockService {
     public UnlockService(WalletsManager walletsManager,
                          BsqWalletService bsqWalletService,
                          BtcWalletService btcWalletService,
-                         StateService stateService) {
+                         BsqStateService bsqStateService) {
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
     }
 
     public void publishUnlockTx(String lockupTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
         try {
-            TxOutput lockupTxOutput = stateService.getLockupTxOutput(lockupTxId).get();
+            TxOutput lockupTxOutput = bsqStateService.getLockupTxOutput(lockupTxId).get();
             final Transaction unlockTx = getUnlockTx(lockupTxOutput);
 
             walletsManager.publishAndCommitBsqTx(unlockTx, new TxBroadcaster.Callback() {

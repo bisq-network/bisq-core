@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.voteresult;
 
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -84,7 +84,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteResultService implements BsqStateListener {
     private final VoteRevealService voteRevealService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
@@ -105,21 +105,21 @@ public class VoteResultService implements BsqStateListener {
 
     @Inject
     public VoteResultService(VoteRevealService voteRevealService,
-                             StateService stateService,
+                             BsqStateService bsqStateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
         this.issuanceService = issuanceService;
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -128,7 +128,7 @@ public class VoteResultService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        maybeCalculateVoteResult(stateService.getChainHeight());
+        maybeCalculateVoteResult(bsqStateService.getChainHeight());
     }
 
     public List<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
@@ -204,20 +204,20 @@ public class VoteResultService implements BsqStateListener {
             }
 
             // Those which did not get accepted will be added to the nonBsq map
-            stateService.getIssuanceCandidateTxOutputs().stream()
-                    .filter(txOutput -> !stateService.isIssuanceTx(txOutput.getTxId()))
-                    .forEach(stateService::addNonBsqTxOutput);
+            bsqStateService.getIssuanceCandidateTxOutputs().stream()
+                    .filter(txOutput -> !bsqStateService.isIssuanceTx(txOutput.getTxId()))
+                    .forEach(bsqStateService::addNonBsqTxOutput);
         }
     }
 
     private Set<DecryptedVote> getDecryptedVotes(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
-        return stateService.getVoteRevealOpReturnTxOutputs().stream()
+        return bsqStateService.getVoteRevealOpReturnTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
                 .map(txOutput -> {
                     final byte[] opReturnData = txOutput.getOpReturnData();
                     final String voteRevealTxId = txOutput.getTxId();
-                    Optional<Tx> optionalVoteRevealTx = stateService.getTx(voteRevealTxId);
+                    Optional<Tx> optionalVoteRevealTx = bsqStateService.getTx(voteRevealTxId);
                     if (!optionalVoteRevealTx.isPresent()) {
                         log.error("optionalVoteRevealTx is not present. voteRevealTxId={}", voteRevealTxId);
                         return null;
@@ -227,9 +227,9 @@ public class VoteResultService implements BsqStateListener {
                     try {
                         byte[] hashOfBlindVoteList = VoteResultConsensus.getHashOfBlindVoteList(opReturnData);
                         SecretKey secretKey = VoteResultConsensus.getSecretKey(opReturnData);
-                        TxOutput blindVoteStakeOutput = VoteResultConsensus.getConnectedBlindVoteStakeOutput(voteRevealTx, stateService);
+                        TxOutput blindVoteStakeOutput = VoteResultConsensus.getConnectedBlindVoteStakeOutput(voteRevealTx, bsqStateService);
                         long blindVoteStake = blindVoteStakeOutput.getValue();
-                        Tx blindVoteTx = VoteResultConsensus.getBlindVoteTx(blindVoteStakeOutput, stateService, periodService, chainHeight);
+                        Tx blindVoteTx = VoteResultConsensus.getBlindVoteTx(blindVoteStakeOutput, bsqStateService, periodService, chainHeight);
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
@@ -302,7 +302,7 @@ public class VoteResultService implements BsqStateListener {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
             map.computeIfAbsent(hash, e -> 0L);
             long aggregatedStake = map.get(hash);
-            long meritStake = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(), decryptedVote.getMeritList(), stateService);
+            long meritStake = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(), decryptedVote.getMeritList(), bsqStateService);
             long stake = decryptedVote.getStake();
             long combinedStake = stake + meritStake;
             log.debug("blindVoteTxId={}, meritStake={}, stake={}, combinedStake={}",
@@ -375,8 +375,8 @@ public class VoteResultService implements BsqStateListener {
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
         List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
-            long requiredQuorum = stateService.getParamValue(proposal.getQuorumParam(), chainHeight);
-            long requiredVoteThreshold = stateService.getParamValue(proposal.getThresholdParam(), chainHeight);
+            long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
+            long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
             long reachedQuorum = proposalVoteResult.getQuorum();
@@ -433,7 +433,7 @@ public class VoteResultService implements BsqStateListener {
         for (VoteWithStake voteWithStake : voteWithStakeList) {
             String blindVoteTxId = voteWithStake.getBlindVoteTxId();
             MeritList meritList = voteWithStake.getMeritList();
-            long meritStake = VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, stateService);
+            long meritStake = VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
             long stake = voteWithStake.getStake();
             long combinedStake = stake + meritStake;
             log.info("proposalTxId={}, stake={}, meritStake={}, combinedStake={}",
@@ -513,12 +513,12 @@ public class VoteResultService implements BsqStateListener {
                 .append("\n################################################################################\n");
         log.info(sb.toString());
 
-        stateService.setNewParam(chainHeight, changeParamProposal.getParam(),
+        bsqStateService.setNewParam(chainHeight, changeParamProposal.getParam(),
                 changeParamProposal.getParamValue());
     }
 
     private ParamChange getParamChange(ChangeParamProposal changeParamProposal, int chainHeight) {
-        return stateService.getStartHeightOfNextCycle(chainHeight)
+        return bsqStateService.getStartHeightOfNextCycle(chainHeight)
                 .map(heightOfNewCycle -> new ParamChange(changeParamProposal.getParam().name(),
                         changeParamProposal.getParamValue(), heightOfNewCycle))
                 .orElse(null);

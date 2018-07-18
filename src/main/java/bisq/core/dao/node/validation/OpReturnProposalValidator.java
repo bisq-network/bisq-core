@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.period.DaoPhase;
@@ -33,14 +33,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OpReturnProposalValidator {
     protected final PeriodService periodService;
-    protected final StateService stateService;
+    protected final BsqStateService bsqStateService;
 
 
     @Inject
     public OpReturnProposalValidator(PeriodService periodService,
-                                     StateService stateService) {
+                                     BsqStateService bsqStateService) {
         this.periodService = periodService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
@@ -49,9 +49,9 @@ public class OpReturnProposalValidator {
         boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
         if (!isInPhase)
             log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
-        boolean isFeeCorrect = fee == stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
+        boolean isFeeCorrect = fee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
         if (!isFeeCorrect)
-            log.warn("Invalid fee. used fee={}, required fee={}", fee, stateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
+            log.warn("Invalid fee. used fee={}, required fee={}", fee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
         return opReturnData.length == 22 &&
                 isFeeCorrect &&
                 isInPhase;

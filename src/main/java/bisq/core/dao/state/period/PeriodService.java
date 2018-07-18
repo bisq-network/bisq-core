@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state.period;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 
 import com.google.inject.Inject;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class PeriodService {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -37,8 +37,8 @@ public final class PeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PeriodService(StateService stateService) {
-        this.stateService = stateService;
+    public PeriodService(BsqStateService bsqStateService) {
+        this.bsqStateService = bsqStateService;
     }
 
 
@@ -47,19 +47,19 @@ public final class PeriodService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public List<Cycle> getCycles() {
-        return stateService.getCycles();
+        return bsqStateService.getCycles();
     }
 
     public Cycle getCurrentCycle() {
-        return stateService.getCurrentCycle();
+        return bsqStateService.getCurrentCycle();
     }
 
     public int getChainHeight() {
-        return stateService.getChainHeight();
+        return bsqStateService.getChainHeight();
     }
 
     public Optional<Tx> getOptionalTx(String txId) {
-        return stateService.getTx(txId);
+        return bsqStateService.getTx(txId);
     }
 
     public DaoPhase.Phase getCurrentPhase() {
@@ -79,7 +79,7 @@ public final class PeriodService {
     }
 
     public Optional<Cycle> getCycle(int height) {
-        return stateService.getCycle(height);
+        return bsqStateService.getCycle(height);
     }
 
     public boolean isInPhase(int height, DaoPhase.Phase phase) {

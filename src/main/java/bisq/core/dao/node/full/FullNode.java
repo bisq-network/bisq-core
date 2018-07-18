@@ -22,7 +22,7 @@ import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.state.SnapshotManager;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.P2PService;
@@ -59,14 +59,14 @@ public class FullNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public FullNode(StateService stateService,
+    public FullNode(BsqStateService bsqStateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     RpcService rpcService,
                     FullNodeParser fullNodeParser,
                     JsonBlockChainExporter jsonBlockChainExporter,
                     FullNodeNetworkService fullNodeNetworkService) {
-        super(stateService, snapshotManager, p2PService);
+        super(bsqStateService, snapshotManager, p2PService);
         this.rpcService = rpcService;
         this.fullNodeParser = fullNodeParser;
 
@@ -109,7 +109,7 @@ public class FullNode extends BsqNode {
 
         if (parseBlockchainComplete) {
             addBlockHandler();
-            int blockHeightOfLastBlock = stateService.getBlockHeightOfLastBlock();
+            int blockHeightOfLastBlock = bsqStateService.getBlockHeightOfLastBlock();
             log.info("onP2PNetworkReady: We run parseBlocksIfNewBlockAvailable with latest block height {}.", blockHeightOfLastBlock);
             parseBlocksIfNewBlockAvailable(blockHeightOfLastBlock);
         }
@@ -189,7 +189,7 @@ public class FullNode extends BsqNode {
                         parseBlocksIfNewBlockAvailable(chainHeadHeight);
                     }, throwable -> {
                         if (throwable instanceof BlockNotConnectingException) {
-                            int blockHeightOfLastBlock = stateService.getBlockHeightOfLastBlock();
+                            int blockHeightOfLastBlock = bsqStateService.getBlockHeightOfLastBlock();
                             requestChainHeadHeightAndParseBlocks(blockHeightOfLastBlock);
                         } else {
                             handleError(throwable);

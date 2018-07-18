@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -32,13 +32,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OpReturnBlindVoteValidator {
     private final PeriodService periodService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
     @Inject
     public OpReturnBlindVoteValidator(PeriodService periodService,
-                                      StateService stateService) {
+                                      BsqStateService bsqStateService) {
         this.periodService = periodService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
@@ -46,7 +46,7 @@ public class OpReturnBlindVoteValidator {
     boolean validate(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
         return parsingModel.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
-                bsqFee == stateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
+                bsqFee == bsqStateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
                 periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE);
     }
 }

@@ -28,7 +28,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -87,7 +87,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class MyBlindVoteListService implements PersistedDataHost, BsqStateListener {
     private final P2PService p2PService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final WalletsManager walletsManager;
     private final Storage<MyBlindVoteList> storage;
@@ -108,7 +108,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     @Inject
     public MyBlindVoteListService(P2PService p2PService,
-                                  StateService stateService,
+                                  BsqStateService bsqStateService,
                                   PeriodService periodService,
                                   WalletsManager walletsManager,
                                   Storage<MyBlindVoteList> storage,
@@ -119,7 +119,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                                   MyProposalListService myProposalListService,
                                   ProposalValidator proposalValidator) {
         this.p2PService = p2PService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.walletsManager = walletsManager;
         this.storage = storage;
@@ -131,7 +131,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         this.proposalValidator = proposalValidator;
 
         numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -181,7 +181,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     }
 
     public Coin getBlindVoteFee() {
-        return BlindVoteConsensus.getFee(stateService, stateService.getChainHeight());
+        return BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
     }
 
     // For showing fee estimation in confirmation popup
@@ -250,7 +250,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
-        MeritList meritList = new MeritList(stateService.getIssuanceSet().stream()
+        MeritList meritList = new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
                     if (!myCompensationProposalTxIs.contains(issuance.getTxId()))

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.voteresult.issuance;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class IssuanceService {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
 
 
@@ -45,20 +45,20 @@ public class IssuanceService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public IssuanceService(StateService stateService, PeriodService periodService) {
-        this.stateService = stateService;
+    public IssuanceService(BsqStateService bsqStateService, PeriodService periodService) {
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
     }
 
     public void issueBsq(CompensationProposal compensationProposal, int chainHeight) {
-        stateService.getIssuanceCandidateTxOutputs().stream()
+        bsqStateService.getIssuanceCandidateTxOutputs().stream()
                 .filter(txOutput -> isValid(txOutput, compensationProposal, periodService, chainHeight))
                 .forEach(txOutput -> {
                     // We don't check atm if the output is unspent. We cannot use the bsqWallet as that would not
                     // reflect our current block state (could have been spent at later block which is valid and
                     // bsqWallet would show that spent state). We would need to support a spent status for the outputs
                     // which are interpreted as BTC like a not yet accepted comp. request is.
-                    Optional<Tx> optionalTx = stateService.getTx(compensationProposal.getTxId());
+                    Optional<Tx> optionalTx = bsqStateService.getTx(compensationProposal.getTxId());
                     if (optionalTx.isPresent()) {
                         long amount = compensationProposal.getRequestedBsq().value;
                         Tx tx = optionalTx.get();
@@ -66,8 +66,8 @@ public class IssuanceService {
                         TxInput txInput = tx.getTxInputs().get(0);
                         String pubKey = txInput.getPubKey();
                         Issuance issuance = new Issuance(tx.getId(), chainHeight, amount, pubKey);
-                        stateService.addIssuance(issuance);
-                        stateService.addUnspentTxOutput(txOutput);
+                        bsqStateService.addIssuance(issuance);
+                        bsqStateService.addUnspentTxOutput(txOutput);
 
                         StringBuilder sb = new StringBuilder();
                         sb.append("\n################################################################################\n");

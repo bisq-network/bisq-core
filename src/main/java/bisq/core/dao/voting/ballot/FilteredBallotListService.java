@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.ballot;
 
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.ProposalValidator;
@@ -56,11 +56,11 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
     @Inject
     public FilteredBallotListService(BallotListService ballotListService,
                                      PeriodService periodService,
-                                     StateService stateService,
+                                     BsqStateService bsqStateService,
                                      ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
         ballotListService.addListener(this);
 
         validAndConfirmedBallots.setPredicate(ballot -> {
@@ -69,9 +69,9 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
 
         closedBallots.setPredicate(ballot -> {
             final String proposalTxId = ballot.getProposalTxId();
-            return stateService.getTx(proposalTxId).isPresent() &&
-                    stateService.getTx(proposalTxId)
-                            .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
+            return bsqStateService.getTx(proposalTxId).isPresent() &&
+                    bsqStateService.getTx(proposalTxId)
+                            .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), bsqStateService.getChainHeight()))
                             .isPresent();
         });
     }

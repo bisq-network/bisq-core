@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -36,12 +36,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Slf4j
 public class TxOutputProcessor {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final OpReturnProcessor opReturnProcessor;
 
     @Inject
-    public TxOutputProcessor(StateService stateService, OpReturnProcessor opReturnProcessor) {
-        this.stateService = stateService;
+    public TxOutputProcessor(BsqStateService bsqStateService, OpReturnProcessor opReturnProcessor) {
+        this.bsqStateService = bsqStateService;
         this.opReturnProcessor = opReturnProcessor;
     }
 
@@ -133,7 +133,7 @@ public class TxOutputProcessor {
         if (txOutputType != null)
             txOutput.setTxOutputType(txOutputType);
 
-        stateService.addUnspentTxOutput(txOutput);
+        bsqStateService.addUnspentTxOutput(txOutput);
     }
 
     protected void applyStateChangeForBtcOutput(TxOutput txOutput) {

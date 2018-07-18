@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 
@@ -28,20 +28,20 @@ import java.util.LinkedList;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Checks if a block is valid and if so adds it to the StateService.
+ * Checks if a block is valid and if so adds it to the BsqStateService.
  */
 @Slf4j
 public class BlockValidator {
 
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
     @Inject
-    public BlockValidator(StateService stateService) {
-        this.stateService = stateService;
+    public BlockValidator(BsqStateService bsqStateService) {
+        this.bsqStateService = bsqStateService;
     }
 
     public void validate(RawBlock rawBlock) throws BlockNotConnectingException {
-        LinkedList<Block> blocks = stateService.getBlocks();
+        LinkedList<Block> blocks = bsqStateService.getBlocks();
         if (!isBlockConnecting(rawBlock, blocks)) {
             final Block last = blocks.getLast();
             log.warn("addBlock called with a not connecting block. New block:\n" +
@@ -55,7 +55,7 @@ public class BlockValidator {
     }
 
     public boolean isBlockAlreadyAdded(RawBlock rawBlock) {
-        return stateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
     private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -35,15 +35,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TxInputProcessor {
 
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
     @Inject
-    public TxInputProcessor(StateService stateService) {
-        this.stateService = stateService;
+    public TxInputProcessor(BsqStateService bsqStateService) {
+        this.bsqStateService = bsqStateService;
     }
 
     void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
-        stateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
+        bsqStateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
                 .ifPresent(connectedTxOutput -> {
                     parsingModel.addToInputValue(connectedTxOutput.getValue());
 
@@ -66,7 +66,7 @@ public class TxInputProcessor {
                         // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
                         if (parsingModel.getSpentLockupTxOutput() == null) {
                             parsingModel.setSpentLockupTxOutput(connectedTxOutput);
-                            stateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
+                            bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
                                     parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
                         }
 
@@ -76,15 +76,15 @@ public class TxInputProcessor {
                         if (spentUnlockConnectedTxOutputs != null)
                             spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
-                        stateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
+                        bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                             // Only count the input as BSQ input if spent after unlock time
                             if (blockHeight < unlockTx.getUnlockBlockHeight())
                                 parsingModel.burnBond(connectedTxOutput.getValue());
                         });
                     }
 
-                    stateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
-                    stateService.removeUnspentTxOutput(connectedTxOutput);
+                    bsqStateService.setSpentInfo(connectedTxOutput.getKey(), new SpentInfo(blockHeight, txId, inputIndex));
+                    bsqStateService.removeUnspentTxOutput(connectedTxOutput);
                 });
     }
 }

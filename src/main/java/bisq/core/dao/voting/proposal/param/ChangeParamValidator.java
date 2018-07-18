@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.proposal.param;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.Proposal;
@@ -31,8 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ChangeParamValidator extends ProposalValidator {
 
     @Inject
-    public ChangeParamValidator(StateService stateService, PeriodService periodService) {
-        super(stateService, periodService);
+    public ChangeParamValidator(BsqStateService bsqStateService, PeriodService periodService) {
+        super(bsqStateService, periodService);
     }
 
     @Override

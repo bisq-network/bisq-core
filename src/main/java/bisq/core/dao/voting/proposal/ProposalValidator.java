@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -35,12 +35,12 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 @Slf4j
 public class ProposalValidator {
 
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
 
     @Inject
-    public ProposalValidator(StateService stateService, PeriodService periodService) {
-        this.stateService = stateService;
+    public ProposalValidator(BsqStateService bsqStateService, PeriodService periodService) {
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
     }
 
@@ -87,9 +87,9 @@ public class ProposalValidator {
             return false;
         }
 
-        Optional<Tx> optionalTx = stateService.getTx(txId);
+        Optional<Tx> optionalTx = bsqStateService.getTx(txId);
         final boolean isTxConfirmed = optionalTx.isPresent();
-        int chainHeight = stateService.getChainHeight();
+        int chainHeight = bsqStateService.getChainHeight();
 
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();

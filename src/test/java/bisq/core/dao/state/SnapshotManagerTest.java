@@ -34,7 +34,7 @@ import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({BsqState.class, StateService.class, PersistenceProtoResolver.class, File.class})
+@PrepareForTest({BsqState.class, BsqStateService.class, PersistenceProtoResolver.class, File.class})
 public class SnapshotManagerTest {
 
     private SnapshotManager snapshotManager;
@@ -42,7 +42,7 @@ public class SnapshotManagerTest {
     @Before
     public void setup() {
         snapshotManager = new SnapshotManager(mock(BsqState.class),
-                mock(StateService.class),
+                mock(BsqStateService.class),
                 mock(PersistenceProtoResolver.class),
                 mock(File.class));
     }

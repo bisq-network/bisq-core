@@ -41,21 +41,21 @@ public class SnapshotManager implements BsqStateListener {
     private static final int SNAPSHOT_GRID = 11000;
 
     private final BsqState bsqState;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final Storage<BsqState> storage;
 
     private BsqState snapshotCandidate;
 
     @Inject
     public SnapshotManager(BsqState bsqState,
-                           StateService stateService,
+                           BsqStateService bsqStateService,
                            PersistenceProtoResolver persistenceProtoResolver,
                            @Named(Storage.STORAGE_DIR) File storageDir) {
         this.bsqState = bsqState;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        this.stateService.addBsqStateListener(this);
+        this.bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -104,8 +104,8 @@ public class SnapshotManager implements BsqStateListener {
         checkNotNull(storage, "storage must not be null");
         BsqState persisted = storage.initAndGetPersisted(bsqState, 100);
         if (persisted != null) {
-            log.info("applySnapshot persisted.chainHeadHeight=" + stateService.getBlocksFromState(persisted).getLast().getHeight());
-            stateService.applySnapshot(persisted);
+            log.info("applySnapshot persisted.chainHeadHeight=" + bsqStateService.getBlocksFromState(persisted).getLast().getHeight());
+            bsqStateService.applySnapshot(persisted);
         } else {
             log.info("Try to apply snapshot but no stored snapshot available");
         }
@@ -127,6 +127,6 @@ public class SnapshotManager implements BsqStateListener {
     }
 
     private boolean isSnapshotHeight(int height) {
-        return isSnapshotHeight(stateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
+        return isSnapshotHeight(bsqStateService.getGenesisBlockHeight(), height, SNAPSHOT_GRID);
     }
 }

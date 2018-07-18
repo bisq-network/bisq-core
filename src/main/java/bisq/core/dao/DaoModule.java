@@ -37,8 +37,8 @@ import bisq.core.dao.node.validation.TxInputProcessor;
 import bisq.core.dao.node.validation.TxOutputProcessor;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.BsqState;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotListService;
@@ -97,7 +97,7 @@ public class DaoModule extends AppModule {
 
         // BsqState
         bind(BsqState.class).in(Singleton.class);
-        bind(StateService.class).in(Singleton.class);
+        bind(BsqStateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 

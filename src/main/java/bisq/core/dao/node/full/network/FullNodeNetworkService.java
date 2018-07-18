@@ -19,7 +19,7 @@ package bisq.core.dao.node.full.network;
 
 import bisq.core.dao.node.messages.GetBlocksRequest;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 
@@ -58,7 +58,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
 
     // Key is connection UID
     private final Map<String, GetBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
@@ -73,11 +73,11 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  StateService stateService) {
+                                  BsqStateService bsqStateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
 
         networkNode.addMessageListener(this);
         peerManager.addListener(this);
@@ -136,7 +136,7 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
                     GetBlocksRequestHandler requestHandler = new GetBlocksRequestHandler(networkNode,
-                            stateService,
+                            bsqStateService,
                             new GetBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {

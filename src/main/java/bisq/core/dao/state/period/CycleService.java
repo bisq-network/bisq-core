@@ -19,7 +19,7 @@ package bisq.core.dao.state.period;
 
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.ext.Param;
 
@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CycleService implements BsqStateListener {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final int genesisBlockHeight;
 
 
@@ -49,12 +49,12 @@ public class CycleService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public CycleService(StateService stateService,
+    public CycleService(BsqStateService bsqStateService,
                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.genesisBlockHeight = genesisBlockHeight;
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -65,8 +65,8 @@ public class CycleService implements BsqStateListener {
     @Override
     public void onNewBlockHeight(int blockHeight) {
         if (blockHeight != genesisBlockHeight)
-            maybeCreateNewCycle(blockHeight, stateService.getCycles())
-                    .ifPresent(stateService.getCycles()::add);
+            maybeCreateNewCycle(blockHeight, bsqStateService.getCycles())
+                    .ifPresent(bsqStateService.getCycles()::add);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class CycleService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        stateService.getCycles().add(getFirstCycle());
+        bsqStateService.getCycles().add(getFirstCycle());
     }
 
     public Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles) {
@@ -100,7 +100,7 @@ public class CycleService implements BsqStateListener {
         // first block of the new cycle.
         Cycle cycle = null;
         if (blockHeight != genesisBlockHeight && isFirstBlockAfterPreviousCycle(blockHeight, cycles)) {
-            // We have the not update stateService.getCurrentCycle() so we grab here the previousCycle
+            // We have the not update bsqStateService.getCurrentCycle() so we grab here the previousCycle
             final Cycle previousCycle = cycles.getLast();
             // We create the new cycle as clone of the previous cycle and only if there have been change events we use
             // the new values from the change event.
@@ -127,7 +127,7 @@ public class CycleService implements BsqStateListener {
     }
 
     public boolean isTxInCycle(Cycle cycle, String txId) {
-        return stateService.getTx(txId).filter(tx -> isBlockHeightInCycle(tx.getBlockHeight(), cycle)).isPresent();
+        return bsqStateService.getTx(txId).filter(tx -> isBlockHeightInCycle(tx.getBlockHeight(), cycle)).isPresent();
     }
 
     public boolean isBlockHeightInCycle(int blockHeight, Cycle cycle) {
@@ -146,7 +146,7 @@ public class CycleService implements BsqStateListener {
                     DaoPhase.Phase phase = daoPhase.getPhase();
                     try {
                         Param param = Param.valueOf("PHASE_" + phase.name());
-                        long value = stateService.getParamValue(param, blockHeight);
+                        long value = bsqStateService.getParamValue(param, blockHeight);
                         return new DaoPhase(phase, (int) value);
                     } catch (Throwable ignore) {
                         return null;

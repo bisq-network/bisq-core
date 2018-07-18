@@ -21,7 +21,7 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ChangeParamProposalService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final ChangeParamValidator changeParamValidator;
 
 
@@ -55,11 +55,11 @@ public class ChangeParamProposalService {
     @Inject
     public ChangeParamProposalService(BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
-                                      StateService stateService,
+                                      BsqStateService bsqStateService,
                                       ChangeParamValidator changeParamValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.changeParamValidator = changeParamValidator;
     }
 
@@ -94,7 +94,7 @@ public class ChangeParamProposalService {
     private Transaction getTransaction(ChangeParamProposal proposal)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
-        final Coin fee = ProposalConsensus.getFee(stateService, stateService.getChainHeight());
+        final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
 
         // payload does not have txId at that moment

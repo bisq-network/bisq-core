@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -40,14 +40,14 @@ public class ProposalUtils {
                 .findAny();
     }
 
-    public static boolean canRemoveProposal(Proposal proposal, StateService stateService, PeriodService periodService) {
-        final Optional<Tx> optionalProposalTx = stateService.getTx(proposal.getTxId());
-        return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, stateService);
+    public static boolean canRemoveProposal(Proposal proposal, BsqStateService bsqStateService, PeriodService periodService) {
+        final Optional<Tx> optionalProposalTx = bsqStateService.getTx(proposal.getTxId());
+        return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, bsqStateService);
     }
 
-    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, StateService stateService) {
+    public static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
         return periodService.isInPhase(tx.getBlockHeight(), DaoPhase.Phase.PROPOSAL) &&
-                periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight());
+                periodService.isTxInCorrectCycle(tx.getBlockHeight(), bsqStateService.getChainHeight());
     }
 
     public static void removeProposalFromList(Proposal proposal, List<Proposal> proposals) {

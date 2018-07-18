@@ -19,7 +19,7 @@ package bisq.core.dao;
 
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.voting.ballot.BallotListService;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
@@ -38,7 +38,7 @@ import com.google.inject.Inject;
 public class DaoSetup {
     private final BsqNode bsqNode;
     private final ProposalService proposalService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final CycleService cycleService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
@@ -48,7 +48,7 @@ public class DaoSetup {
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
-                    StateService stateService,
+                    BsqStateService bsqStateService,
                     CycleService cycleService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService,
@@ -56,7 +56,7 @@ public class DaoSetup {
                     BlindVoteService blindVoteService,
                     MyBlindVoteListService myBlindVoteListService,
                     ProposalService proposalService) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.cycleService = cycleService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
@@ -71,7 +71,7 @@ public class DaoSetup {
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
         bsqNode.setErrorMessageHandler(errorMessageHandler);
 
-        stateService.start();
+        bsqStateService.start();
         cycleService.start();
         proposalService.start();
         voteRevealService.start();

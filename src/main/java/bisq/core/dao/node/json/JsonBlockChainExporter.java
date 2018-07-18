@@ -20,7 +20,7 @@ package bisq.core.dao.node.json;
 import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.node.btcd.PubKeyScript;
 import bisq.core.dao.state.BsqState;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -60,7 +60,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public class JsonBlockChainExporter {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final boolean dumpBlockchainData;
 
     private final ListeningExecutorService executor = Utilities.getListeningExecutorService("JsonExporter", 1, 1, 1200);
@@ -68,10 +68,10 @@ public class JsonBlockChainExporter {
     private JsonFileManager txFileManager, txOutputFileManager, jsonFileManager;
 
     @Inject
-    public JsonBlockChainExporter(StateService stateService,
+    public JsonBlockChainExporter(BsqStateService bsqStateService,
                                   @Named(Storage.STORAGE_DIR) File storageDir,
                                   @Named(DaoOptionKeys.DUMP_BLOCKCHAIN_DATA) boolean dumpBlockchainData) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.dumpBlockchainData = dumpBlockchainData;
 
         init(storageDir, dumpBlockchainData);
@@ -119,21 +119,21 @@ public class JsonBlockChainExporter {
     public void maybeExport() {
         if (dumpBlockchainData) {
             ListenableFuture<Void> future = executor.submit(() -> {
-                final BsqState bsqStateClone = stateService.getClone();
-                Map<String, Tx> txMap = stateService.getBlocksFromState(bsqStateClone).stream()
+                final BsqState bsqStateClone = bsqStateService.getClone();
+                Map<String, Tx> txMap = bsqStateService.getBlocksFromState(bsqStateClone).stream()
                         .filter(Objects::nonNull)
                         .flatMap(block -> block.getTxs().stream())
                         .collect(Collectors.toMap(Tx::getId, tx -> tx));
                 for (Tx tx : txMap.values()) {
                     String txId = tx.getId();
-                    final Optional<TxType> optionalTxType = stateService.getOptionalTxType(txId);
+                    final Optional<TxType> optionalTxType = bsqStateService.getOptionalTxType(txId);
                     if (optionalTxType.isPresent()) {
                         JsonTxType txType = optionalTxType.get() != TxType.UNDEFINED_TX_TYPE ?
                                 JsonTxType.valueOf(optionalTxType.get().name()) : null;
                         List<JsonTxOutput> outputs = new ArrayList<>();
                         tx.getTxOutputs().forEach(txOutput -> {
-                            final Optional<SpentInfo> optionalSpentInfo = stateService.getSpentInfo(txOutput);
-                            final boolean isBsqOutput = stateService.isBsqTxOutputType(txOutput);
+                            final Optional<SpentInfo> optionalSpentInfo = bsqStateService.getSpentInfo(txOutput);
+                            final boolean isBsqOutput = bsqStateService.isBsqTxOutputType(txOutput);
                             final PubKeyScript pubKeyScript = txOutput.getPubKeyScript();
                             final JsonTxOutput outputForJson = new JsonTxOutput(txId,
                                     txOutput.getIndex(),
@@ -141,7 +141,7 @@ public class JsonBlockChainExporter {
                                     !isBsqOutput ? txOutput.getValue() : 0,
                                     txOutput.getBlockHeight(),
                                     isBsqOutput,
-                                    stateService.getBurntFee(tx.getId()),
+                                    bsqStateService.getBurntFee(tx.getId()),
                                     txOutput.getAddress(),
                                     pubKeyScript != null ? new JsonScriptPubKey(pubKeyScript) : null,
                                     optionalSpentInfo.map(JsonSpentInfo::new).orElse(null),
@@ -157,10 +157,10 @@ public class JsonBlockChainExporter {
 
                         List<JsonTxInput> inputs = tx.getTxInputs().stream()
                                 .map(txInput -> {
-                                    Optional<TxOutput> optionalTxOutput = stateService.getConnectedTxOutput(txInput);
+                                    Optional<TxOutput> optionalTxOutput = bsqStateService.getConnectedTxOutput(txInput);
                                     if (optionalTxOutput.isPresent()) {
                                         final TxOutput connectedTxOutput = optionalTxOutput.get();
-                                        final boolean isBsqOutput = stateService.isBsqTxOutputType(connectedTxOutput);
+                                        final boolean isBsqOutput = bsqStateService.isBsqTxOutputType(connectedTxOutput);
                                         return new JsonTxInput(txInput.getConnectedTxOutputIndex(),
                                                 txInput.getConnectedTxOutputTxId(),
                                                 connectedTxOutput != null ? connectedTxOutput.getValue() : 0,
@@ -182,13 +182,13 @@ public class JsonBlockChainExporter {
                                 outputs,
                                 txType,
                                 txType != null ? txType.getDisplayString() : "",
-                                stateService.getBurntFee(tx.getId()));
+                                bsqStateService.getBurntFee(tx.getId()));
 
                         txFileManager.writeToDisc(Utilities.objectToJson(jsonTx), txId);
                     }
                 }
 
-                jsonFileManager.writeToDisc(Utilities.objectToJson(bsqStateClone), "StateService");
+                jsonFileManager.writeToDisc(Utilities.objectToJson(bsqStateClone), "BsqStateService");
                 return null;
             });
 

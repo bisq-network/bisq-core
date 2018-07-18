@@ -19,7 +19,7 @@ package bisq.core.dao.voting.proposal;
 
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FilteredProposalListService implements BsqStateListener, MyProposalListService.Listener {
     private final ProposalService proposalService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final MyProposalListService myProposalListService;
     private final BsqWalletService bsqWalletService;
     private final ProposalValidator proposalValidator;
@@ -68,19 +68,19 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
 
     @Inject
     public FilteredProposalListService(ProposalService proposalService,
-                                       StateService stateService,
+                                       BsqStateService bsqStateService,
                                        MyProposalListService myProposalListService,
                                        BsqWalletService bsqWalletService,
                                        ProposalValidator proposalValidator,
                                        PeriodService periodService) {
         this.proposalService = proposalService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.myProposalListService = myProposalListService;
         this.bsqWalletService = bsqWalletService;
         this.proposalValidator = proposalValidator;
         this.periodService = periodService;
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
         myProposalListService.addListener(this);
 
         proposalService.getProtectedStoreList().addListener((ListChangeListener<Proposal>) c -> {
@@ -147,11 +147,11 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
 
         // We want to show our own unconfirmed proposals. Unconfirmed proposals from other users are not included
         // in the list.
-        // If a tx is not found in the stateService it can be that it is either unconfirmed or invalid.
+        // If a tx is not found in the bsqStateService it can be that it is either unconfirmed or invalid.
         // To avoid inclusion of invalid txs we add a check for the confidence type from the bsqWalletService.
         myUnconfirmedProposals.clear();
         myUnconfirmedProposals.addAll(myProposalListService.getList().stream()
-                .filter(p -> !stateService.getTx(p.getTxId()).isPresent()) // Tx is still not in our bsq blocks
+                .filter(p -> !bsqStateService.getTx(p.getTxId()).isPresent()) // Tx is still not in our bsq blocks
                 .filter(p -> {
                     final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(p.getTxId());
                     return confidenceForTxId != null &&

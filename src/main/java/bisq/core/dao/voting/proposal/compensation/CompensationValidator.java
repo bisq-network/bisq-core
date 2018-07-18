@@ -17,8 +17,8 @@
 
 package bisq.core.dao.voting.proposal.compensation;
 
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.state.StateService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalValidator;
@@ -38,8 +38,8 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 public class CompensationValidator extends ProposalValidator {
 
     @Inject
-    public CompensationValidator(StateService stateService, PeriodService periodService) {
-        super(stateService, periodService);
+    public CompensationValidator(BsqStateService bsqStateService, PeriodService periodService) {
+        super(bsqStateService, periodService);
     }
 
     @Override

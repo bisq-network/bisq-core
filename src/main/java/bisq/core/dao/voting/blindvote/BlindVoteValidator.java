@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -35,12 +35,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class BlindVoteValidator {
 
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
 
     @Inject
-    public BlindVoteValidator(StateService stateService, PeriodService periodService) {
-        this.stateService = stateService;
+    public BlindVoteValidator(BsqStateService bsqStateService, PeriodService periodService) {
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
     }
 
@@ -83,8 +83,8 @@ public class BlindVoteValidator {
         }
 
         final String txId = blindVote.getTxId();
-        Optional<Tx> optionalTx = stateService.getTx(txId);
-        int chainHeight = stateService.getChainHeight();
+        Optional<Tx> optionalTx = bsqStateService.getTx(txId);
+        int chainHeight = bsqStateService.getChainHeight();
         final boolean isTxConfirmed = optionalTx.isPresent();
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
@@ -106,8 +106,8 @@ public class BlindVoteValidator {
 
    /* public boolean isAppendOnlyPayloadValid(BlindVotePayload appendOnlyPayload,
                                             int publishTriggerBlockHeight,
-                                            StateService stateService) {
-        final Optional<Block> optionalBlock = stateService.getBlockAtHeight(publishTriggerBlockHeight);
+                                            BsqStateService bsqStateService) {
+        final Optional<Block> optionalBlock = bsqStateService.getBlockAtHeight(publishTriggerBlockHeight);
         if (optionalBlock.isPresent()) {
             final long blockTimeInMs = optionalBlock.get().getTime() * 1000L;
             final long tolerance = TimeUnit.HOURS.toMillis(5);

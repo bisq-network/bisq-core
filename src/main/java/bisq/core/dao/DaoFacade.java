@@ -22,7 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.bonding.lockup.LockupService;
 import bisq.core.dao.bonding.unlock.UnlockService;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -80,7 +80,7 @@ public class DaoFacade {
     private final BallotListService ballotListService;
     private final FilteredBallotListService filteredBallotListService;
     private final MyProposalListService myProposalListService;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final MyBlindVoteListService myBlindVoteListService;
     private final MyVoteListService myVoteListService;
@@ -96,7 +96,7 @@ public class DaoFacade {
                      FilteredProposalListService filteredProposalListService,
                      BallotListService ballotListService,
                      FilteredBallotListService filteredBallotListService,
-                     StateService stateService,
+                     BsqStateService bsqStateService,
                      PeriodService periodService,
                      MyBlindVoteListService myBlindVoteListService,
                      MyVoteListService myVoteListService,
@@ -108,7 +108,7 @@ public class DaoFacade {
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
         this.myProposalListService = myProposalListService;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.myBlindVoteListService = myBlindVoteListService;
         this.myVoteListService = myVoteListService;
@@ -117,7 +117,7 @@ public class DaoFacade {
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
-        stateService.addBsqStateListener(new BsqStateListener() {
+        bsqStateService.addBsqStateListener(new BsqStateListener() {
             @Override
             public void onNewBlockHeight(int blockHeight) {
                 if (blockHeight > 0 && periodService.getCurrentCycle() != null)
@@ -139,11 +139,11 @@ public class DaoFacade {
     }
 
     public void addBsqStateListener(BsqStateListener listener) {
-        stateService.addBsqStateListener(listener);
+        bsqStateService.addBsqStateListener(listener);
     }
 
     public void removeBsqStateListener(BsqStateListener listener) {
-        stateService.removeBsqStateListener(listener);
+        bsqStateService.removeBsqStateListener(listener);
     }
 
 
@@ -210,7 +210,7 @@ public class DaoFacade {
 
     // Show fee
     public Coin getProposalFee() {
-        return ProposalConsensus.getFee(stateService, stateService.getChainHeight());
+        return ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
     }
 
     // Publish proposal tx, proposal payload and and persist it to myProposalList
@@ -304,7 +304,7 @@ public class DaoFacade {
     }
 
     public int getDurationForPhase(DaoPhase.Phase phase) {
-        return periodService.getDurationForPhase(phase, stateService.getChainHeight());
+        return periodService.getDurationForPhase(phase, bsqStateService.getChainHeight());
     }
 
     // listeners for phase change
@@ -313,7 +313,7 @@ public class DaoFacade {
     }
 
     public int getChainHeight() {
-        return stateService.getChainHeight();
+        return bsqStateService.getChainHeight();
     }
 
 
@@ -340,87 +340,87 @@ public class DaoFacade {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Optional<Tx> getTx(String txId) {
-        return stateService.getTx(txId);
+        return bsqStateService.getTx(txId);
     }
 
     public Set<TxOutput> getUnspentBlindVoteStakeTxOutputs() {
-        return stateService.getUnspentBlindVoteStakeTxOutputs();
+        return bsqStateService.getUnspentBlindVoteStakeTxOutputs();
     }
 
     public int getGenesisBlockHeight() {
-        return stateService.getGenesisBlockHeight();
+        return bsqStateService.getGenesisBlockHeight();
     }
 
     public String getGenesisTxId() {
-        return stateService.getGenesisTxId();
+        return bsqStateService.getGenesisTxId();
     }
 
     public Coin getGenesisTotalSupply() {
-        return stateService.getGenesisTotalSupply();
+        return bsqStateService.getGenesisTotalSupply();
     }
 
     public Set<Tx> getFeeTxs() {
-        return stateService.getBurntFeeTxs();
+        return bsqStateService.getBurntFeeTxs();
     }
 
     public Set<TxOutput> getUnspentTxOutputs() {
-        return stateService.getUnspentTxOutputs();
+        return bsqStateService.getUnspentTxOutputs();
     }
 
     public Set<Tx> getTxs() {
-        return stateService.getTxs();
+        return bsqStateService.getTxs();
     }
 
     public Optional<TxOutput> getLockupTxOutput(String txId) {
-        return stateService.getLockupTxOutput(txId);
+        return bsqStateService.getLockupTxOutput(txId);
     }
 
     public long getTotalBurntFee() {
-        return stateService.getTotalBurntFee();
+        return bsqStateService.getTotalBurntFee();
     }
 
     public long getTotalLockupAmount() {
-        return stateService.getTotalLockupAmount();
+        return bsqStateService.getTotalLockupAmount();
     }
 
     public long getTotalAmountOfUnLockingTxOutputs() {
-        return stateService.getTotalAmountOfUnLockingTxOutputs();
+        return bsqStateService.getTotalAmountOfUnLockingTxOutputs();
     }
 
     public long getTotalAmountOfUnLockedTxOutputs() {
-        return stateService.getTotalAmountOfUnLockedTxOutputs();
+        return bsqStateService.getTotalAmountOfUnLockedTxOutputs();
     }
 
     public long getTotalIssuedAmountFromCompRequests() {
-        return stateService.getTotalIssuedAmount();
+        return bsqStateService.getTotalIssuedAmount();
     }
 
     public long getBlockTime(int issuanceBlockHeight) {
-        return stateService.getBlockTime(issuanceBlockHeight);
+        return bsqStateService.getBlockTime(issuanceBlockHeight);
     }
 
     public int getIssuanceBlockHeight(String txId) {
-        return stateService.getIssuanceBlockHeight(txId);
+        return bsqStateService.getIssuanceBlockHeight(txId);
     }
 
     public Optional<Integer> getLockTime(String txId) {
-        return stateService.getLockTime(txId);
+        return bsqStateService.getLockTime(txId);
     }
 
     public boolean isIssuanceTx(String txId) {
-        return stateService.isIssuanceTx(txId);
+        return bsqStateService.isIssuanceTx(txId);
     }
 
     public boolean hasTxBurntFee(String hashAsString) {
-        return stateService.hasTxBurntFee(hashAsString);
+        return bsqStateService.hasTxBurntFee(hashAsString);
     }
 
     public Optional<TxType> getOptionalTxType(String txId) {
-        return stateService.getOptionalTxType(txId);
+        return bsqStateService.getOptionalTxType(txId);
     }
 
     public TxType getTxType(String txId) {
-        return stateService.getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
+        return bsqStateService.getTx(txId).map(Tx::getTxType).orElse(TxType.UNDEFINED_TX_TYPE);
     }
 
     public boolean isInPhaseButNotLastBlock(DaoPhase.Phase phase) {
@@ -428,7 +428,7 @@ public class DaoFacade {
     }
 
     public boolean isUnspent(TxOutputKey key) {
-        return stateService.isUnspent(key);
+        return bsqStateService.isUnspent(key);
     }
 
 }

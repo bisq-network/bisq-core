@@ -22,7 +22,7 @@ import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.state.BsqStateListener;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -75,7 +75,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 public class BsqWalletService extends WalletService implements BsqStateListener {
     private final BsqCoinSelector bsqCoinSelector;
     private final NonBsqCoinSelector nonBsqCoinSelector;
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final ObservableList<Transaction> walletTransactions = FXCollections.observableArrayList();
     private final CopyOnWriteArraySet<BsqBalanceListener> bsqBalanceListeners = new CopyOnWriteArraySet<>();
 
@@ -102,7 +102,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
     public BsqWalletService(WalletsSetup walletsSetup,
                             BsqCoinSelector bsqCoinSelector,
                             NonBsqCoinSelector nonBsqCoinSelector,
-                            StateService stateService,
+                            BsqStateService bsqStateService,
                             Preferences preferences,
                             FeeService feeService) {
         super(walletsSetup,
@@ -111,7 +111,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
 
         this.bsqCoinSelector = bsqCoinSelector;
         this.nonBsqCoinSelector = nonBsqCoinSelector;
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
 
         if (BisqEnvironment.isBaseCurrencySupportingBsq()) {
             walletsSetup.addSetupCompletedHandler(() -> {
@@ -170,7 +170,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
             });
         }
 
-        stateService.addBsqStateListener(this);
+        bsqStateService.addBsqStateListener(this);
     }
 
 
@@ -238,8 +238,8 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
                                                         connectedOutput.getIndex());
 
                                                 return (connectedOutput.isMine(wallet)
-                                                        && (stateService.isLockupOutput(key)
-                                                        || stateService.isUnlockingOutput(key)));
+                                                        && (bsqStateService.isLockupOutput(key)
+                                                        || bsqStateService.isUnlockingOutput(key)));
                                             }
                                         }
                                         return false;
@@ -255,18 +255,18 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
                 .map(Transaction::getHashAsString)
                 .collect(Collectors.toSet());
 
-        lockedForVotingBalance = Coin.valueOf(stateService.getUnspentBlindVoteStakeTxOutputs().stream()
+        lockedForVotingBalance = Coin.valueOf(bsqStateService.getUnspentBlindVoteStakeTxOutputs().stream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
-        lockupBondsBalance = Coin.valueOf(stateService.getLockupTxOutputs().stream()
-                .filter(txOutput -> stateService.isUnspent(txOutput.getKey()))
-                /*.filter(txOutput -> !stateService.isSpentByUnlockTx(txOutput))*/ // TODO SQ
+        lockupBondsBalance = Coin.valueOf(bsqStateService.getLockupTxOutputs().stream()
+                .filter(txOutput -> bsqStateService.isUnspent(txOutput.getKey()))
+                /*.filter(txOutput -> !bsqStateService.isSpentByUnlockTx(txOutput))*/ // TODO SQ
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
 
-        unlockingBondsBalance = Coin.valueOf(stateService.getUnspentUnlockingTxOutputsStream()
+        unlockingBondsBalance = Coin.valueOf(bsqStateService.getUnspentUnlockingTxOutputsStream()
                 .filter(txOutput -> confirmedTxIdSet.contains(txOutput.getTxId()))
                 .mapToLong(TxOutput::getValue)
                 .sum());
@@ -310,7 +310,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
     private Set<Transaction> getBsqWalletTransactions() {
         return getTransactions(false).stream()
                 .filter(transaction -> transaction.getConfidence().getConfidenceType() == PENDING ||
-                        stateService.containsTx(transaction.getHashAsString()))
+                        bsqStateService.containsTx(transaction.getHashAsString()))
                 .collect(Collectors.toSet());
     }
 
@@ -355,10 +355,10 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
                     if (isConfirmed) {
                         // We lookup if we have a BSQ tx matching the parent tx
                         // We cannot make that findTx call outside of the loop as the parent tx can change at each iteration
-                        Optional<Tx> txOptional = stateService.getTx(parentTransaction.getHash().toString());
+                        Optional<Tx> txOptional = bsqStateService.getTx(parentTransaction.getHash().toString());
                         if (txOptional.isPresent()) {
                             TxOutput txOutput = txOptional.get().getTxOutputs().get(connectedOutput.getIndex());
-                            if (stateService.isBsqTxOutputType(txOutput)) {
+                            if (bsqStateService.isBsqTxOutputType(txOutput)) {
                                 //TODO check why values are not the same
                                 if (txOutput.getValue() != connectedOutput.getValue().value)
                                     log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +
@@ -386,7 +386,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
         Coin result = Coin.ZERO;
         final String txId = transaction.getHashAsString();
         // We check if we have a matching BSQ tx. We do that call here to avoid repeated calls in the loop.
-        Optional<Tx> txOptional = stateService.getTx(txId);
+        Optional<Tx> txOptional = bsqStateService.getTx(txId);
         // We check all the outputs of our tx
         for (int i = 0; i < transaction.getOutputs().size(); i++) {
             TransactionOutput output = transaction.getOutputs().get(i);
@@ -397,7 +397,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
                     if (txOptional.isPresent()) {
                         // The index of the BSQ tx outputs are the same like the bitcoinj tx outputs
                         TxOutput txOutput = txOptional.get().getTxOutputs().get(i);
-                        if (stateService.isBsqTxOutputType(txOutput)) {
+                        if (bsqStateService.isBsqTxOutputType(txOutput)) {
                             //TODO check why values are not the same
                             if (txOutput.getValue() != output.getValue().value) {
                                 log.warn("getValueSentToMeForTransaction: Value of BSQ output do not match BitcoinJ tx output. " +

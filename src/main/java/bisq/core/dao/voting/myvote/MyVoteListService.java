@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.myvote;
 
 import bisq.core.app.BisqEnvironment;
-import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVote;
 
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MyVoteListService implements PersistedDataHost {
-    private final StateService stateService;
+    private final BsqStateService bsqStateService;
     private final Storage<MyVoteList> storage;
     private final MyVoteList myVoteList = new MyVoteList();
 
@@ -47,9 +47,9 @@ public class MyVoteListService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public MyVoteListService(StateService stateService,
+    public MyVoteListService(BsqStateService bsqStateService,
                              Storage<MyVoteList> storage) {
-        this.stateService = stateService;
+        this.bsqStateService = bsqStateService;
         this.storage = storage;
     }
 
@@ -79,7 +79,7 @@ public class MyVoteListService implements PersistedDataHost {
 
     public void createAndAddMyVote(BallotList sortedBallotListForCycle, SecretKey secretKey, BlindVote blindVote) {
         final byte[] secretKeyBytes = Encryption.getSecretKeyBytes(secretKey);
-        MyVote myVote = new MyVote(stateService.getChainHeight(), sortedBallotListForCycle, secretKeyBytes, blindVote);
+        MyVote myVote = new MyVote(bsqStateService.getChainHeight(), sortedBallotListForCycle, secretKeyBytes, blindVote);
         log.info("Add new MyVote to myVotesList list.\nMyVote=" + myVote);
         myVoteList.add(myVote);
         persist();
