@@ -209,8 +209,8 @@ public class DaoFacade {
     }
 
     // Show fee
-    public Coin getProposalFee() {
-        return ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
+    public Coin getProposalFee(int chainHeight) {
+        return ProposalConsensus.getFee(bsqStateService, chainHeight);
     }
 
     // Publish proposal tx, proposal payload and and persist it to myProposalList
@@ -241,7 +241,7 @@ public class DaoFacade {
     // Use case: Present lists
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public ObservableList<Ballot> getActiveOrMyUnconfirmedBallots() {
+    public ObservableList<Ballot> getValidAndConfirmedBallots() {
         return filteredBallotListService.getValidAndConfirmedBallots();
     }
 

@@ -136,8 +136,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     public void onParseBlockChainComplete() {
         parsingComplete = true;
 
-        bsqStateService.removeBsqStateListener(this);
-
         // Fill the lists with the data we have collected in out stores.
         fillListFromProtectedStore();
         fillListFromAppendOnlyDataStore();

@@ -88,7 +88,6 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
 
     @Override
     public void onParseBlockChainComplete() {
-        bsqStateService.removeBsqStateListener(this);
         fillListFromAppendOnlyDataStore();
     }
 
