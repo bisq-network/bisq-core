@@ -18,8 +18,9 @@
 package bisq.core.dao.state.period;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.ext.Param;
 
 import com.google.inject.Inject;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CycleService implements ChainHeightListener {
+public class CycleService implements BsqStateListener {
     private final StateService stateService;
     private final int genesisBlockHeight;
 
@@ -53,19 +54,31 @@ public class CycleService implements ChainHeightListener {
         this.stateService = stateService;
         this.genesisBlockHeight = genesisBlockHeight;
 
-        stateService.addChainHeightListener(this);
+        stateService.addBsqStateListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ChainHeightListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onChainHeightChanged(int blockHeight) {
+    public void onNewBlockHeight(int blockHeight) {
         if (blockHeight != genesisBlockHeight)
             maybeCreateNewCycle(blockHeight, stateService.getCycles())
                     .ifPresent(stateService.getCycles()::add);
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
     }
 
 

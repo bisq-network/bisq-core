@@ -27,8 +27,9 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ballot.BallotList;
@@ -84,7 +85,7 @@ import javax.annotation.Nullable;
  * vote phase of current cycle.
  */
 @Slf4j
-public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChainListener {
+public class MyBlindVoteListService implements PersistedDataHost, BsqStateListener {
     private final P2PService p2PService;
     private final StateService stateService;
     private final PeriodService periodService;
@@ -128,6 +129,9 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
         this.myVoteListService = myVoteListService;
         this.myProposalListService = myProposalListService;
         this.proposalValidator = proposalValidator;
+
+        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+        stateService.addBsqStateListener(this);
     }
 
 
@@ -148,13 +152,24 @@ public class MyBlindVoteListService implements PersistedDataHost, ParseBlockChai
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onComplete() {
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
         rePublishOnceWellConnected();
-        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
     }
 
 

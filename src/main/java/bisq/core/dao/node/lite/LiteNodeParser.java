@@ -54,19 +54,22 @@ public class LiteNodeParser extends BsqParser {
         int blockHeight = rawBlock.getHeight();
         log.debug("Parse block at height={} ", blockHeight);
         blockValidator.validate(rawBlock);
-        stateService.setNewBlockHeight(rawBlock.getHeight());
+        stateService.onNewBlockHeight(rawBlock.getHeight());
 
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
                 rawBlock.getHash(),
                 rawBlock.getPreviousBlockHash());
 
+        // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))
-            stateService.addNewBlock(block);
+            stateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);
 
         // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
         parseBsqTxs(block, rawBlock.getRawTxs());
+
+        stateService.onParseBlockComplete(block);
     }
 }

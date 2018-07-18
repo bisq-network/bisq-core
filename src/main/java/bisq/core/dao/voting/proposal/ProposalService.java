@@ -17,8 +17,7 @@
 
 package bisq.core.dao.voting.proposal;
 
-import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
@@ -50,8 +49,7 @@ import lombok.extern.slf4j.Slf4j;
  * Republishes protectedStoreList to append-only data store when entering the break before the blind vote phase.
  */
 @Slf4j
-public class ProposalService implements HashMapChangedListener, AppendOnlyDataStoreListener,
-        BlockListener, ParseBlockChainListener {
+public class ProposalService implements HashMapChangedListener, AppendOnlyDataStoreListener, BsqStateListener {
 
     private final P2PService p2PService;
     private final PeriodService periodService;
@@ -93,8 +91,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         appendOnlyDataStoreService.addService(proposalStorageService);
         protectedDataStoreService.addService(tempProposalStorageService);
 
-        stateService.addParseBlockChainListener(this);
-        stateService.addBlockListener(this);
+        stateService.addBsqStateListener(this);
 
         p2PService.addHashSetChangedListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
@@ -112,27 +109,19 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onComplete() {
-        parsingComplete = true;
-
-        stateService.removeParseBlockChainListener(this);
-
-        // Fill the lists with the data we have collected in out stores.
-        fillListFromProtectedStore();
-        fillListFromAppendOnlyDataStore();
+    public void onNewBlockHeight(int blockHeight) {
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // BlockListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
 
     @Override
-    public void onBlockAdded(Block block) {
+    public void onParseTxsComplete(Block block) {
         int heightForRepublishing = periodService.getFirstBlockOfPhase(stateService.getChainHeight(), DaoPhase.Phase.BREAK1);
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are not still parsing old blocks
@@ -141,6 +130,17 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
             fillListFromAppendOnlyDataStore();
         }
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
+        parsingComplete = true;
+
+        stateService.removeBsqStateListener(this);
+
+        // Fill the lists with the data we have collected in out stores.
+        fillListFromProtectedStore();
+        fillListFromAppendOnlyDataStore();
     }
 
 

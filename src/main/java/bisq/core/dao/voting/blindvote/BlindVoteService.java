@@ -17,8 +17,9 @@
 
 package bisq.core.dao.voting.blindvote;
 
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.blindvote.storage.BlindVoteStorageService;
 
@@ -41,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  * Listens for new BlindVotePayload and adds it to appendOnlyStoreList.
  */
 @Slf4j
-public class BlindVoteService implements ParseBlockChainListener, AppendOnlyDataStoreListener {
+public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener {
     private final StateService stateService;
     private final P2PService p2PService;
     private final BlindVoteValidator blindVoteValidator;
@@ -64,19 +65,30 @@ public class BlindVoteService implements ParseBlockChainListener, AppendOnlyData
         this.blindVoteValidator = blindVoteValidator;
 
         appendOnlyDataStoreService.addService(blindVoteStorageService);
-        stateService.addParseBlockChainListener(this);
+        stateService.addBsqStateListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onComplete() {
-        stateService.removeParseBlockChainListener(this);
+    public void onNewBlockHeight(int blockHeight) {
+    }
 
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
+        stateService.removeBsqStateListener(this);
         fillListFromAppendOnlyDataStore();
     }
 

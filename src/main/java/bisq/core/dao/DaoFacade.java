@@ -21,9 +21,9 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.bonding.lockup.LockupService;
 import bisq.core.dao.bonding.unlock.UnlockService;
-import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
@@ -117,11 +117,35 @@ public class DaoFacade {
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
-        stateService.addChainHeightListener(chainHeight -> {
-            if (chainHeight > 0 && periodService.getCurrentCycle() != null)
-                periodService.getCurrentCycle().getPhaseForHeight(chainHeight).ifPresent(phaseProperty::set);
+        stateService.addBsqStateListener(new BsqStateListener() {
+            @Override
+            public void onNewBlockHeight(int blockHeight) {
+                if (blockHeight > 0 && periodService.getCurrentCycle() != null)
+                    periodService.getCurrentCycle().getPhaseForHeight(blockHeight).ifPresent(phaseProperty::set);
+            }
+
+            @Override
+            public void onEmptyBlockAdded(Block block) {
+            }
+
+            @Override
+            public void onParseTxsComplete(Block block) {
+            }
+
+            @Override
+            public void onParseBlockChainComplete() {
+            }
         });
     }
+
+    public void addBsqStateListener(BsqStateListener listener) {
+        stateService.addBsqStateListener(listener);
+    }
+
+    public void removeBsqStateListener(BsqStateListener listener) {
+        stateService.removeBsqStateListener(listener);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -271,14 +295,6 @@ public class DaoFacade {
     // Use case: Presentation of phases
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addChainHeightListener(ChainHeightListener listener) {
-        stateService.addChainHeightListener(listener);
-    }
-
-    public void removeChainHeightListener(ChainHeightListener listener) {
-        stateService.removeChainHeightListener(listener);
-    }
-
     public int getFirstBlockOfPhase(int height, DaoPhase.Phase phase) {
         return periodService.getFirstBlockOfPhase(height, phase);
     }
@@ -322,14 +338,6 @@ public class DaoFacade {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Use case: Present transaction related state
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addBlockListener(BlockListener listener) {
-        stateService.addBlockListener(listener);
-    }
-
-    public void removeBlockListener(BlockListener listener) {
-        stateService.removeBlockListener(listener);
-    }
 
     public Optional<Tx> getTx(String txId) {
         return stateService.getTx(txId);

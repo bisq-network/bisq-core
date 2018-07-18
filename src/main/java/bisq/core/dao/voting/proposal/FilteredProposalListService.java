@@ -18,8 +18,7 @@
 package bisq.core.dao.voting.proposal;
 
 import bisq.core.btc.wallet.BsqWalletService;
-import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.ChainHeightListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
@@ -47,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the Proposals from proposalService.
  */
 @Slf4j
-public class FilteredProposalListService implements ChainHeightListener, BlockListener, MyProposalListService.Listener {
+public class FilteredProposalListService implements BsqStateListener, MyProposalListService.Listener {
     private final ProposalService proposalService;
     private final StateService stateService;
     private final MyProposalListService myProposalListService;
@@ -81,8 +80,7 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
         this.proposalValidator = proposalValidator;
         this.periodService = periodService;
 
-        stateService.addChainHeightListener(this);
-        stateService.addBlockListener(this);
+        stateService.addBsqStateListener(this);
         myProposalListService.addListener(this);
 
         proposalService.getProtectedStoreList().addListener((ListChangeListener<Proposal>) c -> {
@@ -95,22 +93,33 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
         updatePredicates();
     }
 
-    private void updatePredicates() {
-        activeOrMyUnconfirmedProposals.setPredicate(proposal -> proposalValidator.isValidAndConfirmed(proposal) ||
-                myUnconfirmedProposals.contains(proposal));
-        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()));
-    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqStateListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     // At new cycle we don't get a list change but we want to update our predicates
     @Override
-    public void onChainHeightChanged(int blockHeight) {
-        // updateLists();
+    public void onNewBlockHeight(int blockHeight) {
     }
 
     @Override
-    public void onBlockAdded(Block block) {
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
         updateLists();
     }
+
+    @Override
+    public void onParseBlockChainComplete() {
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // MyProposalListService.Listener
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public void onListChanged(List<Proposal> list) {
@@ -122,6 +131,11 @@ public class FilteredProposalListService implements ChainHeightListener, BlockLi
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    private void updatePredicates() {
+        activeOrMyUnconfirmedProposals.setPredicate(proposal -> proposalValidator.isValidAndConfirmed(proposal) ||
+                myUnconfirmedProposals.contains(proposal));
+        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()));
+    }
 
     private void updateLists() {
         final List<Proposal> tempProposals = proposalService.getProtectedStoreList();

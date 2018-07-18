@@ -17,7 +17,9 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.ext.ParamChange;
@@ -80,7 +82,7 @@ import javax.annotation.Nullable;
  * the missing blindVotes from the network.
  */
 @Slf4j
-public class VoteResultService {
+public class VoteResultService implements BsqStateListener {
     private final VoteRevealService voteRevealService;
     private final StateService stateService;
     private final PeriodService periodService;
@@ -117,7 +119,7 @@ public class VoteResultService {
         this.blindVoteValidator = blindVoteValidator;
         this.issuanceService = issuanceService;
 
-        stateService.addChainHeightListener(this::maybeCalculateVoteResult);
+        stateService.addBsqStateListener(this);
     }
 
 
@@ -135,6 +137,29 @@ public class VoteResultService {
 
     public List<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
         return getRejectedEvaluatedProposals(allEvaluatedProposals);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqStateListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onNewBlockHeight(int blockHeight) {
+        // TODO check if we should use onParseTxsComplete for calling maybeCalculateVoteResult
+        maybeCalculateVoteResult(blockHeight);
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
     }
 
 

@@ -65,7 +65,7 @@ public class FullNodeParser extends BsqParser {
         blockValidator.validate(rawBlock);
 
         final int blockHeight = rawBlock.getHeight();
-        stateService.setNewBlockHeight(blockHeight);
+        stateService.onNewBlockHeight(blockHeight);
 
         final Block block = new Block(blockHeight,
                 rawBlock.getTime(),
@@ -74,29 +74,7 @@ public class FullNodeParser extends BsqParser {
 
         // TODO needed?
         if (!blockValidator.isBlockAlreadyAdded(rawBlock))
-            stateService.addNewBlock(block);
-
-        long startTs = System.currentTimeMillis();
-        parseTxs(rawBlock, block);
-
-        log.debug("parseBlock took {} ms at blockHeight {}; bsqTxs.size={}",
-                System.currentTimeMillis() - startTs, blockHeight, block.getTxs().size());
-
-        //log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
-        //log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
-        //Utilities.copyToClipboard(BsqParser.sb1.toString() + "\n\n\n" + BsqParser.sb2.toString());
-
-        return block;
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Private
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void parseTxs(RawBlock rawBlock, Block block) {
-        int blockHeight = rawBlock.getHeight();
-        log.debug("Parse block at height={} ", blockHeight);
+            stateService.onNewBlockWithEmptyTxs(block);
 
         maybeAddGenesisTx(rawBlock, blockHeight, block);
 
@@ -111,7 +89,15 @@ public class FullNodeParser extends BsqParser {
         // recursiveFindBsqTxs1(block, rawBlock.getRawTxs(), 0, 10000);
         parseBsqTxs(block, rawBlock.getRawTxs());
 
-        log.debug("recursiveFindBsqTxs took {} ms",
+        log.debug("parseBsqTxs took {} ms",
                 rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
+
+        stateService.onParseBlockComplete(block);
+
+        //log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
+        //log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
+        //Utilities.copyToClipboard(BsqParser.sb1.toString() + "\n\n\n" + BsqParser.sb2.toString());
+
+        return block;
     }
 }

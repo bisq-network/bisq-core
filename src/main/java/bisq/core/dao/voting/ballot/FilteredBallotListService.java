@@ -17,8 +17,7 @@
 
 package bisq.core.dao.voting.ballot;
 
-import bisq.core.dao.state.BlockListener;
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
@@ -39,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides filtered observableLists of the ballots from BallotListService.
  */
 @Slf4j
-public class FilteredBallotListService implements ParseBlockChainListener, BallotListService.BallotListChangeListener, BlockListener {
+public class FilteredBallotListService implements BallotListService.BallotListChangeListener, BsqStateListener {
     private final BallotListService ballotListService;
 
     @Getter
@@ -61,8 +60,8 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
                                      ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
 
-        stateService.addParseBlockChainListener(this);
-        stateService.addBlockListener(this);
+        stateService.addBsqStateListener(this);
+        ballotListService.addListener(this);
 
         validAndConfirmedBallots.setPredicate(ballot -> {
             return proposalValidator.isValidAndConfirmed(ballot.getProposal());
@@ -75,21 +74,27 @@ public class FilteredBallotListService implements ParseBlockChainListener, Ballo
                             .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), stateService.getChainHeight()))
                             .isPresent();
         });
-
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onComplete() {
-        ballotListService.addListener(this);
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
         onListChanged(ballotListService.getBallotList().getList());
     }
 
     @Override
-    public void onBlockAdded(Block block) {
+    public void onParseBlockChainComplete() {
         onListChanged(ballotListService.getBallotList().getList());
     }
 

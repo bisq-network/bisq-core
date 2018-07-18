@@ -54,10 +54,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class StateService {
     private final State state;
-
-    private final List<BlockListener> blockListeners = new CopyOnWriteArrayList<>();
-    private final List<ChainHeightListener> chainHeightListeners = new CopyOnWriteArrayList<>();
-    private final List<ParseBlockChainListener> parseBlockChainListeners = new CopyOnWriteArrayList<>();
+    private final List<BsqStateListener> bsqStateListeners = new CopyOnWriteArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -78,20 +75,6 @@ public class StateService {
 
     public void start() {
         state.setChainHeight(state.getGenesisBlockHeight());
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Parser sets blockHeight of new block to be parsed
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void setNewBlockHeight(int blockHeight) {
-        state.setChainHeight(blockHeight);
-        chainHeightListeners.forEach(listener -> listener.onChainHeightChanged(blockHeight));
-    }
-
-    public void onParseBlockChainComplete() {
-        parseBlockChainListeners.forEach(ParseBlockChainListener::onComplete);
     }
 
 
@@ -167,12 +150,35 @@ public class StateService {
     // Block
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addNewBlock(Block block) {
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Parser events
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    // First we get the blockHeight set
+    public void onNewBlockHeight(int blockHeight) {
+        state.setChainHeight(blockHeight);
+        bsqStateListeners.forEach(listener -> listener.onNewBlockHeight(blockHeight));
+    }
+
+    // Second we get the block added with empty txs
+    public void onNewBlockWithEmptyTxs(Block block) {
         state.getBlocks().add(block);
-        blockListeners.forEach(l -> l.onBlockAdded(block));
+        bsqStateListeners.forEach(l -> l.onEmptyBlockAdded(block));
 
         log.info("New Block added at blockHeight " + block.getHeight());
     }
+
+    // Third we get the onParseBlockComplete called after all rawTxs of blocks have been parsed
+    public void onParseBlockComplete(Block block) {
+        bsqStateListeners.forEach(l -> l.onParseTxsComplete(block));
+    }
+
+    // Called after parsing of all pending blocks is completed
+    public void onParseBlockChainComplete() {
+        bsqStateListeners.forEach(l -> l.onParseBlockChainComplete());
+    }
+
 
     public LinkedList<Block> getBlocks() {
         return state.getBlocks();
@@ -677,28 +683,12 @@ public class StateService {
     // Listeners
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addBlockListener(BlockListener listener) {
-        blockListeners.add(listener);
+    public void addBsqStateListener(BsqStateListener listener) {
+        bsqStateListeners.add(listener);
     }
 
-    public void removeBlockListener(BlockListener listener) {
-        blockListeners.remove(listener);
-    }
-
-    public void addChainHeightListener(ChainHeightListener listener) {
-        chainHeightListeners.add(listener);
-    }
-
-    public void removeChainHeightListener(ChainHeightListener listener) {
-        chainHeightListeners.remove(listener);
-    }
-
-    public void addParseBlockChainListener(ParseBlockChainListener listener) {
-        parseBlockChainListeners.add(listener);
-    }
-
-    public void removeParseBlockChainListener(ParseBlockChainListener listener) {
-        parseBlockChainListeners.remove(listener);
+    public void removeBsqStateListener(BsqStateListener listener) {
+        bsqStateListeners.remove(listener);
     }
 }
 

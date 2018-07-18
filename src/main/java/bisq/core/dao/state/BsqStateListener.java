@@ -17,6 +17,14 @@
 
 package bisq.core.dao.state;
 
-public interface ChainHeightListener {
-    void onChainHeightChanged(int blockHeight);
+import bisq.core.dao.state.blockchain.Block;
+
+public interface BsqStateListener {
+    void onNewBlockHeight(int blockHeight);
+
+    void onEmptyBlockAdded(Block block);
+
+    void onParseTxsComplete(Block block);
+
+    void onParseBlockChainComplete();
 }

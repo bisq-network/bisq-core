@@ -23,8 +23,9 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
-import bisq.core.dao.state.ParseBlockChainListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.proposal.storage.temp.TempProposalPayload;
@@ -58,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
  * Triggers republishing of my proposals at startup.
  */
 @Slf4j
-public class MyProposalListService implements PersistedDataHost, ParseBlockChainListener {
+public class MyProposalListService implements PersistedDataHost, BsqStateListener {
     public interface Listener {
         void onListChanged(List<Proposal> list);
     }
@@ -93,6 +94,9 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
         this.storage = storage;
 
         signaturePubKey = keyRing.getPubKeyRing().getSignaturePubKey();
+
+        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+        stateService.addBsqStateListener(this);
     }
 
 
@@ -114,25 +118,23 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Listeners
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void addListener(Listener listener) {
-        listeners.add(listener);
-    }
-
-    public void removeListener(Listener listener) {
-        listeners.remove(listener);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // ParseBlockChainListener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onComplete() {
-        numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
         rePublishOnceWellConnected();
     }
 
@@ -209,6 +211,14 @@ public class MyProposalListService implements PersistedDataHost, ParseBlockChain
 
     public List<Proposal> getList() {
         return myProposalList.getList();
+    }
+
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
 

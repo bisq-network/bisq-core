@@ -17,6 +17,8 @@
 
 package bisq.core.dao.state;
 
+import bisq.core.dao.state.blockchain.Block;
+
 import bisq.common.proto.persistable.PersistenceProtoResolver;
 import bisq.common.storage.Storage;
 
@@ -35,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Manages snapshots of State.
  */
 @Slf4j
-public class SnapshotManager {
+public class SnapshotManager implements BsqStateListener {
     private static final int SNAPSHOT_GRID = 11000;
 
     private final State state;
@@ -53,25 +55,50 @@ public class SnapshotManager {
         this.stateService = stateService;
         storage = new Storage<>(storageDir, persistenceProtoResolver);
 
-        stateService.addBlockListener(block -> {
-            final int chainHeadHeight = block.getHeight();
-            if (isSnapshotHeight(chainHeadHeight) &&
-                    (snapshotCandidate == null ||
-                            snapshotCandidate.getChainHeight() != chainHeadHeight)) {
-                // At trigger event we store the latest snapshotCandidate to disc
-                if (snapshotCandidate != null) {
-                    // We clone because storage is in a threaded context
-                    final State cloned = state.getClone(snapshotCandidate);
-                    storage.queueUpForSave(cloned);
-                    log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
-                }
-                // Now we clone and keep it in memory for the next trigger
-                snapshotCandidate = state.getClone();
-                // don't access cloned anymore with methods as locks are transient!
-                log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
-            }
-        });
+        this.stateService.addBsqStateListener(this);
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqStateListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+        final int chainHeadHeight = block.getHeight();
+        if (isSnapshotHeight(chainHeadHeight) &&
+                (snapshotCandidate == null ||
+                        snapshotCandidate.getChainHeight() != chainHeadHeight)) {
+            // At trigger event we store the latest snapshotCandidate to disc
+            if (snapshotCandidate != null) {
+                // We clone because storage is in a threaded context
+                final State cloned = state.getClone(snapshotCandidate);
+                storage.queueUpForSave(cloned);
+                log.info("Saved snapshotCandidate to Disc at height " + chainHeadHeight);
+            }
+            // Now we clone and keep it in memory for the next trigger
+            snapshotCandidate = state.getClone();
+            // don't access cloned anymore with methods as locks are transient!
+            log.debug("Cloned new snapshotCandidate at height " + chainHeadHeight);
+        }
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void applySnapshot() {
         checkNotNull(storage, "storage must not be null");
@@ -83,6 +110,11 @@ public class SnapshotManager {
             log.info("Try to apply snapshot but no stored snapshot available");
         }
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @VisibleForTesting
     int getSnapshotHeight(int genesisHeight, int height, int grid) {

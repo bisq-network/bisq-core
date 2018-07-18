@@ -21,7 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.Restrictions;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
-import bisq.core.dao.state.BlockListener;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
@@ -72,7 +72,7 @@ import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.BUILDING;
 import static org.bitcoinj.core.TransactionConfidence.ConfidenceType.PENDING;
 
 @Slf4j
-public class BsqWalletService extends WalletService implements BlockListener {
+public class BsqWalletService extends WalletService implements BsqStateListener {
     private final BsqCoinSelector bsqCoinSelector;
     private final NonBsqCoinSelector nonBsqCoinSelector;
     private final StateService stateService;
@@ -170,18 +170,30 @@ public class BsqWalletService extends WalletService implements BlockListener {
             });
         }
 
-        stateService.addBlockListener(this);
+        stateService.addBsqStateListener(this);
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // StateService.Listener
+    // BsqStateListener
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onBlockAdded(Block block) {
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
         if (isWalletReady())
             updateBsqWalletTransactions();
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
     }
 
 

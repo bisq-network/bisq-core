@@ -26,7 +26,9 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.StateService;
+import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -68,7 +70,7 @@ import lombok.extern.slf4j.Slf4j;
  * Publishes voteRevealTx. Republishes also all blindVotes of that cycle to add more resilience.
  */
 @Slf4j
-public class VoteRevealService {
+public class VoteRevealService implements BsqStateListener {
     private final StateService stateService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
@@ -113,7 +115,7 @@ public class VoteRevealService {
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
 
-        stateService.addChainHeightListener(this::maybeRevealVotes);
+        stateService.addBsqStateListener(this);
     }
 
 
@@ -128,6 +130,29 @@ public class VoteRevealService {
     public byte[] getHashOfBlindVoteList() {
         MyBlindVoteList list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
         return VoteRevealConsensus.getHashOfBlindVoteList(list);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqStateListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onNewBlockHeight(int blockHeight) {
+        // TODO check if we should use onParseTxsComplete for calling maybeCalculateVoteResult
+        maybeRevealVotes(blockHeight);
+    }
+
+    @Override
+    public void onEmptyBlockAdded(Block block) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
     }
 
 
