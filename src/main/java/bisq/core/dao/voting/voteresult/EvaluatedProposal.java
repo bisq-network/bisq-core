@@ -39,6 +39,9 @@ public class EvaluatedProposal {
         return proposalVoteResult.getProposal();
     }
 
+    public String getProposalTxId() {
+        return getProposal().getTxId();
+    }
 
     @Override
     public String toString() {

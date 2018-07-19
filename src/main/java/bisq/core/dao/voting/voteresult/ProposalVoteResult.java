@@ -57,7 +57,7 @@ public class ProposalVoteResult {
     }
 
     public long getThreshold() {
-        return stakeOfAcceptedVotes * 10_000 / getTotalStake();
+        return stakeOfAcceptedVotes > 0 ? stakeOfAcceptedVotes * 10_000 / getTotalStake() : 0;
     }
 
     @Override

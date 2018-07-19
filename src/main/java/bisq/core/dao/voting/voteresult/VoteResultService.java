@@ -39,6 +39,7 @@ import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.voting.merit.MeritList;
+import bisq.core.dao.voting.proposal.FilteredProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
@@ -65,6 +66,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -83,6 +85,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteResultService implements BsqStateListener {
     private final VoteRevealService voteRevealService;
+    private final FilteredProposalListService filteredProposalListService;
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
@@ -96,6 +99,8 @@ public class VoteResultService implements BsqStateListener {
     // TODO persist, PB
     @Getter
     private final List<EvaluatedProposal> allEvaluatedProposals = new ArrayList<>();
+    @Getter
+    private final List<DecryptedVote> allDecryptedVotes = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,6 +109,7 @@ public class VoteResultService implements BsqStateListener {
 
     @Inject
     public VoteResultService(VoteRevealService voteRevealService,
+                             FilteredProposalListService filteredProposalListService,
                              BsqStateService bsqStateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
@@ -111,6 +117,7 @@ public class VoteResultService implements BsqStateListener {
                              BlindVoteValidator blindVoteValidator,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
+        this.filteredProposalListService = filteredProposalListService;
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
@@ -169,6 +176,10 @@ public class VoteResultService implements BsqStateListener {
     private void maybeCalculateVoteResult(int chainHeight) {
         if (isInVoteResultPhase(chainHeight)) {
             Set<DecryptedVote> decryptedVotes = getDecryptedVotes(chainHeight);
+            allDecryptedVotes.addAll(decryptedVotes);
+
+            List<Proposal> proposals = new ArrayList<>(filteredProposalListService.getActiveOrMyUnconfirmedProposals());
+
             if (!decryptedVotes.isEmpty()) {
                 // From the decryptedVotes we create a map with the hash of the blind vote list as key and the
                 // aggregated stake as value. That map is used for calculating the majority of the blind vote lists.
@@ -301,7 +312,7 @@ public class VoteResultService implements BsqStateListener {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
             map.putIfAbsent(hash, 0L);
             long aggregatedStake = map.get(hash);
-            long meritStake = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(), decryptedVote.getMeritList(), bsqStateService);
+            long meritStake = decryptedVote.getMerit(bsqStateService);
             long stake = decryptedVote.getStake();
             long combinedStake = stake + meritStake;
             log.debug("blindVoteTxId={}, meritStake={}, stake={}, combinedStake={}",
@@ -373,9 +384,14 @@ public class VoteResultService implements BsqStateListener {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
         List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
+        AtomicLong defaultRequiredQuorum = new AtomicLong(0);
+        AtomicLong defaultRequiredVoteThreshold = new AtomicLong(0);
+
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
             long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
             long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
+            defaultRequiredQuorum.set(requiredQuorum);
+            defaultRequiredVoteThreshold.set(requiredQuorum);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
             long reachedQuorum = proposalVoteResult.getQuorum();
@@ -401,6 +417,20 @@ public class VoteResultService implements BsqStateListener {
                 log.warn("Proposal did not reach the requiredQuorum. reachedQuorum={}, requiredQuorum={}", reachedQuorum, requiredQuorum);
             }
         });
+
+        Map<String, EvaluatedProposal> lookupMap = new HashMap<>();
+        evaluatedProposals.forEach(evaluatedProposal -> lookupMap.put(evaluatedProposal.getProposalTxId(), evaluatedProposal));
+
+        filteredProposalListService.getActiveOrMyUnconfirmedProposals().stream()
+                .filter(proposal -> !lookupMap.containsKey(proposal.getTxId()))
+                .forEach(proposal -> {
+                    ProposalVoteResult proposalVoteResult = new ProposalVoteResult(proposal, 0, 0, 0, 0, decryptedVotes.size());
+                    EvaluatedProposal evaluatedProposal = new EvaluatedProposal(false,
+                            proposalVoteResult,
+                            defaultRequiredQuorum.get(), defaultRequiredVoteThreshold.get());
+                    evaluatedProposals.add(evaluatedProposal);
+                    log.info("Proposal ignored by all voters: " + evaluatedProposal);
+                });
         return evaluatedProposals;
     }
 

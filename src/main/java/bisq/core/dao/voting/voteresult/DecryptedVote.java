@@ -17,6 +17,7 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.merit.MeritList;
 
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Value
-class DecryptedVote {
+public class DecryptedVote {
     private final byte[] hashOfBlindVoteList;
     private final String voteRevealTxId; // not used yet but keep it for now
     private final String blindVoteTxId; // not used yet but keep it for now
@@ -45,5 +46,9 @@ class DecryptedVote {
         this.stake = stake;
         this.ballotList = ballotList;
         this.meritList = meritList;
+    }
+
+    public long getMerit(BsqStateService bsqStateService) {
+        return VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
     }
 }
