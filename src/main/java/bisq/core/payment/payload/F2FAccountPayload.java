@@ -115,9 +115,9 @@ public final class F2FAccountPayload extends CountryBasedPaymentAccountPayload {
 
     @Override
     public String getPaymentDetailsForTradePopup() {
-        return "Contact details: " + contact + "\n" +
-                "City: " + city + "\n" +
-                "Additional information: " + extraInfo;
+        // We don't show here more as the makers extra data are the relevant for the trade. City has to be anyway the
+        // same for maker and taker.
+        return "Contact details: " + contact;
     }
 
     @Override
