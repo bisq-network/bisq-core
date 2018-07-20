@@ -77,6 +77,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
     public static final String CASH_DEPOSIT_ID = "CASH_DEPOSIT";
     public static final String MONEY_GRAM_ID = "MONEY_GRAM";
     public static final String WESTERN_UNION_ID = "WESTERN_UNION";
+    public static final String F2F_ID = "F2F";
     public static final String BLOCK_CHAINS_ID = "BLOCK_CHAINS";
 
     public static PaymentMethod OK_PAY;
@@ -105,6 +106,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
     public static PaymentMethod CASH_DEPOSIT;
     public static PaymentMethod MONEY_GRAM;
     public static PaymentMethod WESTERN_UNION;
+    public static PaymentMethod F2F;
     public static PaymentMethod BLOCK_CHAINS;
 
     private static List<PaymentMethod> ALL_VALUES;
@@ -208,6 +210,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
                     NATIONAL_BANK = new PaymentMethod(NATIONAL_BANK_ID, 4 * DAY, maxTradeLimitMidRisk),
                     SAME_BANK = new PaymentMethod(SAME_BANK_ID, 2 * DAY, maxTradeLimitMidRisk),
                     SPECIFIC_BANKS = new PaymentMethod(SPECIFIC_BANKS_ID, 4 * DAY, maxTradeLimitMidRisk),
+                    F2F = new PaymentMethod(F2F_ID, 4 * DAY, maxTradeLimitMidRisk),
 
                     // Trans national
                     OK_PAY = new PaymentMethod(OK_PAY_ID, DAY, maxTradeLimitVeryLowRisk),
