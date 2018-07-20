@@ -210,7 +210,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable {
                     NATIONAL_BANK = new PaymentMethod(NATIONAL_BANK_ID, 4 * DAY, maxTradeLimitMidRisk),
                     SAME_BANK = new PaymentMethod(SAME_BANK_ID, 2 * DAY, maxTradeLimitMidRisk),
                     SPECIFIC_BANKS = new PaymentMethod(SPECIFIC_BANKS_ID, 4 * DAY, maxTradeLimitMidRisk),
-                    F2F = new PaymentMethod(F2F_ID, 4 * DAY, maxTradeLimitMidRisk),
+                    F2F = new PaymentMethod(F2F_ID, 4 * DAY, maxTradeLimitLowRisk),
 
                     // Trans national
                     OK_PAY = new PaymentMethod(OK_PAY_ID, DAY, maxTradeLimitVeryLowRisk),
