@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.param;
+package bisq.core.dao.voting.proposal.confiscatebond;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
@@ -24,9 +24,11 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
 
 import bisq.common.app.Version;
-import bisq.common.proto.ProtoUtil;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
 
 import java.util.Date;
 import java.util.UUID;
@@ -37,30 +39,25 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.Immutable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class ChangeParamProposal extends Proposal {
+public final class ConfiscateBondProposal extends Proposal {
 
-    private final Param param;
-    private final long paramValue;
+    private final byte[] bondId;
 
-    public ChangeParamProposal(String name,
-                               String title,
-                               String description,
-                               String link,
-                               Param param,
-                               long paramValue) {
+    public ConfiscateBondProposal(String name,
+                                  String title,
+                                  String description,
+                                  String link,
+                                  byte[] bondId) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
                 description,
                 link,
-                param,
-                paramValue,
+                bondId,
                 Version.PROPOSAL,
                 new Date().getTime(),
                 "");
@@ -71,16 +68,15 @@ public final class ChangeParamProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeParamProposal(String uid,
-                                String name,
-                                String title,
-                                String description,
-                                String link,
-                                Param param,
-                                long paramValue,
-                                byte version,
-                                long creationDate,
-                                String txId) {
+    private ConfiscateBondProposal(String uid,
+                                   String name,
+                                   String title,
+                                   String description,
+                                   String link,
+                                   byte[] bondId,
+                                   byte version,
+                                   long creationDate,
+                                   String txId) {
         super(uid,
                 name,
                 title,
@@ -90,42 +86,24 @@ public final class ChangeParamProposal extends Proposal {
                 creationDate,
                 txId);
 
-        this.param = param;
-        this.paramValue = paramValue;
+        this.bondId = bondId;
     }
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        String name;
-        try {
-            name = param.name();
-        } catch (Throwable t) {
-            log.error("getProposalBuilder: " + t.toString());
-            name = Param.UNDEFINED.name();
-        }
-        final PB.ChangeParamProposal.Builder builder = PB.ChangeParamProposal.newBuilder()
-                .setParam(name)
-                .setParamValue(paramValue);
-        return super.getProposalBuilder().setChangeParamProposal(builder);
+        final PB.ConfiscateBondProposal.Builder builder = PB.ConfiscateBondProposal.newBuilder()
+                .setBondId(ByteString.copyFrom(bondId));
+        return super.getProposalBuilder().setConfiscateBondProposal(builder);
     }
 
-    public static ChangeParamProposal fromProto(PB.Proposal proto) {
-        final PB.ChangeParamProposal proposalProto = proto.getChangeParamProposal();
-        Param param;
-        try {
-            param = ProtoUtil.enumFromProto(Param.class, proposalProto.getParam());
-            checkNotNull(param, "param must not be null");
-        } catch (Throwable t) {
-            log.error("fromProto: " + t.toString());
-            param = Param.UNDEFINED;
-        }
-        return new ChangeParamProposal(proto.getUid(),
+    public static ConfiscateBondProposal fromProto(PB.Proposal proto) {
+        final PB.ConfiscateBondProposal proposalProto = proto.getConfiscateBondProposal();
+        return new ConfiscateBondProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                param,
-                proposalProto.getParamValue(),
+                proposalProto.getBondId().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -138,37 +116,35 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.CHANGE_PARAM;
+        return ProposalType.CONFISCATE_BOND;
     }
 
     @Override
     public Param getQuorumParam() {
-        return Param.QUORUM_CHANGE_PARAM;
+        return Param.QUORUM_CONFISCATION;
     }
 
     @Override
     public Param getThresholdParam() {
-        return Param.THRESHOLD_CHANGE_PARAM;
+        return Param.THRESHOLD_CONFISCATION;
     }
 
     public TxType getTxType() {
         return TxType.PROPOSAL;
     }
 
-    // TODO MK should this be a different opreturn type?
     public TxOutputType getTxOutputType() {
-        return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
+        return TxOutputType.CONFISCATE_BOND_OP_RETURN_OUTPUT;
     }
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new ChangeParamProposal(getUid(),
+        return new ConfiscateBondProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getParam(),
-                getParamValue(),
+                getBondId(),
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
@@ -176,13 +152,12 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new ChangeParamProposal(getUid(),
+        return new ConfiscateBondProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getParam(),
-                getParamValue(),
+                getBondId(),
                 getVersion(),
                 getCreationDate().getTime(),
                 "");
@@ -190,9 +165,8 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "ChangeParamProposal{" +
-                "\n     param=" + param +
-                ",\n     paramValue=" + paramValue +
+        return "ConfiscateBondProposal{" +
+                "\n     bondId=" + Utilities.bytesAsHexString(bondId) +
                 "\n} " + super.toString();
     }
 }

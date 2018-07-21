@@ -21,5 +21,6 @@ public enum ProposalType {
     COMPENSATION_REQUEST,
     GENERIC,
     CHANGE_PARAM,
-    REMOVE_ALTCOIN
+    REMOVE_ALTCOIN,
+    CONFISCATE_BOND
 }

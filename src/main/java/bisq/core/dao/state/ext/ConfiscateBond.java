@@ -15,40 +15,44 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.blockchain;
+package bisq.core.dao.state.ext;
 
-import bisq.common.proto.ProtoUtil;
+import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-public enum TxOutputType {
-    UNDEFINED,
-    GENESIS_OUTPUT,
-    BSQ_OUTPUT,
-    BTC_OUTPUT,
-    PROPOSAL_OP_RETURN_OUTPUT,
-    COMP_REQ_OP_RETURN_OUTPUT,
-    CONFISCATE_BOND_OP_RETURN_OUTPUT,
-    ISSUANCE_CANDIDATE_OUTPUT,
-    BLIND_VOTE_LOCK_STAKE_OUTPUT,
-    BLIND_VOTE_OP_RETURN_OUTPUT,
-    VOTE_REVEAL_UNLOCK_STAKE_OUTPUT,
-    VOTE_REVEAL_OP_RETURN_OUTPUT,
-    LOCKUP,
-    LOCKUP_OP_RETURN_OUTPUT,
-    UNLOCK,
-    INVALID_OUTPUT;
+import com.google.protobuf.ByteString;
 
+import lombok.Value;
+
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
+@Value
+public class ConfiscateBond implements PersistablePayload {
+    private final byte[] bondId;
+    private final int activationHeight;
+
+    public ConfiscateBond(byte[] bondId, int activationHeight) {
+        this.bondId = bondId;
+        this.activationHeight = activationHeight;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static TxOutputType fromProto(PB.TxOutputType txOutputType) {
-        return ProtoUtil.enumFromProto(TxOutputType.class, txOutputType.name());
+
+    @Override
+    public PB.ConfiscateBond toProtoMessage() {
+        return PB.ConfiscateBond.newBuilder()
+                .setBondId(ByteString.copyFrom(bondId))
+                .setActivationHeight(activationHeight)
+                .build();
     }
 
-    public PB.TxOutputType toProtoMessage() {
-        return PB.TxOutputType.valueOf(name());
+    public static ConfiscateBond fromProto(PB.ConfiscateBond proto) {
+        return new ConfiscateBond(proto.getBondId().toByteArray(),
+                proto.getActivationHeight());
     }
 }

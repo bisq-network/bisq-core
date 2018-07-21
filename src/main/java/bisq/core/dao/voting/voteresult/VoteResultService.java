@@ -22,6 +22,7 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.ext.ConfiscateBond;
 import bisq.core.dao.state.ext.ParamChange;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -42,6 +43,7 @@ import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.proposal.FilteredProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
@@ -490,11 +492,19 @@ public class VoteResultService implements BsqStateListener {
     }
 
     private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+        applyIssuance(evaluatedProposals, chainHeight);
+        applyParamChange(evaluatedProposals, chainHeight);
+        applyConfiscateBond(evaluatedProposals, chainHeight);
+        }
+
+    private void applyIssuance(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         evaluatedProposals.stream()
                 .map(EvaluatedProposal::getProposal)
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .forEach(proposal -> issuanceService.issueBsq((CompensationProposal) proposal, chainHeight));
+    }
 
+    private void applyParamChange(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         Map<String, List<EvaluatedProposal>> evaluatedProposalsByParam = new HashMap<>();
         evaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ChangeParamProposal) {
@@ -532,6 +542,7 @@ public class VoteResultService implements BsqStateListener {
         });
     }
 
+
     private void applyAcceptedChangeParamProposal(ChangeParamProposal changeParamProposal, int chainHeight) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n################################################################################\n");
@@ -546,11 +557,24 @@ public class VoteResultService implements BsqStateListener {
                 changeParamProposal.getParamValue());
     }
 
+    private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+        evaluatedProposals.forEach(evaluatedProposal -> {
+            if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
+                ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
+                bsqStateService.confiscateBond(getConfiscateBond(confiscateBondProposal, chainHeight));
+            }
+        });
+    }
+
     private ParamChange getParamChange(ChangeParamProposal changeParamProposal, int chainHeight) {
         return bsqStateService.getStartHeightOfNextCycle(chainHeight)
                 .map(heightOfNewCycle -> new ParamChange(changeParamProposal.getParam().name(),
                         changeParamProposal.getParamValue(), heightOfNewCycle))
                 .orElse(null);
+    }
+
+    private ConfiscateBond getConfiscateBond(ConfiscateBondProposal confiscateBondProposal, int chainHeight) {
+        return new ConfiscateBond(confiscateBondProposal.getBondId(), chainHeight);
     }
 
     private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {

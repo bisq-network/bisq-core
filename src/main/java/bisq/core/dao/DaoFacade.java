@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.bonding.lockup.LockupService;
+import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.bonding.unlock.UnlockService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
@@ -45,6 +46,7 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
+import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposalService;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
 
 import bisq.common.handlers.ErrorMessageHandler;
@@ -86,6 +88,7 @@ public class DaoFacade {
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
     private final ChangeParamProposalService changeParamProposalService;
+    private final ConfiscateBondProposalService confiscateBondProposalService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
 
@@ -102,6 +105,7 @@ public class DaoFacade {
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService,
                      ChangeParamProposalService changeParamProposalService,
+                     ConfiscateBondProposalService confiscateBondProposalService,
                      LockupService lockupService,
                      UnlockService unlockService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -114,6 +118,7 @@ public class DaoFacade {
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
         this.changeParamProposalService = changeParamProposalService;
+        this.confiscateBondProposalService = confiscateBondProposalService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
@@ -206,6 +211,20 @@ public class DaoFacade {
                 link,
                 param,
                 paramValue);
+    }
+
+    public ProposalWithTransaction getConfiscateBondProposalWithTransaction(String name,
+                                                                            String title,
+                                                                            String description,
+                                                                            String link,
+                                                                            byte[] bondId)
+            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+            WalletException {
+        return confiscateBondProposalService.createProposalWithTransaction(name,
+                title,
+                description,
+                link,
+                bondId);
     }
 
     // Show fee
@@ -323,9 +342,9 @@ public class DaoFacade {
 
     //TODO maybe merge lockupService and unlockService as bondService?
     // Publish lockup tx
-    public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
-                                ExceptionHandler exceptionHandler) {
-        lockupService.publishLockupTx(lockupAmount, lockTime, resultHandler, exceptionHandler);
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, byte[] hash,
+                                ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
+        lockupService.publishLockupTx(lockupAmount, lockTime, type, hash, resultHandler, exceptionHandler);
     }
 
     // Publish unlock tx
@@ -334,7 +353,25 @@ public class DaoFacade {
         unlockService.publishUnlockTx(lockupTxId, resultHandler, exceptionHandler);
     }
 
+    public long getTotalLockupAmount() {
+        return bsqStateService.getTotalLockupAmount();
+    }
 
+    public long getTotalAmountOfUnLockingTxOutputs() {
+        return bsqStateService.getTotalAmountOfUnLockingTxOutputs();
+    }
+
+    public long getTotalAmountOfUnLockedTxOutputs() {
+        return bsqStateService.getTotalAmountOfUnLockedTxOutputs();
+    }
+
+    public Optional<Integer> getLockTime(String txId) {
+        return bsqStateService.getLockTime(txId);
+    }
+
+    public Set<byte[]> getLockupAndUnlockingBondIds() {
+        return bsqStateService.getLockupAndUnlockingBondIds();
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Use case: Present transaction related state
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -379,18 +416,6 @@ public class DaoFacade {
         return bsqStateService.getTotalBurntFee();
     }
 
-    public long getTotalLockupAmount() {
-        return bsqStateService.getTotalLockupAmount();
-    }
-
-    public long getTotalAmountOfUnLockingTxOutputs() {
-        return bsqStateService.getTotalAmountOfUnLockingTxOutputs();
-    }
-
-    public long getTotalAmountOfUnLockedTxOutputs() {
-        return bsqStateService.getTotalAmountOfUnLockedTxOutputs();
-    }
-
     public long getTotalIssuedAmountFromCompRequests() {
         return bsqStateService.getTotalIssuedAmount();
     }
@@ -401,10 +426,6 @@ public class DaoFacade {
 
     public int getIssuanceBlockHeight(String txId) {
         return bsqStateService.getIssuanceBlockHeight(txId);
-    }
-
-    public Optional<Integer> getLockTime(String txId) {
-        return bsqStateService.getLockTime(txId);
     }
 
     public boolean isIssuanceTx(String txId) {
