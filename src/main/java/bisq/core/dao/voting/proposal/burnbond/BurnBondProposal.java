@@ -121,12 +121,12 @@ public final class BurnBondProposal extends Proposal {
 
     @Override
     public Param getQuorumParam() {
-        return Param.QUORUM_BURN_BOND;
+        return Param.QUORUM_CONFISCATION;
     }
 
     @Override
     public Param getThresholdParam() {
-        return Param.THRESHOLD_BURN_BOND;
+        return Param.THRESHOLD_CONFISCATION;
     }
 
     public TxType getTxType() {
