@@ -31,18 +31,14 @@ import lombok.Getter;
  */
 public enum Param {
     UNDEFINED(0),
-    // Trade fees in BSQ
-    MIN_MAKER_FEE_IN_BSQ(5),
-    MIN_TAKER_FEE_IN_BSQ(5),
-    // TODO That fee should be changed to % fee to be less dependent on btc price
-    DEFAULT_MAKER_FEE_IN_BSQ(200), // about 2 USD at 1 BSQ = 1 USD for a 1 BTC trade
-    DEFAULT_TAKER_FEE_IN_BSQ(200),
 
-    // Trade fees in BTC
-    MIN_MAKER_FEE_IN_BTC(5_000), // 0.5 USD at BTC price 10000 USD
-    MIN_TAKER_FEE_IN_BTC(5_000),
-    DEFAULT_MAKER_FEE_IN_BTC(200_000), // 20 USD at BTC price 10000 USD for a 1 BTC trade
-    DEFAULT_TAKER_FEE_IN_BTC(200_000),
+    // TODO trade fee is not implemented yet to be actually used.
+    // FeeService is setting the fee atm....
+    // 0.2% 100 = 1%, 1 is 0.01%
+    BSQ_MAKER_FEE_IN_PERCENT(20),
+    BSQ_TAKER_FEE_IN_PERCENT(20),
+    BTC_MAKER_FEE_IN_PERCENT(20),
+    BTC_TAKER_FEE_IN_PERCENT(20),
 
     // Fees proposal/voting. Atm we don't use diff. fees for diff. proposal types
     PROPOSAL_FEE(100),          // 5 BSQ    TODO change low dev
@@ -51,14 +47,16 @@ public enum Param {
     // Quorum for voting in BSQ stake
     QUORUM_PROPOSAL(100),           // 10 000 BSQ  TODO change low dev value
     QUORUM_COMP_REQUEST(100),       // 10 000 BSQ  TODO change low dev value
-    QUORUM_CHANGE_PARAM(100),       // 100 000 BSQ TODO change low dev value
-    QUORUM_REMOVE_ASSET(100),       // 10 000 BSQ  TODO change low dev value
+    QUORUM_CHANGE_PARAM(300),       // 100 000 BSQ TODO change low dev value
+    QUORUM_REMOVE_ASSET(400),       // 10 000 BSQ  TODO change low dev value
+    QUORUM_CONFISCATION(500),       // 10 000 BSQ  TODO change low dev value
 
     // Threshold for voting in % with precision of 2 (e.g. 5000 -> 50.00%)
     THRESHOLD_PROPOSAL(5_000),          // 50%
     THRESHOLD_COMP_REQUEST(5_000),      // 50%
     THRESHOLD_CHANGE_PARAM(7_500),      // 75% -> that might change the THRESHOLD_CHANGE_PARAM and QUORUM_CHANGE_PARAM!
     THRESHOLD_REMOVE_ASSET(5_000),      // 50%
+    THRESHOLD_CONFISCATION(8_500),      // 85%
 
     // Period phase (16 blocks atm)
     PHASE_UNDEFINED(0),

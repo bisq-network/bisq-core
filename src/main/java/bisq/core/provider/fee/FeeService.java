@@ -41,8 +41,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -50,8 +49,9 @@ import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+// TODO use dao parameters for fee
+@Slf4j
 public class FeeService {
-    private static final Logger log = LoggerFactory.getLogger(FeeService.class);
 
     // fixed min fee
     public static final Coin BTC_REFERENCE_DEFAULT_MIN_TX_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE; // 5000
