@@ -66,7 +66,7 @@ public class BurnBondProposalService {
                                                                  String title,
                                                                  String description,
                                                                  String link,
-                                                                 String bondId)
+                                                                 byte[] bondId)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 

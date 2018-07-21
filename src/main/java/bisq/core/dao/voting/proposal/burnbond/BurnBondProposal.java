@@ -24,8 +24,11 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
 
 import bisq.common.app.Version;
+import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
+
+import com.google.protobuf.ByteString;
 
 import java.util.Date;
 import java.util.UUID;
@@ -42,13 +45,13 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public final class BurnBondProposal extends Proposal {
 
-    private final String bondId;
+    private final byte[] bondId;
 
     public BurnBondProposal(String name,
                             String title,
                             String description,
                             String link,
-                            String bondId) {
+                            byte[] bondId) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
@@ -70,7 +73,7 @@ public final class BurnBondProposal extends Proposal {
                              String title,
                              String description,
                              String link,
-                             String bondId,
+                             byte[] bondId,
                              byte version,
                              long creationDate,
                              String txId) {
@@ -89,7 +92,7 @@ public final class BurnBondProposal extends Proposal {
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
         final PB.BurnBondProposal.Builder builder = PB.BurnBondProposal.newBuilder()
-                .setBondId(bondId);
+                .setBondId(ByteString.copyFrom(bondId));
         return super.getProposalBuilder().setBurnBondProposal(builder);
     }
 
@@ -100,7 +103,7 @@ public final class BurnBondProposal extends Proposal {
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                proposalProto.getBondId(),
+                proposalProto.getBondId().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -163,7 +166,7 @@ public final class BurnBondProposal extends Proposal {
     @Override
     public String toString() {
         return "BurnBondProposal{" +
-                "\n     bondId=" + bondId +
+                "\n     bondId=" + Utilities.bytesAsHexString(bondId) +
                 "\n} " + super.toString();
     }
 }

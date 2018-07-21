@@ -20,6 +20,7 @@ package bisq.core.dao;
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.bonding.lockup.LockupService;
+import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.bonding.unlock.UnlockService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
@@ -216,7 +217,7 @@ public class DaoFacade {
                                                                       String title,
                                                                       String description,
                                                                       String link,
-                                                                      String bondId)
+                                                                      byte[] bondId)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
         return burnBondPRoposalService.createProposalWithTransaction(name,
@@ -341,9 +342,9 @@ public class DaoFacade {
 
     //TODO maybe merge lockupService and unlockService as bondService?
     // Publish lockup tx
-    public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
-                                ExceptionHandler exceptionHandler) {
-        lockupService.publishLockupTx(lockupAmount, lockTime, resultHandler, exceptionHandler);
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, byte[] hash,
+                                ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
+        lockupService.publishLockupTx(lockupAmount, lockTime, type, hash, resultHandler, exceptionHandler);
     }
 
     // Publish unlock tx
@@ -352,7 +353,25 @@ public class DaoFacade {
         unlockService.publishUnlockTx(lockupTxId, resultHandler, exceptionHandler);
     }
 
+    public long getTotalLockupAmount() {
+        return bsqStateService.getTotalLockupAmount();
+    }
 
+    public long getTotalAmountOfUnLockingTxOutputs() {
+        return bsqStateService.getTotalAmountOfUnLockingTxOutputs();
+    }
+
+    public long getTotalAmountOfUnLockedTxOutputs() {
+        return bsqStateService.getTotalAmountOfUnLockedTxOutputs();
+    }
+
+    public Optional<Integer> getLockTime(String txId) {
+        return bsqStateService.getLockTime(txId);
+    }
+
+    public Set<byte[]> getLockupAndUnlockingBondIds() {
+        return bsqStateService.getLockupAndUnlockingBondIds();
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Use case: Present transaction related state
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -397,18 +416,6 @@ public class DaoFacade {
         return bsqStateService.getTotalBurntFee();
     }
 
-    public long getTotalLockupAmount() {
-        return bsqStateService.getTotalLockupAmount();
-    }
-
-    public long getTotalAmountOfUnLockingTxOutputs() {
-        return bsqStateService.getTotalAmountOfUnLockingTxOutputs();
-    }
-
-    public long getTotalAmountOfUnLockedTxOutputs() {
-        return bsqStateService.getTotalAmountOfUnLockedTxOutputs();
-    }
-
     public long getTotalIssuedAmountFromCompRequests() {
         return bsqStateService.getTotalIssuedAmount();
     }
@@ -419,10 +426,6 @@ public class DaoFacade {
 
     public int getIssuanceBlockHeight(String txId) {
         return bsqStateService.getIssuanceBlockHeight(txId);
-    }
-
-    public Optional<Integer> getLockTime(String txId) {
-        return bsqStateService.getLockTime(txId);
     }
 
     public boolean isIssuanceTx(String txId) {

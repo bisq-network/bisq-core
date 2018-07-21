@@ -30,6 +30,7 @@ import bisq.core.dao.bonding.BondingConsensus;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
+import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -63,12 +64,15 @@ public class LockupService {
         this.btcWalletService = btcWalletService;
     }
 
-    public void publishLockupTx(Coin lockupAmount, int lockTime, ResultHandler resultHandler,
-                                ExceptionHandler exceptionHandler) {
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, byte[] hash,
+                                ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         checkArgument(lockTime <= BondingConsensus.getMaxLockTime() &&
                 lockTime >= BondingConsensus.getMinLockTime(), "lockTime not in rage");
         try {
-            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime);
+            if (hash != null && hash.length != 20)
+                throw new TransactionVerificationException("Bad hash for bond id" +
+                        hash != null ? Utilities.bytesAsHexString(hash) : "");
+            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime, type, hash);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
 
             //noinspection Duplicates

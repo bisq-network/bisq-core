@@ -38,9 +38,13 @@ class OpReturnLockupValidator {
     boolean validate(byte[] opReturnData, Optional<LockupType> lockupType, int lockTime, int blockHeight,
                      ParsingModel parsingModel) {
         // TODO: Handle all lockupTypes
-        boolean lockupTypeOk = lockupType.isPresent() && lockupType.get() == LockupType.DEFAULT;
-        return parsingModel.getLockupOutput() != null && opReturnData.length == 5 &&
-                lockupTypeOk &&
+        if (!lockupType.isPresent()) {
+            log.warn("No lockuptype found for lockup tx, opreturndata=" + opReturnData.toString());
+            return false;
+        }
+
+        int expectedLength = lockupType.get() == LockupType.DEFAULT ? 5 : 25;
+        return parsingModel.getLockupOutput() != null && opReturnData.length == expectedLength &&
                 lockTime >= BondingConsensus.getMinLockTime() &&
                 lockTime <= BondingConsensus.getMaxLockTime();
     }

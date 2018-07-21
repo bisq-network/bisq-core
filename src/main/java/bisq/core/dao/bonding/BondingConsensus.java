@@ -26,6 +26,8 @@ import bisq.common.app.Version;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import java.util.Arrays;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,14 +44,16 @@ public class BondingConsensus {
     private static int maxLockTime = 65535;
 
     // TODO SQ: add choice of sub version for lock type (e.g. roles, trade,...)
-    public static byte[] getLockupOpReturnData(int lockTime) throws IOException {
+    public static byte[] getLockupOpReturnData(int lockTime, LockupType type, byte[] hash) throws IOException {
         // PushData of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
         // require by btcd-cli4j, avoid opReturns with 4 bytes or less
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP);
-            outputStream.write(LockupType.DEFAULT.getType());
+            outputStream.write(type.getType());
             Util.writeOpReturnData(outputStream, lockTime, 2);
+            if (hash != null)
+                outputStream.write(hash);
             return outputStream.toByteArray();
         } catch (IOException e) {
             // Not expected to happen ever
@@ -61,5 +65,10 @@ public class BondingConsensus {
 
     public static boolean isLockTimeOver(long unlockBlockHeight, long currentBlockHeight) {
         return currentBlockHeight >= unlockBlockHeight;
+    }
+
+    // Bond id is the 20 byte hash added to opreturn for lockup tx that require an id
+    public static byte[] getBondId(byte[] opReturn) {
+        return opReturn.length == 25 ? Arrays.copyOfRange(opReturn, 5, 25) : new byte[0];
     }
 }
