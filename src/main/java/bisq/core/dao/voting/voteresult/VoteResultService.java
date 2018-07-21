@@ -495,7 +495,7 @@ public class VoteResultService implements BsqStateListener {
         applyIssuance(evaluatedProposals, chainHeight);
         applyParamChange(evaluatedProposals, chainHeight);
         applyConfiscateBond(evaluatedProposals, chainHeight);
-        }
+    }
 
     private void applyIssuance(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         evaluatedProposals.stream()
@@ -542,7 +542,6 @@ public class VoteResultService implements BsqStateListener {
         });
     }
 
-
     private void applyAcceptedChangeParamProposal(ChangeParamProposal changeParamProposal, int chainHeight) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n################################################################################\n");
@@ -557,15 +556,6 @@ public class VoteResultService implements BsqStateListener {
                 changeParamProposal.getParamValue());
     }
 
-    private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        evaluatedProposals.forEach(evaluatedProposal -> {
-            if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
-                ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
-                bsqStateService.confiscateBond(getConfiscateBond(confiscateBondProposal, chainHeight));
-            }
-        });
-    }
-
     private ParamChange getParamChange(ChangeParamProposal changeParamProposal, int chainHeight) {
         return bsqStateService.getStartHeightOfNextCycle(chainHeight)
                 .map(heightOfNewCycle -> new ParamChange(changeParamProposal.getParam().name(),
@@ -573,8 +563,21 @@ public class VoteResultService implements BsqStateListener {
                 .orElse(null);
     }
 
-    private ConfiscateBond getConfiscateBond(ConfiscateBondProposal confiscateBondProposal, int chainHeight) {
-        return new ConfiscateBond(confiscateBondProposal.getBondId(), chainHeight);
+    private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+        evaluatedProposals.forEach(evaluatedProposal -> {
+            if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
+                ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
+                bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHashOfBondId(), chainHeight));
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("\n################################################################################\n");
+                sb.append("We confiscated  bond. ProposalTxId=").append(confiscateBondProposal.getTxId())
+                        .append("\nfor confiscateBondProposal with UID ").append(confiscateBondProposal.getUid())
+                        .append("\nHashOfBondId: ").append(Utilities.encodeToHex(confiscateBondProposal.getHashOfBondId()))
+                        .append("\n################################################################################\n");
+                log.info(sb.toString());
+            }
+        });
     }
 
     private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {

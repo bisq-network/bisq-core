@@ -217,14 +217,14 @@ public class DaoFacade {
                                                                             String title,
                                                                             String description,
                                                                             String link,
-                                                                            byte[] bondId)
+                                                                            byte[] hashOfBondId)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
         return confiscateBondProposalService.createProposalWithTransaction(name,
                 title,
                 description,
                 link,
-                bondId);
+                hashOfBondId);
     }
 
     // Show fee
@@ -340,14 +340,11 @@ public class DaoFacade {
     // Use case: Bonding
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    //TODO maybe merge lockupService and unlockService as bondService?
-    // Publish lockup tx
-    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, byte[] hash,
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, Optional<byte[]> hashOfBondId,
                                 ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-        lockupService.publishLockupTx(lockupAmount, lockTime, type, hash, resultHandler, exceptionHandler);
+        lockupService.publishLockupTx(lockupAmount, lockTime, type, hashOfBondId, resultHandler, exceptionHandler);
     }
 
-    // Publish unlock tx
     public void publishUnlockTx(String lockupTxId, ResultHandler resultHandler,
                                 ExceptionHandler exceptionHandler) {
         unlockService.publishUnlockTx(lockupTxId, resultHandler, exceptionHandler);
@@ -370,8 +367,10 @@ public class DaoFacade {
     }
 
     public Set<byte[]> getLockupAndUnlockingBondIds() {
-        return bsqStateService.getLockupAndUnlockingBondIds();
+        return bsqStateService.getHashOfBondIdSet();
     }
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Use case: Present transaction related state
     ///////////////////////////////////////////////////////////////////////////////////////////

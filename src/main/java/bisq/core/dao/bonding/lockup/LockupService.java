@@ -40,6 +40,8 @@ import javax.inject.Inject;
 
 import java.io.IOException;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -64,15 +66,15 @@ public class LockupService {
         this.btcWalletService = btcWalletService;
     }
 
-    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, byte[] hash,
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, Optional<byte[]> hashOfBondId,
                                 ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         checkArgument(lockTime <= BondingConsensus.getMaxLockTime() &&
                 lockTime >= BondingConsensus.getMinLockTime(), "lockTime not in rage");
         try {
-            if (hash != null && hash.length != 20)
-                throw new TransactionVerificationException("Bad hash for bond id" +
-                        hash != null ? Utilities.bytesAsHexString(hash) : "");
-            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime, type, hash);
+            if (hashOfBondId.isPresent() && hashOfBondId.get().length != 20)
+                throw new TransactionVerificationException("Hash has to be 20 bytes: Hash=" +
+                        Utilities.bytesAsHexString(hashOfBondId.get()));
+            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime, type, hashOfBondId);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
 
             //noinspection Duplicates

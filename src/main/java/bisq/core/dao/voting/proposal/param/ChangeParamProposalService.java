@@ -101,7 +101,7 @@ public class ChangeParamProposalService {
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
         byte[] opReturnData = ChangeParamConsensus.getOpReturnData(hashOfPayload);
 
-        final Transaction txWithBtcFee = btcWalletService.completePreparedGenericProposalTx(preparedBurnFeeTx,
+        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx,
                 opReturnData);
 
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);

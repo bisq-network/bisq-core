@@ -112,4 +112,8 @@ public class Tx {
                 proto.getLockTime(),
                 proto.getUnlockBlockHeight());
     }
+
+    public TxOutput getLastTxOutput() {
+        return txOutputs.get(txOutputs.size() - 1);
+    }
 }

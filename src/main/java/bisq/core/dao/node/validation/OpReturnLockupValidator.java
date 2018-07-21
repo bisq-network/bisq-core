@@ -20,6 +20,8 @@ package bisq.core.dao.node.validation;
 import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.bonding.lockup.LockupType;
 
+import bisq.common.util.Utilities;
+
 import javax.inject.Inject;
 
 import java.util.Optional;
@@ -39,12 +41,13 @@ class OpReturnLockupValidator {
                      ParsingModel parsingModel) {
         // TODO: Handle all lockupTypes
         if (!lockupType.isPresent()) {
-            log.warn("No lockuptype found for lockup tx, opreturndata=" + opReturnData.toString());
+            log.warn("No lockupType found for lockup tx, opReturnData=" + Utilities.encodeToHex(opReturnData));
             return false;
         }
 
         int expectedLength = lockupType.get() == LockupType.DEFAULT ? 5 : 25;
-        return parsingModel.getLockupOutput() != null && opReturnData.length == expectedLength &&
+        return parsingModel.getLockupOutput() != null &&
+                opReturnData.length == expectedLength &&
                 lockTime >= BondingConsensus.getMinLockTime() &&
                 lockTime <= BondingConsensus.getMaxLockTime();
     }

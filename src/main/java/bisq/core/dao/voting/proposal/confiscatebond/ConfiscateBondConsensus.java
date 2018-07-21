@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ConfiscateBondConsensus {
     public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            // TODO SQ verify this is correct
             outputStream.write(OpReturnType.PROPOSAL.getType());
             outputStream.write(Version.PROPOSAL);
             outputStream.write(hashOfPayload);

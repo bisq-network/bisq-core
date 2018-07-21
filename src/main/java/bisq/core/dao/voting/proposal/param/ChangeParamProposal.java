@@ -155,9 +155,8 @@ public final class ChangeParamProposal extends Proposal {
         return TxType.PROPOSAL;
     }
 
-    // TODO MK should this be a different opreturn type?
     public TxOutputType getTxOutputType() {
-        return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
+        return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
     }
 
     @Override

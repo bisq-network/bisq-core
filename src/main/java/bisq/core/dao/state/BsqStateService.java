@@ -19,7 +19,6 @@ package bisq.core.dao.state;
 
 import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.blockchain.RawTxOutput;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -44,6 +43,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -529,7 +529,7 @@ public class BsqStateService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Terminology
-    // TODO BondId is the hash of role/trade data ...
+    // HashOfBondId - 20 bytes hash of the bond ID
     // Lockup - txOutputs of LOCKUP type
     // Unlocking - UNLOCK txOutputs that are not yet spendable due to lock time
     // Unlocked - UNLOCK txOutputs that are spendable since the lock time has passed
@@ -541,35 +541,37 @@ public class BsqStateService {
         return getTx(txId).map(Tx::getLockTime);
     }
 
-    // Bond Id
-    public byte[] getBondId(TxOutput txOutput) {
-        Optional<Tx> tx = Optional.empty();
+    public Optional<byte[]> getHashOfBondId(TxOutput txOutput) {
+        Optional<Tx> lockupTx = Optional.empty();
+        String txId = txOutput.getTxId();
         if (txOutput.getTxOutputType() == TxOutputType.LOCKUP) {
-            tx = getTx(txOutput.getTxId());
-        } else if (txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput)) {
-            if (getTx(txOutput.getTxId()).isPresent()) {
-                Tx t1 = getTx(txOutput.getTxId()).get();
-                tx = getTx(t1.getTxInputs().get(0).getConnectedTxOutputTxId());
+            lockupTx = getTx(txId);
+        } else if (isUnlockTxOutputAndLockTimeNotOver(txOutput)) {
+            if (getTx(txId).isPresent()) {
+                Tx unlockTx = getTx(txId).get();
+                lockupTx = getTx(unlockTx.getTxInputs().get(0).getConnectedTxOutputTxId());
             }
         }
-        if (tx.isPresent()) {
-            RawTxOutput rawTxOutput = tx.get().getRawTxOutputs().stream()
-                    .reduce((first, second) -> second)
-                    .orElse(null);
-            if (rawTxOutput != null) {
-                return BondingConsensus.getBondId(rawTxOutput.getOpReturnData());
-            }
+        if (lockupTx.isPresent()) {
+            byte[] opReturnData = lockupTx.get().getLastTxOutput().getOpReturnData();
+            if (opReturnData != null)
+                return BondingConsensus.getHashOfBondIdFromOpReturnData(opReturnData);
         }
-        return new byte[0];
+        return Optional.empty();
     }
 
-    public Set<byte[]> getLockupAndUnlockingBondIds() {
+    public Set<byte[]> getHashOfBondIdSet() {
         return getTxOutputStream()
                 .filter(txOutput -> isUnspent(txOutput.getKey()))
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.LOCKUP ||
-                        txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput))
-                .map(this::getBondId)
+                        isUnlockTxOutputAndLockTimeNotOver(txOutput))
+                .map(txOutput -> getHashOfBondId(txOutput).orElse(null))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+    }
+
+    private boolean isUnlockTxOutputAndLockTimeNotOver(TxOutput txOutput) {
+        return txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput);
     }
 
     // Lockup
@@ -674,23 +676,29 @@ public class BsqStateService {
 
     // Confiscate bond
     public void confiscateBond(ConfiscateBond confiscateBond) {
-        if (confiscateBond.getBondId().length == 0) {
+        if (confiscateBond.getHashOfBondId().length == 0) {
             // Disallow confiscation of empty bonds
             return;
         }
         getTxOutputStream()
                 .filter(txOutput -> isUnspent(txOutput.getKey()))
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.LOCKUP ||
-                        (txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput)))
-                .filter(txOutput -> Arrays.equals(getBondId(txOutput), confiscateBond.getBondId()))
+                        (isUnlockTxOutputAndLockTimeNotOver(txOutput)))
+                .filter(txOutput -> {
+                    Optional<byte[]> hashOfBondId = getHashOfBondId(txOutput);
+                    return hashOfBondId.isPresent() && Arrays.equals(hashOfBondId.get(), confiscateBond.getHashOfBondId());
+                })
                 .forEach(this::applyConfiscateBond);
     }
 
     private void applyConfiscateBond(TxOutput txOutput) {
-        bsqState.getConfiscatedTxOutputMap().put(
-                new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()), txOutput);
-        txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+        bsqState.getConfiscatedTxOutputMap().put(txOutput.getKey(), txOutput);
+
+        // TODO SQ TxOutputType is immutable after parsing
+        // We need to add new checks if a txo is not confiscated by using the map similar like utxo map
+        // txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Param

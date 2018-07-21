@@ -45,19 +45,21 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public final class ConfiscateBondProposal extends Proposal {
 
-    private final byte[] bondId;
+    // TODO add utxo key for other bonds
+    //TODO is nullable?
+    private final byte[] hashOfBondId;
 
     public ConfiscateBondProposal(String name,
                                   String title,
                                   String description,
                                   String link,
-                                  byte[] bondId) {
+                                  byte[] hashOfBondId) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
                 description,
                 link,
-                bondId,
+                hashOfBondId,
                 Version.PROPOSAL,
                 new Date().getTime(),
                 "");
@@ -73,7 +75,7 @@ public final class ConfiscateBondProposal extends Proposal {
                                    String title,
                                    String description,
                                    String link,
-                                   byte[] bondId,
+                                   byte[] hashOfBondId,
                                    byte version,
                                    long creationDate,
                                    String txId) {
@@ -86,13 +88,13 @@ public final class ConfiscateBondProposal extends Proposal {
                 creationDate,
                 txId);
 
-        this.bondId = bondId;
+        this.hashOfBondId = hashOfBondId;
     }
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
         final PB.ConfiscateBondProposal.Builder builder = PB.ConfiscateBondProposal.newBuilder()
-                .setBondId(ByteString.copyFrom(bondId));
+                .setHashOfBondId(ByteString.copyFrom(hashOfBondId));
         return super.getProposalBuilder().setConfiscateBondProposal(builder);
     }
 
@@ -103,7 +105,7 @@ public final class ConfiscateBondProposal extends Proposal {
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                proposalProto.getBondId().toByteArray(),
+                proposalProto.getHashOfBondId().toByteArray(),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -144,7 +146,7 @@ public final class ConfiscateBondProposal extends Proposal {
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getBondId(),
+                getHashOfBondId(),
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
@@ -157,7 +159,7 @@ public final class ConfiscateBondProposal extends Proposal {
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getBondId(),
+                getHashOfBondId(),
                 getVersion(),
                 getCreationDate().getTime(),
                 "");
@@ -166,7 +168,7 @@ public final class ConfiscateBondProposal extends Proposal {
     @Override
     public String toString() {
         return "ConfiscateBondProposal{" +
-                "\n     bondId=" + Utilities.bytesAsHexString(bondId) +
+                "\n     hashOfBondId=" + Utilities.bytesAsHexString(hashOfBondId) +
                 "\n} " + super.toString();
     }
 }

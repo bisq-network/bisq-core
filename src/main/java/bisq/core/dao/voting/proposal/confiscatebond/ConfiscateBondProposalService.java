@@ -66,7 +66,7 @@ public class ConfiscateBondProposalService {
                                                                  String title,
                                                                  String description,
                                                                  String link,
-                                                                 byte[] bondId)
+                                                                 byte[] hashOfBondId)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
 
@@ -76,7 +76,7 @@ public class ConfiscateBondProposalService {
                 title,
                 description,
                 link,
-                bondId);
+                hashOfBondId);
         validate(proposal);
 
         Transaction transaction = getTransaction(proposal);
@@ -98,7 +98,7 @@ public class ConfiscateBondProposalService {
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
         byte[] opReturnData = ConfiscateBondConsensus.getOpReturnData(hashOfPayload);
 
-        final Transaction txWithBtcFee = btcWalletService.completePreparedGenericProposalTx(preparedBurnFeeTx,
+        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx,
                 opReturnData);
 
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
