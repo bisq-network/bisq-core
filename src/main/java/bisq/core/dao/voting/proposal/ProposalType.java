@@ -22,5 +22,5 @@ public enum ProposalType {
     GENERIC,
     CHANGE_PARAM,
     REMOVE_ALTCOIN,
-    BURN_BOND
+    CONFISCATE_BOND
 }

@@ -27,7 +27,7 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.state.ext.BurnBond;
+import bisq.core.dao.state.ext.ConfiscateBond;
 import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.state.ext.ParamChange;
@@ -672,21 +672,21 @@ public class BsqStateService {
                 .sum();
     }
 
-    // Burn bond
-    public void burnBond(BurnBond burnBond) {
-        if (burnBond.getBondId().length == 0) {
-            // Disallow burning of empty bonds
+    // Confiscate bond
+    public void confiscateBond(ConfiscateBond confiscateBond) {
+        if (confiscateBond.getBondId().length == 0) {
+            // Disallow confiscation of empty bonds
             return;
         }
         getTxOutputStream()
                 .filter(txOutput -> isUnspent(txOutput.getKey()))
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.LOCKUP ||
                         (txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput)))
-                .filter(txOutput -> Arrays.equals(getBondId(txOutput), burnBond.getBondId()))
-                .forEach(this::applyBurnBond);
+                .filter(txOutput -> Arrays.equals(getBondId(txOutput), confiscateBond.getBondId()))
+                .forEach(this::applyConfiscateBond);
     }
 
-    private void applyBurnBond(TxOutput txOutput) {
+    private void applyConfiscateBond(TxOutput txOutput) {
         bsqState.getConfiscatedTxOutputMap().put(
                 new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()), txOutput);
         txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);

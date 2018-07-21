@@ -29,11 +29,11 @@ import javax.annotation.concurrent.Immutable;
 
 @Immutable
 @Value
-public class BurnBond implements PersistablePayload {
+public class ConfiscateBond implements PersistablePayload {
     private final byte[] bondId;
     private final int activationHeight;
 
-    public BurnBond(byte[] bondId, int activationHeight) {
+    public ConfiscateBond(byte[] bondId, int activationHeight) {
         this.bondId = bondId;
         this.activationHeight = activationHeight;
     }
@@ -44,15 +44,15 @@ public class BurnBond implements PersistablePayload {
 
 
     @Override
-    public PB.BurnBond toProtoMessage() {
-        return PB.BurnBond.newBuilder()
+    public PB.ConfiscateBond toProtoMessage() {
+        return PB.ConfiscateBond.newBuilder()
                 .setBondId(ByteString.copyFrom(bondId))
                 .setActivationHeight(activationHeight)
                 .build();
     }
 
-    public static BurnBond fromProto(PB.BurnBond proto) {
-        return new BurnBond(proto.getBondId().toByteArray(),
+    public static ConfiscateBond fromProto(PB.ConfiscateBond proto) {
+        return new ConfiscateBond(proto.getBondId().toByteArray(),
                 proto.getActivationHeight());
     }
 }

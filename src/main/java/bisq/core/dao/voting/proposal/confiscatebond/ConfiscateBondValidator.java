@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.burnbond;
+package bisq.core.dao.voting.proposal.confiscatebond;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.PeriodService;
@@ -28,10 +28,10 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BurnBondValidator extends ProposalValidator {
+public class ConfiscateBondValidator extends ProposalValidator {
 
     @Inject
-    public BurnBondValidator(BsqStateService bsqStateService, PeriodService periodService) {
+    public ConfiscateBondValidator(BsqStateService bsqStateService, PeriodService periodService) {
         super(bsqStateService, periodService);
     }
 
@@ -40,7 +40,7 @@ public class BurnBondValidator extends ProposalValidator {
         try {
             super.validateDataFields(proposal);
 
-            BurnBondProposal burnBondProposal = (BurnBondProposal) proposal;
+            ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) proposal;
             //TODO
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);

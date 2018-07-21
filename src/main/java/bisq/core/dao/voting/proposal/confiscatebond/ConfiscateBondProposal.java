@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.burnbond;
+package bisq.core.dao.voting.proposal.confiscatebond;
 
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
@@ -43,15 +43,15 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class BurnBondProposal extends Proposal {
+public final class ConfiscateBondProposal extends Proposal {
 
     private final byte[] bondId;
 
-    public BurnBondProposal(String name,
-                            String title,
-                            String description,
-                            String link,
-                            byte[] bondId) {
+    public ConfiscateBondProposal(String name,
+                                  String title,
+                                  String description,
+                                  String link,
+                                  byte[] bondId) {
         this(UUID.randomUUID().toString(),
                 name,
                 title,
@@ -68,15 +68,15 @@ public final class BurnBondProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BurnBondProposal(String uid,
-                             String name,
-                             String title,
-                             String description,
-                             String link,
-                             byte[] bondId,
-                             byte version,
-                             long creationDate,
-                             String txId) {
+    private ConfiscateBondProposal(String uid,
+                                   String name,
+                                   String title,
+                                   String description,
+                                   String link,
+                                   byte[] bondId,
+                                   byte version,
+                                   long creationDate,
+                                   String txId) {
         super(uid,
                 name,
                 title,
@@ -91,14 +91,14 @@ public final class BurnBondProposal extends Proposal {
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        final PB.BurnBondProposal.Builder builder = PB.BurnBondProposal.newBuilder()
+        final PB.ConfiscateBondProposal.Builder builder = PB.ConfiscateBondProposal.newBuilder()
                 .setBondId(ByteString.copyFrom(bondId));
-        return super.getProposalBuilder().setBurnBondProposal(builder);
+        return super.getProposalBuilder().setConfiscateBondProposal(builder);
     }
 
-    public static BurnBondProposal fromProto(PB.Proposal proto) {
-        final PB.BurnBondProposal proposalProto = proto.getBurnBondProposal();
-        return new BurnBondProposal(proto.getUid(),
+    public static ConfiscateBondProposal fromProto(PB.Proposal proto) {
+        final PB.ConfiscateBondProposal proposalProto = proto.getConfiscateBondProposal();
+        return new ConfiscateBondProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
@@ -116,7 +116,7 @@ public final class BurnBondProposal extends Proposal {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.BURN_BOND;
+        return ProposalType.CONFISCATE_BOND;
     }
 
     @Override
@@ -134,12 +134,12 @@ public final class BurnBondProposal extends Proposal {
     }
 
     public TxOutputType getTxOutputType() {
-        return TxOutputType.BURN_BOND_OP_RETURN_OUTPUT;
+        return TxOutputType.CONFISCATE_BOND_OP_RETURN_OUTPUT;
     }
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new BurnBondProposal(getUid(),
+        return new ConfiscateBondProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -152,7 +152,7 @@ public final class BurnBondProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new BurnBondProposal(getUid(),
+        return new ConfiscateBondProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
@@ -165,7 +165,7 @@ public final class BurnBondProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "BurnBondProposal{" +
+        return "ConfiscateBondProposal{" +
                 "\n     bondId=" + Utilities.bytesAsHexString(bondId) +
                 "\n} " + super.toString();
     }

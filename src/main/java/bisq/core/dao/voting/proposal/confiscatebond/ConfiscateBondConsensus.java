@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.burnbond;
+package bisq.core.dao.voting.proposal.confiscatebond;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BurnBondConsensus {
+public class ConfiscateBondConsensus {
     public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             // TODO SQ verify this is correct

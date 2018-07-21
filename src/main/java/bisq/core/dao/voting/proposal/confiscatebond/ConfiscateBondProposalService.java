@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.burnbond;
+package bisq.core.dao.voting.proposal.confiscatebond;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
@@ -37,14 +37,14 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates BurnBondProposal and transaction.
+ * Creates ConfiscateBondProposal and transaction.
  */
 @Slf4j
-public class BurnBondProposalService {
+public class ConfiscateBondProposalService {
     private final BsqWalletService bsqWalletService;
     private final BtcWalletService btcWalletService;
     private final BsqStateService bsqStateService;
-    private final BurnBondValidator burnBondValidator;
+    private final ConfiscateBondValidator confiscateBondValidator;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -52,14 +52,14 @@ public class BurnBondProposalService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BurnBondProposalService(BsqWalletService bsqWalletService,
-                                   BtcWalletService btcWalletService,
-                                   BsqStateService bsqStateService,
-                                   BurnBondValidator burnBondValidator) {
+    public ConfiscateBondProposalService(BsqWalletService bsqWalletService,
+                                         BtcWalletService btcWalletService,
+                                         BsqStateService bsqStateService,
+                                         ConfiscateBondValidator confiscateBondValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.bsqStateService = bsqStateService;
-        this.burnBondValidator = burnBondValidator;
+        this.confiscateBondValidator = confiscateBondValidator;
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
@@ -71,7 +71,7 @@ public class BurnBondProposalService {
             WalletException {
 
         // As we don't know the txId we create a temp object with txId set to an empty string.
-        BurnBondProposal proposal = new BurnBondProposal(
+        ConfiscateBondProposal proposal = new ConfiscateBondProposal(
                 name,
                 title,
                 description,
@@ -81,14 +81,14 @@ public class BurnBondProposalService {
 
         Transaction transaction = getTransaction(proposal);
 
-        final BurnBondProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final ConfiscateBondProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
     // We have txId set to null in proposal as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction getTransaction(BurnBondProposal proposal)
+    private Transaction getTransaction(ConfiscateBondProposal proposal)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
@@ -96,21 +96,21 @@ public class BurnBondProposalService {
 
         // payload does not have txId at that moment
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
-        byte[] opReturnData = BurnBondConsensus.getOpReturnData(hashOfPayload);
+        byte[] opReturnData = ConfiscateBondConsensus.getOpReturnData(hashOfPayload);
 
         final Transaction txWithBtcFee = btcWalletService.completePreparedGenericProposalTx(preparedBurnFeeTx,
                 opReturnData);
 
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-        log.info("BurnBondProposal tx: " + transaction);
+        log.info("ConfiscateBondProposal tx: " + transaction);
         return transaction;
     }
 
-    private void validate(BurnBondProposal proposal) throws ValidationException {
-        burnBondValidator.validateDataFields(proposal);
+    private void validate(ConfiscateBondProposal proposal) throws ValidationException {
+        confiscateBondValidator.validateDataFields(proposal);
     }
 
-    private BurnBondProposal getProposalWithTxId(BurnBondProposal proposal, String txId) {
-        return (BurnBondProposal) proposal.cloneWithTxId(txId);
+    private ConfiscateBondProposal getProposalWithTxId(ConfiscateBondProposal proposal, String txId) {
+        return (ConfiscateBondProposal) proposal.cloneWithTxId(txId);
     }
 }

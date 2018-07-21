@@ -45,8 +45,8 @@ import bisq.core.dao.voting.proposal.MyProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalConsensus;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
-import bisq.core.dao.voting.proposal.burnbond.BurnBondProposalService;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
+import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposalService;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
 
 import bisq.common.handlers.ErrorMessageHandler;
@@ -88,7 +88,7 @@ public class DaoFacade {
     private final MyVoteListService myVoteListService;
     private final CompensationProposalService compensationProposalService;
     private final ChangeParamProposalService changeParamProposalService;
-    private final BurnBondProposalService burnBondPRoposalService;
+    private final ConfiscateBondProposalService confiscateBondProposalService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
 
@@ -105,7 +105,7 @@ public class DaoFacade {
                      MyVoteListService myVoteListService,
                      CompensationProposalService compensationProposalService,
                      ChangeParamProposalService changeParamProposalService,
-                     BurnBondProposalService burnBondPRoposalService,
+                     ConfiscateBondProposalService confiscateBondProposalService,
                      LockupService lockupService,
                      UnlockService unlockService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -118,7 +118,7 @@ public class DaoFacade {
         this.myVoteListService = myVoteListService;
         this.compensationProposalService = compensationProposalService;
         this.changeParamProposalService = changeParamProposalService;
-        this.burnBondPRoposalService = burnBondPRoposalService;
+        this.confiscateBondProposalService = confiscateBondProposalService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
@@ -213,14 +213,14 @@ public class DaoFacade {
                 paramValue);
     }
 
-    public ProposalWithTransaction getBurnBondProposalWithTransaction(String name,
-                                                                      String title,
-                                                                      String description,
-                                                                      String link,
-                                                                      byte[] bondId)
+    public ProposalWithTransaction getConfiscateBondProposalWithTransaction(String name,
+                                                                            String title,
+                                                                            String description,
+                                                                            String link,
+                                                                            byte[] bondId)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
-        return burnBondPRoposalService.createProposalWithTransaction(name,
+        return confiscateBondProposalService.createProposalWithTransaction(name,
                 title,
                 description,
                 link,

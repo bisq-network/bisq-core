@@ -22,7 +22,7 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.ext.BurnBond;
+import bisq.core.dao.state.ext.ConfiscateBond;
 import bisq.core.dao.state.ext.ParamChange;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
@@ -42,8 +42,8 @@ import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.voting.merit.MeritList;
 import bisq.core.dao.voting.proposal.FilteredProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.burnbond.BurnBondProposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
@@ -494,7 +494,7 @@ public class VoteResultService implements BsqStateListener {
     private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         applyIssuance(evaluatedProposals, chainHeight);
         applyParamChange(evaluatedProposals, chainHeight);
-        applyBurnBond(evaluatedProposals, chainHeight);
+        applyConfiscateBond(evaluatedProposals, chainHeight);
         }
 
     private void applyIssuance(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
@@ -557,11 +557,11 @@ public class VoteResultService implements BsqStateListener {
                 changeParamProposal.getParamValue());
     }
 
-    private void applyBurnBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+    private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         evaluatedProposals.forEach(evaluatedProposal -> {
-            if (evaluatedProposal.getProposal() instanceof BurnBondProposal) {
-                BurnBondProposal burnBondProposal = (BurnBondProposal) evaluatedProposal.getProposal();
-                bsqStateService.burnBond(getBurnBond(burnBondProposal, chainHeight));
+            if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
+                ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
+                bsqStateService.confiscateBond(getConfiscateBond(confiscateBondProposal, chainHeight));
             }
         });
     }
@@ -573,8 +573,8 @@ public class VoteResultService implements BsqStateListener {
                 .orElse(null);
     }
 
-    private BurnBond getBurnBond(BurnBondProposal burnBondProposal, int chainHeight) {
-        return new BurnBond(burnBondProposal.getBondId(), chainHeight);
+    private ConfiscateBond getConfiscateBond(ConfiscateBondProposal confiscateBondProposal, int chainHeight) {
+        return new ConfiscateBond(confiscateBondProposal.getBondId(), chainHeight);
     }
 
     private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {
