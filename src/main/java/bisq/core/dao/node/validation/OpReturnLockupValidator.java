@@ -45,9 +45,8 @@ class OpReturnLockupValidator {
             return false;
         }
 
-        int expectedLength = lockupType.get() == LockupType.DEFAULT ? 5 : 25;
         return parsingModel.getLockupOutput() != null &&
-                opReturnData.length == expectedLength &&
+                opReturnData.length == 25 &&
                 lockTime >= BondingConsensus.getMinLockTime() &&
                 lockTime <= BondingConsensus.getMaxLockTime();
     }

@@ -15,29 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.bonding.lockup;
+package bisq.core.dao.bonding;
 
-import java.util.Arrays;
-import java.util.Optional;
-
-import lombok.Getter;
-
-public enum LockupType {
-    BONDED_ROLE((byte) 0x01),
-    TRADE((byte) 0x02); //TODO handle TRADE
-
-    @Getter
-    private byte type;
-
-    LockupType(byte type) {
-        this.type = type;
-    }
-
-    public static Optional<LockupType> getLockupType(byte type) {
-        return Arrays.stream(LockupType.values())
-                .filter(lockupType -> lockupType.type == type)
-                .map(Optional::of)
-                .findAny()
-                .orElse(Optional.empty());
-    }
+public enum BondedRole {
+    ARBITRATOR,
+    DOMAIN_NAME_HOLDER,
+    SEED_NODE_OPERATOR
 }
