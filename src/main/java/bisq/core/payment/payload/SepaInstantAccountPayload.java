@@ -57,7 +57,7 @@ public final class SepaInstantAccountPayload extends CountryBasedPaymentAccountP
     @Setter
     private String bic = "";
 
-    // Dont use a set here as we need a deterministic ordering, otherwise the contract hash does not match
+    // Don't use a set here as we need a deterministic ordering, otherwise the contract hash does not match
     private final List<String> acceptedCountryCodes;
 
     public SepaInstantAccountPayload(String paymentMethod, String id, List<Country> acceptedCountries) {
