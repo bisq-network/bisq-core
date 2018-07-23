@@ -345,7 +345,21 @@ public class Offer implements NetworkPayload, PersistablePayload {
         if (getExtraDataMap() != null && getExtraDataMap().containsKey(OfferPayload.ACCOUNT_AGE_WITNESS_HASH))
             return Optional.of(getExtraDataMap().get(OfferPayload.ACCOUNT_AGE_WITNESS_HASH));
         else
-            return Optional.<String>empty();
+            return Optional.empty();
+    }
+
+    public String getF2FCity() {
+        if (getExtraDataMap() != null && getExtraDataMap().containsKey(OfferPayload.F2F_CITY))
+            return getExtraDataMap().get(OfferPayload.F2F_CITY);
+        else
+            return "";
+    }
+
+    public String getF2FExtraInfo() {
+        if (getExtraDataMap() != null && getExtraDataMap().containsKey(OfferPayload.F2F_EXTRA_INFO))
+            return getExtraDataMap().get(OfferPayload.F2F_EXTRA_INFO);
+        else
+            return "";
     }
 
     // domain properties
