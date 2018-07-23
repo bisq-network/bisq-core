@@ -17,6 +17,8 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.role.BondedRolesService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -45,6 +47,7 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
+import bisq.core.dao.voting.proposal.role.BondedRoleProposal;
 import bisq.core.dao.voting.voteresult.issuance.IssuanceService;
 import bisq.core.dao.voting.votereveal.VoteRevealConsensus;
 import bisq.core.dao.voting.votereveal.VoteRevealService;
@@ -93,6 +96,7 @@ public class VoteResultService implements BsqStateListener {
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
+    private final BondedRolesService bondedRolesService;
     private final IssuanceService issuanceService;
     @Getter
     private final ObservableList<VoteResultException> voteResultExceptions = FXCollections.observableArrayList();
@@ -117,6 +121,7 @@ public class VoteResultService implements BsqStateListener {
                              BallotListService ballotListService,
                              BlindVoteService blindVoteService,
                              BlindVoteValidator blindVoteValidator,
+                             BondedRolesService bondedRolesService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
         this.filteredProposalListService = filteredProposalListService;
@@ -125,6 +130,7 @@ public class VoteResultService implements BsqStateListener {
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.blindVoteValidator = blindVoteValidator;
+        this.bondedRolesService = bondedRolesService;
         this.issuanceService = issuanceService;
 
         bsqStateService.addBsqStateListener(this);
@@ -494,6 +500,7 @@ public class VoteResultService implements BsqStateListener {
     private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         applyIssuance(evaluatedProposals, chainHeight);
         applyParamChange(evaluatedProposals, chainHeight);
+        applyBondedRole(evaluatedProposals, chainHeight);
         applyConfiscateBond(evaluatedProposals, chainHeight);
     }
 
@@ -563,17 +570,33 @@ public class VoteResultService implements BsqStateListener {
                 .orElse(null);
     }
 
+    private void applyBondedRole(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+        evaluatedProposals.forEach(evaluatedProposal -> {
+            if (evaluatedProposal.getProposal() instanceof BondedRoleProposal) {
+                BondedRoleProposal bondedRoleProposal = (BondedRoleProposal) evaluatedProposal.getProposal();
+                BondedRole bondedRole = bondedRoleProposal.getBondedRole();
+                bondedRolesService.addAcceptedBondedRole(bondedRole);
+                StringBuilder sb = new StringBuilder();
+                sb.append("\n################################################################################\n");
+                sb.append("We added a bonded role. ProposalTxId=").append(bondedRoleProposal.getTxId())
+                        .append("\nfor bondedRoleProposal with UID ").append(bondedRoleProposal.getUid())
+                        .append("\nBondedRole: ").append(bondedRole.getDisplayString())
+                        .append("\n################################################################################\n");
+                log.info(sb.toString());
+            }
+        });
+    }
     private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
         evaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
                 ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
-                bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHashOfBondId(), chainHeight));
+                bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHash(), chainHeight));
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("\n################################################################################\n");
                 sb.append("We confiscated  bond. ProposalTxId=").append(confiscateBondProposal.getTxId())
                         .append("\nfor confiscateBondProposal with UID ").append(confiscateBondProposal.getUid())
-                        .append("\nHashOfBondId: ").append(Utilities.encodeToHex(confiscateBondProposal.getHashOfBondId()))
+                        .append("\nHashOfBondId: ").append(Utilities.encodeToHex(confiscateBondProposal.getHash()))
                         .append("\n################################################################################\n");
                 log.info(sb.toString());
             }

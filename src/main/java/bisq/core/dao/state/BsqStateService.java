@@ -43,7 +43,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -190,7 +189,7 @@ public class BsqStateService {
         return bsqState.getBlocks();
     }
 
-    private Optional<Block> getLastBlock() {
+    public Optional<Block> getLastBlock() {
         if (!getBlocks().isEmpty())
             return Optional.of(getBlocks().getLast());
         else
@@ -251,12 +250,12 @@ public class BsqStateService {
     // Tx
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Stream<Tx> getTxStream() {
+    public Stream<Tx> getTxStream() {
         return getBlocks().stream()
                 .flatMap(block -> block.getTxs().stream());
     }
 
-    private Map<String, Tx> getTxMap() {
+    public Map<String, Tx> getTxMap() {
         return getTxStream().collect(Collectors.toMap(Tx::getId, tx -> tx));
     }
 
@@ -320,7 +319,7 @@ public class BsqStateService {
     // TxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Stream<TxOutput> getTxOutputStream() {
+    public Stream<TxOutput> getTxOutputStream() {
         return getTxStream()
                 .flatMap(tx -> tx.getTxOutputs().stream());
     }
@@ -334,7 +333,7 @@ public class BsqStateService {
     // UnspentTxOutput
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
+    public Map<TxOutputKey, TxOutput> getUnspentTxOutputMap() {
         return bsqState.getUnspentTxOutputMap();
     }
 
@@ -403,7 +402,7 @@ public class BsqStateService {
     // TxOutputType
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
+    public Set<TxOutput> getTxOutputsByTxOutputType(TxOutputType txOutputType) {
         return getTxOutputStream()
                 .filter(txOutput -> txOutput.getTxOutputType() == txOutputType)
                 .collect(Collectors.toSet());
@@ -476,7 +475,7 @@ public class BsqStateService {
         return new HashSet<>(bsqState.getIssuanceMap().values());
     }
 
-    private Optional<Issuance> getIssuance(String txId) {
+    public Optional<Issuance> getIssuance(String txId) {
         if (bsqState.getIssuanceMap().containsKey(txId))
             return Optional.of(bsqState.getIssuanceMap().get(txId));
         else
@@ -541,7 +540,7 @@ public class BsqStateService {
         return getTx(txId).map(Tx::getLockTime);
     }
 
-    public Optional<byte[]> getHashOfBondId(TxOutput txOutput) {
+    public Optional<byte[]> getLockupHash(TxOutput txOutput) {
         Optional<Tx> lockupTx = Optional.empty();
         String txId = txOutput.getTxId();
         if (txOutput.getTxOutputType() == TxOutputType.LOCKUP) {
@@ -555,22 +554,22 @@ public class BsqStateService {
         if (lockupTx.isPresent()) {
             byte[] opReturnData = lockupTx.get().getLastTxOutput().getOpReturnData();
             if (opReturnData != null)
-                return BondingConsensus.getHashOfBondIdFromOpReturnData(opReturnData);
+                return Optional.of(BondingConsensus.getHashFromOpReturnData(opReturnData));
         }
         return Optional.empty();
     }
 
-    public Set<byte[]> getHashOfBondIdSet() {
+   /* public Set<byte[]> getHashOfBondIdSet() {
         return getTxOutputStream()
                 .filter(txOutput -> isUnspent(txOutput.getKey()))
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.LOCKUP ||
                         isUnlockTxOutputAndLockTimeNotOver(txOutput))
-                .map(txOutput -> getHashOfBondId(txOutput).orElse(null))
+                .map(txOutput -> getHash(txOutput).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-    }
+    }*/
 
-    private boolean isUnlockTxOutputAndLockTimeNotOver(TxOutput txOutput) {
+    public boolean isUnlockTxOutputAndLockTimeNotOver(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.UNLOCK && !isLockTimeOverForUnlockTxOutput(txOutput);
     }
 
@@ -580,12 +579,16 @@ public class BsqStateService {
         return opTxOutput.isPresent() && isLockupOutput(opTxOutput.get());
     }
 
-    private boolean isLockupOutput(TxOutput txOutput) {
+    public boolean isLockupOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.LOCKUP;
     }
 
     public Set<TxOutput> getLockupTxOutputs() {
         return getTxOutputsByTxOutputType(TxOutputType.LOCKUP);
+    }
+
+    public Set<TxOutput> getUnlockTxOutputs() {
+        return getTxOutputsByTxOutputType(TxOutputType.UNLOCK);
     }
 
     public Optional<TxOutput> getLockupTxOutput(String txId) {
@@ -595,7 +598,7 @@ public class BsqStateService {
     }
 
     // Returns amount of all LOCKUP txOutputs (they might have been unlocking or unlocked in the meantime)
-    private long getTotalAmountOfLockupTxOutputs() {
+    public long getTotalAmountOfLockupTxOutputs() {
         return getLockupTxOutputs().stream()
                 .mapToLong(TxOutput::getValue)
                 .sum();
@@ -608,7 +611,7 @@ public class BsqStateService {
 
 
     // Unlock
-    private boolean isUnlockOutput(TxOutput txOutput) {
+    public boolean isUnlockOutput(TxOutput txOutput) {
         return txOutput.getTxOutputType() == TxOutputType.UNLOCK;
     }
 
@@ -631,17 +634,18 @@ public class BsqStateService {
         return opTxOutput.isPresent() && isUnlockingOutput(opTxOutput.get());
     }
 
-    private boolean isUnlockingOutput(TxOutput txOutput) {
-        return txOutput.getTxOutputType() != TxOutputType.UNLOCK ||
-                isTxOutputSpendable(new TxOutputKey(txOutput.getTxId(), txOutput.getIndex()));
+    // TODO SQ i changed the code here. i think it was wrong before
+    public boolean isUnlockingOutput(TxOutput txOutput) {
+        return txOutput.getTxOutputType() == TxOutputType.UNLOCK &&
+                !isLockTimeOverForUnlockTxOutput(txOutput);
     }
 
     // Unlocked
-    private Optional<Integer> getUnlockBlockHeight(String txId) {
+    public Optional<Integer> getUnlockBlockHeight(String txId) {
         return getTx(txId).map(Tx::getUnlockBlockHeight);
     }
 
-    private boolean isLockTimeOverForUnlockTxOutput(TxOutput unlockTxOutput) {
+    public boolean isLockTimeOverForUnlockTxOutput(TxOutput unlockTxOutput) {
         checkArgument(isUnlockOutput(unlockTxOutput), "txOutput must be of type UNLOCK");
         return getUnlockBlockHeight(unlockTxOutput.getTxId())
                 .map(unlockBlockHeight -> BondingConsensus.isLockTimeOver(unlockBlockHeight, getChainHeight()))
@@ -649,7 +653,7 @@ public class BsqStateService {
     }
 
     // We don't care here about the unspent state
-    private Stream<TxOutput> getUnlockedTxOutputsStream() {
+    public Stream<TxOutput> getUnlockedTxOutputsStream() {
         return getTxOutputsByTxOutputType(TxOutputType.UNLOCK).stream()
                 .filter(this::isLockTimeOverForUnlockTxOutput);
     }
@@ -676,7 +680,7 @@ public class BsqStateService {
 
     // Confiscate bond
     public void confiscateBond(ConfiscateBond confiscateBond) {
-        if (confiscateBond.getHashOfBondId().length == 0) {
+        if (confiscateBond.getHash().length == 0) {
             // Disallow confiscation of empty bonds
             return;
         }
@@ -685,13 +689,13 @@ public class BsqStateService {
                 .filter(txOutput -> txOutput.getTxOutputType() == TxOutputType.LOCKUP ||
                         (isUnlockTxOutputAndLockTimeNotOver(txOutput)))
                 .filter(txOutput -> {
-                    Optional<byte[]> hashOfBondId = getHashOfBondId(txOutput);
-                    return hashOfBondId.isPresent() && Arrays.equals(hashOfBondId.get(), confiscateBond.getHashOfBondId());
+                    Optional<byte[]> hash = getLockupHash(txOutput);
+                    return hash.isPresent() && Arrays.equals(hash.get(), confiscateBond.getHash());
                 })
                 .forEach(this::applyConfiscateBond);
     }
 
-    private void applyConfiscateBond(TxOutput txOutput) {
+    public void applyConfiscateBond(TxOutput txOutput) {
         bsqState.getConfiscatedTxOutputMap().put(txOutput.getKey(), txOutput);
 
         // TODO SQ TxOutputType is immutable after parsing

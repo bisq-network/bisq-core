@@ -22,6 +22,8 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.dao.bonding.lockup.LockupService;
 import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.bonding.unlock.UnlockService;
+import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.role.BondedRolesService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -48,6 +50,7 @@ import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposalService;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposalService;
+import bisq.core.dao.voting.proposal.role.BondedRoleProposalService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
@@ -89,6 +92,8 @@ public class DaoFacade {
     private final CompensationProposalService compensationProposalService;
     private final ChangeParamProposalService changeParamProposalService;
     private final ConfiscateBondProposalService confiscateBondProposalService;
+    private final BondedRoleProposalService bondedRoleProposalService;
+    private final BondedRolesService bondedRolesService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
 
@@ -106,6 +111,8 @@ public class DaoFacade {
                      CompensationProposalService compensationProposalService,
                      ChangeParamProposalService changeParamProposalService,
                      ConfiscateBondProposalService confiscateBondProposalService,
+                     BondedRoleProposalService bondedRoleProposalService,
+                     BondedRolesService bondedRolesService,
                      LockupService lockupService,
                      UnlockService unlockService) {
         this.filteredProposalListService = filteredProposalListService;
@@ -119,6 +126,8 @@ public class DaoFacade {
         this.compensationProposalService = compensationProposalService;
         this.changeParamProposalService = changeParamProposalService;
         this.confiscateBondProposalService = confiscateBondProposalService;
+        this.bondedRoleProposalService = bondedRoleProposalService;
+        this.bondedRolesService = bondedRolesService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
 
@@ -203,7 +212,7 @@ public class DaoFacade {
                                                                    String link,
                                                                    Param param,
                                                                    long paramValue)
-            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
         return changeParamProposalService.createProposalWithTransaction(name,
                 title,
@@ -217,14 +226,24 @@ public class DaoFacade {
                                                                             String title,
                                                                             String description,
                                                                             String link,
-                                                                            byte[] hashOfBondId)
-            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+                                                                            byte[] hash)
+            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
         return confiscateBondProposalService.createProposalWithTransaction(name,
                 title,
                 description,
                 link,
-                hashOfBondId);
+                hash);
+    }
+
+    public ProposalWithTransaction getBondedRoleProposalWithTransaction(BondedRole bondedRole)
+            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
+            WalletException {
+        return bondedRoleProposalService.createProposalWithTransaction(bondedRole);
+    }
+
+    public List<BondedRole> getBondedRoleList() {
+        return bondedRolesService.getBondedRoleList();
     }
 
     // Show fee
@@ -340,9 +359,9 @@ public class DaoFacade {
     // Use case: Bonding
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, Optional<byte[]> hashOfBondId,
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType lockupType, BondedRole bondedRole,
                                 ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-        lockupService.publishLockupTx(lockupAmount, lockTime, type, hashOfBondId, resultHandler, exceptionHandler);
+        lockupService.publishLockupTx(lockupAmount, lockTime, lockupType, bondedRole, resultHandler, exceptionHandler);
     }
 
     public void publishUnlockTx(String lockupTxId, ResultHandler resultHandler,
@@ -366,8 +385,8 @@ public class DaoFacade {
         return bsqStateService.getLockTime(txId);
     }
 
-    public Set<byte[]> getLockupAndUnlockingBondIds() {
-        return bsqStateService.getHashOfBondIdSet();
+    public List<BondedRole> getValidBondedRoleList() {
+        return bondedRolesService.getValidBondedRoleList();
     }
 
 
@@ -451,4 +470,7 @@ public class DaoFacade {
         return bsqStateService.isUnspent(key);
     }
 
+    public Optional<BondedRole> getBondedRoleFromHash(byte[] hash) {
+        return bondedRolesService.getBondedRoleFromHash(hash);
+    }
 }

@@ -526,6 +526,10 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
 
     // We create a tx with Bsq inputs for the fee and optional BSQ change output.
     // As the fee amount will be missing in the output those BSQ fees are burned.
+    public Transaction getPreparedProposalTx(Coin fee) throws InsufficientBsqException {
+        return getPreparedBurnFeeTx(fee);
+    }
+
     public Transaction getPreparedBurnFeeTx(Coin fee) throws InsufficientBsqException {
         final Transaction tx = new Transaction(params);
         addInputsAndChangeOutputForTx(tx, fee, bsqCoinSelector);

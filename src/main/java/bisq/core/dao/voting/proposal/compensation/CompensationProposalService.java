@@ -94,7 +94,7 @@ public class CompensationProposalService {
             throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
 
         final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
-        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
+        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedProposalTx(fee);
 
         // payload does not have txId at that moment
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);

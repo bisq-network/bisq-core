@@ -15,14 +15,14 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.param;
+package bisq.core.dao.voting.proposal.role;
 
 import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.dao.role.BondedRole;
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.state.ext.Param;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.BaseProposalService;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
@@ -35,11 +35,11 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates ChangeParamProposal and transaction.
+ * Creates BondedRoleProposal and transaction.
  */
 @Slf4j
-public class ChangeParamProposalService extends BaseProposalService<ChangeParamProposal> {
-    private final ChangeParamValidator changeParamValidator;
+public class BondedRoleProposalService extends BaseProposalService<BondedRoleProposal> {
+    private final BondedRoleValidator bondedRoleValidator;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -47,42 +47,31 @@ public class ChangeParamProposalService extends BaseProposalService<ChangeParamP
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public ChangeParamProposalService(BsqWalletService bsqWalletService,
-                                      BtcWalletService btcWalletService,
-                                      BsqStateService bsqStateService,
-                                      ChangeParamValidator changeParamValidator) {
+    public BondedRoleProposalService(BsqWalletService bsqWalletService,
+                                     BtcWalletService btcWalletService,
+                                     BsqStateService bsqStateService,
+                                     BondedRoleValidator bondedRoleValidator) {
         super(bsqWalletService,
                 btcWalletService,
                 bsqStateService);
-        this.changeParamValidator = changeParamValidator;
+        this.bondedRoleValidator = bondedRoleValidator;
     }
 
-    public ProposalWithTransaction createProposalWithTransaction(String name,
-                                                                 String title,
-                                                                 String description,
-                                                                 String link,
-                                                                 Param param,
-                                                                 long paramValue)
+    public ProposalWithTransaction createProposalWithTransaction(BondedRole bondedRole)
             throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
 
         // As we don't know the txId we create a temp object with txId set to an empty string.
-        ChangeParamProposal proposal = new ChangeParamProposal(
-                name,
-                title,
-                description,
-                link,
-                param,
-                paramValue);
+        BondedRoleProposal proposal = new BondedRoleProposal(bondedRole);
         validate(proposal);
 
         Transaction transaction = getTransaction(proposal);
 
-        final ChangeParamProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final BondedRoleProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
-    private void validate(ChangeParamProposal proposal) throws ValidationException {
-        changeParamValidator.validateDataFields(proposal);
+    private void validate(BondedRoleProposal proposal) throws ValidationException {
+        bondedRoleValidator.validateDataFields(proposal);
     }
 }

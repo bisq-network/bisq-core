@@ -15,15 +15,15 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal;
+package bisq.core.dao.role;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
-import bisq.core.dao.voting.proposal.role.BondedRoleProposal;
+import bisq.core.dao.voting.proposal.Proposal;
+import bisq.core.dao.voting.proposal.ProposalConsensus;
 
 import javax.inject.Inject;
 
@@ -35,13 +35,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
-public class ProposalValidator {
+public class BondedRoleValidator {
 
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
 
     @Inject
-    public ProposalValidator(BsqStateService bsqStateService, PeriodService periodService) {
+    public BondedRoleValidator(BsqStateService bsqStateService, PeriodService periodService) {
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
     }
@@ -58,14 +58,11 @@ public class ProposalValidator {
     public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
             notEmpty(proposal.getName(), "name must not be empty");
+            notEmpty(proposal.getTitle(), "title must not be empty");
+            notEmpty(proposal.getDescription(), "description must not be empty");
+            notEmpty(proposal.getLink(), "link must not be empty");
 
-            //TODO use diff validators (store validators in proposal)
-            if (!(proposal instanceof BondedRoleProposal) && !(proposal instanceof ConfiscateBondProposal)) {
-                notEmpty(proposal.getLink(), "link must not be empty");
-                notEmpty(proposal.getTitle(), "title must not be empty");
-                notEmpty(proposal.getDescription(), "description must not be empty");
-                checkArgument(ProposalConsensus.isDescriptionSizeValid(proposal.getDescription()), "description is too long");
-            }
+            checkArgument(ProposalConsensus.isDescriptionSizeValid(proposal.getDescription()), "description is too long");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }

@@ -18,16 +18,16 @@
 package bisq.core.dao.bonding;
 
 import bisq.core.dao.bonding.lockup.LockupType;
+import bisq.core.dao.role.BondedRole;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.blockchain.Util;
 
 import bisq.common.app.Version;
+import bisq.common.util.Utilities;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -44,16 +44,17 @@ public class BondingConsensus {
     @Getter
     private static int maxLockTime = 65535;
 
-    public static byte[] getLockupOpReturnData(int lockTime, LockupType type, Optional<byte[]> hashOfBondId) throws IOException {
+    public static byte[] getLockupOpReturnData(int lockTime, LockupType type, byte[] hash) throws IOException {
         // PushData of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
         // require by btcd-cli4j, avoid opReturns with 4 bytes or less
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             outputStream.write(OpReturnType.LOCKUP.getType());
             outputStream.write(Version.LOCKUP);
             outputStream.write(type.getType());
-            Util.writeOpReturnData(outputStream, lockTime, 2);
-            if (hashOfBondId.isPresent())
-                outputStream.write(hashOfBondId.get());
+            byte[] bytes = Utilities.integerToByteArray(lockTime, 2);
+            outputStream.write(bytes[0]);
+            outputStream.write(bytes[1]);
+            outputStream.write(hash);
             return outputStream.toByteArray();
         } catch (IOException e) {
             // Not expected to happen ever
@@ -67,7 +68,16 @@ public class BondingConsensus {
         return currentBlockHeight >= unlockBlockHeight;
     }
 
-    public static Optional<byte[]> getHashOfBondIdFromOpReturnData(byte[] opReturnData) {
-        return opReturnData.length == 25 ? Optional.of(Arrays.copyOfRange(opReturnData, 5, 25)) : Optional.empty();
+    public static byte[] getHashFromOpReturnData(byte[] opReturnData) {
+        return Arrays.copyOfRange(opReturnData, 5, 25);
+    }
+
+    public static byte[] getHash(LockupType lockupType, BondedRole bondedRole) {
+        if (lockupType == LockupType.BONDED_ROLE) {
+            return bondedRole.getHash();
+        } else {
+            //TODO trade bonds not impl yet
+            return new byte[0];
+        }
     }
 }

@@ -27,10 +27,11 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.bonding.BondingConsensus;
+import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.role.BondedRolesService;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -39,8 +40,6 @@ import org.bitcoinj.core.Transaction;
 import javax.inject.Inject;
 
 import java.io.IOException;
-
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,21 +59,21 @@ public class LockupService {
     @Inject
     public LockupService(WalletsManager walletsManager,
                          BsqWalletService bsqWalletService,
-                         BtcWalletService btcWalletService) {
+                         BtcWalletService btcWalletService,
+                         BondedRolesService bondedRolesService) {
         this.walletsManager = walletsManager;
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
     }
 
-    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType type, Optional<byte[]> hashOfBondId,
+    public void publishLockupTx(Coin lockupAmount, int lockTime, LockupType lockupType, BondedRole bondedRole,
                                 ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         checkArgument(lockTime <= BondingConsensus.getMaxLockTime() &&
                 lockTime >= BondingConsensus.getMinLockTime(), "lockTime not in rage");
         try {
-            if (hashOfBondId.isPresent() && hashOfBondId.get().length != 20)
-                throw new TransactionVerificationException("Hash has to be 20 bytes: Hash=" +
-                        Utilities.bytesAsHexString(hashOfBondId.get()));
-            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime, type, hashOfBondId);
+
+            byte[] hash = BondingConsensus.getHash(lockupType, bondedRole);
+            byte[] opReturnData = BondingConsensus.getLockupOpReturnData(lockTime, lockupType, hash);
             final Transaction lockupTx = getLockupTx(lockupAmount, opReturnData);
 
             //noinspection Duplicates

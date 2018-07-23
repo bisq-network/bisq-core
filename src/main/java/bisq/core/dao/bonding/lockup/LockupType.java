@@ -17,6 +17,8 @@
 
 package bisq.core.dao.bonding.lockup;
 
+import bisq.core.locale.Res;
+
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -31,6 +33,10 @@ public enum LockupType {
 
     LockupType(byte type) {
         this.type = type;
+    }
+
+    public String getDisplayString() {
+        return Res.get("dao.bond.lockupType." + name());
     }
 
     public static Optional<LockupType> getLockupType(byte type) {

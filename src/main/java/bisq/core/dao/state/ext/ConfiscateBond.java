@@ -30,13 +30,13 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Value
 public class ConfiscateBond implements PersistablePayload {
-    private final byte[] hashOfBondId;
+    private final byte[] hash;
 
     //TODO not used so far... is it needed?
     private final int activationHeight;
 
-    public ConfiscateBond(byte[] hashOfBondId, int activationHeight) {
-        this.hashOfBondId = hashOfBondId;
+    public ConfiscateBond(byte[] hash, int activationHeight) {
+        this.hash = hash;
         this.activationHeight = activationHeight;
     }
 
@@ -48,13 +48,13 @@ public class ConfiscateBond implements PersistablePayload {
     @Override
     public PB.ConfiscateBond toProtoMessage() {
         return PB.ConfiscateBond.newBuilder()
-                .setHashOfBondId(ByteString.copyFrom(hashOfBondId))
+                .setHash(ByteString.copyFrom(hash))
                 .setActivationHeight(activationHeight)
                 .build();
     }
 
     public static ConfiscateBond fromProto(PB.ConfiscateBond proto) {
-        return new ConfiscateBond(proto.getHashOfBondId().toByteArray(),
+        return new ConfiscateBond(proto.getHash().toByteArray(),
                 proto.getActivationHeight());
     }
 }

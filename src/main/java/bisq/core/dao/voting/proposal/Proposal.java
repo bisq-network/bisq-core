@@ -24,6 +24,7 @@ import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
+import bisq.core.dao.voting.proposal.role.BondedRoleProposal;
 
 import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;
@@ -114,6 +115,8 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
                 throw new ProtobufferRuntimeException("Not implemented yet: " + proto.getMessageCase());
             case CONFISCATE_BOND_PROPOSAL:
                 return ConfiscateBondProposal.fromProto(proto);
+            case BONDED_ROLE_PROPOSAL:
+                return BondedRoleProposal.fromProto(proto);
             case MESSAGE_NOT_SET:
             default:
                 throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());

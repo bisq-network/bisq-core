@@ -17,6 +17,8 @@
 
 package bisq.core.dao.state.ext;
 
+import bisq.core.locale.Res;
+
 import lombok.Getter;
 
 /**
@@ -87,5 +89,11 @@ public enum Param {
      */
     Param(int defaultValue) {
         this.defaultValue = defaultValue;
+    }
+
+    public String toDisplayString() {
+        return name().startsWith("PHASE_") ?
+                Res.get("dao.phase." + name()) :
+                Res.get("dao.param." + name());
     }
 }

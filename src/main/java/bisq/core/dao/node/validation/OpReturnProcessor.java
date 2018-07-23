@@ -22,9 +22,9 @@ import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
-import bisq.core.dao.state.blockchain.Util;
 
 import bisq.common.app.DevEnv;
+import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Utils;
 
@@ -181,7 +181,7 @@ public class OpReturnProcessor {
 
     private void processLockup(byte[] opReturnData, TxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
         Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
-        int lockTime = Util.parseAsInt(Arrays.copyOfRange(opReturnData, 3, 5));
+        int lockTime = Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
 
         if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.LOCKUP_OP_RETURN_OUTPUT);

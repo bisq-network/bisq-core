@@ -23,8 +23,10 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@EqualsAndHashCode
 @ToString
 public abstract class Vote implements PersistablePayload, NetworkPayload {
 

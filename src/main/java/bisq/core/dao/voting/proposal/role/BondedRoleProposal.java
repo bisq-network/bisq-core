@@ -15,8 +15,9 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.voting.proposal.confiscatebond;
+package bisq.core.dao.voting.proposal.role;
 
+import bisq.core.dao.role.BondedRole;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
@@ -24,11 +25,8 @@ import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalType;
 
 import bisq.common.app.Version;
-import bisq.common.util.Utilities;
 
 import io.bisq.generated.protobuffer.PB;
-
-import com.google.protobuf.ByteString;
 
 import java.util.Date;
 import java.util.UUID;
@@ -43,21 +41,17 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class ConfiscateBondProposal extends Proposal {
+public final class BondedRoleProposal extends Proposal {
 
-    private final byte[] hash;
+    private final BondedRole bondedRole;
 
-    public ConfiscateBondProposal(String name,
-                                  String title,
-                                  String description,
-                                  String link,
-                                  byte[] hash) {
+    public BondedRoleProposal(BondedRole bondedRole) {
         this(UUID.randomUUID().toString(),
-                name,
-                title,
-                description,
-                link,
-                hash,
+                bondedRole.getName(),
+                "",
+                "",
+                "",
+                bondedRole,
                 Version.PROPOSAL,
                 new Date().getTime(),
                 "");
@@ -68,15 +62,15 @@ public final class ConfiscateBondProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ConfiscateBondProposal(String uid,
-                                   String name,
-                                   String title,
-                                   String description,
-                                   String link,
-                                   byte[] hash,
-                                   byte version,
-                                   long creationDate,
-                                   String txId) {
+    private BondedRoleProposal(String uid,
+                               String name,
+                               String title,
+                               String description,
+                               String link,
+                               BondedRole bondedRole,
+                               byte version,
+                               long creationDate,
+                               String txId) {
         super(uid,
                 name,
                 title,
@@ -86,24 +80,24 @@ public final class ConfiscateBondProposal extends Proposal {
                 creationDate,
                 txId);
 
-        this.hash = hash;
+        this.bondedRole = bondedRole;
     }
 
     @Override
     public PB.Proposal.Builder getProposalBuilder() {
-        final PB.ConfiscateBondProposal.Builder builder = PB.ConfiscateBondProposal.newBuilder()
-                .setHash(ByteString.copyFrom(hash));
-        return super.getProposalBuilder().setConfiscateBondProposal(builder);
+        final PB.BondedRoleProposal.Builder builder = PB.BondedRoleProposal.newBuilder()
+                .setBondedRole(bondedRole.toProtoMessage());
+        return super.getProposalBuilder().setBondedRoleProposal(builder);
     }
 
-    public static ConfiscateBondProposal fromProto(PB.Proposal proto) {
-        final PB.ConfiscateBondProposal proposalProto = proto.getConfiscateBondProposal();
-        return new ConfiscateBondProposal(proto.getUid(),
+    public static BondedRoleProposal fromProto(PB.Proposal proto) {
+        final PB.BondedRoleProposal proposalProto = proto.getBondedRoleProposal();
+        return new BondedRoleProposal(proto.getUid(),
                 proto.getName(),
                 proto.getTitle(),
                 proto.getDescription(),
                 proto.getLink(),
-                proposalProto.getHash().toByteArray(),
+                BondedRole.fromProto(proposalProto.getBondedRole()),
                 (byte) proto.getVersion(),
                 proto.getCreationDate(),
                 proto.getTxId());
@@ -116,17 +110,17 @@ public final class ConfiscateBondProposal extends Proposal {
 
     @Override
     public ProposalType getType() {
-        return ProposalType.CONFISCATE_BOND;
+        return ProposalType.BONDED_ROLE;
     }
 
     @Override
     public Param getQuorumParam() {
-        return Param.QUORUM_CONFISCATION;
+        return Param.QUORUM_PROPOSAL;
     }
 
     @Override
     public Param getThresholdParam() {
-        return Param.THRESHOLD_CONFISCATION;
+        return Param.THRESHOLD_PROPOSAL;
     }
 
     public TxType getTxType() {
@@ -134,17 +128,17 @@ public final class ConfiscateBondProposal extends Proposal {
     }
 
     public TxOutputType getTxOutputType() {
-        return TxOutputType.CONFISCATE_BOND_OP_RETURN_OUTPUT;
+        return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
     }
 
     @Override
     public Proposal cloneWithTxId(String txId) {
-        return new ConfiscateBondProposal(getUid(),
+        return new BondedRoleProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getHash(),
+                getBondedRole(),
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
@@ -152,12 +146,12 @@ public final class ConfiscateBondProposal extends Proposal {
 
     @Override
     public Proposal cloneWithoutTxId() {
-        return new ConfiscateBondProposal(getUid(),
+        return new BondedRoleProposal(getUid(),
                 getName(),
                 getTitle(),
                 getDescription(),
                 getLink(),
-                getHash(),
+                getBondedRole(),
                 getVersion(),
                 getCreationDate().getTime(),
                 "");
@@ -165,8 +159,8 @@ public final class ConfiscateBondProposal extends Proposal {
 
     @Override
     public String toString() {
-        return "ConfiscateBondProposal{" +
-                "\n     hash=" + Utilities.bytesAsHexString(hash) +
+        return "BondedRoleProposal{" +
+                "\n     bondedRole=" + bondedRole +
                 "\n} " + super.toString();
     }
 }

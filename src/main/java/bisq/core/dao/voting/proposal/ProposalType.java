@@ -17,10 +17,17 @@
 
 package bisq.core.dao.voting.proposal;
 
+import bisq.core.locale.Res;
+
 public enum ProposalType {
     COMPENSATION_REQUEST,
-    GENERIC,
-    CHANGE_PARAM,
+    BONDED_ROLE,
     REMOVE_ALTCOIN,
-    CONFISCATE_BOND
+    CHANGE_PARAM,
+    GENERIC,
+    CONFISCATE_BOND;
+
+    public String getDisplayName() {
+        return Res.get("dao.proposal.type." + name());
+    }
 }

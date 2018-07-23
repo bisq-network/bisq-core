@@ -23,16 +23,13 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.proposal.ProposalConsensus;
+import bisq.core.dao.voting.proposal.BaseProposalService;
 import bisq.core.dao.voting.proposal.ProposalWithTransaction;
 
-import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
-
-import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * Creates ConfiscateBondProposal and transaction.
  */
 @Slf4j
-public class ConfiscateBondProposalService {
-    private final BsqWalletService bsqWalletService;
-    private final BtcWalletService btcWalletService;
-    private final BsqStateService bsqStateService;
+public class ConfiscateBondProposalService extends BaseProposalService<ConfiscateBondProposal> {
     private final ConfiscateBondValidator confiscateBondValidator;
 
 
@@ -56,9 +50,9 @@ public class ConfiscateBondProposalService {
                                          BtcWalletService btcWalletService,
                                          BsqStateService bsqStateService,
                                          ConfiscateBondValidator confiscateBondValidator) {
-        this.bsqWalletService = bsqWalletService;
-        this.btcWalletService = btcWalletService;
-        this.bsqStateService = bsqStateService;
+        super(bsqWalletService,
+                btcWalletService,
+                bsqStateService);
         this.confiscateBondValidator = confiscateBondValidator;
     }
 
@@ -66,8 +60,8 @@ public class ConfiscateBondProposalService {
                                                                  String title,
                                                                  String description,
                                                                  String link,
-                                                                 byte[] hashOfBondId)
-            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
+                                                                 byte[] hash)
+            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
 
         // As we don't know the txId we create a temp object with txId set to an empty string.
@@ -76,7 +70,7 @@ public class ConfiscateBondProposalService {
                 title,
                 description,
                 link,
-                hashOfBondId);
+                hash);
         validate(proposal);
 
         Transaction transaction = getTransaction(proposal);
@@ -85,32 +79,7 @@ public class ConfiscateBondProposalService {
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
-    // We have txId set to null in proposal as we cannot know it before the tx is created.
-    // Once the tx is known we will create a new object including the txId.
-    // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction getTransaction(ConfiscateBondProposal proposal)
-            throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
-
-        final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
-        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedBurnFeeTx(fee);
-
-        // payload does not have txId at that moment
-        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
-        byte[] opReturnData = ConfiscateBondConsensus.getOpReturnData(hashOfPayload);
-
-        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx,
-                opReturnData);
-
-        final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-        log.info("ConfiscateBondProposal tx: " + transaction);
-        return transaction;
-    }
-
     private void validate(ConfiscateBondProposal proposal) throws ValidationException {
         confiscateBondValidator.validateDataFields(proposal);
-    }
-
-    private ConfiscateBondProposal getProposalWithTxId(ConfiscateBondProposal proposal, String txId) {
-        return (ConfiscateBondProposal) proposal.cloneWithTxId(txId);
     }
 }
