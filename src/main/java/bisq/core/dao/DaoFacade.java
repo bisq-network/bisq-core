@@ -473,4 +473,8 @@ public class DaoFacade {
     public Optional<BondedRole> getBondedRoleFromHash(byte[] hash) {
         return bondedRolesService.getBondedRoleFromHash(hash);
     }
+
+    public boolean isUnlocking(BondedRole bondedRole) {
+        return bsqStateService.isUnlocking(bondedRole);
+    }
 }

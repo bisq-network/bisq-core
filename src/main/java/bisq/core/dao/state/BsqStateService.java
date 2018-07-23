@@ -18,6 +18,7 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.bonding.BondingConsensus;
+import bisq.core.dao.role.BondedRole;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
@@ -635,9 +636,9 @@ public class BsqStateService {
     }
 
     // TODO SQ i changed the code here. i think it was wrong before
-    public boolean isUnlockingOutput(TxOutput txOutput) {
-        return txOutput.getTxOutputType() == TxOutputType.UNLOCK &&
-                !isLockTimeOverForUnlockTxOutput(txOutput);
+    public boolean isUnlockingOutput(TxOutput unlockTxOutput) {
+        return unlockTxOutput.getTxOutputType() == TxOutputType.UNLOCK &&
+                !isLockTimeOverForUnlockTxOutput(unlockTxOutput);
     }
 
     // Unlocked
@@ -701,6 +702,11 @@ public class BsqStateService {
         // TODO SQ TxOutputType is immutable after parsing
         // We need to add new checks if a txo is not confiscated by using the map similar like utxo map
         // txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+    }
+
+    public boolean isUnlocking(BondedRole bondedRole) {
+        Optional<Tx> optionalTx = getTx(bondedRole.getUnlockTxId());
+        return optionalTx.isPresent() && isUnlockingOutput(optionalTx.get().getTxOutputs().get(0));
     }
 
 

@@ -17,6 +17,8 @@
 
 package bisq.core.dao.role;
 
+import bisq.core.dao.DaoFacade;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.locale.Res;
 
 import bisq.common.crypto.Hash;
@@ -146,6 +148,22 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
 
     public String getDisplayString() {
         return name + " / " + Res.get("dao.bond.bondedRoleType." + bondedRoleType.name());
+    }
+
+    public boolean isLockedUp() {
+        return lockupTxId != null;
+    }
+
+    public boolean isUnlocked() {
+        return unlockTxId != null;
+    }
+
+    public boolean isUnlocking(DaoFacade daoFacade) {
+        return daoFacade.isUnlocking(this);
+    }
+
+    public boolean isUnlocking(BsqStateService bsqStateService) {
+        return bsqStateService.isUnlocking(this);
     }
 
     // We use only the immutable data

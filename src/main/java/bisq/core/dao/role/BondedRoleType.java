@@ -24,9 +24,15 @@ import lombok.Getter;
 // Data here must not be changed as it would break backward compatibility! In case we need to change we need to add a new
 // entry and maintain the old one. Once all the role holders of an old deprecated role have revoked the role might get removed.
 public enum BondedRoleType {
+    ARBITRATOR(10000000, 5, "https://github.com/bisq-network/roles/issues/13", true), // 100 000 BSQ, 30 days unlock time
+    DOMAIN_NAME_HOLDER(5000000, 20, "https://github.com/bisq-network/roles/issues/15", false), // 50 000 BSQ, 20 days unlock time //TODO no link yet
+    SEED_NODE_OPERATOR(2000000, 50, "https://github.com/bisq-network/roles/issues/15", true); // 20 000 BSQ, 30 days unlock time
+/*
     ARBITRATOR(10000000, 144 * 30, "https://github.com/bisq-network/roles/issues/13", true), // 100 000 BSQ, 30 days unlock time
     DOMAIN_NAME_HOLDER(5000000, 144 * 20, "https://github.com/bisq-network/roles/issues/15", false), // 50 000 BSQ, 20 days unlock time //TODO no link yet
     SEED_NODE_OPERATOR(2000000, 144 * 30, "https://github.com/bisq-network/roles/issues/15", true); // 20 000 BSQ, 30 days unlock time
+*/
+
 
     @Getter
     private final long requiredBond;
