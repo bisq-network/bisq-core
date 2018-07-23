@@ -26,7 +26,7 @@ import lombok.Getter;
 
 public enum LockupType {
     BONDED_ROLE((byte) 0x01),
-    TRADE((byte) 0x02); //TODO handle TRADE
+    REPUTATION((byte) 0x02);
 
     @Getter
     private byte type;

@@ -43,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener {
-    private final BsqStateService bsqStateService;
     private final P2PService p2PService;
     private final BlindVoteValidator blindVoteValidator;
 
@@ -60,7 +59,6 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
                             BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             BlindVoteValidator blindVoteValidator) {
-        this.bsqStateService = bsqStateService;
         this.p2PService = p2PService;
         this.blindVoteValidator = blindVoteValidator;
 
