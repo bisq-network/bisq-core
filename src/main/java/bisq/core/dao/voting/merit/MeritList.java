@@ -29,11 +29,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+
 // We don't persist that list but use it only for encoding the MeritList list
 // to PB bytes in the blindVote.
 
 // Not used as PersistableList
 // TODO create diff. super class
+@EqualsAndHashCode(callSuper = true)
 public class MeritList extends PersistableList<Merit> implements VoteConsensusCritical {
 
     public MeritList(List<Merit> list) {

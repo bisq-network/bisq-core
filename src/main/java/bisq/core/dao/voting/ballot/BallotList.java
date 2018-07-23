@@ -27,9 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * PersistableEnvelope wrapper for list of ballots.
  */
+@EqualsAndHashCode(callSuper = true)
 public class BallotList extends PersistableList<Ballot> implements VoteConsensusCritical {
 
     public BallotList(List<Ballot> list) {

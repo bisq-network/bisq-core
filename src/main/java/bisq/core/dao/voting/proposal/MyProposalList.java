@@ -27,9 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * PersistableEnvelope wrapper for list of ballots. Used in vote consensus, so changes can break consensus!
  */
+@EqualsAndHashCode(callSuper = true)
 public class MyProposalList extends PersistableList<Proposal> implements VoteConsensusCritical {
 
     private MyProposalList(List<Proposal> list) {

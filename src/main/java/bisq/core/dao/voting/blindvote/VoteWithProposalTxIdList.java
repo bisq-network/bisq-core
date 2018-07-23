@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 // We don't persist that list but use it only for encoding the VoteWithProposalTxId list
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 // Not used as PersistableList
 // TODO create diff. super class
 @Slf4j
+@EqualsAndHashCode(callSuper = true)
 public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTxId> implements VoteConsensusCritical {
 
     public VoteWithProposalTxIdList(List<VoteWithProposalTxId> list) {

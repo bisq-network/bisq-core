@@ -27,9 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * PersistableEnvelope wrapper for list of bondedRoles.
  */
+@EqualsAndHashCode(callSuper = true)
 public class BondedRoleList extends PersistableList<BondedRole> implements VoteConsensusCritical {
 
     public BondedRoleList(List<BondedRole> list) {

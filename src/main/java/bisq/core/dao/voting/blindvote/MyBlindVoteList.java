@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode(callSuper = true)
 public class MyBlindVoteList extends PersistableList<BlindVote> implements VoteConsensusCritical {
 
     public MyBlindVoteList(List<BlindVote> list) {
