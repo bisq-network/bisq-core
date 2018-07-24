@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class MobileNotificationService {
     private static final String DEV_URL = "http://localhost:8888/";
-    private static final String URL = "...onion url"; //TODO
+    private static final String URL = "http://jtboonrvwmq7frkj.onion/";
     private static final String BISQ_MESSAGE_IOS_MAGIC = "BisqMessageiOS";
     private static final String BISQ_MESSAGE_ANDROID_MAGIC = "BisqMessageAndroid";
 
