@@ -17,12 +17,12 @@
 
 package bisq.core.dao.node.validation;
 
-import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-
-import javax.inject.Inject;
 
 import java.util.Optional;
 
@@ -30,30 +30,28 @@ import java.util.Optional;
  * Verifies if a given transaction is a BSQ genesis transaction.
  */
 public class GenesisTxValidator {
+    public static Optional<Tx> getGenesisTx(String genesisTxId, int genesisBlockHeight, RawTx rawTx, int blockHeight) {
+        boolean isGenesis = blockHeight == genesisBlockHeight &&
+                rawTx.getId().equals(genesisTxId);
 
-    private final BsqStateService bsqStateService;
-    private final GenesisTxOutputValidator genesisTxOutputValidator;
-
-    @Inject
-    public GenesisTxValidator(BsqStateService bsqStateService,
-                              GenesisTxOutputValidator genesisTxOutputValidator) {
-        this.bsqStateService = bsqStateService;
-        this.genesisTxOutputValidator = genesisTxOutputValidator;
-    }
-
-    public Optional<Tx> getGenesisTx(RawTx rawTx, int blockHeight) {
-        boolean isGenesis = blockHeight == bsqStateService.getGenesisBlockHeight() &&
-                rawTx.getId().equals(bsqStateService.getGenesisTxId());
-        if (isGenesis) {
-            Tx tx = new Tx(rawTx);
-            tx.setTxType(TxType.GENESIS);
-            ParsingModel parsingModel = new ParsingModel(bsqStateService.getGenesisTotalSupply().getValue());
-            for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
-                genesisTxOutputValidator.validate(tx.getTxOutputs().get(i), parsingModel);
-            }
-            return Optional.of(tx);
-        } else {
+        if (!isGenesis)
             return Optional.empty();
+
+        Tx tx = new Tx(rawTx);
+        tx.setTxType(TxType.GENESIS);
+        long availableInputValue = BsqState.getGenesisTotalSupply().getValue();
+        for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
+            TxOutput txOutput = tx.getTxOutputs().get(i);
+            long value = txOutput.getValue();
+            boolean isValid = value <= availableInputValue;
+            if (!isValid)
+                throw new RuntimeException("Genesis tx is isValid");
+
+            availableInputValue -= value;
+
+            txOutput.setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
+
+        return Optional.of(tx);
     }
 }

@@ -60,7 +60,7 @@ public class BsqState implements PersistableEnvelope {
 
     private static final Coin GENESIS_TOTAL_SUPPLY = Coin.parseCoin("2.5");
 
-    static Coin getGenesisTotalSupply() {
+    public static Coin getGenesisTotalSupply() {
         return GENESIS_TOTAL_SUPPLY;
     }
 

@@ -28,8 +28,6 @@ import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
-import bisq.core.dao.node.validation.GenesisTxOutputValidator;
-import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.OpReturnBlindVoteValidator;
 import bisq.core.dao.node.validation.OpReturnCompReqValidator;
 import bisq.core.dao.node.validation.OpReturnProcessor;
@@ -113,8 +111,6 @@ public class DaoModule extends AppModule {
         bind(PeriodService.class).in(Singleton.class);
 
         // blockchain parser
-        bind(GenesisTxValidator.class).in(Singleton.class);
-        bind(GenesisTxOutputValidator.class).in(Singleton.class);
         bind(TxValidator.class).in(Singleton.class);
         bind(TxInputProcessor.class).in(Singleton.class);
         bind(TxOutputProcessor.class).in(Singleton.class);

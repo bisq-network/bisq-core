@@ -20,11 +20,13 @@ package bisq.core.dao.node;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
+import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxOutput;
 
 import javax.inject.Inject;
 
@@ -47,7 +49,6 @@ public abstract class BsqParser {
     //public static StringBuilder sb2 = new StringBuilder();
 
     protected final BlockValidator blockValidator;
-    private final GenesisTxValidator genesisTxValidator;
     private final TxValidator txValidator;
     protected final BsqStateService bsqStateService;
 
@@ -63,7 +64,6 @@ public abstract class BsqParser {
                      TxValidator txValidator,
                      BsqStateService bsqStateService) {
         this.blockValidator = blockValidator;
-        this.genesisTxValidator = genesisTxValidator;
         this.txValidator = txValidator;
         this.bsqStateService = bsqStateService;
     }
@@ -75,9 +75,19 @@ public abstract class BsqParser {
     protected void maybeAddGenesisTx(RawBlock rawBlock, int blockHeight, Block block) {
         // We don't use streams here as we want to break as soon we found the genesis
         for (RawTx rawTx : rawBlock.getRawTxs()) {
-            Optional<Tx> optionalTx = genesisTxValidator.getGenesisTx(rawTx, blockHeight);
+            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(BsqState.getDefaultGenesisTxId(),
+                    BsqState.getDefaultGenesisBlockHeight(),
+                    rawTx,
+                    blockHeight);
             if (optionalTx.isPresent()) {
-                block.getTxs().add(optionalTx.get());
+                Tx genesisTx = optionalTx.get();
+                block.getTxs().add(genesisTx);
+
+                for (int i = 0; i < genesisTx.getTxOutputs().size(); ++i) {
+                    TxOutput txOutput = genesisTx.getTxOutputs().get(i);
+                    bsqStateService.addUnspentTxOutput(txOutput);
+                }
+
                 break;
             }
         }
