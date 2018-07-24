@@ -20,7 +20,6 @@ package bisq.core.dao.node;
 import bisq.core.dao.node.validation.BlockValidator;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
-import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
@@ -72,8 +71,8 @@ public abstract class BsqParser {
     protected void maybeAddGenesisTx(RawBlock rawBlock, int blockHeight, Block block) {
         // We don't use streams here as we want to break as soon we found the genesis
         for (RawTx rawTx : rawBlock.getRawTxs()) {
-            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(BsqState.getDefaultGenesisTxId(),
-                    BsqState.getDefaultGenesisBlockHeight(),
+            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(bsqStateService.getGenesisTxId(),
+                    bsqStateService.getGenesisBlockHeight(),
                     rawTx,
                     blockHeight);
             if (optionalTx.isPresent()) {
