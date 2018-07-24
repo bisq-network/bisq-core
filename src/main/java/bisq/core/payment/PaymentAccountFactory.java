@@ -72,6 +72,8 @@ public class PaymentAccountFactory {
                 return new MoneyGramAccount();
             case PaymentMethod.WESTERN_UNION_ID:
                 return new WesternUnionAccount();
+            case PaymentMethod.F2F_ID:
+                return new F2FAccount();
             default:
                 throw new RuntimeException("Not supported PaymentMethod: " + paymentMethod);
         }
