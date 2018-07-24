@@ -44,7 +44,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class MobileNotificationService {
-    private static final String DEV_URL = "http://localhost:8888/";
+    private static final String DEV_URL_LOCALHOST = "http://localhost:8080/";
+    private static final String DEV_URL = "http://198.211.125.72:8080/";
     private static final String URL = "http://jtboonrvwmq7frkj.onion/";
     private static final String BISQ_MESSAGE_IOS_MAGIC = "BisqMessageiOS";
     private static final String BISQ_MESSAGE_ANDROID_MAGIC = "BisqMessageAndroid";
@@ -79,6 +80,8 @@ public class MobileNotificationService {
         this.mobileNotificationValidator = mobileNotificationValidator;
         this.httpClient = httpClient;
         this.mobileModel = mobileModel;
+
+        //httpClient.setBaseUrl(useLocalHost ? DEV_URL_LOCALHOST : URL);
 
         httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
         httpClient.setIgnoreSocks5Proxy(false);
