@@ -18,8 +18,12 @@
 package bisq.core.dao.voting.voteresult;
 
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
+import bisq.core.dao.voting.ballot.vote.BooleanVote;
 import bisq.core.dao.voting.merit.MeritList;
+
+import java.util.Optional;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +50,15 @@ public class DecryptedVote {
         this.stake = stake;
         this.ballotList = ballotList;
         this.meritList = meritList;
+    }
+
+    public Optional<BooleanVote> getVote(String proposalTxId) {
+        return ballotList.stream()
+                .filter(ballot -> ballot.getProposalTxId().equals(proposalTxId))
+                .map(Ballot::getVote)
+                .filter(vote -> vote instanceof BooleanVote)
+                .map(vote -> (BooleanVote) vote)
+                .findAny();
     }
 
     public long getMerit(BsqStateService bsqStateService) {

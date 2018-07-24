@@ -27,8 +27,6 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -88,7 +86,9 @@ public class TxOutputProcessor {
         checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
         parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
 
-        applyStateChangeForBsqOutput(txOutput, TxOutputType.UNLOCK);
+        txOutput.setTxOutputType(TxOutputType.UNLOCK);
+        bsqStateService.addUnspentTxOutput(txOutput);
+
         parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
         parsingModel.setBsqOutputFound(true);
     }
@@ -99,18 +99,22 @@ public class TxOutputProcessor {
 
         boolean isFirstOutput = index == 0;
         OpReturnType candidate = parsingModel.getOpReturnTypeCandidate();
+
+        TxOutputType bsqOutput;
         if (isFirstOutput && candidate == OpReturnType.BLIND_VOTE) {
+            bsqOutput = TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT;
             parsingModel.setBlindVoteLockStakeOutput(txOutput);
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT);
         } else if (isFirstOutput && candidate == OpReturnType.VOTE_REVEAL) {
+            bsqOutput = TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT;
             parsingModel.setVoteRevealUnlockStakeOutput(txOutput);
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT);
         } else if (isFirstOutput && candidate == OpReturnType.LOCKUP) {
+            bsqOutput = TxOutputType.LOCKUP;
             parsingModel.setLockupOutput(txOutput);
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.LOCKUP);
         } else {
-            applyStateChangeForBsqOutput(txOutput, TxOutputType.BSQ_OUTPUT);
+            bsqOutput = TxOutputType.BSQ_OUTPUT;
         }
+        txOutput.setTxOutputType(bsqOutput);
+        bsqStateService.addUnspentTxOutput(txOutput);
 
         parsingModel.setBsqOutputFound(true);
     }
@@ -125,18 +129,7 @@ public class TxOutputProcessor {
             // into our parsingModel.
             parsingModel.setIssuanceCandidate(txOutput);
         } else {
-            applyStateChangeForBtcOutput(txOutput);
+            txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
         }
-    }
-
-    void applyStateChangeForBsqOutput(TxOutput txOutput, @Nullable TxOutputType txOutputType) {
-        if (txOutputType != null)
-            txOutput.setTxOutputType(txOutputType);
-
-        bsqStateService.addUnspentTxOutput(txOutput);
-    }
-
-    void applyStateChangeForBtcOutput(TxOutput txOutput) {
-        txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
     }
 }

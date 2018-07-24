@@ -186,8 +186,6 @@ public class VoteResultService implements BsqStateListener {
             Set<DecryptedVote> decryptedVotes = getDecryptedVotes(chainHeight);
             allDecryptedVotes.addAll(decryptedVotes);
 
-            List<Proposal> proposals = new ArrayList<>(filteredProposalListService.getActiveOrMyUnconfirmedProposals());
-
             if (!decryptedVotes.isEmpty()) {
                 // From the decryptedVotes we create a map with the hash of the blind vote list as key and the
                 // aggregated stake as value. That map is used for calculating the majority of the blind vote lists.
