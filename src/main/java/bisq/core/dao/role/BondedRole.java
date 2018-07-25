@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 public class BondedRole implements PersistablePayload, NetworkPayload {
     private final String uid;
     private final String name;
-    private final String linkToAccount;
+    private final String link;
     private final BondedRoleType bondedRoleType;
 
     @Setter
@@ -66,15 +66,15 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
 
     /**
      * @param name                      Full name or nickname
-     * @param linkToAccount             Github account or forum account of user
+     * @param link             Github account or forum account of user
      * @param bondedRoleType            BondedRoleType
      */
     public BondedRole(String name,
-                      String linkToAccount,
+                      String link,
                       BondedRoleType bondedRoleType) {
         this(UUID.randomUUID().toString(),
                 name,
-                linkToAccount,
+                link,
                 bondedRoleType,
                 0,
                 null,
@@ -90,7 +90,7 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
 
     public BondedRole(String uid,
                       String name,
-                      String linkToAccount,
+                      String link,
                       BondedRoleType bondedRoleType,
                       long startDate,
                       @Nullable String lockupTxId,
@@ -98,7 +98,7 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
                       @Nullable String unlockTxId) {
         this.uid = uid;
         this.name = name;
-        this.linkToAccount = linkToAccount;
+        this.link = link;
         this.bondedRoleType = bondedRoleType;
         this.startDate = startDate;
         this.lockupTxId = lockupTxId;
@@ -112,7 +112,7 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
         PB.BondedRole.Builder builder = PB.BondedRole.newBuilder()
                 .setUid(uid)
                 .setName(name)
-                .setLinkToAccount(linkToAccount)
+                .setLink(link)
                 .setBondedRoleType(bondedRoleType.name())
                 .setStartDate(startDate)
                 .setRevokeDate(revokeDate);
@@ -124,7 +124,7 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
     public static BondedRole fromProto(PB.BondedRole proto) {
         return new BondedRole(proto.getUid(),
                 proto.getName(),
-                proto.getLinkToAccount(),
+                proto.getLink(),
                 ProtoUtil.enumFromProto(BondedRoleType.class, proto.getBondedRoleType()),
                 proto.getStartDate(),
                 proto.getLockupTxId().isEmpty() ? null : proto.getLockupTxId(),
@@ -175,13 +175,13 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
         BondedRole that = (BondedRole) o;
         return Objects.equals(uid, that.uid) &&
                 Objects.equals(name, that.name) &&
-                Objects.equals(linkToAccount, that.linkToAccount) &&
+                Objects.equals(link, that.link) &&
                 bondedRoleType.name().equals(that.bondedRoleType.name());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uid, name, linkToAccount, bondedRoleType.name());
+        return Objects.hash(uid, name, link, bondedRoleType.name());
     }
 
     @Override
@@ -189,7 +189,7 @@ public class BondedRole implements PersistablePayload, NetworkPayload {
         return "BondedRole{" +
                 "\n     uid='" + uid + '\'' +
                 ",\n     name='" + name + '\'' +
-                ",\n     linkToAccount='" + linkToAccount + '\'' +
+                ",\n     link='" + link + '\'' +
                 ",\n     bondedRoleType=" + bondedRoleType +
                 ",\n     startDate=" + startDate +
                 ",\n     lockupTxId='" + lockupTxId + '\'' +

@@ -54,8 +54,6 @@ import javax.annotation.concurrent.Immutable;
 public abstract class Proposal implements PersistablePayload, VoteConsensusCritical {
     protected final String uid;
     protected final String name;
-    protected final String title;
-    protected final String description;
     protected final String link;
     protected final byte version;
     protected final long creationDate;
@@ -68,16 +66,12 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
 
     protected Proposal(String uid,
                        String name,
-                       String title,
-                       String description,
                        String link,
                        byte version,
                        long creationDate,
                        @Nullable String txId) {
         this.uid = uid;
         this.name = name;
-        this.title = title;
-        this.description = description;
         this.link = link;
         this.version = version;
         this.creationDate = creationDate;
@@ -88,8 +82,6 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
         final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
                 .setUid(uid)
                 .setName(name)
-                .setTitle(title)
-                .setDescription(description)
                 .setLink(link)
                 .setVersion(version)
                 .setCreationDate(creationDate);
@@ -159,8 +151,6 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
         return "Proposal{" +
                 "\n     uid='" + uid + '\'' +
                 ",\n     name='" + name + '\'' +
-                ",\n     title='" + title + '\'' +
-                ",\n     description='" + description + '\'' +
                 ",\n     link='" + link + '\'' +
                 ",\n     txId='" + txId + '\'' +
                 ",\n     version=" + version +

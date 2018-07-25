@@ -48,14 +48,10 @@ public final class ConfiscateBondProposal extends Proposal {
     private final byte[] hash;
 
     public ConfiscateBondProposal(String name,
-                                  String title,
-                                  String description,
                                   String link,
                                   byte[] hash) {
         this(UUID.randomUUID().toString(),
                 name,
-                title,
-                description,
                 link,
                 hash,
                 Version.PROPOSAL,
@@ -70,8 +66,6 @@ public final class ConfiscateBondProposal extends Proposal {
 
     private ConfiscateBondProposal(String uid,
                                    String name,
-                                   String title,
-                                   String description,
                                    String link,
                                    byte[] hash,
                                    byte version,
@@ -79,8 +73,6 @@ public final class ConfiscateBondProposal extends Proposal {
                                    String txId) {
         super(uid,
                 name,
-                title,
-                description,
                 link,
                 version,
                 creationDate,
@@ -100,8 +92,6 @@ public final class ConfiscateBondProposal extends Proposal {
         final PB.ConfiscateBondProposal proposalProto = proto.getConfiscateBondProposal();
         return new ConfiscateBondProposal(proto.getUid(),
                 proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
                 proto.getLink(),
                 proposalProto.getHash().toByteArray(),
                 (byte) proto.getVersion(),
@@ -141,8 +131,6 @@ public final class ConfiscateBondProposal extends Proposal {
     public Proposal cloneWithTxId(String txId) {
         return new ConfiscateBondProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getHash(),
                 getVersion(),
@@ -154,8 +142,6 @@ public final class ConfiscateBondProposal extends Proposal {
     public Proposal cloneWithoutTxId() {
         return new ConfiscateBondProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getHash(),
                 getVersion(),

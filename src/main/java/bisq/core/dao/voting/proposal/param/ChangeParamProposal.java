@@ -49,15 +49,11 @@ public final class ChangeParamProposal extends Proposal {
     private final long paramValue;
 
     public ChangeParamProposal(String name,
-                               String title,
-                               String description,
                                String link,
                                Param param,
                                long paramValue) {
         this(UUID.randomUUID().toString(),
                 name,
-                title,
-                description,
                 link,
                 param,
                 paramValue,
@@ -73,8 +69,6 @@ public final class ChangeParamProposal extends Proposal {
 
     private ChangeParamProposal(String uid,
                                 String name,
-                                String title,
-                                String description,
                                 String link,
                                 Param param,
                                 long paramValue,
@@ -83,8 +77,6 @@ public final class ChangeParamProposal extends Proposal {
                                 String txId) {
         super(uid,
                 name,
-                title,
-                description,
                 link,
                 version,
                 creationDate,
@@ -121,8 +113,6 @@ public final class ChangeParamProposal extends Proposal {
         }
         return new ChangeParamProposal(proto.getUid(),
                 proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
                 proto.getLink(),
                 param,
                 proposalProto.getParamValue(),
@@ -163,8 +153,6 @@ public final class ChangeParamProposal extends Proposal {
     public Proposal cloneWithTxId(String txId) {
         return new ChangeParamProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getParam(),
                 getParamValue(),
@@ -177,8 +165,6 @@ public final class ChangeParamProposal extends Proposal {
     public Proposal cloneWithoutTxId() {
         return new ChangeParamProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getParam(),
                 getParamValue(),

@@ -191,47 +191,35 @@ public class DaoFacade {
 
     // Creation of Proposal and proposalTransaction
     public ProposalWithTransaction getCompensationProposalWithTransaction(String name,
-                                                                          String title,
-                                                                          String description,
                                                                           String link,
                                                                           Coin requestedBsq,
                                                                           String bsqAddress)
             throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
             WalletException {
         return compensationProposalService.createProposalWithTransaction(name,
-                title,
-                description,
                 link,
                 requestedBsq,
                 bsqAddress);
     }
 
     public ProposalWithTransaction getParamProposalWithTransaction(String name,
-                                                                   String title,
-                                                                   String description,
                                                                    String link,
                                                                    Param param,
                                                                    long paramValue)
             throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
         return changeParamProposalService.createProposalWithTransaction(name,
-                title,
-                description,
                 link,
                 param,
                 paramValue);
     }
 
     public ProposalWithTransaction getConfiscateBondProposalWithTransaction(String name,
-                                                                            String title,
-                                                                            String description,
                                                                             String link,
                                                                             byte[] hash)
             throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
             WalletException {
         return confiscateBondProposalService.createProposalWithTransaction(name,
-                title,
-                description,
                 link,
                 hash);
     }

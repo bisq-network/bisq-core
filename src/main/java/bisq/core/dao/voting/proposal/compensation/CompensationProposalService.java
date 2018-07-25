@@ -63,8 +63,6 @@ public class CompensationProposalService {
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
-                                                                 String title,
-                                                                 String description,
                                                                  String link,
                                                                  Coin requestedBsq,
                                                                  String bsqAddress)
@@ -74,8 +72,6 @@ public class CompensationProposalService {
         // As we don't know the txId we create a temp object with txId set to an empty string.
         CompensationProposal proposal = new CompensationProposal(
                 name,
-                title,
-                description,
                 link,
                 requestedBsq,
                 bsqAddress);

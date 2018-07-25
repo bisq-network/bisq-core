@@ -48,9 +48,7 @@ public final class BondedRoleProposal extends Proposal {
     public BondedRoleProposal(BondedRole bondedRole) {
         this(UUID.randomUUID().toString(),
                 bondedRole.getName(),
-                "",
-                "",
-                "",
+                bondedRole.getLink(),
                 bondedRole,
                 Version.PROPOSAL,
                 new Date().getTime(),
@@ -64,8 +62,6 @@ public final class BondedRoleProposal extends Proposal {
 
     private BondedRoleProposal(String uid,
                                String name,
-                               String title,
-                               String description,
                                String link,
                                BondedRole bondedRole,
                                byte version,
@@ -73,8 +69,6 @@ public final class BondedRoleProposal extends Proposal {
                                String txId) {
         super(uid,
                 name,
-                title,
-                description,
                 link,
                 version,
                 creationDate,
@@ -94,8 +88,6 @@ public final class BondedRoleProposal extends Proposal {
         final PB.BondedRoleProposal proposalProto = proto.getBondedRoleProposal();
         return new BondedRoleProposal(proto.getUid(),
                 proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
                 proto.getLink(),
                 BondedRole.fromProto(proposalProto.getBondedRole()),
                 (byte) proto.getVersion(),
@@ -135,8 +127,6 @@ public final class BondedRoleProposal extends Proposal {
     public Proposal cloneWithTxId(String txId) {
         return new BondedRoleProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getBondedRole(),
                 getVersion(),
@@ -148,8 +138,6 @@ public final class BondedRoleProposal extends Proposal {
     public Proposal cloneWithoutTxId() {
         return new BondedRoleProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getBondedRole(),
                 getVersion(),

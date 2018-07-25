@@ -31,7 +31,6 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
@@ -62,9 +61,6 @@ public class ProposalValidator {
             //TODO use diff validators (store validators in proposal)
             if (!(proposal instanceof BondedRoleProposal) && !(proposal instanceof ConfiscateBondProposal)) {
                 notEmpty(proposal.getLink(), "link must not be empty");
-                notEmpty(proposal.getTitle(), "title must not be empty");
-                notEmpty(proposal.getDescription(), "description must not be empty");
-                checkArgument(ProposalConsensus.isDescriptionSizeValid(proposal.getDescription()), "description is too long");
             }
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);

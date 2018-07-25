@@ -23,7 +23,6 @@ import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalConsensus;
 
 import javax.inject.Inject;
 
@@ -31,7 +30,6 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
@@ -58,11 +56,7 @@ public class BondedRoleValidator {
     public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
             notEmpty(proposal.getName(), "name must not be empty");
-            notEmpty(proposal.getTitle(), "title must not be empty");
-            notEmpty(proposal.getDescription(), "description must not be empty");
             notEmpty(proposal.getLink(), "link must not be empty");
-
-            checkArgument(ProposalConsensus.isDescriptionSizeValid(proposal.getDescription()), "description is too long");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }

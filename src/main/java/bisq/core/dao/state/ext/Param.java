@@ -91,7 +91,7 @@ public enum Param {
         this.defaultValue = defaultValue;
     }
 
-    public String toDisplayString() {
+    public String getDisplayString() {
         return name().startsWith("PHASE_") ?
                 Res.get("dao.phase." + name()) :
                 Res.get("dao.param." + name());

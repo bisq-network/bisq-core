@@ -57,8 +57,6 @@ public class ConfiscateBondProposalService extends BaseProposalService<Confiscat
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
-                                                                 String title,
-                                                                 String description,
                                                                  String link,
                                                                  byte[] hash)
             throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
@@ -67,8 +65,6 @@ public class ConfiscateBondProposalService extends BaseProposalService<Confiscat
         // As we don't know the txId we create a temp object with txId set to an empty string.
         ConfiscateBondProposal proposal = new ConfiscateBondProposal(
                 name,
-                title,
-                description,
                 link,
                 hash);
         validate(proposal);

@@ -51,15 +51,11 @@ public final class CompensationProposal extends Proposal {
     private final String bsqAddress;
 
     public CompensationProposal(String name,
-                                String title,
-                                String description,
                                 String link,
                                 Coin requestedBsq,
                                 String bsqAddress) {
         this(UUID.randomUUID().toString(),
                 name,
-                title,
-                description,
                 link,
                 bsqAddress,
                 requestedBsq.value,
@@ -75,8 +71,6 @@ public final class CompensationProposal extends Proposal {
 
     private CompensationProposal(String uid,
                                  String name,
-                                 String title,
-                                 String description,
                                  String link,
                                  String bsqAddress,
                                  long requestedBsq,
@@ -85,8 +79,6 @@ public final class CompensationProposal extends Proposal {
                                  String txId) {
         super(uid,
                 name,
-                title,
-                description,
                 link,
                 version,
                 creationDate,
@@ -108,8 +100,6 @@ public final class CompensationProposal extends Proposal {
         final PB.CompensationProposal proposalProto = proto.getCompensationProposal();
         return new CompensationProposal(proto.getUid(),
                 proto.getName(),
-                proto.getTitle(),
-                proto.getDescription(),
                 proto.getLink(),
                 proposalProto.getBsqAddress(),
                 proposalProto.getRequestedBsq(),
@@ -160,8 +150,6 @@ public final class CompensationProposal extends Proposal {
     public Proposal cloneWithTxId(String txId) {
         return new CompensationProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getBsqAddress(),
                 getRequestedBsq().value,
@@ -174,8 +162,6 @@ public final class CompensationProposal extends Proposal {
     public Proposal cloneWithoutTxId() {
         return new CompensationProposal(getUid(),
                 getName(),
-                getTitle(),
-                getDescription(),
                 getLink(),
                 getBsqAddress(),
                 getRequestedBsq().value,

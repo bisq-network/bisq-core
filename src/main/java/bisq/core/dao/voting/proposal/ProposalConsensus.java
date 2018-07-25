@@ -61,13 +61,4 @@ public class ProposalConsensus {
     public static byte[] getHashOfPayload(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
-
-    @SuppressWarnings("SameReturnValue")
-    public static int getMaxLengthDescriptionText() {
-        return 100;
-    }
-
-    public static boolean isDescriptionSizeValid(String description) {
-        return description.length() <= getMaxLengthDescriptionText();
-    }
 }

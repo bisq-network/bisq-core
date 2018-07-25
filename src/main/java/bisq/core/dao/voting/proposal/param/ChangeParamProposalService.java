@@ -58,8 +58,6 @@ public class ChangeParamProposalService extends BaseProposalService<ChangeParamP
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
-                                                                 String title,
-                                                                 String description,
                                                                  String link,
                                                                  Param param,
                                                                  long paramValue)
@@ -69,8 +67,6 @@ public class ChangeParamProposalService extends BaseProposalService<ChangeParamP
         // As we don't know the txId we create a temp object with txId set to an empty string.
         ChangeParamProposal proposal = new ChangeParamProposal(
                 name,
-                title,
-                description,
                 link,
                 param,
                 paramValue);
