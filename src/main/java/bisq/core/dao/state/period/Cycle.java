@@ -83,8 +83,11 @@ public class Cycle implements PersistablePayload {
     }
 
     public boolean isInPhase(int height, DaoPhase.Phase phase) {
-        return height >= getFirstBlockOfPhase(phase) &&
-                height <= getLastBlockOfPhase(phase);
+        return height >= getFirstBlockOfPhase(phase) && height <= getLastBlockOfPhase(phase);
+    }
+
+    public boolean isInCycle(int height) {
+        return height >= getHeightOfFirstBlock() && height <= getHeightOfLastBlock();
     }
 
     public int getFirstBlockOfPhase(DaoPhase.Phase phase) {

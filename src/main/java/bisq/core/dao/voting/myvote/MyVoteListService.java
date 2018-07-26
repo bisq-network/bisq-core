@@ -30,6 +30,9 @@ import javax.inject.Inject;
 
 import javax.crypto.SecretKey;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -93,6 +96,12 @@ public class MyVoteListService implements PersistedDataHost {
 
     public MyVoteList getMyVoteList() {
         return myVoteList;
+    }
+
+    public List<MyVote> getMyVoteListForCycle() {
+        return myVoteList.getList().stream()
+                .filter(e -> bsqStateService.getCurrentCycle().isInCycle(e.getHeight()))
+                .collect(Collectors.toList());
     }
 
 

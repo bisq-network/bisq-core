@@ -279,6 +279,10 @@ public class DaoFacade {
         return myVoteListService.getMyVoteList().getList();
     }
 
+    public List<MyVote> getMyVoteListForCycle() {
+        return myVoteListService.getMyVoteListForCycle();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Use case: Vote
