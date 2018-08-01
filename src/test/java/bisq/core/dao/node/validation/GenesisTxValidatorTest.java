@@ -17,21 +17,21 @@
 
 package bisq.core.dao.node.validation;
 
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import org.bitcoinj.core.Coin;
-import org.junit.Test;
-import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
+import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+
+import org.bitcoinj.core.Coin;
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class GenesisTxValidatorTest {
 
@@ -41,11 +41,11 @@ public class GenesisTxValidatorTest {
         String blockHash = "abc123";
         Coin genesisTotalSupply = Coin.parseCoin("2.5");
         long time = new Date().getTime();
-        final List<TxInput> inputs = asList(
+        final List<TxInput> inputs = Arrays.asList(
                 new TxInput("tx0", 0, null),
                 new TxInput("tx1", 1, null)
         );
-        final List<RawTxOutput> outputs = asList(new RawTxOutput(0, 101, null, null, null, null, blockHeight));
+        final List<RawTxOutput> outputs = Arrays.asList(new RawTxOutput(0, 101, null, null, null, null, blockHeight));
         RawTx rawTx = new RawTx(
             "tx2",
             blockHeight,
@@ -61,7 +61,7 @@ public class GenesisTxValidatorTest {
         // With mismatch in blockheight and tx id, we should not get genesis tx back.
         Optional<Tx> result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         Optional<Tx> want = Optional.empty();
-        assertEquals(want, result);
+        Assert.assertEquals(want, result);
 
         // With correct blockheight but mismatch in tx id, we should still not get genesis tx back.
         blockHeight = 150;
@@ -75,7 +75,7 @@ public class GenesisTxValidatorTest {
         );
         result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         want = Optional.empty();
-        assertEquals(want, result);
+        Assert.assertEquals(want, result);
 
         // With correct tx id and blockheight, we should find our genesis tx with correct tx and output type.
         rawTx = new RawTx(
@@ -93,7 +93,7 @@ public class GenesisTxValidatorTest {
             tx.getTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
         want = Optional.of(tx);
-        assertEquals(want, result);
+        Assert.assertEquals(want, result);
         // TODO(chirhonul): test that only outputs in tx summing exactly to genesisTotalSupply is accepted, and
         // that code under test raises RuntimeError otherwise.
     }
