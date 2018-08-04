@@ -458,6 +458,10 @@ public class DaoFacade {
         return periodService.isInPhaseButNotLastBlock(phase);
     }
 
+    public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
+        return periodService.isTxInCorrectCycle(txHeight, chainHeadHeight);
+    }
+
     public boolean isUnspent(TxOutputKey key) {
         return bsqStateService.isUnspent(key);
     }
