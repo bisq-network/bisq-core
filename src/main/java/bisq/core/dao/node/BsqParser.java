@@ -67,14 +67,14 @@ public abstract class BsqParser {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    protected void maybeAddGenesisTx(RawBlock rawBlock, int blockHeight, Block block) {
+    protected void maybeAddGenesisTx(RawBlock rawBlock, Block block) {
         // We don't use streams here as we want to break as soon we found the genesis
         for (RawTx rawTx : rawBlock.getRawTxs()) {
-            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(bsqStateService.getGenesisTxId(),
+            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(
+                    bsqStateService.getGenesisTxId(),
                     bsqStateService.getGenesisBlockHeight(),
-                    rawTx,
-                    blockHeight);
+                    bsqStateService.getGenesisTotalSupply(),
+                    rawTx);
             if (optionalTx.isPresent()) {
                 Tx genesisTx = optionalTx.get();
                 block.getTxs().add(genesisTx);

@@ -76,7 +76,7 @@ public class FullNodeParser extends BsqParser {
         if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
             bsqStateService.onNewBlockWithEmptyTxs(block);
 
-        maybeAddGenesisTx(rawBlock, blockHeight, block);
+        maybeAddGenesisTx(rawBlock, block);
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).

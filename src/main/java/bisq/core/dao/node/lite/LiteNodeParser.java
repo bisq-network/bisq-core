@@ -64,7 +64,7 @@ public class LiteNodeParser extends BsqParser {
         if (blockValidator.isBlockNotAlreadyAdded(rawBlock))
             bsqStateService.onNewBlockWithEmptyTxs(block);
 
-        maybeAddGenesisTx(rawBlock, blockHeight, block);
+        maybeAddGenesisTx(rawBlock, block);
 
         // recursiveFindBsqTxs(block, rawBlock.getRawTxs(), 0, 10000);
         parseBsqTxs(block, rawBlock.getRawTxs());
