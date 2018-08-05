@@ -96,13 +96,18 @@ public class VoteResultConsensus {
         double rel = MathUtils.roundDouble((double) age / (double) maxAge, 10);
         double factor = 1d - rel;
         long weightedAmount = MathUtils.roundDoubleToLong(amount * factor);
-        log.info("getWeightedMeritAmount: amount={}, factor={}, weightedAmount={}, ", amount, factor, weightedAmount);
+        log.debug("getWeightedMeritAmount: amount={}, factor={}, weightedAmount={}, ", amount, factor, weightedAmount);
         return weightedAmount;
     }
 
     public static long getMeritStake(String blindVoteTxId, MeritList meritList, BsqStateService bsqStateService) {
+        // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
+        // later blocks (merit decreases with each block).
+        int txChainHeight = bsqStateService.getTx(blindVoteTxId).map(Tx::getBlockHeight).orElse(0);
+        if (txChainHeight == 0)
+            return 0;
+
         int blocksPerYear = 50_000; // 51264;
-        int currentChainHeight = bsqStateService.getChainHeight();
         return meritList.getList().stream()
                 .filter(merit -> {
                     String pubKeyAsHex = merit.getIssuance().getPubKey();
@@ -126,10 +131,36 @@ public class VoteResultConsensus {
                     return result;
                 })
                 .mapToLong(merit -> {
-                    return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
-                            merit.getIssuance().getChainHeight(),
-                            currentChainHeight,
-                            blocksPerYear);
+                    try {
+                        return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                                merit.getIssuance().getChainHeight(),
+                                txChainHeight,
+                                blocksPerYear);
+                    } catch (Throwable t) {
+                        log.error("Error at getMeritStake: " + t.toString());
+                        return 0;
+                    }
+                })
+                .sum();
+    }
+
+    // Used to get the merit before we have an actual blindVoteTxId (e.g. for displaying the user the available Merit)
+    public static long getAvailableMerit(MeritList meritList, BsqStateService bsqStateService) {
+        // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
+        // later blocks (merit decreases with each block).
+        int chainHeight = bsqStateService.getChainHeight();
+        int blocksPerYear = 50_000; // 51264;
+        return meritList.getList().stream()
+                .mapToLong(merit -> {
+                    try {
+                        return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                                merit.getIssuance().getChainHeight(),
+                                chainHeight,
+                                blocksPerYear);
+                    } catch (Throwable t) {
+                        log.error("Error at getMeritStake: " + t.toString());
+                        return 0;
+                    }
                 })
                 .sum();
     }

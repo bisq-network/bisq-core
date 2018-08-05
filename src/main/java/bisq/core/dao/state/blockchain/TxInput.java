@@ -21,6 +21,8 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import java.util.Optional;
+
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -65,13 +67,15 @@ public final class TxInput implements PersistablePayload {
                 .setConnectedTxOutputTxId(connectedTxOutputTxId)
                 .setConnectedTxOutputIndex(connectedTxOutputIndex);
 
+        Optional.ofNullable(pubKey).ifPresent(builder::setPubKey);
+
         return builder.build();
     }
 
     public static TxInput fromProto(PB.TxInput proto) {
         return new TxInput(proto.getConnectedTxOutputTxId(),
                 proto.getConnectedTxOutputIndex(),
-                proto.getPubKey());
+                proto.getPubKey().isEmpty() ? null : proto.getPubKey());
     }
 
 

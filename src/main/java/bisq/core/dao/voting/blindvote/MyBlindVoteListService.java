@@ -42,6 +42,7 @@ import bisq.core.dao.voting.proposal.MyProposalListService;
 import bisq.core.dao.voting.proposal.Proposal;
 import bisq.core.dao.voting.proposal.ProposalValidator;
 import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
+import bisq.core.dao.voting.voteresult.VoteResultConsensus;
 
 import bisq.network.p2p.P2PService;
 
@@ -224,6 +225,11 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         }
     }
 
+    public long getAvailableMerit() {
+        MeritList meritList = getMerits(null);
+        return VoteResultConsensus.getAvailableMerit(meritList, bsqStateService);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
@@ -244,42 +250,51 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     }
 
     private byte[] getEncryptedMeritList(String blindVoteTxId, SecretKey secretKey) throws CryptoException {
+        MeritList meritList = getMerits(blindVoteTxId);
+        return BlindVoteConsensus.getEncryptedMeritList(meritList, secretKey);
+    }
+
+    public MeritList getMerits(@Nullable String blindVoteTxId) {
         // Create a lookup set for own comp. requests
         Set<String> myCompensationProposalTxIs = myProposalListService.getList().stream()
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
-        MeritList meritList = new MeritList(bsqStateService.getIssuanceSet().stream()
+        return new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
                     if (!myCompensationProposalTxIs.contains(issuance.getTxId()))
                         return null;
 
-                    String pubKey = issuance.getPubKey();
-                    if (pubKey == null) {
-                        log.error("We did not find have a pubKey in our issuance object. " +
-                                "txId={}, issuance={}", issuance.getTxId(), issuance);
-                        return null;
-                    }
+                    byte[] signatureAsBytes;
+                    if (blindVoteTxId != null) {
+                        String pubKey = issuance.getPubKey();
+                        if (pubKey == null) {
+                            log.error("We did not have a pubKey in our issuance object. " +
+                                    "txId={}, issuance={}", issuance.getTxId(), issuance);
+                            return null;
+                        }
 
-                    DeterministicKey key = bsqWalletService.findKeyFromPubKey(Utilities.decodeFromHex(pubKey));
-                    if (key == null) {
-                        log.error("We did not find the key for our compensation request. txId={}",
-                                issuance.getTxId());
-                        return null;
-                    }
+                        DeterministicKey key = bsqWalletService.findKeyFromPubKey(Utilities.decodeFromHex(pubKey));
+                        if (key == null) {
+                            log.error("We did not find the key for our compensation request. txId={}",
+                                    issuance.getTxId());
+                            return null;
+                        }
 
-                    // We sign the txId so we be sure that the signature could not be used by anyone else
-                    // In the verification the txId will be checked as well.
-                    ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
-                    byte[] signatureAsBytes = signature.toCanonicalised().encodeToDER();
+                        // We sign the txId so we be sure that the signature could not be used by anyone else
+                        // In the verification the txId will be checked as well.
+                        ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
+                        signatureAsBytes = signature.toCanonicalised().encodeToDER();
+                    } else {
+                        signatureAsBytes = new byte[0];
+                    }
                     return new Merit(issuance, signatureAsBytes);
 
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
-        return BlindVoteConsensus.getEncryptedMeritList(meritList, secretKey);
     }
 
     private void publishTx(ResultHandler resultHandler, ExceptionHandler exceptionHandler, Transaction blindVoteTx) {

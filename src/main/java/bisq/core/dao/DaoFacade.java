@@ -55,6 +55,7 @@ import bisq.core.dao.voting.proposal.role.BondedRoleProposalService;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
+import bisq.common.util.Tuple2;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -275,8 +276,20 @@ public class DaoFacade {
         return filteredBallotListService.getClosedBallots();
     }
 
+    public ObservableList<Ballot> getAllBallots() {
+        return filteredBallotListService.getAllBallots();
+    }
+
     public List<MyVote> getMyVoteList() {
         return myVoteListService.getMyVoteList().getList();
+    }
+
+    public Tuple2<Long, Long> getMeritAndStakeForProposal(String proposalTxId) {
+        return myVoteListService.getMeritAndStakeForProposal(proposalTxId, myBlindVoteListService);
+    }
+
+    public long getAvailableMerit() {
+        return myBlindVoteListService.getAvailableMerit();
     }
 
     public List<MyVote> getMyVoteListForCycle() {
@@ -460,6 +473,10 @@ public class DaoFacade {
 
     public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
         return periodService.isTxInCorrectCycle(txHeight, chainHeadHeight);
+    }
+
+    public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
+        return periodService.isTxInCorrectCycle(txId, chainHeadHeight);
     }
 
     public boolean isUnspent(TxOutputKey key) {

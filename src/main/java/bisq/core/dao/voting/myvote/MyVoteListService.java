@@ -19,17 +19,22 @@ package bisq.core.dao.voting.myvote;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.voting.ballot.Ballot;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.BlindVote;
+import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
 
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
+import bisq.common.util.Tuple2;
 
 import javax.inject.Inject;
 
 import javax.crypto.SecretKey;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,6 +97,23 @@ public class MyVoteListService implements PersistedDataHost {
         myVote.setRevealTxId(voteRevealTxId);
         log.info("Applied revealTxId to myVote.\nmyVote={}\nvoteRevealTxId={}", myVote, voteRevealTxId);
         persist();
+    }
+
+    public Tuple2<Long, Long> getMeritAndStakeForProposal(String proposalTxId, MyBlindVoteListService myBlindVoteListService) {
+        long merit = 0;
+        long stake = 0;
+        List<MyVote> list = new ArrayList<>(myVoteList.getList());
+        list.sort(Comparator.comparing(MyVote::getDate));
+        for (MyVote myVote : list) {
+            for (Ballot ballot1 : myVote.getBallotList()) {
+                if (ballot1.getProposalTxId().equals(proposalTxId)) {
+                    merit = myVote.getMerit(myBlindVoteListService, bsqStateService);
+                    stake = myVote.getBlindVote().getStake();
+                    break;
+                }
+            }
+        }
+        return new Tuple2<>(merit, stake);
     }
 
     public MyVoteList getMyVoteList() {

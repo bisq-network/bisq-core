@@ -248,8 +248,8 @@ public class RpcService {
                         // Bitcoin Core creates payToPubKey tx when spending mined coins (regtest)...
                         pubKeyAsHex = null;
                         log.debug("pubKeyAsHex is not set as we received a not supported sigScript " +
-                                        "(segWit or payToPubKey tx). asm={},  txId={}",
-                                rawInput.getScriptSig().getAsm(), rawBtcTx.getTxId());
+                                        "(segWit or payToPubKey tx). txId={}, asm={}",
+                                rawBtcTx.getTxId(), rawInput.getScriptSig().getAsm());
                     }
                     return new TxInput(rawInput.getTxId(), rawInput.getVOut(), pubKeyAsHex);
                 })
@@ -297,20 +297,4 @@ public class RpcService {
                 ImmutableList.copyOf(txInputs),
                 ImmutableList.copyOf(txOutputs));
     }
-
-   /* private Transaction requestTx(String txId) throws BitcoindException, CommunicationException {
-        return client.getTransaction(txId);
-    }*/
-
-  /*  private void requestFees(String txId, int blockHeight, Map<Integer, Long> feesByBlock) throws RpcException {
-        try {
-            Transaction transaction = requestTx(txId);
-            final BigDecimal fee = transaction.getFee();
-            if (fee != null)
-                feesByBlock.put(blockHeight, Math.abs(fee.multiply(BigDecimal.valueOf(Coin.COIN.value)).longValue()));
-        } catch (BitcoindException | CommunicationException e) {
-            log.error("error at requestFees with txId={}, blockHeight={}", txId, blockHeight);
-            throw new RpcException(e.getMessage(), e);
-        }
-    }*/
 }
