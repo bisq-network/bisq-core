@@ -37,13 +37,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DisputeMsgEvents {
-    private DisputeManager disputeManager;
     private final P2PService p2PService;
     private final MobileNotificationService mobileNotificationService;
 
     @Inject
     public DisputeMsgEvents(DisputeManager disputeManager, P2PService p2PService, MobileNotificationService mobileNotificationService) {
-        this.disputeManager = disputeManager;
         this.p2PService = p2PService;
         this.mobileNotificationService = mobileNotificationService;
 

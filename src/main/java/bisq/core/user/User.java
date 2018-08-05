@@ -345,7 +345,7 @@ public final class User implements PersistedDataHost {
     public PaymentAccount getPaymentAccount(String paymentAccountId) {
         Optional<PaymentAccount> optional = userPayload.getPaymentAccounts() != null ?
                 userPayload.getPaymentAccounts().stream().filter(e -> e.getId().equals(paymentAccountId)).findAny() :
-                Optional.<PaymentAccount>empty();
+                Optional.empty();
         return optional.orElse(null);
     }
 
