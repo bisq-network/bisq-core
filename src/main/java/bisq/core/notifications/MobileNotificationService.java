@@ -152,10 +152,6 @@ public class MobileNotificationService {
                 String json = gson.toJson(message);
                 log.info("json " + json);
 
-                // What is ptext? bom byte? https://en.wikipedia.org/wiki/Byte_order_mark
-              /*  byte[] ptext = json.getBytes(ISO_8859_1);
-                json = new String(ptext, UTF_8);*/
-
                 StringBuilder padded = new StringBuilder(json);
                 while (padded.length() % 16 != 0) {
                     padded.append(" ");

@@ -34,9 +34,7 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 @Slf4j
 public class MobileMessageEncryption {
-
-    private IvParameterSpec ivspec;
-    private SecretKeySpec keyspec;
+    private SecretKeySpec keySpec;
     private Cipher cipher;
 
     @Inject
@@ -44,7 +42,7 @@ public class MobileMessageEncryption {
     }
 
     public void setKey(String key) {
-        keyspec = new SecretKeySpec(key.getBytes(), "AES");
+        keySpec = new SecretKeySpec(key.getBytes(), "AES");
         try {
             cipher = Cipher.getInstance("AES/CBC/NOPadding");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -60,8 +58,8 @@ public class MobileMessageEncryption {
         if (iv.length() != 16) {
             throw new Exception("iv not 16 characters");
         }
-        ivspec = new IvParameterSpec(iv.getBytes());
-        byte[] encryptedBytes = doEncrypt(valueToEncrypt, ivspec);
+        IvParameterSpec ivSpec = new IvParameterSpec(iv.getBytes());
+        byte[] encryptedBytes = doEncrypt(valueToEncrypt, ivSpec);
         return Base64.encode(encryptedBytes);
     }
 
@@ -72,7 +70,7 @@ public class MobileMessageEncryption {
 
         byte[] encrypted;
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivSpec);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
             encrypted = cipher.doFinal(text.getBytes());
         } catch (Exception e) {
             throw new Exception("[encrypt] " + e.getMessage());

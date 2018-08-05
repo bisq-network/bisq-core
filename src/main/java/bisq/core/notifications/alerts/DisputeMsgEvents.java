@@ -62,14 +62,11 @@ public class DisputeMsgEvents {
     private void setDisputeListener(Dispute dispute) {
         //TODO use weak ref or remove listener
         log.info("We got a dispute added. id={}, tradeId={}", dispute.getId(), dispute.getTradeId());
-        dispute.getDisputeCommunicationMessages().addListener(new ListChangeListener<DisputeCommunicationMessage>() {
-            @Override
-            public void onChanged(Change<? extends DisputeCommunicationMessage> c) {
-                log.info("We got a DisputeCommunicationMessage added. id={}, tradeId={}", dispute.getId(), dispute.getTradeId());
-                c.next();
-                if (c.wasAdded()) {
-                    c.getAddedSubList().forEach(e -> setDisputeCommunicationMessage(e));
-                }
+        dispute.getDisputeCommunicationMessages().addListener((ListChangeListener<DisputeCommunicationMessage>) c -> {
+            log.info("We got a DisputeCommunicationMessage added. id={}, tradeId={}", dispute.getId(), dispute.getTradeId());
+            c.next();
+            if (c.wasAdded()) {
+                c.getAddedSubList().forEach(this::setDisputeCommunicationMessage);
             }
         });
 
@@ -78,10 +75,10 @@ public class DisputeMsgEvents {
             setDisputeCommunicationMessage(dispute.getDisputeCommunicationMessages().get(0));
     }
 
-    public void setDisputeCommunicationMessage(DisputeCommunicationMessage disputeMsg) {
+    private void setDisputeCommunicationMessage(DisputeCommunicationMessage disputeMsg) {
         // TODO we need to prevent to send msg for old dispute messages again at restart
         // Maybe we need a new property in DisputeCommunicationMessage
-        // As key is not set in initial iterations it seems we dont need an extra handling.
+        // As key is not set in initial iterations it seems we don't need an extra handling.
         // the mailbox msg is set a bit later so that triggers a notification, but not the old messages.
 
         // We only send msg in case we are not the sender

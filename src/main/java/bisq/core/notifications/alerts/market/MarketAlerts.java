@@ -49,7 +49,7 @@ public class MarketAlerts {
     private final MobileNotificationService mobileNotificationService;
     private final User user;
     private final PriceFeedService priceFeedService;
-    private BSFormatter formatter;
+    private final BSFormatter formatter;
 
     @Inject
     public MarketAlerts(OfferBookService offerBookService, MobileNotificationService mobileNotificationService,

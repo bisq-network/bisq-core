@@ -107,7 +107,7 @@ public class TradeEvents {
         }
     }
 
-    public static List<MobileMessage> getTestMsgs() {
+    public static List<MobileMessage> getTestMessages() {
         String shortId = UUID.randomUUID().toString().substring(0, 8);
         List<MobileMessage> list = new ArrayList<>();
         list.add(new MobileMessage(Res.get("account.notifications.trade.message.title"),

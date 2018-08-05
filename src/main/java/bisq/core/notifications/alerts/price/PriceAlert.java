@@ -55,7 +55,7 @@ public class PriceAlert {
         priceFeedService.updateCounterProperty().addListener((observable, oldValue, newValue) -> update());
     }
 
-    public void update() {
+    private void update() {
         if (user.getPriceAlertFilter() != null) {
             PriceAlertFilter filter = user.getPriceAlertFilter();
             String currencyCode = filter.getCurrencyCode();
