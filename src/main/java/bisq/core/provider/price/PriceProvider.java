@@ -49,8 +49,8 @@ public class PriceProvider extends HttpClientProvider {
         Map<String, MarketPrice> marketPriceMap = new HashMap<>();
         String json = httpClient.requestWithGET("getAllMarketPrices", "User-Agent", "bisq/"
                 + Version.VERSION + ", uid:" + httpClient.getUid());
-        //noinspection unchecked
-        LinkedTreeMap<String, Object> map = new Gson().fromJson(json, LinkedTreeMap.class);
+
+        LinkedTreeMap<String, Object> map = new Gson().<LinkedTreeMap<String, Object>>fromJson(json, LinkedTreeMap.class);
         Map<String, Long> tsMap = new HashMap<>();
         tsMap.put("btcAverageTs", ((Double) map.get("btcAverageTs")).longValue());
         tsMap.put("poloniexTs", ((Double) map.get("poloniexTs")).longValue());
