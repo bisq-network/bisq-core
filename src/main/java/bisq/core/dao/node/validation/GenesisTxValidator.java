@@ -18,11 +18,14 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.RawTx;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+
 import org.bitcoinj.core.Coin;
+
 import java.util.Optional;
 
 /**
@@ -35,11 +38,11 @@ public class GenesisTxValidator {
         if (!isGenesis)
             return Optional.empty();
 
-        Tx tx = new Tx(rawTx);
-        tx.setTxType(TxType.GENESIS);
+        TempTx tempTx = TempTx.createFromRawTx(rawTx);
+        tempTx.setTxType(TxType.GENESIS);
         long availableInputValue = genesisTotalSupply.getValue();
-        for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
-            TxOutput txOutput = tx.getTxOutputs().get(i);
+        for (int i = 0; i < tempTx.getTxOutputs().size(); ++i) {
+            TxOutput txOutput = tempTx.getTxOutputs().get(i);
             long value = txOutput.getValue();
             boolean isValid = value <= availableInputValue;
             if (!isValid)
@@ -49,6 +52,6 @@ public class GenesisTxValidator {
             txOutput.setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
 
-        return Optional.of(tx);
+        return Optional.of(Tx.createFromTempTx(tempTx));
     }
 }

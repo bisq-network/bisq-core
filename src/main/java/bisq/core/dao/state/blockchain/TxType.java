@@ -23,6 +23,8 @@ import io.bisq.generated.protobuffer.PB;
 
 import lombok.Getter;
 
+import javax.annotation.Nullable;
+
 public enum TxType {
     UNDEFINED_TX_TYPE(false, false),
     UNVERIFIED(false, false),
@@ -52,6 +54,7 @@ public enum TxType {
         this.requiresFee = requiresFee;
     }
 
+    @Nullable
     public static TxType fromProto(PB.TxType txType) {
         return ProtoUtil.enumFromProto(TxType.class, txType.name());
     }

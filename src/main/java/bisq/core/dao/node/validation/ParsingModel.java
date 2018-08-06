@@ -18,7 +18,7 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 @Getter
 @Setter
 class ParsingModel {
-    private Tx tx;
+    private TempTx tx;
     private long availableInputValue = 0;
     private long burntBondValue = 0;
     @Nullable

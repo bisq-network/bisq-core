@@ -53,6 +53,16 @@ public final class RawTxOutput implements PersistablePayload {
                 txOutput.getBlockHeight());
     }
 
+    public static RawTxOutput cloneFromTxOutput(TxOutput txOutput) {
+        return new RawTxOutput(txOutput.getIndex(),
+                txOutput.getValue(),
+                txOutput.getTxId(),
+                txOutput.getPubKeyScript(),
+                txOutput.getAddress(),
+                txOutput.getOpReturnData(),
+                txOutput.getBlockHeight());
+    }
+
     private final int index;
     private final long value;
     private final String txId;

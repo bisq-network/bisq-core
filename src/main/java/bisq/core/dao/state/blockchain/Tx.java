@@ -17,6 +17,8 @@
 
 package bisq.core.dao.state.blockchain;
 
+import bisq.common.proto.persistable.PersistablePayload;
+
 import io.bisq.generated.protobuffer.PB;
 
 import com.google.common.collect.ImmutableList;
@@ -25,71 +27,78 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.Data;
-import lombok.experimental.Delegate;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 
 import javax.annotation.Nullable;
 
 /**
- * Transaction containing BSQ specific data. The raw blockchain specific tx data are in the rawTx object.
- * We use lombok for convenience to delegate access to the data inside the rawTx.
+ * Immutable class for a Bsq transaction.
  *
- * We are storing the txOutputs twice atm. We might optimize that to remove the rawTx and clone the fields here. But for
- * now we prefer ot have a less complex structure.
  */
-@Data
-public class Tx {
-    public static Tx clone(Tx tx) {
-        return new Tx(tx.getRawTx(),
-                tx.getTxType(),
-                tx.getTxOutputs(),
-                tx.getBurntFee(),
-                tx.getLockTime(),
-                tx.getUnlockBlockHeight());
+@EqualsAndHashCode(callSuper = true)
+@Value
+public final class Tx extends BaseTx implements PersistablePayload {
+    // Created after parsing of a tx is completed. We store only the immutable tx in the block.
+    public static Tx createFromTempTx(TempTx tempTx) {
+        final ImmutableList<TxOutput> txOutputs = ImmutableList.copyOf(tempTx.getTxOutputs().stream()
+                .map(TxOutput::clone)
+                .collect(Collectors.toList()));
+
+
+        return new Tx(tempTx.getTxVersion(),
+                tempTx.getId(),
+                tempTx.getBlockHeight(),
+                tempTx.getBlockHash(),
+                tempTx.getTime(),
+                tempTx.getTxInputs(),
+                txOutputs,
+                tempTx.getTxType(),
+                tempTx.getBurntFee(),
+                tempTx.getLockTime(),
+                tempTx.getUnlockBlockHeight());
     }
 
-    private interface ExcludesDelegateMethods<T> {
-        PB.Tx toProtoMessage();
-    }
-
-    @Delegate(excludes = Tx.ExcludesDelegateMethods.class)
-    private final RawTx rawTx;
-
+    private final ImmutableList<TxOutput> txOutputs;
     @Nullable
-    private TxType txType = null;
-    private ImmutableList<TxOutput> txOutputs;
-    private long burntFee = 0L;
+    private final TxType txType;
+    private final long burntFee;
     // If not set it is -1. LockTime of 0 is a valid value.
-    private int lockTime = -1;
-    private int unlockBlockHeight = 0;
-
-    public Tx(RawTx rawTx) {
-        this.rawTx = rawTx;
-        txOutputs = ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TxOutput::new).collect(Collectors.toList()));
-    }
+    private final int lockTime;
+    private final int unlockBlockHeight;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Tx(RawTx rawTx,
-               @Nullable TxType txType,
+    private Tx(String txVersion,
+               String id,
+               int blockHeight,
+               String blockHash,
+               long time,
+               ImmutableList<TxInput> txInputs,
                ImmutableList<TxOutput> txOutputs,
+               @Nullable TxType txType,
                long burntFee,
                int lockTime,
                int unlockBlockHeight) {
-        this.rawTx = rawTx;
-        this.txType = txType;
+        super(txVersion,
+                id,
+                blockHeight,
+                blockHash,
+                time,
+                txInputs);
         this.txOutputs = txOutputs;
+        this.txType = txType;
         this.burntFee = burntFee;
         this.lockTime = lockTime;
         this.unlockBlockHeight = unlockBlockHeight;
     }
 
-    public PB.Tx toProtoMessage() {
+    @Override
+    public PB.BaseTx toProtoMessage() {
         final PB.Tx.Builder builder = PB.Tx.newBuilder()
-                .setTx(rawTx.toProtoMessage())
                 .addAllTxOutputs(txOutputs.stream()
                         .map(TxOutput::toProtoMessage)
                         .collect(Collectors.toList()))
@@ -97,23 +106,51 @@ public class Tx {
                 .setLockTime(lockTime)
                 .setUnlockBlockHeight(unlockBlockHeight);
         Optional.ofNullable(txType).ifPresent(txType -> builder.setTxType(txType.toProtoMessage()));
-        return builder.build();
+        return getBaseTxBuilder().setTx(builder).build();
     }
 
-    public static Tx fromProto(PB.Tx proto) {
-        return new Tx(RawTx.fromProto(proto.getTx()),
-                TxType.fromProto(proto.getTxType()),
-                proto.getTxOutputsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getTxOutputsList().stream()
-                                .map(TxOutput::fromProto)
-                                .collect(Collectors.toList())),
-                proto.getBurntFee(),
-                proto.getLockTime(),
-                proto.getUnlockBlockHeight());
+    public static Tx fromProto(PB.BaseTx protoBaseTx) {
+        ImmutableList<TxInput> txInputs = protoBaseTx.getTxInputsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(protoBaseTx.getTxInputsList().stream()
+                        .map(TxInput::fromProto)
+                        .collect(Collectors.toList()));
+        PB.Tx protoTx = protoBaseTx.getTx();
+        ImmutableList<TxOutput> outputs = protoTx.getTxOutputsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(protoTx.getTxOutputsList().stream()
+                        .map(TxOutput::fromProto)
+                        .collect(Collectors.toList()));
+        return new Tx(protoBaseTx.getTxVersion(),
+                protoBaseTx.getId(),
+                protoBaseTx.getBlockHeight(),
+                protoBaseTx.getBlockHash(),
+                protoBaseTx.getTime(),
+                txInputs,
+                outputs,
+                TxType.fromProto(protoTx.getTxType()),
+                protoTx.getBurntFee(),
+                protoTx.getLockTime(),
+                protoTx.getUnlockBlockHeight());
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Utils
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public TxOutput getLastTxOutput() {
         return txOutputs.get(txOutputs.size() - 1);
+    }
+
+    @Override
+    public String toString() {
+        return "Tx{" +
+                "\n     txOutputs=" + txOutputs +
+                ",\n     txType=" + txType +
+                ",\n     burntFee=" + burntFee +
+                ",\n     lockTime=" + lockTime +
+                ",\n     unlockBlockHeight=" + unlockBlockHeight +
+                "\n} " + super.toString();
     }
 }

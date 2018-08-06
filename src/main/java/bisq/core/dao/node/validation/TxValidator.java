@@ -19,6 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -62,22 +63,22 @@ public class TxValidator {
     // for instance to calculate the total burned BSQ.
     public Optional<Tx> getBsqTx(RawTx rawTx) {
         int blockHeight = rawTx.getBlockHeight();
-        Tx tx = new Tx(rawTx);
+        TempTx tempTx = TempTx.createFromRawTx(rawTx);
         ParsingModel parsingModel = new ParsingModel();
 
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
-        parsingModel.setTx(tx);
+        parsingModel.setTx(tempTx);
 
-        for (int inputIndex = 0; inputIndex < tx.getTxInputs().size(); inputIndex++) {
-            TxInput input = tx.getTxInputs().get(inputIndex);
-            txInputProcessor.process(input, blockHeight, tx.getId(), inputIndex, parsingModel);
+        for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
+            TxInput input = tempTx.getTxInputs().get(inputIndex);
+            txInputProcessor.process(input, blockHeight, tempTx.getId(), inputIndex, parsingModel);
         }
 
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            final List<TxOutput> outputs = tx.getTxOutputs();
+            final List<TxOutput> outputs = tempTx.getTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
             // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
@@ -92,11 +93,11 @@ public class TxValidator {
             // We use order of output index. An output is a BSQ utxo as long there is enough input value
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
-                txOutputProcessor.processTxOutput(tx, outputs.get(index), index, blockHeight, parsingModel);
+                txOutputProcessor.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
-            long numOpReturnOutputs = tx.getTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
+            long numOpReturnOutputs = tempTx.getTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
@@ -106,22 +107,22 @@ public class TxValidator {
                     issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
                 }
 
-                boolean isAnyTxOutputTypeUndefined = tx.getTxOutputs().stream()
+                boolean isAnyTxOutputTypeUndefined = tempTx.getTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
-                    final TxType txType = getTxType(tx, parsingModel);
-                    tx.setTxType(txType);
+                    final TxType txType = getTxType(tempTx, parsingModel);
+                    tempTx.setTxType(txType);
                     final long burntFee = parsingModel.getAvailableInputValue();
                     if (burntFee > 0)
-                        tx.setBurntFee(burntFee);
+                        tempTx.setBurntFee(burntFee);
                 } else {
-                    String msg = "We have undefined txOutput types which must not happen. tx=" + tx;
+                    String msg = "We have undefined txOutput types which must not happen. tx=" + tempTx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
                 }
             } else {
                 // We don't consider a tx with multiple OpReturn outputs valid.
-                tx.setTxType(TxType.INVALID);
-                String msg = "Invalid tx. We have multiple opReturn outputs. tx=" + tx;
+                tempTx.setTxType(TxType.INVALID);
+                String msg = "Invalid tx. We have multiple opReturn outputs. tx=" + tempTx;
                 log.warn(msg);
             }
         }
@@ -133,7 +134,7 @@ public class TxValidator {
         // bsqInputBalancePositive, hence the need to check for parsingModel.getBurntBondValue
         // Perhaps adding boolean parsingModel.isBSQTx and checking for that would be better?
         if (bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0)
-            return Optional.of(tx);
+            return Optional.of(Tx.createFromTempTx(tempTx));
         else
             return Optional.empty();
     }
@@ -141,7 +142,7 @@ public class TxValidator {
     // TODO add tests
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    TxType getTxType(Tx tx, ParsingModel parsingModel) {
+    TxType getTxType(TempTx tx, ParsingModel parsingModel) {
         TxType txType;
         // We need to have at least one BSQ output
         Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, parsingModel);
@@ -166,7 +167,7 @@ public class TxValidator {
         return txType;
     }
 
-    private TxType getTxTypeForOpReturn(Tx tx, OpReturnType opReturnType) {
+    private TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
@@ -195,7 +196,7 @@ public class TxValidator {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(Tx tx, ParsingModel parsingModel) {
+    private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx, ParsingModel parsingModel) {
         if (parsingModel.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.

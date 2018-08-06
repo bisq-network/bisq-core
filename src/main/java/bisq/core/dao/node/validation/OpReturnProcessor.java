@@ -19,7 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
@@ -71,7 +71,7 @@ public class OpReturnProcessor {
         }
     }
 
-    public void validate(byte[] opReturnData, TxOutput txOutput, Tx tx, int index, long bsqFee,
+    public void validate(byte[] opReturnData, TxOutput txOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
         if (txOutput.getValue() == 0 &&
                 index == tx.getTxOutputs().size() - 1 &&
@@ -90,7 +90,7 @@ public class OpReturnProcessor {
         }
     }
 
-    private void selectValidator(byte[] opReturnData, TxOutput txOutput, Tx tx, long bsqFee, int blockHeight,
+    private void selectValidator(byte[] opReturnData, TxOutput txOutput, TempTx tx, long bsqFee, int blockHeight,
                                  ParsingModel parsingModel, OpReturnType opReturnType) {
         switch (opReturnType) {
             case PROPOSAL:

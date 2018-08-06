@@ -19,7 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
@@ -47,7 +47,7 @@ public class TxOutputProcessor {
         opReturnProcessor.processOpReturnCandidate(txOutput, parsingModel);
     }
 
-    void processTxOutput(Tx tx, TxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
+    void processTxOutput(TempTx tx, TxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
         final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();

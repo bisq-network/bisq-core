@@ -21,8 +21,6 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,18 +35,6 @@ import lombok.Value;
  */
 @Value
 public final class Block implements PersistablePayload {
-
-    public static Block clone(Block block) {
-        final ImmutableList<Tx> txs = ImmutableList.copyOf(block.getTxs().stream()
-                .map(Tx::clone)
-                .collect(Collectors.toList()));
-        return new Block(block.getHeight(),
-                block.getTime(),
-                block.getHash(),
-                block.getPreviousBlockHash(),
-                txs);
-    }
-
     private final int height;
     private final long time; // in seconds!
     private final String hash;

@@ -27,56 +27,52 @@ import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.Immutable;
 
 /**
- * RawTx as we get it from the blockchain without BSQ specific data.
+ * RawTx as we get it from the RPC service (full node) or from via the P2P network (lite node).
+ * It contains pure bitcoin blockchain data without any BSQ specific data.
  */
 @Immutable
 @Slf4j
+@EqualsAndHashCode(callSuper = true)
 @Value
-public final class RawTx implements PersistablePayload {
+public final class RawTx extends BaseTx implements PersistablePayload {
+    // Used when a full node sends a block over the P2P network
+    public static RawTx cloneFromTx(Tx tx) {
+        ImmutableList<RawTxOutput> rawTxOutputs = ImmutableList.copyOf(tx.getTxOutputs().stream()
+                .map(RawTxOutput::cloneFromTxOutput)
+                .collect(Collectors.toList()));
 
-    public static RawTx clone(RawTx tx) {
-        final ImmutableList<TxInput> txInputs = ImmutableList.copyOf(tx.getTxInputs().stream()
-                .map(TxInput::clone)
-                .collect(Collectors.toList()));
-        final ImmutableList<RawTxOutput> rawTxOutputs = ImmutableList.copyOf(tx.getRawTxOutputs().stream()
-                .map(RawTxOutput::clone)
-                .collect(Collectors.toList()));
         return new RawTx(tx.getTxVersion(),
                 tx.getId(),
                 tx.getBlockHeight(),
                 tx.getBlockHash(),
                 tx.getTime(),
-                txInputs,
+                tx.getTxInputs(),
                 rawTxOutputs);
     }
 
-    private final String txVersion;
-    private final String id;
-    private final int blockHeight;
-    private final String blockHash;
-    private final long time;
-    private final ImmutableList<TxInput> txInputs;
     private final ImmutableList<RawTxOutput> rawTxOutputs;
 
+    // The RPC service is creating a RawTx.
     public RawTx(String id,
                  int blockHeight,
                  String blockHash,
                  long time,
                  ImmutableList<TxInput> txInputs,
                  ImmutableList<RawTxOutput> rawTxOutputs) {
-        this(Version.BSQ_TX_VERSION,
+        super(Version.BSQ_TX_VERSION,
                 id,
                 blockHeight,
                 blockHash,
                 time,
-                txInputs,
-                rawTxOutputs);
+                txInputs);
+        this.rawTxOutputs = rawTxOutputs;
     }
 
 
@@ -91,61 +87,42 @@ public final class RawTx implements PersistablePayload {
                   long time,
                   ImmutableList<TxInput> txInputs,
                   ImmutableList<RawTxOutput> rawTxOutputs) {
-        this.txVersion = txVersion;
-        this.id = id;
-        this.blockHeight = blockHeight;
-        this.blockHash = blockHash;
-        this.time = time;
-        this.txInputs = txInputs;
+        super(txVersion,
+                id,
+                blockHeight,
+                blockHash,
+                time,
+                txInputs);
         this.rawTxOutputs = rawTxOutputs;
     }
 
-    public PB.RawTx toProtoMessage() {
+    @Override
+    public PB.BaseTx toProtoMessage() {
         final PB.RawTx.Builder builder = PB.RawTx.newBuilder()
-                .setTxVersion(txVersion)
-                .setId(id)
-                .setBlockHeight(blockHeight)
-                .setBlockHash(blockHash)
-                .setTime(time)
-                .addAllTxInputs(txInputs.stream()
-                        .map(TxInput::toProtoMessage)
-                        .collect(Collectors.toList()))
                 .addAllRawTxOutputs(rawTxOutputs.stream()
                         .map(RawTxOutput::toProtoMessage)
                         .collect(Collectors.toList()));
-
-        return builder.build();
+        return getBaseTxBuilder().setRawTx(builder).build();
     }
 
-    public static RawTx fromProto(PB.RawTx proto) {
-        return new RawTx(proto.getTxVersion(),
-                proto.getId(),
-                proto.getBlockHeight(),
-                proto.getBlockHash(),
-                proto.getTime(),
-                proto.getTxInputsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getTxInputsList().stream()
-                                .map(TxInput::fromProto)
-                                .collect(Collectors.toList())),
-                proto.getRawTxOutputsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getRawTxOutputsList().stream()
-                                .map(RawTxOutput::fromProto)
-                                .collect(Collectors.toList())));
-    }
-
-
-    @Override
-    public String toString() {
-        return "RawTx{" +
-                "\n     txVersion='" + txVersion + '\'' +
-                ",\n     id='" + id + '\'' +
-                ",\n     blockHeight=" + blockHeight +
-                ",\n     blockHash='" + blockHash + '\'' +
-                ",\n     time=" + time +
-                ",\n     inputs=" + txInputs +
-                ",\n     rawTxOutputs=" + rawTxOutputs +
-                "\n}";
+    public static RawTx fromProto(PB.BaseTx protoBaseTx) {
+        ImmutableList<TxInput> txInputs = protoBaseTx.getTxInputsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(protoBaseTx.getTxInputsList().stream()
+                        .map(TxInput::fromProto)
+                        .collect(Collectors.toList()));
+        PB.RawTx protoRawTx = protoBaseTx.getRawTx();
+        ImmutableList<RawTxOutput> outputs = protoRawTx.getRawTxOutputsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(protoRawTx.getRawTxOutputsList().stream()
+                        .map(RawTxOutput::fromProto)
+                        .collect(Collectors.toList()));
+        return new RawTx(protoBaseTx.getTxVersion(),
+                protoBaseTx.getId(),
+                protoBaseTx.getBlockHeight(),
+                protoBaseTx.getBlockHash(),
+                protoBaseTx.getTime(),
+                txInputs,
+                outputs);
     }
 }

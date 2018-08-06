@@ -39,20 +39,9 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Value
 public final class RawBlock implements PersistablePayload {
-
-    public static RawBlock clone(RawBlock block) {
-        final ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getRawTxs().stream()
-                .map(RawTx::clone)
-                .collect(Collectors.toList()));
-        return new RawBlock(block.getHeight(),
-                block.getTime(),
-                block.getHash(),
-                block.getPreviousBlockHash(),
-                txs);
-    }
-
+    // Used when a full node sends a block over the P2P network
     public static RawBlock fromBlock(Block block) {
-        ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getTxs().stream().map(Tx::getRawTx).collect(Collectors.toList()));
+        ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getTxs().stream().map(RawTx::cloneFromTx).collect(Collectors.toList()));
         return new RawBlock(block.getHeight(),
                 block.getTime(),
                 block.getHash(),

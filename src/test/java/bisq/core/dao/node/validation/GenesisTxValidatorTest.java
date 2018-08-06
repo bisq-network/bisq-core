@@ -19,17 +19,21 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
+import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 
 import org.bitcoinj.core.Coin;
+
 import com.google.common.collect.ImmutableList;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -87,12 +91,15 @@ public class GenesisTxValidatorTest {
             ImmutableList.copyOf(outputs)
         );
         result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
-        Tx tx = new Tx(rawTx);
-        tx.setTxType(TxType.GENESIS);
-        for (int i = 0; i < tx.getTxOutputs().size(); ++i) {
-            tx.getTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
+
+        TempTx tempTx = TempTx.createFromRawTx(rawTx);
+        tempTx.setTxType(TxType.GENESIS);
+        for (int i = 0; i < tempTx.getTxOutputs().size(); ++i) {
+            tempTx.getTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
+        Tx tx = Tx.createFromTempTx(tempTx);
         want = Optional.of(tx);
+
         Assert.assertEquals(want, result);
         // TODO(chirhonul): test that only outputs in tx summing exactly to genesisTotalSupply is accepted, and
         // that code under test raises RuntimeError otherwise.

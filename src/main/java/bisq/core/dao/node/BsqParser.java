@@ -64,9 +64,11 @@ public abstract class BsqParser {
         this.bsqStateService = bsqStateService;
     }
 
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Protected
     ///////////////////////////////////////////////////////////////////////////////////////////
+
     protected void maybeAddGenesisTx(RawBlock rawBlock, Block block) {
         // We don't use streams here as we want to break as soon we found the genesis
         for (RawTx rawTx : rawBlock.getRawTxs()) {

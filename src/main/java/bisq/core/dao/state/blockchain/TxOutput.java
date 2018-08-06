@@ -28,6 +28,17 @@ import lombok.experimental.Delegate;
  */
 @Data
 public class TxOutput {
+    public static TxOutput clone(TxOutput txOutput) {
+        RawTxOutput rawTxOutput = new RawTxOutput(txOutput.getIndex(),
+                txOutput.getValue(),
+                txOutput.getTxId(),
+                txOutput.getPubKeyScript(),
+                txOutput.getAddress(),
+                txOutput.getOpReturnData(),
+                txOutput.getBlockHeight());
+        return new TxOutput(rawTxOutput);
+    }
+
     private interface ExcludesDelegateMethods<T> {
         PB.TxOutput toProtoMessage();
     }
