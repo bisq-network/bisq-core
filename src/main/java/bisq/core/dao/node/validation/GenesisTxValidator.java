@@ -19,8 +19,8 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 
@@ -41,8 +41,8 @@ public class GenesisTxValidator {
         TempTx tempTx = TempTx.createFromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);
         long availableInputValue = genesisTotalSupply.getValue();
-        for (int i = 0; i < tempTx.getTxOutputs().size(); ++i) {
-            TxOutput txOutput = tempTx.getTxOutputs().get(i);
+        for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
+            TempTxOutput txOutput = tempTx.getTempTxOutputs().get(i);
             long value = txOutput.getValue();
             boolean isValid = value <= availableInputValue;
             if (!isValid)

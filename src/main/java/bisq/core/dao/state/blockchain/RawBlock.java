@@ -17,7 +17,7 @@
 
 package bisq.core.dao.state.blockchain;
 
-import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.network.NetworkPayload;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
@@ -35,10 +36,12 @@ import javax.annotation.concurrent.Immutable;
  * verified at that stage. That block is passed to lite nodes over the P2P network. The validation is done by the lite
  * nodes themselves but the transactions are already filtered for BSQ only transactions to keep bandwidth requirements
  * low.
+ * Sent over wire.
  */
 @Immutable
+@EqualsAndHashCode(callSuper = true)
 @Value
-public final class RawBlock implements PersistablePayload {
+public final class RawBlock extends BaseBlock implements NetworkPayload {
     // Used when a full node sends a block over the P2P network
     public static RawBlock fromBlock(Block block) {
         ImmutableList<RawTx> txs = ImmutableList.copyOf(block.getTxs().stream().map(RawTx::cloneFromTx).collect(Collectors.toList()));
@@ -49,17 +52,17 @@ public final class RawBlock implements PersistablePayload {
                 txs);
     }
 
-    private final int height;
-    private final long time; // in seconds!
-    private final String hash;
-    private final String previousBlockHash;
     private final ImmutableList<RawTx> rawTxs;
 
-    public RawBlock(int height, long time, String hash, String previousBlockHash, ImmutableList<RawTx> rawTxs) {
-        this.height = height;
-        this.time = time;
-        this.hash = hash;
-        this.previousBlockHash = previousBlockHash;
+    public RawBlock(int height,
+                    long time,
+                    String hash,
+                    String previousBlockHash,
+                    ImmutableList<RawTx> rawTxs) {
+        super(height,
+                time,
+                hash,
+                previousBlockHash);
         this.rawTxs = rawTxs;
     }
 
@@ -68,43 +71,34 @@ public final class RawBlock implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.RawBlock toProtoMessage() {
-        return PB.RawBlock.newBuilder()
-                .setHeight(height)
-                .setTime(time)
-                .setHash(hash)
-                .setPreviousBlockHash(previousBlockHash)
+    @Override
+    public PB.BaseBlock toProtoMessage() {
+        PB.RawBlock.Builder builder = PB.RawBlock.newBuilder()
                 .addAllRawTxs(rawTxs.stream()
                         .map(RawTx::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .build();
+                        .collect(Collectors.toList()));
+        return getBaseBlockBuilder().setRawBlock(builder).build();
     }
 
-    public static RawBlock fromProto(PB.RawBlock proto) {
+    public static RawBlock fromProto(PB.BaseBlock proto) {
+        PB.RawBlock rawBlockProto = proto.getRawBlock();
+        ImmutableList<RawTx> rawTxs = rawBlockProto.getRawTxsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(rawBlockProto.getRawTxsList().stream()
+                        .map(RawTx::fromProto)
+                        .collect(Collectors.toList()));
         return new RawBlock(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
-                proto.getRawTxsList().isEmpty() ?
-                        ImmutableList.copyOf(new ArrayList<>()) :
-                        ImmutableList.copyOf(proto.getRawTxsList().stream()
-                                .map(RawTx::fromProto)
-                                .collect(Collectors.toList())));
+                rawTxs);
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public String toString() {
         return "RawBlock{" +
-                "\n     height=" + height +
-                ",\n     time=" + time +
-                ",\n     hash='" + hash + '\'' +
-                ",\n     previousBlockHash='" + previousBlockHash + '\'' +
-                ",\n     rawTxs=" + rawTxs +
-                "\n}";
+                "\n     rawTxs=" + rawTxs +
+                "\n} " + super.toString();
     }
 }

@@ -19,6 +19,7 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
@@ -42,20 +43,22 @@ class ParsingModel {
     private long availableInputValue = 0;
     private long burntBondValue = 0;
     @Nullable
-    private TxOutput issuanceCandidate;
+    private TempTxOutput issuanceCandidate;
     @Nullable
-    private TxOutput blindVoteLockStakeOutput;
+    private TempTxOutput blindVoteLockStakeOutput;
     @Nullable
-    private TxOutput voteRevealUnlockStakeOutput;
+    private TempTxOutput voteRevealUnlockStakeOutput;
     @Nullable
-    private TxOutput lockupOutput;
+    private TempTxOutput lockupOutput;
     private boolean bsqOutputFound;
 
+    // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
     private TxOutput spentLockupTxOutput;
     private int unlockBlockHeight;
 
     //TODO ???
+    // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
     private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
 

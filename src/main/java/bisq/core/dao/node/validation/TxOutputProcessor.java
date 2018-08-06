@@ -20,6 +20,7 @@ package bisq.core.dao.node.validation;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
@@ -43,11 +44,11 @@ public class TxOutputProcessor {
         this.opReturnProcessor = opReturnProcessor;
     }
 
-    void processOpReturnCandidate(TxOutput txOutput, ParsingModel parsingModel) {
+    void processOpReturnCandidate(TempTxOutput txOutput, ParsingModel parsingModel) {
         opReturnProcessor.processOpReturnCandidate(txOutput, parsingModel);
     }
 
-    void processTxOutput(TempTx tx, TxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
+    void processTxOutput(TempTx tx, TempTxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
         final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
@@ -69,11 +70,11 @@ public class TxOutputProcessor {
         }
     }
 
-    boolean isOpReturnOutput(TxOutput txOutput) {
+    boolean isOpReturnOutput(TempTxOutput txOutput) {
         return txOutput.getOpReturnData() != null;
     }
 
-    private boolean isUnlockBondTx(TxOutput txOutput, int index, ParsingModel parsingModel) {
+    private boolean isUnlockBondTx(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
         return parsingModel.getSpentLockupTxOutput() != null &&
                 index == 0 &&
@@ -81,19 +82,19 @@ public class TxOutputProcessor {
                 parsingModel.getAvailableInputValue() == txOutput.getValue();
     }
 
-    private void handleUnlockBondTx(TxOutput txOutput, ParsingModel parsingModel) {
+    private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
         TxOutput spentLockupTxOutput = parsingModel.getSpentLockupTxOutput();
         checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
         parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
 
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
-        bsqStateService.addUnspentTxOutput(txOutput);
+        bsqStateService.addUnspentTxOutput(TxOutput.createFromTempOutput(txOutput));
 
         parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
         parsingModel.setBsqOutputFound(true);
     }
 
-    private void handleBsqOutput(TxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
+    private void handleBsqOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
         // Update the input balance.
         parsingModel.subtractFromInputValue(txOutputValue);
 
@@ -114,12 +115,12 @@ public class TxOutputProcessor {
             bsqOutput = TxOutputType.BSQ_OUTPUT;
         }
         txOutput.setTxOutputType(bsqOutput);
-        bsqStateService.addUnspentTxOutput(txOutput);
+        bsqStateService.addUnspentTxOutput(TxOutput.createFromTempOutput(txOutput));
 
         parsingModel.setBsqOutputFound(true);
     }
 
-    private void handleBtcOutput(TxOutput txOutput, int index, ParsingModel parsingModel) {
+    private void handleBtcOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
         // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
         if (parsingModel.isInputValuePositive() &&

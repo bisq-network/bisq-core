@@ -21,24 +21,22 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
- * A block derived from the BTC blockchain and filtered for BSQ relevant transactions. The transactions are
- * verified and contain BSQ specific data. The transactions gets added at parsing.
- * We don't store the rawBlock here as we don't want to persist all the tx data twice (RawTx and Tx list).
- * A common super class could be used for reducing code duplications of the fields.
+ * The Block which gets persisted in the BsqState. During parsing transactions can be
+ * added to the txs list, therefore it is not an immutable list.
  */
+@EqualsAndHashCode(callSuper = true)
 @Value
-public final class Block implements PersistablePayload {
-    private final int height;
-    private final long time; // in seconds!
-    private final String hash;
-    private final String previousBlockHash;
+public final class Block extends BaseBlock implements PersistablePayload {
     private final List<Tx> txs;
 
     public Block(int height, long time, String hash, String previousBlockHash) {
@@ -50,51 +48,46 @@ public final class Block implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private Block(int height, long time, String hash, String previousBlockHash, List<Tx> txs) {
-        this.height = height;
-        this.time = time;
-        this.hash = hash;
-        this.previousBlockHash = previousBlockHash;
+    private Block(int height,
+                  long time,
+                  String hash,
+                  String previousBlockHash,
+                  List<Tx> txs) {
+        super(height,
+                time,
+                hash,
+                previousBlockHash);
         this.txs = txs;
     }
 
-    public PB.Block toProtoMessage() {
-        return PB.Block.newBuilder()
-                .setHeight(height)
-                .setTime(time)
-                .setHash(hash)
-                .setPreviousBlockHash(previousBlockHash)
+
+    @Override
+    public PB.BaseBlock toProtoMessage() {
+        PB.Block.Builder builder = PB.Block.newBuilder()
                 .addAllTxs(txs.stream()
                         .map(Tx::toProtoMessage)
-                        .collect(Collectors.toList()))
-                .build();
+                        .collect(Collectors.toList()));
+        return getBaseBlockBuilder().setBlock(builder).build();
     }
 
-    public static Block fromProto(PB.Block proto) {
+    public static Block fromProto(PB.BaseBlock proto) {
+        PB.Block blockProto = proto.getBlock();
+        ImmutableList<Tx> txs = blockProto.getTxsList().isEmpty() ?
+                ImmutableList.copyOf(new ArrayList<>()) :
+                ImmutableList.copyOf(blockProto.getTxsList().stream()
+                        .map(Tx::fromProto)
+                        .collect(Collectors.toList()));
         return new Block(proto.getHeight(),
                 proto.getTime(),
                 proto.getHash(),
                 proto.getPreviousBlockHash(),
-                proto.getTxsList().isEmpty() ?
-                        new ArrayList<>() :
-                        new ArrayList<>(proto.getTxsList().stream()
-                                .map(Tx::fromProto)
-                                .collect(Collectors.toList())));
+                txs);
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public String toString() {
         return "Block{" +
-                "\n     height=" + height +
-                ",\n     time=" + time +
-                ",\n     hash='" + hash + '\'' +
-                ",\n     previousBlockHash='" + previousBlockHash + '\'' +
-                ",\n     txs=" + txs +
-                "\n}";
+                "\n     txs=" + txs +
+                "\n} " + super.toString();
     }
 }

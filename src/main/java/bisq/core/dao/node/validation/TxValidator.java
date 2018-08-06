@@ -20,9 +20,9 @@ package bisq.core.dao.node.validation;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
-import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 
@@ -78,7 +78,7 @@ public class TxValidator {
         //TODO rename  to leftOverBsq
         final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
         if (bsqInputBalancePositive) {
-            final List<TxOutput> outputs = tempTx.getTxOutputs();
+            final List<TempTxOutput> outputs = tempTx.getTempTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
             // Setting the opReturn type here does not mean it will be a valid BSQ tx as the checks are only partial and
@@ -97,17 +97,17 @@ public class TxValidator {
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
-            long numOpReturnOutputs = tempTx.getTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
+            long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
-                final TxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
+                final TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
                 if (issuanceCandidate != null &&
                         issuanceCandidate.getTxOutputType() == TxOutputType.UNDEFINED) {
                     issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
                 }
 
-                boolean isAnyTxOutputTypeUndefined = tempTx.getTxOutputs().stream()
+                boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
                     final TxType txType = getTxType(tempTx, parsingModel);
@@ -153,7 +153,7 @@ public class TxValidator {
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
-            } else if (tx.getTxOutputs().get(0).getTxOutputType() == TxOutputType.UNLOCK) {
+            } else if (tx.getTempTxOutputs().get(0).getTxOutputType() == TxOutputType.UNLOCK) {
                 txType = TxType.UNLOCK;
             } else {
                 // No burned fee and no opReturn.
@@ -171,8 +171,8 @@ public class TxValidator {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
-                checkArgument(tx.getTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
-                final TxOutput issuanceTxOutput = tx.getTxOutputs().get(1);
+                checkArgument(tx.getTempTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
+                final TempTxOutput issuanceTxOutput = tx.getTempTxOutputs().get(1);
                 checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;

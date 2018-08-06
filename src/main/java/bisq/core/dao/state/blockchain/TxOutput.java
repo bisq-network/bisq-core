@@ -17,38 +17,56 @@
 
 package bisq.core.dao.state.blockchain;
 
+import bisq.core.dao.node.btcd.PubKeyScript;
+
+import bisq.common.proto.persistable.PersistablePayload;
+
 import io.bisq.generated.protobuffer.PB;
 
 import lombok.Data;
-import lombok.experimental.Delegate;
+import lombok.EqualsAndHashCode;
+
+import javax.annotation.Nullable;
 
 /**
- * TxOutput containing BSQ specific data. The raw blockchain specific TxOutput data are in the rawTxOutput object.
- * We use lombok for convenience to delegate access to the data inside the rawTxOutput.
+ * Contains immutable BSQ specific data (TxOutputType) and is used to get
+ * stored in the list of immutable Transactions (Tx) in a block.
+ * TempTxOutput get converted to immutable TxOutput after tx parsing is completed.
+ * Gets persisted.
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class TxOutput {
-    public static TxOutput clone(TxOutput txOutput) {
-        RawTxOutput rawTxOutput = new RawTxOutput(txOutput.getIndex(),
-                txOutput.getValue(),
-                txOutput.getTxId(),
-                txOutput.getPubKeyScript(),
-                txOutput.getAddress(),
-                txOutput.getOpReturnData(),
-                txOutput.getBlockHeight());
-        return new TxOutput(rawTxOutput);
+public class TxOutput extends BaseTxOutput implements PersistablePayload {
+    public static TxOutput createFromTempOutput(TempTxOutput tempTxOutput) {
+        return new TxOutput(tempTxOutput.getIndex(),
+                tempTxOutput.getValue(),
+                tempTxOutput.getTxId(),
+                tempTxOutput.getPubKeyScript(),
+                tempTxOutput.getAddress(),
+                tempTxOutput.getOpReturnData(),
+                tempTxOutput.getBlockHeight(),
+                tempTxOutput.getTxOutputType());
     }
 
-    private interface ExcludesDelegateMethods<T> {
-        PB.TxOutput toProtoMessage();
-    }
+    private final TxOutputType txOutputType;
 
-    @Delegate(excludes = TxOutput.ExcludesDelegateMethods.class)
-    private final RawTxOutput rawTxOutput;
-    private TxOutputType txOutputType = TxOutputType.UNDEFINED;
+    public TxOutput(int index,
+                    long value,
+                    String txId,
+                    @Nullable PubKeyScript pubKeyScript,
+                    @Nullable String address,
+                    @Nullable byte[] opReturnData,
+                    int blockHeight,
+                    TxOutputType txOutputType) {
+        super(index,
+                value,
+                txId,
+                pubKeyScript,
+                address,
+                opReturnData,
+                blockHeight);
 
-    public TxOutput(RawTxOutput rawTxOutput) {
-        this.rawTxOutput = rawTxOutput;
+        this.txOutputType = txOutputType;
     }
 
 
@@ -56,28 +74,29 @@ public class TxOutput {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private TxOutput(RawTxOutput rawTxOutput, TxOutputType txOutputType) {
-        this.rawTxOutput = rawTxOutput;
-        this.txOutputType = txOutputType;
-    }
-
-    public PB.TxOutput toProtoMessage() {
-        final PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
-                .setRawTxOutput(rawTxOutput.toProtoMessage())
+    @Override
+    public PB.BaseTxOutput toProtoMessage() {
+        PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
                 .setTxOutputType(txOutputType.toProtoMessage());
-        return builder.build();
+        return getRawTxOutputBuilder().setTxOutput(builder).build();
     }
 
-    public static TxOutput fromProto(PB.TxOutput proto) {
-        return new TxOutput(RawTxOutput.fromProto(proto.getRawTxOutput()),
-                TxOutputType.fromProto(proto.getTxOutputType()));
+    public static TxOutput fromProto(PB.BaseTxOutput proto) {
+        return new TxOutput(proto.getIndex(),
+                proto.getValue(),
+                proto.getTxId(),
+                proto.hasPubKeyScript() ? PubKeyScript.fromProto(proto.getPubKeyScript()) : null,
+                proto.getAddress().isEmpty() ? null : proto.getAddress(),
+                proto.getOpReturnData().isEmpty() ? null : proto.getOpReturnData().toByteArray(),
+                proto.getBlockHeight(),
+                TxOutputType.fromProto(proto.getTxOutput().getTxOutputType()));
     }
+
 
     @Override
     public String toString() {
         return "TxOutput{" +
-                "\n     rawTxOutput=" + rawTxOutput +
-                ",\n     txOutputType=" + txOutputType +
-                "\n}";
+                "\n     txOutputType=" + txOutputType +
+                "\n} " + super.toString();
     }
 }

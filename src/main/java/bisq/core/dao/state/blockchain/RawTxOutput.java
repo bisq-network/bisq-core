@@ -19,16 +19,11 @@ package bisq.core.dao.state.blockchain;
 
 import bisq.core.dao.node.btcd.PubKeyScript;
 
-import bisq.common.proto.persistable.PersistablePayload;
-import bisq.common.util.JsonExclude;
-import bisq.common.util.Utilities;
+import bisq.common.proto.network.NetworkPayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.ByteString;
-
-import java.util.Optional;
-
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,23 +31,14 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * RawTxOutput as we get it from the blockchain without BSQ specific data.
+ * TxOutput used in RawTx. Containing only immutable bitcoin specific fields.
+ * Sent over wire.
  */
-@Immutable
-@Value
 @Slf4j
-public final class RawTxOutput implements PersistablePayload {
-
-    public static RawTxOutput clone(RawTxOutput txOutput) {
-        return new RawTxOutput(txOutput.getIndex(),
-                txOutput.getValue(),
-                txOutput.getTxId(),
-                txOutput.getPubKeyScript(),
-                txOutput.getAddress(),
-                txOutput.getOpReturnData(),
-                txOutput.getBlockHeight());
-    }
-
+@Immutable
+@EqualsAndHashCode(callSuper = true)
+@Value
+public final class RawTxOutput extends BaseTxOutput implements NetworkPayload {
     public static RawTxOutput cloneFromTxOutput(TxOutput txOutput) {
         return new RawTxOutput(txOutput.getIndex(),
                 txOutput.getValue(),
@@ -63,20 +49,6 @@ public final class RawTxOutput implements PersistablePayload {
                 txOutput.getBlockHeight());
     }
 
-    private final int index;
-    private final long value;
-    private final String txId;
-
-    // Only set if dumpBlockchainData is true
-    @Nullable
-    private final PubKeyScript pubKeyScript;
-    @Nullable
-    private final String address;
-    @Nullable
-    @JsonExclude
-    private final byte[] opReturnData;
-    private final int blockHeight;
-
     public RawTxOutput(int index,
                        long value,
                        String txId,
@@ -84,13 +56,13 @@ public final class RawTxOutput implements PersistablePayload {
                        @Nullable String address,
                        @Nullable byte[] opReturnData,
                        int blockHeight) {
-        this.index = index;
-        this.value = value;
-        this.txId = txId;
-        this.pubKeyScript = pubKeyScript;
-        this.address = address;
-        this.opReturnData = opReturnData;
-        this.blockHeight = blockHeight;
+        super(index,
+                value,
+                txId,
+                pubKeyScript,
+                address,
+                opReturnData,
+                blockHeight);
     }
 
 
@@ -98,21 +70,12 @@ public final class RawTxOutput implements PersistablePayload {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public PB.RawTxOutput toProtoMessage() {
-        final PB.RawTxOutput.Builder builder = PB.RawTxOutput.newBuilder()
-                .setIndex(index)
-                .setValue(value)
-                .setTxId(txId)
-                .setBlockHeight(blockHeight);
-
-        Optional.ofNullable(pubKeyScript).ifPresent(e -> builder.setPubKeyScript(pubKeyScript.toProtoMessage()));
-        Optional.ofNullable(address).ifPresent(e -> builder.setAddress(address));
-        Optional.ofNullable(opReturnData).ifPresent(e -> builder.setOpReturnData(ByteString.copyFrom(opReturnData)));
-
-        return builder.build();
+    @Override
+    public PB.BaseTxOutput toProtoMessage() {
+        return getRawTxOutputBuilder().setRawTxOutput(PB.RawTxOutput.newBuilder()).build();
     }
 
-    public static RawTxOutput fromProto(PB.RawTxOutput proto) {
+    public static RawTxOutput fromProto(PB.BaseTxOutput proto) {
         return new RawTxOutput(proto.getIndex(),
                 proto.getValue(),
                 proto.getTxId(),
@@ -123,24 +86,8 @@ public final class RawTxOutput implements PersistablePayload {
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Util
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public TxOutputKey getKey() {
-        return new TxOutputKey(txId, index);
-    }
-
     @Override
     public String toString() {
-        return "RawTxOutput{" +
-                "\n     index=" + index +
-                ",\n     value=" + value +
-                ",\n     txId='" + txId + '\'' +
-                ",\n     pubKeyScript=" + pubKeyScript +
-                ",\n     address='" + address + '\'' +
-                ",\n     opReturnData=" + Utilities.bytesAsHexString(opReturnData) +
-                ",\n     blockHeight=" + blockHeight +
-                "\n}";
+        return "RawTxOutput{} " + super.toString();
     }
 }

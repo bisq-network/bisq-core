@@ -41,14 +41,14 @@ public class TempTx extends BaseTx {
                 rawTx.getBlockHash(),
                 rawTx.getTime(),
                 rawTx.getTxInputs(),
-                ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TxOutput::new).collect(Collectors.toList())),
+                ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TempTxOutput::createFromRawTxOutput).collect(Collectors.toList())),
                 null,
                 0,
                 -1,
                 0);
     }
 
-    private final ImmutableList<TxOutput> txOutputs;
+    private final ImmutableList<TempTxOutput> tempTxOutputs;
 
     // Mutable data
     @Nullable
@@ -69,7 +69,7 @@ public class TempTx extends BaseTx {
                    String blockHash,
                    long time,
                    ImmutableList<TxInput> txInputs,
-                   ImmutableList<TxOutput> txOutputs,
+                   ImmutableList<TempTxOutput> tempTxOutputs,
                    @Nullable TxType txType,
                    long burntFee,
                    int lockTime,
@@ -80,7 +80,7 @@ public class TempTx extends BaseTx {
                 blockHash,
                 time,
                 txInputs);
-        this.txOutputs = txOutputs;
+        this.tempTxOutputs = tempTxOutputs;
         this.txType = txType;
         this.burntFee = burntFee;
         this.lockTime = lockTime;
@@ -91,7 +91,7 @@ public class TempTx extends BaseTx {
     @Override
     public String toString() {
         return "TempTx{" +
-                "\n     txOutputs=" + txOutputs +
+                "\n     txOutputs=" + tempTxOutputs +
                 ",\n     txType=" + txType +
                 ",\n     burntFee=" + burntFee +
                 ",\n     lockTime=" + lockTime +

@@ -62,12 +62,12 @@ public class GenesisTxValidatorTest {
         String genesisTxId = "genesisTxId";
         int genesisBlockHeight = 150;
 
-        // With mismatch in blockheight and tx id, we should not get genesis tx back.
+        // With mismatch in block height and tx id, we should not get genesis tx back.
         Optional<Tx> result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         Optional<Tx> want = Optional.empty();
         Assert.assertEquals(want, result);
 
-        // With correct blockheight but mismatch in tx id, we should still not get genesis tx back.
+        // With correct block height but mismatch in tx id, we should still not get genesis tx back.
         blockHeight = 150;
         rawTx = new RawTx(
             "tx2",
@@ -81,7 +81,7 @@ public class GenesisTxValidatorTest {
         want = Optional.empty();
         Assert.assertEquals(want, result);
 
-        // With correct tx id and blockheight, we should find our genesis tx with correct tx and output type.
+        // With correct tx id and block height, we should find our genesis tx with correct tx and output type.
         rawTx = new RawTx(
             genesisTxId,
             blockHeight,
@@ -94,8 +94,8 @@ public class GenesisTxValidatorTest {
 
         TempTx tempTx = TempTx.createFromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);
-        for (int i = 0; i < tempTx.getTxOutputs().size(); ++i) {
-            tempTx.getTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
+        for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
+            tempTx.getTempTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
         Tx tx = Tx.createFromTempTx(tempTx);
         want = Optional.of(tx);

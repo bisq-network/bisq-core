@@ -41,12 +41,12 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 public abstract class BaseTx {
-    private final String txVersion;
-    private final String id;
-    private final int blockHeight;
-    private final String blockHash;
-    private final long time;
-    private final ImmutableList<TxInput> txInputs;
+    protected final String txVersion;
+    protected final String id;
+    protected final int blockHeight;
+    protected final String blockHash;
+    protected final long time;
+    protected final ImmutableList<TxInput> txInputs;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////

@@ -158,17 +158,17 @@ public class RpcService {
                                Consumer<Throwable> errorHandler) {
         daemon.addBlockListener(new BlockListener() {
             @Override
-            public void blockDetected(com.neemre.btcdcli4j.core.domain.RawBlock rawBlock) {
+            public void blockDetected(com.neemre.btcdcli4j.core.domain.RawBlock rawBtcBlock) {
                 try {
-                    log.info("New block received: height={}, id={}", rawBlock.getHeight(), rawBlock.getHash());
-                    List<RawTx> txList = rawBlock.getTx().stream()
-                            .map(e -> getTxFromRawTransaction(e, rawBlock))
+                    log.info("New block received: height={}, id={}", rawBtcBlock.getHeight(), rawBtcBlock.getHash());
+                    List<RawTx> txList = rawBtcBlock.getTx().stream()
+                            .map(e -> getTxFromRawTransaction(e, rawBtcBlock))
                             .collect(Collectors.toList());
                     UserThread.execute(() -> {
-                        btcBlockHandler.accept(new RawBlock(rawBlock.getHeight(),
-                                rawBlock.getTime(),
-                                rawBlock.getHash(),
-                                rawBlock.getPreviousBlockHash(),
+                        btcBlockHandler.accept(new RawBlock(rawBtcBlock.getHeight(),
+                                rawBtcBlock.getTime() * 1000, // rawBtcBlock.getTime() is in sec but we want ms
+                                rawBtcBlock.getHash(),
+                                rawBtcBlock.getPreviousBlockHash(),
                                 ImmutableList.copyOf(txList)));
                     });
                 } catch (Throwable t) {
@@ -204,7 +204,7 @@ public class RpcService {
             log.info("requestBtcBlock with all txs took {} ms at blockHeight {}; txList.size={}",
                     System.currentTimeMillis() - startTs, blockHeight, txList.size());
             return new RawBlock(rawBtcBlock.getHeight(),
-                    rawBtcBlock.getTime(),
+                    rawBtcBlock.getTime() * 1000, // rawBtcBlock.getTime() is in sec but we want ms
                     rawBtcBlock.getHash(),
                     rawBtcBlock.getPreviousBlockHash(),
                     ImmutableList.copyOf(txList));
@@ -230,7 +230,7 @@ public class RpcService {
 
     private RawTx getTxFromRawTransaction(RawTransaction rawBtcTx, com.neemre.btcdcli4j.core.domain.RawBlock rawBtcBlock) {
         String txId = rawBtcTx.getTxId();
-        long blockTime = rawBtcBlock.getTime() * 1000; // We convert block time to ms
+        long blockTime = rawBtcBlock.getTime() * 1000; // We convert block time from sec to ms
         int blockHeight = rawBtcBlock.getHeight();
         String blockHash = rawBtcBlock.getHash();
         final List<TxInput> txInputs = rawBtcTx.getVIn()

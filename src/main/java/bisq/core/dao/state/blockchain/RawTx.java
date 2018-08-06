@@ -18,7 +18,7 @@
 package bisq.core.dao.state.blockchain;
 
 import bisq.common.app.Version;
-import bisq.common.proto.persistable.PersistablePayload;
+import bisq.common.proto.network.NetworkPayload;
 
 import io.bisq.generated.protobuffer.PB;
 
@@ -36,12 +36,13 @@ import javax.annotation.concurrent.Immutable;
 /**
  * RawTx as we get it from the RPC service (full node) or from via the P2P network (lite node).
  * It contains pure bitcoin blockchain data without any BSQ specific data.
+ * Sent over wire.
  */
 @Immutable
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Value
-public final class RawTx extends BaseTx implements PersistablePayload {
+public final class RawTx extends BaseTx implements NetworkPayload {
     // Used when a full node sends a block over the P2P network
     public static RawTx cloneFromTx(Tx tx) {
         ImmutableList<RawTxOutput> rawTxOutputs = ImmutableList.copyOf(tx.getTxOutputs().stream()

@@ -18,7 +18,7 @@
 package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.period.PeriodService;
 
 import javax.inject.Inject;
@@ -40,7 +40,7 @@ public class OpReturnCompReqValidator extends OpReturnProposalValidator {
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     @Override
-    boolean validate(byte[] opReturnData, TxOutput txOutput, long fee, int blockHeight, ParsingModel parsingModel) {
+    boolean validate(byte[] opReturnData, TempTxOutput txOutput, long fee, int blockHeight, ParsingModel parsingModel) {
         return super.validate(opReturnData, txOutput, fee, blockHeight, parsingModel) &&
                 parsingModel.getIssuanceCandidate() != null;
     }

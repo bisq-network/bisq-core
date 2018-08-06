@@ -34,17 +34,16 @@ import javax.annotation.Nullable;
 
 /**
  * Immutable class for a Bsq transaction.
- *
+ * Gets persisted.
  */
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class Tx extends BaseTx implements PersistablePayload {
     // Created after parsing of a tx is completed. We store only the immutable tx in the block.
     public static Tx createFromTempTx(TempTx tempTx) {
-        final ImmutableList<TxOutput> txOutputs = ImmutableList.copyOf(tempTx.getTxOutputs().stream()
-                .map(TxOutput::clone)
+        ImmutableList<TxOutput> txOutputs = ImmutableList.copyOf(tempTx.getTempTxOutputs().stream()
+                .map(TxOutput::createFromTempOutput)
                 .collect(Collectors.toList()));
-
 
         return new Tx(tempTx.getTxVersion(),
                 tempTx.getId(),
