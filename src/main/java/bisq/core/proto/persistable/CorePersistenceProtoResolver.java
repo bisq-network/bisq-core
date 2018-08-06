@@ -118,8 +118,8 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return ProposalStore.fromProto(proto.getProposalStore());
                 case TEMP_PROPOSAL_STORE:
                     return TempProposalStore.fromProto(proto.getTempProposalStore(), networkProtoResolver);
-                case STATE:
-                    return BsqState.fromProto(proto.getState());
+                case BSQ_STATE:
+                    return BsqState.fromProto(proto.getBsqState());
                 case MY_PROPOSAL_LIST:
                     return MyProposalList.fromProto(proto.getMyProposalList());
                 case BALLOT_LIST:
