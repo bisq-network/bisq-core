@@ -161,10 +161,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
     }
 

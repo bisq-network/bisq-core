@@ -77,10 +77,6 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
     }
 

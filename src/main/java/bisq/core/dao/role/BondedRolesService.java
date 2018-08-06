@@ -91,10 +91,6 @@ public class BondedRolesService implements PersistedDataHost, BsqStateListener {
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
         bondedRoleList.getList().forEach(bondedRole -> {
 

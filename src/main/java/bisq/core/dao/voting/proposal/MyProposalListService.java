@@ -126,10 +126,6 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
     }
 

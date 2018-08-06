@@ -117,10 +117,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
         int heightForRepublishing = periodService.getFirstBlockOfPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.BREAK1);
         if (block.getHeight() == heightForRepublishing) {

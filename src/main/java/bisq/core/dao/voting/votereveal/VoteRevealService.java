@@ -144,10 +144,6 @@ public class VoteRevealService implements BsqStateListener {
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
     }
 

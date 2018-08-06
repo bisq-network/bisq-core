@@ -183,10 +183,6 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
         if (isWalletReady())
             updateBsqWalletTransactions();

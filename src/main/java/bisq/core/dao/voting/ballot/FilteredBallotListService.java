@@ -85,10 +85,6 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
         onListChanged(ballotListService.getBallotList().getList());
     }

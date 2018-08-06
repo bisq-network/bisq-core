@@ -22,9 +22,11 @@ import bisq.core.dao.state.blockchain.Block;
 public interface BsqStateListener {
     void onNewBlockHeight(int blockHeight);
 
-    void onEmptyBlockAdded(Block block);
-
     void onParseTxsComplete(Block block);
 
     void onParseBlockChainComplete();
+
+    // Never used but we still want to provide the event
+    default void onEmptyBlockAdded(Block block) {
+    }
 }

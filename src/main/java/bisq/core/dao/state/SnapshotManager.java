@@ -68,10 +68,6 @@ public class SnapshotManager implements BsqStateListener {
     }
 
     @Override
-    public void onEmptyBlockAdded(Block block) {
-    }
-
-    @Override
     public void onParseTxsComplete(Block block) {
         final int chainHeadHeight = block.getHeight();
         if (isSnapshotHeight(chainHeadHeight) &&
