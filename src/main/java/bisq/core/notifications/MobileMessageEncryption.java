@@ -19,6 +19,8 @@ package bisq.core.notifications;
 
 import javax.inject.Inject;
 
+import org.apache.commons.codec.binary.Base64;
+
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -27,10 +29,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.NoSuchAlgorithmException;
 
 import lombok.extern.slf4j.Slf4j;
-
-
-
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 @Slf4j
 public class MobileMessageEncryption {
@@ -60,7 +58,7 @@ public class MobileMessageEncryption {
         }
         IvParameterSpec ivSpec = new IvParameterSpec(iv.getBytes());
         byte[] encryptedBytes = doEncrypt(valueToEncrypt, ivSpec);
-        return Base64.encode(encryptedBytes);
+        return Base64.encodeBase64String(encryptedBytes);
     }
 
     private byte[] doEncrypt(String text, IvParameterSpec ivSpec) throws Exception {

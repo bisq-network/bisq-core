@@ -82,7 +82,7 @@ public class BisqEnvironment extends StandardEnvironment {
         DEFAULT_APP_NAME = defaultAppName;
     }
 
-    public static String DEFAULT_APP_NAME = "Bisq";
+    public static String DEFAULT_APP_NAME = "Bisq_notifications";
 
     public static final String DEFAULT_USER_DATA_DIR = defaultUserDataDir();
     public static final String DEFAULT_APP_DATA_DIR = appDataDir(DEFAULT_USER_DATA_DIR, DEFAULT_APP_NAME);
