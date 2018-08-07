@@ -37,8 +37,10 @@ public class Issuance implements PersistablePayload, NetworkPayload {
     private final String txId; // comp. request txId
     private final int chainHeight;
     private final long amount;
+
+    //TODO do we need to store that? its in the blockchain anyway
     @Nullable
-    private final String pubKey; // sig key as hex of first input it issuance tx
+    private final String pubKey; // sig key as hex of first input in issuance tx
 
     @Inject
     public Issuance(String txId, int chainHeight, long amount, @Nullable String pubKey) {

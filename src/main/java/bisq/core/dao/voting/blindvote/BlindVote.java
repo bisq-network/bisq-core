@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Holds encryptedBallotList, txId of blindVote tx and stake.
- * A encryptedBallotList for 1 proposal is 304 bytes
+ * Holds encryptedVotes, encryptedMeritList, txId of blindVote tx and stake.
+ * A encryptedVotes for 1 proposal is 304 bytes
  */
 @Immutable
 @Slf4j

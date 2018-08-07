@@ -19,9 +19,11 @@ package bisq.core.dao.voting.proposal;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
+import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;
+import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.voting.proposal.role.BondedRoleProposal;
 
@@ -95,13 +97,25 @@ public class ProposalValidator {
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.debug("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
+                log.error("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
             if (!periodService.isInPhase(txHeight, DaoPhase.Phase.PROPOSAL)) {
-                log.debug("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
+                log.error("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
+            if (proposal instanceof CompensationProposal) {
+                if (optionalTx.get().getTxType() != TxType.COMPENSATION_REQUEST) {
+                    log.error("TxType is not PROPOSAL. proposal.getTxId()={}", proposal.getTxId());
+                    return false;
+                }
+            } else {
+                if (optionalTx.get().getTxType() != TxType.PROPOSAL) {
+                    log.error("TxType is not PROPOSAL. proposal.getTxId()={}", proposal.getTxId());
+                    return false;
+                }
+            }
+
             return true;
         } else if (allowUnconfirmed) {
             // We want to show own unconfirmed proposals in the active proposals list.

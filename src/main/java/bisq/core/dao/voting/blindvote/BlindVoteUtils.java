@@ -34,8 +34,8 @@ public class BlindVoteUtils {
                 .findAny();
     }
 
-    public static Optional<BlindVote> findBlindVote(String blindVoteTxId, MyBlindVoteList myBlindVoteList) {
-        return myBlindVoteList.stream()
+    public static Optional<BlindVote> findBlindVote(String blindVoteTxId, List<BlindVote> blindVoteList) {
+        return blindVoteList.stream()
                 .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                 .findAny();
     }

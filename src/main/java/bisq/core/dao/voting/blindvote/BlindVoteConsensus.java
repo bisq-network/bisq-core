@@ -60,7 +60,7 @@ public class BlindVoteConsensus {
         return new BallotList(ballotList);
     }
 
-    public static MyBlindVoteList getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService, BlindVoteValidator blindVoteValidator) {
+    public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService, BlindVoteValidator blindVoteValidator) {
         final List<BlindVote> list = blindVoteService.getVerifiedBlindVotes().stream()
                 .filter(blindVoteValidator::isValidAndConfirmed) // prob. not needed
                 .distinct()
@@ -70,7 +70,7 @@ public class BlindVoteConsensus {
         log.info("Sorted blindVote txId list: " + list.stream()
                 .map(BlindVote::getTxId)
                 .collect(Collectors.toList()));
-        return new MyBlindVoteList(list);
+        return list;
     }
 
     // 128 bit AES key is good enough for our use case

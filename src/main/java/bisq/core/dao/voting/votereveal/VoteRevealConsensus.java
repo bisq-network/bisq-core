@@ -18,7 +18,7 @@
 package bisq.core.dao.voting.votereveal;
 
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.voting.blindvote.MyBlindVoteList;
+import bisq.core.dao.voting.blindvote.BlindVote;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
@@ -28,6 +28,8 @@ import javax.crypto.SecretKey;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -36,9 +38,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealConsensus {
 
-    public static byte[] getHashOfBlindVoteList(MyBlindVoteList myBlindVoteList) {
-        final byte[] bytes = myBlindVoteList.toProtoMessage().toByteArray();
-        return Hash.getSha256Ripemd160hash(bytes);
+    public static byte[] getHashOfBlindVoteList(List<BlindVote> blindVotes) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        blindVotes.forEach(blindVote -> {
+            byte[] data = blindVote.toProtoMessage().toByteArray();
+            try {
+                outputStream.write(data);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return Hash.getSha256Ripemd160hash(outputStream.toByteArray());
     }
 
     public static byte[] getOpReturnData(byte[] hashOfBlindVoteList, SecretKey secretKey) throws IOException {

@@ -84,6 +84,7 @@ import javax.annotation.Nullable;
  * Publishes blind vote tx and blind vote payload to p2p network.
  * Maintains myBlindVoteList for own blind votes. Triggers republishing of my blind votes at startup during blind
  * vote phase of current cycle.
+ * Publishes a BlindVote and the blind vote transaction.
  */
 @Slf4j
 public class MyBlindVoteListService implements PersistedDataHost, BsqStateListener {

@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Holds all data from a decrypted vote item.
  */
-
 @Slf4j
 @Value
 public class DecryptedVote {

@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 
+/**
+ * List of my own blind votes. Blind votes received from other voters are stored in the BlindVoteStore.
+ */
 @EqualsAndHashCode(callSuper = true)
 public class MyBlindVoteList extends PersistableList<BlindVote> implements VoteConsensusCritical {
 
@@ -39,7 +42,7 @@ public class MyBlindVoteList extends PersistableList<BlindVote> implements VoteC
         super(list);
     }
 
-    public MyBlindVoteList() {
+    MyBlindVoteList() {
         super();
     }
 

@@ -32,10 +32,10 @@ import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
+import bisq.core.dao.voting.blindvote.BlindVote;
 import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
-import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.voting.myvote.MyVote;
 import bisq.core.dao.voting.myvote.MyVoteListService;
@@ -55,6 +55,8 @@ import javafx.collections.ObservableList;
 
 import java.io.IOException;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,7 +69,8 @@ import lombok.extern.slf4j.Slf4j;
 // data.
 
 /**
- * Publishes voteRevealTx. Republishes also all blindVotes of that cycle to add more resilience.
+ * Publishes voteRevealTx with the secret key used for encryption at blind vote and the hash of the list of
+ * the blind vote payloads. Republishes also all blindVotes of that cycle to add more resilience.
  */
 @Slf4j
 public class VoteRevealService implements BsqStateListener {
@@ -128,8 +131,8 @@ public class VoteRevealService implements BsqStateListener {
     }
 
     public byte[] getHashOfBlindVoteList() {
-        MyBlindVoteList list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
-        return VoteRevealConsensus.getHashOfBlindVoteList(list);
+        List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+        return VoteRevealConsensus.getHashOfBlindVoteList(blindVotes);
     }
 
 
@@ -210,7 +213,7 @@ public class VoteRevealService implements BsqStateListener {
             publishTx(myVote, voteRevealTx);
 
             // Just for additional resilience we republish our blind votes
-            final MyBlindVoteList sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+            final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
             rePublishBlindVotePayload(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";
@@ -261,7 +264,7 @@ public class VoteRevealService implements BsqStateListener {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void rePublishBlindVotePayload(MyBlindVoteList blindVotes) {
+    private void rePublishBlindVotePayload(List<BlindVote> blindVotes) {
         blindVotes.stream()
                 .filter(blindVoteValidator::isValidAndConfirmed)
                 .map(BlindVotePayload::new)

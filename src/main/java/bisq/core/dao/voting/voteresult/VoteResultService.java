@@ -38,7 +38,6 @@ import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
 import bisq.core.dao.voting.blindvote.BlindVoteService;
 import bisq.core.dao.voting.blindvote.BlindVoteUtils;
 import bisq.core.dao.voting.blindvote.BlindVoteValidator;
-import bisq.core.dao.voting.blindvote.MyBlindVoteList;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.voting.merit.MeritList;
@@ -71,7 +70,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -83,7 +81,7 @@ import javax.annotation.Nullable;
 /**
  * Calculates the result of the voting at the VoteResult period.
  * We  take all data from the bitcoin domain and additionally the blindVote list which we received from the p2p network.
- * Due eventually consistency we use the hash of the data view of the voters (majority by stake). If our local
+ * Due eventually consistency we use the hash of the data view of the voters (majority by merit+stake). If our local
  * blindVote list contains the blindVotes used by the voters we can calculate the result, otherwise we need to request
  * the missing blindVotes from the network.
  */
@@ -184,7 +182,7 @@ public class VoteResultService implements BsqStateListener {
 
             if (!decryptedVotes.isEmpty()) {
                 // From the decryptedVotes we create a map with the hash of the blind vote list as key and the
-                // aggregated stake as value. That map is used for calculating the majority of the blind vote lists.
+                // aggregated stake+merit as value. That map is used for calculating the majority of the blind vote lists.
                 // There might be conflicting versions due the eventually consistency of the P2P network (if some blind
                 // votes do not arrive at all voters) which would lead to consensus failure in the result calculation.
                 // To solve that problem we will only consider the majority data view as valid.
@@ -194,22 +192,32 @@ public class VoteResultService implements BsqStateListener {
                 // local blindVote list by requesting the correct list from other peers.
                 Map<byte[], Long> stakeByHashOfBlindVoteListMap = getStakeByHashOfBlindVoteListMap(decryptedVotes);
 
-                // Get majority hash
-                byte[] majorityBlindVoteListHash = getMajorityBlindVoteListHash(stakeByHashOfBlindVoteListMap);
+                try {
+                    // Get majority hash
+                    byte[] majorityBlindVoteListHash = getMajorityBlindVoteListHash(stakeByHashOfBlindVoteListMap);
 
-                // Is our local list matching the majority data view?
-                if (isBlindVoteListMatchingMajority(majorityBlindVoteListHash)) {
-                    //TODO should we write the decryptedVotes here into the state?
+                    // Is our local list matching the majority data view?
+                    if (isBlindVoteListMatchingMajority(majorityBlindVoteListHash)) {
+                        //TODO should we write the decryptedVotes here into the state?
 
-                    List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight);
-                    List<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
-                    applyAcceptedProposals(acceptedEvaluatedProposals, chainHeight);
+                        List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight);
+                        List<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
+                        applyAcceptedProposals(acceptedEvaluatedProposals, chainHeight);
 
-                    allEvaluatedProposals.addAll(evaluatedProposals);
-                    log.info("processAllVoteResults completed");
-                } else {
-                    log.warn("Our list of received blind votes do not match the list from the majority of voters.");
-                    // TODO request missing blind votes
+                        allEvaluatedProposals.addAll(evaluatedProposals);
+                        log.info("processAllVoteResults completed");
+                    } else {
+                        log.warn("Our list of received blind votes do not match the list from the majority of voters.");
+                        // TODO request missing blind votes
+                    }
+
+                } catch (VoteResultException e) {
+                    log.error(e.toString());
+                    e.printStackTrace();
+
+                    //TODO notify application of that case (e.g. add error handler)
+                    // The vote cycle is invalid as conflicting data views of the blind vote data exist and the winner
+                    // did not reach super majority of 80%.
                 }
             } else {
                 log.info("There have not been any votes in that cycle. chainHeight={}", chainHeight);
@@ -245,7 +253,7 @@ public class VoteResultService implements BsqStateListener {
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
-                        MyBlindVoteList blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
                         Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteList);
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
@@ -279,10 +287,12 @@ public class VoteResultService implements BsqStateListener {
     }
 
     private BallotList createBallotList(VoteWithProposalTxIdList voteWithProposalTxIdList) throws MissingBallotException {
+        // We convert the list to a map with proposalTxId as key and the vote as value
         Map<String, Vote> voteByTxIdMap = voteWithProposalTxIdList.stream()
                 .filter(voteWithProposalTxId -> voteWithProposalTxId.getVote() != null)
                 .collect(Collectors.toMap(VoteWithProposalTxId::getProposalTxId, VoteWithProposalTxId::getVote));
 
+        // We make a map with proposalTxId as key and the ballot as value out of our stored ballot list
         Map<String, Ballot> ballotByTxIdMap = ballotListService.getBallotList().stream()
                 .collect(Collectors.toMap(Ballot::getProposalTxId, ballot -> ballot));
 
@@ -292,10 +302,11 @@ public class VoteResultService implements BsqStateListener {
                     final String txId = e.getKey();
                     if (ballotByTxIdMap.containsKey(txId)) {
                         final Ballot ballot = ballotByTxIdMap.get(txId);
-                        // We apply the vote from our decrypted votes
+                        // We create a new Ballot with the proposal from the ballot list and the vote from our decrypted votes
                         Vote vote = e.getValue();
                         return new Ballot(ballot.getProposal(), vote);
                     } else {
+                        // We got a vote but we don't have the ballot (which includes the proposal)
                         missing.add(txId);
                         return null;
                     }
@@ -314,18 +325,18 @@ public class VoteResultService implements BsqStateListener {
             final byte[] hash = decryptedVote.getHashOfBlindVoteList();
             map.putIfAbsent(hash, 0L);
             long aggregatedStake = map.get(hash);
-            long meritStake = decryptedVote.getMerit(bsqStateService);
+            long merit = decryptedVote.getMerit(bsqStateService);
             long stake = decryptedVote.getStake();
-            long combinedStake = stake + meritStake;
+            long combinedStake = stake + merit;
             log.debug("blindVoteTxId={}, meritStake={}, stake={}, combinedStake={}",
-                    decryptedVote.getBlindVoteTxId(), meritStake, stake, combinedStake);
+                    decryptedVote.getBlindVoteTxId(), merit, stake, combinedStake);
             aggregatedStake += combinedStake;
             map.put(hash, aggregatedStake);
         });
         return map;
     }
 
-    private byte[] getMajorityBlindVoteListHash(Map<byte[], Long> map) {
+    private byte[] getMajorityBlindVoteListHash(Map<byte[], Long> map) throws VoteResultException {
         List<HashWithStake> list = map.entrySet().stream()
                 .map(entry -> new HashWithStake(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
@@ -348,7 +359,7 @@ public class VoteResultService implements BsqStateListener {
             // It still could be that we have additional blind votes so our hash does not match. We can try to permute
             // our list with excluding items to see if we get a matching list. If not last resort is to request the
             // missing items from the network.
-            MyBlindVoteList permutatedListMatchingMajority = findPermutatedListMatchingMajority(majorityVoteListHash);
+            List<BlindVote> permutatedListMatchingMajority = findPermutatedListMatchingMajority(majorityVoteListHash);
             if (!permutatedListMatchingMajority.isEmpty()) {
                 log.info("We found a permutation of our blindVote list which matches the majority view. " +
                         "permutatedListMatchingMajority={}", permutatedListMatchingMajority);
@@ -363,8 +374,8 @@ public class VoteResultService implements BsqStateListener {
         return matches;
     }
 
-    private MyBlindVoteList findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        MyBlindVoteList list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+    private List<BlindVote> findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
+        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...
             list.remove(0);
@@ -372,9 +383,9 @@ public class VoteResultService implements BsqStateListener {
         return list;
     }
 
-    private boolean isListMatchingMajority(byte[] majorityVoteListHash, MyBlindVoteList list) {
-        byte[] myBlindVoteListHash = VoteRevealConsensus.getHashOfBlindVoteList(list);
-        return Arrays.equals(majorityVoteListHash, myBlindVoteListHash);
+    private boolean isListMatchingMajority(byte[] majorityVoteListHash, List<BlindVote> list) {
+        byte[] hashOfBlindVoteList = VoteRevealConsensus.getHashOfBlindVoteList(list);
+        return Arrays.equals(majorityVoteListHash, hashOfBlindVoteList);
     }
 
     private void requestBlindVoteListFromNetwork(byte[] majorityVoteListHash) {
@@ -386,14 +397,9 @@ public class VoteResultService implements BsqStateListener {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
         List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
-        AtomicLong defaultRequiredQuorum = new AtomicLong(0);
-        AtomicLong defaultRequiredVoteThreshold = new AtomicLong(0);
-
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
             long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
             long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
-            defaultRequiredQuorum.set(requiredQuorum);
-            defaultRequiredVoteThreshold.set(requiredQuorum);
 
             ProposalVoteResult proposalVoteResult = getResultPerProposal(voteWithStakeList, proposal);
             long reachedQuorum = proposalVoteResult.getQuorum();
@@ -405,31 +411,42 @@ public class VoteResultService implements BsqStateListener {
                 // required precision.
                 long reachedThreshold = proposalVoteResult.getThreshold();
 
-                log.info("reached threshold: {} %, required threshold: {} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
+                log.info("reached threshold: {} %, required threshold: {} %",
+                        reachedThreshold / 100D,
+                        requiredVoteThreshold / 100D);
                 // We need to exceed requiredVoteThreshold e.g. 50% is not enough but 50.01%
                 if (reachedThreshold > requiredVoteThreshold) {
-                    evaluatedProposals.add(new EvaluatedProposal(true, proposalVoteResult, requiredQuorum, requiredVoteThreshold));
+                    evaluatedProposals.add(new EvaluatedProposal(true, proposalVoteResult,
+                            requiredQuorum, requiredVoteThreshold));
                 } else {
-                    evaluatedProposals.add(new EvaluatedProposal(false, proposalVoteResult, requiredQuorum, requiredVoteThreshold));
+                    evaluatedProposals.add(new EvaluatedProposal(false, proposalVoteResult,
+                            requiredQuorum, requiredVoteThreshold));
                     log.warn("Proposal did not reach the requiredVoteThreshold. reachedThreshold={} %, " +
                             "requiredVoteThreshold={} %", reachedThreshold / 100D, requiredVoteThreshold / 100D);
                 }
             } else {
-                evaluatedProposals.add(new EvaluatedProposal(false, proposalVoteResult, requiredQuorum, requiredVoteThreshold));
-                log.warn("Proposal did not reach the requiredQuorum. reachedQuorum={}, requiredQuorum={}", reachedQuorum, requiredQuorum);
+                evaluatedProposals.add(new EvaluatedProposal(false, proposalVoteResult,
+                        requiredQuorum, requiredVoteThreshold));
+                log.warn("Proposal did not reach the requiredQuorum. reachedQuorum={}, requiredQuorum={}",
+                        reachedQuorum, requiredQuorum);
             }
         });
 
         Map<String, EvaluatedProposal> lookupMap = new HashMap<>();
         evaluatedProposals.forEach(evaluatedProposal -> lookupMap.put(evaluatedProposal.getProposalTxId(), evaluatedProposal));
 
+        // Proposals which did not get any vote need to be set as failed.
         filteredProposalListService.getActiveOrMyUnconfirmedProposals().stream()
                 .filter(proposal -> !lookupMap.containsKey(proposal.getTxId()))
                 .forEach(proposal -> {
-                    ProposalVoteResult proposalVoteResult = new ProposalVoteResult(proposal, 0, 0, 0, 0, decryptedVotes.size());
+                    long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
+                    long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
+                    ProposalVoteResult proposalVoteResult = new ProposalVoteResult(proposal, 0,
+                            0, 0, 0, decryptedVotes.size());
                     EvaluatedProposal evaluatedProposal = new EvaluatedProposal(false,
                             proposalVoteResult,
-                            defaultRequiredQuorum.get(), defaultRequiredVoteThreshold.get());
+                            requiredQuorum,
+                            requiredVoteThreshold);
                     evaluatedProposals.add(evaluatedProposal);
                     log.info("Proposal ignored by all voters: " + evaluatedProposal);
                 });
@@ -491,23 +508,23 @@ public class VoteResultService implements BsqStateListener {
         return new ProposalVoteResult(proposal, stakeOfAcceptedVotes, stakeOfRejectedVotes, numAcceptedVotes, numRejectedVotes, numIgnoredVotes);
     }
 
-    private void applyAcceptedProposals(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        applyIssuance(evaluatedProposals, chainHeight);
-        applyParamChange(evaluatedProposals, chainHeight);
-        applyBondedRole(evaluatedProposals, chainHeight);
-        applyConfiscateBond(evaluatedProposals, chainHeight);
+    private void applyAcceptedProposals(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+        applyIssuance(acceptedEvaluatedProposals, chainHeight);
+        applyParamChange(acceptedEvaluatedProposals, chainHeight);
+        applyBondedRole(acceptedEvaluatedProposals, chainHeight);
+        applyConfiscateBond(acceptedEvaluatedProposals, chainHeight);
     }
 
-    private void applyIssuance(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        evaluatedProposals.stream()
+    private void applyIssuance(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+        acceptedEvaluatedProposals.stream()
                 .map(EvaluatedProposal::getProposal)
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .forEach(proposal -> issuanceService.issueBsq((CompensationProposal) proposal, chainHeight));
     }
 
-    private void applyParamChange(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
+    private void applyParamChange(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         Map<String, List<EvaluatedProposal>> evaluatedProposalsByParam = new HashMap<>();
-        evaluatedProposals.forEach(evaluatedProposal -> {
+        acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ChangeParamProposal) {
                 ChangeParamProposal changeParamProposal = (ChangeParamProposal) evaluatedProposal.getProposal();
                 ParamChange paramChange = getParamChange(changeParamProposal, chainHeight);
@@ -564,8 +581,8 @@ public class VoteResultService implements BsqStateListener {
                 .orElse(null);
     }
 
-    private void applyBondedRole(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        evaluatedProposals.forEach(evaluatedProposal -> {
+    private void applyBondedRole(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+        acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof BondedRoleProposal) {
                 BondedRoleProposal bondedRoleProposal = (BondedRoleProposal) evaluatedProposal.getProposal();
                 BondedRole bondedRole = bondedRoleProposal.getBondedRole();
@@ -580,8 +597,9 @@ public class VoteResultService implements BsqStateListener {
             }
         });
     }
-    private void applyConfiscateBond(List<EvaluatedProposal> evaluatedProposals, int chainHeight) {
-        evaluatedProposals.forEach(evaluatedProposal -> {
+
+    private void applyConfiscateBond(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+        acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
                 ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
                 bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHash(), chainHeight));
@@ -620,11 +638,11 @@ public class VoteResultService implements BsqStateListener {
 
     @Value
     public class HashWithStake {
-        private final byte[] hashOfProposalList;
-        private final Long stake;
+        private final byte[] hash;
+        private final long stake;
 
-        HashWithStake(byte[] hashOfProposalList, Long stake) {
-            this.hashOfProposalList = hashOfProposalList;
+        HashWithStake(byte[] hash, long stake) {
+            this.hash = hash;
             this.stake = stake;
         }
     }

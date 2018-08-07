@@ -121,6 +121,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         int heightForRepublishing = periodService.getFirstBlockOfPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.BREAK1);
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are not still parsing old blocks
+            // TODO rethink that...
             if (parsingComplete)
                 publishToAppendOnlyDataStore();
 

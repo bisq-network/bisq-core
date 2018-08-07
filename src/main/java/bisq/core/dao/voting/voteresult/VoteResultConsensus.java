@@ -169,11 +169,23 @@ public class VoteResultConsensus {
     // We compare first by stake and in case we have multiple entries with same stake we use the
     // hex encoded hashOfProposalList for comparision
     @Nullable
-    public static byte[] getMajorityHash(List<VoteResultService.HashWithStake> hashWithStakeList) {
+    public static byte[] getMajorityHash(List<VoteResultService.HashWithStake> hashWithStakeList) throws VoteResultException {
         checkArgument(!hashWithStakeList.isEmpty(), "hashWithStakeList must not be empty");
         hashWithStakeList.sort(Comparator.comparingLong(VoteResultService.HashWithStake::getStake).reversed()
-                .thenComparing(o -> Utilities.encodeToHex(o.getHashOfProposalList())));
-        return hashWithStakeList.get(0).getHashOfProposalList();
+                .thenComparing(o -> Utilities.encodeToHex(o.getHash())));
+
+        // If there are conflicting data views (multiple hashes) we only consider the voting round as valid if
+        // the majority is a super majority with > 80%.
+        if (hashWithStakeList.size() > 1) {
+            long stakeOfAll = hashWithStakeList.stream().mapToLong(VoteResultService.HashWithStake::getStake).sum();
+            long stakeOfFirst = hashWithStakeList.get(0).getStake();
+            if ((double) stakeOfFirst / (double) stakeOfAll < 0.8) {
+                throw new VoteResultException("The winning data view has less then 80% of the total stake of " +
+                        "all data views. We consider the voting cycle as invalid if the winning data view does not " +
+                        "reach a super majority.");
+            }
+        }
+        return hashWithStakeList.get(0).getHash();
     }
 
     // Key is stored after version and type bytes and list of Blind votes. It has 16 bytes
@@ -186,8 +198,8 @@ public class VoteResultConsensus {
             throws VoteResultException {
         try {
             // We use the stake output of the blind vote tx as first input
-            final TxInput stakeIxInput = voteRevealTx.getTxInputs().get(0);
-            Optional<TxOutput> optionalBlindVoteStakeOutput = bsqStateService.getConnectedTxOutput(stakeIxInput);
+            final TxInput stakeTxInput = voteRevealTx.getTxInputs().get(0);
+            Optional<TxOutput> optionalBlindVoteStakeOutput = bsqStateService.getConnectedTxOutput(stakeTxInput);
             checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must not be present");
             final TxOutput blindVoteStakeOutput = optionalBlindVoteStakeOutput.get();
             checkArgument(blindVoteStakeOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
