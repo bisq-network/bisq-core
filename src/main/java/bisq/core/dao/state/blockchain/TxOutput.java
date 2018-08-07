@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TxOutput extends BaseTxOutput implements PersistablePayload {
-    public static TxOutput createFromTempOutput(TempTxOutput tempTxOutput) {
+    public static TxOutput fromTempOutput(TempTxOutput tempTxOutput) {
         return new TxOutput(tempTxOutput.getIndex(),
                 tempTxOutput.getValue(),
                 tempTxOutput.getTxId(),

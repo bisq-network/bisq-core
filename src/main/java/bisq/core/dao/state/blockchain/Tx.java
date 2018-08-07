@@ -40,9 +40,9 @@ import javax.annotation.Nullable;
 @Value
 public final class Tx extends BaseTx implements PersistablePayload {
     // Created after parsing of a tx is completed. We store only the immutable tx in the block.
-    public static Tx createFromTempTx(TempTx tempTx) {
+    public static Tx fromTempTx(TempTx tempTx) {
         ImmutableList<TxOutput> txOutputs = ImmutableList.copyOf(tempTx.getTempTxOutputs().stream()
-                .map(TxOutput::createFromTempOutput)
+                .map(TxOutput::fromTempOutput)
                 .collect(Collectors.toList()));
 
         return new Tx(tempTx.getTxVersion(),

@@ -39,7 +39,7 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class RawTxOutput extends BaseTxOutput implements NetworkPayload {
-    public static RawTxOutput cloneFromTxOutput(TxOutput txOutput) {
+    public static RawTxOutput fromTxOutput(TxOutput txOutput) {
         return new RawTxOutput(txOutput.getIndex(),
                 txOutput.getValue(),
                 txOutput.getTxId(),

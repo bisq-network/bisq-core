@@ -92,12 +92,12 @@ public class GenesisTxParserTest {
         );
         result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
 
-        TempTx tempTx = TempTx.createFromRawTx(rawTx);
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);
         for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
             tempTx.getTempTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
-        Tx tx = Tx.createFromTempTx(tempTx);
+        Tx tx = Tx.fromTempTx(tempTx);
         want = Optional.of(tx);
 
         Assert.assertEquals(want, result);

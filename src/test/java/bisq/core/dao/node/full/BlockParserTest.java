@@ -61,8 +61,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 
-//TODO test fails. check if still relevant
-
 // Intro to jmockit can be found at http://jmockit.github.io/tutorial/Mocking.html
 @Ignore
 @RunWith(JMockit.class)

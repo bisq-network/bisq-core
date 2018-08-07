@@ -88,7 +88,7 @@ public class TxOutputProcessor {
         parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
 
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
-        bsqStateService.addUnspentTxOutput(TxOutput.createFromTempOutput(txOutput));
+        bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
         parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
         parsingModel.setBsqOutputFound(true);
@@ -115,7 +115,7 @@ public class TxOutputProcessor {
             bsqOutput = TxOutputType.BSQ_OUTPUT;
         }
         txOutput.setTxOutputType(bsqOutput);
-        bsqStateService.addUnspentTxOutput(TxOutput.createFromTempOutput(txOutput));
+        bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
         parsingModel.setBsqOutputFound(true);
     }

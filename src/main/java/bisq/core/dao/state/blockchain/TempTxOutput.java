@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TempTxOutput extends BaseTxOutput {
-    public static TempTxOutput createFromRawTxOutput(RawTxOutput txOutput) {
+    public static TempTxOutput fromRawTxOutput(RawTxOutput txOutput) {
         return new TempTxOutput(txOutput.getIndex(),
                 txOutput.getValue(),
                 txOutput.getTxId(),

@@ -63,7 +63,7 @@ public class TxParser {
     // for instance to calculate the total burned BSQ.
     public Optional<Tx> getBsqTx(RawTx rawTx) {
         int blockHeight = rawTx.getBlockHeight();
-        TempTx tempTx = TempTx.createFromRawTx(rawTx);
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
         ParsingModel parsingModel = new ParsingModel();
 
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
@@ -134,7 +134,7 @@ public class TxParser {
         // bsqInputBalancePositive, hence the need to check for parsingModel.getBurntBondValue
         // Perhaps adding boolean parsingModel.isBSQTx and checking for that would be better?
         if (bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0)
-            return Optional.of(Tx.createFromTempTx(tempTx));
+            return Optional.of(Tx.fromTempTx(tempTx));
         else
             return Optional.empty();
     }

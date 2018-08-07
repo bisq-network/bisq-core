@@ -34,14 +34,14 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TempTx extends BaseTx {
-    public static TempTx createFromRawTx(RawTx rawTx) {
+    public static TempTx fromRawTx(RawTx rawTx) {
         return new TempTx(rawTx.getTxVersion(),
                 rawTx.getId(),
                 rawTx.getBlockHeight(),
                 rawTx.getBlockHash(),
                 rawTx.getTime(),
                 rawTx.getTxInputs(),
-                ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TempTxOutput::createFromRawTxOutput).collect(Collectors.toList())),
+                ImmutableList.copyOf(rawTx.getRawTxOutputs().stream().map(TempTxOutput::fromRawTxOutput).collect(Collectors.toList())),
                 null,
                 0,
                 -1,

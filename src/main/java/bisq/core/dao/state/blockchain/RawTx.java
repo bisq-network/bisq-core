@@ -44,9 +44,9 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public final class RawTx extends BaseTx implements NetworkPayload {
     // Used when a full node sends a block over the P2P network
-    public static RawTx cloneFromTx(Tx tx) {
+    public static RawTx fromTx(Tx tx) {
         ImmutableList<RawTxOutput> rawTxOutputs = ImmutableList.copyOf(tx.getTxOutputs().stream()
-                .map(RawTxOutput::cloneFromTxOutput)
+                .map(RawTxOutput::fromTxOutput)
                 .collect(Collectors.toList()));
 
         return new RawTx(tx.getTxVersion(),
