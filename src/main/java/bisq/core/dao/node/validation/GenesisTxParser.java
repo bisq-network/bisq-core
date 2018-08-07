@@ -32,7 +32,7 @@ import java.util.Optional;
  * Verifies if a given transaction is a BSQ genesis transaction.
  */
 public class GenesisTxParser {
-    public static Optional<Tx> getGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply, RawTx rawTx) {
+    public static Optional<Tx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply, RawTx rawTx) {
         boolean isGenesis = rawTx.getBlockHeight() == genesisBlockHeight &&
                 rawTx.getId().equals(genesisTxId);
         if (!isGenesis)

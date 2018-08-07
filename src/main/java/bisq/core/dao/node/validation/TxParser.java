@@ -61,7 +61,7 @@ public class TxParser {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public Optional<Tx> getBsqTx(RawTx rawTx) {
+    public Optional<Tx> findTx(RawTx rawTx) {
         int blockHeight = rawTx.getBlockHeight();
         TempTx tempTx = TempTx.fromRawTx(rawTx);
         ParsingModel parsingModel = new ParsingModel();

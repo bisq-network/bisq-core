@@ -63,7 +63,7 @@ public class GenesisTxParserTest {
         int genesisBlockHeight = 150;
 
         // With mismatch in block height and tx id, we should not get genesis tx back.
-        Optional<Tx> result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        Optional<Tx> result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         Optional<Tx> want = Optional.empty();
         Assert.assertEquals(want, result);
 
@@ -77,7 +77,7 @@ public class GenesisTxParserTest {
             ImmutableList.copyOf(inputs),
             ImmutableList.copyOf(outputs)
         );
-        result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         want = Optional.empty();
         Assert.assertEquals(want, result);
 
@@ -90,7 +90,7 @@ public class GenesisTxParserTest {
             ImmutableList.copyOf(inputs),
             ImmutableList.copyOf(outputs)
         );
-        result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
 
         TempTx tempTx = TempTx.fromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);

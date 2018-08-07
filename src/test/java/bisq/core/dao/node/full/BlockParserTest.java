@@ -133,11 +133,11 @@ public class BlockParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txParser.getBsqTx(rawTx).isPresent());
+        assertFalse(txParser.findTx(rawTx).isPresent());
         // Second time there is BSQ in the first txout
-        assertTrue(txParser.getBsqTx(rawTx).isPresent());
+        assertTrue(txParser.findTx(rawTx).isPresent());
         // Third time there is BSQ in the second txout
-        assertTrue(txParser.getBsqTx(rawTx).isPresent());
+        assertTrue(txParser.findTx(rawTx).isPresent());
     }
 
     @Test
