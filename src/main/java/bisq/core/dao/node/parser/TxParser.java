@@ -75,9 +75,8 @@ public class TxParser {
             txInputParser.process(input, blockHeight, tempTx.getId(), inputIndex, parsingModel);
         }
 
-        //TODO rename  to leftOverBsq
-        final boolean bsqInputBalancePositive = parsingModel.isInputValuePositive();
-        if (bsqInputBalancePositive) {
+        final boolean leftOverBsq = parsingModel.isInputValuePositive();
+        if (leftOverBsq) {
             final List<TempTxOutput> outputs = tempTx.getTempTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
@@ -133,7 +132,7 @@ public class TxParser {
         // satoshi, this burns the 1000 satoshi and is currently not considered in the
         // bsqInputBalancePositive, hence the need to check for parsingModel.getBurntBondValue
         // Perhaps adding boolean parsingModel.isBSQTx and checking for that would be better?
-        if (bsqInputBalancePositive || parsingModel.getBurntBondValue() > 0)
+        if (leftOverBsq || parsingModel.getBurntBondValue() > 0)
             return Optional.of(Tx.fromTempTx(tempTx));
         else
             return Optional.empty();
