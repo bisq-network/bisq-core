@@ -19,8 +19,6 @@ package bisq.core.dao.node.validation;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.TempTxOutput;
-import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 
 import javax.inject.Inject;
@@ -31,29 +29,19 @@ import lombok.extern.slf4j.Slf4j;
  * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
 @Slf4j
-public class OpReturnProposalValidator {
-    private final PeriodService periodService;
-    private final BsqStateService bsqStateService;
-
+public class OpReturnCompReqParser extends OpReturnProposalParser {
 
     @Inject
-    public OpReturnProposalValidator(PeriodService periodService,
-                                     BsqStateService bsqStateService) {
-        this.periodService = periodService;
-        this.bsqStateService = bsqStateService;
+    public OpReturnCompReqParser(PeriodService periodService,
+                                 BsqStateService bsqStateService) {
+        super(periodService, bsqStateService);
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
+    @Override
     boolean validate(byte[] opReturnData, TempTxOutput txOutput, long fee, int blockHeight, ParsingModel parsingModel) {
-        boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
-        if (!isInPhase)
-            log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
-        boolean isFeeCorrect = fee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
-        if (!isFeeCorrect)
-            log.warn("Invalid fee. used fee={}, required fee={}", fee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
-        return opReturnData.length == 22 &&
-                isFeeCorrect &&
-                isInPhase;
+        return super.validate(opReturnData, txOutput, fee, blockHeight, parsingModel) &&
+                parsingModel.getIssuanceCandidate() != null;
     }
 }

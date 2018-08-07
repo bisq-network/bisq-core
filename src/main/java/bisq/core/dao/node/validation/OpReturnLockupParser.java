@@ -29,10 +29,10 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-class OpReturnLockupValidator {
+class OpReturnLockupParser {
 
     @Inject
-    public OpReturnLockupValidator() {
+    public OpReturnLockupParser() {
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make

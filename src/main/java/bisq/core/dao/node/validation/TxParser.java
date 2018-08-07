@@ -45,14 +45,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class TxParser {
 
-    private final TxInputProcessor txInputProcessor;
-    private final TxOutputProcessor txOutputProcessor;
+    private final TxInputParser txInputParser;
+    private final TxOutputParser txOutputParser;
 
     @Inject
-    public TxParser(TxInputProcessor txInputProcessor,
-                    TxOutputProcessor txOutputProcessor) {
-        this.txInputProcessor = txInputProcessor;
-        this.txOutputProcessor = txOutputProcessor;
+    public TxParser(TxInputParser txInputParser,
+                    TxOutputParser txOutputParser) {
+        this.txInputParser = txInputParser;
+        this.txOutputParser = txOutputParser;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -72,7 +72,7 @@ public class TxParser {
 
         for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
             TxInput input = tempTx.getTxInputs().get(inputIndex);
-            txInputProcessor.process(input, blockHeight, tempTx.getId(), inputIndex, parsingModel);
+            txInputParser.process(input, blockHeight, tempTx.getId(), inputIndex, parsingModel);
         }
 
         //TODO rename  to leftOverBsq
@@ -86,18 +86,18 @@ public class TxParser {
             // We keep the temporary opReturn type in the parsingModel object.
             checkArgument(!outputs.isEmpty(), "outputs must not be empty");
             int lastIndex = outputs.size() - 1;
-            txOutputProcessor.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
+            txOutputParser.processOpReturnCandidate(outputs.get(lastIndex), parsingModel);
 
             // txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
             // We use order of output index. An output is a BSQ utxo as long there is enough input value
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
-                txOutputProcessor.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
+                txOutputParser.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
-            long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputProcessor::isOpReturnOutput).count();
+            long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputParser::isOpReturnOutput).count();
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.

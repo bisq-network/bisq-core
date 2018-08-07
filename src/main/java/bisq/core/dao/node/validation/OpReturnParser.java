@@ -39,25 +39,25 @@ import lombok.extern.slf4j.Slf4j;
  * Processes OpReturn output if valid and delegates validation to specific validators.
  */
 @Slf4j
-public class OpReturnProcessor {
-    private final OpReturnProposalValidator opReturnProposalValidator;
-    private final OpReturnCompReqValidator opReturnCompReqValidator;
-    private final OpReturnBlindVoteValidator opReturnBlindVoteValidator;
-    private final OpReturnVoteRevealValidator opReturnVoteRevealValidator;
-    private final OpReturnLockupValidator opReturnLockupValidator;
+public class OpReturnParser {
+    private final OpReturnProposalParser opReturnProposalParser;
+    private final OpReturnCompReqParser opReturnCompReqParser;
+    private final OpReturnBlindVoteParser opReturnBlindVoteParser;
+    private final OpReturnVoteRevealParser opReturnVoteRevealParser;
+    private final OpReturnLockupParser opReturnLockupParser;
 
     @Inject
-    public OpReturnProcessor(OpReturnProposalValidator opReturnProposalValidator,
-                             OpReturnCompReqValidator opReturnCompReqValidator,
-                             OpReturnBlindVoteValidator opReturnBlindVoteValidator,
-                             OpReturnVoteRevealValidator opReturnVoteRevealValidator,
-                             OpReturnLockupValidator opReturnLockupValidator) {
+    public OpReturnParser(OpReturnProposalParser opReturnProposalParser,
+                          OpReturnCompReqParser opReturnCompReqParser,
+                          OpReturnBlindVoteParser opReturnBlindVoteParser,
+                          OpReturnVoteRevealParser opReturnVoteRevealParser,
+                          OpReturnLockupParser opReturnLockupParser) {
 
-        this.opReturnProposalValidator = opReturnProposalValidator;
-        this.opReturnCompReqValidator = opReturnCompReqValidator;
-        this.opReturnBlindVoteValidator = opReturnBlindVoteValidator;
-        this.opReturnVoteRevealValidator = opReturnVoteRevealValidator;
-        this.opReturnLockupValidator = opReturnLockupValidator;
+        this.opReturnProposalParser = opReturnProposalParser;
+        this.opReturnCompReqParser = opReturnCompReqParser;
+        this.opReturnBlindVoteParser = opReturnBlindVoteParser;
+        this.opReturnVoteRevealParser = opReturnVoteRevealParser;
+        this.opReturnLockupParser = opReturnLockupParser;
     }
 
     // We only check partially the rules here as we do not know the BSQ fee at that moment which is always used when
@@ -121,7 +121,7 @@ public class OpReturnProcessor {
     }
 
     private void processProposal(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnProposalValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
+        if (opReturnProposalParser.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
         } else {
@@ -133,7 +133,7 @@ public class OpReturnProcessor {
 
     private void processCompensationRequest(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
         final TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
-        if (opReturnCompReqValidator.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
+        if (opReturnCompReqParser.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
             if (issuanceCandidate != null)
                 issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
@@ -150,7 +150,7 @@ public class OpReturnProcessor {
     }
 
     private void processBlindVote(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnBlindVoteValidator.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
+        if (opReturnBlindVoteParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
         } else {
@@ -165,7 +165,7 @@ public class OpReturnProcessor {
     }
 
     private void processVoteReveal(byte[] opReturnData, TempTxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnVoteRevealValidator.validate(opReturnData, blockHeight, parsingModel)) {
+        if (opReturnVoteRevealParser.validate(opReturnData, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
         } else {
@@ -183,7 +183,7 @@ public class OpReturnProcessor {
         Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
         int lockTime = Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
 
-        if (opReturnLockupValidator.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
+        if (opReturnLockupParser.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
             txOutput.setTxOutputType(TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
             parsingModel.getTx().setLockTime(lockTime);

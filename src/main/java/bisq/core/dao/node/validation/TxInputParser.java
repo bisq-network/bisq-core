@@ -33,12 +33,12 @@ import lombok.extern.slf4j.Slf4j;
  * Processes TxInput and add input value to available balance if the input is a valid BSQ input.
  */
 @Slf4j
-public class TxInputProcessor {
+public class TxInputParser {
 
     private final BsqStateService bsqStateService;
 
     @Inject
-    public TxInputProcessor(BsqStateService bsqStateService) {
+    public TxInputParser(BsqStateService bsqStateService) {
         this.bsqStateService = bsqStateService;
     }
 
@@ -64,7 +64,7 @@ public class TxInputProcessor {
                         case BLIND_VOTE_LOCK_STAKE_OUTPUT:
                             if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
                                 parsingModel.setInputFromBlindVoteStakeOutput(txInput);
-                                // At the end of the parsing the OpReturnVoteRevealValidator will verify that
+                                // At the end of the parsing the OpReturnVoteRevealParser will verify that
                                 // this property is true, otherwise the tx will be considered invalid.
                                 parsingModel.setValidInputFromBlindVoteStakeOutput(true);
                             } else {

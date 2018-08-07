@@ -34,18 +34,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Checks if an output is a BSQ output and apply state change.
  */
 @Slf4j
-public class TxOutputProcessor {
+public class TxOutputParser {
     private final BsqStateService bsqStateService;
-    private final OpReturnProcessor opReturnProcessor;
+    private final OpReturnParser opReturnParser;
 
     @Inject
-    public TxOutputProcessor(BsqStateService bsqStateService, OpReturnProcessor opReturnProcessor) {
+    public TxOutputParser(BsqStateService bsqStateService, OpReturnParser opReturnParser) {
         this.bsqStateService = bsqStateService;
-        this.opReturnProcessor = opReturnProcessor;
+        this.opReturnParser = opReturnParser;
     }
 
     void processOpReturnCandidate(TempTxOutput txOutput, ParsingModel parsingModel) {
-        opReturnProcessor.processOpReturnCandidate(txOutput, parsingModel);
+        opReturnParser.processOpReturnCandidate(txOutput, parsingModel);
     }
 
     void processTxOutput(TempTx tx, TempTxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
@@ -66,7 +66,7 @@ public class TxOutputProcessor {
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnProcessor.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, parsingModel);
+            opReturnParser.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, parsingModel);
         }
     }
 

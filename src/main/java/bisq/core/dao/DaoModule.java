@@ -27,13 +27,13 @@ import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.validation.BlockParser;
-import bisq.core.dao.node.validation.OpReturnBlindVoteValidator;
-import bisq.core.dao.node.validation.OpReturnCompReqValidator;
-import bisq.core.dao.node.validation.OpReturnProcessor;
-import bisq.core.dao.node.validation.OpReturnProposalValidator;
-import bisq.core.dao.node.validation.OpReturnVoteRevealValidator;
-import bisq.core.dao.node.validation.TxInputProcessor;
-import bisq.core.dao.node.validation.TxOutputProcessor;
+import bisq.core.dao.node.validation.OpReturnBlindVoteParser;
+import bisq.core.dao.node.validation.OpReturnCompReqParser;
+import bisq.core.dao.node.validation.OpReturnParser;
+import bisq.core.dao.node.validation.OpReturnProposalParser;
+import bisq.core.dao.node.validation.OpReturnVoteRevealParser;
+import bisq.core.dao.node.validation.TxInputParser;
+import bisq.core.dao.node.validation.TxOutputParser;
 import bisq.core.dao.node.validation.TxParser;
 import bisq.core.dao.role.BondedRolesService;
 import bisq.core.dao.state.BsqState;
@@ -110,13 +110,13 @@ public class DaoModule extends AppModule {
 
         // blockchain parser
         bind(TxParser.class).in(Singleton.class);
-        bind(TxInputProcessor.class).in(Singleton.class);
-        bind(TxOutputProcessor.class).in(Singleton.class);
-        bind(OpReturnProcessor.class).in(Singleton.class);
-        bind(OpReturnProposalValidator.class).in(Singleton.class);
-        bind(OpReturnCompReqValidator.class).in(Singleton.class);
-        bind(OpReturnBlindVoteValidator.class).in(Singleton.class);
-        bind(OpReturnVoteRevealValidator.class).in(Singleton.class);
+        bind(TxInputParser.class).in(Singleton.class);
+        bind(TxOutputParser.class).in(Singleton.class);
+        bind(OpReturnParser.class).in(Singleton.class);
+        bind(OpReturnProposalParser.class).in(Singleton.class);
+        bind(OpReturnCompReqParser.class).in(Singleton.class);
+        bind(OpReturnBlindVoteParser.class).in(Singleton.class);
+        bind(OpReturnVoteRevealParser.class).in(Singleton.class);
 
         // Proposal
         bind(ProposalService.class).in(Singleton.class);
