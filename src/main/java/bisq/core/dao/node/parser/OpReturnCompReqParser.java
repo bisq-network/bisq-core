@@ -15,11 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.validation;
+package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.period.PeriodService;
 
 import javax.inject.Inject;
@@ -27,26 +26,22 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Verifies if OP_RETURN data matches rules for a blind vote tx and applies state change.
+ * Verifies if OP_RETURN data matches rules for a compensation request tx and applies state change.
  */
 @Slf4j
-public class OpReturnBlindVoteParser {
-    private final PeriodService periodService;
-    private final BsqStateService bsqStateService;
+public class OpReturnCompReqParser extends OpReturnProposalParser {
 
     @Inject
-    public OpReturnBlindVoteParser(PeriodService periodService,
-                                   BsqStateService bsqStateService) {
-        this.periodService = periodService;
-        this.bsqStateService = bsqStateService;
+    public OpReturnCompReqParser(PeriodService periodService,
+                                 BsqStateService bsqStateService) {
+        super(periodService, bsqStateService);
     }
 
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
-    boolean validate(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        return parsingModel.getBlindVoteLockStakeOutput() != null &&
-                opReturnData.length == 22 &&
-                bsqFee == bsqStateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&
-                periodService.isInPhase(blockHeight, DaoPhase.Phase.BLIND_VOTE);
+    @Override
+    boolean validate(byte[] opReturnData, TempTxOutput txOutput, long fee, int blockHeight, ParsingModel parsingModel) {
+        return super.validate(opReturnData, txOutput, fee, blockHeight, parsingModel) &&
+                parsingModel.getIssuanceCandidate() != null;
     }
 }

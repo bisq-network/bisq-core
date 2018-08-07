@@ -15,7 +15,7 @@
  * along with bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.validation;
+package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;

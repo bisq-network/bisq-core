@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.node.validation.BlockParser;
+import bisq.core.dao.node.parser.BlockParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.blockchain.RawBlock;

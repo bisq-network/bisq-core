@@ -15,14 +15,18 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.validation;
+package bisq.core.dao.node.parser;
+
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import lombok.Getter;
 
 @Getter
-public class InvalidGenesisTxException extends RuntimeException {
+public class BlockNotConnectingException extends Exception {
 
-    public InvalidGenesisTxException(String msg) {
-        super(msg);
+    private RawBlock rawBlock;
+
+    public BlockNotConnectingException(RawBlock rawBlock) {
+        this.rawBlock = rawBlock;
     }
 }

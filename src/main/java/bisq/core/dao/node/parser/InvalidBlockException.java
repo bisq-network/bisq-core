@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.node.validation;
+package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
