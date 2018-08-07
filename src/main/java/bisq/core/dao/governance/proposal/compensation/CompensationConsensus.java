@@ -17,37 +17,19 @@
 
 package bisq.core.dao.governance.proposal.compensation;
 
-import bisq.core.dao.state.blockchain.OpReturnType;
-
-import bisq.common.app.Version;
+import bisq.core.dao.governance.proposal.ProposalConsensus;
 
 import org.bitcoinj.core.Coin;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CompensationConsensus {
+public class CompensationConsensus extends ProposalConsensus {
     public static Coin getMinCompensationRequestAmount() {
         return Coin.valueOf(1_000); // 10 BSQ
     }
 
-    public static Coin getMaxCompensationRequestAmount() {
-        return Coin.valueOf(10_000_000); // 100 000 BSQ
-    }
-
-    public static byte[] getOpReturnData(byte[] hashOfPayload) throws IOException {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnType.COMPENSATION_REQUEST.getType());
-            outputStream.write(Version.COMPENSATION_REQUEST);
-            outputStream.write(hashOfPayload);
-            return outputStream.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error(e.toString());
-            throw e;
-        }
+    static Coin getMaxCompensationRequestAmount() {
+        return Coin.valueOf(20_000_000); // 200 000 BSQ
     }
 }

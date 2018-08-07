@@ -56,11 +56,6 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Vo
     protected final long creationDate;
     protected final String txId;
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // PROTO BUFFER
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
     protected Proposal(String uid,
                        String name,
                        String link,
@@ -74,6 +69,11 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Vo
         this.creationDate = creationDate;
         this.txId = txId;
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // PROTO BUFFER
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
     public PB.Proposal.Builder getProposalBuilder() {
         final PB.Proposal.Builder builder = PB.Proposal.newBuilder()

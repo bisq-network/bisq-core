@@ -21,13 +21,19 @@ import bisq.core.btc.exceptions.TransactionVerificationException;
 import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.blockchain.OpReturnType;
+
+import bisq.common.app.Version;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 /**
  * Base class for proposalService classes. Provides creation of a transaction.
@@ -37,6 +43,12 @@ public abstract class BaseProposalService<R extends Proposal> {
     protected final BsqWalletService bsqWalletService;
     protected final BtcWalletService btcWalletService;
     protected final BsqStateService bsqStateService;
+    protected final ProposalConsensus proposalConsensus;
+    protected final ProposalValidator proposalValidator;
+    @Nullable
+    protected String name;
+    @Nullable
+    protected String link;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -45,36 +57,62 @@ public abstract class BaseProposalService<R extends Proposal> {
 
     public BaseProposalService(BsqWalletService bsqWalletService,
                                BtcWalletService btcWalletService,
-                               BsqStateService bsqStateService) {
+                               BsqStateService bsqStateService,
+                               ProposalConsensus proposalConsensus,
+                               ProposalValidator proposalValidator) {
         this.bsqWalletService = bsqWalletService;
         this.btcWalletService = btcWalletService;
         this.bsqStateService = bsqStateService;
+        this.proposalConsensus = proposalConsensus;
+        this.proposalValidator = proposalValidator;
     }
+
+    protected ProposalWithTransaction createProposalWithTransaction(String name,
+                                                                    String link)
+            throws ValidationException, InsufficientMoneyException, TxException {
+        this.name = name;
+        this.link = link;
+        // As we don't know the txId yes we create a temp proposal with txId set to an empty string.
+        R proposal = createProposalWithoutTxId();
+        proposalValidator.validateDataFields(proposal);
+        Transaction transaction = createTransaction(proposal);
+        final Proposal proposalWithTxId = proposal.cloneProposalAndAddTxId(transaction.getHashAsString());
+        return new ProposalWithTransaction(proposalWithTxId, transaction);
+    }
+
+    protected abstract R createProposalWithoutTxId();
 
     // We have txId set to null in proposal as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    protected Transaction createTransaction(R proposal)
-            throws InsufficientMoneyException, TransactionVerificationException, WalletException {
+    protected Transaction createTransaction(R proposal) throws InsufficientMoneyException, TxException {
+        try {
+            final Coin fee = proposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
+            // We create a prepared Bsq Tx for the proposal fee.
+            final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedProposalTx(fee);
 
-        final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
-        // We create a prepared Bsq Tx for the proposal fee.
-        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedProposalTx(fee);
+            // payload does not have txId at that moment
+            byte[] hashOfPayload = proposalConsensus.getHashOfPayload(proposal);
+            byte[] opReturnData = getOpReturnData(hashOfPayload);
 
-        // payload does not have txId at that moment
-        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
-        byte[] opReturnData = ProposalConsensus.getOpReturnData(hashOfPayload);
+            // We add the BTC inputs for the miner fee.
+            final Transaction txWithBtcFee = completeTx(preparedBurnFeeTx, opReturnData, proposal);
 
-        // We add the BTC inputs for the miner fee.
-        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx, opReturnData);
-
-        // We sign the BSQ inputs of the final tx.
-        final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-        log.info("Proposal tx: " + transaction);
-        return transaction;
+            // We sign the BSQ inputs of the final tx.
+            Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
+            log.info("Proposal tx: " + transaction);
+            return transaction;
+        } catch (WalletException | TransactionVerificationException e) {
+            throw new TxException(e);
+        }
     }
 
-    protected R cloneProposalAndAddTxId(R proposal, String txId) {
-        return (R) proposal.cloneProposalAndAddTxId(txId);
+    protected byte[] getOpReturnData(byte[] hashOfPayload) {
+        return proposalConsensus.getOpReturnData(hashOfPayload, OpReturnType.PROPOSAL.getType(), Version.PROPOSAL);
+    }
+
+    protected Transaction completeTx(Transaction preparedBurnFeeTx, byte[] opReturnData, Proposal proposal)
+            throws WalletException, InsufficientMoneyException, TransactionVerificationException {
+        return btcWalletService.completePreparedProposalTx(preparedBurnFeeTx, opReturnData);
     }
 }

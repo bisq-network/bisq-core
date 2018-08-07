@@ -18,10 +18,8 @@
 package bisq.core.dao.governance.proposal;
 
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.governance.Param;
 
-import bisq.common.app.Version;
 import bisq.common.crypto.Hash;
 
 import org.bitcoinj.core.Coin;
@@ -29,25 +27,23 @@ import org.bitcoinj.core.Coin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProposalConsensus {
-    public static Coin getFee(BsqStateService bsqStateService, int chainHeadHeight) {
+    public Coin getFee(BsqStateService bsqStateService, int chainHeadHeight) {
         return Coin.valueOf(bsqStateService.getParamValue(Param.PROPOSAL_FEE, chainHeadHeight));
     }
 
-    public static byte[] getHashOfPayload(Proposal payload) {
+    public byte[] getHashOfPayload(Proposal payload) {
         final byte[] bytes = payload.toProtoMessage().toByteArray();
         return Hash.getSha256Ripemd160hash(bytes);
     }
 
-    public static byte[] getOpReturnData(byte[] hashOfPayload) {
+    public byte[] getOpReturnData(byte[] hashOfPayload, byte opReturnType, byte version) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            outputStream.write(OpReturnType.PROPOSAL.getType());
-            outputStream.write(Version.PROPOSAL);
+            outputStream.write(opReturnType);
+            outputStream.write(version);
             outputStream.write(hashOfPayload);
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -56,9 +52,5 @@ public class ProposalConsensus {
             log.error(e.toString());
             return new byte[0];
         }
-    }
-
-    public static byte[] getHashOfPayload(byte[] opReturnData) {
-        return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 }

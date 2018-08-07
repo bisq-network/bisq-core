@@ -22,9 +22,15 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.governance.ValidationException;
+import bisq.core.dao.governance.proposal.BaseProposalService;
+import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalConsensus;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
+import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.blockchain.OpReturnType;
+
+import bisq.common.app.Version;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -32,86 +38,65 @@ import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
-import java.io.IOException;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates CompensationProposal and transaction.
+ * Creates the CompensationProposal and the transaction.
  */
 @Slf4j
-public class CompensationProposalService {
-    private final BsqWalletService bsqWalletService;
-    private final BtcWalletService btcWalletService;
-    private final BsqStateService bsqStateService;
-    private final CompensationValidator compensationValidator;
+public class CompensationProposalService extends BaseProposalService<CompensationProposal> {
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    private Coin requestedBsq;
+    private String bsqAddress;
 
     @Inject
     public CompensationProposalService(BsqWalletService bsqWalletService,
                                        BtcWalletService btcWalletService,
                                        BsqStateService bsqStateService,
-                                       CompensationValidator compensationValidator) {
-        this.bsqWalletService = bsqWalletService;
-        this.btcWalletService = btcWalletService;
-        this.bsqStateService = bsqStateService;
-        this.compensationValidator = compensationValidator;
+                                       ProposalConsensus proposalConsensus,
+                                       CompensationValidator proposalValidator) {
+        super(bsqWalletService,
+                btcWalletService,
+                bsqStateService,
+                proposalConsensus,
+                proposalValidator);
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
                                                                  String link,
                                                                  Coin requestedBsq,
                                                                  String bsqAddress)
-            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
+        this.requestedBsq = requestedBsq;
+        this.bsqAddress = bsqAddress;
 
-        // As we don't know the txId we create a temp object with txId set to an empty string.
-        CompensationProposal proposal = new CompensationProposal(
+        return super.createProposalWithTransaction(name, link);
+    }
+
+    @Override
+    protected CompensationProposal createProposalWithoutTxId() {
+        return new CompensationProposal(
                 name,
                 link,
                 requestedBsq,
                 bsqAddress);
-        validate(proposal);
-
-        Transaction transaction = getTransaction(proposal);
-
-        final CompensationProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
-        return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 
-    // We have txId set to null in proposal as we cannot know it before the tx is created.
-    // Once the tx is known we will create a new object including the txId.
-    // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    private Transaction getTransaction(CompensationProposal proposal)
-            throws InsufficientMoneyException, TransactionVerificationException, WalletException, IOException {
+    @Override
+    protected byte[] getOpReturnData(byte[] hashOfPayload) {
+        return proposalConsensus.getOpReturnData(hashOfPayload,
+                OpReturnType.COMPENSATION_REQUEST.getType(),
+                Version.COMPENSATION_REQUEST);
+    }
 
-        final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
-        final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedProposalTx(fee);
-
-        // payload does not have txId at that moment
-        byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
-        byte[] opReturnData = CompensationConsensus.getOpReturnData(hashOfPayload);
-
-        final Transaction txWithBtcFee = btcWalletService.completePreparedCompensationRequestTx(
-                proposal.getRequestedBsq(),
-                proposal.getAddress(),
+    @Override
+    protected Transaction completeTx(Transaction preparedBurnFeeTx, byte[] opReturnData, Proposal proposal)
+            throws WalletException, InsufficientMoneyException, TransactionVerificationException {
+        CompensationProposal compensationProposal = (CompensationProposal) proposal;
+        return btcWalletService.completePreparedCompensationRequestTx(
+                compensationProposal.getRequestedBsq(),
+                compensationProposal.getAddress(),
                 preparedBurnFeeTx,
                 opReturnData);
-
-        final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
-        log.info("CompensationProposal tx: " + transaction);
-        return transaction;
-    }
-
-    private void validate(CompensationProposal proposal) throws ValidationException {
-        compensationValidator.validateDataFields(proposal);
-    }
-
-    private CompensationProposal getProposalWithTxId(CompensationProposal proposal, String txId) {
-        return (CompensationProposal) proposal.cloneProposalAndAddTxId(txId);
     }
 }

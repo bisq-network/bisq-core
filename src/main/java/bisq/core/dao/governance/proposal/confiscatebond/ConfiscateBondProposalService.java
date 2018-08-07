@@ -17,17 +17,16 @@
 
 package bisq.core.dao.governance.proposal.confiscatebond;
 
-import bisq.core.btc.exceptions.TransactionVerificationException;
-import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.governance.proposal.BaseProposalService;
+import bisq.core.dao.governance.proposal.ProposalConsensus;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
+import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.state.BsqStateService;
 
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
@@ -38,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ConfiscateBondProposalService extends BaseProposalService<ConfiscateBondProposal> {
-    private final ConfiscateBondValidator confiscateBondValidator;
+    private byte[] hash;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -49,33 +48,29 @@ public class ConfiscateBondProposalService extends BaseProposalService<Confiscat
     public ConfiscateBondProposalService(BsqWalletService bsqWalletService,
                                          BtcWalletService btcWalletService,
                                          BsqStateService bsqStateService,
-                                         ConfiscateBondValidator confiscateBondValidator) {
+                                         ProposalConsensus proposalConsensus,
+                                         ConfiscateBondValidator proposalValidator) {
         super(bsqWalletService,
                 btcWalletService,
-                bsqStateService);
-        this.confiscateBondValidator = confiscateBondValidator;
+                bsqStateService,
+                proposalConsensus,
+                proposalValidator);
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
                                                                  String link,
                                                                  byte[] hash)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
+        this.hash = hash;
 
-        // As we don't know the txId we create a temp object with txId set to an empty string.
-        ConfiscateBondProposal proposal = new ConfiscateBondProposal(
+        return super.createProposalWithTransaction(name, link);
+    }
+
+    @Override
+    protected ConfiscateBondProposal createProposalWithoutTxId() {
+        return new ConfiscateBondProposal(
                 name,
                 link,
                 hash);
-        validate(proposal);
-
-        Transaction transaction = createTransaction(proposal);
-
-        final ConfiscateBondProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
-        return new ProposalWithTransaction(proposalWithTxId, transaction);
-    }
-
-    private void validate(ConfiscateBondProposal proposal) throws ValidationException {
-        confiscateBondValidator.validateDataFields(proposal);
     }
 }

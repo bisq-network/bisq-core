@@ -17,18 +17,17 @@
 
 package bisq.core.dao.governance.proposal.role;
 
-import bisq.core.btc.exceptions.TransactionVerificationException;
-import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.governance.proposal.BaseProposalService;
+import bisq.core.dao.governance.proposal.ProposalConsensus;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
+import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.BsqStateService;
 
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
@@ -39,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BondedRoleProposalService extends BaseProposalService<BondedRoleProposal> {
-    private final BondedRoleValidator bondedRoleValidator;
+    private BondedRole bondedRole;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -50,28 +49,24 @@ public class BondedRoleProposalService extends BaseProposalService<BondedRolePro
     public BondedRoleProposalService(BsqWalletService bsqWalletService,
                                      BtcWalletService btcWalletService,
                                      BsqStateService bsqStateService,
-                                     BondedRoleValidator bondedRoleValidator) {
+                                     ProposalConsensus proposalConsensus,
+                                     BondedRoleValidator proposalValidator) {
         super(bsqWalletService,
                 btcWalletService,
-                bsqStateService);
-        this.bondedRoleValidator = bondedRoleValidator;
+                bsqStateService,
+                proposalConsensus,
+                proposalValidator);
     }
 
     public ProposalWithTransaction createProposalWithTransaction(BondedRole bondedRole)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
+        this.bondedRole = bondedRole;
 
-        // As we don't know the txId we create a temp object with txId set to an empty string.
-        BondedRoleProposal proposal = new BondedRoleProposal(bondedRole);
-        validate(proposal);
-
-        Transaction transaction = createTransaction(proposal);
-
-        final BondedRoleProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
-        return new ProposalWithTransaction(proposalWithTxId, transaction);
+        return super.createProposalWithTransaction(bondedRole.getName(), bondedRole.getLink());
     }
 
-    private void validate(BondedRoleProposal proposal) throws ValidationException {
-        bondedRoleValidator.validateDataFields(proposal);
+    @Override
+    protected BondedRoleProposal createProposalWithoutTxId() {
+        return new BondedRoleProposal(bondedRole);
     }
 }

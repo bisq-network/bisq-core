@@ -17,18 +17,17 @@
 
 package bisq.core.dao.governance.proposal.param;
 
-import bisq.core.btc.exceptions.TransactionVerificationException;
-import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.governance.proposal.BaseProposalService;
+import bisq.core.dao.governance.proposal.ProposalConsensus;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
+import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.governance.Param;
 
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.Transaction;
 
 import javax.inject.Inject;
 
@@ -39,7 +38,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ChangeParamProposalService extends BaseProposalService<ChangeParamProposal> {
-    private final ChangeParamValidator changeParamValidator;
+    private Param param;
+    private long paramValue;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -50,35 +50,32 @@ public class ChangeParamProposalService extends BaseProposalService<ChangeParamP
     public ChangeParamProposalService(BsqWalletService bsqWalletService,
                                       BtcWalletService btcWalletService,
                                       BsqStateService bsqStateService,
-                                      ChangeParamValidator changeParamValidator) {
+                                      ProposalConsensus proposalConsensus,
+                                      ChangeParamValidator proposalValidator) {
         super(bsqWalletService,
                 btcWalletService,
-                bsqStateService);
-        this.changeParamValidator = changeParamValidator;
+                bsqStateService,
+                proposalConsensus,
+                proposalValidator);
     }
 
     public ProposalWithTransaction createProposalWithTransaction(String name,
                                                                  String link,
                                                                  Param param,
                                                                  long paramValue)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
+        this.param = param;
+        this.paramValue = paramValue;
 
-        // As we don't know the txId we create a temp object with txId set to an empty string.
-        ChangeParamProposal proposal = new ChangeParamProposal(
+        return super.createProposalWithTransaction(name, link);
+    }
+
+    @Override
+    protected ChangeParamProposal createProposalWithoutTxId() {
+        return new ChangeParamProposal(
                 name,
                 link,
                 param,
                 paramValue);
-        validate(proposal);
-
-        Transaction transaction = createTransaction(proposal);
-
-        final ChangeParamProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
-        return new ProposalWithTransaction(proposalWithTxId, transaction);
-    }
-
-    private void validate(ChangeParamProposal proposal) throws ValidationException {
-        changeParamValidator.validateDataFields(proposal);
     }
 }

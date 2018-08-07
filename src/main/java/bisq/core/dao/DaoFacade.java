@@ -35,6 +35,7 @@ import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalConsensus;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
+import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposalService;
 import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposalService;
 import bisq.core.dao.governance.proposal.param.ChangeParamProposalService;
@@ -69,8 +70,6 @@ import javafx.beans.property.SimpleObjectProperty;
 
 import javafx.collections.ObservableList;
 
-import java.io.IOException;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -97,6 +96,7 @@ public class DaoFacade {
     private final BondedRolesService bondedRolesService;
     private final LockupService lockupService;
     private final UnlockService unlockService;
+    private final ProposalConsensus proposalConsensus;
 
     private final ObjectProperty<DaoPhase.Phase> phaseProperty = new SimpleObjectProperty<>(DaoPhase.Phase.UNDEFINED);
 
@@ -115,7 +115,8 @@ public class DaoFacade {
                      BondedRoleProposalService bondedRoleProposalService,
                      BondedRolesService bondedRolesService,
                      LockupService lockupService,
-                     UnlockService unlockService) {
+                     UnlockService unlockService,
+                     ProposalConsensus proposalConsensus) {
         this.filteredProposalListService = filteredProposalListService;
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
@@ -131,6 +132,7 @@ public class DaoFacade {
         this.bondedRolesService = bondedRolesService;
         this.lockupService = lockupService;
         this.unlockService = unlockService;
+        this.proposalConsensus = proposalConsensus;
 
         bsqStateService.addBsqStateListener(new BsqStateListener() {
             @Override
@@ -191,8 +193,7 @@ public class DaoFacade {
                                                                           String link,
                                                                           Coin requestedBsq,
                                                                           String bsqAddress)
-            throws ValidationException, InsufficientMoneyException, IOException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
         return compensationProposalService.createProposalWithTransaction(name,
                 link,
                 requestedBsq,
@@ -203,8 +204,7 @@ public class DaoFacade {
                                                                    String link,
                                                                    Param param,
                                                                    long paramValue)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
         return changeParamProposalService.createProposalWithTransaction(name,
                 link,
                 param,
@@ -214,16 +214,14 @@ public class DaoFacade {
     public ProposalWithTransaction getConfiscateBondProposalWithTransaction(String name,
                                                                             String link,
                                                                             byte[] hash)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
         return confiscateBondProposalService.createProposalWithTransaction(name,
                 link,
                 hash);
     }
 
     public ProposalWithTransaction getBondedRoleProposalWithTransaction(BondedRole bondedRole)
-            throws ValidationException, InsufficientMoneyException, TransactionVerificationException,
-            WalletException {
+            throws ValidationException, InsufficientMoneyException, TxException {
         return bondedRoleProposalService.createProposalWithTransaction(bondedRole);
     }
 
@@ -233,7 +231,7 @@ public class DaoFacade {
 
     // Show fee
     public Coin getProposalFee(int chainHeight) {
-        return ProposalConsensus.getFee(bsqStateService, chainHeight);
+        return proposalConsensus.getFee(bsqStateService, chainHeight);
     }
 
     // Publish proposal tx, proposal payload and and persist it to myProposalList
