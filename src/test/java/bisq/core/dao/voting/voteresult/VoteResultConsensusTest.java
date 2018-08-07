@@ -17,6 +17,8 @@
 
 package bisq.core.dao.voting.voteresult;
 
+import bisq.core.dao.governance.voteresult.VoteResultConsensus;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.junit.Before;
