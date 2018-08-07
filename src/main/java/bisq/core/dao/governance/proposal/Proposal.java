@@ -24,7 +24,7 @@ import bisq.core.dao.governance.proposal.param.ChangeParamProposal;
 import bisq.core.dao.governance.proposal.role.BondedRoleProposal;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.state.ext.Param;
+import bisq.core.dao.state.governance.Param;
 
 import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;

@@ -22,8 +22,8 @@ import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
-import bisq.core.dao.state.ext.Issuance;
-import bisq.core.dao.state.ext.ParamChange;
+import bisq.core.dao.state.governance.Issuance;
+import bisq.core.dao.state.governance.ParamChange;
 import bisq.core.dao.state.period.Cycle;
 
 import bisq.common.proto.persistable.PersistableEnvelope;
@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Root class for mutable state of the DAO.
+ * Holds both blockchain data as well as data derived from the governance process (voting).
  */
 @Slf4j
 public class BsqState implements PersistableEnvelope {

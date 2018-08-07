@@ -18,7 +18,7 @@
 package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.state.ext.Param;
+import bisq.core.dao.state.governance.Param;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 

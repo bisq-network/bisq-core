@@ -21,7 +21,7 @@ import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.ext.Param;
+import bisq.core.dao.state.governance.Param;
 
 import com.google.inject.Inject;
 

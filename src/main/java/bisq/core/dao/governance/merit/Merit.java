@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.merit;
 
-import bisq.core.dao.state.ext.Issuance;
+import bisq.core.dao.state.governance.Issuance;
 
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;

@@ -46,8 +46,8 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.ext.ConfiscateBond;
-import bisq.core.dao.state.ext.ParamChange;
+import bisq.core.dao.state.governance.ConfiscateBond;
+import bisq.core.dao.state.governance.ParamChange;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 

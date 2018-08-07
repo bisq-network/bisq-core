@@ -19,7 +19,7 @@ package bisq.core.dao.governance.proposal;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
-import bisq.core.dao.state.ext.Param;
+import bisq.core.dao.state.governance.Param;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.Hash;

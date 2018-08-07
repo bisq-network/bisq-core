@@ -27,10 +27,10 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
-import bisq.core.dao.state.ext.ConfiscateBond;
-import bisq.core.dao.state.ext.Issuance;
-import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.state.ext.ParamChange;
+import bisq.core.dao.state.governance.ConfiscateBond;
+import bisq.core.dao.state.governance.Issuance;
+import bisq.core.dao.state.governance.Param;
+import bisq.core.dao.state.governance.ParamChange;
 import bisq.core.dao.state.period.Cycle;
 
 import org.bitcoinj.core.Coin;

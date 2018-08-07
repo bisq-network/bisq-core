@@ -22,7 +22,7 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
-import bisq.core.dao.state.ext.Issuance;
+import bisq.core.dao.state.governance.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 

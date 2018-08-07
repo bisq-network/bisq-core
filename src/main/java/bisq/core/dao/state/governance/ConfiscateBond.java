@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.state.ext;
+package bisq.core.dao.state.governance;
 
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -27,17 +27,18 @@ import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * Holds the hash of a confiscated bond.
+ */
 @Immutable
 @Value
 public class ConfiscateBond implements PersistablePayload {
+    // Hash can be anything which identifies a bond.
+    // TODO concept not finalized yet...
     private final byte[] hash;
 
-    //TODO not used so far... is it needed?
-    private final int activationHeight;
-
-    public ConfiscateBond(byte[] hash, int activationHeight) {
+    public ConfiscateBond(byte[] hash) {
         this.hash = hash;
-        this.activationHeight = activationHeight;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -49,12 +50,10 @@ public class ConfiscateBond implements PersistablePayload {
     public PB.ConfiscateBond toProtoMessage() {
         return PB.ConfiscateBond.newBuilder()
                 .setHash(ByteString.copyFrom(hash))
-                .setActivationHeight(activationHeight)
                 .build();
     }
 
     public static ConfiscateBond fromProto(PB.ConfiscateBond proto) {
-        return new ConfiscateBond(proto.getHash().toByteArray(),
-                proto.getActivationHeight());
+        return new ConfiscateBond(proto.getHash().toByteArray());
     }
 }
