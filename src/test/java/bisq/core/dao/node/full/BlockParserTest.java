@@ -18,9 +18,9 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.parser.BlockParser;
+import bisq.core.dao.node.parser.GenesisTxParser;
 import bisq.core.dao.node.parser.TxParser;
 import bisq.core.dao.node.parser.exceptions.BlockNotConnectingException;
-import bisq.core.dao.node.parser.exceptions.GenesisTxParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
