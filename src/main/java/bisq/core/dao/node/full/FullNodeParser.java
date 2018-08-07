@@ -32,8 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Parser for full nodes. Request blockchain data via rpc from Bitcoin Core and iterates blocks to find BSQ relevant transactions.
- * <p>
- * We are in threaded context. Don't mix up with UserThread.
  */
 @Slf4j
 public class FullNodeParser extends BsqParser {

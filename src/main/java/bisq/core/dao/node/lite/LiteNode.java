@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Main class for lite nodes which receive the BSQ transactions from a full node (e.g. seed nodes).
- * <p>
  * Verification of BSQ transactions is done also by the lite node.
  */
 @Slf4j

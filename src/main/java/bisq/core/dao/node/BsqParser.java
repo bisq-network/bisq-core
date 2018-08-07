@@ -38,8 +38,6 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Base class for lite node parser and full node parser. Iterates blocks to find BSQ relevant transactions.
- * <p>
- * We are in threaded context. Don't mix up with UserThread.
  */
 @Slf4j
 @Immutable

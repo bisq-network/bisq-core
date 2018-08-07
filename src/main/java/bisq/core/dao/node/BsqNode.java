@@ -35,8 +35,7 @@ import javax.annotation.Nullable;
 
 /**
  * Base class for the lite and full node.
- * <p>
- * We are in UserThread context. We get callbacks from threaded classes which are already mapped to the UserThread.
+ * It is responsible or the setup of the parser and snapshot management.
  */
 @Slf4j
 public abstract class BsqNode {

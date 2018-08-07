@@ -64,7 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Request blockchain data via RPC from Bitcoin Core.
+ * Request blockchain data via RPC from Bitcoin Core for a FullNode.
  * Runs in a custom thread.
  * See the rpc.md file in the doc directory for more info about the setup.
  */
