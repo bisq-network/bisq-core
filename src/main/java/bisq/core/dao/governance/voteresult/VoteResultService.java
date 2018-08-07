@@ -602,7 +602,7 @@ public class VoteResultService implements BsqStateListener {
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
                 ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
-                bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHash(), chainHeight));
+                bsqStateService.confiscateBond(new ConfiscateBond(confiscateBondProposal.getHash()));
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("\n################################################################################\n");
