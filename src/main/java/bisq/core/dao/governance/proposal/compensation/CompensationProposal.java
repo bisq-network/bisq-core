@@ -20,7 +20,6 @@ package bisq.core.dao.governance.proposal.compensation;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalType;
-import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.governance.Param;
 
@@ -46,14 +45,13 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class CompensationProposal extends Proposal {
-
     private final long requestedBsq;
     private final String bsqAddress;
 
-    public CompensationProposal(String name,
-                                String link,
-                                Coin requestedBsq,
-                                String bsqAddress) {
+    CompensationProposal(String name,
+                         String link,
+                         Coin requestedBsq,
+                         String bsqAddress) {
         this(UUID.randomUUID().toString(),
                 name,
                 link,
@@ -113,6 +111,17 @@ public final class CompensationProposal extends Proposal {
     // Getters
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public Coin getRequestedBsq() {
+        return Coin.valueOf(requestedBsq);
+    }
+
+    public Address getAddress() throws AddressFormatException {
+        // Remove leading 'B'
+        String underlyingBtcAddress = bsqAddress.substring(1, bsqAddress.length());
+        return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
+    }
+
+
     @Override
     public ProposalType getType() {
         return ProposalType.COMPENSATION_REQUEST;
@@ -128,26 +137,13 @@ public final class CompensationProposal extends Proposal {
         return Param.THRESHOLD_COMP_REQUEST;
     }
 
-    public Coin getRequestedBsq() {
-        return Coin.valueOf(requestedBsq);
-    }
-
-    public Address getAddress() throws AddressFormatException {
-        // Remove leading 'B'
-        String underlyingBtcAddress = bsqAddress.substring(1, bsqAddress.length());
-        return Address.fromBase58(BisqEnvironment.getParameters(), underlyingBtcAddress);
-    }
-
+    @Override
     public TxType getTxType() {
         return TxType.COMPENSATION_REQUEST;
     }
 
-    public TxOutputType getTxOutputType() {
-        return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
-    }
-
     @Override
-    public Proposal cloneWithTxId(String txId) {
+    public Proposal cloneProposalAndAddTxId(String txId) {
         return new CompensationProposal(getUid(),
                 getName(),
                 getLink(),
@@ -156,18 +152,6 @@ public final class CompensationProposal extends Proposal {
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
-    }
-
-    @Override
-    public Proposal cloneWithoutTxId() {
-        return new CompensationProposal(getUid(),
-                getName(),
-                getLink(),
-                getBsqAddress(),
-                getRequestedBsq().value,
-                getVersion(),
-                getCreationDate().getTime(),
-                "");
     }
 
     @Override

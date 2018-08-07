@@ -65,9 +65,9 @@ public class BondedRoleProposalService extends BaseProposalService<BondedRolePro
         BondedRoleProposal proposal = new BondedRoleProposal(bondedRole);
         validate(proposal);
 
-        Transaction transaction = getTransaction(proposal);
+        Transaction transaction = createTransaction(proposal);
 
-        final BondedRoleProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final BondedRoleProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 

@@ -69,9 +69,9 @@ public class ConfiscateBondProposalService extends BaseProposalService<Confiscat
                 hash);
         validate(proposal);
 
-        Transaction transaction = getTransaction(proposal);
+        Transaction transaction = createTransaction(proposal);
 
-        final ConfiscateBondProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final ConfiscateBondProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 

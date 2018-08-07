@@ -20,7 +20,6 @@ package bisq.core.dao.governance.proposal.role;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalType;
 import bisq.core.dao.governance.role.BondedRole;
-import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.governance.Param;
 
@@ -42,10 +41,9 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class BondedRoleProposal extends Proposal {
-
     private final BondedRole bondedRole;
 
-    public BondedRoleProposal(BondedRole bondedRole) {
+    BondedRoleProposal(BondedRole bondedRole) {
         this(UUID.randomUUID().toString(),
                 bondedRole.getName(),
                 bondedRole.getLink(),
@@ -115,16 +113,13 @@ public final class BondedRoleProposal extends Proposal {
         return Param.THRESHOLD_PROPOSAL;
     }
 
+    @Override
     public TxType getTxType() {
         return TxType.PROPOSAL;
     }
 
-    public TxOutputType getTxOutputType() {
-        return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
-    }
-
     @Override
-    public Proposal cloneWithTxId(String txId) {
+    public Proposal cloneProposalAndAddTxId(String txId) {
         return new BondedRoleProposal(getUid(),
                 getName(),
                 getLink(),
@@ -132,17 +127,6 @@ public final class BondedRoleProposal extends Proposal {
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
-    }
-
-    @Override
-    public Proposal cloneWithoutTxId() {
-        return new BondedRoleProposal(getUid(),
-                getName(),
-                getLink(),
-                getBondedRole(),
-                getVersion(),
-                getCreationDate().getTime(),
-                "");
     }
 
     @Override

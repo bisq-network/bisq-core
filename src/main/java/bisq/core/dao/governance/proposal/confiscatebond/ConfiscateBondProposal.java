@@ -19,7 +19,6 @@ package bisq.core.dao.governance.proposal.confiscatebond;
 
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalType;
-import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.governance.Param;
 
@@ -44,12 +43,11 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode(callSuper = true)
 @Value
 public final class ConfiscateBondProposal extends Proposal {
-
     private final byte[] hash;
 
-    public ConfiscateBondProposal(String name,
-                                  String link,
-                                  byte[] hash) {
+    ConfiscateBondProposal(String name,
+                           String link,
+                           byte[] hash) {
         this(UUID.randomUUID().toString(),
                 name,
                 link,
@@ -119,16 +117,13 @@ public final class ConfiscateBondProposal extends Proposal {
         return Param.THRESHOLD_CONFISCATION;
     }
 
+    @Override
     public TxType getTxType() {
         return TxType.PROPOSAL;
     }
 
-    public TxOutputType getTxOutputType() {
-        return TxOutputType.CONFISCATE_BOND_OP_RETURN_OUTPUT;
-    }
-
     @Override
-    public Proposal cloneWithTxId(String txId) {
+    public Proposal cloneProposalAndAddTxId(String txId) {
         return new ConfiscateBondProposal(getUid(),
                 getName(),
                 getLink(),
@@ -136,17 +131,6 @@ public final class ConfiscateBondProposal extends Proposal {
                 getVersion(),
                 getCreationDate().getTime(),
                 txId);
-    }
-
-    @Override
-    public Proposal cloneWithoutTxId() {
-        return new ConfiscateBondProposal(getUid(),
-                getName(),
-                getLink(),
-                getHash(),
-                getVersion(),
-                getCreationDate().getTime(),
-                "");
     }
 
     @Override

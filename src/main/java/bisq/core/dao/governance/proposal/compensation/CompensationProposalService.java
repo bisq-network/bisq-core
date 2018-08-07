@@ -112,6 +112,6 @@ public class CompensationProposalService {
     }
 
     private CompensationProposal getProposalWithTxId(CompensationProposal proposal, String txId) {
-        return (CompensationProposal) proposal.cloneWithTxId(txId);
+        return (CompensationProposal) proposal.cloneProposalAndAddTxId(txId);
     }
 }

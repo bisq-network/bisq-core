@@ -30,10 +30,10 @@ import org.bitcoinj.core.Transaction;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Creates BondedRoleProposal and transaction.
+ * Base class for proposalService classes. Provides creation of a transaction.
  */
 @Slf4j
-public class BaseProposalService<R extends Proposal> {
+public abstract class BaseProposalService<R extends Proposal> {
     protected final BsqWalletService bsqWalletService;
     protected final BtcWalletService btcWalletService;
     protected final BsqStateService bsqStateService;
@@ -54,25 +54,27 @@ public class BaseProposalService<R extends Proposal> {
     // We have txId set to null in proposal as we cannot know it before the tx is created.
     // Once the tx is known we will create a new object including the txId.
     // The hashOfPayload used in the opReturnData is created with the txId set to null.
-    protected Transaction getTransaction(R proposal)
+    protected Transaction createTransaction(R proposal)
             throws InsufficientMoneyException, TransactionVerificationException, WalletException {
 
         final Coin fee = ProposalConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
+        // We create a prepared Bsq Tx for the proposal fee.
         final Transaction preparedBurnFeeTx = bsqWalletService.getPreparedProposalTx(fee);
 
         // payload does not have txId at that moment
         byte[] hashOfPayload = ProposalConsensus.getHashOfPayload(proposal);
         byte[] opReturnData = ProposalConsensus.getOpReturnData(hashOfPayload);
 
-        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx,
-                opReturnData);
+        // We add the BTC inputs for the miner fee.
+        final Transaction txWithBtcFee = btcWalletService.completePreparedProposalTx(preparedBurnFeeTx, opReturnData);
 
+        // We sign the BSQ inputs of the final tx.
         final Transaction transaction = bsqWalletService.signTx(txWithBtcFee);
         log.info("Proposal tx: " + transaction);
         return transaction;
     }
 
-    protected R getProposalWithTxId(R proposal, String txId) {
-        return (R) proposal.cloneWithTxId(txId);
+    protected R cloneProposalAndAddTxId(R proposal, String txId) {
+        return (R) proposal.cloneProposalAndAddTxId(txId);
     }
 }

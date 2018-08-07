@@ -22,11 +22,11 @@ import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
 import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.governance.proposal.param.ChangeParamProposal;
 import bisq.core.dao.governance.proposal.role.BondedRoleProposal;
-import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.governance.Param;
 
 import bisq.common.proto.ProtobufferRuntimeException;
+import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
@@ -34,10 +34,8 @@ import io.bisq.generated.protobuffer.PB;
 import java.util.Date;
 import java.util.Optional;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -50,8 +48,7 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public abstract class Proposal implements PersistablePayload, VoteConsensusCritical {
+public abstract class Proposal implements PersistablePayload, NetworkPayload, VoteConsensusCritical {
     protected final String uid;
     protected final String name;
     protected final String link;
@@ -100,29 +97,25 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
             case COMPENSATION_PROPOSAL:
                 return CompensationProposal.fromProto(proto);
             case GENERIC_PROPOSAL:
-                throw new ProtobufferRuntimeException("Not implemented yet: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Not implemented yet: " + proto);
             case CHANGE_PARAM_PROPOSAL:
                 return ChangeParamProposal.fromProto(proto);
             case REMOVE_ALTCOIN_PROPOSAL:
-                throw new ProtobufferRuntimeException("Not implemented yet: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Not implemented yet: " + proto);
             case CONFISCATE_BOND_PROPOSAL:
                 return ConfiscateBondProposal.fromProto(proto);
             case BONDED_ROLE_PROPOSAL:
                 return BondedRoleProposal.fromProto(proto);
             case MESSAGE_NOT_SET:
             default:
-                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
+                throw new ProtobufferRuntimeException("Unknown message case: " + proto);
         }
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Getters
+    // Utils
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    abstract public Proposal cloneWithoutTxId();
-
-    abstract public Proposal cloneWithTxId(String txId);
 
     public Date getCreationDate() {
         return new Date(creationDate);
@@ -132,19 +125,21 @@ public abstract class Proposal implements PersistablePayload, VoteConsensusCriti
         return uid.length() > 7 ? uid.substring(0, 8) : uid;
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Abstract
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract Proposal cloneProposalAndAddTxId(String txId);
+
     public abstract ProposalType getType();
 
-    public TxType getTxType() {
-        return TxType.PROPOSAL;
-    }
-
-    public TxOutputType getTxOutputType() {
-        return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
-    }
+    public abstract TxType getTxType();
 
     public abstract Param getQuorumParam();
 
     public abstract Param getThresholdParam();
+
 
     @Override
     public String toString() {

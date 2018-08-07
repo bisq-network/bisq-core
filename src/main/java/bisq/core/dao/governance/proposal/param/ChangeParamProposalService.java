@@ -72,9 +72,9 @@ public class ChangeParamProposalService extends BaseProposalService<ChangeParamP
                 paramValue);
         validate(proposal);
 
-        Transaction transaction = getTransaction(proposal);
+        Transaction transaction = createTransaction(proposal);
 
-        final ChangeParamProposal proposalWithTxId = getProposalWithTxId(proposal, transaction.getHashAsString());
+        final ChangeParamProposal proposalWithTxId = cloneProposalAndAddTxId(proposal, transaction.getHashAsString());
         return new ProposalWithTransaction(proposalWithTxId, transaction);
     }
 

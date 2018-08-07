@@ -19,7 +19,14 @@ package bisq.core.dao.state.governance;
 
 import bisq.core.locale.Res;
 
+import bisq.common.proto.ProtoUtil;
+
+import io.bisq.generated.protobuffer.PB;
+
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * All parameters in the Bisq DAO which can be changed by voting.
@@ -31,6 +38,7 @@ import lombok.Getter;
  * using the latest software version.
  * The UNDEFINED entry is used as fallback for error cases and will get ignored.
  */
+@Slf4j
 public enum Param {
     UNDEFINED(0),
 
@@ -95,5 +103,28 @@ public enum Param {
         return name().startsWith("PHASE_") ?
                 Res.get("dao.phase." + name()) :
                 Res.get("dao.param." + name());
+    }
+
+    public String getParamName() {
+        String name;
+        try {
+            name = this.name();
+        } catch (Throwable t) {
+            log.error(t.toString());
+            name = Param.UNDEFINED.name();
+        }
+        return name;
+    }
+
+    public static Param fromProto(PB.ChangeParamProposal proposalProto) {
+        Param param;
+        try {
+            param = ProtoUtil.enumFromProto(Param.class, proposalProto.getParam());
+            checkNotNull(param, "param must not be null");
+        } catch (Throwable t) {
+            log.error("fromProto: " + t.toString());
+            param = Param.UNDEFINED;
+        }
+        return param;
     }
 }
