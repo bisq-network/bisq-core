@@ -19,8 +19,8 @@ package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.validation.BlockNotConnectingException;
 import bisq.core.dao.node.validation.BlockParser;
-import bisq.core.dao.node.validation.GenesisTxValidator;
-import bisq.core.dao.node.validation.TxValidator;
+import bisq.core.dao.node.validation.GenesisTxParser;
+import bisq.core.dao.node.validation.TxParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
@@ -95,9 +95,9 @@ public class BlockParserTest {
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     BsqStateService writeModel;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    GenesisTxValidator genesisTxValidator;
+    GenesisTxParser genesisTxParser;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    TxValidator txValidator;
+    TxParser txParser;
 
     //FIXME
     @Test
@@ -135,11 +135,11 @@ public class BlockParserTest {
         }};
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txValidator.getBsqTx(rawTx).isPresent());
+        assertFalse(txParser.getBsqTx(rawTx).isPresent());
         // Second time there is BSQ in the first txout
-        assertTrue(txValidator.getBsqTx(rawTx).isPresent());
+        assertTrue(txParser.getBsqTx(rawTx).isPresent());
         // Third time there is BSQ in the second txout
-        assertTrue(txValidator.getBsqTx(rawTx).isPresent());
+        assertTrue(txParser.getBsqTx(rawTx).isPresent());
     }
 
     @Test

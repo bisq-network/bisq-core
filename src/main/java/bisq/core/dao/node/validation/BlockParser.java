@@ -43,7 +43,7 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Immutable
 public class BlockParser {
-    private final TxValidator txValidator;
+    private final TxParser txParser;
     private final BsqStateService bsqStateService;
 
 
@@ -53,10 +53,10 @@ public class BlockParser {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BlockParser(GenesisTxValidator genesisTxValidator,
-                       TxValidator txValidator,
+    public BlockParser(GenesisTxParser genesisTxParser,
+                       TxParser txParser,
                        BsqStateService bsqStateService) {
-        this.txValidator = txValidator;
+        this.txParser = txParser;
         this.bsqStateService = bsqStateService;
     }
 
@@ -105,7 +105,7 @@ public class BlockParser {
         // Lately there is a patter with 24 iterations observed
         long startTs = System.currentTimeMillis();
         List<Tx> txList = block.getTxs();
-        rawBlock.getRawTxs().forEach(rawTx -> txValidator.getBsqTx(rawTx).ifPresent(txList::add));
+        rawBlock.getRawTxs().forEach(rawTx -> txParser.getBsqTx(rawTx).ifPresent(txList::add));
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
@@ -116,7 +116,7 @@ public class BlockParser {
     private void maybeAddGenesisTx(RawBlock rawBlock, Block block) {
         // We don't use streams here as we want to break as soon we found the genesis
         for (RawTx rawTx : rawBlock.getRawTxs()) {
-            Optional<Tx> optionalTx = GenesisTxValidator.getGenesisTx(
+            Optional<Tx> optionalTx = GenesisTxParser.getGenesisTx(
                     bsqStateService.getGenesisTxId(),
                     bsqStateService.getGenesisBlockHeight(),
                     bsqStateService.getGenesisTotalSupply(),

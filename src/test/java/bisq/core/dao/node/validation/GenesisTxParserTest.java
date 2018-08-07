@@ -37,7 +37,7 @@ import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class GenesisTxValidatorTest {
+public class GenesisTxParserTest {
 
     @Test
     public void testGetGenesisTx() {
@@ -63,7 +63,7 @@ public class GenesisTxValidatorTest {
         int genesisBlockHeight = 150;
 
         // With mismatch in block height and tx id, we should not get genesis tx back.
-        Optional<Tx> result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        Optional<Tx> result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         Optional<Tx> want = Optional.empty();
         Assert.assertEquals(want, result);
 
@@ -77,7 +77,7 @@ public class GenesisTxValidatorTest {
             ImmutableList.copyOf(inputs),
             ImmutableList.copyOf(outputs)
         );
-        result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         want = Optional.empty();
         Assert.assertEquals(want, result);
 
@@ -90,7 +90,7 @@ public class GenesisTxValidatorTest {
             ImmutableList.copyOf(inputs),
             ImmutableList.copyOf(outputs)
         );
-        result = GenesisTxValidator.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        result = GenesisTxParser.getGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
 
         TempTx tempTx = TempTx.createFromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);

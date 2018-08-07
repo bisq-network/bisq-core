@@ -34,7 +34,7 @@ import bisq.core.dao.node.validation.OpReturnProposalValidator;
 import bisq.core.dao.node.validation.OpReturnVoteRevealValidator;
 import bisq.core.dao.node.validation.TxInputProcessor;
 import bisq.core.dao.node.validation.TxOutputProcessor;
-import bisq.core.dao.node.validation.TxValidator;
+import bisq.core.dao.node.validation.TxParser;
 import bisq.core.dao.role.BondedRolesService;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
@@ -109,7 +109,7 @@ public class DaoModule extends AppModule {
         bind(PeriodService.class).in(Singleton.class);
 
         // blockchain parser
-        bind(TxValidator.class).in(Singleton.class);
+        bind(TxParser.class).in(Singleton.class);
         bind(TxInputProcessor.class).in(Singleton.class);
         bind(TxOutputProcessor.class).in(Singleton.class);
         bind(OpReturnProcessor.class).in(Singleton.class);

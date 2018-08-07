@@ -43,14 +43,14 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Verifies if a given transaction is a BSQ transaction.
  */
 @Slf4j
-public class TxValidator {
+public class TxParser {
 
     private final TxInputProcessor txInputProcessor;
     private final TxOutputProcessor txOutputProcessor;
 
     @Inject
-    public TxValidator(TxInputProcessor txInputProcessor,
-                       TxOutputProcessor txOutputProcessor) {
+    public TxParser(TxInputProcessor txInputProcessor,
+                    TxOutputProcessor txOutputProcessor) {
         this.txInputProcessor = txInputProcessor;
         this.txOutputProcessor = txOutputProcessor;
     }
