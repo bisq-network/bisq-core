@@ -21,13 +21,12 @@ import bisq.core.dao.bonding.lockup.LockupService;
 import bisq.core.dao.bonding.unlock.UnlockService;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.node.full.FullNode;
-import bisq.core.dao.node.full.FullNodeParser;
 import bisq.core.dao.node.full.RpcService;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
-import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
+import bisq.core.dao.node.validation.BlockParser;
 import bisq.core.dao.node.validation.OpReturnBlindVoteValidator;
 import bisq.core.dao.node.validation.OpReturnCompReqValidator;
 import bisq.core.dao.node.validation.OpReturnProcessor;
@@ -92,13 +91,12 @@ public class DaoModule extends AppModule {
 
         // Node, parser
         bind(BsqNodeProvider.class).in(Singleton.class);
-        bind(RpcService.class).in(Singleton.class);
         bind(FullNode.class).in(Singleton.class);
-        bind(FullNodeNetworkService.class).in(Singleton.class);
-        bind(FullNodeParser.class).in(Singleton.class);
         bind(LiteNode.class).in(Singleton.class);
+        bind(RpcService.class).in(Singleton.class);
+        bind(BlockParser.class).in(Singleton.class);
+        bind(FullNodeNetworkService.class).in(Singleton.class);
         bind(LiteNodeNetworkService.class).in(Singleton.class);
-        bind(LiteNodeParser.class).in(Singleton.class);
 
         // BsqState
         bind(BsqState.class).in(Singleton.class);

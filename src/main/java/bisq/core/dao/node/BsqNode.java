@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node;
 
+import bisq.core.dao.node.validation.BlockParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.blockchain.RawBlock;
@@ -40,6 +41,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public abstract class BsqNode {
 
+    protected final BlockParser blockParser;
     private final P2PService p2PService;
     protected final BsqStateService bsqStateService;
     private final String genesisTxId;
@@ -58,9 +60,11 @@ public abstract class BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BsqNode(BsqStateService bsqStateService,
+    public BsqNode(BlockParser blockParser,
+                   BsqStateService bsqStateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
+        this.blockParser = blockParser;
         this.p2PService = p2PService;
         this.bsqStateService = bsqStateService;
 
@@ -160,9 +164,9 @@ public abstract class BsqNode {
         parseBlockchainComplete = true;
         bsqStateService.onParseBlockChainComplete();
 
-        // log.error("COMPLETED: sb1={}\nsb2={}", BsqParser.sb1.toString(), BsqParser.sb2.toString());
-        // log.error("equals? " + BsqParser.sb1.toString().equals(BsqParser.sb2.toString()));
-        // Utilities.copyToClipboard(BsqParser.sb1.toString() + "\n\n\n" + BsqParser.sb2.toString());
+        // log.error("COMPLETED: sb1={}\nsb2={}", BlockParser.sb1.toString(), BlockParser.sb2.toString());
+        // log.error("equals? " + BlockParser.sb1.toString().equals(BlockParser.sb2.toString()));
+        // Utilities.copyToClipboard(BlockParser.sb1.toString() + "\n\n\n" + BlockParser.sb2.toString());
     }
 
     @SuppressWarnings("WeakerAccess")

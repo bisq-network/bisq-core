@@ -21,8 +21,9 @@ import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
 import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
-import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.node.validation.BlockParser;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.blockchain.Block;
 
 import bisq.network.p2p.P2PService;
@@ -47,7 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 public class FullNode extends BsqNode {
 
     private final RpcService rpcService;
-    private final FullNodeParser fullNodeParser;
     private final FullNodeNetworkService fullNodeNetworkService;
     private final JsonBlockChainExporter jsonBlockChainExporter;
     private boolean addBlockHandlerAdded;
@@ -59,16 +59,15 @@ public class FullNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public FullNode(BsqStateService bsqStateService,
+    public FullNode(BlockParser blockParser,
+                    BsqStateService bsqStateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
                     RpcService rpcService,
-                    FullNodeParser fullNodeParser,
                     JsonBlockChainExporter jsonBlockChainExporter,
                     FullNodeNetworkService fullNodeNetworkService) {
-        super(bsqStateService, snapshotManager, p2PService);
+        super(blockParser, bsqStateService, snapshotManager, p2PService);
         this.rpcService = rpcService;
-        this.fullNodeParser = fullNodeParser;
 
         this.jsonBlockChainExporter = jsonBlockChainExporter;
         this.fullNodeNetworkService = fullNodeNetworkService;
@@ -136,7 +135,7 @@ public class FullNode extends BsqNode {
             rpcService.addNewBtcBlockHandler(rawBlock -> {
                         if (!isBlockAlreadyAdded(rawBlock)) {
                             try {
-                                Block block = fullNodeParser.parseBlock(rawBlock);
+                                Block block = blockParser.parseBlock(rawBlock);
                                 onNewBlock(block);
                             } catch (BlockNotConnectingException throwable) {
                                 handleError(throwable);
@@ -219,7 +218,7 @@ public class FullNode extends BsqNode {
                 rawBlock -> {
                     if (!isBlockAlreadyAdded(rawBlock)) {
                         try {
-                            Block block = fullNodeParser.parseBlock(rawBlock);
+                            Block block = blockParser.parseBlock(rawBlock);
                             newBlockHandler.accept(block);
 
                             // Increment blockHeight and recursively call parseBlockAsync until we reach chainHeadHeight

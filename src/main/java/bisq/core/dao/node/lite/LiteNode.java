@@ -22,6 +22,7 @@ import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.messages.GetBlocksResponse;
 import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.dao.node.validation.BlockNotConnectingException;
+import bisq.core.dao.node.validation.BlockParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.blockchain.RawBlock;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @Slf4j
 public class LiteNode extends BsqNode {
-    private final LiteNodeParser liteNodeParser;
     private final LiteNodeNetworkService liteNodeNetworkService;
 
 
@@ -54,14 +54,13 @@ public class LiteNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public LiteNode(BsqStateService bsqStateService,
+    public LiteNode(BlockParser blockParser,
+                    BsqStateService bsqStateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    LiteNodeParser liteNodeParser,
                     LiteNodeNetworkService liteNodeNetworkService) {
-        super(bsqStateService, snapshotManager, p2PService);
+        super(blockParser, bsqStateService, snapshotManager, p2PService);
 
-        this.liteNodeParser = liteNodeParser;
         this.liteNodeNetworkService = liteNodeNetworkService;
     }
 
@@ -153,7 +152,7 @@ public class LiteNode extends BsqNode {
     private void parseBlock(RawBlock rawBlock) {
         if (!isBlockAlreadyAdded(rawBlock)) {
             try {
-                liteNodeParser.parseBlock(rawBlock);
+                blockParser.parseBlock(rawBlock);
             } catch (BlockNotConnectingException throwable) {
                 startReOrgFromLastSnapshot();
             } catch (Throwable throwable) {

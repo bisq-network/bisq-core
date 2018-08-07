@@ -97,11 +97,11 @@ public class ProposalValidator {
         if (isTxConfirmed) {
             final int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.error("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
+                log.debug("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
             if (!periodService.isInPhase(txHeight, DaoPhase.Phase.PROPOSAL)) {
-                log.error("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
+                log.debug("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
             if (proposal instanceof CompensationProposal) {

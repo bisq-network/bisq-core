@@ -18,7 +18,7 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.validation.BlockNotConnectingException;
-import bisq.core.dao.node.validation.BlockValidator;
+import bisq.core.dao.node.validation.BlockParser;
 import bisq.core.dao.node.validation.GenesisTxValidator;
 import bisq.core.dao.node.validation.TxValidator;
 import bisq.core.dao.state.BsqStateService;
@@ -60,15 +60,18 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+
+//TODO test fails. check if still relevant
+
 // Intro to jmockit can be found at http://jmockit.github.io/tutorial/Mocking.html
 @Ignore
 @RunWith(JMockit.class)
-public class FullNodeParserTest {
+public class BlockParserTest {
     // @Tested classes are instantiated automatically when needed in a test case,
     // using injection where possible, see http://jmockit.github.io/tutorial/Mocking.html#tested
     // To force instantiate earlier, use availableDuringSetup
     @Tested(fullyInitialized = true, availableDuringSetup = true)
-    FullNodeParser fullNodeParser;
+    BlockParser blockParser;
 
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     BsqStateService bsqStateService;
@@ -95,8 +98,6 @@ public class FullNodeParserTest {
     GenesisTxValidator genesisTxValidator;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     TxValidator txValidator;
-    @Injectable
-    BlockValidator blockValidator;
 
     //FIXME
     @Test
