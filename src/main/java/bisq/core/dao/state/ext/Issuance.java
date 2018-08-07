@@ -31,11 +31,14 @@ import lombok.Value;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * Holds the issuance data (compensation request which was accepted in voting).
+ */
 @Immutable
 @Value
 public class Issuance implements PersistablePayload, NetworkPayload {
     private final String txId; // comp. request txId
-    private final int chainHeight;
+    private final int chainHeight; // of issuance (first block of result phase)
     private final long amount;
 
     //TODO do we need to store that? its in the blockchain anyway

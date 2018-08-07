@@ -25,6 +25,9 @@ import lombok.Value;
 
 import javax.annotation.concurrent.Immutable;
 
+/**
+ * Holds the data for a parameter change. Gets persisted with the BsqState.
+ */
 @Immutable
 @Value
 public class ParamChange implements PersistablePayload {
