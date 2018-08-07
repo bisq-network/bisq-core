@@ -17,7 +17,7 @@
 
 package bisq.core.dao.node.json;
 
-import bisq.core.dao.node.btcd.PubKeyScript;
+import bisq.core.dao.state.blockchain.PubKeyScript;
 
 import java.util.List;
 

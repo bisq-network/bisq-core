@@ -18,7 +18,7 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.btcd.PubKeyScript;
+import bisq.core.dao.state.blockchain.PubKeyScript;
 import bisq.core.dao.state.blockchain.RawBlock;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;

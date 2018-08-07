@@ -18,9 +18,9 @@
 package bisq.core.dao.node.json;
 
 import bisq.core.dao.DaoOptionKeys;
-import bisq.core.dao.node.btcd.PubKeyScript;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.blockchain.PubKeyScript;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutput;

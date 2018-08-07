@@ -17,8 +17,6 @@
 
 package bisq.core.dao.state.blockchain;
 
-import bisq.core.dao.node.btcd.PubKeyScript;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
