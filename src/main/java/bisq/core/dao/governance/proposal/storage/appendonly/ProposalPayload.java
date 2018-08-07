@@ -19,8 +19,6 @@ package bisq.core.dao.governance.proposal.storage.appendonly;
 
 import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
-import bisq.core.dao.voting.proposal.Proposal;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 import bisq.network.p2p.storage.payload.PersistableNetworkPayload;

@@ -18,7 +18,6 @@
 package bisq.core.dao.governance.voteresult;
 
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
-import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
 
 import lombok.Getter;
 

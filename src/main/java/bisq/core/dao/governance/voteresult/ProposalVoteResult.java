@@ -18,7 +18,6 @@
 package bisq.core.dao.governance.voteresult;
 
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.voting.proposal.Proposal;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;

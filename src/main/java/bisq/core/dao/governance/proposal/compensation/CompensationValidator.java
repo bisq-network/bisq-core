@@ -17,11 +17,11 @@
 
 package bisq.core.dao.governance.proposal.compensation;
 
+import bisq.core.dao.governance.ValidationException;
+import bisq.core.dao.governance.proposal.Proposal;
+import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.ValidationException;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalValidator;
 
 import org.bitcoinj.core.Coin;
 
@@ -29,8 +29,8 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static bisq.core.dao.voting.proposal.compensation.CompensationConsensus.getMaxCompensationRequestAmount;
-import static bisq.core.dao.voting.proposal.compensation.CompensationConsensus.getMinCompensationRequestAmount;
+import static bisq.core.dao.governance.proposal.compensation.CompensationConsensus.getMaxCompensationRequestAmount;
+import static bisq.core.dao.governance.proposal.compensation.CompensationConsensus.getMinCompensationRequestAmount;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.Validate.notEmpty;
 

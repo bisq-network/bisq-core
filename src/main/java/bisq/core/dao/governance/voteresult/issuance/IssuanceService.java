@@ -25,7 +25,6 @@ import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.ext.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
 
 import javax.inject.Inject;
 

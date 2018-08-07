@@ -20,14 +20,11 @@ package bisq.core.dao.governance.blindvote;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.merit.MeritList;
+import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.merit.MeritList;
-import bisq.core.dao.voting.proposal.ProposalValidator;
 
 import bisq.common.app.Version;
 import bisq.common.crypto.CryptoException;

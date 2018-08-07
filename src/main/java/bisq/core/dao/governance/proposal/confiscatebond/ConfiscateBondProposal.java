@@ -18,11 +18,10 @@
 package bisq.core.dao.governance.proposal.confiscatebond;
 
 import bisq.core.dao.governance.proposal.Proposal;
+import bisq.core.dao.governance.proposal.ProposalType;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalType;
 
 import bisq.common.app.Version;
 import bisq.common.util.Utilities;

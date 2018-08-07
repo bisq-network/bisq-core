@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.governance.merit;
+package bisq.core.dao.governance.role;
 
 import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
 
@@ -23,53 +23,54 @@ import bisq.common.proto.persistable.PersistableList;
 
 import io.bisq.generated.protobuffer.PB;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 
-// We don't persist that list but use it only for encoding the MeritList list
-// to PB bytes in the blindVote.
-
-// Not used as PersistableList
-// TODO create diff. super class
+/**
+ * PersistableEnvelope wrapper for list of bondedRoles.
+ */
 @EqualsAndHashCode(callSuper = true)
-public class MeritList extends PersistableList<Merit> implements VoteConsensusCritical {
+public class BondedRoleList extends PersistableList<BondedRole> implements VoteConsensusCritical {
 
-    public MeritList(List<Merit> list) {
+    public BondedRoleList(List<BondedRole> list) {
         super(list);
     }
 
-    public MeritList() {
+    public BondedRoleList() {
         super();
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public PB.MeritList toProtoMessage() {
-        return getBuilder().build();
+    public PB.PersistableEnvelope toProtoMessage() {
+        return PB.PersistableEnvelope.newBuilder().setBondedRoleList(getBuilder()).build();
     }
 
-    private PB.MeritList.Builder getBuilder() {
-        return PB.MeritList.newBuilder()
-                .addAllMerit(getList().stream()
-                        .map(Merit::toProtoMessage)
+    public PB.BondedRoleList.Builder getBuilder() {
+        return PB.BondedRoleList.newBuilder()
+                .addAllBondedRole(getList().stream()
+                        .map(BondedRole::toProtoMessage)
                         .collect(Collectors.toList()));
     }
 
-    public static MeritList fromProto(PB.MeritList proto) {
-        return new MeritList(new ArrayList<>(proto.getMeritList().stream()
-                .map(Merit::fromProto)
+    public static BondedRoleList fromProto(PB.BondedRoleList proto) {
+        return new BondedRoleList(new ArrayList<>(proto.getBondedRoleList().stream()
+                .map(BondedRole::fromProto)
                 .collect(Collectors.toList())));
     }
 
-    public static MeritList getMeritListFromBytes(byte[] bytes) throws InvalidProtocolBufferException {
-        return MeritList.fromProto(PB.MeritList.parseFrom(bytes));
+    @Override
+    public String toString() {
+        return "List of UID's in BondedRoleList: " + getList().stream()
+                .map(BondedRole::getUid)
+                .collect(Collectors.toList());
     }
 }
+

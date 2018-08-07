@@ -20,11 +20,8 @@ package bisq.core.dao.governance.voteresult;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.vote.BooleanVote;
+import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.voting.ballot.Ballot;
-import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.ballot.vote.BooleanVote;
-import bisq.core.dao.voting.merit.MeritList;
 
 import java.util.Optional;
 

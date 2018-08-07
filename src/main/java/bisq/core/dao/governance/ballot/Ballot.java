@@ -17,10 +17,9 @@
 
 package bisq.core.dao.governance.ballot;
 
+import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.voting.ballot.vote.Vote;
-import bisq.core.dao.voting.proposal.Proposal;
-import bisq.core.dao.voting.proposal.ProposalType;
+import bisq.core.dao.governance.proposal.ProposalType;
 
 import bisq.common.proto.persistable.PersistablePayload;
 

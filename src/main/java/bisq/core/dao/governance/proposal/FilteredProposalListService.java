@@ -23,7 +23,6 @@ import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import org.bitcoinj.core.TransactionConfidence;
 

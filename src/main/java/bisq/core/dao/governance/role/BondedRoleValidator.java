@@ -15,15 +15,12 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.governance.proposal;
+package bisq.core.dao.governance.role;
 
 import bisq.core.dao.governance.ValidationException;
-import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
-import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
-import bisq.core.dao.governance.proposal.role.BondedRoleProposal;
+import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 
@@ -36,13 +33,13 @@ import lombok.extern.slf4j.Slf4j;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 @Slf4j
-public class ProposalValidator {
+public class BondedRoleValidator {
 
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
 
     @Inject
-    public ProposalValidator(BsqStateService bsqStateService, PeriodService periodService) {
+    public BondedRoleValidator(BsqStateService bsqStateService, PeriodService periodService) {
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
     }
@@ -59,11 +56,7 @@ public class ProposalValidator {
     public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
             notEmpty(proposal.getName(), "name must not be empty");
-
-            //TODO use diff validators (store validators in proposal)
-            if (!(proposal instanceof BondedRoleProposal) && !(proposal instanceof ConfiscateBondProposal)) {
-                notEmpty(proposal.getLink(), "link must not be empty");
-            }
+            notEmpty(proposal.getLink(), "link must not be empty");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }
@@ -104,18 +97,6 @@ public class ProposalValidator {
                 log.debug("Tx is not in PROPOSAL phase. proposal.getTxId()={}", proposal.getTxId());
                 return false;
             }
-            if (proposal instanceof CompensationProposal) {
-                if (optionalTx.get().getTxType() != TxType.COMPENSATION_REQUEST) {
-                    log.error("TxType is not PROPOSAL. proposal.getTxId()={}", proposal.getTxId());
-                    return false;
-                }
-            } else {
-                if (optionalTx.get().getTxType() != TxType.PROPOSAL) {
-                    log.error("TxType is not PROPOSAL. proposal.getTxId()={}", proposal.getTxId());
-                    return false;
-                }
-            }
-
             return true;
         } else if (allowUnconfirmed) {
             // We want to show own unconfirmed proposals in the active proposals list.

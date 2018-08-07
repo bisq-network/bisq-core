@@ -26,19 +26,19 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.governance.blindvote.BlindVote;
+import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
+import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteValidator;
+import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
+import bisq.core.dao.governance.myvote.MyVote;
+import bisq.core.dao.governance.myvote.MyVoteListService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.blindvote.BlindVote;
-import bisq.core.dao.voting.blindvote.BlindVoteConsensus;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.blindvote.BlindVoteValidator;
-import bisq.core.dao.voting.blindvote.storage.BlindVotePayload;
-import bisq.core.dao.voting.myvote.MyVote;
-import bisq.core.dao.voting.myvote.MyVoteListService;
 
 import bisq.network.p2p.P2PService;
 

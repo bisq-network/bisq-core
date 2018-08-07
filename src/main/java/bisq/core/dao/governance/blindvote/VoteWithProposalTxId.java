@@ -18,7 +18,6 @@
 package bisq.core.dao.governance.blindvote;
 
 import bisq.core.dao.governance.ballot.vote.Vote;
-import bisq.core.dao.voting.ballot.vote.Vote;
 
 import bisq.common.proto.persistable.PersistablePayload;
 

@@ -22,7 +22,6 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.Proposal;
 
 import java.util.List;
 import java.util.Optional;

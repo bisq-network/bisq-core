@@ -17,16 +17,14 @@
 
 package bisq.core.dao.governance.proposal;
 
+import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
+import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.governance.proposal.param.ChangeParamProposal;
+import bisq.core.dao.governance.proposal.role.BondedRoleProposal;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
-import bisq.core.dao.voting.ballot.vote.VoteConsensusCritical;
-import bisq.core.dao.voting.proposal.compensation.CompensationProposal;
-import bisq.core.dao.voting.proposal.confiscatebond.ConfiscateBondProposal;
-import bisq.core.dao.voting.proposal.param.ChangeParamProposal;
-import bisq.core.dao.voting.proposal.role.BondedRoleProposal;
 
 import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.persistable.PersistablePayload;

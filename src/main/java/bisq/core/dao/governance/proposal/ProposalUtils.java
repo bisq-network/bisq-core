@@ -17,11 +17,11 @@
 
 package bisq.core.dao.governance.proposal;
 
+import bisq.core.dao.governance.proposal.storage.appendonly.ProposalPayload;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.storage.appendonly.ProposalPayload;
 
 import bisq.network.p2p.storage.P2PDataStorage;
 

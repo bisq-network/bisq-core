@@ -23,11 +23,6 @@ import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.voteresult.VoteResultConsensus;
 import bisq.core.dao.state.BsqStateService;
-import bisq.core.dao.voting.ballot.BallotList;
-import bisq.core.dao.voting.blindvote.BlindVote;
-import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
-import bisq.core.dao.voting.merit.MeritList;
-import bisq.core.dao.voting.voteresult.VoteResultConsensus;
 
 import bisq.common.crypto.Encryption;
 import bisq.common.proto.persistable.PersistablePayload;

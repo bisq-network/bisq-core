@@ -17,16 +17,16 @@
 
 package bisq.core.dao;
 
+import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
+import bisq.core.dao.governance.proposal.ProposalService;
+import bisq.core.dao.governance.voteresult.VoteResultService;
+import bisq.core.dao.governance.votereveal.VoteRevealService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.CycleService;
-import bisq.core.dao.voting.ballot.BallotListService;
-import bisq.core.dao.voting.blindvote.BlindVoteService;
-import bisq.core.dao.voting.blindvote.MyBlindVoteListService;
-import bisq.core.dao.voting.proposal.ProposalService;
-import bisq.core.dao.voting.voteresult.VoteResultService;
-import bisq.core.dao.voting.votereveal.VoteRevealService;
 
 import bisq.common.handlers.ErrorMessageHandler;
 

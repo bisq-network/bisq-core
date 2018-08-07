@@ -17,11 +17,11 @@
 
 package bisq.core.dao.governance.ballot;
 
+import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.proposal.ProposalValidator;
 
 import com.google.inject.Inject;
 

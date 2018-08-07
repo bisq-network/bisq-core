@@ -17,6 +17,8 @@
 
 package bisq.core.dao.governance.voteresult;
 
+import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
@@ -25,8 +27,6 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
-import bisq.core.dao.voting.blindvote.VoteWithProposalTxIdList;
-import bisq.core.dao.voting.merit.MeritList;
 
 import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
