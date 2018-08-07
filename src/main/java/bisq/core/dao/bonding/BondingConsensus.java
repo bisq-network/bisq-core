@@ -18,7 +18,7 @@
 package bisq.core.dao.bonding;
 
 import bisq.core.dao.bonding.lockup.LockupType;
-import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.blockchain.OpReturnType;
 
 import bisq.common.app.Version;

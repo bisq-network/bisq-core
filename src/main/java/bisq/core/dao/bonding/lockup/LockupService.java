@@ -27,8 +27,8 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.bonding.BondingConsensus;
-import bisq.core.dao.role.BondedRole;
-import bisq.core.dao.role.BondedRolesService;
+import bisq.core.dao.governance.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRolesService;
 
 import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;

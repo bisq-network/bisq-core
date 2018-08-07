@@ -20,7 +20,7 @@ package bisq.core.proto.persistable;
 import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.role.BondedRoleList;
+import bisq.core.dao.governance.role.BondedRoleList;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.voting.ballot.BallotList;
 import bisq.core.dao.voting.blindvote.MyBlindVoteList;

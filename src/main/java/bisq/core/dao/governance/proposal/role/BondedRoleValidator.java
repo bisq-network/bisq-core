@@ -18,7 +18,7 @@
 package bisq.core.dao.governance.proposal.role;
 
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.period.PeriodService;
 import bisq.core.dao.voting.ValidationException;

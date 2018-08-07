@@ -22,7 +22,7 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
-import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.voting.ValidationException;
 import bisq.core.dao.voting.proposal.BaseProposalService;

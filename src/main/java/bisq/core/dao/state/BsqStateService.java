@@ -18,7 +18,7 @@
 package bisq.core.dao.state;
 
 import bisq.core.dao.bonding.BondingConsensus;
-import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.Tx;

@@ -35,7 +35,7 @@ import bisq.core.dao.node.parser.OpReturnVoteRevealParser;
 import bisq.core.dao.node.parser.TxInputParser;
 import bisq.core.dao.node.parser.TxOutputParser;
 import bisq.core.dao.node.parser.TxParser;
-import bisq.core.dao.role.BondedRolesService;
+import bisq.core.dao.governance.role.BondedRolesService;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;

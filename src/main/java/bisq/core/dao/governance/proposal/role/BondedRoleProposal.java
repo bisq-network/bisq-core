@@ -18,7 +18,7 @@
 package bisq.core.dao.governance.proposal.role;
 
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.role.BondedRole;
+import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 import bisq.core.dao.state.ext.Param;
