@@ -265,7 +265,7 @@ public class BsqStateService {
     }
 
     public Optional<Tx> getTx(String txId) {
-        return Optional.ofNullable(getTxMap().get(txId));
+        return getTxStream().filter(tx -> tx.getId().equals(txId)).findAny();
     }
 
     public boolean containsTx(String txId) {
