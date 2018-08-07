@@ -51,6 +51,8 @@ import bisq.core.dao.state.governance.ParamChange;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 
+import bisq.network.p2p.storage.P2PDataStorage;
+
 import bisq.common.util.Utilities;
 
 import javax.inject.Inject;
@@ -190,7 +192,7 @@ public class VoteResultService implements BsqStateListener {
                 // blind vote hash and use the first one in the sorted list as winner.
                 // A node which has a local blindVote list which does not match the winner data view need to recover it's
                 // local blindVote list by requesting the correct list from other peers.
-                Map<byte[], Long> stakeByHashOfBlindVoteListMap = getStakeByHashOfBlindVoteListMap(decryptedVotes);
+                Map<P2PDataStorage.ByteArray, Long> stakeByHashOfBlindVoteListMap = getStakeByHashOfBlindVoteListMap(decryptedVotes);
 
                 try {
                     // Get majority hash
@@ -319,10 +321,11 @@ public class VoteResultService implements BsqStateListener {
         return new BallotList(ballots);
     }
 
-    private Map<byte[], Long> getStakeByHashOfBlindVoteListMap(Set<DecryptedVote> decryptedVotes) {
-        Map<byte[], Long> map = new HashMap<>();
+    private Map<P2PDataStorage.ByteArray, Long> getStakeByHashOfBlindVoteListMap(Set<DecryptedVote> decryptedVotes) {
+        // Don't use byte[] as key as byte[] uses object identity for equals and hashCode
+        Map<P2PDataStorage.ByteArray, Long> map = new HashMap<>();
         decryptedVotes.forEach(decryptedVote -> {
-            final byte[] hash = decryptedVote.getHashOfBlindVoteList();
+            P2PDataStorage.ByteArray hash = new P2PDataStorage.ByteArray(decryptedVote.getHashOfBlindVoteList());
             map.putIfAbsent(hash, 0L);
             long aggregatedStake = map.get(hash);
             long merit = decryptedVote.getMerit(bsqStateService);
@@ -336,9 +339,9 @@ public class VoteResultService implements BsqStateListener {
         return map;
     }
 
-    private byte[] getMajorityBlindVoteListHash(Map<byte[], Long> map) throws VoteResultException {
+    private byte[] getMajorityBlindVoteListHash(Map<P2PDataStorage.ByteArray, Long> map) throws VoteResultException {
         List<HashWithStake> list = map.entrySet().stream()
-                .map(entry -> new HashWithStake(entry.getKey(), entry.getValue()))
+                .map(entry -> new HashWithStake(entry.getKey().bytes, entry.getValue()))
                 .collect(Collectors.toList());
         return VoteResultConsensus.getMajorityHash(list);
     }
