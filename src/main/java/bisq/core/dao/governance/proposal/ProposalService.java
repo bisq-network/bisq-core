@@ -157,7 +157,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     @Override
     public void onParseBlockChainComplete() {
-        log.error("onParseBlockChainComplete " + bsqStateService.getChainHeight());
         parsingComplete = true;
 
         // Fill the lists with the data we have collected in out stores.
@@ -186,7 +185,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                     boolean success = p2PService.addPersistableNetworkPayload(proposalPayload, true);
                     if (success)
                         log.info("We published a ProposalPayload to the P2P network as append-only data. proposalUid={}",
-                                proposalPayload.getProposal().getUid());
+                                proposalPayload.getProposal().getTxId());
                     else
                         log.warn("publishToAppendOnlyDataStore failed for proposal " + proposalPayload.getProposal());
                 });
@@ -203,7 +202,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 if (proposalValidator.isValidOrUnconfirmed(proposal)) {
                     tempProposals.add(proposal);
                     log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalUid={}",
-                            proposal.getUid());
+                            proposal.getTxId());
                 } else {
                     //TODO called at startup when we are not in cycle of proposal
                     log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
@@ -236,7 +235,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 if (proposalValidator.isValidAndConfirmed(proposal)) {
                     proposalPayloads.add(proposalPayload);
                     log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalUid={}",
-                            proposal.getUid());
+                            proposal.getTxId());
                 } else {
                     log.debug("We received a invalid append-only proposal from the P2P network. " +
                                     "Proposal.txId={}, blockHeight={}",

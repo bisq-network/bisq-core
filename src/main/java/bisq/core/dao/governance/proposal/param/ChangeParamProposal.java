@@ -27,7 +27,6 @@ import bisq.common.app.Version;
 import io.bisq.generated.protobuffer.PB;
 
 import java.util.Date;
-import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -47,8 +46,7 @@ public final class ChangeParamProposal extends Proposal {
                         String link,
                         Param param,
                         long paramValue) {
-        this(UUID.randomUUID().toString(),
-                name,
+        this(name,
                 link,
                 param,
                 paramValue,
@@ -62,16 +60,14 @@ public final class ChangeParamProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ChangeParamProposal(String uid,
-                                String name,
+    private ChangeParamProposal(String name,
                                 String link,
                                 Param param,
                                 long paramValue,
                                 byte version,
                                 long creationDate,
                                 String txId) {
-        super(uid,
-                name,
+        super(name,
                 link,
                 version,
                 creationDate,
@@ -91,8 +87,7 @@ public final class ChangeParamProposal extends Proposal {
 
     public static ChangeParamProposal fromProto(PB.Proposal proto) {
         final PB.ChangeParamProposal proposalProto = proto.getChangeParamProposal();
-        return new ChangeParamProposal(proto.getUid(),
-                proto.getName(),
+        return new ChangeParamProposal(proto.getName(),
                 proto.getLink(),
                 Param.fromProto(proposalProto),
                 proposalProto.getParamValue(),
@@ -128,8 +123,7 @@ public final class ChangeParamProposal extends Proposal {
 
     @Override
     public Proposal cloneProposalAndAddTxId(String txId) {
-        return new ChangeParamProposal(getUid(),
-                getName(),
+        return new ChangeParamProposal(getName(),
                 getLink(),
                 getParam(),
                 getParamValue(),

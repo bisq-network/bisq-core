@@ -30,7 +30,6 @@ import io.bisq.generated.protobuffer.PB;
 import com.google.protobuf.ByteString;
 
 import java.util.Date;
-import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -48,8 +47,7 @@ public final class ConfiscateBondProposal extends Proposal {
     ConfiscateBondProposal(String name,
                            String link,
                            byte[] hash) {
-        this(UUID.randomUUID().toString(),
-                name,
+        this(name,
                 link,
                 hash,
                 Version.PROPOSAL,
@@ -62,15 +60,13 @@ public final class ConfiscateBondProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ConfiscateBondProposal(String uid,
-                                   String name,
+    private ConfiscateBondProposal(String name,
                                    String link,
                                    byte[] hash,
                                    byte version,
                                    long creationDate,
                                    String txId) {
-        super(uid,
-                name,
+        super(name,
                 link,
                 version,
                 creationDate,
@@ -88,8 +84,7 @@ public final class ConfiscateBondProposal extends Proposal {
 
     public static ConfiscateBondProposal fromProto(PB.Proposal proto) {
         final PB.ConfiscateBondProposal proposalProto = proto.getConfiscateBondProposal();
-        return new ConfiscateBondProposal(proto.getUid(),
-                proto.getName(),
+        return new ConfiscateBondProposal(proto.getName(),
                 proto.getLink(),
                 proposalProto.getHash().toByteArray(),
                 (byte) proto.getVersion(),
@@ -124,8 +119,7 @@ public final class ConfiscateBondProposal extends Proposal {
 
     @Override
     public Proposal cloneProposalAndAddTxId(String txId) {
-        return new ConfiscateBondProposal(getUid(),
-                getName(),
+        return new ConfiscateBondProposal(getName(),
                 getLink(),
                 getHash(),
                 getVersion(),

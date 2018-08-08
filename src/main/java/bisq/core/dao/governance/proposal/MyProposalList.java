@@ -69,7 +69,7 @@ public class MyProposalList extends PersistableList<Proposal> implements VoteCon
     @Override
     public String toString() {
         return "List of UID's in MyProposalList: " + getList().stream()
-                .map(Proposal::getUid)
+                .map(Proposal::getTxId)
                 .collect(Collectors.toList());
     }
 }

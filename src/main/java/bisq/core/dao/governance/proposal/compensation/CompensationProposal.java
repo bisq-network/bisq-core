@@ -32,7 +32,6 @@ import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 
 import java.util.Date;
-import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -52,8 +51,7 @@ public final class CompensationProposal extends Proposal {
                          String link,
                          Coin requestedBsq,
                          String bsqAddress) {
-        this(UUID.randomUUID().toString(),
-                name,
+        this(name,
                 link,
                 bsqAddress,
                 requestedBsq.value,
@@ -67,16 +65,14 @@ public final class CompensationProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private CompensationProposal(String uid,
-                                 String name,
+    private CompensationProposal(String name,
                                  String link,
                                  String bsqAddress,
                                  long requestedBsq,
                                  byte version,
                                  long creationDate,
                                  String txId) {
-        super(uid,
-                name,
+        super(name,
                 link,
                 version,
                 creationDate,
@@ -96,8 +92,7 @@ public final class CompensationProposal extends Proposal {
 
     public static CompensationProposal fromProto(PB.Proposal proto) {
         final PB.CompensationProposal proposalProto = proto.getCompensationProposal();
-        return new CompensationProposal(proto.getUid(),
-                proto.getName(),
+        return new CompensationProposal(proto.getName(),
                 proto.getLink(),
                 proposalProto.getBsqAddress(),
                 proposalProto.getRequestedBsq(),
@@ -144,8 +139,7 @@ public final class CompensationProposal extends Proposal {
 
     @Override
     public Proposal cloneProposalAndAddTxId(String txId) {
-        return new CompensationProposal(getUid(),
-                getName(),
+        return new CompensationProposal(getName(),
                 getLink(),
                 getBsqAddress(),
                 getRequestedBsq().value,

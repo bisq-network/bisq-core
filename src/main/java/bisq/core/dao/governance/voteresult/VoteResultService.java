@@ -567,7 +567,7 @@ public class VoteResultService implements BsqStateListener {
         StringBuilder sb = new StringBuilder();
         sb.append("\n################################################################################\n");
         sb.append("We changed a parameter. ProposalTxId=").append(changeParamProposal.getTxId())
-                .append("\nfor changeParamProposal with UID ").append(changeParamProposal.getUid())
+                .append("\nfor changeParamProposal with UID ").append(changeParamProposal.getTxId())
                 .append("\nParam: ").append(changeParamProposal.getParam().name())
                 .append(" new value: ").append(changeParamProposal.getParamValue())
                 .append("\n################################################################################\n");
@@ -593,7 +593,7 @@ public class VoteResultService implements BsqStateListener {
                 StringBuilder sb = new StringBuilder();
                 sb.append("\n################################################################################\n");
                 sb.append("We added a bonded role. ProposalTxId=").append(bondedRoleProposal.getTxId())
-                        .append("\nfor bondedRoleProposal with UID ").append(bondedRoleProposal.getUid())
+                        .append("\nfor bondedRoleProposal with UID ").append(bondedRoleProposal.getTxId())
                         .append("\nBondedRole: ").append(bondedRole.getDisplayString())
                         .append("\n################################################################################\n");
                 log.info(sb.toString());
@@ -610,7 +610,7 @@ public class VoteResultService implements BsqStateListener {
                 StringBuilder sb = new StringBuilder();
                 sb.append("\n################################################################################\n");
                 sb.append("We confiscated  bond. ProposalTxId=").append(confiscateBondProposal.getTxId())
-                        .append("\nfor confiscateBondProposal with UID ").append(confiscateBondProposal.getUid())
+                        .append("\nfor confiscateBondProposal with UID ").append(confiscateBondProposal.getTxId())
                         .append("\nHashOfBondId: ").append(Utilities.encodeToHex(confiscateBondProposal.getHash()))
                         .append("\n################################################################################\n");
                 log.info(sb.toString());

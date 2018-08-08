@@ -49,21 +49,17 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 public abstract class Proposal implements PersistablePayload, NetworkPayload, VoteConsensusCritical {
-    //TODO remove uid
-    protected final String uid;
     protected final String name;
     protected final String link;
     protected final byte version;
     protected final long creationDate;
     protected final String txId;
 
-    protected Proposal(String uid,
-                       String name,
+    protected Proposal(String name,
                        String link,
                        byte version,
                        long creationDate,
                        @Nullable String txId) {
-        this.uid = uid;
         this.name = name;
         this.link = link;
         this.version = version;
@@ -78,7 +74,6 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Vo
 
     public PB.Proposal.Builder getProposalBuilder() {
         final PB.Proposal.Builder builder = PB.Proposal.newBuilder()
-                .setUid(uid)
                 .setName(name)
                 .setLink(link)
                 .setVersion(version)
@@ -122,10 +117,6 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Vo
         return new Date(creationDate);
     }
 
-    public String getShortId() {
-        return uid.length() > 7 ? uid.substring(0, 8) : uid;
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Abstract
@@ -145,7 +136,7 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Vo
     @Override
     public String toString() {
         return "Proposal{" +
-                "\n     uid='" + uid + '\'' +
+                "\n     uid='" + txId + '\'' +
                 ",\n     name='" + name + '\'' +
                 ",\n     link='" + link + '\'' +
                 ",\n     txId='" + txId + '\'' +

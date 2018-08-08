@@ -28,7 +28,6 @@ import bisq.common.app.Version;
 import io.bisq.generated.protobuffer.PB;
 
 import java.util.Date;
-import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -44,8 +43,7 @@ public final class BondedRoleProposal extends Proposal {
     private final BondedRole bondedRole;
 
     BondedRoleProposal(BondedRole bondedRole) {
-        this(UUID.randomUUID().toString(),
-                bondedRole.getName(),
+        this(bondedRole.getName(),
                 bondedRole.getLink(),
                 bondedRole,
                 Version.PROPOSAL,
@@ -58,15 +56,13 @@ public final class BondedRoleProposal extends Proposal {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BondedRoleProposal(String uid,
-                               String name,
+    private BondedRoleProposal(String name,
                                String link,
                                BondedRole bondedRole,
                                byte version,
                                long creationDate,
                                String txId) {
-        super(uid,
-                name,
+        super(name,
                 link,
                 version,
                 creationDate,
@@ -84,8 +80,7 @@ public final class BondedRoleProposal extends Proposal {
 
     public static BondedRoleProposal fromProto(PB.Proposal proto) {
         final PB.BondedRoleProposal proposalProto = proto.getBondedRoleProposal();
-        return new BondedRoleProposal(proto.getUid(),
-                proto.getName(),
+        return new BondedRoleProposal(proto.getName(),
                 proto.getLink(),
                 BondedRole.fromProto(proposalProto.getBondedRole()),
                 (byte) proto.getVersion(),
@@ -120,8 +115,7 @@ public final class BondedRoleProposal extends Proposal {
 
     @Override
     public Proposal cloneProposalAndAddTxId(String txId) {
-        return new BondedRoleProposal(getUid(),
-                getName(),
+        return new BondedRoleProposal(getName(),
                 getLink(),
                 getBondedRole(),
                 getVersion(),

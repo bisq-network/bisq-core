@@ -52,7 +52,8 @@ public class CompensationValidator extends ProposalValidator {
             notEmpty(bsqAddress, "bsqAddress must not be empty");
             checkArgument(bsqAddress.substring(0, 1).equals("B"), "bsqAddress must start with B");
             compensationProposal.getAddress(); // throws AddressFormatException if wrong address
-            final Coin requestedBsq = compensationProposal.getRequestedBsq();
+
+            Coin requestedBsq = compensationProposal.getRequestedBsq();
             checkArgument(requestedBsq.compareTo(getMaxCompensationRequestAmount()) <= 0,
                     "Requested BSQ must not exceed MaxCompensationRequestAmount");
             checkArgument(requestedBsq.compareTo(getMinCompensationRequestAmount()) >= 0,
