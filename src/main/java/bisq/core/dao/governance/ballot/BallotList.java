@@ -39,7 +39,7 @@ public class BallotList extends PersistableList<Ballot> implements VoteConsensus
         super(list);
     }
 
-    public BallotList() {
+    BallotList() {
         super();
     }
 

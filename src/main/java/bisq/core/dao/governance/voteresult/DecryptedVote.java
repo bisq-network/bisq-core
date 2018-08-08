@@ -53,7 +53,7 @@ public class DecryptedVote {
 
     public Optional<BooleanVote> getVote(String proposalTxId) {
         return ballotList.stream()
-                .filter(ballot -> ballot.getProposalTxId().equals(proposalTxId))
+                .filter(ballot -> ballot.getTxId().equals(proposalTxId))
                 .map(Ballot::getVote)
                 .filter(vote -> vote instanceof BooleanVote)
                 .map(vote -> (BooleanVote) vote)

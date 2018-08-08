@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 /**
- * Takes the proposals from the append only store and makes Ballots out of it.
+ * Takes the proposals from the append only store and makes Ballots out of it (vote is null).
  * Applies voting on individual ballots and persist the list.
  * The BallotList contains all ballots of all cycles.
  */
@@ -53,27 +53,24 @@ public class BallotListService implements PersistedDataHost {
     private final List<BallotListChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
-    public BallotListService(ProposalService proposalService,
-                             Storage<BallotList> storage) {
+    public BallotListService(ProposalService proposalService, Storage<BallotList> storage) {
         this.storage = storage;
 
         proposalService.getProposalPayloads().addListener((ListChangeListener<ProposalPayload>) c -> {
             c.next();
             if (c.wasAdded()) {
-                List<? extends ProposalPayload> proposalPayloads = c.getAddedSubList();
-                proposalPayloads.stream()
+                c.getAddedSubList().stream()
                         .map(ProposalPayload::getProposal)
-                        .filter(proposal -> !BallotUtils.listContainsProposal(proposal, ballotList.getList()))
+                        .filter(proposal -> ballotList.stream()
+                                .noneMatch(ballot -> ballot.getProposal().equals(proposal)))
                         .forEach(proposal -> {
-                            Ballot ballot = new Ballot(proposal);
-                            if (ballotList.stream().noneMatch(e -> e.equals(ballot))) {
-                                log.info("We add a proposal to a new ballot. Vote is null at that moment.proposalTxId={}",
-                                        proposal.getTxId());
-                                ballotList.add(ballot);
-                                listeners.forEach(l -> l.onListChanged(ballotList.getList()));
-                                persist();
-                            }
+                            Ballot ballot = new Ballot(proposal); // vote is null
+                            log.info("We create a new ballot with a proposal and add it to our list. " +
+                                    "Vote is null at that moment. proposalTxId={}", proposal.getTxId());
+                            ballotList.add(ballot);
+                            listeners.forEach(l -> l.onListChanged(ballotList.getList()));
                         });
+                persist();
             }
         });
     }
@@ -99,9 +96,6 @@ public class BallotListService implements PersistedDataHost {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-    }
 
     public void setVote(Ballot ballot, @Nullable Vote vote) {
         ballot.setVote(vote);

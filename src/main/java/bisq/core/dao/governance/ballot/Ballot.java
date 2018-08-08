@@ -25,9 +25,6 @@ import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-
 import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
@@ -50,9 +47,6 @@ public class Ballot implements PersistablePayload {
     protected final Proposal proposal;
     @Nullable
     protected Vote vote;
-
-    // Not persisted!
-    protected transient ObjectProperty<Vote> voteResultProperty = new SimpleObjectProperty<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -94,15 +88,10 @@ public class Ballot implements PersistablePayload {
 
     public void setVote(@Nullable Vote vote) {
         this.vote = vote;
-        voteResultProperty.set(vote);
     }
 
     public ProposalType getType() {
         return getProposal().getType();
-    }
-
-    public String getProposalTxId() {
-        return proposal.getTxId();
     }
 
     public String getTxId() {

@@ -296,7 +296,7 @@ public class VoteResultService implements BsqStateListener {
 
         // We make a map with proposalTxId as key and the ballot as value out of our stored ballot list
         Map<String, Ballot> ballotByTxIdMap = ballotListService.getBallotList().stream()
-                .collect(Collectors.toMap(Ballot::getProposalTxId, ballot -> ballot));
+                .collect(Collectors.toMap(Ballot::getTxId, ballot -> ballot));
 
         List<String> missing = new ArrayList<>();
         List<Ballot> ballots = voteByTxIdMap.entrySet().stream()

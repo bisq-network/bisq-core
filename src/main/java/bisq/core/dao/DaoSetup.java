@@ -42,7 +42,6 @@ public class DaoSetup {
     private final CycleService cycleService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
-    private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
     private final MyBlindVoteListService myBlindVoteListService;
 
@@ -60,7 +59,6 @@ public class DaoSetup {
         this.cycleService = cycleService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
-        this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.myBlindVoteListService = myBlindVoteListService;
         this.proposalService = proposalService;
@@ -75,7 +73,6 @@ public class DaoSetup {
         cycleService.start();
         proposalService.start();
         voteRevealService.start();
-        ballotListService.start();
         blindVoteService.start();
         myBlindVoteListService.start();
         voteResultService.start();

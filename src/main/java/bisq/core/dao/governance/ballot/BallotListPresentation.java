@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 
 import java.util.List;
 
@@ -35,18 +34,14 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered observableLists of the ballots from BallotListService.
+ * Provides the ballots as observableList for presentation classes.
  */
 @Slf4j
-public class FilteredBallotListService implements BallotListService.BallotListChangeListener, BsqStateListener {
+public class BallotListPresentation implements BallotListService.BallotListChangeListener, BsqStateListener {
     private final BallotListService ballotListService;
 
     @Getter
-    private final ObservableList<Ballot> allBallots = FXCollections.observableArrayList();
-    @Getter
-    private final FilteredList<Ballot> validAndConfirmedBallots = new FilteredList<>(allBallots);
-    @Getter
-    private final FilteredList<Ballot> closedBallots = new FilteredList<>(allBallots);
+    private final ObservableList<Ballot> ballots = FXCollections.observableArrayList();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -54,26 +49,14 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FilteredBallotListService(BallotListService ballotListService,
-                                     PeriodService periodService,
-                                     BsqStateService bsqStateService,
-                                     ProposalValidator proposalValidator) {
+    public BallotListPresentation(BallotListService ballotListService,
+                                  PeriodService periodService,
+                                  BsqStateService bsqStateService,
+                                  ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
 
         bsqStateService.addBsqStateListener(this);
         ballotListService.addListener(this);
-
-        validAndConfirmedBallots.setPredicate(ballot -> {
-            return proposalValidator.isValidAndConfirmed(ballot.getProposal());
-        });
-
-        closedBallots.setPredicate(ballot -> {
-            final String proposalTxId = ballot.getProposalTxId();
-            return bsqStateService.getTx(proposalTxId).isPresent() &&
-                    bsqStateService.getTx(proposalTxId)
-                            .filter(tx -> !periodService.isTxInCorrectCycle(tx.getBlockHeight(), bsqStateService.getChainHeight()))
-                            .isPresent();
-        });
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -91,6 +74,7 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
 
     @Override
     public void onParseBlockChainComplete() {
+        // As we update the list in ProposalService.onParseBlockChainComplete we need to update here as well.
         onListChanged(ballotListService.getBallotList().getList());
     }
 
@@ -101,7 +85,7 @@ public class FilteredBallotListService implements BallotListService.BallotListCh
 
     @Override
     public void onListChanged(List<Ballot> list) {
-        allBallots.clear();
-        allBallots.addAll(list);
+        ballots.clear();
+        ballots.addAll(list);
     }
 }

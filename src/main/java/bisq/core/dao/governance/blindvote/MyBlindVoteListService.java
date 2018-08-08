@@ -337,7 +337,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     private VoteWithProposalTxIdList getSortedVoteWithProposalTxIdList(BallotList sortedBallotList) {
         final List<VoteWithProposalTxId> list = sortedBallotList.stream()
-                .map(ballot -> new VoteWithProposalTxId(ballot.getProposalTxId(), ballot.getVote()))
+                .map(ballot -> new VoteWithProposalTxId(ballot.getTxId(), ballot.getVote()))
                 .collect(Collectors.toList());
         return new VoteWithProposalTxIdList(list);
     }

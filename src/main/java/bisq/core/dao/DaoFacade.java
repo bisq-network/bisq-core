@@ -24,8 +24,8 @@ import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.bonding.unlock.UnlockService;
 import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.governance.ballot.Ballot;
+import bisq.core.dao.governance.ballot.BallotListPresentation;
 import bisq.core.dao.governance.ballot.BallotListService;
-import bisq.core.dao.governance.ballot.FilteredBallotListService;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.myvote.MyVote;
@@ -83,7 +83,7 @@ import javax.annotation.Nullable;
 public class DaoFacade {
     private final ProposalListPresentation proposalListPresentation;
     private final BallotListService ballotListService;
-    private final FilteredBallotListService filteredBallotListService;
+    private final BallotListPresentation ballotListPresentation;
     private final MyProposalListService myProposalListService;
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
@@ -104,7 +104,7 @@ public class DaoFacade {
     public DaoFacade(MyProposalListService myProposalListService,
                      ProposalListPresentation proposalListPresentation,
                      BallotListService ballotListService,
-                     FilteredBallotListService filteredBallotListService,
+                     BallotListPresentation ballotListPresentation,
                      BsqStateService bsqStateService,
                      PeriodService periodService,
                      MyBlindVoteListService myBlindVoteListService,
@@ -119,7 +119,7 @@ public class DaoFacade {
                      ProposalConsensus proposalConsensus) {
         this.proposalListPresentation = proposalListPresentation;
         this.ballotListService = ballotListService;
-        this.filteredBallotListService = filteredBallotListService;
+        this.ballotListPresentation = ballotListPresentation;
         this.myProposalListService = myProposalListService;
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
@@ -254,20 +254,8 @@ public class DaoFacade {
     // Use case: Present lists
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public ObservableList<Ballot> getValidAndConfirmedBallots() {
-        return filteredBallotListService.getValidAndConfirmedBallots();
-    }
-
-    public ObservableList<Ballot> getClosedBallots() {
-        return filteredBallotListService.getClosedBallots();
-    }
-
-    public ObservableList<Ballot> getAllBallots() {
-        return filteredBallotListService.getAllBallots();
-    }
-
-    public List<MyVote> getMyVoteList() {
-        return myVoteListService.getMyVoteList().getList();
+    public ObservableList<Ballot> getBallots() {
+        return ballotListPresentation.getBallots();
     }
 
     public Tuple2<Long, Long> getMeritAndStakeForProposal(String proposalTxId) {

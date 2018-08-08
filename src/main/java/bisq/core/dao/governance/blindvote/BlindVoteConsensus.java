@@ -55,7 +55,7 @@ public class BlindVoteConsensus {
         final List<Ballot> ballotList = ballotListService.getBallotList().stream()
                 .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
                 .distinct()
-                .sorted(Comparator.comparing(Ballot::getProposalTxId)).collect(Collectors.toList());
+                .sorted(Comparator.comparing(Ballot::getTxId)).collect(Collectors.toList());
         log.info("Sorted ballotList: " + ballotList);
         return new BallotList(ballotList);
     }
