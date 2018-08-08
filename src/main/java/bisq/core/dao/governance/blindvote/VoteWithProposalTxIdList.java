@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @EqualsAndHashCode(callSuper = true)
 public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTxId> implements ConsensusCritical {
 
-    public VoteWithProposalTxIdList(List<VoteWithProposalTxId> list) {
+    VoteWithProposalTxIdList(List<VoteWithProposalTxId> list) {
         super(list);
     }
 

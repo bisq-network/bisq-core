@@ -372,7 +372,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     }
 
     private void addBlindVoteToList(BlindVote blindVote) {
-        if (!BlindVoteUtils.containsBlindVote(blindVote, myBlindVoteList.getList())) {
+        if (!myBlindVoteList.getList().contains(blindVote)) {
             myBlindVoteList.add(blindVote);
             persist();
         }

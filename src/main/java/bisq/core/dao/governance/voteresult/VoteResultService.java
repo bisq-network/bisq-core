@@ -24,7 +24,6 @@ import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
 import bisq.core.dao.governance.blindvote.BlindVoteService;
-import bisq.core.dao.governance.blindvote.BlindVoteUtils;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.governance.merit.MeritList;
@@ -251,7 +250,9 @@ public class VoteResultService implements BsqStateListener {
 
                         // Here we deal with eventual consistency of the p2p network data!
                         List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
-                        Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteList);
+                        Optional<BlindVote> optionalBlindVote = blindVoteList.stream()
+                                .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
+                                .findAny();
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.getDecryptedVotes(blindVote.getEncryptedVotes(), secretKey);
@@ -487,12 +488,12 @@ public class VoteResultService implements BsqStateListener {
             Vote vote = voteWithStake.getVote();
             if (vote != null) {
                 if (vote.isAccepted()) {
-                        stakeOfAcceptedVotes += combinedStake;
-                        numAcceptedVotes++;
-                    } else {
-                        stakeOfRejectedVotes += combinedStake;
-                        numRejectedVotes++;
-                    }
+                    stakeOfAcceptedVotes += combinedStake;
+                    numAcceptedVotes++;
+                } else {
+                    stakeOfRejectedVotes += combinedStake;
+                    numRejectedVotes++;
+                }
             } else {
                 numIgnoredVotes++;
                 log.debug("Voter ignored proposal");
