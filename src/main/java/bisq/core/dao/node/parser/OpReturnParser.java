@@ -113,9 +113,7 @@ public class OpReturnParser {
                 final String msg = "Unsupported OpReturnType. tx=" + tx +
                         "; opReturnData=" + Utils.HEX.encode(opReturnData);
                 log.error(msg);
-                if (DevEnv.isDevMode())
-                    throw new RuntimeException(msg);
-
+                DevEnv.logErrorAndThrowIfDevMode(msg);
                 break;
         }
     }

@@ -91,8 +91,7 @@ public class BlockParser {
         } else {
             //TODO check how/if that can happen
             log.warn("Block was already added.");
-            if (DevEnv.isDevMode())
-                throw new RuntimeException("Block was already added. rawBlock=" + rawBlock);
+            DevEnv.logErrorAndThrowIfDevMode("Block was already added. rawBlock=" + rawBlock);
         }
 
         // TODO should we include that in the txParser?
