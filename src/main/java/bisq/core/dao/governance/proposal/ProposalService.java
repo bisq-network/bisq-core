@@ -184,7 +184,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 .forEach(proposalPayload -> {
                     boolean success = p2PService.addPersistableNetworkPayload(proposalPayload, true);
                     if (success)
-                        log.info("We published a ProposalPayload to the P2P network as append-only data. proposalUid={}",
+                        log.info("We published a ProposalPayload to the P2P network as append-only data. proposalTxId={}",
                                 proposalPayload.getProposal().getTxId());
                     else
                         log.warn("publishToAppendOnlyDataStore failed for proposal " + proposalPayload.getProposal());
@@ -201,7 +201,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             if (!tempProposals.contains(proposal)) {
                 if (proposalValidator.isValidOrUnconfirmed(proposal)) {
                     tempProposals.add(proposal);
-                    log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalUid={}",
+                    log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalTxId={}",
                             proposal.getTxId());
                 } else {
                     //TODO called at startup when we are not in cycle of proposal
@@ -234,7 +234,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                 Proposal proposal = proposalPayload.getProposal();
                 if (proposalValidator.isValidAndConfirmed(proposal)) {
                     proposalPayloads.add(proposalPayload);
-                    log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalUid={}",
+                    log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalTxId={}",
                             proposal.getTxId());
                 } else {
                     log.debug("We received a invalid append-only proposal from the P2P network. " +

@@ -148,8 +148,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
         walletsManager.publishAndCommitBsqTx(transaction, new TxBroadcaster.Callback() {
             @Override
             public void onSuccess(Transaction transaction) {
-                log.info("Proposal tx has been published. TxId={}, proposalUid={}",
-                        transaction.getHashAsString(), proposal.getTxId());
+                log.info("Proposal tx has been published. TxId={}", transaction.getHashAsString());
                 resultHandler.handleResult();
             }
 
@@ -230,7 +229,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     private void addToP2PNetworkAsProtectedData(Proposal proposal, ErrorMessageHandler errorMessageHandler) {
         final boolean success = addToP2PNetworkAsProtectedData(proposal);
         if (success) {
-            log.info("TempProposalPayload has been added to P2P network. ProposalUid={}", proposal.getTxId());
+            log.info("TempProposalPayload has been added to P2P network. ProposalTxId={}", proposal.getTxId());
         } else {
             final String msg = "Adding of proposal to P2P network failed. proposal=" + proposal;
             log.error(msg);

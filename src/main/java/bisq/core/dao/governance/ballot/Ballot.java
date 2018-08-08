@@ -105,7 +105,7 @@ public class Ballot implements PersistablePayload {
         return proposal.getTxId();
     }
 
-    public String getUid() {
+    public String getTxId() {
         return proposal.getTxId();
     }
 

@@ -149,7 +149,7 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
         myUnconfirmedProposals.addAll(myProposalListService.getList().stream()
                 .filter(p -> !bsqStateService.getTx(p.getTxId()).isPresent()) // Tx is still not in our bsq blocks
                 .filter(p -> {
-                    final TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(p.getTxId());
+                    TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(p.getTxId());
                     return confidenceForTxId != null &&
                             confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
                 })

@@ -67,7 +67,7 @@ public class BallotListService implements PersistedDataHost {
                         .forEach(proposal -> {
                             Ballot ballot = new Ballot(proposal);
                             if (ballotList.stream().noneMatch(e -> e.equals(ballot))) {
-                                log.info("We add a proposal to a new ballot. Vote is null at that moment.proposalUid={}",
+                                log.info("We add a proposal to a new ballot. Vote is null at that moment.proposalTxId={}",
                                         proposal.getTxId());
                                 ballotList.add(ballot);
                                 listeners.forEach(l -> l.onListChanged(ballotList.getList()));

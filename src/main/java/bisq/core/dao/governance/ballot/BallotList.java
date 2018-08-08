@@ -69,7 +69,7 @@ public class BallotList extends PersistableList<Ballot> implements VoteConsensus
     @Override
     public String toString() {
         return "List of UID's in BallotList: " + getList().stream()
-                .map(Ballot::getUid)
+                .map(Ballot::getTxId)
                 .collect(Collectors.toList());
     }
 }
