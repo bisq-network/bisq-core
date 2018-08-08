@@ -21,7 +21,6 @@ import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.merit.MeritList;
-import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.governance.Param;
@@ -50,23 +49,17 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
-
-    public static BallotList getSortedBallotList(BallotListService ballotListService, ProposalValidator proposalValidator) {
+    public static BallotList getSortedBallotList(BallotListService ballotListService) {
         final List<Ballot> ballotList = ballotListService.getBallotList().stream()
-                .filter(ballot -> proposalValidator.isValidAndConfirmed(ballot.getProposal()))
-                .distinct()
                 .sorted(Comparator.comparing(Ballot::getTxId)).collect(Collectors.toList());
         log.info("Sorted ballotList: " + ballotList);
         return new BallotList(ballotList);
     }
 
-    public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService, BlindVoteValidator blindVoteValidator) {
+    public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService) {
         final List<BlindVote> list = blindVoteService.getVerifiedBlindVotes().stream()
-                .filter(blindVoteValidator::isValidAndConfirmed) // prob. not needed
-                .distinct()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
                 .collect(Collectors.toList());
-
         log.info("Sorted blindVote txId list: " + list.stream()
                 .map(BlindVote::getTxId)
                 .collect(Collectors.toList()));

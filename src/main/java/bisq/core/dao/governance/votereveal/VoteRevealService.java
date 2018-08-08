@@ -131,7 +131,7 @@ public class VoteRevealService implements BsqStateListener {
     }
 
     public byte[] getHashOfBlindVoteList() {
-        List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+        List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
         return VoteRevealConsensus.getHashOfBlindVoteList(blindVotes);
     }
 
@@ -213,7 +213,7 @@ public class VoteRevealService implements BsqStateListener {
             publishTx(myVote, voteRevealTx);
 
             // Just for additional resilience we republish our blind votes
-            final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+            final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
             rePublishBlindVotePayload(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";

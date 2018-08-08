@@ -42,14 +42,6 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Value
 public final class BlindVote implements PersistablePayload, NetworkPayload, ConsensusCritical {
-
-    public static BlindVote clone(BlindVote blindVote) {
-        return new BlindVote(blindVote.encryptedVotes,
-                blindVote.getTxId(),
-                blindVote.getStake(),
-                blindVote.getEncryptedMeritList());
-    }
-
     private final byte[] encryptedVotes; // created from voteWithProposalTxIdList
     private final String txId;
     // Stake is revealed in the BSQ tx anyway as output value so no reason to encrypt it here.

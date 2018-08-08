@@ -38,10 +38,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class MyBlindVoteList extends PersistableList<BlindVote> implements ConsensusCritical {
 
-    public MyBlindVoteList(List<BlindVote> list) {
-        super(list);
-    }
-
     MyBlindVoteList() {
         super();
     }
@@ -49,6 +45,10 @@ public class MyBlindVoteList extends PersistableList<BlindVote> implements Conse
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private MyBlindVoteList(List<BlindVote> list) {
+        super(list);
+    }
 
     @Override
     public Message toProtoMessage() {

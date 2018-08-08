@@ -25,7 +25,6 @@ import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
 import bisq.core.dao.governance.blindvote.BlindVoteService;
 import bisq.core.dao.governance.blindvote.BlindVoteUtils;
-import bisq.core.dao.governance.blindvote.BlindVoteValidator;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.governance.merit.MeritList;
@@ -94,7 +93,6 @@ public class VoteResultService implements BsqStateListener {
     private final PeriodService periodService;
     private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
-    private final BlindVoteValidator blindVoteValidator;
     private final BondedRolesService bondedRolesService;
     private final IssuanceService issuanceService;
     @Getter
@@ -119,7 +117,6 @@ public class VoteResultService implements BsqStateListener {
                              PeriodService periodService,
                              BallotListService ballotListService,
                              BlindVoteService blindVoteService,
-                             BlindVoteValidator blindVoteValidator,
                              BondedRolesService bondedRolesService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
@@ -128,7 +125,6 @@ public class VoteResultService implements BsqStateListener {
         this.periodService = periodService;
         this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
-        this.blindVoteValidator = blindVoteValidator;
         this.bondedRolesService = bondedRolesService;
         this.issuanceService = issuanceService;
 
@@ -254,7 +250,7 @@ public class VoteResultService implements BsqStateListener {
                         String blindVoteTxId = blindVoteTx.getId();
 
                         // Here we deal with eventual consistency of the p2p network data!
-                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
                         Optional<BlindVote> optionalBlindVote = BlindVoteUtils.findBlindVote(blindVoteTxId, blindVoteList);
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
@@ -377,7 +373,7 @@ public class VoteResultService implements BsqStateListener {
     }
 
     private List<BlindVote> findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService, blindVoteValidator);
+        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...
             list.remove(0);

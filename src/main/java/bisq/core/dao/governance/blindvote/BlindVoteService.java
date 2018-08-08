@@ -63,6 +63,7 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
         this.blindVoteValidator = blindVoteValidator;
 
         appendOnlyDataStoreService.addService(blindVoteStorageService);
+
         bsqStateService.addBsqStateListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
@@ -123,9 +124,8 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
         if (persistableNetworkPayload instanceof BlindVotePayload) {
             BlindVotePayload blindVotePayload = (BlindVotePayload) persistableNetworkPayload;
-
-            // TODO verify? blindVoteValidator.isValidAndConfirmed(blindVotePayload.getBlindVote())
             if (!appendOnlyStoreList.contains(blindVotePayload)) {
+                // We don't validate as we might receive blindVotes from other cycles or phases at startup.
                 appendOnlyStoreList.add(blindVotePayload);
                 log.info("We received a blindVotePayload. blindVoteTxId={}", blindVotePayload.getBlindVote().getTxId());
             }

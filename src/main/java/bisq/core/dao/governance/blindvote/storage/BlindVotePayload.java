@@ -56,7 +56,7 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
+public final class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
         CapabilityRequiringPayload, ConsensusCritical {
     private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
 

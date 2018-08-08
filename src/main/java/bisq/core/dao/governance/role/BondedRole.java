@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 
 @Slf4j
 @Getter
-public class BondedRole implements PersistablePayload, NetworkPayload {
+public final class BondedRole implements PersistablePayload, NetworkPayload {
     private final String uid;
     private final String name;
     private final String link;

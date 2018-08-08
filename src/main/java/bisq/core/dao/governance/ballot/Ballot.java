@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public class Ballot implements PersistablePayload, ConsensusCritical {
+public final class Ballot implements PersistablePayload, ConsensusCritical {
     protected final Proposal proposal;
 
     @Nullable

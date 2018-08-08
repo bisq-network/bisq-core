@@ -192,7 +192,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
             SecretKey secretKey = BlindVoteConsensus.getSecretKey();
-            BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService, proposalValidator);
+            BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService);
             byte[] encryptedVotes = getEncryptedVotes(sortedBallotList, secretKey);
             byte[] opReturnData = getOpReturnData(encryptedVotes);
             Transaction blindVoteTx = getBlindVoteTx(stake, getBlindVoteFee(), opReturnData);
