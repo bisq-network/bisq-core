@@ -78,11 +78,11 @@ public class VoteResultConsensus {
         }
     }
 
-    public static long getWeightedMeritAmount(long amount, int issuanceHeight, int currentHeight, int blocksPerYear) {
-        if (issuanceHeight > currentHeight)
-            throw new IllegalArgumentException("issuanceHeight must not be larger than currentHeight");
-        if (currentHeight < 0)
-            throw new IllegalArgumentException("currentHeight must not be negative");
+    public static long getWeightedMeritAmount(long amount, int issuanceHeight, int blockHeight, int blocksPerYear) {
+        if (issuanceHeight > blockHeight)
+            throw new IllegalArgumentException("issuanceHeight must not be larger than blockHeight");
+        if (blockHeight < 0)
+            throw new IllegalArgumentException("blockHeight must not be negative");
         if (amount < 0)
             throw new IllegalArgumentException("amount must not be negative");
         if (blocksPerYear < 0)
@@ -91,7 +91,7 @@ public class VoteResultConsensus {
         // We use a linear function  to apply a factor for the issuance amount of 1 if the issuance was recent and 0
         // if the issuance was 2 years old or older.
         int maxAge = 2 * blocksPerYear;
-        int age = Math.min(maxAge, currentHeight - issuanceHeight);
+        int age = Math.min(maxAge, blockHeight - issuanceHeight);
 
         double rel = MathUtils.roundDouble((double) age / (double) maxAge, 10);
         double factor = 1d - rel;
@@ -132,10 +132,15 @@ public class VoteResultConsensus {
                 })
                 .mapToLong(merit -> {
                     try {
-                        return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
-                                merit.getIssuance().getChainHeight(),
-                                txChainHeight,
-                                blocksPerYear);
+                        int issuanceHeight = merit.getIssuance().getChainHeight();
+                        if (issuanceHeight <= txChainHeight) {
+                            return getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                                    issuanceHeight,
+                                    txChainHeight,
+                                    blocksPerYear);
+                        } else {
+                            return 0;
+                        }
                     } catch (Throwable t) {
                         log.error("Error at getMeritStake: " + t.toString());
                         return 0;
@@ -153,10 +158,15 @@ public class VoteResultConsensus {
         return meritList.getList().stream()
                 .mapToLong(merit -> {
                     try {
-                        return VoteResultConsensus.getWeightedMeritAmount(merit.getIssuance().getAmount(),
-                                merit.getIssuance().getChainHeight(),
-                                chainHeight,
-                                blocksPerYear);
+                        int issuanceHeight = merit.getIssuance().getChainHeight();
+                        if (issuanceHeight <= chainHeight) {
+                            return getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                                    merit.getIssuance().getChainHeight(),
+                                    chainHeight,
+                                    blocksPerYear);
+                        } else {
+                            return 0;
+                        }
                     } catch (Throwable t) {
                         log.error("Error at getMeritStake: " + t.toString());
                         return 0;
