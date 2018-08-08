@@ -57,7 +57,7 @@ public class BallotListService implements PersistedDataHost {
                              Storage<BallotList> storage) {
         this.storage = storage;
 
-        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalPayload>) c -> {
+        proposalService.getProposalPayloads().addListener((ListChangeListener<ProposalPayload>) c -> {
             c.next();
             if (c.wasAdded()) {
                 List<? extends ProposalPayload> proposalPayloads = c.getAddedSubList();

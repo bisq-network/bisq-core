@@ -29,6 +29,9 @@ import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Encapsulates consensus critical aspects.
+ */
 @Slf4j
 public class ProposalConsensus {
     public Coin getFee(BsqStateService bsqStateService, int chainHeadHeight) {

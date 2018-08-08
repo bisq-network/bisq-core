@@ -19,8 +19,6 @@ package bisq.core.dao.governance.proposal;
 
 import bisq.core.dao.governance.ValidationException;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
-import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
-import bisq.core.dao.governance.proposal.role.BondedRoleProposal;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxType;
@@ -59,16 +57,11 @@ public class ProposalValidator {
     public void validateDataFields(Proposal proposal) throws ValidationException {
         try {
             notEmpty(proposal.getName(), "name must not be empty");
-
-            //TODO use diff validators (store validators in proposal)
-            if (!(proposal instanceof BondedRoleProposal) && !(proposal instanceof ConfiscateBondProposal)) {
-                notEmpty(proposal.getLink(), "link must not be empty");
-            }
+            notEmpty(proposal.getLink(), "link must not be empty");
         } catch (Throwable throwable) {
             throw new ValidationException(throwable);
         }
     }
-
 
     public boolean isValidOrUnconfirmed(Proposal proposal) {
         return isValid(proposal, true);
@@ -80,22 +73,22 @@ public class ProposalValidator {
 
     private boolean isValid(Proposal proposal, boolean allowUnconfirmed) {
         if (!areDataFieldsValid(proposal)) {
-            log.warn("proposal data fields are invalid. proposal.getTxId()={}", proposal.getTxId());
+            log.warn("proposal data fields are invalid. proposal={}", proposal);
             return false;
         }
 
-        final String txId = proposal.getTxId();
+        String txId = proposal.getTxId();
         if (txId == null || txId.equals("")) {
             log.warn("txId must be set. proposal.getTxId()={}", proposal.getTxId());
             return false;
         }
 
         Optional<Tx> optionalTx = bsqStateService.getTx(txId);
-        final boolean isTxConfirmed = optionalTx.isPresent();
+        boolean isTxConfirmed = optionalTx.isPresent();
         int chainHeight = bsqStateService.getChainHeight();
 
         if (isTxConfirmed) {
-            final int txHeight = optionalTx.get().getBlockHeight();
+            int txHeight = optionalTx.get().getBlockHeight();
             if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
                 log.debug("Tx is not in current cycle. proposal.getTxId()={}", proposal.getTxId());
                 return false;
@@ -119,7 +112,7 @@ public class ProposalValidator {
             return true;
         } else if (allowUnconfirmed) {
             // We want to show own unconfirmed proposals in the active proposals list.
-            final boolean inPhase = periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
+            boolean inPhase = periodService.isInPhase(chainHeight, DaoPhase.Phase.PROPOSAL);
             if (inPhase)
                 log.debug("proposal is unconfirmed and we are in proposal phase: txId={}", txId);
             return inPhase;

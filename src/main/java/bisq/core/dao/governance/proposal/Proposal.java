@@ -49,6 +49,7 @@ import javax.annotation.concurrent.Immutable;
 @Getter
 @EqualsAndHashCode
 public abstract class Proposal implements PersistablePayload, NetworkPayload, VoteConsensusCritical {
+    //TODO remove uid
     protected final String uid;
     protected final String name;
     protected final String link;

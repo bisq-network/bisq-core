@@ -178,7 +178,12 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
         // Inconsistently propagated payloads in the p2p network could have potentially worse effects.
         addToP2PNetworkAsProtectedData(proposal, errorMessageHandler);
 
-        addToList(proposal);
+        // Add to list
+        if (!ProposalUtils.containsProposal(proposal, getList())) {
+            myProposalList.add(proposal);
+            listeners.forEach(l -> l.onListChanged(getList()));
+            persist();
+        }
     }
 
     public boolean remove(Proposal proposal) {
@@ -235,14 +240,6 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
 
     private boolean addToP2PNetworkAsProtectedData(Proposal proposal) {
         return p2PService.addProtectedStorageEntry(new TempProposalPayload(proposal, signaturePubKey), true);
-    }
-
-    private void addToList(Proposal proposal) {
-        if (!ProposalUtils.containsProposal(proposal, getList())) {
-            myProposalList.add(proposal);
-            listeners.forEach(l -> l.onListChanged(getList()));
-            persist();
-        }
     }
 
     private void rePublishOnceWellConnected() {

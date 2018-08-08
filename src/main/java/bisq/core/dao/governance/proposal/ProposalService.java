@@ -45,12 +45,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Maintains protectedStoreList and appendOnlyStoreList.
+ * Maintains protectedStoreList and appendOnlyStoreList for received proposals.
  * Republishes protectedStoreList to append-only data store when entering the break before the blind vote phase.
  */
 @Slf4j
 public class ProposalService implements HashMapChangedListener, AppendOnlyDataStoreListener, BsqStateListener {
-
     private final P2PService p2PService;
     private final PeriodService periodService;
     private final BsqStateService bsqStateService;
@@ -59,14 +58,13 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     // Proposals we receive in the proposal phase. They can be removed in that phase. That list must not be used for
     // consensus critical code.
     @Getter
-    private final ObservableList<Proposal> protectedStoreList = FXCollections.observableArrayList();
+    private final ObservableList<Proposal> tempProposals = FXCollections.observableArrayList();
 
     // Proposals which got added to the append-only data store in the break before the blind vote phase.
     // They cannot be removed anymore. This list is used for consensus critical code. Different nodes might have
     // different data collections due the eventually consistency of the P2P network.
     @Getter
-    private final ObservableList<ProposalPayload> appendOnlyStoreList = FXCollections.observableArrayList();
-
+    private final ObservableList<ProposalPayload> proposalPayloads = FXCollections.observableArrayList();
     private boolean parsingComplete;
 
 
@@ -88,12 +86,15 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         this.bsqStateService = bsqStateService;
         this.proposalValidator = proposalValidator;
 
+        // We add our stores to the global stores
         appendOnlyDataStoreService.addService(proposalStorageService);
         protectedDataStoreService.addService(tempProposalStorageService);
 
         bsqStateService.addBsqStateListener(this);
 
+        // Listen for tempProposals
         p2PService.addHashSetChangedListener(this);
+        // Listen for proposalPayloads
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
 
@@ -103,37 +104,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void start() {
-        fillListFromAppendOnlyDataStore();
-        fillListFromProtectedStore();
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // BsqStateListener
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void onNewBlockHeight(int blockHeight) {
-    }
-
-    @Override
-    public void onParseTxsComplete(Block block) {
-        int heightForRepublishing = periodService.getFirstBlockOfPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.BREAK1);
-        if (block.getHeight() == heightForRepublishing) {
-            // We only republish if we are not still parsing old blocks
-            // TODO rethink that...
-            if (parsingComplete)
-                publishToAppendOnlyDataStore();
-
-            fillListFromAppendOnlyDataStore();
-        }
-    }
-
-    @Override
-    public void onParseBlockChainComplete() {
-        parsingComplete = true;
-
-        // Fill the lists with the data we have collected in out stores.
         fillListFromProtectedStore();
         fillListFromAppendOnlyDataStore();
     }
@@ -165,6 +135,38 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    // BsqStateListener
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onNewBlockHeight(int blockHeight) {
+    }
+
+    @Override
+    public void onParseTxsComplete(Block block) {
+        int heightForRepublishing = periodService.getFirstBlockOfPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.BREAK1);
+        if (block.getHeight() == heightForRepublishing) {
+            // We only republish if we are completed with parsing old blocks, otherwise we would republish old
+            // proposals all the time
+            if (parsingComplete)
+                publishToAppendOnlyDataStore();
+
+            fillListFromAppendOnlyDataStore();
+        }
+    }
+
+    @Override
+    public void onParseBlockChainComplete() {
+        log.error("onParseBlockChainComplete " + bsqStateService.getChainHeight());
+        parsingComplete = true;
+
+        // Fill the lists with the data we have collected in out stores.
+        fillListFromProtectedStore();
+        fillListFromAppendOnlyDataStore();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -176,9 +178,8 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         p2PService.getP2PDataStorage().getAppendOnlyDataStoreMap().values().forEach(this::onAppendOnlyDataAdded);
     }
 
-
     private void publishToAppendOnlyDataStore() {
-        protectedStoreList.stream()
+        tempProposals.stream()
                 .filter(proposalValidator::isValidAndConfirmed)
                 .map(ProposalPayload::new)
                 .forEach(proposalPayload -> {
@@ -198,9 +199,9 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             // We do not validate phase, cycle and confirmation yet as the tx might be not available/confirmed yet.
             // Though we check if we are in the proposal phase. During parsing we might miss proposals but we will
             // handle that in the node to request again the p2p network data so we get added potentially missed data
-            if (!protectedStoreList.contains(proposal)) {
+            if (!tempProposals.contains(proposal)) {
                 if (proposalValidator.isValidOrUnconfirmed(proposal)) {
-                    protectedStoreList.add(proposal);
+                    tempProposals.add(proposal);
                     log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalUid={}",
                             proposal.getUid());
                 } else {
@@ -218,8 +219,8 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             final Proposal proposal = ((TempProposalPayload) protectedStoragePayload).getProposal();
             // We allow removal only if we are in the proposal phase.
             if (periodService.isInPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.PROPOSAL)) {
-                if (protectedStoreList.contains(proposal))
-                    protectedStoreList.remove(proposal);
+                if (tempProposals.contains(proposal))
+                    tempProposals.remove(proposal);
             } else {
                 log.warn("We received a remove request outside the PROPOSAL phase. " +
                         "Proposal.txId={}, blockHeight={}", proposal.getTxId(), bsqStateService.getChainHeight());
@@ -230,10 +231,10 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
     private void onAppendOnlyDataAdded(PersistableNetworkPayload persistableNetworkPayload) {
         if (persistableNetworkPayload instanceof ProposalPayload) {
             ProposalPayload proposalPayload = (ProposalPayload) persistableNetworkPayload;
-            if (!appendOnlyStoreList.contains(proposalPayload)) {
+            if (!proposalPayloads.contains(proposalPayload)) {
                 Proposal proposal = proposalPayload.getProposal();
                 if (proposalValidator.isValidAndConfirmed(proposal)) {
-                    appendOnlyStoreList.add(proposalPayload);
+                    proposalPayloads.add(proposalPayload);
                     log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalUid={}",
                             proposal.getUid());
                 } else {

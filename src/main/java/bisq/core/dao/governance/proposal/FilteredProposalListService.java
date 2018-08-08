@@ -83,10 +83,10 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
         bsqStateService.addBsqStateListener(this);
         myProposalListService.addListener(this);
 
-        proposalService.getProtectedStoreList().addListener((ListChangeListener<Proposal>) c -> {
+        proposalService.getTempProposals().addListener((ListChangeListener<Proposal>) c -> {
             updateLists();
         });
-        proposalService.getAppendOnlyStoreList().addListener((ListChangeListener<ProposalPayload>) c -> {
+        proposalService.getProposalPayloads().addListener((ListChangeListener<ProposalPayload>) c -> {
             updateLists();
         });
 
@@ -134,8 +134,8 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
     }
 
     private void updateLists() {
-        final List<Proposal> tempProposals = proposalService.getProtectedStoreList();
-        final Set<Proposal> verifiedProposals = proposalService.getAppendOnlyStoreList().stream()
+        final List<Proposal> tempProposals = proposalService.getTempProposals();
+        final Set<Proposal> verifiedProposals = proposalService.getProposalPayloads().stream()
                 .map(ProposalPayload::getProposal)
                 .collect(Collectors.toSet());
         Set<Proposal> set = new HashSet<>(tempProposals);

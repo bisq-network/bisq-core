@@ -41,8 +41,10 @@ class ProposalUtils {
     }
 
     public static boolean canRemoveProposal(Proposal proposal, BsqStateService bsqStateService, PeriodService periodService) {
-        final Optional<Tx> optionalProposalTx = bsqStateService.getTx(proposal.getTxId());
-        return !optionalProposalTx.isPresent() || isTxInProposalPhaseAndCycle(optionalProposalTx.get(), periodService, bsqStateService);
+        return bsqStateService.getTx(proposal.getTxId())
+                .filter(tx -> isTxInProposalPhaseAndCycle(tx, periodService, bsqStateService))
+                .isPresent();
+
     }
 
     private static boolean isTxInProposalPhaseAndCycle(Tx tx, PeriodService periodService, BsqStateService bsqStateService) {
