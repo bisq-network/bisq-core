@@ -20,7 +20,6 @@ package bisq.core.dao.governance.voteresult;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
-import bisq.core.dao.governance.ballot.vote.BooleanVote;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
@@ -491,18 +490,13 @@ public class VoteResultService implements BsqStateListener {
                     proposal.getTxId(), stake, meritStake, combinedStake);
             Vote vote = voteWithStake.getVote();
             if (vote != null) {
-                if (vote instanceof BooleanVote) {
-                    BooleanVote result = (BooleanVote) vote;
-                    if (result.isAccepted()) {
+                if (vote.isAccepted()) {
                         stakeOfAcceptedVotes += combinedStake;
                         numAcceptedVotes++;
                     } else {
                         stakeOfRejectedVotes += combinedStake;
                         numRejectedVotes++;
                     }
-                } /*else if (vote instanceof LongVote) {
-                    //not used yet
-                }*/
             } else {
                 numIgnoredVotes++;
                 log.debug("Voter ignored proposal");

@@ -19,7 +19,7 @@ package bisq.core.dao.governance.voteresult;
 
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
-import bisq.core.dao.governance.ballot.vote.BooleanVote;
+import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
 
@@ -51,12 +51,10 @@ public class DecryptedVote {
         this.meritList = meritList;
     }
 
-    public Optional<BooleanVote> getVote(String proposalTxId) {
+    public Optional<Vote> getVote(String proposalTxId) {
         return ballotList.stream()
                 .filter(ballot -> ballot.getTxId().equals(proposalTxId))
                 .map(Ballot::getVote)
-                .filter(vote -> vote instanceof BooleanVote)
-                .map(vote -> (BooleanVote) vote)
                 .findAny();
     }
 

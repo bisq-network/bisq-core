@@ -45,6 +45,7 @@ import javax.annotation.Nullable;
 @EqualsAndHashCode
 public class Ballot implements PersistablePayload {
     protected final Proposal proposal;
+
     @Nullable
     protected Vote vote;
 
@@ -96,6 +97,10 @@ public class Ballot implements PersistablePayload {
 
     public String getTxId() {
         return proposal.getTxId();
+    }
+
+    public Optional<Vote> getVoteAsOptional() {
+        return Optional.ofNullable(vote);
     }
 
     @Override

@@ -17,36 +17,35 @@
 
 package bisq.core.dao.governance.ballot.vote;
 
-import bisq.common.proto.ProtobufferRuntimeException;
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 
 import io.bisq.generated.protobuffer.PB;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import com.google.protobuf.Message;
 
-@EqualsAndHashCode
-@ToString
-public abstract class Vote implements PersistablePayload, NetworkPayload {
+import lombok.Value;
+
+@Value
+public class Vote implements PersistablePayload, NetworkPayload {
+    private boolean accepted;
+
+    public Vote(boolean accepted) {
+        this.accepted = accepted;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public static Vote fromProto(PB.Vote proto) {
-        switch (proto.getMessageCase()) {
-            case BOOLEAN_VOTE:
-                return BooleanVote.fromProto(proto);
-            case LONG_VOTE:
-                return LongVote.fromProto(proto);
-            default:
-                throw new ProtobufferRuntimeException("Unknown message case: " + proto.getMessageCase());
-        }
+    @Override
+    public Message toProtoMessage() {
+        return PB.Vote.newBuilder()
+                .setAccepted(accepted)
+                .build();
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public PB.Vote.Builder getVoteBuilder() {
-        return PB.Vote.newBuilder();
+    public static Vote fromProto(PB.Vote proto) {
+        return new Vote(proto.getAccepted());
     }
 }
