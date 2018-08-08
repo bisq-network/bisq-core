@@ -22,7 +22,6 @@ import bisq.core.dao.governance.proposal.storage.appendonly.ProposalPayload;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
-import bisq.core.dao.state.period.PeriodService;
 
 import org.bitcoinj.core.TransactionConfidence;
 
@@ -33,7 +32,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,23 +41,20 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Provides filtered observableLists of the Proposals from proposalService.
+ * Provides filtered observableLists of the Proposals from proposalService and myProposalListService.
+ * We want to show the own proposals in unconfirmed state (validation of phase and cycle cannot be done but as it is
+ * our own proposal that is not critical). Foreign proposals are only shown if confirmed and fully validated.
  */
 @Slf4j
-public class FilteredProposalListService implements BsqStateListener, MyProposalListService.Listener {
+public class ProposalListPresentation implements BsqStateListener, MyProposalListService.Listener {
     private final ProposalService proposalService;
     private final BsqStateService bsqStateService;
     private final MyProposalListService myProposalListService;
     private final BsqWalletService bsqWalletService;
     private final ProposalValidator proposalValidator;
-    private final PeriodService periodService;
-    @Getter
     private final ObservableList<Proposal> allProposals = FXCollections.observableArrayList();
     @Getter
     private final FilteredList<Proposal> activeOrMyUnconfirmedProposals = new FilteredList<>(allProposals);
-    @Getter
-    private final FilteredList<Proposal> closedProposals = new FilteredList<>(allProposals);
-    private final List<Proposal> myUnconfirmedProposals = new ArrayList<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -67,18 +62,16 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public FilteredProposalListService(ProposalService proposalService,
-                                       BsqStateService bsqStateService,
-                                       MyProposalListService myProposalListService,
-                                       BsqWalletService bsqWalletService,
-                                       ProposalValidator proposalValidator,
-                                       PeriodService periodService) {
+    public ProposalListPresentation(ProposalService proposalService,
+                                    BsqStateService bsqStateService,
+                                    MyProposalListService myProposalListService,
+                                    BsqWalletService bsqWalletService,
+                                    ProposalValidator proposalValidator) {
         this.proposalService = proposalService;
         this.bsqStateService = bsqStateService;
         this.myProposalListService = myProposalListService;
         this.bsqWalletService = bsqWalletService;
         this.proposalValidator = proposalValidator;
-        this.periodService = periodService;
 
         bsqStateService.addBsqStateListener(this);
         myProposalListService.addListener(this);
@@ -89,8 +82,6 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
         proposalService.getProposalPayloads().addListener((ListChangeListener<ProposalPayload>) c -> {
             updateLists();
         });
-
-        updatePredicates();
     }
 
 
@@ -127,15 +118,9 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private void updatePredicates() {
-        activeOrMyUnconfirmedProposals.setPredicate(proposal -> proposalValidator.isValidAndConfirmed(proposal) ||
-                myUnconfirmedProposals.contains(proposal));
-        closedProposals.setPredicate(proposal -> periodService.isTxInPastCycle(proposal.getTxId(), periodService.getChainHeight()));
-    }
-
     private void updateLists() {
-        final List<Proposal> tempProposals = proposalService.getTempProposals();
-        final Set<Proposal> verifiedProposals = proposalService.getProposalPayloads().stream()
+        List<Proposal> tempProposals = proposalService.getTempProposals();
+        Set<Proposal> verifiedProposals = proposalService.getProposalPayloads().stream()
                 .map(ProposalPayload::getProposal)
                 .collect(Collectors.toSet());
         Set<Proposal> set = new HashSet<>(tempProposals);
@@ -144,21 +129,23 @@ public class FilteredProposalListService implements BsqStateListener, MyProposal
         // We want to show our own unconfirmed proposals. Unconfirmed proposals from other users are not included
         // in the list.
         // If a tx is not found in the bsqStateService it can be that it is either unconfirmed or invalid.
-        // To avoid inclusion of invalid txs we add a check for the confidence type from the bsqWalletService.
-        myUnconfirmedProposals.clear();
-        myUnconfirmedProposals.addAll(myProposalListService.getList().stream()
+        // To avoid inclusion of invalid txs we add a check for the confidence type PENDING from the bsqWalletService.
+        // So we only add proposals if they are unconfirmed and therefor not yet parsed. Once confirmed they have to be
+        // found in the bsqStateService.
+        List<Proposal> myUnconfirmedProposals = myProposalListService.getList().stream()
                 .filter(p -> !bsqStateService.getTx(p.getTxId()).isPresent()) // Tx is still not in our bsq blocks
                 .filter(p -> {
                     TransactionConfidence confidenceForTxId = bsqWalletService.getConfidenceForTxId(p.getTxId());
                     return confidenceForTxId != null &&
                             confidenceForTxId.getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
                 })
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
         set.addAll(myUnconfirmedProposals);
 
         allProposals.clear();
         allProposals.addAll(set);
 
-        updatePredicates();
+        activeOrMyUnconfirmedProposals.setPredicate(proposal -> proposalValidator.isValidAndConfirmed(proposal) ||
+                myUnconfirmedProposals.contains(proposal));
     }
 }

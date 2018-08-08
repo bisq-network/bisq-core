@@ -30,8 +30,8 @@ import bisq.core.dao.governance.blindvote.BlindVoteValidator;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.governance.merit.MeritList;
-import bisq.core.dao.governance.proposal.FilteredProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
+import bisq.core.dao.governance.proposal.ProposalListPresentation;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
 import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.governance.proposal.param.ChangeParamProposal;
@@ -90,7 +90,7 @@ import javax.annotation.Nullable;
 @Slf4j
 public class VoteResultService implements BsqStateListener {
     private final VoteRevealService voteRevealService;
-    private final FilteredProposalListService filteredProposalListService;
+    private final ProposalListPresentation proposalListPresentation;
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
@@ -115,7 +115,7 @@ public class VoteResultService implements BsqStateListener {
 
     @Inject
     public VoteResultService(VoteRevealService voteRevealService,
-                             FilteredProposalListService filteredProposalListService,
+                             ProposalListPresentation proposalListPresentation,
                              BsqStateService bsqStateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
@@ -124,7 +124,7 @@ public class VoteResultService implements BsqStateListener {
                              BondedRolesService bondedRolesService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
-        this.filteredProposalListService = filteredProposalListService;
+        this.proposalListPresentation = proposalListPresentation;
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
@@ -439,7 +439,7 @@ public class VoteResultService implements BsqStateListener {
         evaluatedProposals.forEach(evaluatedProposal -> lookupMap.put(evaluatedProposal.getProposalTxId(), evaluatedProposal));
 
         // Proposals which did not get any vote need to be set as failed.
-        filteredProposalListService.getActiveOrMyUnconfirmedProposals().stream()
+        proposalListPresentation.getActiveOrMyUnconfirmedProposals().stream()
                 .filter(proposal -> !lookupMap.containsKey(proposal.getTxId()))
                 .forEach(proposal -> {
                     long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);

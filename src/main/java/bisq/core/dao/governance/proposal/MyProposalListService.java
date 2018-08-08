@@ -264,7 +264,7 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
         storage.queueUpForSave();
     }
 
-    public boolean canRemoveProposal(Proposal proposal, BsqStateService bsqStateService, PeriodService periodService) {
+    private boolean canRemoveProposal(Proposal proposal, BsqStateService bsqStateService, PeriodService periodService) {
         return bsqStateService.getTx(proposal.getTxId())
                 .filter(tx -> isTxInProposalPhaseAndCycle(tx, periodService, bsqStateService))
                 .isPresent();

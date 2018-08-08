@@ -27,9 +27,9 @@ import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.blindvote.storage.BlindVoteStorageService;
 import bisq.core.dao.governance.blindvote.storage.BlindVoteStore;
 import bisq.core.dao.governance.myvote.MyVoteListService;
-import bisq.core.dao.governance.proposal.FilteredProposalListService;
 import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.ProposalConsensus;
+import bisq.core.dao.governance.proposal.ProposalListPresentation;
 import bisq.core.dao.governance.proposal.ProposalService;
 import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.governance.proposal.compensation.CompensationConsensus;
@@ -125,7 +125,7 @@ public class DaoModule extends AppModule {
         bind(ProposalService.class).in(Singleton.class);
 
         bind(MyProposalListService.class).in(Singleton.class);
-        bind(FilteredProposalListService.class).in(Singleton.class);
+        bind(ProposalListPresentation.class).in(Singleton.class);
 
         bind(ProposalStore.class).in(Singleton.class);
         bind(ProposalStorageService.class).in(Singleton.class);

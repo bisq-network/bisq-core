@@ -30,10 +30,10 @@ import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.myvote.MyVote;
 import bisq.core.dao.governance.myvote.MyVoteListService;
-import bisq.core.dao.governance.proposal.FilteredProposalListService;
 import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalConsensus;
+import bisq.core.dao.governance.proposal.ProposalListPresentation;
 import bisq.core.dao.governance.proposal.ProposalWithTransaction;
 import bisq.core.dao.governance.proposal.TxException;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposalService;
@@ -81,7 +81,7 @@ import javax.annotation.Nullable;
  * by providing a reduced API and/or aggregating subroutines.
  */
 public class DaoFacade {
-    private final FilteredProposalListService filteredProposalListService;
+    private final ProposalListPresentation proposalListPresentation;
     private final BallotListService ballotListService;
     private final FilteredBallotListService filteredBallotListService;
     private final MyProposalListService myProposalListService;
@@ -102,7 +102,7 @@ public class DaoFacade {
 
     @Inject
     public DaoFacade(MyProposalListService myProposalListService,
-                     FilteredProposalListService filteredProposalListService,
+                     ProposalListPresentation proposalListPresentation,
                      BallotListService ballotListService,
                      FilteredBallotListService filteredBallotListService,
                      BsqStateService bsqStateService,
@@ -117,7 +117,7 @@ public class DaoFacade {
                      LockupService lockupService,
                      UnlockService unlockService,
                      ProposalConsensus proposalConsensus) {
-        this.filteredProposalListService = filteredProposalListService;
+        this.proposalListPresentation = proposalListPresentation;
         this.ballotListService = ballotListService;
         this.filteredBallotListService = filteredBallotListService;
         this.myProposalListService = myProposalListService;
@@ -172,15 +172,7 @@ public class DaoFacade {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public ObservableList<Proposal> getActiveOrMyUnconfirmedProposals() {
-        return filteredProposalListService.getActiveOrMyUnconfirmedProposals();
-    }
-
-    public ObservableList<Proposal> getClosedProposals() {
-        return filteredProposalListService.getClosedProposals();
-    }
-
-    public List<Proposal> getMyProposals() {
-        return myProposalListService.getList();
+        return proposalListPresentation.getActiveOrMyUnconfirmedProposals();
     }
 
 

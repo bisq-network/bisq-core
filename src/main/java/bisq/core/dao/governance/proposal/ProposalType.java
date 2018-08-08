@@ -30,4 +30,8 @@ public enum ProposalType {
     public String getDisplayName() {
         return Res.get("dao.proposal.type." + name());
     }
+
+    public String getShortDisplayName() {
+        return Res.get("dao.proposal.type.short." + name());
+    }
 }

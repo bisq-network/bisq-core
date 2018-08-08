@@ -39,7 +39,7 @@ public class MyProposalList extends PersistableList<Proposal> implements VoteCon
         super(list);
     }
 
-    public MyProposalList() {
+    MyProposalList() {
         super();
     }
 
