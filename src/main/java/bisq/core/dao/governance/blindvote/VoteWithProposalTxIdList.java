@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.blindvote;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 // TODO create diff. super class
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
-public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTxId> implements VoteConsensusCritical {
+public class VoteWithProposalTxIdList extends PersistableList<VoteWithProposalTxId> implements ConsensusCritical {
 
     public VoteWithProposalTxIdList(List<VoteWithProposalTxId> list) {
         super(list);

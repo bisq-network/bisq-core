@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.proposal;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
 import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposal;
 import bisq.core.dao.governance.proposal.param.ChangeParamProposal;
@@ -48,7 +48,7 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public abstract class Proposal implements PersistablePayload, NetworkPayload, VoteConsensusCritical {
+public abstract class Proposal implements PersistablePayload, NetworkPayload, ConsensusCritical {
     protected final String name;
     protected final String link;
     protected final byte version;

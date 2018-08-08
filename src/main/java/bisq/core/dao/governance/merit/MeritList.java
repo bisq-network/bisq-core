@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.merit;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
@@ -37,7 +37,7 @@ import lombok.EqualsAndHashCode;
 // Not used as PersistableList
 // TODO create diff. super class
 @EqualsAndHashCode(callSuper = true)
-public class MeritList extends PersistableList<Merit> implements VoteConsensusCritical {
+public class MeritList extends PersistableList<Merit> implements ConsensusCritical {
 
     public MeritList(List<Merit> list) {
         super(list);

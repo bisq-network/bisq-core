@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.ballot;
 
+import bisq.core.dao.governance.ConsensusCritical;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalType;
@@ -43,7 +44,7 @@ import javax.annotation.Nullable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-public class Ballot implements PersistablePayload {
+public class Ballot implements PersistablePayload, ConsensusCritical {
     protected final Proposal proposal;
 
     @Nullable

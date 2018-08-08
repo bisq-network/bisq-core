@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.ballot;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
@@ -33,7 +33,7 @@ import lombok.EqualsAndHashCode;
  * PersistableEnvelope wrapper for list of ballots.
  */
 @EqualsAndHashCode(callSuper = true)
-public class BallotList extends PersistableList<Ballot> implements VoteConsensusCritical {
+public class BallotList extends PersistableList<Ballot> implements ConsensusCritical {
 
     public BallotList(List<Ballot> list) {
         super(list);

@@ -26,7 +26,7 @@ public class ProposalWithTransaction {
     private final Proposal proposal;
     private final Transaction transaction;
 
-    public ProposalWithTransaction(Proposal proposal, Transaction transaction) {
+    ProposalWithTransaction(Proposal proposal, Transaction transaction) {
         this.proposal = proposal;
         this.transaction = transaction;
     }

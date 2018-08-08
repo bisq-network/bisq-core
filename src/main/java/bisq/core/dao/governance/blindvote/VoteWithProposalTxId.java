@@ -38,7 +38,7 @@ public class VoteWithProposalTxId implements PersistablePayload {
     @Nullable
     private final Vote vote;
 
-    public VoteWithProposalTxId(String proposalTxId, @Nullable Vote vote) {
+    VoteWithProposalTxId(String proposalTxId, @Nullable Vote vote) {
         this.proposalTxId = proposalTxId;
         this.vote = vote;
     }

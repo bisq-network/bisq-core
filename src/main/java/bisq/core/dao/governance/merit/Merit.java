@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.merit;
 
+import bisq.core.dao.governance.ConsensusCritical;
 import bisq.core.dao.state.governance.Issuance;
 
 import bisq.common.proto.network.NetworkPayload;
@@ -30,7 +31,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @EqualsAndHashCode
-public class Merit implements PersistablePayload, NetworkPayload {
+public class Merit implements PersistablePayload, NetworkPayload, ConsensusCritical {
     @Getter
     private final Issuance issuance;
     @Getter

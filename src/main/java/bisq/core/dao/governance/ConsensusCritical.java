@@ -15,11 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.core.dao.governance.ballot.vote;
+package bisq.core.dao.governance;
 
 /**
  * Marker interface for classes which are critical in the vote consensus process. Any changes in that class might cause
  * consensus failures with older versions.
  */
-public interface VoteConsensusCritical {
+public interface ConsensusCritical {
 }

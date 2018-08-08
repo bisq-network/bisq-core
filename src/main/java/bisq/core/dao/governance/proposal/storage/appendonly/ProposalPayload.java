@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.proposal.storage.appendonly;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 import bisq.core.dao.governance.proposal.Proposal;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
@@ -49,7 +49,7 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Value
 public class ProposalPayload implements PersistableNetworkPayload, PersistableEnvelope,
-        CapabilityRequiringPayload, VoteConsensusCritical {
+        CapabilityRequiringPayload, ConsensusCritical {
     private final Proposal proposal;
     protected final byte[] hash;        // 20 byte
 

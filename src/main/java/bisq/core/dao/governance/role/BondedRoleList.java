@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.role;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 
 import bisq.common.proto.persistable.PersistableList;
 
@@ -33,7 +33,7 @@ import lombok.EqualsAndHashCode;
  * PersistableEnvelope wrapper for list of bondedRoles.
  */
 @EqualsAndHashCode(callSuper = true)
-public class BondedRoleList extends PersistableList<BondedRole> implements VoteConsensusCritical {
+public class BondedRoleList extends PersistableList<BondedRole> implements ConsensusCritical {
 
     public BondedRoleList(List<BondedRole> list) {
         super(list);

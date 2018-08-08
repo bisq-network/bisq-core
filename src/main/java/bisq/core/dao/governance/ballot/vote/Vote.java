@@ -17,6 +17,8 @@
 
 package bisq.core.dao.governance.ballot.vote;
 
+import bisq.core.dao.governance.ConsensusCritical;
+
 import bisq.common.proto.network.NetworkPayload;
 import bisq.common.proto.persistable.PersistablePayload;
 
@@ -27,7 +29,7 @@ import com.google.protobuf.Message;
 import lombok.Value;
 
 @Value
-public class Vote implements PersistablePayload, NetworkPayload {
+public class Vote implements PersistablePayload, NetworkPayload, ConsensusCritical {
     private boolean accepted;
 
     public Vote(boolean accepted) {

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.blindvote.storage;
 
-import bisq.core.dao.governance.ballot.vote.VoteConsensusCritical;
+import bisq.core.dao.governance.ConsensusCritical;
 import bisq.core.dao.governance.blindvote.BlindVote;
 
 import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
@@ -57,7 +57,7 @@ import javax.annotation.concurrent.Immutable;
 @EqualsAndHashCode
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
-        CapabilityRequiringPayload, VoteConsensusCritical {
+        CapabilityRequiringPayload, ConsensusCritical {
     private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
 
     private BlindVote blindVote;
