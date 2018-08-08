@@ -105,7 +105,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     public void start() {
         fillListFromProtectedStore();
-        fillListFromAppendOnlyDataStore();
     }
 
 
@@ -195,17 +194,15 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         final ProtectedStoragePayload protectedStoragePayload = entry.getProtectedStoragePayload();
         if (protectedStoragePayload instanceof TempProposalPayload) {
             final Proposal proposal = ((TempProposalPayload) protectedStoragePayload).getProposal();
-            // We do not validate phase, cycle and confirmation yet as the tx might be not available/confirmed yet.
-            // Though we check if we are in the proposal phase. During parsing we might miss proposals but we will
-            // handle that in the node to request again the p2p network data so we get added potentially missed data
+            // We do not validate if we are in current cycle and if tx is confirmed yet as the tx might be not
+            // available/confirmed. But we check if we are in the proposal phase.
             if (!tempProposals.contains(proposal)) {
                 if (proposalValidator.isValidOrUnconfirmed(proposal)) {
                     tempProposals.add(proposal);
                     log.info("We received a TempProposalPayload and store it to our protectedStoreList. proposalTxId={}",
                             proposal.getTxId());
                 } else {
-                    //TODO called at startup when we are not in cycle of proposal
-                    log.debug("We received a invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
+                    log.warn("We received an invalid proposal from the P2P network. Proposal.txId={}, blockHeight={}",
                             proposal.getTxId(), bsqStateService.getChainHeight());
                 }
             }
@@ -218,8 +215,11 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             final Proposal proposal = ((TempProposalPayload) protectedStoragePayload).getProposal();
             // We allow removal only if we are in the proposal phase.
             if (periodService.isInPhase(bsqStateService.getChainHeight(), DaoPhase.Phase.PROPOSAL)) {
-                if (tempProposals.contains(proposal))
+                if (tempProposals.contains(proposal)) {
                     tempProposals.remove(proposal);
+                    log.info("We received a remove request for a TempProposalPayload and have removed the proposal " +
+                            "from our list. proposalTxId={}", proposal.getTxId());
+                }
             } else {
                 log.warn("We received a remove request outside the PROPOSAL phase. " +
                         "Proposal.txId={}, blockHeight={}", proposal.getTxId(), bsqStateService.getChainHeight());
@@ -237,7 +237,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                     log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalTxId={}",
                             proposal.getTxId());
                 } else {
-                    log.debug("We received a invalid append-only proposal from the P2P network. " +
+                    log.warn("We received a invalid append-only proposal from the P2P network. " +
                                     "Proposal.txId={}, blockHeight={}",
                             proposal.getTxId(), bsqStateService.getChainHeight());
                 }
