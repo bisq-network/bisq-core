@@ -71,8 +71,6 @@ public class BlindVoteConsensus {
         return Encryption.generateSecretKey(128);
     }
 
-    // TODO should we use PB as data input or a more common encoding like json?
-    // Are there risks that PB encoding format changes?
     public static byte[] getEncryptedVotes(VoteWithProposalTxIdList voteWithProposalTxIdList, SecretKey secretKey) throws CryptoException {
         final byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
         final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
