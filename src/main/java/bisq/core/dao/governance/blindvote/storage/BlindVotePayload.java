@@ -32,8 +32,6 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.ByteString;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -46,7 +44,6 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -70,23 +67,17 @@ public class BlindVotePayload implements PersistableNetworkPayload, PersistableE
     public BlindVotePayload(BlindVote blindVote) {
         this(blindVote,
                 new Date().getTime(),
-                null);
+                Hash.getRipemd160hash(blindVote.toProtoMessage().toByteArray()));
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BlindVotePayload(BlindVote blindVote, long date, @Nullable byte[] hash) {
+    private BlindVotePayload(BlindVote blindVote, long date, byte[] hash) {
         this.blindVote = blindVote;
         this.date = date;
-
-        if (hash == null) {
-            // We combine hash of payload + blockHash to get hash used as storage key.
-            this.hash = Hash.getRipemd160hash(ArrayUtils.addAll(blindVote.toProtoMessage().toByteArray()));
-        } else {
-            this.hash = hash;
-        }
+        this.hash = hash;
     }
 
     private PB.BlindVotePayload.Builder getBlindVoteBuilder() {
@@ -101,14 +92,15 @@ public class BlindVotePayload implements PersistableNetworkPayload, PersistableE
         return PB.PersistableNetworkPayload.newBuilder().setBlindVotePayload(getBlindVoteBuilder()).build();
     }
 
+    public PB.BlindVotePayload toProtoBlindVotePayload() {
+        return getBlindVoteBuilder().build();
+    }
+
+
     public static BlindVotePayload fromProto(PB.BlindVotePayload proto) {
         return new BlindVotePayload(BlindVote.fromProto(proto.getBlindVote()),
                 proto.getDate(),
                 proto.getHash().toByteArray());
-    }
-
-    public PB.BlindVotePayload toProtoBlindVotePayload() {
-        return getBlindVoteBuilder().build();
     }
 
 
@@ -133,7 +125,7 @@ public class BlindVotePayload implements PersistableNetworkPayload, PersistableE
 
     @Override
     public boolean isDateInTolerance() {
-        // We don't allow older or newer then 5 hours.
+        // We don't allow entries older or newer then 5 hours.
         // Preventing forward dating is also important to protect against a sophisticated attack
         return Math.abs(new Date().getTime() - date) <= TOLERANCE;
     }

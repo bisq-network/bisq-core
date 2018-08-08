@@ -35,12 +35,10 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -52,26 +50,21 @@ import javax.annotation.concurrent.Immutable;
 @Value
 public class ProposalPayload implements PersistableNetworkPayload, PersistableEnvelope,
         CapabilityRequiringPayload, VoteConsensusCritical {
-    private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
-
     private final Proposal proposal;
     protected final byte[] hash;        // 20 byte
 
     public ProposalPayload(Proposal proposal) {
-        this(proposal, null);
+        this(proposal, Hash.getRipemd160hash(proposal.toProtoMessage().toByteArray()));
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private ProposalPayload(Proposal proposal, @Nullable byte[] hash) {
+    private ProposalPayload(Proposal proposal, byte[] hash) {
         this.proposal = proposal;
-
-        if (hash == null)
-            this.hash = Hash.getRipemd160hash(proposal.toProtoMessage().toByteArray());
-        else
-            this.hash = hash;
+        this.hash = hash;
     }
 
     private PB.ProposalPayload.Builder getProposalBuilder() {
@@ -87,13 +80,14 @@ public class ProposalPayload implements PersistableNetworkPayload, PersistableEn
                 .build();
     }
 
+    public PB.ProposalPayload toProtoProposalPayload() {
+        return getProposalBuilder().build();
+    }
+
+
     public static ProposalPayload fromProto(PB.ProposalPayload proto) {
         return new ProposalPayload(Proposal.fromProto(proto.getProposal()),
                 proto.getHash().toByteArray());
-    }
-
-    public PB.ProposalPayload toProtoProposalPayload() {
-        return getProposalBuilder().build();
     }
 
 
