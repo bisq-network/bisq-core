@@ -131,13 +131,17 @@ public class BlockParserTest {
             result = Optional.empty();
             result = Optional.of(new RawTxOutput(0, 100, "txout2", null, null, null, height));
         }};
+        String genesisTxId = "genesisTxId";
+        int blockHeight = 200;
+        String blockHash = "abc123";
+        Coin genesisTotalSupply = Coin.parseCoin("2.5");
 
         // First time there is no BSQ value to spend so it's not a bsq transaction
-        assertFalse(txParser.findTx(rawTx).isPresent());
+        assertFalse(txParser.findTx(rawTx, genesisTxId, blockHeight, genesisTotalSupply).isPresent());
         // Second time there is BSQ in the first txout
-        assertTrue(txParser.findTx(rawTx).isPresent());
+        assertTrue(txParser.findTx(rawTx, genesisTxId, blockHeight, genesisTotalSupply).isPresent());
         // Third time there is BSQ in the second txout
-        assertTrue(txParser.findTx(rawTx).isPresent());
+        assertTrue(txParser.findTx(rawTx, genesisTxId, blockHeight, genesisTotalSupply).isPresent());
     }
 
     @Test
