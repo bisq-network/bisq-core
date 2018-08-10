@@ -121,7 +121,7 @@ public class MobileNotificationService {
     }
 
     public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
-        log.error("sendMessage\n" +
+        log.info("sendMessage\n" +
                 "Title: " + message.getTitle() + "\nMessage: " + message.getMessage());
         if (mobileModel.getKey() != null) {
             boolean doSend;
@@ -187,6 +187,7 @@ public class MobileNotificationService {
 
 
     private void sendConfirmationMessage() throws Exception {
+        log.info("sendConfirmationMessage");
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.SETUP_CONFIRMATION);
