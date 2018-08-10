@@ -20,7 +20,6 @@ package bisq.core.dao.node.parser;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
 import bisq.core.dao.state.blockchain.TempTx;
-import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
@@ -63,8 +62,8 @@ public class GenesisTxParserTest {
         int genesisBlockHeight = 150;
 
         // With mismatch in block height and tx id, we should not get genesis tx back.
-        Optional<Tx> result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
-        Optional<Tx> want = Optional.empty();
+        Optional<TempTx> result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+        Optional<TempTx> want = Optional.empty();
         Assert.assertEquals(want, result);
 
         // With correct block height but mismatch in tx id, we should still not get genesis tx back.
@@ -97,8 +96,7 @@ public class GenesisTxParserTest {
         for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
             tempTx.getTempTxOutputs().get(i).setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
-        Tx tx = Tx.fromTempTx(tempTx);
-        want = Optional.of(tx);
+        want = Optional.of(tempTx);
 
         Assert.assertEquals(want, result);
         // TODO(chirhonul): test that only outputs in tx summing exactly to genesisTotalSupply is accepted, and

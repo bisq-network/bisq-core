@@ -263,7 +263,7 @@ public class DaoFacade {
     }
 
     public long getAvailableMerit() {
-        return myBlindVoteListService.getAvailableMerit();
+        return myBlindVoteListService.getCurrentlyAvailableMerit();
     }
 
     public List<MyVote> getMyVoteListForCycle() {

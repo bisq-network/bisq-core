@@ -135,7 +135,7 @@ public class MyVote implements PersistablePayload {
         if (bsqStateService.getTx(blindVote.getTxId()).isPresent())
             return VoteResultConsensus.getMeritStake(blindVote.getTxId(), meritList, bsqStateService);
         else
-            return VoteResultConsensus.getAvailableMerit(meritList, bsqStateService);
+            return VoteResultConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
     }
 
     @Override

@@ -21,9 +21,7 @@ import bisq.core.dao.node.parser.exceptions.BlockNotConnectingException;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.RawBlock;
-import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.Tx;
-import bisq.core.dao.state.blockchain.TxOutput;
 
 import bisq.common.app.DevEnv;
 
@@ -31,7 +29,6 @@ import javax.inject.Inject;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,9 +91,6 @@ public class BlockParser {
             DevEnv.logErrorAndThrowIfDevMode("Block was already added. rawBlock=" + rawBlock);
         }
 
-        // TODO should we include that in the txParser?
-        maybeAddGenesisTx(rawBlock, block);
-
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
         // Min tx size is 189 bytes (normally about 240 bytes), 1 MB can contain max. about 5300 txs (usually 2000).
         // Realistically we don't expect more then a few recursive calls.
@@ -109,30 +103,7 @@ public class BlockParser {
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
-
         return block;
-    }
-
-    private void maybeAddGenesisTx(RawBlock rawBlock, Block block) {
-        // We don't use streams here as we want to break as soon we found the genesis
-        for (RawTx rawTx : rawBlock.getRawTxs()) {
-            Optional<Tx> optionalTx = GenesisTxParser.findGenesisTx(
-                    bsqStateService.getGenesisTxId(),
-                    bsqStateService.getGenesisBlockHeight(),
-                    bsqStateService.getGenesisTotalSupply(),
-                    rawTx);
-            if (optionalTx.isPresent()) {
-                Tx genesisTx = optionalTx.get();
-                block.getTxs().add(genesisTx);
-
-                for (int i = 0; i < genesisTx.getTxOutputs().size(); ++i) {
-                    TxOutput txOutput = genesisTx.getTxOutputs().get(i);
-                    bsqStateService.addUnspentTxOutput(txOutput);
-                }
-
-                break;
-            }
-        }
     }
 
     private void validateIfBlockIsConnecting(RawBlock rawBlock) throws BlockNotConnectingException {

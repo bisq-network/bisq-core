@@ -222,9 +222,9 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         }
     }
 
-    public long getAvailableMerit() {
+    public long getCurrentlyAvailableMerit() {
         MeritList meritList = getMerits(null);
-        return VoteResultConsensus.getAvailableMerit(meritList, bsqStateService);
+        return VoteResultConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
     }
 
 

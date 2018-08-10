@@ -43,9 +43,6 @@ public class MeritList extends PersistableList<Merit> implements ConsensusCritic
         super(list);
     }
 
-    public MeritList() {
-        super();
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER

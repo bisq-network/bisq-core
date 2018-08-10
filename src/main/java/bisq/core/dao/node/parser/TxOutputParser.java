@@ -44,6 +44,13 @@ public class TxOutputParser {
         this.opReturnParser = opReturnParser;
     }
 
+    public void processGenesisTxOutput(TempTx genesisTx) {
+        for (int i = 0; i < genesisTx.getTempTxOutputs().size(); ++i) {
+            TempTxOutput tempTxOutput = genesisTx.getTempTxOutputs().get(i);
+            bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(tempTxOutput));
+        }
+    }
+
     void processOpReturnCandidate(TempTxOutput txOutput, ParsingModel parsingModel) {
         opReturnParser.processOpReturnCandidate(txOutput, parsingModel);
     }

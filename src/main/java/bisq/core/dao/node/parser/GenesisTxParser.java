@@ -21,7 +21,6 @@ import bisq.core.dao.node.parser.exceptions.InvalidGenesisTxException;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TempTxOutput;
-import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 
@@ -33,13 +32,13 @@ import java.util.Optional;
  * Verifies if a given transaction is a BSQ genesis transaction.
  */
 public class GenesisTxParser {
-    public static Optional<Tx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply, RawTx rawTx) {
-        boolean isGenesis = rawTx.getBlockHeight() == genesisBlockHeight &&
-                rawTx.getId().equals(genesisTxId);
+    public static Optional<TempTx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply, RawTx rawTx) {
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
+        boolean isGenesis = tempTx.getBlockHeight() == genesisBlockHeight &&
+                tempTx.getId().equals(genesisTxId);
         if (!isGenesis)
             return Optional.empty();
 
-        TempTx tempTx = TempTx.fromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);
         long availableInputValue = genesisTotalSupply.getValue();
         for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
@@ -53,7 +52,10 @@ public class GenesisTxParser {
             availableInputValue -= value;
             txOutput.setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
+        if (availableInputValue > 0)
+            throw new InvalidGenesisTxException("Genesis tx is isValid because not all available BSQ is spent in outputs. " +
+                    "availableInputValue=" + availableInputValue);
 
-        return Optional.of(Tx.fromTempTx(tempTx));
+        return Optional.of(tempTx);
     }
 }

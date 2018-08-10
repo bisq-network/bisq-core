@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -47,12 +48,15 @@ public class TxParser {
 
     private final TxInputParser txInputParser;
     private final TxOutputParser txOutputParser;
+    private final BsqStateService bsqStateService;
 
     @Inject
     public TxParser(TxInputParser txInputParser,
-                    TxOutputParser txOutputParser) {
+                    TxOutputParser txOutputParser,
+                    BsqStateService bsqStateService) {
         this.txInputParser = txInputParser;
         this.txOutputParser = txOutputParser;
+        this.bsqStateService = bsqStateService;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -62,10 +66,22 @@ public class TxParser {
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
     public Optional<Tx> findTx(RawTx rawTx) {
-        int blockHeight = rawTx.getBlockHeight();
-        TempTx tempTx = TempTx.fromRawTx(rawTx);
-        ParsingModel parsingModel = new ParsingModel();
+        // Let's see if we have a genesis tx
+        Optional<TempTx> optionalGenesisTx = GenesisTxParser.findGenesisTx(
+                bsqStateService.getGenesisTxId(),
+                bsqStateService.getGenesisBlockHeight(),
+                bsqStateService.getGenesisTotalSupply(),
+                rawTx);
+        if (optionalGenesisTx.isPresent()) {
+            TempTx genesisTx = optionalGenesisTx.get();
+            txOutputParser.processGenesisTxOutput(genesisTx);
+            return Optional.of(Tx.fromTempTx(genesisTx));
+        }
 
+        // If it is not a genesis tx we continue to parse to see if it is a valid BSQ tx.
+        int blockHeight = rawTx.getBlockHeight();
+        ParsingModel parsingModel = new ParsingModel();
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
         parsingModel.setTx(tempTx);

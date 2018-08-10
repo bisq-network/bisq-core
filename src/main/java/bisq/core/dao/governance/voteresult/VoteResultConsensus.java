@@ -25,6 +25,7 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.governance.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 
@@ -51,6 +52,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
 public class VoteResultConsensus {
+    private static final int BLOCKS_PER_YEAR = 50_000; // 51264;
+
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
     public static byte[] getHashOfBlindVoteList(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);
@@ -104,15 +107,20 @@ public class VoteResultConsensus {
         // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
         // later blocks (merit decreases with each block).
         int txChainHeight = bsqStateService.getTx(blindVoteTxId).map(Tx::getBlockHeight).orElse(0);
-        if (txChainHeight == 0)
+        if (txChainHeight == 0) {
+            log.error("Error at getMeritStake: blindVoteTx not found in bsqStateService. blindVoteTxId=" + blindVoteTxId);
             return 0;
+        }
 
-        int blocksPerYear = 50_000; // 51264;
         return meritList.getList().stream()
                 .filter(merit -> {
+                    // We verify if signature of hash of blindVoteTxId is correct. EC key from first input for blind vote tx is
+                    // used for signature.
                     String pubKeyAsHex = merit.getIssuance().getPubKey();
-                    if (pubKeyAsHex == null)
+                    if (pubKeyAsHex == null) {
+                        log.error("Error at getMeritStake: pubKeyAsHex is null");
                         return false;
+                    }
 
                     // TODO Check if a sig key was used multiple times for different voters
                     // At the moment we don't impl. that to not add too much complexity and as we consider that
@@ -122,12 +130,15 @@ public class VoteResultConsensus {
                     try {
                         ECKey pubKey = ECKey.fromPublicOnly(Utilities.decodeFromHex(pubKeyAsHex));
                         ECKey.ECDSASignature signature = ECKey.ECDSASignature.decodeFromDER(merit.getSignature()).toCanonicalised();
-                        Sha256Hash data = Sha256Hash.wrap(blindVoteTxId);
-                        result = pubKey.verify(data, signature);
+                        Sha256Hash msg = Sha256Hash.wrap(blindVoteTxId);
+                        result = pubKey.verify(msg, signature);
                     } catch (Throwable t) {
                         log.error("Signature verification of issuance failed: " + t.toString());
                     }
-                    log.debug("Signature verification result {}, txId={}", result, blindVoteTxId);
+                    if (!result) {
+                        log.error("Signature verification of issuance failed: blindVoteTxId={}, pubKeyAsHex={}",
+                                blindVoteTxId, pubKeyAsHex);
+                    }
                     return result;
                 })
                 .mapToLong(merit -> {
@@ -137,7 +148,7 @@ public class VoteResultConsensus {
                             return getWeightedMeritAmount(merit.getIssuance().getAmount(),
                                     issuanceHeight,
                                     txChainHeight,
-                                    blocksPerYear);
+                                    BLOCKS_PER_YEAR);
                         } else {
                             return 0;
                         }
@@ -149,26 +160,23 @@ public class VoteResultConsensus {
                 .sum();
     }
 
-    // Used to get the merit before we have an actual blindVoteTxId (e.g. for displaying the user the available Merit)
-    public static long getAvailableMerit(MeritList meritList, BsqStateService bsqStateService) {
+    // Used to get the currently available merit before we have made the blind vote.
+    public static long getCurrentlyAvailableMerit(MeritList meritList, int currentChainHeight) {
         // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
         // later blocks (merit decreases with each block).
-        int chainHeight = bsqStateService.getChainHeight();
-        int blocksPerYear = 50_000; // 51264;
         return meritList.getList().stream()
                 .mapToLong(merit -> {
                     try {
-                        int issuanceHeight = merit.getIssuance().getChainHeight();
-                        if (issuanceHeight <= chainHeight) {
-                            return getWeightedMeritAmount(merit.getIssuance().getAmount(),
-                                    merit.getIssuance().getChainHeight(),
-                                    chainHeight,
-                                    blocksPerYear);
-                        } else {
-                            return 0;
-                        }
+                        Issuance issuance = merit.getIssuance();
+                        int issuanceHeight = issuance.getChainHeight();
+                        checkArgument(issuanceHeight <= currentChainHeight,
+                                "issuanceHeight must not be larger as currentChainHeight");
+                        return getWeightedMeritAmount(issuance.getAmount(),
+                                issuanceHeight,
+                                currentChainHeight,
+                                BLOCKS_PER_YEAR);
                     } catch (Throwable t) {
-                        log.error("Error at getMeritStake: " + t.toString());
+                        log.error("Error at getCurrentlyAvailableMerit: " + t.toString());
                         return 0;
                     }
                 })
