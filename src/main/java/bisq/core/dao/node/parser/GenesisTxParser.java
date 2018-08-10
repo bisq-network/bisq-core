@@ -41,19 +41,22 @@ public class GenesisTxParser {
 
         TempTx tempTx = TempTx.fromRawTx(rawTx);
         tempTx.setTxType(TxType.GENESIS);
-        long availableInputValue = genesisTotalSupply.getValue();
+        long remainingInputValue = genesisTotalSupply.getValue();
         for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
             TempTxOutput txOutput = tempTx.getTempTxOutputs().get(i);
             long value = txOutput.getValue();
-            boolean isValid = value <= availableInputValue;
+            boolean isValid = value <= remainingInputValue;
             if (!isValid)
-                throw new InvalidGenesisTxException("Genesis tx is isValid. " +
-                        "availableInputValue=" + availableInputValue + "; txOutput=" + txOutput.toString());
+                throw new InvalidGenesisTxException("Genesis tx is invalid; using more than available inputs. " +
+                        "Remaining input value is " + remainingInputValue + " sat; tx info: " + tempTx.toString());
 
-            availableInputValue -= value;
+            remainingInputValue -= value;
             txOutput.setTxOutputType(TxOutputType.GENESIS_OUTPUT);
         }
-
+        if (remainingInputValue > 0) {
+            throw new InvalidGenesisTxException("Genesis tx is invalid; not using all available inputs. " +
+                    "Remaining input value is " + remainingInputValue + " sat, tx info: " + tempTx.toString());
+        }
         return Optional.of(Tx.fromTempTx(tempTx));
     }
 }
