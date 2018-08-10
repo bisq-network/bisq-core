@@ -29,6 +29,8 @@ import bisq.core.dao.state.blockchain.TxType;
 
 import bisq.common.app.DevEnv;
 
+import org.bitcoinj.core.Coin;
+
 import javax.inject.Inject;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,15 +50,12 @@ public class TxParser {
 
     private final TxInputParser txInputParser;
     private final TxOutputParser txOutputParser;
-    private final BsqStateService bsqStateService;
 
     @Inject
     public TxParser(TxInputParser txInputParser,
-                    TxOutputParser txOutputParser,
-                    BsqStateService bsqStateService) {
+                    TxOutputParser txOutputParser) {
         this.txInputParser = txInputParser;
         this.txOutputParser = txOutputParser;
-        this.bsqStateService = bsqStateService;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -65,12 +64,12 @@ public class TxParser {
     // that class).
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
-    public Optional<Tx> findTx(RawTx rawTx) {
+    public Optional<Tx> findTx(RawTx rawTx, String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply) {
         // Let's see if we have a genesis tx
         Optional<TempTx> optionalGenesisTx = GenesisTxParser.findGenesisTx(
-                bsqStateService.getGenesisTxId(),
-                bsqStateService.getGenesisBlockHeight(),
-                bsqStateService.getGenesisTotalSupply(),
+                genesisTxId,
+                genesisBlockHeight,
+                genesisTotalSupply,
                 rawTx);
         if (optionalGenesisTx.isPresent()) {
             TempTx genesisTx = optionalGenesisTx.get();
@@ -125,7 +124,7 @@ public class TxParser {
                 boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
-                    final TxType txType = getTxType(tempTx, parsingModel);
+                    final TxType txType = TxParser.getTxType(tempTx, parsingModel);
                     tempTx.setTxType(txType);
                     final long burntFee = parsingModel.getAvailableInputValue();
                     if (burntFee > 0)
@@ -154,15 +153,19 @@ public class TxParser {
             return Optional.empty();
     }
 
-    // TODO add tests
+    /*
+    TODO add tests
+    todo(chirhonul): would be nice to make this not need parsingModel; can the midstate checked within
+    be deduced from tx, or otherwise explicitly passed in?
+    */
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    TxType getTxType(TempTx tx, ParsingModel parsingModel) {
+    static TxType getTxType(TempTx tx, ParsingModel parsingModel) {
         TxType txType;
         // We need to have at least one BSQ output
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, parsingModel);
+        Optional<OpReturnType> optionalOpReturnType = TxParser.getOptionalOpReturnType(tx, parsingModel);
         if (optionalOpReturnType.isPresent()) {
-            txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
+            txType = TxParser.getTxTypeForOpReturn(tx, optionalOpReturnType.get());
         } else if (parsingModel.getOpReturnTypeCandidate() == null) {
             final boolean bsqFeesBurnt = parsingModel.isInputValuePositive();
             if (bsqFeesBurnt) {
@@ -182,7 +185,7 @@ public class TxParser {
         return txType;
     }
 
-    private TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
+    static private TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
@@ -211,7 +214,7 @@ public class TxParser {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx, ParsingModel parsingModel) {
+    static private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx, ParsingModel parsingModel) {
         if (parsingModel.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.

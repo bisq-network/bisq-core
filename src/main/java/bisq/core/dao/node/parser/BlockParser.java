@@ -99,7 +99,12 @@ public class BlockParser {
         // Lately there is a patter with 24 iterations observed
         long startTs = System.currentTimeMillis();
         List<Tx> txList = block.getTxs();
-        rawBlock.getRawTxs().forEach(rawTx -> txParser.findTx(rawTx).ifPresent(txList::add));
+
+        rawBlock.getRawTxs().forEach(rawTx -> txParser.findTx(
+                rawTx,
+                bsqStateService.getGenesisTxId(),
+                bsqStateService.getGenesisBlockHeight(),
+                bsqStateService.getGenesisTotalSupply()).ifPresent(txList::add));
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
