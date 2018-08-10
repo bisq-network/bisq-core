@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
+import bisq.core.dao.node.parser.exceptions.InvalidGenesisTxException;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -48,14 +49,22 @@ public class GenesisTxParserTest {
                 new TxInput("tx0", 0, null),
                 new TxInput("tx1", 1, null)
         );
-        final List<RawTxOutput> outputs = Arrays.asList(new RawTxOutput(0, 101, null, null, null, null, blockHeight));
+        RawTxOutput output = new RawTxOutput(
+                0,
+                genesisTotalSupply.value,
+                null,
+                null,
+                null,
+                null,
+                blockHeight
+        );
         RawTx rawTx = new RawTx(
-            "tx2",
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(outputs)
+                "tx2",
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
 
         String genesisTxId = "genesisTxId";
@@ -69,12 +78,12 @@ public class GenesisTxParserTest {
         // With correct block height but mismatch in tx id, we should still not get genesis tx back.
         blockHeight = 150;
         rawTx = new RawTx(
-            "tx2",
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(outputs)
+                "tx2",
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
         result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         want = Optional.empty();
@@ -82,12 +91,12 @@ public class GenesisTxParserTest {
 
         // With correct tx id and block height, we should find our genesis tx with correct tx and output type.
         rawTx = new RawTx(
-            genesisTxId,
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(outputs)
+                genesisTxId,
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
         result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
 
@@ -99,7 +108,70 @@ public class GenesisTxParserTest {
         want = Optional.of(tempTx);
 
         Assert.assertEquals(want, result);
-        // TODO(chirhonul): test that only outputs in tx summing exactly to genesisTotalSupply is accepted, and
-        // that code under test raises RuntimeError otherwise.
+
+        // With correct tx id and block height, but too low sum of outputs (lower than genesisTotalSupply), we
+        // should see an exception raised.
+        output = new RawTxOutput(
+                0,
+                genesisTotalSupply.value - 1,
+                null,
+                null,
+                null,
+                null,
+                blockHeight
+        );
+        rawTx = new RawTx(
+                genesisTxId,
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
+        );
+        try {
+            result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+            Assert.fail("Expected an InvalidGenesisTxException to be thrown when outputs are too low");
+        } catch (InvalidGenesisTxException igtxe) {
+            String wantMessage = "Genesis tx is invalid; not using all available inputs. Remaining input value is 1 sat";
+            Assert.assertTrue("Unexpected exception, want message starting with " +
+                    "'" + wantMessage + "', got '" + igtxe.getMessage() + "'", igtxe.getMessage().startsWith(wantMessage));
+        }
+
+        // With correct tx id and block height, but too high sum of outputs (higher than from genesisTotalSupply), we
+        // should see an exception raised.
+        RawTxOutput output1 = new RawTxOutput(
+                0,
+                genesisTotalSupply.value - 2,
+                null,
+                null,
+                null,
+                null,
+                blockHeight
+        );
+        RawTxOutput output2 = new RawTxOutput(
+                0,
+                3,
+                null,
+                null,
+                null,
+                null,
+                blockHeight
+        );
+        rawTx = new RawTx(
+                genesisTxId,
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output1, output2))
+        );
+        try {
+            result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
+            Assert.fail("Expected an InvalidGenesisTxException to be thrown when outputs are too high");
+        } catch (InvalidGenesisTxException igtxe) {
+            String wantMessage = "Genesis tx is invalid; using more than available inputs. Remaining input value is 2 sat";
+            Assert.assertTrue("Unexpected exception, want message starting with " +
+                    "'" + wantMessage + "', got '" + igtxe.getMessage() + "'", igtxe.getMessage().startsWith(wantMessage));
+        }
     }
 }
