@@ -59,12 +59,12 @@ public class GenesisTxParserTest {
                 blockHeight
         );
         RawTx rawTx = new RawTx(
-            "tx2",
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(Arrays.asList(output))
+                "tx2",
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
 
         String genesisTxId = "genesisTxId";
@@ -78,12 +78,12 @@ public class GenesisTxParserTest {
         // With correct block height but mismatch in tx id, we should still not get genesis tx back.
         blockHeight = 150;
         rawTx = new RawTx(
-            "tx2",
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(Arrays.asList(output))
+                "tx2",
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
         result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
         want = Optional.empty();
@@ -91,12 +91,12 @@ public class GenesisTxParserTest {
 
         // With correct tx id and block height, we should find our genesis tx with correct tx and output type.
         rawTx = new RawTx(
-            genesisTxId,
-            blockHeight,
-            blockHash,
-            time,
-            ImmutableList.copyOf(inputs),
-            ImmutableList.copyOf(Arrays.asList(output))
+                genesisTxId,
+                blockHeight,
+                blockHash,
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
         );
         result = GenesisTxParser.findGenesisTx(genesisTxId, genesisBlockHeight, genesisTotalSupply, rawTx);
 
@@ -173,6 +173,5 @@ public class GenesisTxParserTest {
             Assert.assertTrue("Unexpected exception, want message starting with " +
                     "'" + wantMessage + "', got '" + igtxe.getMessage() + "'", igtxe.getMessage().startsWith(wantMessage));
         }
-
     }
 }
