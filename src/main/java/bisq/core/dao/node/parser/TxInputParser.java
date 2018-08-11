@@ -62,15 +62,14 @@ public class TxInputParser {
                         case ISSUANCE_CANDIDATE_OUTPUT:
                             break;
                         case BLIND_VOTE_LOCK_STAKE_OUTPUT:
-                            if (parsingModel.getInputFromBlindVoteStakeOutput() == null) {
-                                parsingModel.setInputFromBlindVoteStakeOutput(txInput);
-                                // At the end of the parsing the OpReturnVoteRevealParser will verify that
-                                // this property is true, otherwise the tx will be considered invalid.
-                                parsingModel.setValidInputFromBlindVoteStakeOutput(true);
+                            if (parsingModel.getBlindVoteOutputState() == ParsingModel.BlindVoteOutputState.UNKNOWN) {
+                                // We found the input that's used as output of a blind vote. Only transactions with one such output
+                                // is valid.
+                                parsingModel.setBlindVoteOutputState(ParsingModel.BlindVoteOutputState.VALID);
                             } else {
-                                log.warn("We have a tx which has 2 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
+                                log.warn("We have a tx which has >1 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                         "This is not a valid BSQ tx.");
-                                parsingModel.setValidInputFromBlindVoteStakeOutput(false);
+                                parsingModel.setBlindVoteOutputState(ParsingModel.BlindVoteOutputState.INVALID);
                             }
                             break;
                         case BLIND_VOTE_OP_RETURN_OUTPUT:

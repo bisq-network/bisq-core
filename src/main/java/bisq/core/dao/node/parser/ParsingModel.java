@@ -39,6 +39,12 @@ import javax.annotation.Nullable;
 @Getter
 @Setter
 class ParsingModel {
+    /**
+     * The different possible states for an output used in a blind vote.
+     */
+    enum BlindVoteOutputState {
+        UNKNOWN, VALID, INVALID
+    }
     private TempTx tx;
     private long availableInputValue = 0;
     private long burntBondValue = 0;
@@ -68,12 +74,11 @@ class ParsingModel {
     @Nullable
     private OpReturnType opReturnTypeCandidate;
 
+    private BlindVoteOutputState blindVoteOutputState;
+
     // At end of parsing when we do the full validation we set the type here
     @Nullable
     private OpReturnType verifiedOpReturnType;
-    @Nullable
-    private TxInput inputFromBlindVoteStakeOutput;
-    private boolean isValidInputFromBlindVoteStakeOutput;
 
     ParsingModel() {
     }
