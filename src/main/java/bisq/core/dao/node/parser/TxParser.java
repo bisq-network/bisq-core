@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.parser;
 
-import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -115,7 +114,7 @@ public class TxParser {
             if (numOpReturnOutputs <= 1) {
                 // If we had an issuanceCandidate and the type was not applied in the opReturnController due failed validation
                 // we set it to an BTC_OUTPUT.
-                final TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
+                TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
                 if (issuanceCandidate != null &&
                         issuanceCandidate.getTxOutputType() == TxOutputType.UNDEFINED) {
                     issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
@@ -124,7 +123,7 @@ public class TxParser {
                 boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
-                    final TxType txType = TxParser.getTxType(tempTx, parsingModel);
+                    TxType txType = TxParser.getTxType(tempTx, parsingModel);
                     tempTx.setTxType(txType);
                     final long burntFee = parsingModel.getAvailableInputValue();
                     if (burntFee > 0)
@@ -167,7 +166,7 @@ public class TxParser {
         if (optionalOpReturnType.isPresent()) {
             txType = TxParser.getTxTypeForOpReturn(tx, optionalOpReturnType.get());
         } else if (parsingModel.getOpReturnTypeCandidate() == null) {
-            final boolean bsqFeesBurnt = parsingModel.isInputValuePositive();
+            boolean bsqFeesBurnt = parsingModel.isInputValuePositive();
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -190,7 +189,7 @@ public class TxParser {
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
                 checkArgument(tx.getTempTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
-                final TempTxOutput issuanceTxOutput = tx.getTempTxOutputs().get(1);
+                TempTxOutput issuanceTxOutput = tx.getTempTxOutputs().get(1);
                 checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
                         "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
                 txType = TxType.COMPENSATION_REQUEST;
@@ -218,19 +217,19 @@ public class TxParser {
         if (parsingModel.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
-            final OpReturnType opReturnTypeCandidate = parsingModel.getOpReturnTypeCandidate();
-            final OpReturnType verifiedOpReturnType = parsingModel.getVerifiedOpReturnType();
+            OpReturnType opReturnTypeCandidate = parsingModel.getOpReturnTypeCandidate();
+            OpReturnType verifiedOpReturnType = parsingModel.getVerifiedOpReturnType();
             if (opReturnTypeCandidate == verifiedOpReturnType) {
                 return Optional.ofNullable(verifiedOpReturnType);
             } else {
-                final String msg = "We got a different opReturn type after validation as we expected initially. " +
+                String msg = "We got a different opReturn type after validation as we expected initially. " +
                         "opReturnTypeCandidate=" + opReturnTypeCandidate +
                         ", verifiedOpReturnType=" + parsingModel.getVerifiedOpReturnType() +
                         ", txId=" + tx.getId();
                 log.error(msg);
             }
         } else {
-            final String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
+            String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
                     "Burned fee=" + parsingModel.getAvailableInputValue() / 100D + " BSQ. tx=" + tx;
             log.warn(msg);
         }

@@ -25,6 +25,8 @@ import bisq.core.dao.state.blockchain.Tx;
 
 import bisq.common.app.DevEnv;
 
+import org.bitcoinj.core.Coin;
+
 import javax.inject.Inject;
 
 import java.util.LinkedList;
@@ -43,6 +45,9 @@ import javax.annotation.concurrent.Immutable;
 public class BlockParser {
     private final TxParser txParser;
     private final BsqStateService bsqStateService;
+    private final String genesisTxId;
+    private final int genesisBlockHeight;
+    private final Coin genesisTotalSupply;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +61,10 @@ public class BlockParser {
                        BsqStateService bsqStateService) {
         this.txParser = txParser;
         this.bsqStateService = bsqStateService;
+
+        genesisTxId = bsqStateService.getGenesisTxId();
+        genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
+        genesisTotalSupply = bsqStateService.getGenesisTotalSupply();
     }
 
 
@@ -100,11 +109,13 @@ public class BlockParser {
         long startTs = System.currentTimeMillis();
         List<Tx> txList = block.getTxs();
 
-        rawBlock.getRawTxs().forEach(rawTx -> txParser.findTx(
-                rawTx,
-                bsqStateService.getGenesisTxId(),
-                bsqStateService.getGenesisBlockHeight(),
-                bsqStateService.getGenesisTotalSupply()).ifPresent(txList::add));
+        rawBlock.getRawTxs().forEach(rawTx -> {
+            txParser.findTx(rawTx,
+                    genesisTxId,
+                    genesisBlockHeight,
+                    genesisTotalSupply)
+                    .ifPresent(txList::add);
+        });
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
