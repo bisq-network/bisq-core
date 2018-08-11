@@ -73,7 +73,7 @@ class ParsingModel {
     @Nullable
     private OpReturnType opReturnTypeCandidate;
 
-    private VoteRevealInputState voteRevealInputState;
+    private VoteRevealInputState voteRevealInputState = VoteRevealInputState.UNKNOWN;
 
     // At end of parsing when we do the full validation we set the type here
     @Nullable
