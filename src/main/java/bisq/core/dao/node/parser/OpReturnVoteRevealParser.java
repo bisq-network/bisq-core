@@ -45,7 +45,7 @@ public class OpReturnVoteRevealParser {
         boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.VOTE_REVEAL);
         if (!isInPhase)
             log.warn("Not in VOTE_REVEAL phase. blockHeight={}", blockHeight);
-        return parsingModel.getBlindVoteOutputState() == ParsingModel.BlindVoteOutputState.VALID &&
+        return parsingModel.getVoteRevealInputState() == ParsingModel.VoteRevealInputState.VALID &&
                 parsingModel.getVoteRevealUnlockStakeOutput() != null &&
                 opReturnData.length == 38 &&
                 isInPhase;
