@@ -67,6 +67,7 @@ import bisq.core.dao.node.parser.TxOutputParser;
 import bisq.core.dao.node.parser.TxParser;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.GenesisTxInfo;
 import bisq.core.dao.state.SnapshotManager;
 import bisq.core.dao.state.period.CycleService;
 import bisq.core.dao.state.period.PeriodService;
@@ -101,6 +102,7 @@ public class DaoModule extends AppModule {
         bind(LiteNodeNetworkService.class).in(Singleton.class);
 
         // BsqState
+        bind(GenesisTxInfo.class).in(Singleton.class);
         bind(BsqState.class).in(Singleton.class);
         bind(BsqStateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
@@ -169,10 +171,10 @@ public class DaoModule extends AppModule {
         bind(IssuanceService.class).in(Singleton.class);
 
         // Genesis
-        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, BsqState.getDefaultGenesisTxId());
+        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, null);
         bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
 
-        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, BsqState.getDefaultGenesisBlockHeight());
+        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, 0);
         bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
 
         // Bonds

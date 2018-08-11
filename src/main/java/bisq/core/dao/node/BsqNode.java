@@ -40,7 +40,6 @@ import javax.annotation.Nullable;
  */
 @Slf4j
 public abstract class BsqNode implements DaoSetupService {
-
     protected final BlockParser blockParser;
     private final P2PService p2PService;
     protected final BsqStateService bsqStateService;

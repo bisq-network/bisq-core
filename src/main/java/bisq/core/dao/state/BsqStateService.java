@@ -58,6 +58,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Slf4j
 public class BsqStateService implements DaoSetupService {
     private final BsqState bsqState;
+    private final GenesisTxInfo genesisTxInfo;
     private final List<BsqStateListener> bsqStateListeners = new CopyOnWriteArrayList<>();
 
 
@@ -66,8 +67,9 @@ public class BsqStateService implements DaoSetupService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BsqStateService(BsqState bsqState) {
+    public BsqStateService(BsqState bsqState, GenesisTxInfo genesisTxInfo) {
         this.bsqState = bsqState;
+        this.genesisTxInfo = genesisTxInfo;
     }
 
 
@@ -81,7 +83,7 @@ public class BsqStateService implements DaoSetupService {
 
     @Override
     public void start() {
-        bsqState.setChainHeight(bsqState.getGenesisBlockHeight());
+        bsqState.setChainHeight(genesisTxInfo.getGenesisBlockHeight());
     }
 
 
@@ -235,15 +237,15 @@ public class BsqStateService implements DaoSetupService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public String getGenesisTxId() {
-        return bsqState.getGenesisTxId();
+        return genesisTxInfo.getGenesisTxId();
     }
 
     public int getGenesisBlockHeight() {
-        return bsqState.getGenesisBlockHeight();
+        return genesisTxInfo.getGenesisBlockHeight();
     }
 
     public Coin getGenesisTotalSupply() {
-        return BsqState.getGenesisTotalSupply();
+        return GenesisTxInfo.GENESIS_TOTAL_SUPPLY;
     }
 
     public Optional<Tx> getGenesisTx() {

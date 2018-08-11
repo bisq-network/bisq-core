@@ -17,7 +17,6 @@
 
 package bisq.core.dao.state;
 
-import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.state.blockchain.Block;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxOutput;
@@ -32,10 +31,7 @@ import io.bisq.generated.protobuffer.PB;
 
 import com.google.protobuf.Message;
 
-import org.bitcoinj.core.Coin;
-
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,58 +50,17 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BsqState implements PersistableEnvelope {
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Static
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private static final Coin GENESIS_TOTAL_SUPPLY = Coin.parseCoin("2.5");
-
-    public static Coin getGenesisTotalSupply() {
-        return GENESIS_TOTAL_SUPPLY;
-    }
-
     //TODO not sure if we will use that
-    private static final int ISSUANCE_MATURITY = 144 * 30; // 30 days
+  /*  private static final int ISSUANCE_MATURITY = 144 * 30; // 30 days
 
     static int getIssuanceMaturity() {
         return ISSUANCE_MATURITY;
-    }
-
-    // mainnet
-    // this tx has a lot of outputs
-    // https://blockchain.info/de/tx/ee921650ab3f978881b8fe291e0c025e0da2b7dc684003d7a03d9649dfee2e15
-    // BLOCK_HEIGHT 411779
-    // 411812 has 693 recursions
-    // block 376078 has 2843 recursions and caused once a StackOverflowError, a second run worked. Took 1,2 sec.
-
-    public static String getDefaultGenesisTxId() {
-        return DEFAULT_GENESIS_TX_ID;
-    }
-
-    public static int getDefaultGenesisBlockHeight() {
-        return DEFAULT_GENESIS_BLOCK_HEIGHT;
-    }
-
-    // BTC MAIN NET
-    // new: --genesisBlockHeight=524717 --genesisTxId=81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e
-    //  private static final String DEFAULT_GENESIS_TX_ID = "e5c8313c4144d219b5f6b2dacf1d36f2d43a9039bb2fcd1bd57f8352a9c9809a";
-    // private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 477865; // 2017-07-28
-
-    private static final String DEFAULT_GENESIS_TX_ID = "81855816eca165f17f0668898faa8724a105196e90ffc4993f4cac980176674e";
-    private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 524717; // 2018-05-27
-
-    // private static final String DEFAULT_GENESIS_TX_ID = "--";
-    // private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 499000; // recursive test 137298, 499000 dec 2017
+    }*/
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @Getter
-    private final String genesisTxId;
-    @Getter
-    private final int genesisBlockHeight;
     @Getter
     private int chainHeight;
     @Getter
@@ -135,11 +90,8 @@ public class BsqState implements PersistableEnvelope {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BsqState(@Named(DaoOptionKeys.GENESIS_TX_ID) String genesisTxId,
-                    @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
-        this(genesisTxId,
-                genesisBlockHeight,
-                genesisBlockHeight, // We use genesisBlockHeight as chainHeight to start with
+    public BsqState() {
+        this(0,
                 new LinkedList<>(),
                 new LinkedList<>(),
                 new HashMap<>(),
@@ -156,9 +108,7 @@ public class BsqState implements PersistableEnvelope {
     // PROTO BUFFER
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    private BsqState(String genesisTxId,
-                     int genesisBlockHeight,
-                     int chainHeight,
+    private BsqState(int chainHeight,
                      LinkedList<Block> blocks,
                      LinkedList<Cycle> cycles,
                      Map<TxOutputKey, TxOutput> unspentTxOutputMap,
@@ -167,8 +117,6 @@ public class BsqState implements PersistableEnvelope {
                      Map<TxOutputKey, TxOutput> confiscatedTxOutputMap,
                      Map<String, Issuance> issuanceMap,
                      List<ParamChange> paramChangeList) {
-        this.genesisTxId = genesisTxId;
-        this.genesisBlockHeight = genesisBlockHeight;
         this.chainHeight = chainHeight;
         this.blocks = blocks;
         this.cycles = cycles;
@@ -189,9 +137,7 @@ public class BsqState implements PersistableEnvelope {
 
     private PB.BsqState.Builder getStateBuilder() {
         final PB.BsqState.Builder builder = PB.BsqState.newBuilder();
-        builder.setGenesisTxId(genesisTxId)
-                .setGenesisBlockHeight(genesisBlockHeight)
-                .setChainHeight(chainHeight)
+        builder.setChainHeight(chainHeight)
                 .addAllBlocks(blocks.stream().map(Block::toProtoMessage).collect(Collectors.toList()))
                 .addAllCycles(cycles.stream().map(Cycle::toProtoMessage).collect(Collectors.toList()))
                 .putAllUnspentTxOutputMap(unspentTxOutputMap.entrySet().stream()
@@ -226,9 +172,7 @@ public class BsqState implements PersistableEnvelope {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Issuance.fromProto(e.getValue())));
         final List<ParamChange> paramChangeList = proto.getParamChangeListList().stream()
                 .map(ParamChange::fromProto).collect(Collectors.toCollection(ArrayList::new));
-        return new BsqState(proto.getGenesisTxId(),
-                proto.getGenesisBlockHeight(),
-                proto.getChainHeight(),
+        return new BsqState(proto.getChainHeight(),
                 blocks,
                 cycles,
                 unspentTxOutputMap,

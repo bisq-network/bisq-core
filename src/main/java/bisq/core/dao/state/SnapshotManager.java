@@ -35,6 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Manages snapshots of BsqState.
+ * // FIXME not working correctly anymore
  */
 @Slf4j
 public class SnapshotManager implements BsqStateListener {
