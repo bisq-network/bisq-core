@@ -20,7 +20,6 @@ package bisq.core.dao.node.parser;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TempTxOutput;
-import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
 import java.util.HashSet;
@@ -40,9 +39,9 @@ import javax.annotation.Nullable;
 @Setter
 class ParsingModel {
     /**
-     * The different possible states for an output used in a blind vote.
+     * The different possible states for an input used at the vote reveal tx.
      */
-    enum BlindVoteOutputState {
+    enum VoteRevealInputState {
         UNKNOWN, VALID, INVALID
     }
     private TempTx tx;
@@ -74,7 +73,7 @@ class ParsingModel {
     @Nullable
     private OpReturnType opReturnTypeCandidate;
 
-    private BlindVoteOutputState blindVoteOutputState;
+    private VoteRevealInputState voteRevealInputState;
 
     // At end of parsing when we do the full validation we set the type here
     @Nullable
