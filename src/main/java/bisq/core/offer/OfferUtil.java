@@ -19,6 +19,8 @@ package bisq.core.offer;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.monetary.Price;
+import bisq.core.monetary.Volume;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 import bisq.core.util.CoinUtil;
@@ -26,6 +28,8 @@ import bisq.core.util.CoinUtil;
 import bisq.common.util.MathUtils;
 
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +40,7 @@ import javax.annotation.Nullable;
  * Long-term there could be a GUI-agnostic OfferService which provides these and other functionalities to both the
  * GUI and the API.
  */
+@Slf4j
 public class OfferUtil {
 
     /**
@@ -130,5 +135,28 @@ public class OfferUtil {
                 BisqEnvironment.isBaseCurrencySupportingBsq() &&
                 availableBalance != null &&
                 !availableBalance.subtract(makerFee).isNegative();
+    }
+
+    public static Volume getAdjustedVolumeForHalCash(Volume volumeByAmount) {
+        // EUR has precision 4 and we want multiple of 10 so we divide by 100000 then
+        // round and multiply with 10
+        long rounded = Math.max(1, Math.round((double) volumeByAmount.getValue() / 100000d));
+        return Volume.parse(String.valueOf(rounded * 10), "EUR");
+    }
+
+    public static Coin getAdjustedMinAmountForHalCash(Coin minAmount, Price price) {
+        // Min amount must result in a volume of min 10 EUR
+        Volume minVolume = Volume.parse(String.valueOf(10), "EUR");
+        Coin minAmountByMinVolume = price.getAmountByVolume(minVolume);
+        if (minAmount.compareTo(minAmountByMinVolume) < 0)
+            minAmount = minAmountByMinVolume;
+
+        // We adjust the minAmount so that the minVolume is a multiple of 10 EUR
+        minVolume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(minAmount));
+        minAmount = price.getAmountByVolume(minVolume);
+
+        // We want only 4 decimal places
+        long rounded = Math.round((double) minAmount.value / 10000d) * 10000;
+        return Coin.valueOf(rounded);
     }
 }
