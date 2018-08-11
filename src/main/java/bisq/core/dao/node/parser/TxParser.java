@@ -78,11 +78,10 @@ public class TxParser {
 
         // If it is not a genesis tx we continue to parse to see if it is a valid BSQ tx.
         int blockHeight = rawTx.getBlockHeight();
-        ParsingModel parsingModel = new ParsingModel();
-        TempTx tempTx = TempTx.fromRawTx(rawTx);
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
-        parsingModel.setTx(tempTx);
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
+        ParsingModel parsingModel = new ParsingModel(tempTx);
 
         for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
             TxInput input = tempTx.getTxInputs().get(inputIndex);

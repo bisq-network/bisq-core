@@ -80,11 +80,8 @@ class ParsingModel {
     @Nullable
     private OpReturnType verifiedOpReturnType;
 
-    ParsingModel() {
-    }
-
-    ParsingModel(long availableInputValue) {
-        this.availableInputValue = availableInputValue;
+    ParsingModel(TempTx tx) {
+        this.tx = tx;
     }
 
     public void addToInputValue(long value) {
