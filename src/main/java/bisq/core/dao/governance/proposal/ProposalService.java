@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.proposal;
 
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.proposal.storage.appendonly.ProposalPayload;
 import bisq.core.dao.governance.proposal.storage.appendonly.ProposalStorageService;
 import bisq.core.dao.governance.proposal.storage.temp.TempProposalPayload;
@@ -49,7 +50,8 @@ import lombok.extern.slf4j.Slf4j;
  * Republishes protectedStoreList to append-only data store when entering the break before the blind vote phase.
  */
 @Slf4j
-public class ProposalService implements HashMapChangedListener, AppendOnlyDataStoreListener, BsqStateListener {
+public class ProposalService implements HashMapChangedListener, AppendOnlyDataStoreListener,
+        BsqStateListener, DaoSetupService {
     private final P2PService p2PService;
     private final PeriodService periodService;
     private final BsqStateService bsqStateService;
@@ -89,20 +91,23 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         // We add our stores to the global stores
         appendOnlyDataStoreService.addService(proposalStorageService);
         protectedDataStoreService.addService(tempProposalStorageService);
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         bsqStateService.addBsqStateListener(this);
-
         // Listen for tempProposals
         p2PService.addHashSetChangedListener(this);
         // Listen for proposalPayloads
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // API
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
+    @Override
     public void start() {
         fillListFromProtectedStore();
     }

@@ -85,7 +85,6 @@ public class IssuanceService {
         return txOutput.getTxId().equals(compensationProposal.getTxId())
                 && compensationProposal.getRequestedBsq().value == txOutput.getValue()
                 && compensationProposal.getBsqAddress().substring(1).equals(txOutput.getAddress())
-                && periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight)
-                && periodService.isTxInPhase(txOutput.getTxId(), DaoPhase.Phase.PROPOSAL);
+                && periodService.isTxInPhaseAndCycle(txOutput.getTxId(), DaoPhase.Phase.PROPOSAL, chainHeight);
     }
 }

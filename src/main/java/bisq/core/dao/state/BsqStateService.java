@@ -17,6 +17,7 @@
 
 package bisq.core.dao.state;
 
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.governance.role.BondedRole;
 import bisq.core.dao.state.blockchain.Block;
@@ -55,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
-public class BsqStateService {
+public class BsqStateService implements DaoSetupService {
     private final BsqState bsqState;
     private final List<BsqStateListener> bsqStateListeners = new CopyOnWriteArrayList<>();
 
@@ -66,16 +67,19 @@ public class BsqStateService {
 
     @Inject
     public BsqStateService(BsqState bsqState) {
-        super();
-
         this.bsqState = bsqState;
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Initialize
+    // DaoSetupService
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    @Override
+    public void addListeners() {
+    }
+
+    @Override
     public void start() {
         bsqState.setChainHeight(bsqState.getGenesisBlockHeight());
     }

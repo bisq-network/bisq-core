@@ -94,28 +94,32 @@ public final class PeriodService {
                 .isPresent();
     }
 
+    public boolean isTxInPhaseAndCycle(String txId, DaoPhase.Phase phase, int currentChainHeadHeight) {
+        return isTxInPhase(txId, phase) && isTxInCorrectCycle(txId, currentChainHeadHeight);
+    }
+
     public DaoPhase.Phase getPhaseForHeight(int height) {
         return getCycle(height)
                 .flatMap(cycle -> cycle.getPhaseForHeight(height))
                 .orElse(DaoPhase.Phase.UNDEFINED);
     }
 
-    public boolean isTxInCorrectCycle(int txHeight, int chainHeadHeight) {
+    public boolean isTxInCorrectCycle(int txHeight, int currentChainHeadHeight) {
         return getCycle(txHeight)
-                .filter(cycle -> chainHeadHeight >= cycle.getHeightOfFirstBlock())
-                .filter(cycle -> chainHeadHeight <= cycle.getHeightOfLastBlock())
+                .filter(cycle -> currentChainHeadHeight >= cycle.getHeightOfFirstBlock())
+                .filter(cycle -> currentChainHeadHeight <= cycle.getHeightOfLastBlock())
                 .isPresent();
     }
 
-    public boolean isTxInCorrectCycle(String txId, int chainHeadHeight) {
+    public boolean isTxInCorrectCycle(String txId, int currentChainHeadHeight) {
         return getOptionalTx(txId)
-                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), chainHeadHeight))
+                .filter(tx -> isTxInCorrectCycle(tx.getBlockHeight(), currentChainHeadHeight))
                 .isPresent();
     }
 
-    private boolean isTxInPastCycle(int txHeight, int chainHeadHeight) {
+    private boolean isTxInPastCycle(int txHeight, int currentChainHeadHeight) {
         return getCycle(txHeight)
-                .filter(cycle -> chainHeadHeight > cycle.getHeightOfLastBlock())
+                .filter(cycle -> currentChainHeadHeight > cycle.getHeightOfLastBlock())
                 .isPresent();
     }
 

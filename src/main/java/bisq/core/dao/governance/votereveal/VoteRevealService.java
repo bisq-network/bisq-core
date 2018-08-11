@@ -26,6 +26,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
 import bisq.core.dao.governance.blindvote.BlindVoteService;
@@ -73,7 +74,7 @@ import lombok.extern.slf4j.Slf4j;
  * the blind vote payloads. Republishes also all blindVotes of that cycle to add more resilience.
  */
 @Slf4j
-public class VoteRevealService implements BsqStateListener {
+public class VoteRevealService implements BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final BlindVoteService blindVoteService;
     private final BlindVoteValidator blindVoteValidator;
@@ -111,24 +112,32 @@ public class VoteRevealService implements BsqStateListener {
         this.btcWalletService = btcWalletService;
         this.p2PService = p2PService;
         this.walletsManager = walletsManager;
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         voteRevealExceptions.addListener((ListChangeListener<VoteRevealException>) c -> {
             c.next();
             if (c.wasAdded())
                 c.getAddedSubList().forEach(exception -> log.error(exception.toString()));
         });
-
         bsqStateService.addBsqStateListener(this);
+    }
+
+    @Override
+    public void start() {
+        maybeRevealVotes(bsqStateService.getChainHeight());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        maybeRevealVotes(bsqStateService.getChainHeight());
-    }
 
     public byte[] getHashOfBlindVoteList() {
         List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);

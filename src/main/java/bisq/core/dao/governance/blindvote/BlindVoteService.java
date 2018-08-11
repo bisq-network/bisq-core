@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.blindvote;
 
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.governance.blindvote.storage.BlindVoteStorageService;
 import bisq.core.dao.state.BsqStateListener;
@@ -42,7 +43,8 @@ import lombok.extern.slf4j.Slf4j;
  * Listens for new BlindVotePayload and adds it to appendOnlyStoreList.
  */
 @Slf4j
-public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener {
+public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener, DaoSetupService {
+    private final BsqStateService bsqStateService;
     private final P2PService p2PService;
     private final BlindVoteValidator blindVoteValidator;
 
@@ -59,13 +61,27 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
                             BlindVoteStorageService blindVoteStorageService,
                             AppendOnlyDataStoreService appendOnlyDataStoreService,
                             BlindVoteValidator blindVoteValidator) {
+        this.bsqStateService = bsqStateService;
         this.p2PService = p2PService;
         this.blindVoteValidator = blindVoteValidator;
 
         appendOnlyDataStoreService.addService(blindVoteStorageService);
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         bsqStateService.addBsqStateListener(this);
         p2PService.getP2PDataStorage().addAppendOnlyDataStoreListener(this);
+    }
+
+    @Override
+    public void start() {
+        fillListFromAppendOnlyDataStore();
     }
 
 
@@ -100,10 +116,6 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        fillListFromAppendOnlyDataStore();
-    }
 
     public List<BlindVote> getVerifiedBlindVotes() {
         return appendOnlyStoreList.stream()

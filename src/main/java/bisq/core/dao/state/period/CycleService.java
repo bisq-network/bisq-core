@@ -18,6 +18,7 @@
 package bisq.core.dao.state.period;
 
 import bisq.core.dao.DaoOptionKeys;
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CycleService implements BsqStateListener {
+public class CycleService implements BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final int genesisBlockHeight;
 
@@ -53,8 +54,21 @@ public class CycleService implements BsqStateListener {
                         @Named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT) int genesisBlockHeight) {
         this.bsqStateService = bsqStateService;
         this.genesisBlockHeight = genesisBlockHeight;
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         bsqStateService.addBsqStateListener(this);
+    }
+
+    @Override
+    public void start() {
+        bsqStateService.getCycles().add(getFirstCycle());
     }
 
 
@@ -81,10 +95,6 @@ public class CycleService implements BsqStateListener {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        bsqStateService.getCycles().add(getFirstCycle());
-    }
 
     private Optional<Cycle> maybeCreateNewCycle(int blockHeight, LinkedList<Cycle> cycles) {
         // We want to set the correct phase and cycle before we start parsing a new block.

@@ -18,6 +18,7 @@
 package bisq.core.dao.governance.ballot;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.proposal.ProposalService;
 import bisq.core.dao.governance.proposal.storage.appendonly.ProposalPayload;
@@ -42,20 +43,30 @@ import javax.annotation.Nullable;
  * The BallotList contains all ballots of all cycles.
  */
 @Slf4j
-public class BallotListService implements PersistedDataHost {
-
+public class BallotListService implements PersistedDataHost, DaoSetupService {
     public interface BallotListChangeListener {
         void onListChanged(List<Ballot> list);
     }
 
+    private final ProposalService proposalService;
     private final Storage<BallotList> storage;
+
     private final BallotList ballotList = new BallotList();
     private final List<BallotListChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Inject
     public BallotListService(ProposalService proposalService, Storage<BallotList> storage) {
+        this.proposalService = proposalService;
         this.storage = storage;
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         proposalService.getProposalPayloads().addListener((ListChangeListener<ProposalPayload>) c -> {
             c.next();
             if (c.wasAdded()) {
@@ -73,6 +84,10 @@ public class BallotListService implements PersistedDataHost {
                 persist();
             }
         });
+    }
+
+    @Override
+    public void start() {
     }
 
 

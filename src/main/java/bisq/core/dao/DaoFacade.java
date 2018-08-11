@@ -453,6 +453,10 @@ public class DaoFacade {
         return periodService.isTxInCorrectCycle(txId, chainHeadHeight);
     }
 
+    public boolean isTxInPhaseAndCycle(String txId, DaoPhase.Phase phase, int chainHeadHeight) {
+        return periodService.isTxInPhaseAndCycle(txId, phase, chainHeadHeight);
+    }
+
     public boolean isUnspent(TxOutputKey key) {
         return bsqStateService.isUnspent(key);
     }

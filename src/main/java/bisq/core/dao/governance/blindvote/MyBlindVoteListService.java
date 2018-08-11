@@ -27,6 +27,7 @@ import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
@@ -35,7 +36,6 @@ import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.myvote.MyVoteListService;
 import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
-import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
 import bisq.core.dao.governance.voteresult.VoteResultConsensus;
 import bisq.core.dao.state.BsqStateListener;
@@ -46,6 +46,7 @@ import bisq.core.dao.state.period.PeriodService;
 
 import bisq.network.p2p.P2PService;
 
+import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 import bisq.common.crypto.CryptoException;
 import bisq.common.handlers.ErrorMessageHandler;
@@ -87,7 +88,7 @@ import javax.annotation.Nullable;
  * Publishes a BlindVote and the blind vote transaction.
  */
 @Slf4j
-public class MyBlindVoteListService implements PersistedDataHost, BsqStateListener {
+public class MyBlindVoteListService implements PersistedDataHost, BsqStateListener, DaoSetupService {
     private final P2PService p2PService;
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
@@ -98,7 +99,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     private final BallotListService ballotListService;
     private final MyVoteListService myVoteListService;
     private final MyProposalListService myProposalListService;
-    private final ProposalValidator proposalValidator;
     private final ChangeListener<Number> numConnectedPeersListener;
     @Getter
     private final MyBlindVoteList myBlindVoteList = new MyBlindVoteList();
@@ -118,8 +118,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                                   BtcWalletService btcWalletService,
                                   BallotListService ballotListService,
                                   MyVoteListService myVoteListService,
-                                  MyProposalListService myProposalListService,
-                                  ProposalValidator proposalValidator) {
+                                  MyProposalListService myProposalListService) {
         this.p2PService = p2PService;
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
@@ -130,10 +129,22 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         this.ballotListService = ballotListService;
         this.myVoteListService = myVoteListService;
         this.myProposalListService = myProposalListService;
-        this.proposalValidator = proposalValidator;
 
         numConnectedPeersListener = (observable, oldValue, newValue) -> rePublishOnceWellConnected();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         bsqStateService.addBsqStateListener(this);
+    }
+
+    @Override
+    public void start() {
     }
 
 
@@ -174,9 +185,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-    }
 
     public Coin getBlindVoteFee() {
         return BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
@@ -344,15 +352,15 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     private void rePublishOnceWellConnected() {
         if ((p2PService.getNumConnectedPeers().get() > 4 && p2PService.isBootstrapped()) || DevEnv.isDevMode()) {
-            p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener);
+            int chainHeight = periodService.getChainHeight();
+            myBlindVoteList.stream()
+                    .filter(blindVote -> periodService.isTxInPhaseAndCycle(blindVote.getTxId(),
+                            DaoPhase.Phase.BLIND_VOTE,
+                            chainHeight))
+                    .forEach(blindVote -> addToP2PNetwork(blindVote, null));
 
-            myBlindVoteList.forEach(blindVote -> {
-                final String txId = blindVote.getTxId();
-                if (periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE) &&
-                        periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
-                    addToP2PNetwork(blindVote, null);
-                }
-            });
+            // We delay removal of listener as we call that inside listener itself.
+            UserThread.execute(() -> p2PService.getNumConnectedPeers().removeListener(numConnectedPeersListener));
         }
     }
 

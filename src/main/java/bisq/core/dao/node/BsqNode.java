@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node;
 
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.node.parser.BlockParser;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.SnapshotManager;
@@ -29,7 +30,6 @@ import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  * It is responsible or the setup of the parser and snapshot management.
  */
 @Slf4j
-public abstract class BsqNode {
+public abstract class BsqNode implements DaoSetupService {
 
     protected final BlockParser blockParser;
     private final P2PService p2PService;
@@ -47,10 +47,9 @@ public abstract class BsqNode {
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
-    private final P2PServiceListener p2PServiceListener;
+    private P2PServiceListener p2PServiceListener;
     protected boolean parseBlockchainComplete;
     protected boolean p2pNetworkReady;
-    @Setter
     @Nullable
     protected ErrorMessageHandler errorMessageHandler;
 
@@ -65,13 +64,21 @@ public abstract class BsqNode {
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
         this.blockParser = blockParser;
-        this.p2PService = p2PService;
         this.bsqStateService = bsqStateService;
+        this.snapshotManager = snapshotManager;
+        this.p2PService = p2PService;
 
         genesisTxId = bsqStateService.getGenesisTxId();
         genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
-        this.snapshotManager = snapshotManager;
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         p2PServiceListener = new P2PServiceListener() {
             @Override
             public void onTorNodeReady() {
@@ -109,12 +116,17 @@ public abstract class BsqNode {
         };
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Public methods
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
+    @Override
     public abstract void start();
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void setErrorMessageHandler(@Nullable ErrorMessageHandler errorMessageHandler) {
+        this.errorMessageHandler = errorMessageHandler;
+    }
 
     public abstract void shutDown();
 

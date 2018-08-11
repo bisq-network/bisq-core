@@ -33,49 +33,65 @@ import bisq.common.handlers.ErrorMessageHandler;
 import com.google.inject.Inject;
 
 /**
- * High level entry point for Dao domain
+ * High level entry point for Dao domain.
+ * We initialize all main service classes here to be sure they are started.
+ *
  */
 public class DaoSetup {
-    private final BsqNode bsqNode;
-    private final ProposalService proposalService;
     private final BsqStateService bsqStateService;
     private final CycleService cycleService;
-    private final VoteRevealService voteRevealService;
-    private final VoteResultService voteResultService;
+    private final ProposalService proposalService;
+    private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
     private final MyBlindVoteListService myBlindVoteListService;
+    private final VoteRevealService voteRevealService;
+    private final VoteResultService voteResultService;
+    private final BsqNode bsqNode;
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
                     BsqStateService bsqStateService,
                     CycleService cycleService,
-                    VoteRevealService voteRevealService,
-                    VoteResultService voteResultService,
+                    ProposalService proposalService,
                     BallotListService ballotListService,
                     BlindVoteService blindVoteService,
                     MyBlindVoteListService myBlindVoteListService,
-                    ProposalService proposalService) {
+                    VoteRevealService voteRevealService,
+                    VoteResultService voteResultService) {
         this.bsqStateService = bsqStateService;
         this.cycleService = cycleService;
-        this.voteRevealService = voteRevealService;
-        this.voteResultService = voteResultService;
+        this.proposalService = proposalService;
+        this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
         this.myBlindVoteListService = myBlindVoteListService;
-        this.proposalService = proposalService;
+        this.voteRevealService = voteRevealService;
+        this.voteResultService = voteResultService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        bsqNode.setErrorMessageHandler(errorMessageHandler);
+        // We need to take care of order of execution. Let's keep both addListeners and start for all main classes even
+        // if they are not used to have a consistent startup sequence.
+        bsqStateService.addListeners();
+        cycleService.addListeners();
+        proposalService.addListeners();
+        ballotListService.addListeners();
+        blindVoteService.addListeners();
+        myBlindVoteListService.addListeners();
+        voteRevealService.addListeners();
+        voteResultService.addListeners();
 
         bsqStateService.start();
         cycleService.start();
         proposalService.start();
-        voteRevealService.start();
+        ballotListService.start();
         blindVoteService.start();
         myBlindVoteListService.start();
+        voteRevealService.start();
         voteResultService.start();
+
+        bsqNode.setErrorMessageHandler(errorMessageHandler);
         bsqNode.start();
     }
 

@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.voteresult;
 
+import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
@@ -85,7 +86,7 @@ import javax.annotation.Nullable;
  * the missing blindVotes from the network.
  */
 @Slf4j
-public class VoteResultService implements BsqStateListener {
+public class VoteResultService implements BsqStateListener, DaoSetupService {
     private final VoteRevealService voteRevealService;
     private final ProposalListPresentation proposalListPresentation;
     private final BsqStateService bsqStateService;
@@ -126,18 +127,27 @@ public class VoteResultService implements BsqStateListener {
         this.blindVoteService = blindVoteService;
         this.bondedRolesService = bondedRolesService;
         this.issuanceService = issuanceService;
+    }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
         bsqStateService.addBsqStateListener(this);
+    }
+
+    @Override
+    public void start() {
+        maybeCalculateVoteResult(bsqStateService.getChainHeight());
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    public void start() {
-        maybeCalculateVoteResult(bsqStateService.getChainHeight());
-    }
 
     public List<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
         return getAcceptedEvaluatedProposals(allEvaluatedProposals);

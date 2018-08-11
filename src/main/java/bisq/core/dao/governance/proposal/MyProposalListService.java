@@ -252,9 +252,9 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
     private void rePublish() {
         myProposalList.forEach(proposal -> {
             final String txId = proposal.getTxId();
-            if (periodService.isTxInPhase(txId, DaoPhase.Phase.PROPOSAL) &&
-                    periodService.isTxInCorrectCycle(txId, periodService.getChainHeight())) {
-                if (!addToP2PNetworkAsProtectedData(proposal))
+            if (periodService.isTxInPhaseAndCycle(txId, DaoPhase.Phase.PROPOSAL, periodService.getChainHeight())) {
+                boolean result = addToP2PNetworkAsProtectedData(proposal);
+                if (!result)
                     log.warn("Adding of proposal to P2P network failed.\nproposal=" + proposal);
             }
         });
