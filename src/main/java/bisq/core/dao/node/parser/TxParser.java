@@ -24,6 +24,7 @@ import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.blockchain.TxInput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
 
@@ -86,7 +87,8 @@ public class TxParser {
 
         for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
             TxInput input = tempTx.getTxInputs().get(inputIndex);
-            txInputParser.process(input, blockHeight, tempTx.getId(), inputIndex, parsingModel);
+            TxOutputKey outputKey = input.getConnectedTxOutputKey();
+            txInputParser.process(outputKey, blockHeight, rawTx.getId(), inputIndex, parsingModel);
         }
 
         final boolean leftOverBsq = parsingModel.isInputValuePositive();
