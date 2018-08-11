@@ -54,6 +54,7 @@ import bisq.common.handlers.ExceptionHandler;
 import bisq.common.handlers.ResultHandler;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.storage.Storage;
+import bisq.common.util.Tuple2;
 import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
@@ -186,15 +187,14 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public Coin getBlindVoteFee() {
-        return BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
-    }
-
-    // For showing fee estimation in confirmation popup
-    public Transaction getDummyBlindVoteTx(Coin stake, Coin fee)
+    public Tuple2<Coin, Integer> getMiningFeeAndTxSize(Coin stake)
             throws InsufficientMoneyException, WalletException, TransactionVerificationException {
         // We set dummy opReturn data
-        return getBlindVoteTx(stake, fee, new byte[22]);
+        Coin blindVoteFee = BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
+        Transaction dummyTx = getBlindVoteTx(stake, blindVoteFee, new byte[22]);
+        Coin miningFee = dummyTx.getFee();
+        int txSize = dummyTx.bitcoinSerialize().length;
+        return new Tuple2<>(miningFee, txSize);
     }
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
@@ -203,8 +203,11 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
             BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService);
             byte[] encryptedVotes = getEncryptedVotes(sortedBallotList, secretKey);
             byte[] opReturnData = getOpReturnData(encryptedVotes);
-            Transaction blindVoteTx = getBlindVoteTx(stake, getBlindVoteFee(), opReturnData);
+            Coin blindVoteFee = BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
+            Transaction blindVoteTx = getBlindVoteTx(stake, blindVoteFee, opReturnData);
             String blindVoteTxId = blindVoteTx.getHashAsString();
+
+            //TODO move at end of method?
             publishTx(resultHandler, exceptionHandler, blindVoteTx);
 
             byte[] encryptedMeritList = getEncryptedMeritList(blindVoteTxId, secretKey);
@@ -240,6 +243,20 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+
+    private byte[] getEncryptedVotes(BallotList sortedBallotList, SecretKey secretKey) throws CryptoException {
+        // We don't want to store the proposal but only use the proposalTxId as reference in our encrypted list.
+        // So we convert it to the VoteWithProposalTxIdList.
+        // The VoteWithProposalTxIdList is used for serialisation with protobuffer, it is not actually persisted but we
+        // use the PersistableList base class for convenience.
+        final List<VoteWithProposalTxId> list = sortedBallotList.stream()
+                .map(ballot -> new VoteWithProposalTxId(ballot.getTxId(), ballot.getVote()))
+                .collect(Collectors.toList());
+        final VoteWithProposalTxIdList voteWithProposalTxIdList = new VoteWithProposalTxIdList(list);
+        log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
+        return BlindVoteConsensus.getEncryptedVotes(voteWithProposalTxIdList, secretKey);
+    }
+
     private byte[] getOpReturnData(byte[] encryptedVotes) throws IOException {
         // We cannot use hash of whole blindVote data because we create the merit signature with the blindVoteTxId
         // So we use the encryptedVotes for the hash only.
@@ -248,19 +265,14 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         return BlindVoteConsensus.getOpReturnData(hash);
     }
 
-    private byte[] getEncryptedVotes(BallotList sortedBallotList, SecretKey secretKey) throws CryptoException {
-        final VoteWithProposalTxIdList voteWithProposalTxIdList = getSortedVoteWithProposalTxIdList(sortedBallotList);
-        log.info("voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={}", voteWithProposalTxIdList);
-        return BlindVoteConsensus.getEncryptedVotes(voteWithProposalTxIdList, secretKey);
-    }
-
     private byte[] getEncryptedMeritList(String blindVoteTxId, SecretKey secretKey) throws CryptoException {
         MeritList meritList = getMerits(blindVoteTxId);
         return BlindVoteConsensus.getEncryptedMeritList(meritList, secretKey);
     }
 
+    // blindVoteTxId is null if we use the method from the getCurrentlyAvailableMerit call.
     public MeritList getMerits(@Nullable String blindVoteTxId) {
-        // Create a lookup set for own comp. requests
+        // Create a lookup set for txIds of own comp. requests
         Set<String> myCompensationProposalTxIs = myProposalListService.getList().stream()
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .map(Proposal::getTxId)
@@ -293,6 +305,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                         ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
                         signatureAsBytes = signature.toCanonicalised().encodeToDER();
                     } else {
+                        // In case we use it for requesting the currently available merit we don't apply a signature
                         signatureAsBytes = new byte[0];
                     }
                     return new Merit(issuance, signatureAsBytes);
@@ -341,13 +354,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
         Transaction preparedTx = bsqWalletService.getPreparedBlindVoteTx(fee, stake);
         Transaction txWithBtcFee = btcWalletService.completePreparedBlindVoteTx(preparedTx, opReturnData);
         return bsqWalletService.signTx(txWithBtcFee);
-    }
-
-    private VoteWithProposalTxIdList getSortedVoteWithProposalTxIdList(BallotList sortedBallotList) {
-        final List<VoteWithProposalTxId> list = sortedBallotList.stream()
-                .map(ballot -> new VoteWithProposalTxId(ballot.getTxId(), ballot.getVote()))
-                .collect(Collectors.toList());
-        return new VoteWithProposalTxIdList(list);
     }
 
     private void rePublishOnceWellConnected() {

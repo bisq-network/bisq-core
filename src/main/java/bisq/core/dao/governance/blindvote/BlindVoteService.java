@@ -117,9 +117,9 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public List<BlindVote> getVerifiedBlindVotes() {
+    public List<BlindVote> getBlindVotesInPhaseAndCycle() {
         return appendOnlyStoreList.stream()
-                .filter(blindVotePayload -> blindVoteValidator.isValidAndConfirmed(blindVotePayload.getBlindVote()))
+                .filter(blindVotePayload -> blindVoteValidator.isTxInPhaseAndCycle(blindVotePayload.getBlindVote()))
                 .map(BlindVotePayload::getBlindVote)
                 .collect(Collectors.toList());
     }
@@ -137,9 +137,17 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
         if (persistableNetworkPayload instanceof BlindVotePayload) {
             BlindVotePayload blindVotePayload = (BlindVotePayload) persistableNetworkPayload;
             if (!appendOnlyStoreList.contains(blindVotePayload)) {
-                // We don't validate as we might receive blindVotes from other cycles or phases at startup.
-                appendOnlyStoreList.add(blindVotePayload);
-                log.info("We received a blindVotePayload. blindVoteTxId={}", blindVotePayload.getBlindVote().getTxId());
+                BlindVote blindVote = blindVotePayload.getBlindVote();
+                String txId = blindVote.getTxId();
+                // We don't check the phase and the cycle as we want to add all object independently when we receive it
+                // (or when we start the app to fill our list from the data we gor from the seed node).
+                if (blindVoteValidator.areDataFieldsValidAndTxConfirmed(blindVote)) {
+                    // We don't validate as we might receive blindVotes from other cycles or phases at startup.
+                    appendOnlyStoreList.add(blindVotePayload);
+                    log.info("We received a blindVotePayload. blindVoteTxId={}", txId);
+                } else {
+                    log.warn("We received an invalid blindVotePayload. blindVoteTxId={}", txId);
+                }
             }
         }
     }

@@ -56,53 +56,49 @@ public class BlindVoteValidator {
     private void validateDataFields(BlindVote blindVote) throws ValidationException {
         try {
             checkNotNull(blindVote.getEncryptedVotes(), "encryptedProposalList must not be null");
-            checkArgument(blindVote.getEncryptedVotes().length > 0, "encryptedProposalList must not be empty");
+            checkArgument(blindVote.getEncryptedVotes().length > 0,
+                    "encryptedProposalList must not be empty");
             checkNotNull(blindVote.getTxId(), "txId must not be null");
             checkArgument(blindVote.getTxId().length() > 0, "txId must not be empty");
             checkArgument(blindVote.getStake() > 0, "stake must be positive");
-            //TODO check stake min/max
+            checkNotNull(blindVote.getEncryptedMeritList(), "getEncryptedMeritList must not be null");
+            checkArgument(blindVote.getEncryptedMeritList().length > 0,
+                    "getEncryptedMeritList must not be empty");
+
+            //TODO should we use a min/max for stake, atm its just dust limit as the min. value
         } catch (Throwable e) {
             log.warn(e.toString());
             throw new ValidationException(e);
         }
     }
 
-
-    public boolean isValidOrUnconfirmed(BlindVote blindVote) {
-        return isValid(blindVote, true);
-    }
-
-    public boolean isValidAndConfirmed(BlindVote blindVote) {
-        return isValid(blindVote, false);
-    }
-
-    @SuppressWarnings("SimplifiableIfStatement")
-    private boolean isValid(BlindVote blindVote, boolean allowUnconfirmed) {
+    public boolean areDataFieldsValidAndTxConfirmed(BlindVote blindVote) {
         if (!areDataFieldsValid(blindVote)) {
             log.warn("blindVote is invalid. blindVote={}", blindVote);
             return false;
         }
 
-        final String txId = blindVote.getTxId();
+        // Check if tx is already confirmed and in BsqState
+        boolean isConfirmed = bsqStateService.getTx(blindVote.getTxId()).isPresent();
+        if (!isConfirmed)
+            log.warn("blindVoteTx is not confirmed. blindVoteTxId={}", blindVote.getTxId());
+
+        return isConfirmed;
+    }
+
+    public boolean isTxInPhaseAndCycle(BlindVote blindVote) {
+        String txId = blindVote.getTxId();
         Optional<Tx> optionalTx = bsqStateService.getTx(txId);
-        int chainHeight = bsqStateService.getChainHeight();
-        final boolean isTxConfirmed = optionalTx.isPresent();
-        if (isTxConfirmed) {
-            final int txHeight = optionalTx.get().getBlockHeight();
-            if (!periodService.isTxInCorrectCycle(txHeight, chainHeight)) {
-                log.debug("Tx is not in current cycle. blindVote={}", blindVote);
-                return false;
-            }
-            if (!periodService.isInPhase(txHeight, DaoPhase.Phase.BLIND_VOTE)) {
-                log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
-                return false;
-            }
-            return true;
-        } else if (allowUnconfirmed) {
-            return periodService.isInPhase(chainHeight, DaoPhase.Phase.BLIND_VOTE);
-        } else {
+        int txHeight = optionalTx.get().getBlockHeight();
+        if (!periodService.isTxInCorrectCycle(txHeight, bsqStateService.getChainHeight())) {
+            log.debug("Tx is not in current cycle. blindVote={}", blindVote);
             return false;
         }
+        if (!periodService.isTxInPhase(txId, DaoPhase.Phase.BLIND_VOTE)) {
+            log.warn("Tx is not in BLIND_VOTE phase. blindVote={}", blindVote);
+            return false;
+        }
+        return true;
     }
 
    /* public boolean isAppendOnlyPayloadValid(BlindVotePayload appendOnlyPayload,

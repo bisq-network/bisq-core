@@ -51,13 +51,14 @@ import lombok.extern.slf4j.Slf4j;
 public class BlindVoteConsensus {
     public static BallotList getSortedBallotList(BallotListService ballotListService) {
         final List<Ballot> ballotList = ballotListService.getBallotList().stream()
-                .sorted(Comparator.comparing(Ballot::getTxId)).collect(Collectors.toList());
+                .sorted(Comparator.comparing(Ballot::getTxId))
+                .collect(Collectors.toList());
         log.info("Sorted ballotList: " + ballotList);
         return new BallotList(ballotList);
     }
 
     public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService) {
-        final List<BlindVote> list = blindVoteService.getVerifiedBlindVotes().stream()
+        final List<BlindVote> list = blindVoteService.getBlindVotesInPhaseAndCycle().stream()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
                 .collect(Collectors.toList());
         log.info("Sorted blindVote txId list: " + list.stream()
@@ -74,7 +75,7 @@ public class BlindVoteConsensus {
     public static byte[] getEncryptedVotes(VoteWithProposalTxIdList voteWithProposalTxIdList, SecretKey secretKey) throws CryptoException {
         final byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
         final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
-        log.info("encrypted: " + Utilities.bytesAsHexString(encrypted));
+        log.info("EncryptedVotes: " + Utilities.bytesAsHexString(encrypted));
         return encrypted;
     }
 

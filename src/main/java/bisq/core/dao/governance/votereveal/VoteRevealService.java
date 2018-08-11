@@ -223,7 +223,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
 
             // Just for additional resilience we republish our blind votes
             final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
-            rePublishBlindVotePayload(sortedBlindVoteListOfCycle);
+            rePublishBlindVotePayloadList(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";
             log.error("{}. chainHeight={},  blindVoteTxId()={}", msg, chainHeight, myVote.getTxId());
@@ -273,9 +273,8 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
         return bsqWalletService.signTx(txWithBtcFee);
     }
 
-    private void rePublishBlindVotePayload(List<BlindVote> blindVotes) {
-        blindVotes.stream()
-                .filter(blindVoteValidator::isValidAndConfirmed)
+    private void rePublishBlindVotePayloadList(List<BlindVote> blindVoteList) {
+        blindVoteList.stream()
                 .map(BlindVotePayload::new)
                 .forEach(blindVotePayload -> {
                     boolean success = p2PService.addPersistableNetworkPayload(blindVotePayload, true);

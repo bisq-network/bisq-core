@@ -27,6 +27,7 @@ import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotListPresentation;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.ballot.vote.Vote;
+import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
 import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.myvote.MyVote;
 import bisq.core.dao.governance.myvote.MyVoteListService;
@@ -287,12 +288,12 @@ public class DaoFacade {
 
     // When creating blind vote we present fee
     public Coin getBlindVoteFeeForCycle() {
-        return myBlindVoteListService.getBlindVoteFee();
+        return BlindVoteConsensus.getFee(bsqStateService, bsqStateService.getChainHeight());
     }
 
-    // Used for mining fee estimation
-    public Transaction getDummyBlindVoteTx(Coin stake, Coin blindVoteFee) throws WalletException, InsufficientMoneyException, TransactionVerificationException {
-        return myBlindVoteListService.getDummyBlindVoteTx(stake, blindVoteFee);
+    public Tuple2<Coin, Integer> getMiningFeeAndTxSize(Coin stake)
+            throws WalletException, InsufficientMoneyException, TransactionVerificationException {
+        return myBlindVoteListService.getMiningFeeAndTxSize(stake);
     }
 
     // Publish blindVote tx and broadcast blindVote to p2p network and store to blindVoteList.

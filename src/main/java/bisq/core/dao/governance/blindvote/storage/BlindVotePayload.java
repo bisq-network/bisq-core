@@ -38,10 +38,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.concurrent.Immutable;
@@ -55,12 +53,11 @@ import javax.annotation.concurrent.Immutable;
 @Slf4j
 @Getter
 @EqualsAndHashCode
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public final class BlindVotePayload implements PersistableNetworkPayload, PersistableEnvelope, DateTolerantPayload,
         CapabilityRequiringPayload, ConsensusCritical {
     private static final long TOLERANCE = TimeUnit.HOURS.toMillis(5); // +/- 5 hours
 
-    private BlindVote blindVote;
+    private final BlindVote blindVote;
     private final long date;            // 8 byte
     protected final byte[] hash;        // 20 byte
 

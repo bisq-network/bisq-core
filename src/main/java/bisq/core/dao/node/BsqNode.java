@@ -46,7 +46,7 @@ public abstract class BsqNode implements DaoSetupService {
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
-    private P2PServiceListener p2PServiceListener;
+    private final P2PServiceListener p2PServiceListener;
     protected boolean parseBlockchainComplete;
     protected boolean p2pNetworkReady;
     @Nullable
@@ -69,15 +69,7 @@ public abstract class BsqNode implements DaoSetupService {
 
         genesisTxId = bsqStateService.getGenesisTxId();
         genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
-    }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // DaoSetupService
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public void addListeners() {
         p2PServiceListener = new P2PServiceListener() {
             @Override
             public void onTorNodeReady() {
@@ -113,6 +105,15 @@ public abstract class BsqNode implements DaoSetupService {
                 onP2PNetworkReady();
             }
         };
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // DaoSetupService
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addListeners() {
     }
 
     @Override
