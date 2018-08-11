@@ -124,9 +124,6 @@ public class MobileModel {
         // iPhone 6 does not support isContentAvailable, iPhone 7 does.
         // We don't know for other versions, but lets assume all above iPhone 6 are ok.
         if (descriptor != null) {
-            if (descriptor.equals("iPhone 6"))
-                return false;
-
             String[] descriptorTokens = descriptor.split(" ");
             if (descriptorTokens.length >= 1) {
                 String model = descriptorTokens[0];
