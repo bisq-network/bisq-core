@@ -81,9 +81,9 @@ public class MobileNotificationService {
         this.httpClient = httpClient;
         this.mobileModel = mobileModel;
 
-        //httpClient.setBaseUrl(useLocalHost ? DEV_URL_LOCALHOST : URL);
+        httpClient.setBaseUrl(useLocalHost ? DEV_URL_LOCALHOST : URL);
 
-        httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
+        // httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
         httpClient.setIgnoreSocks5Proxy(false);
     }
 
@@ -104,7 +104,7 @@ public class MobileNotificationService {
         sendMessage(message, useSoundProperty.get());
     }
 
-    public void applyKeyAndToken(String keyAndToken) {
+    public boolean applyKeyAndToken(String keyAndToken) {
         if (mobileNotificationValidator.isValid(keyAndToken)) {
             mobileModel.applyKeyAndToken(keyAndToken);
             mobileMessageEncryption.setKey(mobileModel.getKey());
@@ -117,6 +117,9 @@ public class MobileNotificationService {
                     e.printStackTrace();
                 }
             }
+            return true;
+        } else {
+            return false;
         }
     }
 

@@ -29,6 +29,12 @@ public class PriceAlertFilter implements PersistablePayload {
     long high;
     long low;
 
+    public PriceAlertFilter(String currencyCode, long high, long low) {
+        this.currencyCode = currencyCode;
+        this.high = high;
+        this.low = low;
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PROTO BUFFER
