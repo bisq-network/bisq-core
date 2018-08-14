@@ -17,77 +17,85 @@
 
 package bisq.core.dao;
 
-import bisq.core.app.BisqEnvironment;
+import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
+import bisq.core.dao.governance.proposal.ProposalService;
+import bisq.core.dao.governance.voteresult.VoteResultService;
+import bisq.core.dao.governance.votereveal.VoteRevealService;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.proposal.ProposalService;
-import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
-import bisq.core.dao.vote.votereveal.VoteRevealService;
+import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.period.CycleService;
 
-import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
 /**
- * High level entry point for Dao domain
+ * High level entry point for Dao domain.
+ * We initialize all main service classes here to be sure they are started.
+ *
  */
 public class DaoSetup {
-    private final PeriodService periodService;
+    private final BsqStateService bsqStateService;
+    private final CycleService cycleService;
     private final ProposalService proposalService;
-    private final BsqNode bsqNode;
-    private final DaoParamService daoParamService;
-    private final VoteRevealService voteRevealService;
-    private final IssuanceService issuanceService;
+    private final BallotListService ballotListService;
     private final BlindVoteService blindVoteService;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    // Constructor
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    private final MyBlindVoteListService myBlindVoteListService;
+    private final VoteRevealService voteRevealService;
+    private final VoteResultService voteResultService;
+    private final BsqNode bsqNode;
 
     @Inject
     public DaoSetup(BsqNodeProvider bsqNodeProvider,
-                    PeriodService periodService,
+                    BsqStateService bsqStateService,
+                    CycleService cycleService,
                     ProposalService proposalService,
+                    BallotListService ballotListService,
                     BlindVoteService blindVoteService,
+                    MyBlindVoteListService myBlindVoteListService,
                     VoteRevealService voteRevealService,
-                    IssuanceService issuanceService,
-                    DaoParamService daoParamService) {
-        this.periodService = periodService;
+                    VoteResultService voteResultService) {
+        this.bsqStateService = bsqStateService;
+        this.cycleService = cycleService;
         this.proposalService = proposalService;
+        this.ballotListService = ballotListService;
         this.blindVoteService = blindVoteService;
+        this.myBlindVoteListService = myBlindVoteListService;
         this.voteRevealService = voteRevealService;
-        this.issuanceService = issuanceService;
-        this.daoParamService = daoParamService;
+        this.voteResultService = voteResultService;
 
         bsqNode = bsqNodeProvider.getBsqNode();
     }
 
     public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
-            periodService.onAllServicesInitialized();
-            proposalService.onAllServicesInitialized();
-            bsqNode.onAllServicesInitialized(errorMessageHandler);
-            blindVoteService.onAllServicesInitialized();
-            voteRevealService.onAllServicesInitialized();
-            issuanceService.onAllServicesInitialized();
-            daoParamService.onAllServicesInitialized();
-        }
+        // We need to take care of order of execution. Let's keep both addListeners and start for all main classes even
+        // if they are not used to have a consistent startup sequence.
+        bsqStateService.addListeners();
+        cycleService.addListeners();
+        proposalService.addListeners();
+        ballotListService.addListeners();
+        blindVoteService.addListeners();
+        myBlindVoteListService.addListeners();
+        voteRevealService.addListeners();
+        voteResultService.addListeners();
+
+        bsqStateService.start();
+        cycleService.start();
+        proposalService.start();
+        ballotListService.start();
+        blindVoteService.start();
+        myBlindVoteListService.start();
+        voteRevealService.start();
+        voteResultService.start();
+
+        bsqNode.setErrorMessageHandler(errorMessageHandler);
+        bsqNode.start();
     }
 
     public void shutDown() {
-        if (BisqEnvironment.isDAOActivatedAndBaseCurrencySupportingBsq() && DevEnv.isDaoPhase2Activated()) {
-            periodService.shutDown();
-            proposalService.shutDown();
-            bsqNode.shutDown();
-            blindVoteService.shutDown();
-            voteRevealService.shutDown();
-            issuanceService.shutDown();
-            daoParamService.shutDown();
-        }
+        bsqNode.shutDown();
     }
 }

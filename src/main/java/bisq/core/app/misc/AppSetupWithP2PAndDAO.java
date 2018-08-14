@@ -18,8 +18,10 @@
 package bisq.core.app.misc;
 
 import bisq.core.dao.DaoSetup;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.proposal.ProposalService;
+import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
+import bisq.core.dao.governance.myvote.MyVoteListService;
+import bisq.core.dao.governance.role.BondedRolesService;
 import bisq.core.filter.FilterManager;
 import bisq.core.payment.AccountAgeWitnessService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
@@ -45,17 +47,23 @@ public class AppSetupWithP2PAndDAO extends AppSetupWithP2P {
                                  AccountAgeWitnessService accountAgeWitnessService,
                                  FilterManager filterManager,
                                  DaoSetup daoSetup,
-                                 ProposalService proposalService,
-                                 BlindVoteService blindVoteService) {
+                                 MyVoteListService myVoteListService,
+                                 BallotListService ballotListService,
+                                 MyBlindVoteListService myBlindVoteListService,
+                                 BondedRolesService bondedRolesService) {
         super(encryptionService,
                 keyRing,
                 p2PService,
                 tradeStatisticsManager,
                 accountAgeWitnessService,
                 filterManager);
+
         this.daoSetup = daoSetup;
-        this.persistedDataHosts.add(proposalService);
-        persistedDataHosts.add(blindVoteService);
+
+        persistedDataHosts.add(myVoteListService);
+        persistedDataHosts.add(ballotListService);
+        persistedDataHosts.add(myBlindVoteListService);
+        persistedDataHosts.add(bondedRolesService);
     }
 
     @Override

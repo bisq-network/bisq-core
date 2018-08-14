@@ -17,8 +17,8 @@
 
 package bisq.core.dao.node.lite.network;
 
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.network.CloseConnectionReason;
@@ -38,7 +38,6 @@ import bisq.common.util.Tuple2;
 
 import javax.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -74,9 +74,9 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     public interface Listener {
         void onNoSeedNodeAvailable();
 
-        void onRequestedBlocksReceived(GetBsqBlocksResponse getBsqBlocksResponse);
+        void onRequestedBlocksReceived(GetBlocksResponse getBlocksResponse);
 
-        void onNewBlockReceived(NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage);
+        void onNewBlockReceived(NewBlockBroadcastMessage newBlockBroadcastMessage);
 
         void onFault(String errorMessage, @Nullable Connection connection);
     }
@@ -90,7 +90,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
     private final PeerManager peerManager;
     private final Collection<NodeAddress> seedNodeAddresses;
 
-    private final List<Listener> listeners = new ArrayList<>();
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
     // Key is tuple of seedNode address and requested blockHeight
     private final Map<Tuple2<NodeAddress, Integer>, RequestBlocksHandler> requestBlocksHandlerMap = new HashMap<>();
@@ -218,8 +218,8 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
-        if (networkEnvelope instanceof NewBsqBlockBroadcastMessage) {
-            listeners.forEach(listener -> listener.onNewBlockReceived((NewBsqBlockBroadcastMessage) networkEnvelope));
+        if (networkEnvelope instanceof NewBlockBroadcastMessage) {
+            listeners.forEach(listener -> listener.onNewBlockReceived((NewBlockBroadcastMessage) networkEnvelope));
         }
     }
 
@@ -238,7 +238,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                             startBlockHeight,
                             new RequestBlocksHandler.Listener() {
                                 @Override
-                                public void onComplete(GetBsqBlocksResponse getBsqBlocksResponse) {
+                                public void onComplete(GetBlocksResponse getBlocksResponse) {
                                     log.trace("requestBlocksHandler of outbound connection complete. nodeAddress={}",
                                             peersNodeAddress);
                                     stopRetryTimer();
@@ -248,7 +248,7 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                                     // we only notify if our request was latest
                                     if (startBlockHeight >= lastReceivedBlockHeight) {
                                         lastReceivedBlockHeight = startBlockHeight;
-                                        listeners.forEach(listener -> listener.onRequestedBlocksReceived(getBsqBlocksResponse));
+                                        listeners.forEach(listener -> listener.onRequestedBlocksReceived(getBlocksResponse));
                                     } else {
                                         log.warn("We got a response which is already obsolete because we receive a " +
                                                 "response from a request with a higher block height. " +
@@ -276,13 +276,13 @@ public class LiteNodeNetworkService implements MessageListener, ConnectionListen
                     // FIXME when a lot of blocks are created we get caught here. Seems to be a threading issue...
                     log.warn("startBlockHeight must not be smaller than lastReceivedBlockHeight. That should never happen." +
                             "startBlockHeight={},lastReceivedBlockHeight={}", startBlockHeight, lastReceivedBlockHeight);
-                    if (DevEnv.isDevMode())
-                        throw new RuntimeException("startBlockHeight must be larger than lastReceivedBlockHeight. startBlockHeight=" +
-                                startBlockHeight + " / lastReceivedBlockHeight=" + lastReceivedBlockHeight);
+                    DevEnv.logErrorAndThrowIfDevMode("startBlockHeight must be larger than lastReceivedBlockHeight. startBlockHeight=" +
+                            startBlockHeight + " / lastReceivedBlockHeight=" + lastReceivedBlockHeight);
                 }
             } else {
-                log.warn("We have started already a requestDataHandshake to peer. nodeAddress=" + peersNodeAddress + "\n" +
-                        "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");
+                log.warn("We have started already a requestDataHandshake for startBlockHeight {} to peer. nodeAddress={}\n" +
+                                "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.",
+                        peersNodeAddress, startBlockHeight);
 
                 UserThread.runAfter(() -> {
                     if (requestBlocksHandlerMap.containsKey(key)) {

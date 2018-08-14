@@ -217,7 +217,17 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
     }
 
     protected void setupPersistedDataHosts(Injector injector) {
-        PersistedDataHost.apply(CorePersistedDataHost.getPersistedDataHosts(injector));
+        try {
+            PersistedDataHost.apply(CorePersistedDataHost.getPersistedDataHosts(injector));
+        } catch (Throwable t) {
+            // If we are in dev mode we want to get the exception if some db files are corrupted
+            // We need to delay it as the stage is not created yet and so popups would not be shown.
+            if (DevEnv.isDevMode())
+                UserThread.runAfter(() -> {
+                    log.error("Error at PersistedDataHost.apply: " + t.toString());
+                    throw t;
+                }, 2);
+        }
     }
 
     protected abstract void startApplication();
@@ -332,6 +342,14 @@ public abstract class BisqExecutable implements GracefulShutDownHandler {
         parser.accepts(AppOptionKeys.IGNORE_DEV_MSG_KEY,
                 description("If set to true all signed network_messages from bisq developers are ignored " +
                         "(Global alert, Version update alert, Filters for offers, nodes or trading account data)", false))
+                .withRequiredArg()
+                .ofType(boolean.class);
+        parser.accepts(AppOptionKeys.DESKTOP_WITH_HTTP_API,
+                description("If set to true Bisq Desktop starts with Http API", false))
+                .withRequiredArg()
+                .ofType(boolean.class);
+        parser.accepts(AppOptionKeys.DESKTOP_WITH_GRPC_API,
+                description("If set to true Bisq Desktop starts with gRPC API", false))
                 .withRequiredArg()
                 .ofType(boolean.class);
         parser.accepts(AppOptionKeys.USE_DEV_PRIVILEGE_KEYS,

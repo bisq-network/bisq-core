@@ -19,10 +19,11 @@ package bisq.core.setup;
 
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.btc.AddressEntryList;
-import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.myvote.MyVoteService;
-import bisq.core.dao.vote.proposal.ProposalService;
+import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
+import bisq.core.dao.governance.myvote.MyVoteListService;
+import bisq.core.dao.governance.proposal.MyProposalListService;
+import bisq.core.dao.governance.role.BondedRolesService;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.trade.TradeManager;
 import bisq.core.trade.closed.ClosedTradableManager;
@@ -56,10 +57,11 @@ public class CorePersistedDataHost {
         persistedDataHosts.add(injector.getInstance(FailedTradesManager.class));
         persistedDataHosts.add(injector.getInstance(DisputeManager.class));
         persistedDataHosts.add(injector.getInstance(P2PService.class));
-        persistedDataHosts.add(injector.getInstance(ProposalService.class));
-        persistedDataHosts.add(injector.getInstance(BlindVoteService.class));
-        persistedDataHosts.add(injector.getInstance(MyVoteService.class));
-        persistedDataHosts.add(injector.getInstance(DaoParamService.class));
+        persistedDataHosts.add(injector.getInstance(BallotListService.class));
+        persistedDataHosts.add(injector.getInstance(MyBlindVoteListService.class));
+        persistedDataHosts.add(injector.getInstance(MyVoteListService.class));
+        persistedDataHosts.add(injector.getInstance(MyProposalListService.class));
+        persistedDataHosts.add(injector.getInstance(BondedRolesService.class));
         return persistedDataHosts;
     }
 }

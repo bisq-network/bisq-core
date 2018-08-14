@@ -17,10 +17,11 @@
 
 package bisq.core.dao.node.full.network;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.vo.BsqBlock;
-import bisq.core.dao.node.messages.GetBsqBlocksRequest;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksRequest;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
+import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.blockchain.Block;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.MessageListener;
@@ -57,10 +58,10 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     private final NetworkNode networkNode;
     private final PeerManager peerManager;
     private final Broadcaster broadcaster;
-    private final ReadableBsqBlockChain readableBsqBlockChain;
+    private final BsqStateService bsqStateService;
 
     // Key is connection UID
-    private final Map<String, GetBsqBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
+    private final Map<String, GetBlocksRequestHandler> getBlocksRequestHandlers = new HashMap<>();
     private boolean stopped;
 
 
@@ -72,11 +73,11 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
     public FullNodeNetworkService(NetworkNode networkNode,
                                   PeerManager peerManager,
                                   Broadcaster broadcaster,
-                                  ReadableBsqBlockChain readableBsqBlockChain) {
+                                  BsqStateService bsqStateService) {
         this.networkNode = networkNode;
         this.peerManager = peerManager;
         this.broadcaster = broadcaster;
-        this.readableBsqBlockChain = readableBsqBlockChain;
+        this.bsqStateService = bsqStateService;
 
         networkNode.addMessageListener(this);
         peerManager.addListener(this);
@@ -94,10 +95,11 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
         peerManager.removeListener(this);
     }
 
-    public void publishNewBlock(BsqBlock bsqBlock) {
-        log.info("Publish new block at height={} and block hash={}", bsqBlock.getHeight(), bsqBlock.getHash());
-        final NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage = new NewBsqBlockBroadcastMessage(bsqBlock);
-        broadcaster.broadcast(newBsqBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
+    public void publishNewBlock(Block block) {
+        log.info("Publish new block at height={} and block hash={}", block.getHeight(), block.getHash());
+        RawBlock rawBlock = RawBlock.fromBlock(block);
+        final NewBlockBroadcastMessage newBlockBroadcastMessage = new NewBlockBroadcastMessage(rawBlock);
+        broadcaster.broadcast(newBlockBroadcastMessage, networkNode.getNodeAddress(), null, true);
     }
 
 
@@ -127,15 +129,15 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
 
     @Override
     public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
-        if (networkEnvelope instanceof GetBsqBlocksRequest) {
-            // We received a GetBsqBlocksRequest from a liteNode
+        if (networkEnvelope instanceof GetBlocksRequest) {
+            // We received a GetBlocksRequest from a liteNode
             Log.traceCall(networkEnvelope.toString() + "\n\tconnection=" + connection);
             if (!stopped) {
                 final String uid = connection.getUid();
                 if (!getBlocksRequestHandlers.containsKey(uid)) {
-                    GetBsqBlocksRequestHandler requestHandler = new GetBsqBlocksRequestHandler(networkNode,
-                            readableBsqBlockChain,
-                            new GetBsqBlocksRequestHandler.Listener() {
+                    GetBlocksRequestHandler requestHandler = new GetBlocksRequestHandler(networkNode,
+                            bsqStateService,
+                            new GetBlocksRequestHandler.Listener() {
                                 @Override
                                 public void onComplete() {
                                     getBlocksRequestHandlers.remove(uid);
@@ -155,14 +157,14 @@ public class FullNodeNetworkService implements MessageListener, PeerManager.List
                                 }
                             });
                     getBlocksRequestHandlers.put(uid, requestHandler);
-                    requestHandler.onGetBsqBlocksRequest((GetBsqBlocksRequest) networkEnvelope, connection);
+                    requestHandler.onGetBlocksRequest((GetBlocksRequest) networkEnvelope, connection);
                 } else {
                     log.warn("We have already a GetDataRequestHandler for that connection started. " +
                             "We start a cleanup timer if the handler has not closed by itself in between 2 minutes.");
 
                     UserThread.runAfter(() -> {
                         if (getBlocksRequestHandlers.containsKey(uid)) {
-                            GetBsqBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
+                            GetBlocksRequestHandler handler = getBlocksRequestHandlers.get(uid);
                             handler.stop();
                             getBlocksRequestHandlers.remove(uid);
                         }

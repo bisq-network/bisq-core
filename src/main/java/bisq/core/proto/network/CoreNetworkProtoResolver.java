@@ -26,11 +26,10 @@ import bisq.core.arbitration.messages.DisputeResultMessage;
 import bisq.core.arbitration.messages.OpenNewDisputeMessage;
 import bisq.core.arbitration.messages.PeerOpenedDisputeMessage;
 import bisq.core.arbitration.messages.PeerPublishedDisputePayoutTxMessage;
-import bisq.core.dao.node.messages.GetBsqBlocksRequest;
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
-import bisq.core.dao.vote.blindvote.BlindVote;
-import bisq.core.dao.vote.proposal.ProposalPayload;
+import bisq.core.dao.governance.proposal.storage.temp.TempProposalPayload;
+import bisq.core.dao.node.messages.GetBlocksRequest;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
 import bisq.core.filter.Filter;
 import bisq.core.offer.OfferPayload;
 import bisq.core.offer.messages.OfferAvailabilityRequest;
@@ -147,12 +146,12 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                 case PRIVATE_NOTIFICATION_MESSAGE:
                     return PrivateNotificationMessage.fromProto(proto.getPrivateNotificationMessage(), messageVersion);
 
-                case GET_BSQ_BLOCKS_REQUEST:
-                    return GetBsqBlocksRequest.fromProto(proto.getGetBsqBlocksRequest(), messageVersion);
-                case GET_BSQ_BLOCKS_RESPONSE:
-                    return GetBsqBlocksResponse.fromProto(proto.getGetBsqBlocksResponse(), messageVersion);
-                case NEW_BSQ_BLOCK_BROADCAST_MESSAGE:
-                    return NewBsqBlockBroadcastMessage.fromProto(proto.getNewBsqBlockBroadcastMessage(), messageVersion);
+                case GET_BLOCKS_REQUEST:
+                    return GetBlocksRequest.fromProto(proto.getGetBlocksRequest(), messageVersion);
+                case GET_BLOCKS_RESPONSE:
+                    return GetBlocksResponse.fromProto(proto.getGetBlocksResponse(), messageVersion);
+                case NEW_BLOCK_BROADCAST_MESSAGE:
+                    return NewBlockBroadcastMessage.fromProto(proto.getNewBlockBroadcastMessage(), messageVersion);
 
                 case ADD_PERSISTABLE_NETWORK_PAYLOAD_MESSAGE:
                     return AddPersistableNetworkPayloadMessage.fromProto(proto.getAddPersistableNetworkPayloadMessage(), this, messageVersion);
@@ -203,10 +202,8 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return MailboxStoragePayload.fromProto(proto.getMailboxStoragePayload());
                 case OFFER_PAYLOAD:
                     return OfferPayload.fromProto(proto.getOfferPayload());
-                case PROPOSAL_PAYLOAD:
-                    return ProposalPayload.fromProto(proto.getProposalPayload());
-                case BLIND_VOTE:
-                    return BlindVote.fromProto(proto.getBlindVote());
+                case TEMP_PROPOSAL_PAYLOAD:
+                    return TempProposalPayload.fromProto(proto.getTempProposalPayload());
                 default:
                     throw new ProtobufferRuntimeException("Unknown proto message case (PB.StoragePayload). messageCase="
                             + proto.getMessageCase() + "; proto raw data=" + proto.toString());

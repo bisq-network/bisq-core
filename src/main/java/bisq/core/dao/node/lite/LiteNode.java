@@ -17,41 +17,34 @@
 
 package bisq.core.dao.node.lite;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.SnapshotManager;
-import bisq.core.dao.blockchain.exceptions.BlockNotConnectingException;
-import bisq.core.dao.blockchain.vo.BsqBlock;
 import bisq.core.dao.node.BsqNode;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
-import bisq.core.dao.node.messages.GetBsqBlocksResponse;
-import bisq.core.dao.node.messages.NewBsqBlockBroadcastMessage;
+import bisq.core.dao.node.messages.GetBlocksResponse;
+import bisq.core.dao.node.messages.NewBlockBroadcastMessage;
+import bisq.core.dao.node.parser.BlockParser;
+import bisq.core.dao.node.parser.exceptions.BlockNotConnectingException;
+import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.network.Connection;
-
-import bisq.common.UserThread;
-import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Main class for lite nodes which receive the BSQ transactions from a full node (e.g. seed nodes).
- * <p>
  * Verification of BSQ transactions is done also by the lite node.
  */
 @Slf4j
 public class LiteNode extends BsqNode {
-    private final LiteNodeExecutor bsqLiteNodeExecutor;
     private final LiteNodeNetworkService liteNodeNetworkService;
 
 
@@ -61,15 +54,13 @@ public class LiteNode extends BsqNode {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public LiteNode(ReadableBsqBlockChain readableBsqBlockChain,
+    public LiteNode(BlockParser blockParser,
+                    BsqStateService bsqStateService,
                     SnapshotManager snapshotManager,
                     P2PService p2PService,
-                    LiteNodeExecutor bsqLiteNodeExecutor,
                     LiteNodeNetworkService liteNodeNetworkService) {
-        super(readableBsqBlockChain,
-                snapshotManager,
-                p2PService);
-        this.bsqLiteNodeExecutor = bsqLiteNodeExecutor;
+        super(blockParser, bsqStateService, snapshotManager, p2PService);
+
         this.liteNodeNetworkService = liteNodeNetworkService;
     }
 
@@ -79,12 +70,13 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler) {
+    public void start() {
         super.onInitialized();
 
         liteNodeNetworkService.init();
     }
 
+    @Override
     public void shutDown() {
         liteNodeNetworkService.shutDown();
     }
@@ -100,13 +92,13 @@ public class LiteNode extends BsqNode {
 
         liteNodeNetworkService.addListener(new LiteNodeNetworkService.Listener() {
             @Override
-            public void onRequestedBlocksReceived(GetBsqBlocksResponse getBsqBlocksResponse) {
-                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBsqBlocksResponse.getBsqBlocks()));
+            public void onRequestedBlocksReceived(GetBlocksResponse getBlocksResponse) {
+                LiteNode.this.onRequestedBlocksReceived(new ArrayList<>(getBlocksResponse.getBlocks()));
             }
 
             @Override
-            public void onNewBlockReceived(NewBsqBlockBroadcastMessage newBsqBlockBroadcastMessage) {
-                LiteNode.this.onNewBlockReceived(newBsqBlockBroadcastMessage.getBsqBlock());
+            public void onNewBlockReceived(NewBlockBroadcastMessage newBlockBroadcastMessage) {
+                LiteNode.this.onNewBlockReceived(newBlockBroadcastMessage.getBlock());
             }
 
             @Override
@@ -118,13 +110,14 @@ public class LiteNode extends BsqNode {
             }
         });
 
-        // delay a bit to not stress too much at startup
-        UserThread.runAfter(this::startParseBlocks, 2);
+        if (!parseBlockchainComplete)
+            startParseBlocks();
     }
 
     // First we request the blocks from a full node
     @Override
     protected void startParseBlocks() {
+        log.info("startParseBlocks");
         liteNodeNetworkService.requestBlocks(getStartBlockHeight());
     }
 
@@ -134,45 +127,40 @@ public class LiteNode extends BsqNode {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // We received the missing blocks
-    private void onRequestedBlocksReceived(List<BsqBlock> bsqBlockList) {
-        log.info("onRequestedBlocksReceived: blocks with {} items", bsqBlockList.size());
-        if (bsqBlockList.size() > 0)
-            log.info("block height of last item: {}", bsqBlockList.get(bsqBlockList.size() - 1).getHeight());
-        // We clone with a reset of all mutable data in case the provider would not have done it.
-        List<BsqBlock> clonedBsqBlockList = bsqBlockList.stream()
-                .map(bsqBlock -> BsqBlock.clone(bsqBlock, true))
-                .collect(Collectors.toList());
-        bsqLiteNodeExecutor.parseBlocks(clonedBsqBlockList,
-                this::onNewBsqBlock,
-                this::onParseBlockChainComplete,
-                getErrorHandler());
+    private void onRequestedBlocksReceived(List<RawBlock> blockList) {
+        if (!blockList.isEmpty())
+            log.info("We received blocks from height {} to {}", blockList.get(0).getHeight(),
+                    blockList.get(blockList.size() - 1).getHeight());
+
+        // 4000 blocks take about 3 seconds if DAO UI is not displayed or 7 sec. if it is displayed.
+        // The updates at block height change are not much optimized yet, so that can be for sure improved
+        // 144 blocks a day would result in about 4000 in a month, so if a user downloads the app after 1 months latest
+        // release it will be a bit of a performance hit. It is a one time event as the snapshots gets created and be
+        // used at next startup.
+        long startTs = System.currentTimeMillis();
+        blockList.forEach(this::parseBlock);
+        log.info("Parsing of {} blocks took {} sec.", blockList.size(), (System.currentTimeMillis() - startTs) / 1000D);
+        onParseBlockChainComplete();
     }
 
     // We received a new block
-    private void onNewBlockReceived(BsqBlock bsqBlock) {
-        log.info("onNewBlockReceived: bsqBlock={}", bsqBlock.getHeight());
-
-        // We clone with a reset of all mutable data in case the provider would not have done it.
-        BsqBlock clonedBsqBlock = BsqBlock.clone(bsqBlock, true);
-        if (!readableBsqBlockChain.containsBsqBlock(clonedBsqBlock)) {
-            //TODO check block height and prev block it it connects to existing blocks
-            bsqLiteNodeExecutor.parseBlock(clonedBsqBlock, this::onNewBsqBlock, getErrorHandler());
-        }
+    private void onNewBlockReceived(RawBlock block) {
+        log.info("onNewBlockReceived: block at height {}", block.getHeight());
+        parseBlock(block);
     }
 
-    private void onNewBsqBlock(BsqBlock bsqBlock) {
-        log.debug("new bsqBlock parsed: " + bsqBlock);
-    }
-
-    @NotNull
-    private Consumer<Throwable> getErrorHandler() {
-        return throwable -> {
-            if (throwable instanceof BlockNotConnectingException) {
+    private void parseBlock(RawBlock rawBlock) {
+        if (!isBlockAlreadyAdded(rawBlock)) {
+            try {
+                blockParser.parseBlock(rawBlock);
+            } catch (BlockNotConnectingException throwable) {
                 startReOrgFromLastSnapshot();
-            } else {
+            } catch (Throwable throwable) {
                 log.error(throwable.toString());
                 throwable.printStackTrace();
+                if (errorMessageHandler != null)
+                    errorMessageHandler.handleErrorMessage(throwable.toString());
             }
-        };
+        }
     }
 }
