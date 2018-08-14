@@ -112,7 +112,7 @@ public final class User implements PersistedDataHost {
         });
     }
 
-    private void persist() {
+    public void persist() {
         if (storage != null)
             storage.queueUpForSave(userPayload);
     }

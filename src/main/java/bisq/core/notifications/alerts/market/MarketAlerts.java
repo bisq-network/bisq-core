@@ -27,7 +27,6 @@ import bisq.core.notifications.MobileNotificationService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferBookService;
 import bisq.core.offer.OfferPayload;
-import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.provider.price.MarketPrice;
 import bisq.core.provider.price.PriceFeedService;
 import bisq.core.user.User;
@@ -39,6 +38,7 @@ import org.bitcoinj.utils.Fiat;
 
 import javax.inject.Inject;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +61,11 @@ public class MarketAlerts {
         this.formatter = formatter;
     }
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public void onAllServicesInitialized() {
         offerBookService.addOfferBookChangedListener(new OfferBookService.OfferBookChangedListener() {
             @Override
@@ -72,12 +77,38 @@ public class MarketAlerts {
             public void onRemoved(Offer offer) {
             }
         });
-        offerBookService.getOffers().forEach(this::onOfferAdded);
+        applyFilterOnAllOffers();
+    }
 
-        // TODO for dev testing
-        /*user.getPaymentAccounts().forEach(e -> {
-            user.addMarketAlertFilter(new MarketAlertFilter(e, 200, 500));
-        });*/
+    public void addMarketAlertFilter(MarketAlertFilter filter) {
+        user.addMarketAlertFilter(filter);
+        applyFilterOnAllOffers();
+    }
+
+    public void removeMarketAlertFilter(MarketAlertFilter filter) {
+        user.removeMarketAlertFilter(filter);
+    }
+
+    public List<MarketAlertFilter> getMarketAlertFilters() {
+        return user.getMarketAlertFilters();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Private
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private void applyFilterOnAllOffers() {
+        offerBookService.getOffers().forEach(this::onOfferAdded);
+    }
+
+    // We combine the offer ID and the price (either as % price or as fixed price) to get also updates for edited offers
+    // % price get multiplied by 10000 to have 0.12% be converted to 12. For fixed price we have precision of 8 for
+    // altcoins and precision of 4 for fiat.
+    private String getAlertId(Offer offer) {
+        double price = offer.isUseMarketBasedPrice() ? offer.getMarketPriceMargin() * 10000 : offer.getOfferPayload().getPrice();
+        String priceString = String.valueOf((long) price);
+        return offer.getId() + "|" + priceString;
     }
 
     private void onOfferAdded(Offer offer) {
@@ -86,16 +117,15 @@ public class MarketAlerts {
         Price offerPrice = offer.getPrice();
         if (marketPrice != null && offerPrice != null) {
             boolean isSellOffer = offer.getDirection() == OfferPayload.Direction.SELL;
-            String shortId = offer.getShortId();
+            String shortOfferId = offer.getShortId();
             boolean isFiatCurrency = CurrencyUtil.isFiatCurrency(currencyCode);
+            String alertId = getAlertId(offer);
             user.getMarketAlertFilters().stream()
-                    .filter(filter -> {
-                        PaymentMethod paymentMethod = filter.getPaymentAccount().getPaymentMethod();
-                        return offer.getPaymentMethod().equals(paymentMethod);
-                    })
-                    .forEach(filter -> {
-                        int highPercentage = filter.getHighPercentage();
-                        int lowPercentage = -1 * filter.getLowPercentage();
+                    .filter(marketAlertFilter -> offer.getPaymentMethod().equals(marketAlertFilter.getPaymentAccount().getPaymentMethod()))
+                    .filter(marketAlertFilter -> marketAlertFilter.notContainsAlertId(alertId))
+                    .forEach(marketAlertFilter -> {
+                        int triggerValue = marketAlertFilter.getTriggerValue();
+                        boolean isTriggerForBuyOffer = marketAlertFilter.isBuyOffer();
                         double marketPriceAsDouble1 = marketPrice.getPrice();
                         int precision = CurrencyUtil.isCryptoCurrency(currencyCode) ?
                                 Altcoin.SMALLEST_UNIT_EXPONENT :
@@ -110,7 +140,13 @@ public class MarketAlerts {
                             ratio *= -1;
 
                         ratio = ratio * 10000;
-                        if (ratio > highPercentage || ratio < lowPercentage) {
+                        boolean triggered = ratio <= triggerValue;
+                        if (!triggered)
+                            return;
+
+                        boolean isTriggerForBuyOfferAndTriggered = !isSellOffer && isTriggerForBuyOffer;
+                        boolean isTriggerForSellOfferAndTriggered = isSellOffer && !isTriggerForBuyOffer;
+                        if (isTriggerForBuyOfferAndTriggered || isTriggerForSellOfferAndTriggered) {
                             String direction = isSellOffer ? Res.get("shared.sell") : Res.get("shared.buy");
                             String marketDir;
                             if (isFiatCurrency) {
@@ -143,13 +179,19 @@ public class MarketAlerts {
                                     formatter.formatToPercentWithSymbol(ratio / 10000d),
                                     marketDir,
                                     Res.get(offer.getPaymentMethod().getId()),
-                                    shortId);
+                                    shortOfferId);
                             MobileMessage message = new MobileMessage(Res.get("account.notifications.marketAlert.message.title"),
                                     msg,
-                                    shortId,
+                                    shortOfferId,
                                     MobileMessageType.MARKET);
                             try {
-                                mobileNotificationService.sendMessage(message);
+                                boolean success = mobileNotificationService.sendMessage(message);
+                                if (success) {
+                                    // In case we have disabled alerts we do not get a success msg back and we do not
+                                    // persist the offer
+                                    marketAlertFilter.addAlertId(alertId);
+                                    user.persist();
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }

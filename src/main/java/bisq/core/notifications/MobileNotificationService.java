@@ -44,6 +44,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class MobileNotificationService {
+    // Used in Relay app to response of a success state. We won't want a code dependency just for that string so we keep it
+    // duplicated in relay and here. Must not be changed.
+    private static final String SUCCESS = "success";
     private static final String DEV_URL_LOCALHOST = "http://localhost:8080/";
     private static final String DEV_URL = "http://198.211.125.72:8080/";
     private static final String URL = "http://jtboonrvwmq7frkj.onion/";
@@ -81,9 +84,9 @@ public class MobileNotificationService {
         this.httpClient = httpClient;
         this.mobileModel = mobileModel;
 
-        httpClient.setBaseUrl(useLocalHost ? DEV_URL_LOCALHOST : URL);
+        // httpClient.setBaseUrl(useLocalHost ? DEV_URL_LOCALHOST : URL);
 
-        // httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
+        httpClient.setBaseUrl(useLocalHost ? DEV_URL : URL);
         httpClient.setIgnoreSocks5Proxy(false);
     }
 
@@ -100,8 +103,8 @@ public class MobileNotificationService {
         useSoundProperty.set(preferences.isUseSoundForMobileNotifications());
     }
 
-    public void sendMessage(MobileMessage message) throws Exception {
-        sendMessage(message, useSoundProperty.get());
+    public boolean sendMessage(MobileMessage message) throws Exception {
+        return sendMessage(message, useSoundProperty.get());
     }
 
     public boolean applyKeyAndToken(String keyAndToken) {
@@ -111,8 +114,11 @@ public class MobileNotificationService {
             preferences.setPhoneKeyAndToken(keyAndToken);
             if (!setupConfirmationSent) {
                 try {
-                    sendConfirmationMessage();
-                    setupConfirmationSent = true;
+                    boolean success = sendConfirmationMessage();
+                    if (success)
+                        setupConfirmationSent = true;
+                    else
+                        log.warn("sendConfirmationMessage failed");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -123,63 +129,66 @@ public class MobileNotificationService {
         }
     }
 
-    public void sendMessage(MobileMessage message, boolean useSound) throws Exception {
+    public boolean sendMessage(MobileMessage message, boolean useSound) throws Exception {
         log.info("sendMessage\n" +
                 "Title: " + message.getTitle() + "\nMessage: " + message.getMessage());
-        if (mobileModel.getKey() != null) {
-            boolean doSend;
-            switch (message.getMobileMessageType()) {
-                case SETUP_CONFIRMATION:
-                    doSend = true;
-                    break;
-                case OFFER:
-                case TRADE:
-                case DISPUTE:
-                    doSend = useTradeNotificationsProperty.get();
-                    break;
-                case PRICE:
-                    doSend = usePriceNotificationsProperty.get();
-                    break;
-                case MARKET:
-                    doSend = useMarketNotificationsProperty.get();
-                    break;
-                case ERASE:
-                    doSend = true;
-                    break;
-                default:
-                    doSend = false;
-            }
-            if (doSend) {
-                log.info("sendMessage message={}", message);
-                Gson gson = new Gson();
-                String json = gson.toJson(message);
-                log.info("json " + json);
+        if (mobileModel.getKey() == null)
+            return false;
 
-                StringBuilder padded = new StringBuilder(json);
-                while (padded.length() % 16 != 0) {
-                    padded.append(" ");
-                }
-                json = padded.toString();
-
-                // generate 16 random characters for iv
-                String uuid = UUID.randomUUID().toString();
-                uuid = uuid.replace("-", "");
-                String iv = uuid.substring(0, 16);
-
-                String cipher = mobileMessageEncryption.encrypt(json, iv);
-                log.info("key = " + mobileModel.getKey());
-                log.info("iv = " + iv);
-                log.info("encryptedJson = " + cipher);
-                doSendMessage(iv, cipher, useSound);
-            }
+        boolean doSend;
+        switch (message.getMobileMessageType()) {
+            case SETUP_CONFIRMATION:
+                doSend = true;
+                break;
+            case OFFER:
+            case TRADE:
+            case DISPUTE:
+                doSend = useTradeNotificationsProperty.get();
+                break;
+            case PRICE:
+                doSend = usePriceNotificationsProperty.get();
+                break;
+            case MARKET:
+                doSend = useMarketNotificationsProperty.get();
+                break;
+            case ERASE:
+                doSend = true;
+                break;
+            default:
+                doSend = false;
         }
+
+        if (!doSend)
+            return false;
+
+        log.info("sendMessage message={}", message);
+        Gson gson = new Gson();
+        String json = gson.toJson(message);
+        log.info("json " + json);
+
+        StringBuilder padded = new StringBuilder(json);
+        while (padded.length() % 16 != 0) {
+            padded.append(" ");
+        }
+        json = padded.toString();
+
+        // generate 16 random characters for iv
+        String uuid = UUID.randomUUID().toString();
+        uuid = uuid.replace("-", "");
+        String iv = uuid.substring(0, 16);
+
+        String cipher = mobileMessageEncryption.encrypt(json, iv);
+        log.info("key = " + mobileModel.getKey());
+        log.info("iv = " + iv);
+        log.info("encryptedJson = " + cipher);
+        return doSendMessage(iv, cipher, useSound);
     }
 
-    public void sendEraseMessage() throws Exception {
+    public boolean sendEraseMessage() throws Exception {
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.ERASE);
-        sendMessage(message, false);
+        return sendMessage(message, false);
     }
 
     public void reset() {
@@ -189,15 +198,15 @@ public class MobileNotificationService {
     }
 
 
-    private void sendConfirmationMessage() throws Exception {
+    private boolean sendConfirmationMessage() throws Exception {
         log.info("sendConfirmationMessage");
         MobileMessage message = new MobileMessage("",
                 "",
                 MobileMessageType.SETUP_CONFIRMATION);
-        sendMessage(message, true);
+        return sendMessage(message, true);
     }
 
-    private void doSendMessage(String iv, String cipher, boolean useSound) throws Exception {
+    private boolean doSendMessage(String iv, String cipher, boolean useSound) throws Exception {
         String msg;
         if (mobileModel.getOs() == null)
             throw new RuntimeException("No mobileModel OS set");
@@ -239,5 +248,6 @@ public class MobileNotificationService {
         String result = httpClient.requestWithGET(param, "User-Agent", "bisq/" +
                 Version.VERSION + ", uid:" + httpClient.getUid());
         log.info("result: " + result);
+        return result.equals(SUCCESS);
     }
 }
