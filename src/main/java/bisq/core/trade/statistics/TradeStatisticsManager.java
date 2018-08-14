@@ -27,9 +27,6 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.trade.Trade;
 
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.storage.HashMapChangedListener;
-import bisq.network.p2p.storage.payload.ProtectedStorageEntry;
-import bisq.network.p2p.storage.payload.ProtectedStoragePayload;
 import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 
 import bisq.common.UserThread;
