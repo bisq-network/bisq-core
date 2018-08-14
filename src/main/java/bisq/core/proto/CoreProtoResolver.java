@@ -26,6 +26,7 @@ import bisq.core.payment.payload.ClearXchangeAccountPayload;
 import bisq.core.payment.payload.CryptoCurrencyAccountPayload;
 import bisq.core.payment.payload.F2FAccountPayload;
 import bisq.core.payment.payload.FasterPaymentsAccountPayload;
+import bisq.core.payment.payload.HalCashAccountPayload;
 import bisq.core.payment.payload.InteracETransferAccountPayload;
 import bisq.core.payment.payload.MoneyBeamAccountPayload;
 import bisq.core.payment.payload.MoneyGramAccountPayload;
@@ -128,6 +129,8 @@ public class CoreProtoResolver implements ProtoResolver {
                     return PerfectMoneyAccountPayload.fromProto(proto);
                 case SWISH_ACCOUNT_PAYLOAD:
                     return SwishAccountPayload.fromProto(proto);
+                case HAL_CASH_ACCOUNT_PAYLOAD:
+                    return HalCashAccountPayload.fromProto(proto);
                 case U_S_POSTAL_MONEY_ORDER_ACCOUNT_PAYLOAD:
                     return USPostalMoneyOrderAccountPayload.fromProto(proto);
                 default:
