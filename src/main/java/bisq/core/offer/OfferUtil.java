@@ -144,19 +144,19 @@ public class OfferUtil {
         return Volume.parse(String.valueOf(rounded * 10), "EUR");
     }
 
-    public static Coin getAdjustedMinAmountForHalCash(Coin minAmount, Price price) {
-        // Min amount must result in a volume of min 10 EUR
-        Volume minVolume = Volume.parse(String.valueOf(10), "EUR");
-        Coin minAmountByMinVolume = price.getAmountByVolume(minVolume);
-        if (minAmount.compareTo(minAmountByMinVolume) < 0)
-            minAmount = minAmountByMinVolume;
+    public static Coin getAdjustedAmountForHalCash(Coin amount, Price price) {
+        // Amount must result in a volume of min 10 EUR
+        Volume volume = Volume.parse(String.valueOf(10), "EUR");
+        Coin amountByVolume = price.getAmountByVolume(volume);
+        if (amount.compareTo(amountByVolume) < 0)
+            amount = amountByVolume;
 
-        // We adjust the minAmount so that the minVolume is a multiple of 10 EUR
-        minVolume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(minAmount));
-        minAmount = price.getAmountByVolume(minVolume);
+        // We adjust the amount so that the volume is a multiple of 10 EUR
+        volume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(amount));
+        amount = price.getAmountByVolume(volume);
 
         // We want only 4 decimal places
-        long rounded = Math.round((double) minAmount.value / 10000d) * 10000;
+        long rounded = Math.round((double) amount.value / 10000d) * 10000;
         return Coin.valueOf(rounded);
     }
 }
