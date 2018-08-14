@@ -144,19 +144,26 @@ public class OfferUtil {
         return Volume.parse(String.valueOf(rounded * 10), "EUR");
     }
 
-    public static Coin getAdjustedAmountForHalCash(Coin amount, Price price) {
+    public static Coin getAdjustedAmountForHalCash(Coin amount, Price price, long maxTradeLimit) {
         // Amount must result in a volume of min 10 EUR
-        Volume volume = Volume.parse(String.valueOf(10), "EUR");
-        Coin amountByVolume = price.getAmountByVolume(volume);
-        if (amount.compareTo(amountByVolume) < 0)
-            amount = amountByVolume;
+        Volume volume10EUR = Volume.parse(String.valueOf(10), "EUR");
+        Coin amountByVolume10EUR = price.getAmountByVolume(volume10EUR);
+        // We set min amount so it has a volume of 10 EUR
+        if (amount.compareTo(amountByVolume10EUR) < 0)
+            amount = amountByVolume10EUR;
 
         // We adjust the amount so that the volume is a multiple of 10 EUR
-        volume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(amount));
+        Volume volume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(amount));
         amount = price.getAmountByVolume(volume);
 
         // We want only 4 decimal places
         long rounded = Math.round((double) amount.value / 10000d) * 10000;
+
+        if (rounded > maxTradeLimit) {
+            // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
+            rounded = Math.min(maxTradeLimit, rounded - amountByVolume10EUR.value);
+        }
+
         return Coin.valueOf(rounded);
     }
 }
