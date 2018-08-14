@@ -44,7 +44,7 @@ public class BlindVoteValidator {
         this.periodService = periodService;
     }
 
-    private boolean areDataFieldsValid(BlindVote blindVote) {
+    public boolean areDataFieldsValid(BlindVote blindVote) {
         try {
             validateDataFields(blindVote);
             return true;

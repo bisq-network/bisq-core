@@ -141,7 +141,7 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
                 String txId = blindVote.getTxId();
                 // We don't check the phase and the cycle as we want to add all object independently when we receive it
                 // (or when we start the app to fill our list from the data we gor from the seed node).
-                if (blindVoteValidator.areDataFieldsValidAndTxConfirmed(blindVote)) {
+                if (blindVoteValidator.areDataFieldsValid(blindVote)) {
                     // We don't validate as we might receive blindVotes from other cycles or phases at startup.
                     appendOnlyStoreList.add(blindVotePayload);
                     log.info("We received a blindVotePayload. blindVoteTxId={}", txId);
