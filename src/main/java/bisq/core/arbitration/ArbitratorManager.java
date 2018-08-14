@@ -322,6 +322,10 @@ public class ArbitratorManager {
         return publicKeys.contains(pubKeyAsHex);
     }
 
+    public boolean isArbitratorAvailableForLanguage(String languageCode) {
+        return arbitratorsObservableMap.values().stream().anyMatch(arbitrator ->
+                arbitrator.getLanguageCodes().stream().anyMatch(lc -> lc.equals(languageCode)));
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
