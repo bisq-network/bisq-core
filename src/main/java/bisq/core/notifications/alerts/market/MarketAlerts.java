@@ -32,6 +32,7 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.user.User;
 import bisq.core.util.BSFormatter;
 
+import bisq.common.crypto.KeyRing;
 import bisq.common.util.MathUtils;
 
 import org.bitcoinj.utils.Fiat;
@@ -49,15 +50,17 @@ public class MarketAlerts {
     private final MobileNotificationService mobileNotificationService;
     private final User user;
     private final PriceFeedService priceFeedService;
+    private final KeyRing keyRing;
     private final BSFormatter formatter;
 
     @Inject
     public MarketAlerts(OfferBookService offerBookService, MobileNotificationService mobileNotificationService,
-                        User user, PriceFeedService priceFeedService, BSFormatter formatter) {
+                        User user, PriceFeedService priceFeedService, KeyRing keyRing, BSFormatter formatter) {
         this.offerBookService = offerBookService;
         this.mobileNotificationService = mobileNotificationService;
         this.user = user;
         this.priceFeedService = priceFeedService;
+        this.keyRing = keyRing;
         this.formatter = formatter;
     }
 
@@ -121,6 +124,7 @@ public class MarketAlerts {
             boolean isFiatCurrency = CurrencyUtil.isFiatCurrency(currencyCode);
             String alertId = getAlertId(offer);
             user.getMarketAlertFilters().stream()
+                    .filter(marketAlertFilter -> !offer.isMyOffer(keyRing))
                     .filter(marketAlertFilter -> offer.getPaymentMethod().equals(marketAlertFilter.getPaymentAccount().getPaymentMethod()))
                     .filter(marketAlertFilter -> marketAlertFilter.notContainsAlertId(alertId))
                     .forEach(marketAlertFilter -> {
