@@ -121,8 +121,11 @@ public class RpcService {
                 nodeConfig.setProperty("node.bitcoind.rpc.password", rpcPassword);
                 nodeConfig.setProperty("node.bitcoind.rpc.port", rpcPort);
                 nodeConfig.setProperty("node.bitcoind.notification.block.port", rpcBlockPort);
-                nodeConfig.setProperty("node.bitcoind.notification.alert.port", "64647");
-                nodeConfig.setProperty("node.bitcoind.notification.wallet.port", "64648");
+                // todo(chirhonul): we are not using the alert or wallet functionality currently, so we may want to
+                // disable this in the com.neemre.btcdcli4j library entirely, if possible.
+                nodeConfig.setProperty("node.bitcoind.notification.alert.port", String.valueOf(bisq.network.p2p.Utils.findFreeSystemPort()));
+                nodeConfig.setProperty("node.bitcoind.notification.wallet.port", String.valueOf(bisq.network.p2p.Utils.findFreeSystemPort()));
+
                 nodeConfig.setProperty("node.bitcoind.http.auth_scheme", "Basic");
                 BtcdClientImpl client = new BtcdClientImpl(httpProvider, nodeConfig);
                 daemon = new BtcdDaemonImpl(client);
