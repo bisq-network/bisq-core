@@ -34,8 +34,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -77,6 +81,42 @@ public class ArbitratorManagerTest {
 
         assertTrue(manager.isArbitratorAvailableForLanguage("en"));
         assertFalse(manager.isArbitratorAvailableForLanguage("th"));
+    }
+
+    @Test
+    public void testGetArbitratorLanguages() {
+        User user = mock(User.class);
+        ArbitratorService arbitratorService = mock(ArbitratorService.class);
+
+        ArbitratorManager manager = new ArbitratorManager(null, arbitratorService, user, null, null, false);
+
+        ArrayList<String> languagesOne = new ArrayList<String>() {{
+            add("en");
+            add("de");
+        }};
+
+        ArrayList<String> languagesTwo = new ArrayList<String>() {{
+            add("en");
+            add("es");
+        }};
+
+        Arbitrator one = new Arbitrator(new NodeAddress("arbitrator:1"), null, null, null,
+                languagesOne, 0L, null, "", null,
+                null, null);
+
+        Arbitrator two = new Arbitrator(new NodeAddress("arbitrator:2"), null, null, null,
+                languagesTwo, 0L, null, "", null,
+                null, null);
+
+        ArrayList<NodeAddress> nodeAddresses = new ArrayList<NodeAddress>() {{
+            add(two.getNodeAddress());
+        }};
+
+        manager.addArbitrator(one, () -> {}, errorMessage -> {});
+        manager.addArbitrator(two, () -> {}, errorMessage -> {});
+
+        assertThat(manager.getArbitratorLanguages(nodeAddresses), containsInAnyOrder("en", "es"));
+        assertThat(manager.getArbitratorLanguages(nodeAddresses), not(containsInAnyOrder("de")));
     }
 
 }

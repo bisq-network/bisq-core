@@ -327,6 +327,14 @@ public class ArbitratorManager {
                 arbitrator.getLanguageCodes().stream().anyMatch(lc -> lc.equals(languageCode)));
     }
 
+    public List<String> getArbitratorLanguages(List<NodeAddress> nodeAddresses) {
+        return arbitratorsObservableMap.values().stream()
+                .filter(arbitrator -> nodeAddresses.stream().anyMatch(nodeAddress -> nodeAddress.equals(arbitrator.getNodeAddress())))
+                .flatMap(arbitrator -> arbitrator.getLanguageCodes().stream())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private
     ///////////////////////////////////////////////////////////////////////////////////////////
