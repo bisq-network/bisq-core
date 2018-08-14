@@ -19,6 +19,8 @@ package bisq.core.offer;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.monetary.Price;
+import bisq.core.monetary.Volume;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 import bisq.core.util.CoinUtil;
@@ -26,6 +28,8 @@ import bisq.core.util.CoinUtil;
 import bisq.common.util.MathUtils;
 
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +40,7 @@ import javax.annotation.Nullable;
  * Long-term there could be a GUI-agnostic OfferService which provides these and other functionalities to both the
  * GUI and the API.
  */
+@Slf4j
 public class OfferUtil {
 
     /**
@@ -130,5 +135,35 @@ public class OfferUtil {
                 BisqEnvironment.isBaseCurrencySupportingBsq() &&
                 availableBalance != null &&
                 !availableBalance.subtract(makerFee).isNegative();
+    }
+
+    public static Volume getAdjustedVolumeForHalCash(Volume volumeByAmount) {
+        // EUR has precision 4 and we want multiple of 10 so we divide by 100000 then
+        // round and multiply with 10
+        long rounded = Math.max(1, Math.round((double) volumeByAmount.getValue() / 100000d));
+        return Volume.parse(String.valueOf(rounded * 10), "EUR");
+    }
+
+    public static Coin getAdjustedAmountForHalCash(Coin amount, Price price, long maxTradeLimit) {
+        // Amount must result in a volume of min 10 EUR
+        Volume volume10EUR = Volume.parse(String.valueOf(10), "EUR");
+        Coin amountByVolume10EUR = price.getAmountByVolume(volume10EUR);
+        // We set min amount so it has a volume of 10 EUR
+        if (amount.compareTo(amountByVolume10EUR) < 0)
+            amount = amountByVolume10EUR;
+
+        // We adjust the amount so that the volume is a multiple of 10 EUR
+        Volume volume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(amount));
+        amount = price.getAmountByVolume(volume);
+
+        // We want only 4 decimal places
+        long rounded = Math.round((double) amount.value / 10000d) * 10000;
+
+        if (rounded > maxTradeLimit) {
+            // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
+            rounded = Math.min(maxTradeLimit, rounded - amountByVolume10EUR.value);
+        }
+
+        return Coin.valueOf(rounded);
     }
 }
