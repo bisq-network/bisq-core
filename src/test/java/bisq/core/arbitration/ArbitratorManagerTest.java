@@ -39,7 +39,6 @@ import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInA
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -76,8 +75,12 @@ public class ArbitratorManagerTest {
                 languagesTwo, 0L, null, "", null,
                 null, null);
 
-        manager.addArbitrator(one, () -> {}, errorMessage -> {});
-        manager.addArbitrator(two, () -> {}, errorMessage -> {});
+        manager.addArbitrator(one, () -> {
+        }, errorMessage -> {
+        });
+        manager.addArbitrator(two, () -> {
+        }, errorMessage -> {
+        });
 
         assertTrue(manager.isArbitratorAvailableForLanguage("en"));
         assertFalse(manager.isArbitratorAvailableForLanguage("th"));
@@ -112,8 +115,12 @@ public class ArbitratorManagerTest {
             add(two.getNodeAddress());
         }};
 
-        manager.addArbitrator(one, () -> {}, errorMessage -> {});
-        manager.addArbitrator(two, () -> {}, errorMessage -> {});
+        manager.addArbitrator(one, () -> {
+        }, errorMessage -> {
+        });
+        manager.addArbitrator(two, () -> {
+        }, errorMessage -> {
+        });
 
         assertThat(manager.getArbitratorLanguages(nodeAddresses), containsInAnyOrder("en", "es"));
         assertThat(manager.getArbitratorLanguages(nodeAddresses), not(containsInAnyOrder("de")));
