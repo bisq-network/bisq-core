@@ -39,8 +39,10 @@ public class LanguageUtil {
             "hu", // Hungarian
             "ro", // Romanian
             "ru", // Russian
-            "fr"  // French
-
+            "fr", // French
+            "th", // Thai
+            "vi", // Vietnamese
+            "fa" // Persian
             /*
             // not translated yet
             "tr" // Turkish
