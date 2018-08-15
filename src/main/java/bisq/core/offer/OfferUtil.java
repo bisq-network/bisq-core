@@ -19,6 +19,8 @@ package bisq.core.offer;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.BsqWalletService;
+import bisq.core.monetary.Price;
+import bisq.core.monetary.Volume;
 import bisq.core.provider.fee.FeeService;
 import bisq.core.user.Preferences;
 import bisq.core.util.CoinUtil;
@@ -26,6 +28,8 @@ import bisq.core.util.CoinUtil;
 import bisq.common.util.MathUtils;
 
 import org.bitcoinj.core.Coin;
+
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +40,7 @@ import javax.annotation.Nullable;
  * Long-term there could be a GUI-agnostic OfferService which provides these and other functionalities to both the
  * GUI and the API.
  */
+@Slf4j
 public class OfferUtil {
 
     /**
@@ -130,5 +135,54 @@ public class OfferUtil {
                 BisqEnvironment.isBaseCurrencySupportingBsq() &&
                 availableBalance != null &&
                 !availableBalance.subtract(makerFee).isNegative();
+    }
+
+    public static Volume getRoundedFiatVolume(Volume volumeByAmount, String currencyCode) {
+        // We want to get rounded to 1 unit of the fiat currency, e.g. 1 EUR.
+        return getAdjustedFiatVolume(volumeByAmount, currencyCode, 1);
+    }
+
+    public static Volume getAdjustedVolumeForHalCash(Volume volumeByAmount) {
+        // EUR has precision 4 and we want multiple of 10 so we divide by 100000 then
+        // round and multiply with 10
+        return getAdjustedFiatVolume(volumeByAmount, "EUR", 10);
+    }
+
+    private static Volume getAdjustedFiatVolume(Volume volumeByAmount, String currencyCode, int factor) {
+        // Fiat currencies has precision 4 and we want multiple of 10 so we divide by 10000 * factor then
+        // round and multiply with factor
+        long rounded = Math.max(1, Math.round((double) volumeByAmount.getValue() / (10000d * factor)));
+        // We pass EUR but any fiat currency would be good.
+        return Volume.parse(String.valueOf(rounded * factor), currencyCode);
+    }
+
+    public static Coin getRoundedFiatAmount(Coin amount, Price price, String currencyCode, long maxTradeLimit) {
+        return getAdjustedAmount(amount, price, maxTradeLimit, currencyCode, 1);
+    }
+
+    public static Coin getAdjustedAmountForHalCash(Coin amount, Price price, long maxTradeLimit) {
+        return getAdjustedAmount(amount, price, maxTradeLimit, "EUR", 10);
+    }
+
+    private static Coin getAdjustedAmount(Coin amount, Price price, long maxTradeLimit, String currencyCode, int factor) {
+        // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or 10 EUR in case of Halcash
+        Volume volumeRoundedToFactor = Volume.parse(String.valueOf(factor), currencyCode);
+        Coin amountByVolumeRoundedToFactor = price.getAmountByVolume(volumeRoundedToFactor);
+        // We set min amount so it has a volume of 10 EUR
+        if (amount.compareTo(amountByVolumeRoundedToFactor) < 0)
+            amount = amountByVolumeRoundedToFactor;
+
+        // We adjust the amount so that the volume is a multiple of 10 EUR
+        Volume volume = getAdjustedFiatVolume(price.getVolumeByAmount(amount), currencyCode, factor);
+        amount = price.getAmountByVolume(volume);
+
+        // We want only 4 decimal places
+        long rounded = Math.round((double) amount.value / 10000d) * 10000;
+        if (rounded > maxTradeLimit) {
+            // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
+            rounded = Math.min(maxTradeLimit, rounded - amountByVolumeRoundedToFactor.value);
+        }
+
+        return Coin.valueOf(rounded);
     }
 }
