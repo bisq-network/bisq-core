@@ -65,7 +65,6 @@ public class TradeEvents {
         if (!trade.isPayoutPublished()) {
             trade.statePhaseProperty().addListener((observable, oldValue, newValue) -> {
                 String msg = null;
-                log.error("setTradePhaseListener phase " + newValue);
                 String shortId = trade.getShortId();
                 switch (newValue) {
                     case INIT:
