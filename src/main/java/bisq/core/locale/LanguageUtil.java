@@ -40,11 +40,11 @@ public class LanguageUtil {
             "ro", // Romanian
             "ru", // Russian
             "fr", // French
-            "th", // Thai
-            "vi", // Vietnamese
-            "fa" // Persian
+            "vi" // Vietnamese
             /*
             // not translated yet
+            "fa" // Persian --> waiting for third review
+            "th", // Thai --> render issues atm
             "tr" // Turkish
             "it", // Italian
             "ja", // Japanese
