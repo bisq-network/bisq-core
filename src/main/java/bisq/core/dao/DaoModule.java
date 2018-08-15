@@ -17,43 +17,60 @@
 
 package bisq.core.dao;
 
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.SnapshotManager;
-import bisq.core.dao.blockchain.WritableBsqBlockChain;
-import bisq.core.dao.blockchain.json.JsonBlockChainExporter;
+import bisq.core.dao.bonding.lockup.LockupService;
+import bisq.core.dao.bonding.unlock.UnlockService;
+import bisq.core.dao.governance.ballot.BallotListPresentation;
+import bisq.core.dao.governance.ballot.BallotListService;
+import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteValidator;
+import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
+import bisq.core.dao.governance.blindvote.storage.BlindVoteStorageService;
+import bisq.core.dao.governance.blindvote.storage.BlindVoteStore;
+import bisq.core.dao.governance.myvote.MyVoteListService;
+import bisq.core.dao.governance.proposal.MyProposalListService;
+import bisq.core.dao.governance.proposal.ProposalConsensus;
+import bisq.core.dao.governance.proposal.ProposalListPresentation;
+import bisq.core.dao.governance.proposal.ProposalService;
+import bisq.core.dao.governance.proposal.ProposalValidator;
+import bisq.core.dao.governance.proposal.compensation.CompensationConsensus;
+import bisq.core.dao.governance.proposal.compensation.CompensationProposalService;
+import bisq.core.dao.governance.proposal.compensation.CompensationValidator;
+import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondProposalService;
+import bisq.core.dao.governance.proposal.confiscatebond.ConfiscateBondValidator;
+import bisq.core.dao.governance.proposal.param.ChangeParamProposalService;
+import bisq.core.dao.governance.proposal.param.ChangeParamValidator;
+import bisq.core.dao.governance.proposal.role.BondedRoleProposalService;
+import bisq.core.dao.governance.proposal.role.BondedRoleValidator;
+import bisq.core.dao.governance.proposal.storage.appendonly.ProposalStorageService;
+import bisq.core.dao.governance.proposal.storage.appendonly.ProposalStore;
+import bisq.core.dao.governance.proposal.storage.temp.TempProposalStorageService;
+import bisq.core.dao.governance.proposal.storage.temp.TempProposalStore;
+import bisq.core.dao.governance.role.BondedRolesService;
+import bisq.core.dao.governance.voteresult.VoteResultService;
+import bisq.core.dao.governance.voteresult.issuance.IssuanceService;
+import bisq.core.dao.governance.votereveal.VoteRevealService;
 import bisq.core.dao.node.BsqNodeProvider;
-import bisq.core.dao.node.consensus.BsqTxController;
-import bisq.core.dao.node.consensus.GenesisTxController;
-import bisq.core.dao.node.consensus.GenesisTxOutputController;
-import bisq.core.dao.node.consensus.IssuanceController;
-import bisq.core.dao.node.consensus.OpReturnBlindVoteController;
-import bisq.core.dao.node.consensus.OpReturnCompReqController;
-import bisq.core.dao.node.consensus.OpReturnController;
-import bisq.core.dao.node.consensus.OpReturnProposalController;
-import bisq.core.dao.node.consensus.OpReturnVoteRevealController;
-import bisq.core.dao.node.consensus.TxInputController;
-import bisq.core.dao.node.consensus.TxInputsController;
-import bisq.core.dao.node.consensus.TxOutputController;
-import bisq.core.dao.node.consensus.TxOutputsController;
 import bisq.core.dao.node.full.FullNode;
-import bisq.core.dao.node.full.FullNodeExecutor;
-import bisq.core.dao.node.full.FullNodeParser;
+import bisq.core.dao.node.full.RpcService;
 import bisq.core.dao.node.full.network.FullNodeNetworkService;
-import bisq.core.dao.node.full.rpc.RpcService;
+import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
-import bisq.core.dao.node.lite.LiteNodeExecutor;
-import bisq.core.dao.node.lite.LiteNodeParser;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
-import bisq.core.dao.param.DaoParamService;
-import bisq.core.dao.vote.PeriodService;
-import bisq.core.dao.vote.blindvote.BlindVoteService;
-import bisq.core.dao.vote.myvote.MyVoteService;
-import bisq.core.dao.vote.proposal.ProposalService;
-import bisq.core.dao.vote.proposal.compensation.CompensationRequestService;
-import bisq.core.dao.vote.proposal.compensation.issuance.IssuanceService;
-import bisq.core.dao.vote.proposal.generic.GenericProposalService;
-import bisq.core.dao.vote.votereveal.VoteRevealService;
+import bisq.core.dao.node.parser.BlockParser;
+import bisq.core.dao.node.parser.OpReturnBlindVoteParser;
+import bisq.core.dao.node.parser.OpReturnCompReqParser;
+import bisq.core.dao.node.parser.OpReturnParser;
+import bisq.core.dao.node.parser.OpReturnProposalParser;
+import bisq.core.dao.node.parser.OpReturnVoteRevealParser;
+import bisq.core.dao.node.parser.TxInputParser;
+import bisq.core.dao.node.parser.TxOutputParser;
+import bisq.core.dao.node.parser.TxParser;
+import bisq.core.dao.state.BsqState;
+import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.GenesisTxInfo;
+import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.state.period.CycleService;
+import bisq.core.dao.state.period.PeriodService;
 
 import bisq.common.app.AppModule;
 
@@ -73,50 +90,99 @@ public class DaoModule extends AppModule {
     @Override
     protected void configure() {
         bind(DaoSetup.class).in(Singleton.class);
+        bind(DaoFacade.class).in(Singleton.class);
 
+        // Node, parser
         bind(BsqNodeProvider.class).in(Singleton.class);
-
         bind(FullNode.class).in(Singleton.class);
-        bind(FullNodeExecutor.class).in(Singleton.class);
-        bind(FullNodeNetworkService.class).in(Singleton.class);
-        bind(FullNodeParser.class).in(Singleton.class);
-        bind(RpcService.class).in(Singleton.class);
-
         bind(LiteNode.class).in(Singleton.class);
+        bind(RpcService.class).in(Singleton.class);
+        bind(BlockParser.class).in(Singleton.class);
+        bind(FullNodeNetworkService.class).in(Singleton.class);
         bind(LiteNodeNetworkService.class).in(Singleton.class);
-        bind(LiteNodeExecutor.class).in(Singleton.class);
-        bind(LiteNodeParser.class).in(Singleton.class);
 
-        bind(BsqBlockChain.class).in(Singleton.class);
-        bind(ReadableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
-        bind(WritableBsqBlockChain.class).to(BsqBlockChain.class).in(Singleton.class);
+        // BsqState
+        bind(GenesisTxInfo.class).in(Singleton.class);
+        bind(BsqState.class).in(Singleton.class);
+        bind(BsqStateService.class).in(Singleton.class);
         bind(SnapshotManager.class).in(Singleton.class);
-        bind(DaoParamService.class).in(Singleton.class);
         bind(JsonBlockChainExporter.class).in(Singleton.class);
 
-        bind(GenesisTxController.class).in(Singleton.class);
-        bind(GenesisTxOutputController.class).in(Singleton.class);
-        bind(BsqTxController.class).in(Singleton.class);
-        bind(TxInputsController.class).in(Singleton.class);
-        bind(TxInputController.class).in(Singleton.class);
-        bind(TxOutputsController.class).in(Singleton.class);
-        bind(TxOutputController.class).in(Singleton.class);
-        bind(OpReturnController.class).in(Singleton.class);
-        bind(OpReturnProposalController.class).in(Singleton.class);
-        bind(OpReturnCompReqController.class).in(Singleton.class);
-        bind(OpReturnBlindVoteController.class).in(Singleton.class);
-        bind(OpReturnVoteRevealController.class).in(Singleton.class);
-        bind(IssuanceController.class).in(Singleton.class);
-
+        // Period
+        bind(CycleService.class).in(Singleton.class);
         bind(PeriodService.class).in(Singleton.class);
+
+        // blockchain parser
+        bind(TxParser.class).in(Singleton.class);
+        bind(TxInputParser.class).in(Singleton.class);
+        bind(TxOutputParser.class).in(Singleton.class);
+        bind(OpReturnParser.class).in(Singleton.class);
+        bind(OpReturnProposalParser.class).in(Singleton.class);
+        bind(OpReturnCompReqParser.class).in(Singleton.class);
+        bind(OpReturnBlindVoteParser.class).in(Singleton.class);
+        bind(OpReturnVoteRevealParser.class).in(Singleton.class);
+
+        // Proposal
+        bind(ProposalConsensus.class).in(Singleton.class);
         bind(ProposalService.class).in(Singleton.class);
-        bind(CompensationRequestService.class).in(Singleton.class);
-        bind(GenericProposalService.class).in(Singleton.class);
-        bind(MyVoteService.class).in(Singleton.class);
+
+        bind(MyProposalListService.class).in(Singleton.class);
+        bind(ProposalListPresentation.class).in(Singleton.class);
+
+        bind(ProposalStore.class).in(Singleton.class);
+        bind(ProposalStorageService.class).in(Singleton.class);
+        bind(TempProposalStore.class).in(Singleton.class);
+        bind(TempProposalStorageService.class).in(Singleton.class);
+        bind(ProposalValidator.class).in(Singleton.class);
+
+        bind(CompensationValidator.class).in(Singleton.class);
+        bind(CompensationConsensus.class).in(Singleton.class);
+        bind(CompensationProposalService.class).in(Singleton.class);
+
+        bind(ChangeParamValidator.class).in(Singleton.class);
+        bind(ChangeParamProposalService.class).in(Singleton.class);
+
+        bind(BondedRoleValidator.class).in(Singleton.class);
+        bind(BondedRoleProposalService.class).in(Singleton.class);
+
+        bind(ConfiscateBondValidator.class).in(Singleton.class);
+        bind(ConfiscateBondProposalService.class).in(Singleton.class);
+
+
+        // Ballot
+        bind(BallotListService.class).in(Singleton.class);
+        bind(BallotListPresentation.class).in(Singleton.class);
+
+        // MyVote
+        bind(MyVoteListService.class).in(Singleton.class);
+
+        // BlindVote
         bind(BlindVoteService.class).in(Singleton.class);
+        bind(BlindVoteStore.class).in(Singleton.class);
+        bind(BlindVoteStorageService.class).in(Singleton.class);
+        bind(BlindVoteValidator.class).in(Singleton.class);
+        bind(MyBlindVoteListService.class).in(Singleton.class);
+
+        // VoteReveal
         bind(VoteRevealService.class).in(Singleton.class);
+
+        // VoteResult
+        bind(VoteResultService.class).in(Singleton.class);
         bind(IssuanceService.class).in(Singleton.class);
 
+        // Genesis
+        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, null);
+        bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
+
+        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, 0);
+        bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
+
+        // Bonds
+        bind(LockupService.class).in(Singleton.class);
+        bind(UnlockService.class).in(Singleton.class);
+        bind(BondedRolesService.class).in(Singleton.class);
+
+        // Options
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_USER)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_USER));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PASSWORD)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PASSWORD));
         bindConstant().annotatedWith(named(DaoOptionKeys.RPC_PORT)).to(environment.getRequiredProperty(DaoOptionKeys.RPC_PORT));
@@ -126,13 +192,6 @@ public class DaoModule extends AppModule {
                 .to(environment.getRequiredProperty(DaoOptionKeys.DUMP_BLOCKCHAIN_DATA));
         bindConstant().annotatedWith(named(DaoOptionKeys.FULL_DAO_NODE))
                 .to(environment.getRequiredProperty(DaoOptionKeys.FULL_DAO_NODE));
-
-        String genesisTxId = environment.getProperty(DaoOptionKeys.GENESIS_TX_ID, String.class, BsqBlockChain.BTC_GENESIS_TX_ID);
-        bind(String.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_TX_ID)).toInstance(genesisTxId);
-
-        Integer genesisBlockHeight = environment.getProperty(DaoOptionKeys.GENESIS_BLOCK_HEIGHT, Integer.class, BsqBlockChain.BTC_GENESIS_BLOCK_HEIGHT);
-        bind(Integer.class).annotatedWith(Names.named(DaoOptionKeys.GENESIS_BLOCK_HEIGHT)).toInstance(genesisBlockHeight);
-
         Boolean daoActivated = environment.getProperty(DaoOptionKeys.DAO_ACTIVATED, Boolean.class, false);
         bind(Boolean.class).annotatedWith(Names.named(DaoOptionKeys.DAO_ACTIVATED)).toInstance(daoActivated);
     }

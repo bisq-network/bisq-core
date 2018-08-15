@@ -17,8 +17,11 @@
 
 package bisq.core.dao.node;
 
-import bisq.core.dao.blockchain.ReadableBsqBlockChain;
-import bisq.core.dao.blockchain.SnapshotManager;
+import bisq.core.dao.DaoSetupService;
+import bisq.core.dao.node.parser.BlockParser;
+import bisq.core.dao.state.BsqStateService;
+import bisq.core.dao.state.SnapshotManager;
+import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.P2PService;
 import bisq.network.p2p.P2PServiceListener;
@@ -27,54 +30,103 @@ import bisq.common.handlers.ErrorMessageHandler;
 
 import com.google.inject.Inject;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Nullable;
 
 /**
  * Base class for the lite and full node.
- * <p>
- * We are in UserThread context. We get callbacks from threaded classes which are already mapped to the UserThread.
+ * It is responsible or the setup of the parser and snapshot management.
  */
 @Slf4j
-public abstract class BsqNode {
-
-    @SuppressWarnings("WeakerAccess")
-    protected final P2PService p2PService;
-    protected final ReadableBsqBlockChain readableBsqBlockChain;
-    @SuppressWarnings("WeakerAccess")
+public abstract class BsqNode implements DaoSetupService {
+    protected final BlockParser blockParser;
+    private final P2PService p2PService;
+    protected final BsqStateService bsqStateService;
     private final String genesisTxId;
     private final int genesisBlockHeight;
     private final SnapshotManager snapshotManager;
-    @Getter
+    private final P2PServiceListener p2PServiceListener;
     protected boolean parseBlockchainComplete;
-    @SuppressWarnings("WeakerAccess")
     protected boolean p2pNetworkReady;
+    @Nullable
+    protected ErrorMessageHandler errorMessageHandler;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    @SuppressWarnings("WeakerAccess")
     @Inject
-    public BsqNode(ReadableBsqBlockChain readableBsqBlockChain,
+    public BsqNode(BlockParser blockParser,
+                   BsqStateService bsqStateService,
                    SnapshotManager snapshotManager,
                    P2PService p2PService) {
-
-        this.p2PService = p2PService;
-        this.readableBsqBlockChain = readableBsqBlockChain;
-
-        genesisTxId = readableBsqBlockChain.getGenesisTxId();
-        genesisBlockHeight = readableBsqBlockChain.getGenesisBlockHeight();
+        this.blockParser = blockParser;
+        this.bsqStateService = bsqStateService;
         this.snapshotManager = snapshotManager;
+        this.p2PService = p2PService;
+
+        genesisTxId = bsqStateService.getGenesisTxId();
+        genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
+
+        p2PServiceListener = new P2PServiceListener() {
+            @Override
+            public void onTorNodeReady() {
+            }
+
+            @Override
+            public void onHiddenServicePublished() {
+            }
+
+            @Override
+            public void onSetupFailed(Throwable throwable) {
+            }
+
+            @Override
+            public void onRequestCustomBridges() {
+            }
+
+            @Override
+            public void onDataReceived() {
+            }
+
+            @Override
+            public void onNoSeedNodeAvailable() {
+                onP2PNetworkReady();
+            }
+
+            @Override
+            public void onNoPeersAvailable() {
+            }
+
+            @Override
+            public void onUpdatedDataReceived() {
+                onP2PNetworkReady();
+            }
+        };
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
-    // Public methods
+    // DaoSetupService
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract void onAllServicesInitialized(ErrorMessageHandler errorMessageHandler);
+    @Override
+    public void addListeners() {
+    }
+
+    @Override
+    public abstract void start();
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // API
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void setErrorMessageHandler(@Nullable ErrorMessageHandler errorMessageHandler) {
+        this.errorMessageHandler = errorMessageHandler;
+    }
 
     public abstract void shutDown();
 
@@ -86,59 +138,24 @@ public abstract class BsqNode {
     @SuppressWarnings("WeakerAccess")
     protected void onInitialized() {
         applySnapshot();
-        log.info("onAllServicesInitialized");
+
         if (p2PService.isBootstrapped()) {
             log.info("onAllServicesInitialized: isBootstrapped");
             onP2PNetworkReady();
         } else {
-            p2PService.addP2PServiceListener(new P2PServiceListener() {
-                @Override
-                public void onTorNodeReady() {
-                }
-
-                @Override
-                public void onHiddenServicePublished() {
-                }
-
-                @Override
-                public void onSetupFailed(Throwable throwable) {
-                }
-
-                @Override
-                public void onRequestCustomBridges() {
-                }
-
-                @Override
-                public void onDataReceived() {
-                }
-
-                @Override
-                public void onNoSeedNodeAvailable() {
-                    log.info("onAllServicesInitialized: onNoSeedNodeAvailable");
-                    onP2PNetworkReady();
-                }
-
-                @Override
-                public void onNoPeersAvailable() {
-                }
-
-                @Override
-                public void onUpdatedDataReceived() {
-                    log.info("onAllServicesInitialized: onBootstrapComplete");
-                    onP2PNetworkReady();
-                }
-            });
+            p2PService.addP2PServiceListener(p2PServiceListener);
         }
     }
 
     @SuppressWarnings("WeakerAccess")
     protected void onP2PNetworkReady() {
         p2pNetworkReady = true;
+        p2PService.removeP2PServiceListener(p2PServiceListener);
     }
 
     @SuppressWarnings("WeakerAccess")
     protected int getStartBlockHeight() {
-        final int startBlockHeight = Math.max(genesisBlockHeight, readableBsqBlockChain.getChainHeadHeight() + 1);
+        final int startBlockHeight = Math.max(genesisBlockHeight, bsqStateService.getChainHeight());
         log.info("Start parse blocks:\n" +
                         "   Start block height={}\n" +
                         "   Genesis txId={}\n" +
@@ -147,7 +164,7 @@ public abstract class BsqNode {
                 startBlockHeight,
                 genesisTxId,
                 genesisBlockHeight,
-                readableBsqBlockChain.getChainHeadHeight());
+                bsqStateService.getChainHeight());
 
         return startBlockHeight;
     }
@@ -155,13 +172,23 @@ public abstract class BsqNode {
     abstract protected void startParseBlocks();
 
     protected void onParseBlockChainComplete() {
+        log.info("onParseBlockChainComplete");
         parseBlockchainComplete = true;
+        bsqStateService.onParseBlockChainComplete();
+
+        // log.error("COMPLETED: sb1={}\nsb2={}", BlockParser.sb1.toString(), BlockParser.sb2.toString());
+        // log.error("equals? " + BlockParser.sb1.toString().equals(BlockParser.sb2.toString()));
+        // Utilities.copyToClipboard(BlockParser.sb1.toString() + "\n\n\n" + BlockParser.sb2.toString());
     }
 
     @SuppressWarnings("WeakerAccess")
     protected void startReOrgFromLastSnapshot() {
         applySnapshot();
         startParseBlocks();
+    }
+
+    protected boolean isBlockAlreadyAdded(RawBlock rawBlock) {
+        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
 

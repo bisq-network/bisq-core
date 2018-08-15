@@ -20,11 +20,16 @@ package bisq.core.proto.persistable;
 import bisq.core.arbitration.DisputeList;
 import bisq.core.btc.AddressEntryList;
 import bisq.core.btc.wallet.BtcWalletService;
-import bisq.core.dao.blockchain.BsqBlockChain;
-import bisq.core.dao.param.ParamChangeEventList;
-import bisq.core.dao.vote.blindvote.BlindVoteList;
-import bisq.core.dao.vote.myvote.MyVoteList;
-import bisq.core.dao.vote.proposal.ProposalList;
+import bisq.core.dao.governance.ballot.BallotList;
+import bisq.core.dao.governance.blindvote.MyBlindVoteList;
+import bisq.core.dao.governance.blindvote.storage.BlindVoteStore;
+import bisq.core.dao.governance.merit.MeritList;
+import bisq.core.dao.governance.myvote.MyVoteList;
+import bisq.core.dao.governance.proposal.MyProposalList;
+import bisq.core.dao.governance.proposal.storage.appendonly.ProposalStore;
+import bisq.core.dao.governance.proposal.storage.temp.TempProposalStore;
+import bisq.core.dao.governance.role.BondedRoleList;
+import bisq.core.dao.state.BsqState;
 import bisq.core.payment.AccountAgeWitnessStore;
 import bisq.core.payment.PaymentAccountList;
 import bisq.core.proto.CoreProtoResolver;
@@ -101,23 +106,32 @@ public class CorePersistenceProtoResolver extends CoreProtoResolver implements P
                     return NavigationPath.fromProto(proto.getNavigationPath());
                 case PAYMENT_ACCOUNT_LIST:
                     return PaymentAccountList.fromProto(proto.getPaymentAccountList(), this);
-                case BSQ_BLOCK_CHAIN:
-                    return BsqBlockChain.fromProto(proto.getBsqBlockChain());
                 case PERSISTABLE_NETWORK_PAYLOAD_LIST:
                     return PersistableNetworkPayloadList.fromProto(proto.getPersistableNetworkPayloadList(), this);
                 case ACCOUNT_AGE_WITNESS_STORE:
                     return AccountAgeWitnessStore.fromProto(proto.getAccountAgeWitnessStore());
                 case TRADE_STATISTICS2_STORE:
                     return TradeStatistics2Store.fromProto(proto.getTradeStatistics2Store());
-                case PROPOSAL_LIST:
-                    return ProposalList.fromProto(proto.getProposalList());
+                case BLIND_VOTE_STORE:
+                    return BlindVoteStore.fromProto(proto.getBlindVoteStore());
+                case PROPOSAL_STORE:
+                    return ProposalStore.fromProto(proto.getProposalStore());
+                case TEMP_PROPOSAL_STORE:
+                    return TempProposalStore.fromProto(proto.getTempProposalStore(), networkProtoResolver);
+                case BSQ_STATE:
+                    return BsqState.fromProto(proto.getBsqState());
+                case MY_PROPOSAL_LIST:
+                    return MyProposalList.fromProto(proto.getMyProposalList());
+                case BALLOT_LIST:
+                    return BallotList.fromProto(proto.getBallotList());
                 case MY_VOTE_LIST:
                     return MyVoteList.fromProto(proto.getMyVoteList());
-                case BLIND_VOTE_LIST:
-                    return BlindVoteList.fromProto(proto.getBlindVoteList());
-                case PARAM_CHANGE_EVENT_LIST:
-                    return ParamChangeEventList.fromProto(proto.getParamChangeEventList());
-
+                case MY_BLIND_VOTE_LIST:
+                    return MyBlindVoteList.fromProto(proto.getMyBlindVoteList());
+                case MERIT_LIST:
+                    return MeritList.fromProto(proto.getMeritList());
+                case BONDED_ROLE_LIST:
+                    return BondedRoleList.fromProto(proto.getBondedRoleList());
                 default:
                     throw new ProtobufferRuntimeException("Unknown proto message case(PB.PersistableEnvelope). " +
                             "messageCase=" + proto.getMessageCase() + "; proto raw data=" + proto.toString());

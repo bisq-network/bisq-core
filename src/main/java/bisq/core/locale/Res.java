@@ -20,6 +20,7 @@ package bisq.core.locale;
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.BaseCurrencyNetwork;
 
+import bisq.common.UserThread;
 import bisq.common.app.DevEnv;
 
 import org.apache.commons.lang3.StringUtils;
@@ -116,7 +117,10 @@ public class Res {
         } catch (MissingResourceException e) {
             log.warn("Missing resource for key: " + key);
             if (DevEnv.isDevMode())
-                throw new RuntimeException("Missing resource for key: " + key);
+                UserThread.runAfter(() -> {
+                    // We delay a bit to not throw while UI is not ready
+                    throw new RuntimeException("Missing resource for key: " + key);
+                }, 1);
 
             return key;
         }

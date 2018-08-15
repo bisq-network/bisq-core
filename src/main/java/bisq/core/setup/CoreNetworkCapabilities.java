@@ -31,7 +31,9 @@ public class CoreNetworkCapabilities {
                 Capabilities.Capability.TRADE_STATISTICS.ordinal(),
                 Capabilities.Capability.TRADE_STATISTICS_2.ordinal(),
                 Capabilities.Capability.ACCOUNT_AGE_WITNESS.ordinal(),
-                Capabilities.Capability.ACK_MSG.ordinal()
+                Capabilities.Capability.ACK_MSG.ordinal(),
+                Capabilities.Capability.PROPOSAL.ordinal(),
+                Capabilities.Capability.BLIND_VOTE.ordinal()
         ));
 
         Boolean fullDaoNode = bisqEnvironment.getProperty(DaoOptionKeys.FULL_DAO_NODE, Boolean.class, false);
