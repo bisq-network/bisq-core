@@ -36,6 +36,7 @@ import bisq.common.util.Tuple2;
 
 import com.google.inject.Inject;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
@@ -50,6 +51,7 @@ import java.time.Instant;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,6 +61,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -299,28 +304,32 @@ public class PriceFeedService {
             return new Date();
     }
 
-    public final void applyLatestBisqMarketPrice(Set<TradeStatistics2> tradeStatisticsSet) {
-        // takes about 10 ms for 5000 items
-        Map<String, SortedSet<TradeStatistics2>> byCode = tradeStatisticsSet.stream()
-                .collect(Collectors.groupingBy(TradeStatistics2::getCurrencyCode, toSortedSetOfTradeStatistics2()));
+    public final void applyLatestBisqMarketPrice(Collection<TradeStatistics2> stats) {
+        Set<TradeStatistics2> snapshot = ImmutableSet.copyOf(stats);
 
-        Collection<SortedSet<TradeStatistics2>> groupedCodes = byCode.values();
-        groupedCodes.stream()
+        Map<String, SortedSet<TradeStatistics2>> statsByCode = snapshot.parallelStream()
+                .collect(Collectors.groupingByConcurrent(
+                        TradeStatistics2::getCurrencyCode, toSortedSetOfTradeStatistics2()));
+
+        Collection<SortedSet<TradeStatistics2>> groupedCodes = statsByCode.values();
+
+        Iterable<TradeStatistics2> updates = groupedCodes.parallelStream()
                 .map(SortedSet::last)
-                .forEach(last -> setBisqMarketPrice(last.getCurrencyCode(), last.getTradePrice()));
+                .collect(Collectors.toCollection(ConcurrentLinkedQueue::new));
+
+        updates.forEach(last -> setBisqMarketPrice(last.getCurrencyCode(), last.getTradePrice()));
     }
 
     private static Collector<TradeStatistics2, ?, SortedSet<TradeStatistics2>> toSortedSetOfTradeStatistics2() {
         Comparator<TradeStatistics2> byDate = Comparator.comparing(TradeStatistics2::getTradeDate);
-        return Collectors.toCollection(() -> new TreeSet<>(byDate));
+        return Collectors.toCollection(() -> new ConcurrentSkipListSet<>(byDate));
     }
 
     private void setBisqMarketPrice(String code, Price price) {
         if (!cache.containsKey(code) || !cache.get(code).isExternallyProvidedPrice()) {
-            cache.put(code, new MarketPrice(code,
-                    MathUtils.scaleDownByPowerOf10(price.getValue(), CurrencyUtil.isCryptoCurrency(code) ? 8 : 4),
-                    0,
-                    false));
+            int exponent = CurrencyUtil.isCryptoCurrency(code) ? 8 : 4;
+            double value = MathUtils.scaleDownByPowerOf10(price.getValue(), exponent);
+            cache.put(code, new MarketPrice(code, value, 0L, false));
             updateCounter.set(updateCounter.get() + 1);
         }
     }
