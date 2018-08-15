@@ -279,6 +279,15 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         if (referralIdFromOptions != null && !referralIdFromOptions.isEmpty())
             setReferralId(referralIdFromOptions);
 
+        // For users from old versions the 4 flags a false but we want to have it true by default
+        // PhoneKeyAndToken is also null so we can use that to enable the flags
+        if (prefPayload.getPhoneKeyAndToken() == null) {
+            setUseSoundForMobileNotifications(true);
+            setUseTradeNotifications(true);
+            setUseMarketNotifications(true);
+            setUsePriceNotifications(true);
+        }
+
         initialReadDone = true;
         persist();
     }
