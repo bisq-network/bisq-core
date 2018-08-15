@@ -32,6 +32,12 @@ import bisq.core.btc.wallet.WalletsSetup;
 import bisq.core.dao.DaoSetup;
 import bisq.core.filter.FilterManager;
 import bisq.core.locale.Res;
+import bisq.core.notifications.MobileNotificationService;
+import bisq.core.notifications.alerts.DisputeMsgEvents;
+import bisq.core.notifications.alerts.MyOfferTakenEvents;
+import bisq.core.notifications.alerts.TradeEvents;
+import bisq.core.notifications.alerts.market.MarketAlerts;
+import bisq.core.notifications.alerts.price.PriceAlert;
 import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.payment.AccountAgeWitnessService;
@@ -134,6 +140,12 @@ public class BisqSetup {
     private final KeyRing keyRing;
     private final BisqEnvironment bisqEnvironment;
     private final AccountAgeWitnessService accountAgeWitnessService;
+    private final MobileNotificationService mobileNotificationService;
+    private final MyOfferTakenEvents myOfferTakenEvents;
+    private final TradeEvents tradeEvents;
+    private final DisputeMsgEvents disputeMsgEvents;
+    private final PriceAlert priceAlert;
+    private final MarketAlerts marketAlerts;
     private final BSFormatter formatter;
     @Setter
     @Nullable
@@ -197,7 +209,15 @@ public class BisqSetup {
                      KeyRing keyRing,
                      BisqEnvironment bisqEnvironment,
                      AccountAgeWitnessService accountAgeWitnessService,
+                     MobileNotificationService mobileNotificationService,
+                     MyOfferTakenEvents myOfferTakenEvents,
+                     TradeEvents tradeEvents,
+                     DisputeMsgEvents disputeMsgEvents,
+                     PriceAlert priceAlert,
+                     MarketAlerts marketAlerts,
                      BSFormatter formatter) {
+
+
         this.p2PNetworkSetup = p2PNetworkSetup;
         this.walletAppSetup = walletAppSetup;
 
@@ -224,6 +244,12 @@ public class BisqSetup {
         this.keyRing = keyRing;
         this.bisqEnvironment = bisqEnvironment;
         this.accountAgeWitnessService = accountAgeWitnessService;
+        this.mobileNotificationService = mobileNotificationService;
+        this.myOfferTakenEvents = myOfferTakenEvents;
+        this.tradeEvents = tradeEvents;
+        this.disputeMsgEvents = disputeMsgEvents;
+        this.priceAlert = priceAlert;
+        this.marketAlerts = marketAlerts;
         this.formatter = formatter;
     }
 
@@ -601,6 +627,13 @@ public class BisqSetup {
                     filterWarningHandler.accept(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.priceRelay")));
             }
         });
+
+        mobileNotificationService.onAllServicesInitialized();
+        myOfferTakenEvents.onAllServicesInitialized();
+        tradeEvents.onAllServicesInitialized();
+        disputeMsgEvents.onAllServicesInitialized();
+        priceAlert.onAllServicesInitialized();
+        marketAlerts.onAllServicesInitialized();
 
         allBasicServicesInitialized = true;
     }

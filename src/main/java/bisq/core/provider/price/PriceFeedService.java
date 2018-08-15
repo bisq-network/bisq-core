@@ -21,6 +21,7 @@ import bisq.core.app.BisqEnvironment;
 import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.TradeCurrency;
 import bisq.core.monetary.Price;
+import bisq.core.provider.PriceNodeHttpClient;
 import bisq.core.provider.ProvidersRepository;
 import bisq.core.trade.statistics.TradeStatistics2;
 import bisq.core.user.Preferences;
@@ -98,7 +99,7 @@ public class PriceFeedService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public PriceFeedService(@SuppressWarnings("SameParameterValue") HttpClient httpClient,
+    public PriceFeedService(@SuppressWarnings("SameParameterValue") PriceNodeHttpClient httpClient,
                             @SuppressWarnings("SameParameterValue") ProvidersRepository providersRepository,
                             @SuppressWarnings("SameParameterValue") Preferences preferences) {
         this.httpClient = httpClient;
