@@ -23,6 +23,7 @@ import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.filter.FilterManager;
+import bisq.core.locale.CurrencyUtil;
 import bisq.core.monetary.Price;
 import bisq.core.monetary.Volume;
 import bisq.core.offer.Offer;
@@ -701,9 +702,12 @@ public abstract class Trade implements Tradable, Model {
     public Volume getTradeVolume() {
         if (getTradeAmount() != null && getTradePrice() != null) {
             Volume volumeByAmount = getTradePrice().getVolumeByAmount(getTradeAmount());
-            if (offer != null && offer.getPaymentMethod().getId().equals(PaymentMethod.HAL_CASH_ID))
-                volumeByAmount = OfferUtil.getAdjustedVolumeForHalCash(volumeByAmount);
-
+            if (offer != null) {
+                if (offer.getPaymentMethod().getId().equals(PaymentMethod.HAL_CASH_ID))
+                    volumeByAmount = OfferUtil.getAdjustedVolumeForHalCash(volumeByAmount);
+                else if (CurrencyUtil.isFiatCurrency(offer.getCurrencyCode()))
+                    volumeByAmount = OfferUtil.getRoundedFiatVolume(volumeByAmount, offer.getCurrencyCode());
+            }
             return volumeByAmount;
         } else {
             return null;

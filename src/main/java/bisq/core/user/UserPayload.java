@@ -21,6 +21,8 @@ import bisq.core.alert.Alert;
 import bisq.core.arbitration.Arbitrator;
 import bisq.core.arbitration.Mediator;
 import bisq.core.filter.Filter;
+import bisq.core.notifications.alerts.market.MarketAlertFilter;
+import bisq.core.notifications.alerts.price.PriceAlertFilter;
 import bisq.core.payment.PaymentAccount;
 import bisq.core.proto.CoreProtoResolver;
 
@@ -68,6 +70,10 @@ public class UserPayload implements PersistableEnvelope {
     private List<Arbitrator> acceptedArbitrators = new ArrayList<>();
     @Nullable
     private List<Mediator> acceptedMediators = new ArrayList<>();
+    @Nullable
+    private PriceAlertFilter priceAlertFilter;
+    @Nullable
+    private List<MarketAlertFilter> marketAlertFilters = new ArrayList<>();
 
     public UserPayload() {
     }
@@ -98,6 +104,9 @@ public class UserPayload implements PersistableEnvelope {
         Optional.ofNullable(acceptedMediators)
                 .ifPresent(e -> builder.addAllAcceptedMediators(ProtoUtil.collectionToProto(acceptedMediators,
                         message -> ((PB.StoragePayload) message).getMediator())));
+        Optional.ofNullable(priceAlertFilter).ifPresent(priceAlertFilter -> builder.setPriceAlertFilter(priceAlertFilter.toProtoMessage()));
+        Optional.ofNullable(marketAlertFilters)
+                .ifPresent(e -> builder.addAllMarketAlertFilters(ProtoUtil.collectionToProto(marketAlertFilters)));
         return PB.PersistableEnvelope.newBuilder().setUserPayload(builder).build();
     }
 
@@ -119,7 +128,10 @@ public class UserPayload implements PersistableEnvelope {
                         .collect(Collectors.toList())),
                 proto.getAcceptedMediatorsList().isEmpty() ? new ArrayList<>() : new ArrayList<>(proto.getAcceptedMediatorsList().stream()
                         .map(Mediator::fromProto)
-                        .collect(Collectors.toList()))
-        );
+                        .collect(Collectors.toList())),
+                PriceAlertFilter.fromProto(proto.getPriceAlertFilter()),
+                proto.getMarketAlertFiltersList().isEmpty() ? new ArrayList<>() : new ArrayList<>(proto.getMarketAlertFiltersList().stream()
+                        .map(e -> MarketAlertFilter.fromProto(e, coreProtoResolver))
+                        .collect(Collectors.toSet())));
     }
 }

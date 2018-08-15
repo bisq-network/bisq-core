@@ -510,8 +510,8 @@ public class BSFormatter {
         return decimalFormat.format(MathUtils.roundDouble(value * 100.0, 2)).replace(",", ".");
     }
 
-    public double parseNumberStringToDouble(String percentString) throws NumberFormatException {
-        return Double.parseDouble(cleanDoubleInput(percentString));
+    public double parseNumberStringToDouble(String input) throws NumberFormatException {
+        return Double.parseDouble(cleanDoubleInput(input));
     }
 
     public double parsePercentStringToDouble(String percentString) throws NumberFormatException {
@@ -519,6 +519,24 @@ public class BSFormatter {
         input = cleanDoubleInput(input);
         double value = Double.parseDouble(input);
         return value / 100d;
+    }
+
+    public long parsePriceStringToLong(String currencyCode, String amount, int precision) {
+        if (amount == null || amount.isEmpty())
+            return 0;
+
+        long value = 0;
+        try {
+            double amountValue = Double.parseDouble(amount);
+            amount = formatRoundedDoubleWithPrecision(amountValue, precision);
+            value = Price.parse(currencyCode, amount).getValue();
+        } catch (NumberFormatException ignore) {
+            // expected NumberFormatException if input is not a number
+        } catch (Throwable t) {
+            log.error("parsePriceStringToLong: " + t.toString());
+        }
+
+        return value;
     }
 
     protected String cleanDoubleInput(String input) {
