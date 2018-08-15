@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 
 import java.util.List;
 
@@ -39,9 +40,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BallotListPresentation implements BallotListService.BallotListChangeListener, BsqStateListener {
     private final BallotListService ballotListService;
+    private final PeriodService periodService;
+    private final BsqStateService bsqStateService;
 
     @Getter
     private final ObservableList<Ballot> ballots = FXCollections.observableArrayList();
+    @Getter
+    private final FilteredList<Ballot> ballotsOfCycle = new FilteredList<>(ballots);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +59,8 @@ public class BallotListPresentation implements BallotListService.BallotListChang
                                   BsqStateService bsqStateService,
                                   ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
+        this.periodService = periodService;
+        this.bsqStateService = bsqStateService;
 
         bsqStateService.addBsqStateListener(this);
         ballotListService.addListener(this);
@@ -70,6 +77,8 @@ public class BallotListPresentation implements BallotListService.BallotListChang
     @Override
     public void onParseTxsComplete(Block block) {
         onListChanged(ballotListService.getBallotList().getList());
+
+        ballotsOfCycle.setPredicate(ballot -> periodService.isTxInCorrectCycle(ballot.getTxId(), bsqStateService.getChainHeight()));
     }
 
     @Override
