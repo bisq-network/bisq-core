@@ -137,31 +137,50 @@ public class OfferUtil {
                 !availableBalance.subtract(makerFee).isNegative();
     }
 
+    public static Volume getRoundedFiatVolume(Volume volumeByAmount, String currencyCode) {
+        // We want to get rounded to 1 unit of the fiat currency, e.g. 1 EUR.
+        return getAdjustedFiatVolume(volumeByAmount, currencyCode, 1);
+    }
+
     public static Volume getAdjustedVolumeForHalCash(Volume volumeByAmount) {
         // EUR has precision 4 and we want multiple of 10 so we divide by 100000 then
         // round and multiply with 10
-        long rounded = Math.max(1, Math.round((double) volumeByAmount.getValue() / 100000d));
-        return Volume.parse(String.valueOf(rounded * 10), "EUR");
+        return getAdjustedFiatVolume(volumeByAmount, "EUR", 10);
+    }
+
+    private static Volume getAdjustedFiatVolume(Volume volumeByAmount, String currencyCode, int factor) {
+        // Fiat currencies has precision 4 and we want multiple of 10 so we divide by 10000 * factor then
+        // round and multiply with factor
+        long rounded = Math.max(1, Math.round((double) volumeByAmount.getValue() / (10000d * factor)));
+        // We pass EUR but any fiat currency would be good.
+        return Volume.parse(String.valueOf(rounded * factor), currencyCode);
+    }
+
+    public static Coin getRoundedFiatAmount(Coin amount, Price price, String currencyCode, long maxTradeLimit) {
+        return getAdjustedAmount(amount, price, maxTradeLimit, currencyCode, 1);
     }
 
     public static Coin getAdjustedAmountForHalCash(Coin amount, Price price, long maxTradeLimit) {
-        // Amount must result in a volume of min 10 EUR
-        Volume volume10EUR = Volume.parse(String.valueOf(10), "EUR");
-        Coin amountByVolume10EUR = price.getAmountByVolume(volume10EUR);
+        return getAdjustedAmount(amount, price, maxTradeLimit, "EUR", 10);
+    }
+
+    private static Coin getAdjustedAmount(Coin amount, Price price, long maxTradeLimit, String currencyCode, int factor) {
+        // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or 10 EUR in case of Halcash
+        Volume volumeRoundedToFactor = Volume.parse(String.valueOf(factor), currencyCode);
+        Coin amountByVolumeRoundedToFactor = price.getAmountByVolume(volumeRoundedToFactor);
         // We set min amount so it has a volume of 10 EUR
-        if (amount.compareTo(amountByVolume10EUR) < 0)
-            amount = amountByVolume10EUR;
+        if (amount.compareTo(amountByVolumeRoundedToFactor) < 0)
+            amount = amountByVolumeRoundedToFactor;
 
         // We adjust the amount so that the volume is a multiple of 10 EUR
-        Volume volume = getAdjustedVolumeForHalCash(price.getVolumeByAmount(amount));
+        Volume volume = getAdjustedFiatVolume(price.getVolumeByAmount(amount), currencyCode, factor);
         amount = price.getAmountByVolume(volume);
 
         // We want only 4 decimal places
         long rounded = Math.round((double) amount.value / 10000d) * 10000;
-
         if (rounded > maxTradeLimit) {
             // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
-            rounded = Math.min(maxTradeLimit, rounded - amountByVolume10EUR.value);
+            rounded = Math.min(maxTradeLimit, rounded - amountByVolumeRoundedToFactor.value);
         }
 
         return Coin.valueOf(rounded);
