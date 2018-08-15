@@ -49,13 +49,19 @@ import javafx.beans.property.StringProperty;
 import java.time.Instant;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -242,15 +248,6 @@ public class PriceFeedService {
         return cache.getOrDefault(currencyCode, null);
     }
 
-    private void setBisqMarketPrice(String currencyCode, Price price) {
-        if (!cache.containsKey(currencyCode) || !cache.get(currencyCode).isExternallyProvidedPrice()) {
-            cache.put(currencyCode, new MarketPrice(currencyCode,
-                    MathUtils.scaleDownByPowerOf10(price.getValue(), CurrencyUtil.isCryptoCurrency(currencyCode) ? 8 : 4),
-                    0,
-                    false));
-            updateCounter.set(updateCounter.get() + 1);
-        }
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Setter
@@ -302,28 +299,30 @@ public class PriceFeedService {
             return new Date();
     }
 
-    public void applyLatestBisqMarketPrice(Set<TradeStatistics2> tradeStatisticsSet) {
+    public final void applyLatestBisqMarketPrice(Set<TradeStatistics2> tradeStatisticsSet) {
         // takes about 10 ms for 5000 items
-        Map<String, List<TradeStatistics2>> mapByCurrencyCode = new HashMap<>();
-        tradeStatisticsSet.forEach(e -> {
-            final List<TradeStatistics2> list;
-            final String currencyCode = e.getCurrencyCode();
-            if (mapByCurrencyCode.containsKey(currencyCode)) {
-                list = mapByCurrencyCode.get(currencyCode);
-            } else {
-                list = new ArrayList<>();
-                mapByCurrencyCode.put(currencyCode, list);
-            }
-            list.add(e);
-        });
+        Map<String, SortedSet<TradeStatistics2>> byCode = tradeStatisticsSet.stream()
+                .collect(Collectors.groupingBy(TradeStatistics2::getCurrencyCode, toSortedSetOfTradeStatistics2()));
 
-        mapByCurrencyCode.values().stream()
-                .filter(list -> !list.isEmpty())
-                .forEach(list -> {
-                    list.sort((o1, o2) -> o1.getTradeDate().compareTo(o2.getTradeDate()));
-                    TradeStatistics2 tradeStatistics = list.get(list.size() - 1);
-                    setBisqMarketPrice(tradeStatistics.getCurrencyCode(), tradeStatistics.getTradePrice());
-                });
+        Collection<SortedSet<TradeStatistics2>> groupedCodes = byCode.values();
+        groupedCodes.stream()
+                .map(SortedSet::last)
+                .forEach(last -> setBisqMarketPrice(last.getCurrencyCode(), last.getTradePrice()));
+    }
+
+    private static Collector<TradeStatistics2, ?, SortedSet<TradeStatistics2>> toSortedSetOfTradeStatistics2() {
+        Comparator<TradeStatistics2> byDate = Comparator.comparing(TradeStatistics2::getTradeDate);
+        return Collectors.toCollection(() -> new TreeSet<>(byDate));
+    }
+
+    private void setBisqMarketPrice(String code, Price price) {
+        if (!cache.containsKey(code) || !cache.get(code).isExternallyProvidedPrice()) {
+            cache.put(code, new MarketPrice(code,
+                    MathUtils.scaleDownByPowerOf10(price.getValue(), CurrencyUtil.isCryptoCurrency(code) ? 8 : 4),
+                    0,
+                    false));
+            updateCounter.set(updateCounter.get() + 1);
+        }
     }
 
 
