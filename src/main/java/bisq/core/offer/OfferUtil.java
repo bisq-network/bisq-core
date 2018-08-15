@@ -178,7 +178,6 @@ public class OfferUtil {
 
         // We want only 4 decimal places
         long rounded = Math.round((double) amount.value / 10000d) * 10000;
-
         if (rounded > maxTradeLimit) {
             // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
             rounded = Math.min(maxTradeLimit, rounded - amountByVolumeRoundedToFactor.value);
