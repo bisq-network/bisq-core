@@ -37,6 +37,7 @@ public class CoreNetworkCapabilities {
         if (bisqEnvironment.getProperty(DaoOptionKeys.DAO_ACTIVATED, Boolean.class, false)) {
             supportedCapabilities.add(Capabilities.Capability.PROPOSAL.ordinal());
             supportedCapabilities.add(Capabilities.Capability.BLIND_VOTE.ordinal());
+            supportedCapabilities.add(Capabilities.Capability.BSQ_BLOCK.ordinal());
 
             if (bisqEnvironment.getProperty(DaoOptionKeys.FULL_DAO_NODE, Boolean.class, false))
                 supportedCapabilities.add(Capabilities.Capability.DAO_FULL_NODE.ordinal());

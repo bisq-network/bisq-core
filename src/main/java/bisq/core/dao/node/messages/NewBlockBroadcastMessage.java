@@ -20,11 +20,17 @@ package bisq.core.dao.node.messages;
 import bisq.core.dao.state.blockchain.RawBlock;
 
 import bisq.network.p2p.storage.messages.BroadcastMessage;
+import bisq.network.p2p.storage.payload.CapabilityRequiringPayload;
 
+import bisq.common.app.Capabilities;
 import bisq.common.app.Version;
 import bisq.common.proto.network.NetworkEnvelope;
 
 import io.bisq.generated.protobuffer.PB;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,7 +39,7 @@ import lombok.Getter;
 // nodes when they receive the NewBlockBroadcastMessage!
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public final class NewBlockBroadcastMessage extends BroadcastMessage {
+public final class NewBlockBroadcastMessage extends BroadcastMessage implements CapabilityRequiringPayload {
     private final RawBlock block;
 
     public NewBlockBroadcastMessage(RawBlock block) {
@@ -61,5 +67,12 @@ public final class NewBlockBroadcastMessage extends BroadcastMessage {
     public static NetworkEnvelope fromProto(PB.NewBlockBroadcastMessage proto, int messageVersion) {
         return new NewBlockBroadcastMessage(RawBlock.fromProto(proto.getRawBlock()),
                 messageVersion);
+    }
+
+    @Override
+    public List<Integer> getRequiredCapabilities() {
+        return new ArrayList<>(Collections.singletonList(
+                Capabilities.Capability.BSQ_BLOCK.ordinal()
+        ));
     }
 }
