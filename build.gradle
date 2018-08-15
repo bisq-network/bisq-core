@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'network.bisq'
-version = '0.8.0'
+version = '-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -13,7 +13,6 @@ tasks.withType(JavaCompile) {
 }
 
 repositories {
-    mavenLocal()
     jcenter()
     maven { url 'https://jitpack.io' }
     maven { url 'https://raw.githubusercontent.com/JesusMcCloud/tor-binary/master/release/' }
@@ -21,7 +20,7 @@ repositories {
 
 dependencies {
     compile 'network.bisq:bisq-assets:0.7.2'
-    compile 'network.bisq:bisq-p2p:0.8.0'
+    compile 'network.bisq:bisq-p2p:-SNAPSHOT'
     compile 'net.sf.jopt-simple:jopt-simple:5.0.3'
     compile('network.bisq.btcd-cli4j:btcd-cli4j-core:29f99be') {
         exclude(module: 'slf4j-api')
@@ -45,7 +44,7 @@ dependencies {
         exclude(module: 'jackson-annotations')
     }
     compileOnly 'org.projectlombok:lombok:1.16.16'
-    //annotationProcessor 'org.projectlombok:lombok:1.16.16'
+    annotationProcessor 'org.projectlombok:lombok:1.16.16'
     testCompile 'junit:junit:4.12'
     testCompile('org.mockito:mockito-core:2.8.9') {
         exclude(module: 'objenesis')
@@ -57,5 +56,5 @@ dependencies {
     testCompile 'com.natpryce:make-it-easy:4.0.1'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     testCompileOnly 'org.projectlombok:lombok:1.16.16'
-    //testAnnotationProcessor 'org.projectlombok:lombok:1.16.16'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.16.16'
 }
