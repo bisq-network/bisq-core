@@ -18,7 +18,6 @@
 package bisq.core.dao.node.full;
 
 import bisq.core.dao.node.parser.BlockParser;
-import bisq.core.dao.node.parser.GenesisTxParser;
 import bisq.core.dao.node.parser.TxParser;
 import bisq.core.dao.node.parser.exceptions.BlockNotConnectingException;
 import bisq.core.dao.state.BsqStateService;
@@ -92,8 +91,6 @@ public class BlockParserTest {
     RpcService rpcService;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     BsqStateService writeModel;
-    @Tested(fullyInitialized = true, availableDuringSetup = true)
-    GenesisTxParser genesisTxParser;
     @Tested(fullyInitialized = true, availableDuringSetup = true)
     TxParser txParser;
 

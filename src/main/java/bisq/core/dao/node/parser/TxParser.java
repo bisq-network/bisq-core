@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
+import bisq.core.dao.node.parser.exceptions.InvalidGenesisTxException;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -65,7 +66,7 @@ public class TxParser {
     // for instance to calculate the total burned BSQ.
     public Optional<Tx> findTx(RawTx rawTx, String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply) {
         // Let's see if we have a genesis tx
-        Optional<TempTx> optionalGenesisTx = GenesisTxParser.findGenesisTx(
+        Optional<TempTx> optionalGenesisTx = TxParser.findGenesisTx(
                 genesisTxId,
                 genesisBlockHeight,
                 genesisTotalSupply,
@@ -233,5 +234,32 @@ public class TxParser {
             log.warn(msg);
         }
         return Optional.empty();
+    }
+
+    public static Optional<TempTx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply, RawTx rawTx) {
+        boolean isGenesis = rawTx.getBlockHeight() == genesisBlockHeight &&
+                rawTx.getId().equals(genesisTxId);
+        if (!isGenesis)
+            return Optional.empty();
+
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
+        tempTx.setTxType(TxType.GENESIS);
+        long remainingInputValue = genesisTotalSupply.getValue();
+        for (int i = 0; i < tempTx.getTempTxOutputs().size(); ++i) {
+            TempTxOutput txOutput = tempTx.getTempTxOutputs().get(i);
+            long value = txOutput.getValue();
+            boolean isValid = value <= remainingInputValue;
+            if (!isValid)
+                throw new InvalidGenesisTxException("Genesis tx is invalid; using more than available inputs. " +
+                        "Remaining input value is " + remainingInputValue + " sat; tx info: " + tempTx.toString());
+
+            remainingInputValue -= value;
+            txOutput.setTxOutputType(TxOutputType.GENESIS_OUTPUT);
+        }
+        if (remainingInputValue > 0) {
+            throw new InvalidGenesisTxException("Genesis tx is invalid; not using all available inputs. " +
+                    "Remaining input value is " + remainingInputValue + " sat, tx info: " + tempTx.toString());
+        }
+        return Optional.of(tempTx);
     }
 }
