@@ -17,7 +17,6 @@
 
 package bisq.core.provider.price;
 
-import bisq.core.app.BisqEnvironment;
 import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.TradeCurrency;
 import bisq.core.monetary.Price;
@@ -75,7 +74,6 @@ public class PriceFeedService {
     private static final long PERIOD_SEC = 60;
 
     private final Map<String, MarketPrice> cache = new HashMap<>();
-    private final String baseCurrencyCode;
     private PriceProvider priceProvider;
     @Nullable
     private Consumer<Double> priceConsumer;
@@ -108,8 +106,6 @@ public class PriceFeedService {
 
         // Do not use Guice for PriceProvider as we might create multiple instances
         this.priceProvider = new PriceProvider(httpClient, providersRepository.getBaseUrl());
-
-        baseCurrencyCode = BisqEnvironment.getBaseCurrencyNetwork().getCurrencyCode();
     }
 
 
@@ -397,45 +393,8 @@ public class PriceFeedService {
                     timeStampMap = result.first;
                     epochInSecondAtLastRequest = timeStampMap.get("btcAverageTs");
                     final Map<String, MarketPrice> priceMap = result.second;
-                    switch (baseCurrencyCode) {
-                        case "BTC":
-                            // do nothing as we request btc based prices
-                            cache.putAll(priceMap);
-                            break;
-                        case "LTC":
-                        case "DASH":
-                            // apply conversion of btc based price to baseCurrencyCode based with btc/baseCurrencyCode price
-                            MarketPrice baseCurrencyPrice = priceMap.get(baseCurrencyCode);
-                            if (baseCurrencyPrice != null) {
-                                Map<String, MarketPrice> convertedPriceMap = new HashMap<>();
-                                priceMap.forEach((key, marketPrice) -> {
-                                    if (marketPrice != null) {
-                                        double convertedPrice;
-                                        final double marketPriceAsDouble = marketPrice.getPrice();
-                                        final double baseCurrencyPriceAsDouble = baseCurrencyPrice.getPrice();
-                                        if (marketPriceAsDouble > 0 && baseCurrencyPriceAsDouble > 0) {
-                                            if (CurrencyUtil.isCryptoCurrency(key))
-                                                convertedPrice = marketPriceAsDouble / baseCurrencyPriceAsDouble;
-                                            else
-                                                convertedPrice = marketPriceAsDouble * baseCurrencyPriceAsDouble;
-                                            convertedPriceMap.put(key,
-                                                    new MarketPrice(marketPrice.getCurrencyCode(), convertedPrice, marketPrice.getTimestampSec(), true));
-                                        } else {
-                                            log.warn("marketPriceAsDouble or baseCurrencyPriceAsDouble is 0: marketPriceAsDouble={}, " +
-                                                    "baseCurrencyPriceAsDouble={}", marketPriceAsDouble, baseCurrencyPriceAsDouble);
-                                        }
-                                    } else {
-                                        log.warn("marketPrice is null");
-                                    }
-                                });
-                                cache.putAll(convertedPriceMap);
-                            } else {
-                                log.warn("baseCurrencyPrice is null");
-                            }
-                            break;
-                        default:
-                            throw new RuntimeException("baseCurrencyCode not defined. baseCurrencyCode=" + baseCurrencyCode);
-                    }
+
+                    cache.putAll(priceMap);
 
                     resultHandler.run();
                 });
