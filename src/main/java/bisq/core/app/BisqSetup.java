@@ -606,10 +606,12 @@ public class BisqSetup {
 
         feeService.onAllServicesInitialized();
 
-        daoSetup.onAllServicesInitialized(errorMessage -> {
-            if (daoSetupErrorHandler != null)
-                daoSetupErrorHandler.accept(errorMessage);
-        });
+        if (DevEnv.isDaoActivated()) {
+            daoSetup.onAllServicesInitialized(errorMessage -> {
+                if (daoSetupErrorHandler != null)
+                    daoSetupErrorHandler.accept(errorMessage);
+            });
+        }
 
         tradeStatisticsManager.onAllServicesInitialized();
 

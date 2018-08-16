@@ -70,6 +70,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 
 import java.util.List;
 import java.util.Optional;
@@ -257,6 +258,10 @@ public class DaoFacade {
 
     public ObservableList<Ballot> getBallots() {
         return ballotListPresentation.getBallots();
+    }
+
+    public FilteredList<Ballot> getBallotsOfCycle() {
+        return ballotListPresentation.getBallotsOfCycle();
     }
 
     public Tuple2<Long, Long> getMeritAndStakeForProposal(String proposalTxId) {
