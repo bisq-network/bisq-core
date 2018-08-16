@@ -56,8 +56,7 @@ public class BlockParser {
 
     @SuppressWarnings("WeakerAccess")
     @Inject
-    public BlockParser(GenesisTxParser genesisTxParser,
-                       TxParser txParser,
+    public BlockParser(TxParser txParser,
                        BsqStateService bsqStateService) {
         this.txParser = txParser;
         this.bsqStateService = bsqStateService;
