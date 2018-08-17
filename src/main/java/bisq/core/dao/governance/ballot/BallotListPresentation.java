@@ -72,13 +72,12 @@ public class BallotListPresentation implements BallotListService.BallotListChang
 
     @Override
     public void onNewBlockHeight(int blockHeight) {
+        ballotsOfCycle.setPredicate(ballot -> periodService.isTxInCorrectCycle(ballot.getTxId(), blockHeight));
     }
 
     @Override
     public void onParseTxsComplete(Block block) {
         onListChanged(ballotListService.getBallotList().getList());
-
-        ballotsOfCycle.setPredicate(ballot -> periodService.isTxInCorrectCycle(ballot.getTxId(), bsqStateService.getChainHeight()));
     }
 
     @Override

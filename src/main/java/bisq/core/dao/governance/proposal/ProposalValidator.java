@@ -45,7 +45,7 @@ public class ProposalValidator {
         this.periodService = periodService;
     }
 
-    private boolean areDataFieldsValid(Proposal proposal) {
+    public boolean areDataFieldsValid(Proposal proposal) {
         try {
             validateDataFields(proposal);
             return true;
