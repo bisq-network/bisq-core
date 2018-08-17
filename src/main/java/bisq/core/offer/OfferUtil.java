@@ -18,6 +18,7 @@
 package bisq.core.offer;
 
 import bisq.core.app.BisqEnvironment;
+import bisq.core.btc.Restrictions;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.monetary.Price;
 import bisq.core.monetary.Volume;
@@ -167,6 +168,9 @@ public class OfferUtil {
     private static Coin getAdjustedAmount(Coin amount, Price price, long maxTradeLimit, String currencyCode, int factor) {
         // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or 10 EUR in case of Halcash
         Volume volumeRoundedToFactor = Volume.parse(String.valueOf(factor), currencyCode);
+        if (volumeRoundedToFactor.getValue() <= 0)
+            return Coin.ZERO;
+
         Coin amountByVolumeRoundedToFactor = price.getAmountByVolume(volumeRoundedToFactor);
         // We set min amount so it has a volume of 10 EUR
         if (amount.compareTo(amountByVolumeRoundedToFactor) < 0)
@@ -174,13 +178,18 @@ public class OfferUtil {
 
         // We adjust the amount so that the volume is a multiple of 10 EUR
         Volume volume = getAdjustedFiatVolume(price.getVolumeByAmount(amount), currencyCode, factor);
+        if (volume.getValue() <= 0)
+            return Coin.ZERO;
+
         amount = price.getAmountByVolume(volume);
 
         // We want only 4 decimal places
         long rounded = Math.round((double) amount.value / 10000d) * 10000;
         if (rounded > maxTradeLimit) {
             // If we are above out trade limit we reduce the amount by the correlating 10 EUR volume
-            rounded = Math.min(maxTradeLimit, rounded - amountByVolumeRoundedToFactor.value);
+            long reduced = rounded - amountByVolumeRoundedToFactor.value;
+            if (reduced > Restrictions.getMinTradeAmount().value)
+                rounded = Math.min(maxTradeLimit, reduced);
         }
 
         return Coin.valueOf(rounded);
