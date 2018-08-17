@@ -440,7 +440,7 @@ public abstract class WalletService {
 
     public int getNumTxOutputsForAddress(Address address) {
         List<TransactionOutput> transactionOutputs = new ArrayList<>();
-        wallet.getTransactions(false).stream().forEach(t -> transactionOutputs.addAll(t.getOutputs()));
+        wallet.getTransactions(false).forEach(t -> transactionOutputs.addAll(t.getOutputs()));
         int outputs = 0;
         for (TransactionOutput output : transactionOutputs) {
             if (isOutputScriptConvertibleToAddress(output) &&
