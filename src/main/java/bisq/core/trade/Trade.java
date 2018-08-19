@@ -706,7 +706,7 @@ public abstract class Trade implements Tradable, Model {
                 if (offer.getPaymentMethod().getId().equals(PaymentMethod.HAL_CASH_ID))
                     volumeByAmount = OfferUtil.getAdjustedVolumeForHalCash(volumeByAmount);
                 else if (CurrencyUtil.isFiatCurrency(offer.getCurrencyCode()))
-                    volumeByAmount = OfferUtil.getRoundedFiatVolume(volumeByAmount, offer.getCurrencyCode());
+                    volumeByAmount = OfferUtil.getRoundedFiatVolume(volumeByAmount);
             }
             return volumeByAmount;
         } else {
