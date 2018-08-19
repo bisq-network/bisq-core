@@ -75,10 +75,6 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
             return Coin.ZERO;
     }
 
-    private static int getPrecision(String currencyCode) {
-        return CurrencyUtil.isCryptoCurrency(currencyCode) ? 8 : 4;
-    }
-
     public String getCurrencyCode() {
         return monetary instanceof Altcoin ? ((Altcoin) monetary).getCurrencyCode() : ((Fiat) monetary).getCurrencyCode();
     }
