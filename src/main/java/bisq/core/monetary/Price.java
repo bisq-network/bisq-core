@@ -54,11 +54,11 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
      * Parse the Bitcoin {@code Price} given a {@code currencyCode} and {@code inputValue}.
      *
      * @param currencyCode The currency code to parse, e.g "USD" or "LTC".
-     * @param inputValue   The value to parse as a String, e.g "2.54" or "-0.0001".
+     * @param value        The value to parse as a String, e.g "2.54" or "-0.0001".
      * @return The parsed Price.
      */
-    public static Price parse(String currencyCode, String inputValue) {
-        final String cleaned = inputValue.replace(",", ".");
+    public static Price parse(String currencyCode, String value) {
+        final String cleaned = value.replace(",", ".");
         if (CurrencyUtil.isFiatCurrency(currencyCode))
             return new Price(Fiat.parseFiat(currencyCode, cleaned));
         else
