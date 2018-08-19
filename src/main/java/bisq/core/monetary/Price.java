@@ -30,16 +30,33 @@ import org.slf4j.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Wrapper for price values with variable precision. If monetary is Altcoin we use precision 8 otherwise Fiat with precision 4.
- * The inverted price notation in the offer will be refactored once in a bigger refactoring update.
+ * Bitcoin price value with variable precision.
+ *
+ * <br/>
+ * We wrap an object implementing the {@link Monetary} interface from bitcoinj. We respect the
+ * number of decimal digits of precision defined in the {@code smallestUnitExponent()} defined in
+ * those classes, like {@link Fiat} or {@link Altcoin}.
+ *
  */
 public class Price extends MonetaryWrapper implements Comparable<Price> {
     private static final Logger log = LoggerFactory.getLogger(Price.class);
 
+    /**
+     * Create a new {@code Price} from specified {@code Monetary}.
+     *
+     * @param monetary
+     */
     public Price(Monetary monetary) {
         super(monetary);
     }
 
+    /**
+     * Parse the Bitcoin {@code Price} given a {@code currencyCode} and {@code inputValue}.
+     *
+     * @param currencyCode The currency code to parse, e.g "USD" or "LTC".
+     * @param inputValue   The value to parse as a String, e.g "2.54" or "-0.0001".
+     * @return The parsed Price.
+     */
     public static Price parse(String currencyCode, String inputValue) {
         final String cleaned = inputValue.replace(",", ".");
         if (CurrencyUtil.isFiatCurrency(currencyCode))
@@ -48,6 +65,13 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
             return new Price(Altcoin.parseAltcoin(currencyCode, cleaned));
     }
 
+    /**
+     * Parse the Bitcoin {@code Price} given a {@code currencyCode} and {@code inputValue}.
+     *
+     * @param currencyCode The currency code to parse, e.g "USD" or "LTC".
+     * @param value        The value to parse.
+     * @return The parsed Price.
+     */
     public static Price valueOf(String currencyCode, long value) {
         if (CurrencyUtil.isFiatCurrency(currencyCode)) {
             return new Price(Fiat.valueOf(currencyCode, value));
