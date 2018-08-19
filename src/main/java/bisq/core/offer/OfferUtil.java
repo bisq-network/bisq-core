@@ -193,6 +193,13 @@ public class OfferUtil {
             return Coin.ZERO;
 
         Coin smallestUnitForAmount = price.getAmountByVolume(smallestUnitForVolume);
+        long minTradeAmount = Restrictions.getMinTradeAmount().value;
+
+        // We use 10 000 satoshi as min allowed amount
+        checkArgument(minTradeAmount >= 10000, "MinTradeAmount must be positive");
+
+        smallestUnitForAmount = Coin.valueOf(Math.max(minTradeAmount, smallestUnitForAmount.value));
+
         // We don't allow smaller amount values than smallestUnitForAmount
         if (amount.compareTo(smallestUnitForAmount) < 0)
             amount = smallestUnitForAmount;
@@ -207,19 +214,14 @@ public class OfferUtil {
         amount = price.getAmountByVolume(volume);
 
         // For the amount we allow only 4 decimal places
-        long roundedAmount = Math.round((double) amount.value / 10000d) * 10000;
+        long adjustedAmount = Math.round((double) amount.value / 10000d) * 10000;
 
         // If we are above our trade limit we reduce the amount by the smallestUnitForAmount
-        if (roundedAmount > maxTradeLimit) {
-            long reduced = roundedAmount - smallestUnitForAmount.value;
-            checkArgument(roundedAmount <= maxTradeLimit, "After the reduction of the amount " +
-                    "we must have a smaller amount as the trade limit");
-
-            // If our reduced amount is larger then the minTradeAmount
-            if (reduced >= Restrictions.getMinTradeAmount().value)
-                roundedAmount = Math.min(maxTradeLimit, reduced);
+        while (adjustedAmount > maxTradeLimit) {
+            adjustedAmount -= smallestUnitForAmount.value;
         }
-
-        return Coin.valueOf(roundedAmount);
+        adjustedAmount = Math.max(minTradeAmount, adjustedAmount);
+        adjustedAmount = Math.min(maxTradeLimit, adjustedAmount);
+        return Coin.valueOf(adjustedAmount);
     }
 }
