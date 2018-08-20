@@ -91,12 +91,12 @@ public class BlockParser {
                 rawBlock.getHash(),
                 rawBlock.getPreviousBlockHash());
 
-        if (isBlockNotAlreadyAdded(rawBlock)) {
-            bsqStateService.onNewBlockWithEmptyTxs(block);
-        } else {
+        if (isBlockAlreadyAdded(rawBlock)) {
             //TODO check how/if that can happen
             log.warn("Block was already added.");
             DevEnv.logErrorAndThrowIfDevMode("Block was already added. rawBlock=" + rawBlock);
+        } else {
+            bsqStateService.onNewBlockWithEmptyTxs(block);
         }
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
@@ -134,8 +134,10 @@ public class BlockParser {
         }
     }
 
-    private boolean isBlockNotAlreadyAdded(RawBlock rawBlock) {
-        return !bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+    private boolean isBlockAlreadyAdded(RawBlock rawBlock) {
+        // TODO(chirhonul): shouldn't we verify that we know about the blockHash, not just that the
+        // block heights are the same? how do we handle chainsplits otherwise?
+        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
     }
 
     private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {
