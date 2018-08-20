@@ -169,6 +169,15 @@ public class OfferUtil {
         return Volume.parse(String.valueOf(roundedVolume), volumeByAmount.getCurrencyCode());
     }
 
+    /**
+     * Calculate the possibly adjusted amount for {@code amount}, taking into account the
+     * {@code price} and {@code maxTradeLimit} and {@code factor}.
+     *
+     * @param amount            Bitcoin amount which is a candidate for getting rounded.
+     * @param price             Price used in relation ot that amount.
+     * @param maxTradeLimit     The max. trade limit of the users account, in satoshis.
+     * @return The adjusted amount
+     */
     public static Coin getRoundedFiatAmount(Coin amount, Price price, long maxTradeLimit) {
         return getAdjustedAmount(amount, price, maxTradeLimit, 1);
     }
@@ -178,16 +187,28 @@ public class OfferUtil {
     }
 
     /**
+     * Calculate the possibly adjusted amount for {@code amount}, taking into account the
+     * {@code price} and {@code maxTradeLimit} and {@code factor}.
      *
-     * @param amount            Bitcoin amount which is a candidate for getting rounded
-     * @param price             Price used in relation ot that amount
-     * @param maxTradeLimit     The max. trade limit of the users account.
-     * @param factor            The factor used for rounding. E.g. 1 means rounded to units of 1 EUR, 10 means rounded to 10 EUR...
+     * @param amount            Bitcoin amount which is a candidate for getting rounded.
+     * @param price             Price used in relation ot that amount.
+     * @param maxTradeLimit     The max. trade limit of the users account, in satoshis.
+     * @param factor            The factor used for rounding. E.g. 1 means rounded to units of
+     *                          1 EUR, 10 means rounded to 10 EUR, etc.
      * @return The adjusted amount
      */
     @VisibleForTesting
     static Coin getAdjustedAmount(Coin amount, Price price, long maxTradeLimit, int factor) {
-        // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or 10 EUR in case of HalCash
+        checkArgument(
+                amount.getValue() >= 10_000,
+                "amount needs to be above minimum of 10k satoshi"
+        );
+        checkArgument(
+                factor > 0,
+                "factor needs to be positive"
+        );
+        // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or
+        // 10 EUR in case of HalCash.
         Volume smallestUnitForVolume = Volume.parse(String.valueOf(factor), price.getCurrencyCode());
         if (smallestUnitForVolume.getValue() <= 0)
             return Coin.ZERO;
@@ -196,10 +217,11 @@ public class OfferUtil {
         long minTradeAmount = Restrictions.getMinTradeAmount().value;
 
         // We use 10 000 satoshi as min allowed amount
-        checkArgument(minTradeAmount >= 10000, "MinTradeAmount must be positive");
-
+        checkArgument(
+                minTradeAmount >= 10_000,
+                "MinTradeAmount must be at least 10k satoshi"
+        );
         smallestUnitForAmount = Coin.valueOf(Math.max(minTradeAmount, smallestUnitForAmount.value));
-
         // We don't allow smaller amount values than smallestUnitForAmount
         if (amount.compareTo(smallestUnitForAmount) < 0)
             amount = smallestUnitForAmount;
@@ -209,8 +231,8 @@ public class OfferUtil {
         if (volume.getValue() <= 0)
             return Coin.ZERO;
 
-        // From that adjusted volume we calculate back the amount. It might be a bit different as the amount used as
-        // input before due rounding.
+        // From that adjusted volume we calculate back the amount. It might be a bit different as
+        // the amount used as input before due rounding.
         amount = price.getAmountByVolume(volume);
 
         // For the amount we allow only 4 decimal places
