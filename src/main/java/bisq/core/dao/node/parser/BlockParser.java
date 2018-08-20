@@ -108,13 +108,12 @@ public class BlockParser {
         long startTs = System.currentTimeMillis();
         List<Tx> txList = block.getTxs();
 
-        rawBlock.getRawTxs().forEach(rawTx -> {
+        rawBlock.getRawTxs().forEach(rawTx ->
             txParser.findTx(rawTx,
                     genesisTxId,
                     genesisBlockHeight,
                     genesisTotalSupply)
-                    .ifPresent(txList::add);
-        });
+                    .ifPresent(txList::add));
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
