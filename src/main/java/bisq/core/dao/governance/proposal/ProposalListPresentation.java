@@ -122,6 +122,7 @@ public class ProposalListPresentation implements BsqStateListener, MyProposalLis
         List<Proposal> tempProposals = proposalService.getTempProposals();
         Set<Proposal> verifiedProposals = proposalService.getProposalPayloads().stream()
                 .map(ProposalPayload::getProposal)
+                .filter(proposalValidator::isValidAndConfirmed)
                 .collect(Collectors.toSet());
         Set<Proposal> set = new HashSet<>(tempProposals);
         set.addAll(verifiedProposals);

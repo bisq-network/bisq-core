@@ -550,7 +550,7 @@ public class BtcWalletService extends WalletService {
             // We try to use available and not yet used entries
             Optional<AddressEntry> emptyAvailableAddressEntry = getAddressEntryListAsImmutableList().stream()
                     .filter(e -> AddressEntry.Context.AVAILABLE == e.getContext())
-                    .filter(e -> getNumTxOutputsForAddress(e.getAddress()) == 0)
+                    .filter(e -> isAddressUnused(e.getAddress()))
                     .findAny();
             if (emptyAvailableAddressEntry.isPresent()) {
                 return addressEntryList.swapAvailableToAddressEntryWithOfferId(emptyAvailableAddressEntry.get(), context, offerId);
@@ -574,7 +574,7 @@ public class BtcWalletService extends WalletService {
         AddressEntry.Context context = AddressEntry.Context.AVAILABLE;
         Optional<AddressEntry> addressEntry = getAddressEntryListAsImmutableList().stream()
                 .filter(e -> context == e.getContext())
-                .filter(e -> getNumTxOutputsForAddress(e.getAddress()) == 0)
+                .filter(e -> isAddressUnused(e.getAddress()))
                 .findAny();
         return getOrCreateAddressEntry(context, addressEntry);
     }

@@ -109,7 +109,6 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     @Override
     public void start() {
-        fillListFromProtectedStore();
     }
 
 
@@ -152,10 +151,10 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         if (block.getHeight() == heightForRepublishing) {
             // We only republish if we are completed with parsing old blocks, otherwise we would republish old
             // proposals all the time
-            if (parsingComplete)
+            if (parsingComplete) {
                 publishToAppendOnlyDataStore();
-
-            fillListFromAppendOnlyDataStore();
+                fillListFromAppendOnlyDataStore();
+            }
         }
     }
 
@@ -237,7 +236,7 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
             ProposalPayload proposalPayload = (ProposalPayload) persistableNetworkPayload;
             if (!proposalPayloads.contains(proposalPayload)) {
                 Proposal proposal = proposalPayload.getProposal();
-                if (proposalValidator.isValidAndConfirmed(proposal)) {
+                if (proposalValidator.areDataFieldsValid(proposal)) {
                     proposalPayloads.add(proposalPayload);
                     log.info("We received a ProposalPayload and store it to our appendOnlyStoreList. proposalTxId={}",
                             proposal.getTxId());
