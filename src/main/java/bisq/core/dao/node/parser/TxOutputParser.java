@@ -73,7 +73,16 @@ public class TxOutputParser {
             }
         } else {
             // We got a OP_RETURN output.
-            opReturnParser.validate(opReturnData, txOutput, tx, index, bsqInputBalanceValue, blockHeight, parsingModel);
+            TxOutputType outputType = opReturnParser.validate(
+                    opReturnData,
+                    txOutput.getValue() == 0,
+                    tx,
+                    index,
+                    bsqInputBalanceValue,
+                    blockHeight,
+                    parsingModel
+            );
+            txOutput.setTxOutputType(outputType);
         }
     }
 

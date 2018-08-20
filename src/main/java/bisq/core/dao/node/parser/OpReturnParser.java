@@ -71,24 +71,24 @@ public class OpReturnParser {
         }
     }
 
-    public void validate(byte[] opReturnData, TempTxOutput txOutput, TempTx tx, int index, long bsqFee,
+    public TxOutputType validate(byte[] opReturnData, boolean noValueOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
-        if (txOutput.getValue() == 0 &&
-                index == tx.getTempTxOutputs().size() - 1 &&
-                opReturnData.length >= 1) {
-            final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
-            if (optionalOpReturnType.isPresent()) {
-                TxOutputType outputType = selectValidator(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
-                txOutput.setTxOutputType(outputType);
-            } else {
-                // TODO add exception or set undefined...
-                log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
-                        tx, Utils.HEX.encode(opReturnData));
-            }
-        } else {
+        if (!noValueOutput ||
+                index != tx.getTempTxOutputs().size() - 1 ||
+                opReturnData.length < 1) {
             log.warn("OP_RETURN data does not match our rules. opReturnData={}",
                     tx, Utils.HEX.encode(opReturnData));
+            return TxOutputType.UNDEFINED;
         }
+        final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
+        if (!optionalOpReturnType.isPresent()) {
+            // TODO add exception?
+            log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
+                    tx, Utils.HEX.encode(opReturnData));
+            return TxOutputType.UNDEFINED;
+        }
+        TxOutputType outputType = selectValidator(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
+        return outputType;
     }
 
     private TxOutputType selectValidator(byte[] opReturnData, TempTx tx, long bsqFee, int blockHeight,
