@@ -199,6 +199,14 @@ public class OfferUtil {
      */
     @VisibleForTesting
     static Coin getAdjustedAmount(Coin amount, Price price, long maxTradeLimit, int factor) {
+        checkArgument(
+                amount.getValue() >= 10_000,
+                "amount needs to be above minimum of 10k satoshi"
+        );
+        checkArgument(
+                factor > 0,
+                "factor needs to be positive"
+        );
         // Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or
         // 10 EUR in case of HalCash.
         Volume smallestUnitForVolume = Volume.parse(String.valueOf(factor), price.getCurrencyCode());
