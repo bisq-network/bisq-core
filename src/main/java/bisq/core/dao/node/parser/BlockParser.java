@@ -60,10 +60,9 @@ public class BlockParser {
                        BsqStateService bsqStateService) {
         this.txParser = txParser;
         this.bsqStateService = bsqStateService;
-
-        genesisTxId = bsqStateService.getGenesisTxId();
-        genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
-        genesisTotalSupply = bsqStateService.getGenesisTotalSupply();
+        this.genesisTxId = bsqStateService.getGenesisTxId();
+        this.genesisBlockHeight = bsqStateService.getGenesisBlockHeight();
+        this.genesisTotalSupply = bsqStateService.getGenesisTotalSupply();
     }
 
 
