@@ -635,7 +635,7 @@ public class BsqWalletService extends WalletService implements BsqStateListener 
 
     public Address getUnusedAddress() {
         return wallet.getIssuedReceiveAddresses().stream()
-                .filter(address -> getNumTxOutputsForAddress(address) == 0)
+                .filter(this::isAddressUnused)
                 .findAny()
                 .orElse(wallet.freshReceiveAddress());
     }

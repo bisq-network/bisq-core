@@ -438,6 +438,19 @@ public abstract class WalletService {
         return getBalanceForAddress(getAddressFromOutput(output));
     }
 
+    public Coin getTxFeeForWithdrawalPerByte() {
+        Coin fee = (preferences.isUseCustomWithdrawalTxFee()) ?
+                Coin.valueOf(preferences.getWithdrawalTxFeeInBytes()) :
+                feeService.getTxFeePerByte();
+        log.info("tx fee = " + fee.toFriendlyString());
+        return fee;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    // Tx outputs
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
     public int getNumTxOutputsForAddress(Address address) {
         List<TransactionOutput> transactionOutputs = new ArrayList<>();
         wallet.getTransactions(false).forEach(t -> transactionOutputs.addAll(t.getOutputs()));
@@ -451,12 +464,8 @@ public abstract class WalletService {
         return outputs;
     }
 
-    public Coin getTxFeeForWithdrawalPerByte() {
-        Coin fee = (preferences.isUseCustomWithdrawalTxFee()) ?
-                Coin.valueOf(preferences.getWithdrawalTxFeeInBytes()) :
-                feeService.getTxFeePerByte();
-        log.info("tx fee = " + fee.toFriendlyString());
-        return fee;
+    public boolean isAddressUnused(Address address) {
+        return getNumTxOutputsForAddress(address) == 0;
     }
 
 
