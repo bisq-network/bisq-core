@@ -33,6 +33,8 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Slf4j
 public class AccountAgeWitnessStorageService extends StoreService<AccountAgeWitnessStore, PersistableNetworkPayload> {
     public static final String FILE_NAME = "AccountAgeWitnessStore";
@@ -75,5 +77,13 @@ public class AccountAgeWitnessStorageService extends StoreService<AccountAgeWitn
     @Override
     protected AccountAgeWitnessStore createStore() {
         return new AccountAgeWitnessStore();
+    }
+
+    @Override
+    protected void readStore() {
+        super.readStore();
+        checkArgument(store instanceof AccountAgeWitnessStore,
+                "Store is not instance of AccountAgeWitnessStore. That can happen if the ProtoBuffer " +
+                        "file got changed. We clear the data store and recreated it again.");
     }
 }

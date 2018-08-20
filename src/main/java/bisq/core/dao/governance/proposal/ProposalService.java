@@ -17,6 +17,7 @@
 
 package bisq.core.dao.governance.proposal;
 
+import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.proposal.storage.appendonly.ProposalPayload;
 import bisq.core.dao.governance.proposal.storage.appendonly.ProposalStorageService;
@@ -38,6 +39,8 @@ import bisq.network.p2p.storage.persistence.AppendOnlyDataStoreService;
 import bisq.network.p2p.storage.persistence.ProtectedDataStoreService;
 
 import com.google.inject.Inject;
+
+import javax.inject.Named;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -82,15 +85,18 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                            AppendOnlyDataStoreService appendOnlyDataStoreService,
                            ProtectedDataStoreService protectedDataStoreService,
                            BsqStateService bsqStateService,
-                           ProposalValidator proposalValidator) {
+                           ProposalValidator proposalValidator,
+                           @Named(DaoOptionKeys.DAO_ACTIVATED) boolean daoActivated) {
         this.p2PService = p2PService;
         this.periodService = periodService;
         this.bsqStateService = bsqStateService;
         this.proposalValidator = proposalValidator;
 
-        // We add our stores to the global stores
-        appendOnlyDataStoreService.addService(proposalStorageService);
-        protectedDataStoreService.addService(tempProposalStorageService);
+        if (daoActivated) {
+            // We add our stores to the global stores
+            appendOnlyDataStoreService.addService(proposalStorageService);
+            protectedDataStoreService.addService(tempProposalStorageService);
+        }
     }
 
 

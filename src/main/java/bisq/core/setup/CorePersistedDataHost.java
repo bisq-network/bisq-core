@@ -19,6 +19,7 @@ package bisq.core.setup;
 
 import bisq.core.arbitration.DisputeManager;
 import bisq.core.btc.AddressEntryList;
+import bisq.core.dao.DaoOptionKeys;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.myvote.MyVoteListService;
@@ -36,6 +37,8 @@ import bisq.network.p2p.P2PService;
 import bisq.common.proto.persistable.PersistedDataHost;
 
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +60,14 @@ public class CorePersistedDataHost {
         persistedDataHosts.add(injector.getInstance(FailedTradesManager.class));
         persistedDataHosts.add(injector.getInstance(DisputeManager.class));
         persistedDataHosts.add(injector.getInstance(P2PService.class));
-        persistedDataHosts.add(injector.getInstance(BallotListService.class));
-        persistedDataHosts.add(injector.getInstance(MyBlindVoteListService.class));
-        persistedDataHosts.add(injector.getInstance(MyVoteListService.class));
-        persistedDataHosts.add(injector.getInstance(MyProposalListService.class));
-        persistedDataHosts.add(injector.getInstance(BondedRolesService.class));
+
+        if (injector.getInstance(Key.get(Boolean.class, Names.named(DaoOptionKeys.DAO_ACTIVATED)))) {
+            persistedDataHosts.add(injector.getInstance(BallotListService.class));
+            persistedDataHosts.add(injector.getInstance(MyBlindVoteListService.class));
+            persistedDataHosts.add(injector.getInstance(MyVoteListService.class));
+            persistedDataHosts.add(injector.getInstance(MyProposalListService.class));
+            persistedDataHosts.add(injector.getInstance(BondedRolesService.class));
+        }
         return persistedDataHosts;
     }
 }
