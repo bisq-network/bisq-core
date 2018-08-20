@@ -46,6 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final P2PService p2PService;
+    private final BlindVoteStorageService blindVoteStorageService;
+    private final AppendOnlyDataStoreService appendOnlyDataStoreService;
     private final BlindVoteValidator blindVoteValidator;
 
     private final ObservableList<BlindVotePayload> appendOnlyStoreList = FXCollections.observableArrayList();
@@ -63,9 +65,9 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
                             BlindVoteValidator blindVoteValidator) {
         this.bsqStateService = bsqStateService;
         this.p2PService = p2PService;
+        this.blindVoteStorageService = blindVoteStorageService;
+        this.appendOnlyDataStoreService = appendOnlyDataStoreService;
         this.blindVoteValidator = blindVoteValidator;
-
-        appendOnlyDataStoreService.addService(blindVoteStorageService);
     }
 
 
@@ -81,6 +83,8 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
 
     @Override
     public void start() {
+        appendOnlyDataStoreService.addService(blindVoteStorageService);
+
         fillListFromAppendOnlyDataStore();
     }
 

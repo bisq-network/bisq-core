@@ -54,6 +54,10 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
         BsqStateListener, DaoSetupService {
     private final P2PService p2PService;
     private final PeriodService periodService;
+    private final ProposalStorageService proposalStorageService;
+    private final TempProposalStorageService tempProposalStorageService;
+    private final AppendOnlyDataStoreService appendOnlyDataStoreService;
+    private final ProtectedDataStoreService protectedDataStoreService;
     private final BsqStateService bsqStateService;
     private final ProposalValidator proposalValidator;
 
@@ -85,12 +89,12 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
                            ProposalValidator proposalValidator) {
         this.p2PService = p2PService;
         this.periodService = periodService;
+        this.proposalStorageService = proposalStorageService;
+        this.tempProposalStorageService = tempProposalStorageService;
+        this.appendOnlyDataStoreService = appendOnlyDataStoreService;
+        this.protectedDataStoreService = protectedDataStoreService;
         this.bsqStateService = bsqStateService;
         this.proposalValidator = proposalValidator;
-
-        // We add our stores to the global stores
-        appendOnlyDataStoreService.addService(proposalStorageService);
-        protectedDataStoreService.addService(tempProposalStorageService);
     }
 
 
@@ -109,6 +113,9 @@ public class ProposalService implements HashMapChangedListener, AppendOnlyDataSt
 
     @Override
     public void start() {
+        // We add our stores to the global stores
+        appendOnlyDataStoreService.addService(proposalStorageService);
+        protectedDataStoreService.addService(tempProposalStorageService);
     }
 
 
