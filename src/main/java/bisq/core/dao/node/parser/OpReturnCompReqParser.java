@@ -40,8 +40,8 @@ public class OpReturnCompReqParser extends OpReturnProposalParser {
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     @Override
-    boolean validate(byte[] opReturnData, TempTxOutput txOutput, long fee, int blockHeight, ParsingModel parsingModel) {
-        return super.validate(opReturnData, txOutput, fee, blockHeight, parsingModel) &&
+    boolean validate(byte[] opReturnData, long fee, int blockHeight, ParsingModel parsingModel) {
+        return super.validate(opReturnData, fee, blockHeight, parsingModel) &&
                 parsingModel.getIssuanceCandidate() != null;
     }
 }
