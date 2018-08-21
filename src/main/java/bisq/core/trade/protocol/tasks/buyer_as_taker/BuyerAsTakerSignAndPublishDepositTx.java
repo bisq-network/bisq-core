@@ -92,6 +92,7 @@ public class BuyerAsTakerSignAndPublishDepositTx extends TradeTask {
                         @Override
                         public void onSuccess(Transaction transaction) {
                             if (!completed) {
+                                trade.setDepositTx(transaction);
                                 log.trace("takerSignsAndPublishesDepositTx succeeded " + transaction);
                                 trade.setState(Trade.State.TAKER_PUBLISHED_DEPOSIT_TX);
                                 walletService.swapTradeEntryToAvailableEntry(id, AddressEntry.Context.RESERVED_FOR_TRADE);
@@ -111,8 +112,11 @@ public class BuyerAsTakerSignAndPublishDepositTx extends TradeTask {
                             }
                         }
                     });
-            // We set the deposit tx in case we get the onFailure called.
-            trade.setDepositTx(depositTx);
+            if (trade.getDepositTx() == null) {
+                // We set the deposit tx in case we get the onFailure called. We cannot set it in the onFailure
+                // callback as the tx is returned by the method call where the callback is  used as an argument.
+                trade.setDepositTx(depositTx);
+            }
         } catch (Throwable t) {
             failed(t);
         }
