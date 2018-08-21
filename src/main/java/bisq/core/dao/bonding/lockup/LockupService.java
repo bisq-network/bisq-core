@@ -22,7 +22,6 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
@@ -81,11 +80,6 @@ public class LockupService {
                 @Override
                 public void onSuccess(Transaction transaction) {
                     resultHandler.handleResult();
-                }
-
-                @Override
-                public void onTimeout(TxBroadcastTimeoutException exception) {
-                    exceptionHandler.handleException(exception);
                 }
 
                 @Override

@@ -19,7 +19,6 @@ package bisq.core.dao.governance.proposal;
 
 import bisq.core.app.BisqEnvironment;
 import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
@@ -151,12 +150,6 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
             public void onSuccess(Transaction transaction) {
                 log.info("Proposal tx has been published. TxId={}", transaction.getHashAsString());
                 resultHandler.handleResult();
-            }
-
-            @Override
-            public void onTimeout(TxBroadcastTimeoutException exception) {
-                // TODO handle
-                errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
 
             @Override
