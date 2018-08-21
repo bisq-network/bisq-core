@@ -135,9 +135,7 @@ public class BlockParser {
     }
 
     private boolean isBlockAlreadyAdded(RawBlock rawBlock) {
-        // TODO(chirhonul): shouldn't we verify that we know about the blockHash, not just that the
-        // block heights are the same? how do we handle chainsplits otherwise?
-        return bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+        return bsqStateService.isBlockHashKnown(rawBlock.getHash());
     }
 
     private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {

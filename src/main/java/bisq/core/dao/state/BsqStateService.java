@@ -196,6 +196,19 @@ public class BsqStateService implements DaoSetupService {
         return bsqState.getBlocks();
     }
 
+    /**
+     * Whether specified block hash belongs to a block we already know about.
+     *
+     * @param blockHash The hash of a {@link Block}.
+     * @return          True if the hash belongs to a {@link Block} we know about, otherwise
+     *                  {@code false}.
+     */
+    public boolean isBlockHashKnown(String blockHash) {
+        // TODO(chirhonul): If performance of O(n) time in number of blocks becomes an issue,
+        // we should keep a HashMap of block hash -> Block to make this method O(1).
+        return getBlocks().stream().anyMatch(block -> block.getHash() == blockHash);
+    }
+
     public Optional<Block> getLastBlock() {
         if (!getBlocks().isEmpty())
             return Optional.of(getBlocks().getLast());
