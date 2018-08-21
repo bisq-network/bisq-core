@@ -23,7 +23,6 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
@@ -322,15 +321,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
             public void onSuccess(Transaction transaction) {
                 log.info("BlindVote tx published. txId={}", transaction.getHashAsString());
                 resultHandler.handleResult();
-            }
-
-            @Override
-            public void onTimeout(TxBroadcastTimeoutException exception) {
-                // TODO handle
-                // We need to handle cases where a timeout happens and
-                // the tx might get broadcasted at a later restart!
-                // We need to be sure that in case of a failed tx the locked stake gets unlocked!
-                exceptionHandler.handleException(exception);
             }
 
             @Override

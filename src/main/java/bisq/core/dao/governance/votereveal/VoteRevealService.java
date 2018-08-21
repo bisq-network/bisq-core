@@ -22,7 +22,6 @@ import bisq.core.btc.exceptions.WalletException;
 import bisq.core.btc.wallet.BsqWalletService;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TxBroadcastException;
-import bisq.core.btc.wallet.TxBroadcastTimeoutException;
 import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
@@ -238,14 +237,6 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
             public void onSuccess(Transaction transaction) {
                 log.info("voteRevealTx successfully broadcasted.");
                 myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
-            }
-
-            @Override
-            public void onTimeout(TxBroadcastTimeoutException exception) {
-                log.error(exception.toString());
-                // TODO handle
-                voteRevealExceptions.add(new VoteRevealException("Publishing of voteRevealTx failed.",
-                        exception, voteRevealTx));
             }
 
             @Override
