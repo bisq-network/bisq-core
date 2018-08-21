@@ -65,6 +65,11 @@ public class TxBroadcaster {
                         txId,
                         exception.getDelay());
 
+                // The commit is required in case the tx is spent by a follow up tx as otherwise there would be an
+                // InsufficientMoneyException thrown. But in some test scenarios we also got issues with wallet
+                // inconsistency if the tx was committed twice. It should be prevented by the maybeCommitTx methods but
+                // not 100% if that is always the case. Just added that comment to make clear that this might be a risky
+                // strategy and might need improvement if we get problems.
                 exception.getWallet().maybeCommitTx(tx);
 
                 onSuccess(tx);
@@ -82,7 +87,7 @@ public class TxBroadcaster {
         void onFailure(TxBroadcastException exception);
     }
 
-    private static final int DEFAULT_BROADCAST_TIMEOUT = 8;
+    private static final int DEFAULT_BROADCAST_TIMEOUT = 20;
     private static Map<String, Timer> broadcastTimerMap = new HashMap<>();
 
     public static void broadcastTx(Wallet wallet, PeerGroup peerGroup, Transaction localTx, Callback callback) {
