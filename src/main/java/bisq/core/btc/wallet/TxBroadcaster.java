@@ -42,8 +42,36 @@ public class TxBroadcaster {
         void onSuccess(Transaction transaction);
 
         default void onTimeout(TxBroadcastTimeoutException exception) {
-            log.error("TxBroadcaster.onTimeout " + exception.toString());
-            onFailure(exception);
+            Transaction tx = exception.getLocalTx();
+            if (tx != null) {
+                String txId = tx.getHashAsString();
+                log.warn("TxBroadcaster.onTimeout called: {}\n" +
+                                "We optimistically assume that the tx broadcast succeeds later and call onSuccess on the " +
+                                "callback handler. This behaviour carries less potential problems than if we would trigger " +
+                                "a failure (e.g. which would cause a failed create offer attempt of failed take offer attempt).\n" +
+                                "We have no guarantee how long it will take to get the information that sufficiently BTC " +
+                                "nodes have reported back to BitcoinJ that the tx is in their mempool.\n" +
+                                "In normal situations " +
+                                "that's very fast but in some cases it can take minutes (mostly related to Tor connection " +
+                                "issues). So if we just go on in the application logic and treat it as successful and the " +
+                                "tx will be broadcasted successfully later all is fine.\n" +
+                                "If it will fail to get broadcasted, " +
+                                "it will lead to a failure state, the same as if we would trigger a failure due the timeout." +
+                                "So we can assume that this behaviour will lead to less problems as otherwise.\n" +
+                                "Long term we should implement better monitoring for Tor and the provided Bitcoin nodes to " +
+                                "find out why those delays happen and add some rollback behaviour to the app state in case " +
+                                "the tx will never get broadcasted.",
+                        exception.toString(),
+                        txId,
+                        exception.getDelay());
+
+                exception.getWallet().maybeCommitTx(tx);
+
+                onSuccess(tx);
+            } else {
+                log.error("TxBroadcaster.onTimeout: Tx is null. exception={} ", exception.toString());
+                onFailure(exception);
+            }
         }
 
         default void onTxMalleability(TxMalleabilityException exception) {
@@ -66,15 +94,14 @@ public class TxBroadcaster {
         final String txId = tx.getHashAsString();
         if (!broadcastTimerMap.containsKey(txId)) {
             timeoutTimer = UserThread.runAfter(() -> {
-                log.warn("Broadcast of tx {} not completed after {} sec. We optimistically assume that the tx " +
-                        "broadcast succeeded and call onSuccess on the callback handler.", txId, delayInSec);
-                broadcastTimerMap.remove(txId);
+                log.warn("Broadcast of tx {} not completed after {} sec.", txId, delayInSec);
                 stopAndRemoveTimer(txId);
-                UserThread.execute(() -> callback.onTimeout(new TxBroadcastTimeoutException(tx, delayInSec)));
+                UserThread.execute(() -> callback.onTimeout(new TxBroadcastTimeoutException(tx, delayInSec, wallet)));
             }, delayInSec);
 
             broadcastTimerMap.put(txId, timeoutTimer);
         } else {
+            // Would be due a wrong way how to use the API (calling 2 times a broadcast with same tx).
             stopAndRemoveTimer(txId);
             UserThread.execute(() -> callback.onFailure(new TxBroadcastException("We got broadcastTx called with a tx " +
                     "which has an open timeoutTimer. txId=" + txId, txId)));
@@ -94,8 +121,8 @@ public class TxBroadcaster {
                             UserThread.execute(() -> callback.onSuccess(tx));
                         } else {
                             stopAndRemoveTimer(txId);
-                            UserThread.execute(() -> callback.onFailure(new TxBroadcastException("We got an onSuccess callback for " +
-                                    "a broadcast which got already triggered the timeout.", txId)));
+                            log.warn("We got an onSuccess callback for a broadcast which got already triggered " +
+                                    "the timeout.", txId);
                         }
                     } else {
                         stopAndRemoveTimer(txId);

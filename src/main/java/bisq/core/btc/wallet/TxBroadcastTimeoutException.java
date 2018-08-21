@@ -18,6 +18,7 @@
 package bisq.core.btc.wallet;
 
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.wallet.Wallet;
 
 import lombok.Getter;
 
@@ -29,13 +30,22 @@ public class TxBroadcastTimeoutException extends TxBroadcastException {
     @Nullable
     private final Transaction localTx;
     @Getter
-    private int delay;
+    private final int delay;
+    @Getter
+    private final Wallet wallet;
 
-    public TxBroadcastTimeoutException(Transaction localTx, int delay) {
+    /**
+     *
+     * @param localTx       The tx we sent out
+     * @param delay         The timeout delay
+     * @param wallet        Wallet is needed if a client is calling wallet.commitTx(tx)
+     */
+    public TxBroadcastTimeoutException(Transaction localTx, int delay, Wallet wallet) {
         super("The transaction was not broadcasted in " + delay +
                 "seconds. txId=" + localTx.getHashAsString());
         this.localTx = localTx;
         this.delay = delay;
+        this.wallet = wallet;
     }
 
     @Override
