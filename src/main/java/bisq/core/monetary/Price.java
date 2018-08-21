@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * <br/>
  * We wrap an object implementing the {@link Monetary} interface from bitcoinj. We respect the
- * number of decimal digits of precision defined in the {@code smallestUnitExponent()} defined in
+ * number of decimal digits of precision specified in the {@code smallestUnitExponent()}, defined in
  * those classes, like {@link Fiat} or {@link Altcoin}.
  *
  */
@@ -55,7 +55,7 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
      *
      * @param currencyCode The currency code to parse, e.g "USD" or "LTC".
      * @param value        The value to parse as a String, e.g "2.54" or "-0.0001".
-     * @return The parsed Price.
+     * @return             The parsed Price.
      */
     public static Price parse(String currencyCode, String value) {
         final String cleaned = value.replace(",", ".");
@@ -70,7 +70,7 @@ public class Price extends MonetaryWrapper implements Comparable<Price> {
      *
      * @param currencyCode The currency code to parse, e.g "USD" or "LTC".
      * @param value        The value to parse.
-     * @return The parsed Price.
+     * @return             The parsed Price.
      */
     public static Price valueOf(String currencyCode, long value) {
         if (CurrencyUtil.isFiatCurrency(currencyCode)) {
