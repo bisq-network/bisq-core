@@ -438,7 +438,6 @@ public class WalletConfig extends AbstractIdleService {
             vChain = new BlockChain(params, vStore);
             vPeerGroup = createPeerGroup();
 
-            vPeerGroup.setBroadcastToAllPeers(true);
             if (minBroadcastConnections > 0)
                 vPeerGroup.setMinBroadcastConnections(minBroadcastConnections);
 
