@@ -49,23 +49,21 @@ public class TxBroadcaster {
                                 "We optimistically assume that the tx broadcast succeeds later and call onSuccess on the " +
                                 "callback handler. This behaviour carries less potential problems than if we would trigger " +
                                 "a failure (e.g. which would cause a failed create offer attempt of failed take offer attempt).\n" +
-                                "We have no guarantee how long it will take to get the information that sufficiently BTC " +
+                                "We have no guarantee how long it will take to get the information that sufficiently many BTC " +
                                 "nodes have reported back to BitcoinJ that the tx is in their mempool.\n" +
                                 "In normal situations " +
                                 "that's very fast but in some cases it can take minutes (mostly related to Tor connection " +
                                 "issues). So if we just go on in the application logic and treat it as successful and the " +
-                                "tx will be broadcasted successfully later all is fine.\n" +
-                                "If it will fail to get broadcasted, " +
+                                "tx will be broadcast successfully later all is fine.\n" +
+                                "If it will fail to get broadcast, " +
                                 "it will lead to a failure state, the same as if we would trigger a failure due the timeout." +
                                 "So we can assume that this behaviour will lead to less problems as otherwise.\n" +
                                 "Long term we should implement better monitoring for Tor and the provided Bitcoin nodes to " +
                                 "find out why those delays happen and add some rollback behaviour to the app state in case " +
-                                "the tx will never get broadcasted.",
-                        exception.toString(),
-                        txId,
-                        exception.getDelay());
+                                "the tx will never get broadcast.",
+                        exception.toString());
 
-                // The commit is required in case the tx is spent by a follow up tx as otherwise there would be an
+                // The wallet.maybeCommitTx() call is required in case the tx is spent by a follow up tx as otherwise there would be an
                 // InsufficientMoneyException thrown. But in some test scenarios we also got issues with wallet
                 // inconsistency if the tx was committed twice. It should be prevented by the maybeCommitTx methods but
                 // not 100% if that is always the case. Just added that comment to make clear that this might be a risky
@@ -126,8 +124,7 @@ public class TxBroadcaster {
                             UserThread.execute(() -> callback.onSuccess(tx));
                         } else {
                             stopAndRemoveTimer(txId);
-                            log.warn("We got an onSuccess callback for a broadcast which got already triggered " +
-                                    "the timeout.", txId);
+                            log.warn("We got an onSuccess callback for a broadcast which already triggered the timeout.", txId);
                         }
                     } else {
                         stopAndRemoveTimer(txId);

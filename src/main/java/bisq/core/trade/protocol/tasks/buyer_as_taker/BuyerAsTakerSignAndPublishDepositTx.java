@@ -92,6 +92,11 @@ public class BuyerAsTakerSignAndPublishDepositTx extends TradeTask {
                         @Override
                         public void onSuccess(Transaction transaction) {
                             if (!completed) {
+                                // We set the depositTx before we change the state as the state change triggers code
+                                // which expected the tx to be available. That case will usually never happen as the
+                                // callback is called after the method call has returned but in some test scenarios
+                                // with regtest we run into such issues, thus fixing it to make it more stict seems
+                                // reasonable.
                                 trade.setDepositTx(transaction);
                                 log.trace("takerSignsAndPublishesDepositTx succeeded " + transaction);
                                 trade.setState(Trade.State.TAKER_PUBLISHED_DEPOSIT_TX);

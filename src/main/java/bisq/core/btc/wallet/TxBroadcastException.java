@@ -21,6 +21,10 @@ import lombok.Getter;
 
 import javax.annotation.Nullable;
 
+/**
+ * Used in case the broadcasting of a tx did not succeed in the expected time.
+ * The broadcast can still succeed at a later moment though.
+ */
 public class TxBroadcastException extends Exception {
     @Getter
     @Nullable
