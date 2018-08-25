@@ -71,9 +71,9 @@ public class OpReturnParser {
         }
     }
 
-    public TxOutputType validate(byte[] opReturnData, boolean noValueOutput, TempTx tx, int index, long bsqFee,
+    public TxOutputType validate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
-        if (!noValueOutput ||
+        if (nonZeroOutput ||
                 index != tx.getTempTxOutputs().size() - 1 ||
                 opReturnData.length < 1) {
             log.warn("OP_RETURN data does not match our rules. opReturnData={}",

@@ -75,7 +75,7 @@ public class TxOutputParser {
             // We got a OP_RETURN output.
             TxOutputType outputType = opReturnParser.validate(
                     opReturnData,
-                    txOutput.getValue() == 0,
+                    txOutput.getValue() != 0,
                     tx,
                     index,
                     bsqInputBalanceValue,
