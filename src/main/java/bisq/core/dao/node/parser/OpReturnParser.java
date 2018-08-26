@@ -85,10 +85,9 @@ public class OpReturnParser {
      *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
      *                          unexpected state.
      *
-     * todo(chirhonul): rename to parseAndValidate?
      * todo(chirhonul): simplify signature by combining types: tx, nonZeroOutput, index, bsqFee, blockHeight all seem related
      */
-    public TxOutputType validate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
+    public TxOutputType parseAndValidate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
         if (nonZeroOutput ||
                 index != tx.getTempTxOutputs().size() - 1 ||

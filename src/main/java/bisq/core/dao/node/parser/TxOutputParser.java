@@ -73,7 +73,7 @@ public class TxOutputParser {
             }
         } else {
             // We got a OP_RETURN output.
-            TxOutputType outputType = opReturnParser.validate(
+            TxOutputType outputType = opReturnParser.parseAndValidate(
                     opReturnData,
                     txOutput.getValue() != 0,
                     tx,
