@@ -103,11 +103,23 @@ public class OpReturnParser {
                     tx, Utils.HEX.encode(opReturnData));
             return TxOutputType.UNDEFINED;
         }
-        TxOutputType outputType = selectValidator(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
+        TxOutputType outputType = validate(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
         return outputType;
     }
 
-    private TxOutputType selectValidator(byte[] opReturnData, TempTx tx, long bsqFee, int blockHeight,
+    /**
+     * Validate that the OP_RETURN data is correct for specified type.
+     *
+     * @param opReturnData The raw OP_RETURN data.
+     * @param tx           The transaction that the OP_RETURN output is from.
+     * @param bsqFee       The fee in BSQ for the operation.
+     * @param parsingModel The parsing model.
+     * @param opReturnType The type of the OP_RETURN operation.
+     * @return             The type of transaction output, which will be either one of the
+     *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
+     *                          unexpected state.
+     */
+    private TxOutputType validate(byte[] opReturnData, TempTx tx, long bsqFee, int blockHeight,
                                  ParsingModel parsingModel, OpReturnType opReturnType) {
         TxOutputType outputType = TxOutputType.UNDEFINED;
         switch (opReturnType) {
