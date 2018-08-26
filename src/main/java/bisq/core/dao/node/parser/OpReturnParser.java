@@ -71,6 +71,23 @@ public class OpReturnParser {
         }
     }
 
+    /**
+     * Parse the type of OP_RETURN data and validate it.
+     *
+     * @param opReturnData  The raw bytes of the OP_RETURN to parse.
+     * @param nonZeroOutput If true, the output being parsed has a non-zero value.
+     * @param tx            The transaction that the output belongs to.
+     * @param index         The index of the output in the {@code tx}.
+     * @param bsqFee        The fee which should be paid in BSQ.
+     * @param blockHeight   The height of the block that includes {@code tx}.
+     * @param parsingModel  The parsing model.
+     * @return              The type of the transaction output, which will be either one of the
+     *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
+     *                          unexpected state.
+     *
+     * todo(chirhonul): rename to parseAndValidate?
+     * todo(chirhonul): simplify signature by combining types: tx, nonZeroOutput, index, bsqFee, blockHeight all seem related
+     */
     public TxOutputType validate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
         if (nonZeroOutput ||
