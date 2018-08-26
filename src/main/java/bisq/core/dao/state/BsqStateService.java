@@ -502,6 +502,7 @@ public class BsqStateService implements DaoSetupService {
             return Optional.empty();
     }
 
+    //TODO rename acceptedIssuanceTx
     public boolean isIssuanceTx(String txId) {
         return getIssuance(txId).isPresent();
     }

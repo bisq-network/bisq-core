@@ -57,6 +57,7 @@ public class BlindVoteConsensus {
         return new BallotList(ballotList);
     }
 
+    // TODO pass blindVoteService.getBlindVotesInPhaseAndCycle()
     public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService) {
         final List<BlindVote> list = blindVoteService.getBlindVotesInPhaseAndCycle().stream()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
@@ -68,7 +69,7 @@ public class BlindVoteConsensus {
     }
 
     // 128 bit AES key is good enough for our use case
-    public static SecretKey getSecretKey() {
+    public static SecretKey createSecretKey() {
         return Encryption.generateSecretKey(128);
     }
 

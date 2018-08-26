@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
+// TODO rename to list service
 /**
  * Listens for new BlindVotePayload and adds it to appendOnlyStoreList.
  */
@@ -121,6 +122,7 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // TODO check if cycle and phase should be passed
     public List<BlindVote> getBlindVotesInPhaseAndCycle() {
         return appendOnlyStoreList.stream()
                 .filter(blindVotePayload -> blindVoteValidator.isTxInPhaseAndCycle(blindVotePayload.getBlindVote()))
