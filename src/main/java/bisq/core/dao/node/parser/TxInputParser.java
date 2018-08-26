@@ -21,6 +21,7 @@ import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
 import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
+import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
@@ -43,8 +44,8 @@ public class TxInputParser {
     }
 
     @SuppressWarnings("IfCanBeSwitch")
-    void process(TxInput txInput, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
-        bsqStateService.getUnspentTxOutput(txInput.getConnectedTxOutputKey())
+    void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
+        bsqStateService.getUnspentTxOutput(txOutputKey)
                 .ifPresent(connectedTxOutput -> {
                     parsingModel.addToInputValue(connectedTxOutput.getValue());
 
