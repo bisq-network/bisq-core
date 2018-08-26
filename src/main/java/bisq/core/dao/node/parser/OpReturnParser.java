@@ -71,42 +71,72 @@ public class OpReturnParser {
         }
     }
 
-    public void validate(byte[] opReturnData, TempTxOutput txOutput, TempTx tx, int index, long bsqFee,
+    /**
+     * Parse the type of OP_RETURN data and validate it.
+     *
+     * @param opReturnData  The raw bytes of the OP_RETURN to parse.
+     * @param nonZeroOutput If true, the output being parsed has a non-zero value.
+     * @param tx            The transaction that the output belongs to.
+     * @param index         The index of the output in the {@code tx}.
+     * @param bsqFee        The fee which should be paid in BSQ.
+     * @param blockHeight   The height of the block that includes {@code tx}.
+     * @param parsingModel  The parsing model.
+     * @return              The type of the transaction output, which will be either one of the
+     *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
+     *                          unexpected state.
+     *
+     * todo(chirhonul): simplify signature by combining types: tx, nonZeroOutput, index, bsqFee, blockHeight all seem related
+     */
+    public TxOutputType parseAndValidate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
                          int blockHeight, ParsingModel parsingModel) {
-        if (txOutput.getValue() == 0 &&
-                index == tx.getTempTxOutputs().size() - 1 &&
-                opReturnData.length >= 1) {
-            final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
-            if (optionalOpReturnType.isPresent()) {
-                selectValidator(opReturnData, txOutput, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
-            } else {
-                // TODO add exception or set undefined...
-                log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
-                        tx, Utils.HEX.encode(opReturnData));
-            }
-        } else {
+        if (nonZeroOutput ||
+                index != tx.getTempTxOutputs().size() - 1 ||
+                opReturnData.length < 1) {
             log.warn("OP_RETURN data does not match our rules. opReturnData={}",
                     tx, Utils.HEX.encode(opReturnData));
+            return TxOutputType.UNDEFINED;
         }
+        final Optional<OpReturnType> optionalOpReturnType = OpReturnType.getOpReturnType(opReturnData[0]);
+        if (!optionalOpReturnType.isPresent()) {
+            // TODO add exception?
+            log.warn("OP_RETURN data does not match our defined types. opReturnData={}",
+                    tx, Utils.HEX.encode(opReturnData));
+            return TxOutputType.UNDEFINED;
+        }
+        TxOutputType outputType = validate(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
+        return outputType;
     }
 
-    private void selectValidator(byte[] opReturnData, TempTxOutput txOutput, TempTx tx, long bsqFee, int blockHeight,
+    /**
+     * Validate that the OP_RETURN data is correct for specified type.
+     *
+     * @param opReturnData The raw OP_RETURN data.
+     * @param tx           The transaction that the OP_RETURN output is from.
+     * @param bsqFee       The fee in BSQ for the operation.
+     * @param parsingModel The parsing model.
+     * @param opReturnType The type of the OP_RETURN operation.
+     * @return             The type of transaction output, which will be either one of the
+     *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
+     *                          unexpected state.
+     */
+    private TxOutputType validate(byte[] opReturnData, TempTx tx, long bsqFee, int blockHeight,
                                  ParsingModel parsingModel, OpReturnType opReturnType) {
+        TxOutputType outputType = TxOutputType.UNDEFINED;
         switch (opReturnType) {
             case PROPOSAL:
-                processProposal(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
+                outputType = processProposal(opReturnData, bsqFee, blockHeight, parsingModel);
                 break;
             case COMPENSATION_REQUEST:
-                processCompensationRequest(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
+                outputType = processCompensationRequest(opReturnData, bsqFee, blockHeight, parsingModel);
                 break;
             case BLIND_VOTE:
-                processBlindVote(opReturnData, txOutput, bsqFee, blockHeight, parsingModel);
+                outputType = processBlindVote(opReturnData, bsqFee, blockHeight, parsingModel);
                 break;
             case VOTE_REVEAL:
-                processVoteReveal(opReturnData, txOutput, blockHeight, parsingModel);
+                outputType = processVoteReveal(opReturnData, blockHeight, parsingModel);
                 break;
             case LOCKUP:
-                processLockup(opReturnData, txOutput, blockHeight, parsingModel);
+                outputType = processLockup(opReturnData, blockHeight, parsingModel);
                 break;
             default:
                 // Should never happen as long we keep OpReturnType entries in sync with out switch case.
@@ -116,84 +146,85 @@ public class OpReturnParser {
                 DevEnv.logErrorAndThrowIfDevMode(msg);
                 break;
         }
+        return outputType;
     }
 
-    private void processProposal(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnProposalParser.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
-            txOutput.setTxOutputType(TxOutputType.PROPOSAL_OP_RETURN_OUTPUT);
+    private TxOutputType processProposal(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        if (opReturnProposalParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
             parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+            return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a proposal op_return data but it did not " +
-                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
+                    "match our rules. blockHeight={}", blockHeight);
+            return TxOutputType.INVALID_OUTPUT;
         }
     }
 
-    private void processCompensationRequest(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+    private TxOutputType processCompensationRequest(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
         final TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
-        if (opReturnCompReqParser.validate(opReturnData, txOutput, bsqFee, blockHeight, parsingModel)) {
-            txOutput.setTxOutputType(TxOutputType.COMP_REQ_OP_RETURN_OUTPUT);
+        if (opReturnCompReqParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
             if (issuanceCandidate != null)
                 issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+            return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
-                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
+                    "match our rules. blockHeight={}", blockHeight);
 
             // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
             if (issuanceCandidate != null)
                 issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            return TxOutputType.INVALID_OUTPUT;
         }
     }
 
-    private void processBlindVote(byte[] opReturnData, TempTxOutput txOutput, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+    private TxOutputType processBlindVote(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
         if (opReturnBlindVoteParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
-            txOutput.setTxOutputType(TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+            return TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
-                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
+                    "match our rules. blockHeight={}", blockHeight);
 
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
             TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
             if (blindVoteLockStakeOutput != null)
                 blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            return TxOutputType.INVALID_OUTPUT;
         }
     }
 
-    private void processVoteReveal(byte[] opReturnData, TempTxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
+    private TxOutputType processVoteReveal(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
         if (opReturnVoteRevealParser.validate(opReturnData, blockHeight, parsingModel)) {
-            txOutput.setTxOutputType(TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+            return TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
-                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
+                    "match our rules. blockHeight={}", blockHeight);
 
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
             TempTxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
             if (voteRevealUnlockStakeOutput != null)
                 voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            return TxOutputType.INVALID_OUTPUT;
         }
     }
 
-    private void processLockup(byte[] opReturnData, TempTxOutput txOutput, int blockHeight, ParsingModel parsingModel) {
+    private TxOutputType processLockup(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
         Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
         int lockTime = Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
 
         if (opReturnLockupParser.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
-            txOutput.setTxOutputType(TxOutputType.LOCKUP_OP_RETURN_OUTPUT);
             parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
             parsingModel.getTx().setLockTime(lockTime);
+            return TxOutputType.LOCKUP_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a lockup op_return data but it did not " +
-                    "match our rules. txOutput={}; blockHeight={}", txOutput, blockHeight);
-            txOutput.setTxOutputType(TxOutputType.INVALID_OUTPUT);
+                    "match our rules. blockHeight={}", blockHeight);
 
             // If the opReturn is invalid the lockup candidate cannot become BSQ, so we set it to BTC
             TempTxOutput lockupCandidate = parsingModel.getLockupOutput();
             if (lockupCandidate != null)
                 lockupCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            return TxOutputType.INVALID_OUTPUT;
         }
     }
 }
