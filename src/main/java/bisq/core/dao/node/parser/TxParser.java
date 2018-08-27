@@ -115,10 +115,17 @@ public class TxParser {
 
             // txOutputsIterator.iterate(tx, blockHeight, parsingModel);
 
+
             // We use order of output index. An output is a BSQ utxo as long there is enough input value
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
-                txOutputParser.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
+                txOutputParser.processTxOutput(
+                        tempTx.getBlockHeight(),
+                        index == tempTx.getTempTxOutputs().size() - 1,
+                        outputs.get(index),
+                        index,
+                        parsingModel
+                );
             }
 
             long bsqFee = parsingModel.getAvailableInputValue();

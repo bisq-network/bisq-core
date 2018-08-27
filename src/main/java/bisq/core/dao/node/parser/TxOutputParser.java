@@ -55,8 +55,17 @@ public class TxOutputParser {
         opReturnParser.processOpReturnCandidate(txOutput, parsingModel);
     }
 
-    void processTxOutput(TempTx tx, TempTxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
-        long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
+    /**
+     * Process a transaction output.
+     *
+     * @param blockHeight
+     * @param lastOutput
+     * @param txOutput
+     * @param index
+     * @param parsingModel
+     */
+    void processTxOutput(int blockHeight, boolean lastOutput, TempTxOutput txOutput, int index, ParsingModel parsingModel) {
+        final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
@@ -72,16 +81,10 @@ public class TxOutputParser {
                 handleBtcOutput(txOutput, index, parsingModel);
             }
         } else {
-            // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
-            long bsqFee = bsqInputBalanceValue;
             TxOutputType outputType = opReturnParser.parseAndValidate(
-                    opReturnData,
-                    txOutput.getValue() != 0,
-                    tx,
-                    index,
-                    bsqFee,
-                    blockHeight,
-                    parsingModel
+                    txOutput,
+                    lastOutput,
+                    blockHeight
             );
 
             if (outputType == TxOutputType.PROPOSAL_OP_RETURN_OUTPUT) {
