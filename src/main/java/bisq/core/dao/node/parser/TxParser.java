@@ -101,7 +101,7 @@ public class TxParser {
             txInputParser.process(outputKey, blockHeight, rawTx.getId(), inputIndex, parsingModel);
         }
 
-        final boolean leftOverBsq = parsingModel.isInputValuePositive();
+        boolean leftOverBsq = parsingModel.isInputValuePositive();
         if (leftOverBsq) {
             final List<TempTxOutput> outputs = tempTx.getTempTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
@@ -115,7 +115,6 @@ public class TxParser {
 
             // We use order of output index. An output is a BSQ utxo as long there is enough input value
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
-            Optional<OpReturnType> optionalVerifiedOpReturnType = Optional.empty();
             for (int index = 0; index < outputs.size(); index++) {
                 boolean isLastOutput = index == lastIndex;
                 txOutputParser.processTxOutput(
@@ -124,86 +123,9 @@ public class TxParser {
                         index,
                         parsingModel
                 );
-
-
-                optionalVerifiedOpReturnType = txOutputParser.getOptionalVerifiedOpReturnType();
-                if (isLastOutput) {
-                    // We might have a opReturn output
-                    OpReturnType verifiedOpReturnType = null;
-                    if (optionalVerifiedOpReturnType.isPresent()) {
-                        verifiedOpReturnType = optionalVerifiedOpReturnType.get();
-
-                        //TODO
-                        long bsqFee = parsingModel.getAvailableInputValue();
-
-                        boolean isFeeAndPhaseValid;
-                        switch (verifiedOpReturnType) {
-                            case PROPOSAL:
-                                isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
-                                break;
-                            case COMPENSATION_REQUEST:
-                                isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
-                                Optional<TempTxOutput> optionalIssuanceCandidate = txOutputParser.getOptionalIssuanceCandidate();
-                                if (isFeeAndPhaseValid) {
-                                    if (optionalIssuanceCandidate.isPresent()) {
-                                        // Now after we have validated the opReturn data we will apply the TxOutputType
-                                        optionalIssuanceCandidate.get().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
-                                    } else {
-                                        log.warn("It can be that we have a opReturn which is correct from its structure but the whole tx " +
-                                                "in not valid as the issuanceCandidate in not there. " +
-                                                "As the BSQ fee is set it must be either a buggy tx or an manually crafted invalid tx.");
-                                    }
-                                } else {
-                                    optionalIssuanceCandidate.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                                    // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
-                                    // valid BSQ tx.
-                                }
-                                break;
-                            case BLIND_VOTE:
-                                isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.BLIND_VOTE, Param.BLIND_VOTE_FEE);
-                                if (!isFeeAndPhaseValid) {
-                                    Optional<TempTxOutput> optionalBlindVoteLockStakeOutput = txOutputParser.getOptionalBlindVoteLockStakeOutput();
-                                    optionalBlindVoteLockStakeOutput.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                                    // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
-                                    // valid BSQ tx.
-                                }
-                                break;
-                            case VOTE_REVEAL:
-                                boolean isPhaseValid = isPhaseValid(blockHeight, tempTx, DaoPhase.Phase.VOTE_REVEAL);
-                                boolean isVoteRevealInputInValid = txInputParser.getVoteRevealInputState() != TxInputParser.VoteRevealInputState.VALID;
-                                if (!isPhaseValid || isVoteRevealInputInValid) {
-                                    Optional<TempTxOutput> optionalVoteRevealUnlockStakeOutput = txOutputParser.getOptionalVoteRevealUnlockStakeOutput();
-                                    optionalVoteRevealUnlockStakeOutput.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                                    // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
-                                    // valid BSQ tx.
-                                }
-                                break;
-                            case LOCKUP:
-                                // do nothing
-                                break;
-                        }
-                    }
-
-                    // We need to check if any temp txOutput is available and if so and the OpRetrun data is invalid we
-                    // set the output to a BTC output. We must not use if else cases here!
-                    if (verifiedOpReturnType != OpReturnType.COMPENSATION_REQUEST) {
-                        txOutputParser.getOptionalIssuanceCandidate().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                    }
-
-                    if (verifiedOpReturnType != OpReturnType.BLIND_VOTE) {
-                        txOutputParser.getOptionalBlindVoteLockStakeOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                    }
-
-                    if (verifiedOpReturnType != OpReturnType.VOTE_REVEAL) {
-                        txOutputParser.getOptionalVoteRevealUnlockStakeOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                    }
-
-                    if (verifiedOpReturnType != OpReturnType.LOCKUP) {
-                        txOutputParser.getOptionalLockupOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
-                    }
-                }
             }
 
+            processOpReturnType(blockHeight, tempTx, parsingModel, txOutputParser.getOptionalVerifiedOpReturnType());
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
             long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputParser::isOpReturnOutput).count();
@@ -240,6 +162,82 @@ public class TxParser {
             return Optional.empty();
     }
 
+    private void processOpReturnType(int blockHeight, TempTx tempTx, ParsingModel parsingModel, Optional<OpReturnType> optionalVerifiedOpReturnType) {
+        // We might have a opReturn output
+        OpReturnType verifiedOpReturnType = null;
+        if (optionalVerifiedOpReturnType.isPresent()) {
+            verifiedOpReturnType = optionalVerifiedOpReturnType.get();
+
+            //TODO
+            long bsqFee = parsingModel.getAvailableInputValue();
+
+            boolean isFeeAndPhaseValid;
+            switch (verifiedOpReturnType) {
+                case PROPOSAL:
+                    isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+                    break;
+                case COMPENSATION_REQUEST:
+                    isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+                    Optional<TempTxOutput> optionalIssuanceCandidate = txOutputParser.getOptionalIssuanceCandidate();
+                    if (isFeeAndPhaseValid) {
+                        if (optionalIssuanceCandidate.isPresent()) {
+                            // Now after we have validated the opReturn data we will apply the TxOutputType
+                            optionalIssuanceCandidate.get().setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+                        } else {
+                            log.warn("It can be that we have a opReturn which is correct from its structure but the whole tx " +
+                                    "in not valid as the issuanceCandidate in not there. " +
+                                    "As the BSQ fee is set it must be either a buggy tx or an manually crafted invalid tx.");
+                        }
+                    } else {
+                        optionalIssuanceCandidate.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+                        // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
+                    }
+                    break;
+                case BLIND_VOTE:
+                    isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.BLIND_VOTE, Param.BLIND_VOTE_FEE);
+                    if (!isFeeAndPhaseValid) {
+                        Optional<TempTxOutput> optionalBlindVoteLockStakeOutput = txOutputParser.getOptionalBlindVoteLockStakeOutput();
+                        optionalBlindVoteLockStakeOutput.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+                        // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
+                    }
+                    break;
+                case VOTE_REVEAL:
+                    boolean isPhaseValid = isPhaseValid(blockHeight, tempTx, DaoPhase.Phase.VOTE_REVEAL);
+                    boolean isVoteRevealInputInValid = txInputParser.getVoteRevealInputState() != TxInputParser.VoteRevealInputState.VALID;
+                    if (!isPhaseValid || isVoteRevealInputInValid) {
+                        Optional<TempTxOutput> optionalVoteRevealUnlockStakeOutput = txOutputParser.getOptionalVoteRevealUnlockStakeOutput();
+                        optionalVoteRevealUnlockStakeOutput.ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+                        // Empty Optional case is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
+                    }
+                    break;
+                case LOCKUP:
+                    // do nothing
+                    break;
+            }
+        }
+
+        // We need to check if any temp txOutput is available and if so and the OpRetrun data is invalid we
+        // set the output to a BTC output. We must not use if else cases here!
+        if (verifiedOpReturnType != OpReturnType.COMPENSATION_REQUEST) {
+            txOutputParser.getOptionalIssuanceCandidate().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+        }
+
+        if (verifiedOpReturnType != OpReturnType.BLIND_VOTE) {
+            txOutputParser.getOptionalBlindVoteLockStakeOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+        }
+
+        if (verifiedOpReturnType != OpReturnType.VOTE_REVEAL) {
+            txOutputParser.getOptionalVoteRevealUnlockStakeOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+        }
+
+        if (verifiedOpReturnType != OpReturnType.LOCKUP) {
+            txOutputParser.getOptionalLockupOutput().ifPresent(tempTxOutput -> tempTxOutput.setTxOutputType(TxOutputType.BTC_OUTPUT));
+        }
+    }
+
     private boolean isFeeAndPhaseValid(int blockHeight, TempTx tempTx, long bsqFee, DaoPhase.Phase phase, Param param) {
         // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
 
@@ -250,6 +248,8 @@ public class TxParser {
         boolean isFeeCorrect = bsqFee == paramValue;
         if (!isFeeCorrect) {
             log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, paramValue);
+
+            //TODO move outside
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
 
@@ -263,6 +263,8 @@ public class TxParser {
         boolean isInPhase = periodService.isInPhase(blockHeight, phase);
         if (!isInPhase) {
             log.warn("Not in {} phase. blockHeight={}", phase, blockHeight);
+
+            //TODO move outside
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
             return false;
