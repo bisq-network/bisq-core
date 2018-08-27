@@ -17,7 +17,6 @@
 
 package bisq.core.dao.node.parser;
 
-import bisq.core.dao.state.blockchain.TempTx;
 import bisq.core.dao.state.blockchain.TxOutput;
 
 import java.util.HashSet;
@@ -36,10 +35,6 @@ import javax.annotation.Nullable;
 @Getter
 @Setter
 class ParsingModel {
-    /**
-     * The different possible states for an input used at the vote reveal tx.
-     */
-    private TempTx tx;
 
     // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
@@ -50,8 +45,5 @@ class ParsingModel {
     @Nullable
     private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
 
-    ParsingModel(TempTx tx) {
-        this.tx = tx;
-    }
 
 }

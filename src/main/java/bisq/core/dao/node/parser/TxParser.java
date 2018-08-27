@@ -92,7 +92,7 @@ public class TxParser {
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
         TempTx tempTx = TempTx.fromRawTx(rawTx);
-        ParsingModel parsingModel = new ParsingModel(tempTx);
+        ParsingModel parsingModel = new ParsingModel();
 
         for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
             TxInput input = tempTx.getTxInputs().get(inputIndex);
@@ -103,6 +103,7 @@ public class TxParser {
         long accumulatedInputValue = txInputParser.getAccumulatedInputValue();
         txOutputParser.setAvailableInputValue(accumulatedInputValue);
         txOutputParser.setUnlockBlockHeight(txInputParser.getUnlockBlockHeight());
+        txOutputParser.setTempTx(tempTx);
 
         boolean hasBsqInputs = accumulatedInputValue > 0;
         if (hasBsqInputs) {

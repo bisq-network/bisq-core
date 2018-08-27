@@ -50,6 +50,10 @@ public class TxOutputParser {
     @Setter
     private int unlockBlockHeight;
 
+    @Setter
+    private TempTx tempTx;
+
+
     @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
     @Getter
@@ -135,7 +139,9 @@ public class TxOutputParser {
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
-        parsingModel.getTx().setUnlockBlockHeight(unlockBlockHeight);
+        //TODO move up to TxParser
+        tempTx.setUnlockBlockHeight(unlockBlockHeight);
+
         bsqOutputFound = true;
     }
 
