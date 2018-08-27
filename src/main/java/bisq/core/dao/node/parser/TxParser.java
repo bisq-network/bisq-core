@@ -92,12 +92,11 @@ public class TxParser {
         // We could pass tx also to the sub validators but as long we have not refactored the validators to pure
         // functions lets use the parsingModel.
         TempTx tempTx = TempTx.fromRawTx(rawTx);
-        ParsingModel parsingModel = new ParsingModel();
 
         for (int inputIndex = 0; inputIndex < tempTx.getTxInputs().size(); inputIndex++) {
             TxInput input = tempTx.getTxInputs().get(inputIndex);
             TxOutputKey outputKey = input.getConnectedTxOutputKey();
-            txInputParser.process(outputKey, blockHeight, rawTx.getId(), inputIndex, parsingModel);
+            txInputParser.process(outputKey, blockHeight, rawTx.getId(), inputIndex);
         }
 
         long accumulatedInputValue = txInputParser.getAccumulatedInputValue();
@@ -122,11 +121,9 @@ public class TxParser {
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
                 boolean isLastOutput = index == lastIndex;
-                txOutputParser.processTxOutput(
-                        isLastOutput,
+                txOutputParser.processTxOutput(isLastOutput,
                         outputs.get(index),
-                        index,
-                        parsingModel
+                        index
                 );
             }
 
@@ -140,7 +137,7 @@ public class TxParser {
                 boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
-                    TxType txType = getTxType(tempTx, parsingModel);
+                    TxType txType = getTxType(tempTx);
                     tempTx.setTxType(txType);
                     if (remainingInputValue > 0)
                         tempTx.setBurntFee(remainingInputValue);
@@ -285,10 +282,10 @@ public class TxParser {
     */
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    TxType getTxType(TempTx tx, ParsingModel parsingModel) {
+    TxType getTxType(TempTx tx) {
         TxType txType;
         // We need to have at least one BSQ output
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx, parsingModel);
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx);
 
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
@@ -340,7 +337,7 @@ public class TxParser {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx, ParsingModel parsingModel) {
+    private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx) {
         if (txOutputParser.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.

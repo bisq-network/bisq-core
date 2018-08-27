@@ -92,25 +92,24 @@ public class TxOutputParser {
      * @param isLastOutput  If it is the last output
      * @param tempTxOutput  The TempTxOutput we are parsing
      * @param index         The index in the outputs
-     * @param parsingModel  The ParsingModel
      */
-    void processTxOutput(boolean isLastOutput, TempTxOutput tempTxOutput, int index, ParsingModel parsingModel) {
+    void processTxOutput(boolean isLastOutput, TempTxOutput tempTxOutput, int index) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = tempTxOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = tempTxOutput.getValue();
-            if (isUnlockBondTx(tempTxOutput.getValue(), index, parsingModel)) {
+            if (isUnlockBondTx(tempTxOutput.getValue(), index)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
                 // output to not be BSQ output at all
-                handleUnlockBondTx(tempTxOutput, parsingModel);
+                handleUnlockBondTx(tempTxOutput);
             } else if (availableInputValue > 0 && availableInputValue >= txOutputValue) {
-                handleBsqOutput(tempTxOutput, index, parsingModel, txOutputValue);
+                handleBsqOutput(tempTxOutput, index, txOutputValue);
             } else {
-                handleBtcOutput(tempTxOutput, index, parsingModel);
+                handleBtcOutput(tempTxOutput, index);
             }
         } else {
-            handleOpReturnOutput(tempTxOutput, isLastOutput, parsingModel);
+            handleOpReturnOutput(tempTxOutput, isLastOutput);
         }
     }
 
@@ -126,7 +125,7 @@ public class TxOutputParser {
      * @param parsingModel  The parsing model.
      * @return True if the transaction is an unlock transaction, false otherwise.
      */
-    private boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
+    private boolean isUnlockBondTx(long txOutputValue, int index) {
         // We require that the input value is exact the available value and the output value
         return index == 0 &&
                 availableInputValue == txOutputValue &&
@@ -134,7 +133,7 @@ public class TxOutputParser {
                 optionalSpentLockupTxOutput.get().getValue() == txOutputValue;
     }
 
-    private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
+    private void handleUnlockBondTx(TempTxOutput txOutput) {
         checkArgument(optionalSpentLockupTxOutput.isPresent(), "optionalSpentLockupTxOutput must be present");
         availableInputValue -= optionalSpentLockupTxOutput.get().getValue();
 
@@ -147,7 +146,7 @@ public class TxOutputParser {
         bsqOutputFound = true;
     }
 
-    private void handleBsqOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
+    private void handleBsqOutput(TempTxOutput txOutput, int index, long txOutputValue) {
         // Update the input balance.
         availableInputValue -= txOutputValue;
 
@@ -176,7 +175,7 @@ public class TxOutputParser {
         bsqOutputFound = true;
     }
 
-    private void handleBtcOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
+    private void handleBtcOutput(TempTxOutput txOutput, int index) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
         // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
         if (availableInputValue > 0 &&
@@ -192,7 +191,7 @@ public class TxOutputParser {
         }
     }
 
-    private void handleOpReturnOutput(TempTxOutput tempTxOutput, boolean isLastOutput, ParsingModel parsingModel) {
+    private void handleOpReturnOutput(TempTxOutput tempTxOutput, boolean isLastOutput) {
         TxOutputType txOutputType = OpReturnParser.getTxOutputType(tempTxOutput, isLastOutput);
         tempTxOutput.setTxOutputType(txOutputType);
 

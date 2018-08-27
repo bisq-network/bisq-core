@@ -25,6 +25,7 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,13 +54,17 @@ public class TxInputParser {
     @Getter
     private TxInputParser.VoteRevealInputState voteRevealInputState = TxInputParser.VoteRevealInputState.UNKNOWN;
 
+    //TODO never read from... remove?
+    // We use here TxOutput as we do not alter it but take it from the BsqState
+    private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
+
     @Inject
     public TxInputParser(BsqStateService bsqStateService) {
         this.bsqStateService = bsqStateService;
     }
 
     @SuppressWarnings("IfCanBeSwitch")
-    void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
+    void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex) {
         bsqStateService.getUnspentTxOutput(txOutputKey)
                 .ifPresent(connectedTxOutput -> {
                     long inputValue = connectedTxOutput.getValue();
@@ -106,9 +111,7 @@ public class TxInputParser {
                             break;
                         case UNLOCK:
                             // This txInput is Spending an UNLOCK txOutput
-                            Set<TxOutput> spentUnlockConnectedTxOutputs = parsingModel.getSpentUnlockConnectedTxOutputs();
-                            if (spentUnlockConnectedTxOutputs != null)
-                                spentUnlockConnectedTxOutputs.add(connectedTxOutput);
+                            spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
                             bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                                 // Only count the input as BSQ input if spent after unlock time
