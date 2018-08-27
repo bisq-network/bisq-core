@@ -53,6 +53,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class VoteResultConsensus {
     private static final int BLOCKS_PER_YEAR = 50_000; // 51264;
 
+    public static boolean hasOpReturnDataValidLength(byte[] opReturnData) {
+        return opReturnData.length == 38;
+    }
+
     // Hash of the list of Blind votes is 20 bytes after version and type bytes
     public static byte[] getHashOfBlindVoteList(byte[] opReturnData) {
         return Arrays.copyOfRange(opReturnData, 2, 22);

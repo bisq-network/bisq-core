@@ -56,4 +56,8 @@ public class ProposalConsensus {
             return new byte[0];
         }
     }
+
+    public static boolean hasOpReturnDataValidLength(byte[] opReturnData) {
+        return opReturnData.length == 22;
+    }
 }

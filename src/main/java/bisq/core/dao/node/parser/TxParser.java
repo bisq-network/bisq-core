@@ -117,8 +117,7 @@ public class TxParser {
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
                 txOutputParser.processTxOutput(
-                        tempTx.getBlockHeight(),
-                        index == tempTx.getTempTxOutputs().size() - 1,
+                        index == outputs.size() - 1,
                         outputs.get(index),
                         index,
                         parsingModel

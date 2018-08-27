@@ -57,11 +57,6 @@ import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.parser.BlockParser;
-import bisq.core.dao.node.parser.OpReturnBlindVoteParser;
-import bisq.core.dao.node.parser.OpReturnCompReqParser;
-import bisq.core.dao.node.parser.OpReturnParser;
-import bisq.core.dao.node.parser.OpReturnProposalParser;
-import bisq.core.dao.node.parser.OpReturnVoteRevealParser;
 import bisq.core.dao.node.parser.TxInputParser;
 import bisq.core.dao.node.parser.TxOutputParser;
 import bisq.core.dao.node.parser.TxParser;
@@ -116,11 +111,6 @@ public class DaoModule extends AppModule {
         bind(TxParser.class).in(Singleton.class);
         bind(TxInputParser.class).in(Singleton.class);
         bind(TxOutputParser.class).in(Singleton.class);
-        bind(OpReturnParser.class).in(Singleton.class);
-        bind(OpReturnProposalParser.class).in(Singleton.class);
-        bind(OpReturnCompReqParser.class).in(Singleton.class);
-        bind(OpReturnBlindVoteParser.class).in(Singleton.class);
-        bind(OpReturnVoteRevealParser.class).in(Singleton.class);
 
         // Proposal
         bind(ProposalConsensus.class).in(Singleton.class);

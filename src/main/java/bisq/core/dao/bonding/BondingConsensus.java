@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,22 @@ public class BondingConsensus {
             log.error(e.toString());
             throw e;
         }
+    }
+
+    public static boolean hasOpReturnDataValidLength(byte[] opReturnData) {
+        return opReturnData.length == 25;
+    }
+
+    public static int getLockTime(byte[] opReturnData) {
+        return Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
+    }
+
+    public static boolean isLockTimeInValidRange(int lockTime) {
+        return lockTime >= BondingConsensus.getMinLockTime() && lockTime <= BondingConsensus.getMaxLockTime();
+    }
+
+    public static Optional<LockupType> getLockupType(byte[] opReturnData) {
+        return LockupType.getLockupType(opReturnData[2]);
     }
 
     public static boolean isLockTimeOver(long unlockBlockHeight, long currentBlockHeight) {
