@@ -124,19 +124,39 @@ public class TxParser {
             long bsqFee = parsingModel.getAvailableInputValue();
             if (parsingModel.getVerifiedOpReturnType() == OpReturnType.PROPOSAL) {
                 isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
-
             } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.COMPENSATION_REQUEST) {
-                boolean isValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+                boolean isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+
                 //TODO refactor issuanceCandidate
                 TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
-                if (!isValid || issuanceCandidate != null)
-                    issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+                if (isFeeAndPhaseValid) {
+                    if (issuanceCandidate != null) {
+                        issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+                    } else {
+                        log.warn("It can be that we have a opReturn which is correct from its structure but the whole tx " +
+                                "in not valid as the issuanceCandidate in not there. " +
+                                "As the BSQ fee is set it must be either a buggy tx or an manually crafted invalid tx.");
+                    }
+                } else {
+                    // If the opReturn is invalid we set the issuanceCandidate as BTC if it is available
+                    if (issuanceCandidate != null) {
+                        issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    } else {
+                        // That is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
+                    }
+                }
             } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.BLIND_VOTE) {
                 boolean isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.BLIND_VOTE, Param.BLIND_VOTE_FEE);
-                // TODO refactor getBlindVoteLockStakeOutput
-                TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
-                if (!isFeeAndPhaseValid || blindVoteLockStakeOutput == null) {
-                    blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                if (!isFeeAndPhaseValid) {
+                    // TODO refactor getBlindVoteLockStakeOutput
+                    TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
+                    if (blindVoteLockStakeOutput != null) {
+                        blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    } else {
+                        // That is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
+                    }
                 }
             } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.VOTE_REVEAL) {
                 boolean isPhaseValid = isPhaseValid(blockHeight, tempTx, DaoPhase.Phase.VOTE_REVEAL);
@@ -145,7 +165,8 @@ public class TxParser {
                     if (voteRevealUnlockStakeOutput != null) {
                         voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
                     } else {
-                        //todo handle
+                        // That is a possible valid case where a random tx matches our opReturn rules but it is not a
+                        // valid BSQ tx.
                     }
                 }
             }
@@ -163,6 +184,13 @@ public class TxParser {
                 TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
                 if (blindVoteLockStakeOutput != null)
                     blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            }
+
+            if (parsingModel.getVerifiedOpReturnType() != OpReturnType.VOTE_REVEAL) {
+                //TODO refactor
+                TempTxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
+                if (voteRevealUnlockStakeOutput != null)
+                    voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
             }
 
 
