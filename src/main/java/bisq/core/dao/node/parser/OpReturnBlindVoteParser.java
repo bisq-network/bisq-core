@@ -44,6 +44,7 @@ public class OpReturnBlindVoteParser {
     // We do not check the version as if we upgrade the a new version old clients would fail. Rather we need to make
     // a change backward compatible so that new clients can handle both versions and old clients are tolerant.
     boolean validate(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
+        //TODO remove
         return parsingModel.getBlindVoteLockStakeOutput() != null &&
                 opReturnData.length == 22 &&
                 bsqFee == bsqStateService.getParamValue(Param.BLIND_VOTE_FEE, blockHeight) &&

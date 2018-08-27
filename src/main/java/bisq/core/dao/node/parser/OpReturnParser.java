@@ -129,7 +129,7 @@ public class OpReturnParser {
                 outputType = processCompensationRequest(opReturnData);
                 break;
             case BLIND_VOTE:
-                outputType = processBlindVote(opReturnData, bsqFee, blockHeight, parsingModel);
+                outputType = processBlindVote(opReturnData);
                 break;
             case VOTE_REVEAL:
                 outputType = processVoteReveal(opReturnData, blockHeight, parsingModel);
@@ -173,17 +173,12 @@ public class OpReturnParser {
         }
     }
 
-    private TxOutputType processBlindVote(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnBlindVoteParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
-            parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+    private TxOutputType processBlindVote(byte[] opReturnData) {
+        if (opReturnData.length == 22) {
             return TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a blind vote op_return data but it did not " +
-                    "match our rules. blockHeight={}", blockHeight);
-
-            TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
-            if (blindVoteLockStakeOutput != null)
-                blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    "match our rules.");
             return TxOutputType.INVALID_OUTPUT;
         }
     }

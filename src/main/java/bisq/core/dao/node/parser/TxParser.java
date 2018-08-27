@@ -121,15 +121,23 @@ public class TxParser {
                 txOutputParser.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
             }
 
+            long bsqFee = parsingModel.getAvailableInputValue();
             if (parsingModel.getVerifiedOpReturnType() == OpReturnType.PROPOSAL) {
-                checkFeeAndPhase(blockHeight, tempTx, parsingModel);
+                isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
 
             } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.COMPENSATION_REQUEST) {
-                checkFeeAndPhase(blockHeight, tempTx, parsingModel);
+                boolean isValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
                 //TODO refactor issuanceCandidate
                 TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
-                if (issuanceCandidate != null)
+                if (!isValid || issuanceCandidate != null)
                     issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+            } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.BLIND_VOTE) {
+                boolean isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, tempTx, bsqFee, DaoPhase.Phase.BLIND_VOTE, Param.BLIND_VOTE_FEE);
+                // TODO refactor getBlindVoteLockStakeOutput
+                TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
+                if (!isFeeAndPhaseValid || blindVoteLockStakeOutput == null) {
+                    blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                }
             }
 
             if (parsingModel.getVerifiedOpReturnType() != OpReturnType.COMPENSATION_REQUEST) {
@@ -139,6 +147,14 @@ public class TxParser {
                 if (issuanceCandidate != null)
                     issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
             }
+
+            if (parsingModel.getVerifiedOpReturnType() != OpReturnType.BLIND_VOTE) {
+                //TODO refactor
+                TempTxOutput blindVoteLockStakeOutput = parsingModel.getBlindVoteLockStakeOutput();
+                if (blindVoteLockStakeOutput != null)
+                    blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            }
+
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
             long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputParser::isOpReturnOutput).count();
@@ -156,7 +172,7 @@ public class TxParser {
                 if (!isAnyTxOutputTypeUndefined) {
                     TxType txType = TxParser.getTxType(tempTx, parsingModel);
                     tempTx.setTxType(txType);
-                    final long burntFee = parsingModel.getAvailableInputValue();
+                    final long burntFee = bsqFee;
                     if (burntFee > 0)
                         tempTx.setBurntFee(burntFee);
                 } else {
@@ -183,23 +199,29 @@ public class TxParser {
             return Optional.empty();
     }
 
-    private void checkFeeAndPhase(int blockHeight, TempTx tempTx, ParsingModel parsingModel) {
+    private boolean isFeeAndPhaseValid(int blockHeight, TempTx tempTx, long bsqFee, DaoPhase.Phase phase, Param param) {
         // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
-        long bsqFee = parsingModel.getAvailableInputValue();
 
-        boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
+        boolean isInPhase = periodService.isInPhase(blockHeight, phase);
         if (!isInPhase) {
             log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
+
+            return false;
         }
 
-        boolean isFeeCorrect = bsqFee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
+        long paramValue = bsqStateService.getParamValue(param, blockHeight);
+        boolean isFeeCorrect = bsqFee == paramValue;
         if (!isFeeCorrect) {
-            log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
+            log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, paramValue);
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
+
+            return false;
         }
+
+        return true;
     }
 
     /*
