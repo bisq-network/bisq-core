@@ -46,6 +46,8 @@ public class TxOutputParser {
     @Setter
     private long availableInputValue = 0;
     @Getter
+    private boolean bsqOutputFound;
+    @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
     @Getter
     private Optional<OpReturnType> optionalVerifiedOpReturnType = Optional.empty();
@@ -131,7 +133,7 @@ public class TxOutputParser {
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
         parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
-        parsingModel.setBsqOutputFound(true);
+        bsqOutputFound = true;
     }
 
     private void handleBsqOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
@@ -160,7 +162,7 @@ public class TxOutputParser {
         txOutput.setTxOutputType(bsqOutput);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
-        parsingModel.setBsqOutputFound(true);
+        bsqOutputFound = true;
     }
 
     private void handleBtcOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel) {

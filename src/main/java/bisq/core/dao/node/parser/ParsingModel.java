@@ -40,7 +40,6 @@ class ParsingModel {
      * The different possible states for an input used at the vote reveal tx.
      */
     private TempTx tx;
-    private boolean bsqOutputFound;
 
     // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
