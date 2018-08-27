@@ -103,6 +103,7 @@ public class TxParser {
         long accumulatedInputValue = txInputParser.getAccumulatedInputValue();
         txOutputParser.setAvailableInputValue(accumulatedInputValue);
         txOutputParser.setUnlockBlockHeight(txInputParser.getUnlockBlockHeight());
+        txOutputParser.setOptionalSpentLockupTxOutput(txInputParser.getOptionalSpentLockupTxOutput());
         txOutputParser.setTempTx(tempTx);
 
         boolean hasBsqInputs = accumulatedInputValue > 0;

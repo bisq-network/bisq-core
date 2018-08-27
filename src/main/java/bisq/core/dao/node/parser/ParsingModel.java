@@ -36,14 +36,9 @@ import javax.annotation.Nullable;
 @Setter
 class ParsingModel {
 
-    // We use here TxOutput as we do not alter it but take it from the BsqState
-    @Nullable
-    private TxOutput spentLockupTxOutput;
-
     //TODO never read from...
     // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
     private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
-
 
 }

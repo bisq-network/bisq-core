@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -42,17 +43,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TxOutputParser {
     private final BsqStateService bsqStateService;
 
+    // Setters
     @Getter
     @Setter
     private long availableInputValue = 0;
-    @Getter
-    private boolean bsqOutputFound;
     @Setter
     private int unlockBlockHeight;
-
     @Setter
-    private TempTx tempTx;
+    private TempTx tempTx; //TODO remove
+    @Setter
+    @Getter
+    private Optional<TxOutput> optionalSpentLockupTxOutput = Optional.empty();
 
+    @Getter
+    private boolean bsqOutputFound;
 
     @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
@@ -124,17 +128,15 @@ public class TxOutputParser {
      */
     private boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
-        return parsingModel.getSpentLockupTxOutput() != null &&
-                index == 0 &&
-                parsingModel.getSpentLockupTxOutput().getValue() == txOutputValue &&
-                availableInputValue == txOutputValue;
+        return index == 0 &&
+                availableInputValue == txOutputValue &&
+                optionalSpentLockupTxOutput.isPresent() &&
+                optionalSpentLockupTxOutput.get().getValue() == txOutputValue;
     }
 
     private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
-        TxOutput spentLockupTxOutput = parsingModel.getSpentLockupTxOutput();
-        checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
-
-        availableInputValue -= spentLockupTxOutput.getValue();
+        checkArgument(optionalSpentLockupTxOutput.isPresent(), "optionalSpentLockupTxOutput must be present");
+        availableInputValue -= optionalSpentLockupTxOutput.get().getValue();
 
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));

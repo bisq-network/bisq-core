@@ -25,6 +25,7 @@ import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
 import java.util.Set;
 
 import lombok.Getter;
@@ -45,6 +46,8 @@ public class TxInputParser {
     private long burntBondValue = 0;
     @Getter
     private int unlockBlockHeight;
+    @Getter
+    private Optional<TxOutput> optionalSpentLockupTxOutput = Optional.empty();
 
     private final BsqStateService bsqStateService;
     @Getter
@@ -93,8 +96,8 @@ public class TxInputParser {
                         case LOCKUP:
                             // A LOCKUP BSQ txOutput is spent to a corresponding UNLOCK
                             // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
-                            if (parsingModel.getSpentLockupTxOutput() == null) {
-                                parsingModel.setSpentLockupTxOutput(connectedTxOutput);
+                            if (!optionalSpentLockupTxOutput.isPresent()) {
+                                optionalSpentLockupTxOutput = Optional.of(connectedTxOutput);
                                 bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
                                         unlockBlockHeight = blockHeight + tx.getLockTime());
                             }
