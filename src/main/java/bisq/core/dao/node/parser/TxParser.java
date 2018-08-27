@@ -18,6 +18,7 @@
 package bisq.core.dao.node.parser;
 
 import bisq.core.dao.node.parser.exceptions.InvalidGenesisTxException;
+import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -27,6 +28,9 @@ import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 import bisq.core.dao.state.blockchain.TxType;
+import bisq.core.dao.state.governance.Param;
+import bisq.core.dao.state.period.DaoPhase;
+import bisq.core.dao.state.period.PeriodService;
 
 import bisq.common.app.DevEnv;
 
@@ -51,12 +55,18 @@ public class TxParser {
 
     private final TxInputParser txInputParser;
     private final TxOutputParser txOutputParser;
+    private final PeriodService periodService;
+    private final BsqStateService bsqStateService;
 
     @Inject
     public TxParser(TxInputParser txInputParser,
-                    TxOutputParser txOutputParser) {
+                    TxOutputParser txOutputParser,
+                    PeriodService periodService,
+                    BsqStateService bsqStateService) {
         this.txInputParser = txInputParser;
         this.txOutputParser = txOutputParser;
+        this.periodService = periodService;
+        this.bsqStateService = bsqStateService;
     }
 
     // Apply state changes to tx, inputs and outputs
@@ -109,6 +119,25 @@ public class TxParser {
             // We iterate all outputs including the opReturn to do a full validation including the BSQ fee
             for (int index = 0; index < outputs.size(); index++) {
                 txOutputParser.processTxOutput(tempTx, outputs.get(index), index, blockHeight, parsingModel);
+            }
+
+            if (parsingModel.getVerifiedOpReturnType() == OpReturnType.PROPOSAL) {
+                // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
+                long bsqFee = parsingModel.getAvailableInputValue();
+
+                boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
+                if (!isInPhase) {
+                    log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
+                    tempTx.setTxType(TxType.INVALID);
+                    // TODO should we return already?
+                }
+
+                boolean isFeeCorrect = bsqFee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
+                if (!isFeeCorrect) {
+                    log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
+                    tempTx.setTxType(TxType.INVALID);
+                    // TODO should we return already?
+                }
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)

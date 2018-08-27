@@ -81,14 +81,14 @@ public class OpReturnParser {
      * @param bsqFee        The fee which should be paid in BSQ.
      * @param blockHeight   The height of the block that includes {@code tx}.
      * @param parsingModel  The parsing model.
-     * @return              The type of the transaction output, which will be either one of the
+     * @return The type of the transaction output, which will be either one of the
      *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
      *                          unexpected state.
      *
      * todo(chirhonul): simplify signature by combining types: tx, nonZeroOutput, index, bsqFee, blockHeight all seem related
      */
     public TxOutputType parseAndValidate(byte[] opReturnData, boolean nonZeroOutput, TempTx tx, int index, long bsqFee,
-                         int blockHeight, ParsingModel parsingModel) {
+                                         int blockHeight, ParsingModel parsingModel) {
         if (nonZeroOutput ||
                 index != tx.getTempTxOutputs().size() - 1 ||
                 opReturnData.length < 1) {
@@ -103,8 +103,7 @@ public class OpReturnParser {
                     tx, Utils.HEX.encode(opReturnData));
             return TxOutputType.UNDEFINED;
         }
-        TxOutputType outputType = validate(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
-        return outputType;
+        return validate(opReturnData, tx, bsqFee, blockHeight, parsingModel, optionalOpReturnType.get());
     }
 
     /**
@@ -115,16 +114,16 @@ public class OpReturnParser {
      * @param bsqFee       The fee in BSQ for the operation.
      * @param parsingModel The parsing model.
      * @param opReturnType The type of the OP_RETURN operation.
-     * @return             The type of transaction output, which will be either one of the
+     * @return The type of transaction output, which will be either one of the
      *                          {@code *_OP_RETURN_OUTPUT} values, or {@code UNDEFINED} in case of
      *                          unexpected state.
      */
     private TxOutputType validate(byte[] opReturnData, TempTx tx, long bsqFee, int blockHeight,
-                                 ParsingModel parsingModel, OpReturnType opReturnType) {
+                                  ParsingModel parsingModel, OpReturnType opReturnType) {
         TxOutputType outputType = TxOutputType.UNDEFINED;
         switch (opReturnType) {
             case PROPOSAL:
-                outputType = processProposal(opReturnData, bsqFee, blockHeight, parsingModel);
+                outputType = processProposal(opReturnData);
                 break;
             case COMPENSATION_REQUEST:
                 outputType = processCompensationRequest(opReturnData, bsqFee, blockHeight, parsingModel);
@@ -149,13 +148,12 @@ public class OpReturnParser {
         return outputType;
     }
 
-    private TxOutputType processProposal(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnProposalParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
-            parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+    private TxOutputType processProposal(byte[] opReturnData) {
+        if (opReturnData.length == 22) {
             return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a proposal op_return data but it did not " +
-                    "match our rules. blockHeight={}", blockHeight);
+                    "match our rules.");
             return TxOutputType.INVALID_OUTPUT;
         }
     }
