@@ -54,7 +54,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
                 txOutputs,
                 tempTx.getTxType(),
                 tempTx.getBurntFee(),
-                tempTx.getLockTime(),
                 tempTx.getUnlockBlockHeight());
     }
 
@@ -63,7 +62,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
     private final TxType txType;
     private final long burntFee;
     // If not set it is -1. LockTime of 0 is a valid value.
-    private final int lockTime;
     private final int unlockBlockHeight;
 
 
@@ -80,7 +78,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
                ImmutableList<TxOutput> txOutputs,
                @Nullable TxType txType,
                long burntFee,
-               int lockTime,
                int unlockBlockHeight) {
         super(txVersion,
                 id,
@@ -91,7 +88,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
         this.txOutputs = txOutputs;
         this.txType = txType;
         this.burntFee = burntFee;
-        this.lockTime = lockTime;
         this.unlockBlockHeight = unlockBlockHeight;
     }
 
@@ -102,7 +98,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
                         .map(TxOutput::toProtoMessage)
                         .collect(Collectors.toList()))
                 .setBurntFee(burntFee)
-                .setLockTime(lockTime)
                 .setUnlockBlockHeight(unlockBlockHeight);
         Optional.ofNullable(txType).ifPresent(txType -> builder.setTxType(txType.toProtoMessage()));
         return getBaseTxBuilder().setTx(builder).build();
@@ -129,7 +124,6 @@ public final class Tx extends BaseTx implements PersistablePayload {
                 outputs,
                 TxType.fromProto(protoTx.getTxType()),
                 protoTx.getBurntFee(),
-                protoTx.getLockTime(),
                 protoTx.getUnlockBlockHeight());
     }
 
@@ -142,14 +136,26 @@ public final class Tx extends BaseTx implements PersistablePayload {
         return txOutputs.get(txOutputs.size() - 1);
     }
 
+
+    /**
+     * OpReturn output might contain the lockTime in case of a LockTx. It has to be the last output.
+     * We store technically the lockTime there as is is stored in the OpReturn data but conceptually we want to provide
+     * it from the transaction.
+     *
+     * @return
+     */
+    public int getLockTime() {
+        return getLastTxOutput().getLockTime();
+    }
+
     @Override
     public String toString() {
         return "Tx{" +
                 "\n     txOutputs=" + txOutputs +
                 ",\n     txType=" + txType +
                 ",\n     burntFee=" + burntFee +
-                ",\n     lockTime=" + lockTime +
                 ",\n     unlockBlockHeight=" + unlockBlockHeight +
                 "\n} " + super.toString();
     }
+
 }

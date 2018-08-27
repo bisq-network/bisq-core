@@ -198,7 +198,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     public void publishBlindVote(Coin stake, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
         try {
-            SecretKey secretKey = BlindVoteConsensus.getSecretKey();
+            SecretKey secretKey = BlindVoteConsensus.createSecretKey();
             BallotList sortedBallotList = BlindVoteConsensus.getSortedBallotList(ballotListService);
             byte[] encryptedVotes = getEncryptedVotes(sortedBallotList, secretKey);
             byte[] opReturnData = getOpReturnData(encryptedVotes);
@@ -277,6 +277,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
+        // TODO sort merit list to make it consensus safe
         return new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
@@ -287,6 +288,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                     if (blindVoteTxId != null) {
                         String pubKey = issuance.getPubKey();
                         if (pubKey == null) {
+                            // Maybe add exception
                             log.error("We did not have a pubKey in our issuance object. " +
                                     "txId={}, issuance={}", issuance.getTxId(), issuance);
                             return null;
@@ -294,6 +296,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                         DeterministicKey key = bsqWalletService.findKeyFromPubKey(Utilities.decodeFromHex(pubKey));
                         if (key == null) {
+                            // Maybe add exception
                             log.error("We did not find the key for our compensation request. txId={}",
                                     issuance.getTxId());
                             return null;
@@ -301,6 +304,8 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                         // We sign the txId so we be sure that the signature could not be used by anyone else
                         // In the verification the txId will be checked as well.
+                        // TODO BitcoinJ parts here are consensus critical parts
+                        // Consider using our non EC Sig
                         ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
                         signatureAsBytes = signature.toCanonicalised().encodeToDER();
                     } else {

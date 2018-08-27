@@ -105,8 +105,8 @@ public class MyVoteListService implements PersistedDataHost {
         List<MyVote> list = new ArrayList<>(myVoteList.getList());
         list.sort(Comparator.comparing(MyVote::getDate));
         for (MyVote myVote : list) {
-            for (Ballot ballot1 : myVote.getBallotList()) {
-                if (ballot1.getTxId().equals(proposalTxId)) {
+            for (Ballot ballot : myVote.getBallotList()) {
+                if (ballot.getTxId().equals(proposalTxId)) {
                     merit = myVote.getMerit(myBlindVoteListService, bsqStateService);
                     stake = myVote.getBlindVote().getStake();
                     break;

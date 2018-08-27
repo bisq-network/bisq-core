@@ -22,6 +22,8 @@ import bisq.core.dao.governance.proposal.Proposal;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Value
 @Slf4j
 public class ProposalVoteResult {
@@ -49,6 +51,7 @@ public class ProposalVoteResult {
     public long getQuorum() {
         log.info("Quorum: proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}",
                 proposal.getTxId(), getTotalStake(), stakeOfAcceptedVotes, stakeOfRejectedVotes);
+        // TODO use only accepted???
         return getTotalStake();
     }
 
@@ -57,7 +60,12 @@ public class ProposalVoteResult {
     }
 
     public long getThreshold() {
-        return stakeOfAcceptedVotes > 0 ? stakeOfAcceptedVotes * 10_000 / getTotalStake() : 0;
+        checkArgument(stakeOfAcceptedVotes >= 0, "stakeOfAcceptedVotes must not be negative");
+        checkArgument(stakeOfRejectedVotes >= 0, "stakeOfRejectedVotes must not be negative");
+        if (stakeOfAcceptedVotes == 0) {
+            return 0;
+        }
+        return stakeOfAcceptedVotes * 10_000 / getTotalStake();
     }
 
     @Override

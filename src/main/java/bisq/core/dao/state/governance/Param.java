@@ -83,7 +83,7 @@ public enum Param {
     PHASE_PROPOSAL(3456),      // 24 days
     PHASE_BREAK1(10),        // 10 blocks
     PHASE_BLIND_VOTE(576),    // 4 days
-    PHASE_BREAK2(1),        // 10 blocks
+    PHASE_BREAK2(10),        // 10 blocks
     PHASE_VOTE_REVEAL(432),   // 2 days
     PHASE_BREAK3(10),        // 10 blocks
     PHASE_RESULT(1),        // 1 block

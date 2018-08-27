@@ -55,13 +55,22 @@ public class TxOutputParser {
         opReturnParser.processOpReturnCandidate(txOutput, parsingModel);
     }
 
-    void processTxOutput(TempTx tx, TempTxOutput txOutput, int index, int blockHeight, ParsingModel parsingModel) {
+    /**
+     * Process a transaction output.
+     *
+     * @param blockHeight
+     * @param lastOutput
+     * @param txOutput
+     * @param index
+     * @param parsingModel
+     */
+    void processTxOutput(int blockHeight, boolean lastOutput, TempTxOutput txOutput, int index, ParsingModel parsingModel) {
         final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
-            if (isUnlockBondTx(txOutput, index, parsingModel)) {
+            if (TxOutputParser.isUnlockBondTx(txOutput.getValue(), index, parsingModel)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
                 // output to not be BSQ output at all
@@ -72,16 +81,24 @@ public class TxOutputParser {
                 handleBtcOutput(txOutput, index, parsingModel);
             }
         } else {
-            // We got a OP_RETURN output.
             TxOutputType outputType = opReturnParser.parseAndValidate(
-                    opReturnData,
-                    txOutput.getValue() != 0,
-                    tx,
-                    index,
-                    bsqInputBalanceValue,
-                    blockHeight,
-                    parsingModel
+                    txOutput,
+                    lastOutput,
+                    blockHeight
             );
+
+            if (outputType == TxOutputType.PROPOSAL_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+            } else if (outputType == TxOutputType.COMP_REQ_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+            } else if (outputType == TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+            } else if (outputType == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+            } else if (outputType == TxOutputType.LOCKUP_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
+            }
+
             txOutput.setTxOutputType(outputType);
         }
     }
@@ -90,12 +107,20 @@ public class TxOutputParser {
         return txOutput.getOpReturnData() != null;
     }
 
-    private boolean isUnlockBondTx(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
+    /**
+     * Whether a transaction is a valid unlock bond transaction or not.
+     *
+     * @param txOutputValue The value of the current output, in satoshi.
+     * @param index         The index of the output.
+     * @param parsingModel  The parsing model.
+     * @return True if the transaction is an unlock transaction, false otherwise.
+     */
+    private static boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
         return parsingModel.getSpentLockupTxOutput() != null &&
                 index == 0 &&
-                parsingModel.getSpentLockupTxOutput().getValue() == txOutput.getValue() &&
-                parsingModel.getAvailableInputValue() == txOutput.getValue();
+                parsingModel.getSpentLockupTxOutput().getValue() == txOutputValue &&
+                parsingModel.getAvailableInputValue() == txOutputValue;
     }
 
     private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {

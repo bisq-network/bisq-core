@@ -29,7 +29,6 @@ import bisq.core.dao.state.governance.Issuance;
 import bisq.core.dao.state.period.DaoPhase;
 import bisq.core.dao.state.period.PeriodService;
 
-import bisq.common.crypto.CryptoException;
 import bisq.common.crypto.Encryption;
 import bisq.common.util.MathUtils;
 import bisq.common.util.Utilities;
@@ -59,20 +58,16 @@ public class VoteResultConsensus {
         return Arrays.copyOfRange(opReturnData, 2, 22);
     }
 
-    private static byte[] decryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws CryptoException {
-        return Encryption.decrypt(encryptedVotes, secretKey);
-    }
-
-    public static VoteWithProposalTxIdList getDecryptedVotes(byte[] encryptedVotes, SecretKey secretKey) throws VoteResultException {
+    public static VoteWithProposalTxIdList decryptVotes(byte[] encryptedVotes, SecretKey secretKey) throws VoteResultException {
         try {
-            final byte[] decrypted = decryptVotes(encryptedVotes, secretKey);
+            byte[] decrypted = Encryption.decrypt(encryptedVotes, secretKey);
             return VoteWithProposalTxIdList.getVoteWithProposalTxIdListFromBytes(decrypted);
         } catch (Throwable t) {
             throw new VoteResultException(t);
         }
     }
 
-    public static MeritList getDecryptMeritList(byte[] encryptedMeritList, SecretKey secretKey) throws VoteResultException {
+    public static MeritList decryptMeritList(byte[] encryptedMeritList, SecretKey secretKey) throws VoteResultException {
         try {
             final byte[] decrypted = Encryption.decrypt(encryptedMeritList, secretKey);
             return MeritList.getMeritListFromBytes(decrypted);
@@ -81,6 +76,7 @@ public class VoteResultConsensus {
         }
     }
 
+    // TODO move ot MeritConsensus
     public static long getWeightedMeritAmount(long amount, int issuanceHeight, int blockHeight, int blocksPerYear) {
         if (issuanceHeight > blockHeight)
             throw new IllegalArgumentException("issuanceHeight must not be larger than blockHeight");
@@ -93,6 +89,8 @@ public class VoteResultConsensus {
 
         // We use a linear function  to apply a factor for the issuance amount of 1 if the issuance was recent and 0
         // if the issuance was 2 years old or older.
+
+        // TODO Use stairway function without double/divisions or lookup table
         int maxAge = 2 * blocksPerYear;
         int age = Math.min(maxAge, blockHeight - issuanceHeight);
 
@@ -106,6 +104,7 @@ public class VoteResultConsensus {
     public static long getMeritStake(String blindVoteTxId, MeritList meritList, BsqStateService bsqStateService) {
         // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
         // later blocks (merit decreases with each block).
+        //TODO move to caller
         int txChainHeight = bsqStateService.getTx(blindVoteTxId).map(Tx::getBlockHeight).orElse(0);
         if (txChainHeight == 0) {
             log.error("Error at getMeritStake: blindVoteTx not found in bsqStateService. blindVoteTxId=" + blindVoteTxId);
@@ -114,6 +113,7 @@ public class VoteResultConsensus {
 
         return meritList.getList().stream()
                 .filter(merit -> {
+                    // TODO make method
                     // We verify if signature of hash of blindVoteTxId is correct. EC key from first input for blind vote tx is
                     // used for signature.
                     String pubKeyAsHex = merit.getIssuance().getPubKey();
@@ -190,7 +190,7 @@ public class VoteResultConsensus {
     public static byte[] getMajorityHash(List<VoteResultService.HashWithStake> hashWithStakeList) throws VoteResultException {
         checkArgument(!hashWithStakeList.isEmpty(), "hashWithStakeList must not be empty");
         hashWithStakeList.sort(Comparator.comparingLong(VoteResultService.HashWithStake::getStake).reversed()
-                .thenComparing(o -> Utilities.encodeToHex(o.getHash())));
+                .thenComparing(hashWithStake -> Utilities.encodeToHex(hashWithStake.getHash())));
 
         // If there are conflicting data views (multiple hashes) we only consider the voting round as valid if
         // the majority is a super majority with > 80%.
@@ -218,10 +218,10 @@ public class VoteResultConsensus {
             // We use the stake output of the blind vote tx as first input
             final TxInput stakeTxInput = voteRevealTx.getTxInputs().get(0);
             Optional<TxOutput> optionalBlindVoteStakeOutput = bsqStateService.getConnectedTxOutput(stakeTxInput);
-            checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must not be present");
+            checkArgument(optionalBlindVoteStakeOutput.isPresent(), "blindVoteStakeOutput must be present");
             final TxOutput blindVoteStakeOutput = optionalBlindVoteStakeOutput.get();
             checkArgument(blindVoteStakeOutput.getTxOutputType() == TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT,
-                    "blindVoteStakeOutput must have type BLIND_VOTE_LOCK_STAKE_OUTPUT");
+                    "blindVoteStakeOutput must be of type BLIND_VOTE_LOCK_STAKE_OUTPUT");
             return blindVoteStakeOutput;
         } catch (Throwable t) {
             throw new VoteResultException(t);
@@ -235,7 +235,7 @@ public class VoteResultConsensus {
             String blindVoteTxId = blindVoteStakeOutput.getTxId();
             Optional<Tx> optionalBlindVoteTx = bsqStateService.getTx(blindVoteTxId);
             checkArgument(optionalBlindVoteTx.isPresent(), "blindVoteTx with txId " +
-                    blindVoteTxId + "not found.");
+                    blindVoteTxId + " not found.");
             Tx blindVoteTx = optionalBlindVoteTx.get();
             Optional<TxType> optionalTxType = bsqStateService.getOptionalTxType(blindVoteTx.getId());
             checkArgument(optionalTxType.isPresent(), "optionalTxType must be present");

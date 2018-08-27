@@ -76,6 +76,7 @@ public class IssuanceService {
                                 .append("\n################################################################################\n");
                         log.info(sb.toString());
                     } else {
+                        //TODO throw exception
                         log.error("Tx for compensation request not found. txId={}", compensationProposal.getTxId());
                     }
                 });
