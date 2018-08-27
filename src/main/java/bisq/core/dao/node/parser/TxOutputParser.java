@@ -25,13 +25,12 @@ import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
-import javax.inject.Inject;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Optional;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -42,6 +41,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class TxOutputParser {
     private final BsqStateService bsqStateService;
+
+    @Getter
+    @Setter
+    private long availableInputValue = 0;
     @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
     @Getter
@@ -55,8 +58,7 @@ public class TxOutputParser {
     @Getter
     private Optional<TempTxOutput> optionalLockupOutput = Optional.empty();
 
-    @Inject
-    public TxOutputParser(BsqStateService bsqStateService) {
+    TxOutputParser(BsqStateService bsqStateService) {
         this.bsqStateService = bsqStateService;
     }
 
@@ -80,17 +82,16 @@ public class TxOutputParser {
      * @param parsingModel  The ParsingModel
      */
     void processTxOutput(boolean isLastOutput, TempTxOutput tempTxOutput, int index, ParsingModel parsingModel) {
-        final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
         final byte[] opReturnData = tempTxOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = tempTxOutput.getValue();
-            if (TxOutputParser.isUnlockBondTx(tempTxOutput.getValue(), index, parsingModel)) {
+            if (isUnlockBondTx(tempTxOutput.getValue(), index, parsingModel)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
                 // output to not be BSQ output at all
                 handleUnlockBondTx(tempTxOutput, parsingModel);
-            } else if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
+            } else if (availableInputValue > 0 && availableInputValue >= txOutputValue) {
                 handleBsqOutput(tempTxOutput, index, parsingModel, txOutputValue);
             } else {
                 handleBtcOutput(tempTxOutput, index, parsingModel);
@@ -112,18 +113,19 @@ public class TxOutputParser {
      * @param parsingModel  The parsing model.
      * @return True if the transaction is an unlock transaction, false otherwise.
      */
-    private static boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
+    private boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
         return parsingModel.getSpentLockupTxOutput() != null &&
                 index == 0 &&
                 parsingModel.getSpentLockupTxOutput().getValue() == txOutputValue &&
-                parsingModel.getAvailableInputValue() == txOutputValue;
+                availableInputValue == txOutputValue;
     }
 
     private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
         TxOutput spentLockupTxOutput = parsingModel.getSpentLockupTxOutput();
         checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
-        parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
+
+        availableInputValue -= spentLockupTxOutput.getValue();
 
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
@@ -134,7 +136,7 @@ public class TxOutputParser {
 
     private void handleBsqOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
         // Update the input balance.
-        parsingModel.subtractFromInputValue(txOutputValue);
+        availableInputValue -= txOutputValue;
 
         boolean isFirstOutput = index == 0;
 
@@ -164,7 +166,7 @@ public class TxOutputParser {
     private void handleBtcOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
         // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
-        if (parsingModel.isInputValuePositive() &&
+        if (availableInputValue > 0 &&
                 index == 1 &&
                 optionalOpReturnTypeCandidate.isPresent() &&
                 optionalOpReturnTypeCandidate.get() == OpReturnType.COMPENSATION_REQUEST) {

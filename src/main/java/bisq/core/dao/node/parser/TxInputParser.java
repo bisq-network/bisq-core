@@ -39,6 +39,11 @@ public class TxInputParser {
         UNKNOWN, VALID, INVALID
     }
 
+    @Getter
+    private long accumulatedInputValue = 0;
+    @Getter
+    private long burntBondValue = 0;
+
     private final BsqStateService bsqStateService;
     @Getter
     private TxInputParser.VoteRevealInputState voteRevealInputState = TxInputParser.VoteRevealInputState.UNKNOWN;
@@ -52,7 +57,8 @@ public class TxInputParser {
     void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
         bsqStateService.getUnspentTxOutput(txOutputKey)
                 .ifPresent(connectedTxOutput -> {
-                    parsingModel.addToInputValue(connectedTxOutput.getValue());
+                    long inputValue = connectedTxOutput.getValue();
+                    accumulatedInputValue += inputValue;
 
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
@@ -101,8 +107,10 @@ public class TxInputParser {
 
                             bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                                 // Only count the input as BSQ input if spent after unlock time
-                                if (blockHeight < unlockTx.getUnlockBlockHeight())
-                                    parsingModel.burnBond(connectedTxOutput.getValue());
+                                if (blockHeight < unlockTx.getUnlockBlockHeight()) {
+                                    accumulatedInputValue -= inputValue;
+                                    burntBondValue += inputValue;
+                                }
                             });
                             break;
                         case INVALID_OUTPUT:

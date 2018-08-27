@@ -40,8 +40,6 @@ class ParsingModel {
      * The different possible states for an input used at the vote reveal tx.
      */
     private TempTx tx;
-    private long availableInputValue = 0;
-    private long burntBondValue = 0;
     private boolean bsqOutputFound;
 
     // We use here TxOutput as we do not alter it but take it from the BsqState
@@ -58,20 +56,4 @@ class ParsingModel {
         this.tx = tx;
     }
 
-    public void addToInputValue(long value) {
-        this.availableInputValue += value;
-    }
-
-    public void subtractFromInputValue(long value) {
-        this.availableInputValue -= value;
-    }
-
-    public boolean isInputValuePositive() {
-        return availableInputValue > 0;
-    }
-
-    public void burnBond(long value) {
-        subtractFromInputValue(value);
-        burntBondValue += value;
-    }
 }

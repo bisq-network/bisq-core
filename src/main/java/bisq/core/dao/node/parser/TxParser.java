@@ -52,19 +52,15 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Slf4j
 public class TxParser {
-
-    private final TxInputParser txInputParser;
-    private final TxOutputParser txOutputParser;
     private final PeriodService periodService;
     private final BsqStateService bsqStateService;
+    private long remainingInputValue;
+    private TxOutputParser txOutputParser;
+    private TxInputParser txInputParser;
 
     @Inject
-    public TxParser(TxInputParser txInputParser,
-                    TxOutputParser txOutputParser,
-                    PeriodService periodService,
+    public TxParser(PeriodService periodService,
                     BsqStateService bsqStateService) {
-        this.txInputParser = txInputParser;
-        this.txOutputParser = txOutputParser;
         this.periodService = periodService;
         this.bsqStateService = bsqStateService;
     }
@@ -76,6 +72,9 @@ public class TxParser {
     // There might be txs without any valid BSQ txOutput but we still keep track of it,
     // for instance to calculate the total burned BSQ.
     public Optional<Tx> findTx(RawTx rawTx, String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply) {
+        txInputParser = new TxInputParser(bsqStateService);
+        txOutputParser = new TxOutputParser(bsqStateService);
+
         // Let's see if we have a genesis tx
         Optional<TempTx> optionalGenesisTx = TxParser.findGenesisTx(
                 genesisTxId,
@@ -101,8 +100,11 @@ public class TxParser {
             txInputParser.process(outputKey, blockHeight, rawTx.getId(), inputIndex, parsingModel);
         }
 
-        boolean leftOverBsq = parsingModel.isInputValuePositive();
-        if (leftOverBsq) {
+        long accumulatedInputValue = txInputParser.getAccumulatedInputValue();
+        txOutputParser.setAvailableInputValue(accumulatedInputValue);
+
+        boolean hasBsqInputs = accumulatedInputValue > 0;
+        if (hasBsqInputs) {
             final List<TempTxOutput> outputs = tempTx.getTempTxOutputs();
             // We start with last output as that might be an OP_RETURN output and gives us the specific tx type, so it is
             // easier and cleaner at parsing the other outputs to detect which kind of tx we deal with.
@@ -125,7 +127,9 @@ public class TxParser {
                 );
             }
 
-            processOpReturnType(blockHeight, tempTx, parsingModel, txOutputParser.getOptionalVerifiedOpReturnType());
+            remainingInputValue = txOutputParser.getAvailableInputValue();
+
+            processOpReturnType(blockHeight, tempTx, txOutputParser.getOptionalVerifiedOpReturnType());
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
             long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputParser::isOpReturnOutput).count();
@@ -135,9 +139,8 @@ public class TxParser {
                 if (!isAnyTxOutputTypeUndefined) {
                     TxType txType = getTxType(tempTx, parsingModel);
                     tempTx.setTxType(txType);
-                    long burntFee = parsingModel.getAvailableInputValue();
-                    if (burntFee > 0)
-                        tempTx.setBurntFee(burntFee);
+                    if (remainingInputValue > 0)
+                        tempTx.setBurntFee(remainingInputValue);
                 } else {
                     String msg = "We have undefined txOutput types which must not happen. tx=" + tempTx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
@@ -156,20 +159,20 @@ public class TxParser {
         // satoshi, this burns the 1000 satoshi and is currently not considered in the
         // bsqInputBalancePositive, hence the need to check for parsingModel.getBurntBondValue
         // Perhaps adding boolean parsingModel.isBSQTx and checking for that would be better?
-        if (leftOverBsq || parsingModel.getBurntBondValue() > 0)
+
+        if (hasBsqInputs || txInputParser.getBurntBondValue() > 0)
             return Optional.of(Tx.fromTempTx(tempTx));
         else
             return Optional.empty();
     }
 
-    private void processOpReturnType(int blockHeight, TempTx tempTx, ParsingModel parsingModel, Optional<OpReturnType> optionalVerifiedOpReturnType) {
+    private void processOpReturnType(int blockHeight, TempTx tempTx, Optional<OpReturnType> optionalVerifiedOpReturnType) {
         // We might have a opReturn output
         OpReturnType verifiedOpReturnType = null;
         if (optionalVerifiedOpReturnType.isPresent()) {
             verifiedOpReturnType = optionalVerifiedOpReturnType.get();
 
-            //TODO
-            long bsqFee = parsingModel.getAvailableInputValue();
+            long bsqFee = remainingInputValue;
 
             boolean isFeeAndPhaseValid;
             switch (verifiedOpReturnType) {
@@ -287,7 +290,7 @@ public class TxParser {
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
         } else if (!txOutputParser.getOptionalOpReturnTypeCandidate().isPresent()) {
-            boolean bsqFeesBurnt = parsingModel.isInputValuePositive();
+            boolean bsqFeesBurnt = remainingInputValue > 0;
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
                 txType = TxType.PAY_TRADE_FEE;
@@ -358,7 +361,7 @@ public class TxParser {
 
         } else {
             String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
-                    "Burned fee=" + parsingModel.getAvailableInputValue() / 100D + " BSQ. tx=" + tx;
+                    "Burned fee=" + remainingInputValue / 100D + " BSQ. tx=" + tx;
             log.warn(msg);
         }
         return Optional.empty();

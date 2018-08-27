@@ -57,8 +57,6 @@ import bisq.core.dao.node.json.JsonBlockChainExporter;
 import bisq.core.dao.node.lite.LiteNode;
 import bisq.core.dao.node.lite.network.LiteNodeNetworkService;
 import bisq.core.dao.node.parser.BlockParser;
-import bisq.core.dao.node.parser.TxInputParser;
-import bisq.core.dao.node.parser.TxOutputParser;
 import bisq.core.dao.node.parser.TxParser;
 import bisq.core.dao.state.BsqState;
 import bisq.core.dao.state.BsqStateService;
@@ -109,8 +107,6 @@ public class DaoModule extends AppModule {
 
         // blockchain parser
         bind(TxParser.class).in(Singleton.class);
-        bind(TxInputParser.class).in(Singleton.class);
-        bind(TxOutputParser.class).in(Singleton.class);
 
         // Proposal
         bind(ProposalConsensus.class).in(Singleton.class);
