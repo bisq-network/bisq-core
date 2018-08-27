@@ -17,9 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
-import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
-import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.TxOutput;
 
 import java.util.HashSet;
@@ -41,20 +39,9 @@ class ParsingModel {
     /**
      * The different possible states for an input used at the vote reveal tx.
      */
-    enum VoteRevealInputState {
-        UNKNOWN, VALID, INVALID
-    }
     private TempTx tx;
     private long availableInputValue = 0;
     private long burntBondValue = 0;
-    @Nullable
-    private TempTxOutput issuanceCandidate;
-    @Nullable
-    private TempTxOutput blindVoteLockStakeOutput;
-    @Nullable
-    private TempTxOutput voteRevealUnlockStakeOutput;
-    @Nullable
-    private TempTxOutput lockupOutput;
     private boolean bsqOutputFound;
 
     // We use here TxOutput as we do not alter it but take it from the BsqState
@@ -62,22 +49,10 @@ class ParsingModel {
     private TxOutput spentLockupTxOutput;
     private int unlockBlockHeight;
 
-    //TODO ???
+    //TODO never read from...
     // We use here TxOutput as we do not alter it but take it from the BsqState
     @Nullable
     private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
-
-    // That will be set preliminary at first parsing the last output. Not guaranteed
-    // that it is a valid BSQ tx at that moment.
-
-    @Nullable
-    private OpReturnType opReturnTypeCandidate;
-
-    private VoteRevealInputState voteRevealInputState = VoteRevealInputState.UNKNOWN;
-
-    // At end of parsing when we do the full validation we set the type here
-    @Nullable
-    private OpReturnType verifiedOpReturnType;
 
     ParsingModel(TempTx tx) {
         this.tx = tx;

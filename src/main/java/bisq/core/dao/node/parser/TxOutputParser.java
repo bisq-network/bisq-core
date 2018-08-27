@@ -31,6 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Optional;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,6 +42,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class TxOutputParser {
     private final BsqStateService bsqStateService;
+    @Getter
+    private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
+    @Getter
+    private Optional<OpReturnType> optionalVerifiedOpReturnType = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalIssuanceCandidate = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalBlindVoteLockStakeOutput = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalVoteRevealUnlockStakeOutput = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalLockupOutput = Optional.empty();
 
     @Inject
     public TxOutputParser(BsqStateService bsqStateService) {
@@ -54,9 +67,8 @@ public class TxOutputParser {
         }
     }
 
-    void processOpReturnCandidate(TempTxOutput txOutput, ParsingModel parsingModel) {
-        Optional<OpReturnType> optionalOpReturnType = OpReturnParser.getOptionalOpReturnTypeCandidate(txOutput);
-        optionalOpReturnType.ifPresent(parsingModel::setOpReturnTypeCandidate);
+    void processOpReturnCandidate(TempTxOutput txOutput) {
+        optionalOpReturnTypeCandidate = OpReturnParser.getOptionalOpReturnTypeCandidate(txOutput);
     }
 
     /**
@@ -125,18 +137,21 @@ public class TxOutputParser {
         parsingModel.subtractFromInputValue(txOutputValue);
 
         boolean isFirstOutput = index == 0;
-        OpReturnType candidate = parsingModel.getOpReturnTypeCandidate();
+
+        OpReturnType opReturnTypeCandidate = null;
+        if (optionalOpReturnTypeCandidate.isPresent())
+            opReturnTypeCandidate = optionalOpReturnTypeCandidate.get();
 
         TxOutputType bsqOutput;
-        if (isFirstOutput && candidate == OpReturnType.BLIND_VOTE) {
+        if (isFirstOutput && opReturnTypeCandidate == OpReturnType.BLIND_VOTE) {
             bsqOutput = TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT;
-            parsingModel.setBlindVoteLockStakeOutput(txOutput);
-        } else if (isFirstOutput && candidate == OpReturnType.VOTE_REVEAL) {
+            optionalBlindVoteLockStakeOutput = Optional.of(txOutput);
+        } else if (isFirstOutput && opReturnTypeCandidate == OpReturnType.VOTE_REVEAL) {
             bsqOutput = TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT;
-            parsingModel.setVoteRevealUnlockStakeOutput(txOutput);
-        } else if (isFirstOutput && candidate == OpReturnType.LOCKUP) {
+            optionalVoteRevealUnlockStakeOutput = Optional.of(txOutput);
+        } else if (isFirstOutput && opReturnTypeCandidate == OpReturnType.LOCKUP) {
             bsqOutput = TxOutputType.LOCKUP;
-            parsingModel.setLockupOutput(txOutput);
+            optionalLockupOutput = Optional.of(txOutput);
         } else {
             bsqOutput = TxOutputType.BSQ_OUTPUT;
         }
@@ -151,10 +166,12 @@ public class TxOutputParser {
         // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
         if (parsingModel.isInputValuePositive() &&
                 index == 1 &&
-                parsingModel.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
+                optionalOpReturnTypeCandidate.isPresent() &&
+                optionalOpReturnTypeCandidate.get() == OpReturnType.COMPENSATION_REQUEST) {
             // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
-            // into our parsingModel.
-            parsingModel.setIssuanceCandidate(txOutput);
+            // into our local optionalIssuanceCandidate.
+
+            optionalIssuanceCandidate = Optional.of(txOutput);
         } else {
             txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
         }
@@ -164,23 +181,19 @@ public class TxOutputParser {
         TxOutputType txOutputType = OpReturnParser.getTxOutputType(tempTxOutput, isLastOutput);
         tempTxOutput.setTxOutputType(txOutputType);
 
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnTypeFromTxOutputType(txOutputType);
-        if (optionalOpReturnType.isPresent()) {
-            OpReturnType opReturnType = optionalOpReturnType.get();
-            parsingModel.setVerifiedOpReturnType(opReturnType);
-
-            if (opReturnType == OpReturnType.LOCKUP) {
-                byte[] opReturnData = tempTxOutput.getOpReturnData();
-                checkNotNull(opReturnData, "opReturnData must not be null");
-                int lockTime = BondingConsensus.getLockTime(opReturnData);
-                tempTxOutput.setLockTime(lockTime);
-            }
-        }
+        optionalVerifiedOpReturnType = getMappedOpReturnType(txOutputType);
+        optionalVerifiedOpReturnType.filter(verifiedOpReturnType -> verifiedOpReturnType == OpReturnType.LOCKUP)
+                .ifPresent(verifiedOpReturnType -> {
+                    byte[] opReturnData = tempTxOutput.getOpReturnData();
+                    checkNotNull(opReturnData, "opReturnData must not be null");
+                    int lockTime = BondingConsensus.getLockTime(opReturnData);
+                    tempTxOutput.setLockTime(lockTime);
+                });
     }
 
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    static Optional<OpReturnType> getOptionalOpReturnTypeFromTxOutputType(TxOutputType outputType) {
+    static Optional<OpReturnType> getMappedOpReturnType(TxOutputType outputType) {
         switch (outputType) {
             case PROPOSAL_OP_RETURN_OUTPUT:
                 return Optional.of(OpReturnType.PROPOSAL);

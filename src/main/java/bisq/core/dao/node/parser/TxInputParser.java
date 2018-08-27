@@ -19,7 +19,6 @@ package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
-import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
@@ -28,6 +27,7 @@ import javax.inject.Inject;
 
 import java.util.Set;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,8 +35,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TxInputParser {
+    enum VoteRevealInputState {
+        UNKNOWN, VALID, INVALID
+    }
 
     private final BsqStateService bsqStateService;
+    @Getter
+    private TxInputParser.VoteRevealInputState voteRevealInputState = TxInputParser.VoteRevealInputState.UNKNOWN;
 
     @Inject
     public TxInputParser(BsqStateService bsqStateService) {
@@ -63,14 +68,14 @@ public class TxInputParser {
                         case ISSUANCE_CANDIDATE_OUTPUT:
                             break;
                         case BLIND_VOTE_LOCK_STAKE_OUTPUT:
-                            if (parsingModel.getVoteRevealInputState() == ParsingModel.VoteRevealInputState.UNKNOWN) {
+                            if (voteRevealInputState == TxInputParser.VoteRevealInputState.UNKNOWN) {
                                 // The connected tx output of the blind vote tx is our input for the reveal tx.
                                 // We allow only one input from any blind vote tx otherwise the vote reveal tx is invalid.
-                                parsingModel.setVoteRevealInputState(ParsingModel.VoteRevealInputState.VALID);
+                                voteRevealInputState = TxInputParser.VoteRevealInputState.VALID;
                             } else {
                                 log.warn("We have a tx which has >1 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                         "This is not a valid BSQ tx.");
-                                parsingModel.setVoteRevealInputState(ParsingModel.VoteRevealInputState.INVALID);
+                                voteRevealInputState = TxInputParser.VoteRevealInputState.INVALID;
                             }
                             break;
                         case BLIND_VOTE_OP_RETURN_OUTPUT:
