@@ -57,7 +57,6 @@ public class TxOutputParser {
 
     @Getter
     private boolean bsqOutputFound;
-
     @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
     @Getter
@@ -95,9 +94,9 @@ public class TxOutputParser {
      */
     void processTxOutput(boolean isLastOutput, TempTxOutput tempTxOutput, int index) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
-        final byte[] opReturnData = tempTxOutput.getOpReturnData();
+        byte[] opReturnData = tempTxOutput.getOpReturnData();
         if (opReturnData == null) {
-            final long txOutputValue = tempTxOutput.getValue();
+            long txOutputValue = tempTxOutput.getValue();
             if (isUnlockBondTx(tempTxOutput.getValue(), index)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
@@ -122,7 +121,6 @@ public class TxOutputParser {
      *
      * @param txOutputValue The value of the current output, in satoshi.
      * @param index         The index of the output.
-     * @param parsingModel  The parsing model.
      * @return True if the transaction is an unlock transaction, false otherwise.
      */
     private boolean isUnlockBondTx(long txOutputValue, int index) {
@@ -141,6 +139,7 @@ public class TxOutputParser {
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
         //TODO move up to TxParser
+        // We should add unlockBlockHeight to TempTxOutput and remove unlockBlockHeight from tempTx
         tempTx.setUnlockBlockHeight(unlockBlockHeight);
 
         bsqOutputFound = true;

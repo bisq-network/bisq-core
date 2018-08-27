@@ -103,7 +103,7 @@ public class TxParser {
         txOutputParser.setAvailableInputValue(accumulatedInputValue);
         txOutputParser.setUnlockBlockHeight(txInputParser.getUnlockBlockHeight());
         txOutputParser.setOptionalSpentLockupTxOutput(txInputParser.getOptionalSpentLockupTxOutput());
-        txOutputParser.setTempTx(tempTx);
+        txOutputParser.setTempTx(tempTx); //TODO remove
 
         boolean hasBsqInputs = accumulatedInputValue > 0;
         if (hasBsqInputs) {
@@ -129,7 +129,7 @@ public class TxParser {
 
             remainingInputValue = txOutputParser.getAvailableInputValue();
 
-            processOpReturnType(blockHeight, tempTx, txOutputParser.getOptionalVerifiedOpReturnType());
+            processOpReturnType(blockHeight, tempTx);
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
             long numOpReturnOutputs = tempTx.getTempTxOutputs().stream().filter(txOutputParser::isOpReturnOutput).count();
@@ -142,6 +142,7 @@ public class TxParser {
                     if (remainingInputValue > 0)
                         tempTx.setBurntFee(remainingInputValue);
                 } else {
+                    tempTx.setTxType(TxType.INVALID);
                     String msg = "We have undefined txOutput types which must not happen. tx=" + tempTx;
                     DevEnv.logErrorAndThrowIfDevMode(msg);
                 }
@@ -166,9 +167,10 @@ public class TxParser {
             return Optional.empty();
     }
 
-    private void processOpReturnType(int blockHeight, TempTx tempTx, Optional<OpReturnType> optionalVerifiedOpReturnType) {
+    private void processOpReturnType(int blockHeight, TempTx tempTx) {
         // We might have a opReturn output
         OpReturnType verifiedOpReturnType = null;
+        Optional<OpReturnType> optionalVerifiedOpReturnType = txOutputParser.getOptionalVerifiedOpReturnType();
         if (optionalVerifiedOpReturnType.isPresent()) {
             verifiedOpReturnType = optionalVerifiedOpReturnType.get();
 

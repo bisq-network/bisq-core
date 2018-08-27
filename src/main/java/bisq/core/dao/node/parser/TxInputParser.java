@@ -112,6 +112,8 @@ public class TxInputParser {
                             // This txInput is Spending an UNLOCK txOutput
                             spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
+                            //TODO  We should add unlockBlockHeight to TempTxOutput and remove unlockBlockHeight from tempTx
+                            // then we can use connectedTxOutput to access the unlockBlockHeight instead of the tx
                             bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                                 // Only count the input as BSQ input if spent after unlock time
                                 if (blockHeight < unlockTx.getUnlockBlockHeight()) {
