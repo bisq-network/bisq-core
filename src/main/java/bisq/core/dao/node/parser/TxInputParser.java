@@ -43,6 +43,8 @@ public class TxInputParser {
     private long accumulatedInputValue = 0;
     @Getter
     private long burntBondValue = 0;
+    @Getter
+    private int unlockBlockHeight;
 
     private final BsqStateService bsqStateService;
     @Getter
@@ -94,7 +96,7 @@ public class TxInputParser {
                             if (parsingModel.getSpentLockupTxOutput() == null) {
                                 parsingModel.setSpentLockupTxOutput(connectedTxOutput);
                                 bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
-                                        parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
+                                        unlockBlockHeight = blockHeight + tx.getLockTime());
                             }
                             break;
                         case LOCKUP_OP_RETURN_OUTPUT:

@@ -47,6 +47,9 @@ public class TxOutputParser {
     private long availableInputValue = 0;
     @Getter
     private boolean bsqOutputFound;
+    @Setter
+    private int unlockBlockHeight;
+
     @Getter
     private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
     @Getter
@@ -132,7 +135,7 @@ public class TxOutputParser {
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
-        parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
+        parsingModel.getTx().setUnlockBlockHeight(unlockBlockHeight);
         bsqOutputFound = true;
     }
 

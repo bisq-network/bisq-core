@@ -102,6 +102,7 @@ public class TxParser {
 
         long accumulatedInputValue = txInputParser.getAccumulatedInputValue();
         txOutputParser.setAvailableInputValue(accumulatedInputValue);
+        txOutputParser.setUnlockBlockHeight(txInputParser.getUnlockBlockHeight());
 
         boolean hasBsqInputs = accumulatedInputValue > 0;
         if (hasBsqInputs) {
