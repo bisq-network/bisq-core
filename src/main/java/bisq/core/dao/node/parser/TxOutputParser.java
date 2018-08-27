@@ -61,7 +61,7 @@ public class TxOutputParser {
         final byte[] opReturnData = txOutput.getOpReturnData();
         if (opReturnData == null) {
             final long txOutputValue = txOutput.getValue();
-            if (isUnlockBondTx(txOutput, index, parsingModel)) {
+            if (TxOutputParser.isUnlockBondTx(txOutput.getValue(), index, parsingModel)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
                 // output to not be BSQ output at all
@@ -98,12 +98,20 @@ public class TxOutputParser {
         return txOutput.getOpReturnData() != null;
     }
 
-    private boolean isUnlockBondTx(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
+    /**
+     * Whether a transaction is a valid unlock bond transaction or not.
+     *
+     * @param txOutputValue The value of the current output, in satoshi.
+     * @param index         The index of the output.
+     * @param parsingModel  The parsing model.
+     * @return              True if the transaction is an unlock transaction, false otherwise.
+     */
+    private static boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
         return parsingModel.getSpentLockupTxOutput() != null &&
                 index == 0 &&
-                parsingModel.getSpentLockupTxOutput().getValue() == txOutput.getValue() &&
-                parsingModel.getAvailableInputValue() == txOutput.getValue();
+                parsingModel.getSpentLockupTxOutput().getValue() == txOutputValue &&
+                parsingModel.getAvailableInputValue() == txOutputValue;
     }
 
     private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
