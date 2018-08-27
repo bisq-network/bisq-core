@@ -43,10 +43,12 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
                 tempTxOutput.getAddress(),
                 tempTxOutput.getOpReturnData(),
                 tempTxOutput.getBlockHeight(),
-                tempTxOutput.getTxOutputType());
+                tempTxOutput.getTxOutputType(),
+                tempTxOutput.getLockTime());
     }
 
     private final TxOutputType txOutputType;
+    private final int lockTime;
 
     public TxOutput(int index,
                     long value,
@@ -55,7 +57,8 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
                     @Nullable String address,
                     @Nullable byte[] opReturnData,
                     int blockHeight,
-                    TxOutputType txOutputType) {
+                    TxOutputType txOutputType,
+                    int lockTime) {
         super(index,
                 value,
                 txId,
@@ -65,6 +68,7 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
                 blockHeight);
 
         this.txOutputType = txOutputType;
+        this.lockTime = lockTime;
     }
 
 
@@ -75,7 +79,8 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
     @Override
     public PB.BaseTxOutput toProtoMessage() {
         PB.TxOutput.Builder builder = PB.TxOutput.newBuilder()
-                .setTxOutputType(txOutputType.toProtoMessage());
+                .setTxOutputType(txOutputType.toProtoMessage())
+                .setLockTime(lockTime);
         return getRawTxOutputBuilder().setTxOutput(builder).build();
     }
 
@@ -87,7 +92,8 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
                 proto.getAddress().isEmpty() ? null : proto.getAddress(),
                 proto.getOpReturnData().isEmpty() ? null : proto.getOpReturnData().toByteArray(),
                 proto.getBlockHeight(),
-                TxOutputType.fromProto(proto.getTxOutput().getTxOutputType()));
+                TxOutputType.fromProto(proto.getTxOutput().getTxOutputType()),
+                proto.getTxOutput().getLockTime());
     }
 
 
@@ -95,6 +101,7 @@ public class TxOutput extends BaseTxOutput implements PersistablePayload {
     public String toString() {
         return "TxOutput{" +
                 "\n     txOutputType=" + txOutputType +
+                "\n     lockTime=" + lockTime +
                 "\n} " + super.toString();
     }
 }

@@ -92,6 +92,8 @@ public class TxOutputParser {
                 parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
             } else if (outputType == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT) {
                 parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+            } else if (outputType == TxOutputType.LOCKUP_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
             }
 
             txOutput.setTxOutputType(outputType);

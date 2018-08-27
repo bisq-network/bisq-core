@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
+import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.bonding.lockup.LockupType;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -135,7 +136,7 @@ public class OpReturnParser {
                 outputType = processVoteReveal(opReturnData);
                 break;
             case LOCKUP:
-                outputType = processLockup(opReturnData, blockHeight, parsingModel);
+                outputType = processLockup(opReturnData, tx.getTempTxOutputs().get(tx.getTempTxOutputs().size() - 1));
                 break;
             default:
                 // Should never happen as long we keep OpReturnType entries in sync with out switch case.
@@ -193,22 +194,27 @@ public class OpReturnParser {
         }
     }
 
-    private TxOutputType processLockup(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
-        Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
-        int lockTime = Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
+    private TxOutputType processLockup(byte[] opReturnData, TempTxOutput tempTxOutput) {
+        if (opReturnData.length != 25) {
+            return TxOutputType.INVALID_OUTPUT;
+        }
 
-        if (opReturnLockupParser.validate(opReturnData, lockupType, lockTime, blockHeight, parsingModel)) {
-            parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
-            parsingModel.getTx().setLockTime(lockTime);
+        Optional<LockupType> lockupType = LockupType.getLockupType(opReturnData[2]);
+        if (!lockupType.isPresent()) {
+            log.warn("No lockupType found for lockup tx, opReturnData=" + Utilities.encodeToHex(opReturnData));
+            return TxOutputType.INVALID_OUTPUT;
+        }
+
+        int lockTime = Utilities.byteArrayToInteger(Arrays.copyOfRange(opReturnData, 3, 5));
+        if (lockTime >= BondingConsensus.getMinLockTime() &&
+                lockTime <= BondingConsensus.getMaxLockTime()) {
+
+            //TODO should be in txOutputParser
+            tempTxOutput.setLockTime(lockTime);
             return TxOutputType.LOCKUP_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a lockup op_return data but it did not " +
-                    "match our rules. blockHeight={}", blockHeight);
-
-            // If the opReturn is invalid the lockup candidate cannot become BSQ, so we set it to BTC
-            TempTxOutput lockupCandidate = parsingModel.getLockupOutput();
-            if (lockupCandidate != null)
-                lockupCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    "match our rules.");
             return TxOutputType.INVALID_OUTPUT;
         }
     }

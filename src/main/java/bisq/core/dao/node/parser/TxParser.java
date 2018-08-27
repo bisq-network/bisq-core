@@ -169,6 +169,8 @@ public class TxParser {
                         // valid BSQ tx.
                     }
                 }
+            } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.LOCKUP) {
+                // nothing to do
             }
 
             if (parsingModel.getVerifiedOpReturnType() != OpReturnType.COMPENSATION_REQUEST) {
@@ -191,6 +193,14 @@ public class TxParser {
                 TempTxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
                 if (voteRevealUnlockStakeOutput != null)
                     voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+            }
+
+
+            if (parsingModel.getVerifiedOpReturnType() != OpReturnType.LOCKUP) {
+                //TODO refactor
+                TempTxOutput lockupCandidate = parsingModel.getLockupOutput();
+                if (lockupCandidate != null)
+                    lockupCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
             }
 
 

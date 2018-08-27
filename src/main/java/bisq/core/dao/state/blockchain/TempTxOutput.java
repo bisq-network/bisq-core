@@ -37,10 +37,12 @@ public class TempTxOutput extends BaseTxOutput {
                 txOutput.getAddress(),
                 txOutput.getOpReturnData(),
                 txOutput.getBlockHeight(),
-                TxOutputType.UNDEFINED);
+                TxOutputType.UNDEFINED,
+                0);
     }
 
     private TxOutputType txOutputType;
+    private int lockTime;
 
     private TempTxOutput(int index,
                          long value,
@@ -49,7 +51,8 @@ public class TempTxOutput extends BaseTxOutput {
                          @Nullable String address,
                          @Nullable byte[] opReturnData,
                          int blockHeight,
-                         TxOutputType txOutputType) {
+                         TxOutputType txOutputType,
+                         int lockTime) {
         super(index,
                 value,
                 txId,
@@ -59,6 +62,7 @@ public class TempTxOutput extends BaseTxOutput {
                 blockHeight);
 
         this.txOutputType = txOutputType;
+        this.lockTime = lockTime;
     }
 
 
@@ -66,6 +70,7 @@ public class TempTxOutput extends BaseTxOutput {
     public String toString() {
         return "TempTxOutput{" +
                 "\n     txOutputType=" + txOutputType +
+                "\n     lockTime=" + lockTime +
                 "\n} " + super.toString();
     }
 }

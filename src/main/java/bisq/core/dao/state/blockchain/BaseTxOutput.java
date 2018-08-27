@@ -67,6 +67,7 @@ public abstract class BaseTxOutput {
         this.address = address;
         this.opReturnData = opReturnData;
         this.blockHeight = blockHeight;
+
     }
 
 
