@@ -138,6 +138,16 @@ public class TxParser {
                 if (!isFeeAndPhaseValid || blindVoteLockStakeOutput == null) {
                     blindVoteLockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
                 }
+            } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.VOTE_REVEAL) {
+                boolean isPhaseValid = isPhaseValid(blockHeight, tempTx, DaoPhase.Phase.VOTE_REVEAL);
+                if (!isPhaseValid || parsingModel.getVoteRevealInputState() != ParsingModel.VoteRevealInputState.VALID) {
+                    TempTxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
+                    if (voteRevealUnlockStakeOutput != null) {
+                        voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    } else {
+                        //todo handle
+                    }
+                }
             }
 
             if (parsingModel.getVerifiedOpReturnType() != OpReturnType.COMPENSATION_REQUEST) {
@@ -202,14 +212,8 @@ public class TxParser {
     private boolean isFeeAndPhaseValid(int blockHeight, TempTx tempTx, long bsqFee, DaoPhase.Phase phase, Param param) {
         // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
 
-        boolean isInPhase = periodService.isInPhase(blockHeight, phase);
-        if (!isInPhase) {
-            log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
-            tempTx.setTxType(TxType.INVALID);
-            // TODO should we return already?
-
+        if (!isPhaseValid(blockHeight, tempTx, phase))
             return false;
-        }
 
         long paramValue = bsqStateService.getParamValue(param, blockHeight);
         boolean isFeeCorrect = bsqFee == paramValue;
@@ -221,6 +225,17 @@ public class TxParser {
             return false;
         }
 
+        return true;
+    }
+
+    private boolean isPhaseValid(int blockHeight, TempTx tempTx, DaoPhase.Phase phase) {
+        boolean isInPhase = periodService.isInPhase(blockHeight, phase);
+        if (!isInPhase) {
+            log.warn("Not in {} phase. blockHeight={}", phase, blockHeight);
+            tempTx.setTxType(TxType.INVALID);
+            // TODO should we return already?
+            return false;
+        }
         return true;
     }
 

@@ -132,7 +132,7 @@ public class OpReturnParser {
                 outputType = processBlindVote(opReturnData);
                 break;
             case VOTE_REVEAL:
-                outputType = processVoteReveal(opReturnData, blockHeight, parsingModel);
+                outputType = processVoteReveal(opReturnData);
                 break;
             case LOCKUP:
                 outputType = processLockup(opReturnData, blockHeight, parsingModel);
@@ -183,17 +183,12 @@ public class OpReturnParser {
         }
     }
 
-    private TxOutputType processVoteReveal(byte[] opReturnData, int blockHeight, ParsingModel parsingModel) {
-        if (opReturnVoteRevealParser.validate(opReturnData, blockHeight, parsingModel)) {
-            parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
+    private TxOutputType processVoteReveal(byte[] opReturnData) {
+        if (opReturnData.length == 38) {
             return TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a vote reveal op_return data but it did not " +
-                    "match our rules. blockHeight={}", blockHeight);
-
-            TempTxOutput voteRevealUnlockStakeOutput = parsingModel.getVoteRevealUnlockStakeOutput();
-            if (voteRevealUnlockStakeOutput != null)
-                voteRevealUnlockStakeOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+                    "match our rules.");
             return TxOutputType.INVALID_OUTPUT;
         }
     }

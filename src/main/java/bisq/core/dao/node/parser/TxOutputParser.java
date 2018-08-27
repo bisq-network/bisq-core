@@ -90,6 +90,8 @@ public class TxOutputParser {
                 parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
             } else if (outputType == TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT) {
                 parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
+            } else if (outputType == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
             }
 
             txOutput.setTxOutputType(outputType);
@@ -106,7 +108,7 @@ public class TxOutputParser {
      * @param txOutputValue The value of the current output, in satoshi.
      * @param index         The index of the output.
      * @param parsingModel  The parsing model.
-     * @return              True if the transaction is an unlock transaction, false otherwise.
+     * @return True if the transaction is an unlock transaction, false otherwise.
      */
     private static boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
         // We require that the input value is exact the available value and the output value
