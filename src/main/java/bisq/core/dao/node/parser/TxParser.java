@@ -122,22 +122,22 @@ public class TxParser {
             }
 
             if (parsingModel.getVerifiedOpReturnType() == OpReturnType.PROPOSAL) {
-                // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
-                long bsqFee = parsingModel.getAvailableInputValue();
+                checkFeeAndPhase(blockHeight, tempTx, parsingModel);
 
-                boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
-                if (!isInPhase) {
-                    log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
-                    tempTx.setTxType(TxType.INVALID);
-                    // TODO should we return already?
-                }
+            } else if (parsingModel.getVerifiedOpReturnType() == OpReturnType.COMPENSATION_REQUEST) {
+                checkFeeAndPhase(blockHeight, tempTx, parsingModel);
+                //TODO refactor issuanceCandidate
+                TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
+                if (issuanceCandidate != null)
+                    issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+            }
 
-                boolean isFeeCorrect = bsqFee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
-                if (!isFeeCorrect) {
-                    log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
-                    tempTx.setTxType(TxType.INVALID);
-                    // TODO should we return already?
-                }
+            if (parsingModel.getVerifiedOpReturnType() != OpReturnType.COMPENSATION_REQUEST) {
+                //TODO refactor issuanceCandidate
+                // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
+                TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
+                if (issuanceCandidate != null)
+                    issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
             }
 
             // We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
@@ -181,6 +181,25 @@ public class TxParser {
             return Optional.of(Tx.fromTempTx(tempTx));
         else
             return Optional.empty();
+    }
+
+    private void checkFeeAndPhase(int blockHeight, TempTx tempTx, ParsingModel parsingModel) {
+        // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
+        long bsqFee = parsingModel.getAvailableInputValue();
+
+        boolean isInPhase = periodService.isInPhase(blockHeight, DaoPhase.Phase.PROPOSAL);
+        if (!isInPhase) {
+            log.warn("Not in PROPOSAL phase. blockHeight={}", blockHeight);
+            tempTx.setTxType(TxType.INVALID);
+            // TODO should we return already?
+        }
+
+        boolean isFeeCorrect = bsqFee == bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight);
+        if (!isFeeCorrect) {
+            log.warn("Invalid fee. used fee={}, required fee={}", bsqFee, bsqStateService.getParamValue(Param.PROPOSAL_FEE, blockHeight));
+            tempTx.setTxType(TxType.INVALID);
+            // TODO should we return already?
+        }
     }
 
     /*

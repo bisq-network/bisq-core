@@ -86,6 +86,8 @@ public class TxOutputParser {
 
             if (outputType == TxOutputType.PROPOSAL_OP_RETURN_OUTPUT) {
                 parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
+            } else if (outputType == TxOutputType.COMP_REQ_OP_RETURN_OUTPUT) {
+                parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
             }
 
             txOutput.setTxOutputType(outputType);

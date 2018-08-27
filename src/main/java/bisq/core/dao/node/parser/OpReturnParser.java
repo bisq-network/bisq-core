@@ -126,7 +126,7 @@ public class OpReturnParser {
                 outputType = processProposal(opReturnData);
                 break;
             case COMPENSATION_REQUEST:
-                outputType = processCompensationRequest(opReturnData, bsqFee, blockHeight, parsingModel);
+                outputType = processCompensationRequest(opReturnData);
                 break;
             case BLIND_VOTE:
                 outputType = processBlindVote(opReturnData, bsqFee, blockHeight, parsingModel);
@@ -149,7 +149,7 @@ public class OpReturnParser {
     }
 
     private TxOutputType processProposal(byte[] opReturnData) {
-        if (opReturnData.length == 22) {
+        if (validateProposal(opReturnData)) {
             return TxOutputType.PROPOSAL_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a proposal op_return data but it did not " +
@@ -158,20 +158,17 @@ public class OpReturnParser {
         }
     }
 
-    private TxOutputType processCompensationRequest(byte[] opReturnData, long bsqFee, int blockHeight, ParsingModel parsingModel) {
-        final TempTxOutput issuanceCandidate = parsingModel.getIssuanceCandidate();
-        if (opReturnCompReqParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)) {
-            if (issuanceCandidate != null)
-                issuanceCandidate.setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
-            parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
+    private boolean validateProposal(byte[] opReturnData) {
+        return opReturnData.length == 22;
+    }
+
+    private TxOutputType processCompensationRequest(byte[] opReturnData) {
+        if (validateProposal(opReturnData)/*opReturnCompReqParser.validate(opReturnData, bsqFee, blockHeight, parsingModel)*/) {
             return TxOutputType.COMP_REQ_OP_RETURN_OUTPUT;
         } else {
             log.info("We expected a compensation request op_return data but it did not " +
-                    "match our rules. blockHeight={}", blockHeight);
+                    "match our rules.");
 
-            // If the opReturn is invalid the issuance candidate cannot become BSQ, so we set it to BTC
-            if (issuanceCandidate != null)
-                issuanceCandidate.setTxOutputType(TxOutputType.BTC_OUTPUT);
             return TxOutputType.INVALID_OUTPUT;
         }
     }
