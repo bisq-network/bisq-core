@@ -103,8 +103,7 @@ public class TxInputParser {
                             // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
                             if (!optionalSpentLockupTxOutput.isPresent()) {
                                 optionalSpentLockupTxOutput = Optional.of(connectedTxOutput);
-                                bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
-                                        unlockBlockHeight = blockHeight + tx.getLockTime());
+                                unlockBlockHeight = blockHeight + connectedTxOutput.getLockTime();
                             }
                             break;
                         case LOCKUP_OP_RETURN_OUTPUT:
