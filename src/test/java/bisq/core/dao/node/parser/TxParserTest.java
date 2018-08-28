@@ -40,7 +40,7 @@ import org.junit.Test;
 
 public class TxParserTest {
     @Test
-    public void testGetTxType() {
+    public void testGetBisqTxType() {
         long time = 1371729865; // Thu Jun 20 14:04:25 CEST 2013
         final List<TxInput> inputs = Arrays.asList(
                 new TxInput("tx0", 0, null),
@@ -68,7 +68,7 @@ public class TxParserTest {
         long remainingInputValue = 0;
         Optional<OpReturnType> optionalOpReturnType = Optional.empty();
 
-        TxType result = TxParser.getTxType(
+        TxType result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -79,9 +79,8 @@ public class TxParserTest {
                 want,
                 result);
 
-        // todo(chirhonul): why is this not INVALID? do we know this is bsq tx for sure when getTxType() is called?
         hasOpReturnCandidate = false;
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -97,7 +96,7 @@ public class TxParserTest {
         // !hasOpReturnCandidate but optionalOpReturnType.
         hasOpReturnCandidate = false;
         optionalOpReturnType = Optional.of(OpReturnType.LOCKUP);
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -111,7 +110,7 @@ public class TxParserTest {
 
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.BLIND_VOTE);
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -125,7 +124,7 @@ public class TxParserTest {
 
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.VOTE_REVEAL);
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -139,7 +138,7 @@ public class TxParserTest {
 
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.PROPOSAL);
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,
@@ -154,7 +153,7 @@ public class TxParserTest {
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
         try {
-            TxParser.getTxType(
+            TxParser.getBisqTxType(
                     tempTx,
                     hasOpReturnCandidate,
                     remainingInputValue,
@@ -207,7 +206,7 @@ public class TxParserTest {
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
         try {
-            TxParser.getTxType(
+            TxParser.getBisqTxType(
                     tempTx,
                     hasOpReturnCandidate,
                     remainingInputValue,
@@ -224,7 +223,7 @@ public class TxParserTest {
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
         tempTx.getTempTxOutputs().get(1).setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
-        result = TxParser.getTxType(
+        result = TxParser.getBisqTxType(
                 tempTx,
                 hasOpReturnCandidate,
                 remainingInputValue,

@@ -139,7 +139,7 @@ public class TxParser {
                 if (!isAnyTxOutputTypeUndefined) {
                     // TODO(chirhonul): we don't modify the tempTx within the call below, so maybe we should
                     // use RawTx?
-                    TxType txType = TxParser.getTxType(
+                    TxType txType = TxParser.getBisqTxType(
                             tempTx,
                             txOutputParser.getOptionalOpReturnTypeCandidate().isPresent(),
                             remainingInputValue,
@@ -294,7 +294,7 @@ public class TxParser {
     }
 
     /**
-     * Retrieve the type of the transaction, if it is relevant to bisq.
+     * Retrieve the type of the transaction, assuming it is relevant to bisq.
      *
      * @param tx                    The temporary transaction.
      * @param hasOpReturnCandidate  True if we have a candidate for an OP_RETURN.
@@ -303,7 +303,7 @@ public class TxParser {
      * @return                      The type of the transaction, if it is relevant to bisq.
      */
     @VisibleForTesting
-    static TxType getTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
+    static TxType getBisqTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
         TxType txType;
         // We need to have at least one BSQ output
         if (optionalOpReturnType.isPresent()) {
