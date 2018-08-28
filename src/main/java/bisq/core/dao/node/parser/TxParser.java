@@ -387,6 +387,15 @@ public class TxParser {
         return Optional.empty();
     }
 
+    /**
+     * Parse and return the genesis transaction for bisq, if applicable.
+     *
+     * @param genesisTxId         The transaction id of the bisq genesis transaction.
+     * @param genesisBlockHeight  The block height of the bisq genesis transaction.
+     * @param genesisTotalSupply  The total supply of the genesis issuance for bisq.
+     * @param rawTx               The candidate transaction.
+     * @return                    The genesis transaction if applicable, or Optional.empty() otherwise.
+     */
     public static Optional<TempTx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply,
                                                  RawTx rawTx) {
         boolean isGenesis = rawTx.getBlockHeight() == genesisBlockHeight &&
