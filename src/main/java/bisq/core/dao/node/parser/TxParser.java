@@ -137,7 +137,12 @@ public class TxParser {
                 boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
-                    TxType txType = getTxType(tempTx);
+                    TxType txType = TxParser.getTxType(
+                            tempTx,
+                            txOutputParser.getOptionalOpReturnTypeCandidate().isPresent(),
+                            remainingInputValue,
+                            getOptionalOpReturnType()
+                    );
                     tempTx.setTxType(txType);
                     if (remainingInputValue > 0)
                         tempTx.setBurntFee(remainingInputValue);
@@ -286,19 +291,21 @@ public class TxParser {
         return isInPhase;
     }
 
-    /*
-    TODO add tests
-    */
-    @SuppressWarnings("WeakerAccess")
-    @VisibleForTesting
-    TxType getTxType(TempTx tx) {
+    /**
+     * Retrieve the type of the transaction, if it is relevant to bisq.
+     *
+     * @param tx                    The temporary transaction.
+     * @param hasOpReturnCandidate  True if we have a candidate for an OP_RETURN.
+     * @param remainingInputValue   The remaining value of inputs not yet accounted for, in satoshi.
+     * @param optionalOpReturnType  If present, the OP_RETURN type of the transaction.
+     * @return                      The type of the transaction, if it is relevant to bisq.
+     */
+    private static TxType getTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
         TxType txType;
         // We need to have at least one BSQ output
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType();
-
         if (optionalOpReturnType.isPresent()) {
-            txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
-        } else if (!txOutputParser.getOptionalOpReturnTypeCandidate().isPresent()) {
+            txType = TxParser.getTxTypeForOpReturn(tx, optionalOpReturnType.get());
+        } else if (!hasOpReturnCandidate) {
             boolean bsqFeesBurnt = remainingInputValue > 0;
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
@@ -317,7 +324,7 @@ public class TxParser {
         return txType;
     }
 
-    private TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
+    private static TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
         TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
