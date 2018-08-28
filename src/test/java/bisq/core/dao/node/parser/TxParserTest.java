@@ -18,6 +18,7 @@
 package bisq.core.dao.node.parser;
 
 import bisq.core.dao.node.parser.exceptions.InvalidGenesisTxException;
+import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.RawTx;
 import bisq.core.dao.state.blockchain.RawTxOutput;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -38,13 +39,209 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TxParserTest {
+    @Test
+    public void testGetBisqTxType() {
+        long time = 1371729865; // Thu Jun 20 14:04:25 CEST 2013
+        final List<TxInput> inputs = Arrays.asList(
+                new TxInput("tx0", 0, null),
+                new TxInput("tx1", 1, null)
+        );
+        RawTxOutput output = new RawTxOutput(
+                0,
+                123,
+                null,
+                null,
+                null,
+                null,
+                100
+        );
+        RawTx rawTx = new RawTx(
+                "faketx0",
+                100,
+                "fakeblock0",
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output))
+        );
+        TempTx tempTx = TempTx.fromRawTx(rawTx);
+        boolean hasOpReturnCandidate = true;
+        long remainingInputValue = 0;
+        Optional<OpReturnType> optionalOpReturnType = Optional.empty();
+
+        TxType result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+       TxType want = TxType.INVALID;
+        Assert.assertEquals(
+                "With an OP_RETURN candidate but no optional OP_RETURN type, this tx should be invalid.",
+                want,
+                result);
+
+        hasOpReturnCandidate = false;
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.TRANSFER_BSQ;
+        Assert.assertEquals(
+                "With no OP_RETURN candidate and no optional OP_RETURN type, this should be a BSQ transfer tx.",
+                want,
+                result
+        );
+
+        // todo(chirhonul): this is very likely incorrect, we should see the tx as INVALID if
+        // !hasOpReturnCandidate but optionalOpReturnType.
+        hasOpReturnCandidate = false;
+        optionalOpReturnType = Optional.of(OpReturnType.LOCKUP);
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.LOCKUP;
+        Assert.assertEquals(
+                "With no OP_RETURN candidate and optional OP_RETURN type of LOCKUP, this should be a LOCKUP tx.",
+                want,
+                result
+        );
+
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.BLIND_VOTE);
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.BLIND_VOTE;
+        Assert.assertEquals(
+                "With OP_RETURN candidate and optional OP_RETURN type of BLIND_VOTE, this should be a BLIND_VOTE tx.",
+                want,
+                result
+        );
+
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.VOTE_REVEAL);
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.VOTE_REVEAL;
+        Assert.assertEquals(
+                "With OP_RETURN candidate and optional OP_RETURN type of VOTE_REVEAL, this should be a VOTE_REVEAL tx.",
+                want,
+                result
+        );
+
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.PROPOSAL);
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.PROPOSAL;
+        Assert.assertEquals(
+                "With OP_RETURN candidate and optional OP_RETURN type of PROPOSAL, this should be a PROPOSAL tx.",
+                want,
+                result
+        );
+
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
+        try {
+            TxParser.getBisqTxType(
+                    tempTx,
+                    hasOpReturnCandidate,
+                    remainingInputValue,
+                    optionalOpReturnType);
+            Assert.fail("Expected IllegalArgumentException to be thrown when COMPENSATION_REQUEST has fewer than three outputs.");
+        } catch (IllegalArgumentException iae) {
+            Assert.assertEquals(
+                    "Unexpected exception message.",
+                    "Compensation request tx need to have at least 3 outputs",
+                    iae.getMessage()
+            );
+        }
+
+        RawTxOutput output1 = new RawTxOutput(
+                0,
+                123,
+                null,
+                null,
+                null,
+                null,
+                100
+        );
+        RawTxOutput output2 = new RawTxOutput(
+                0,
+                456,
+                null,
+                null,
+                null,
+                null,
+                100
+        );
+        RawTxOutput output3 = new RawTxOutput(
+                0,
+                678,
+                null,
+                null,
+                null,
+                null,
+                100
+        );
+        rawTx = new RawTx(
+                "faketx1",
+                200,
+                "fakeblock1",
+                time,
+                ImmutableList.copyOf(inputs),
+                ImmutableList.copyOf(Arrays.asList(output1, output2, output3))
+        );
+        tempTx = TempTx.fromRawTx(rawTx);
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
+        try {
+            TxParser.getBisqTxType(
+                    tempTx,
+                    hasOpReturnCandidate,
+                    remainingInputValue,
+                    optionalOpReturnType);
+            Assert.fail("Expected IllegalArgumentException to be thrown when COMPENSATION_REQUEST has outputs that are not issuance candidates.");
+        } catch (IllegalArgumentException iae) {
+            Assert.assertEquals(
+                    "Unexpected exception message.",
+                    "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT",
+                    iae.getMessage()
+            );
+        }
+
+        hasOpReturnCandidate = true;
+        optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
+        tempTx.getTempTxOutputs().get(1).setTxOutputType(TxOutputType.ISSUANCE_CANDIDATE_OUTPUT);
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.COMPENSATION_REQUEST;
+        Assert.assertEquals(
+                "With OP_RETURN candidate and optional OP_RETURN type of COMPENSATION_REQUEST, this should be a COMPENSATION_REQUEST tx.",
+                want,
+                result
+        );
+    }
 
     @Test
     public void testGetGenesisTx() {
         int blockHeight = 200;
         String blockHash = "abc123";
         Coin genesisTotalSupply = Coin.parseCoin("2.5");
-        long time = new Date().getTime();
+        long time = 1371729865; // Thu Jun 20 14:04:25 CEST 2013
         final List<TxInput> inputs = Arrays.asList(
                 new TxInput("tx0", 0, null),
                 new TxInput("tx1", 1, null)
