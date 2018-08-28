@@ -19,15 +19,17 @@ package bisq.core.dao.node.parser;
 
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.SpentInfo;
-import bisq.core.dao.state.blockchain.TxInput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputKey;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
 import javax.inject.Inject;
 
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,8 +37,26 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TxInputParser {
+    enum VoteRevealInputState {
+        UNKNOWN, VALID, INVALID
+    }
+
+    @Getter
+    private long accumulatedInputValue = 0;
+    @Getter
+    private long burntBondValue = 0;
+    @Getter
+    private int unlockBlockHeight;
+    @Getter
+    private Optional<TxOutput> optionalSpentLockupTxOutput = Optional.empty();
 
     private final BsqStateService bsqStateService;
+    @Getter
+    private TxInputParser.VoteRevealInputState voteRevealInputState = TxInputParser.VoteRevealInputState.UNKNOWN;
+
+    //TODO never read from... remove?
+    // We use here TxOutput as we do not alter it but take it from the BsqState
+    private Set<TxOutput> spentUnlockConnectedTxOutputs = new HashSet<>();
 
     @Inject
     public TxInputParser(BsqStateService bsqStateService) {
@@ -44,10 +64,11 @@ public class TxInputParser {
     }
 
     @SuppressWarnings("IfCanBeSwitch")
-    void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex, ParsingModel parsingModel) {
+    void process(TxOutputKey txOutputKey, int blockHeight, String txId, int inputIndex) {
         bsqStateService.getUnspentTxOutput(txOutputKey)
                 .ifPresent(connectedTxOutput -> {
-                    parsingModel.addToInputValue(connectedTxOutput.getValue());
+                    long inputValue = connectedTxOutput.getValue();
+                    accumulatedInputValue += inputValue;
 
                     // If we are spending an output from a blind vote tx marked as VOTE_STAKE_OUTPUT we save it in our parsingModel
                     // for later verification at the outputs of a reveal tx.
@@ -63,14 +84,14 @@ public class TxInputParser {
                         case ISSUANCE_CANDIDATE_OUTPUT:
                             break;
                         case BLIND_VOTE_LOCK_STAKE_OUTPUT:
-                            if (parsingModel.getVoteRevealInputState() == ParsingModel.VoteRevealInputState.UNKNOWN) {
+                            if (voteRevealInputState == TxInputParser.VoteRevealInputState.UNKNOWN) {
                                 // The connected tx output of the blind vote tx is our input for the reveal tx.
                                 // We allow only one input from any blind vote tx otherwise the vote reveal tx is invalid.
-                                parsingModel.setVoteRevealInputState(ParsingModel.VoteRevealInputState.VALID);
+                                voteRevealInputState = TxInputParser.VoteRevealInputState.VALID;
                             } else {
                                 log.warn("We have a tx which has >1 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. " +
                                         "This is not a valid BSQ tx.");
-                                parsingModel.setVoteRevealInputState(ParsingModel.VoteRevealInputState.INVALID);
+                                voteRevealInputState = TxInputParser.VoteRevealInputState.INVALID;
                             }
                             break;
                         case BLIND_VOTE_OP_RETURN_OUTPUT:
@@ -80,24 +101,25 @@ public class TxInputParser {
                         case LOCKUP:
                             // A LOCKUP BSQ txOutput is spent to a corresponding UNLOCK
                             // txOutput. The UNLOCK can only be spent after lockTime blocks has passed.
-                            if (parsingModel.getSpentLockupTxOutput() == null) {
-                                parsingModel.setSpentLockupTxOutput(connectedTxOutput);
-                                bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(tx ->
-                                        parsingModel.setUnlockBlockHeight(blockHeight + tx.getLockTime()));
+                            if (!optionalSpentLockupTxOutput.isPresent()) {
+                                optionalSpentLockupTxOutput = Optional.of(connectedTxOutput);
+                                unlockBlockHeight = blockHeight + connectedTxOutput.getLockTime();
                             }
                             break;
                         case LOCKUP_OP_RETURN_OUTPUT:
                             break;
                         case UNLOCK:
                             // This txInput is Spending an UNLOCK txOutput
-                            Set<TxOutput> spentUnlockConnectedTxOutputs = parsingModel.getSpentUnlockConnectedTxOutputs();
-                            if (spentUnlockConnectedTxOutputs != null)
-                                spentUnlockConnectedTxOutputs.add(connectedTxOutput);
+                            spentUnlockConnectedTxOutputs.add(connectedTxOutput);
 
+                            //TODO  We should add unlockBlockHeight to TempTxOutput and remove unlockBlockHeight from tempTx
+                            // then we can use connectedTxOutput to access the unlockBlockHeight instead of the tx
                             bsqStateService.getTx(connectedTxOutput.getTxId()).ifPresent(unlockTx -> {
                                 // Only count the input as BSQ input if spent after unlock time
-                                if (blockHeight < unlockTx.getUnlockBlockHeight())
-                                    parsingModel.burnBond(connectedTxOutput.getValue());
+                                if (blockHeight < unlockTx.getUnlockBlockHeight()) {
+                                    accumulatedInputValue -= inputValue;
+                                    burntBondValue += inputValue;
+                                }
                             });
                             break;
                         case INVALID_OUTPUT:

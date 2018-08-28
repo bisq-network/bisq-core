@@ -17,6 +17,7 @@
 
 package bisq.core.dao.node.parser;
 
+import bisq.core.dao.bonding.BondingConsensus;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.OpReturnType;
 import bisq.core.dao.state.blockchain.TempTx;
@@ -24,10 +25,15 @@ import bisq.core.dao.state.blockchain.TempTxOutput;
 import bisq.core.dao.state.blockchain.TxOutput;
 import bisq.core.dao.state.blockchain.TxOutputType;
 
-import javax.inject.Inject;
+import com.google.common.annotations.VisibleForTesting;
 
+import java.util.Optional;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -36,12 +42,36 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class TxOutputParser {
     private final BsqStateService bsqStateService;
-    private final OpReturnParser opReturnParser;
 
-    @Inject
-    public TxOutputParser(BsqStateService bsqStateService, OpReturnParser opReturnParser) {
+    // Setters
+    @Getter
+    @Setter
+    private long availableInputValue = 0;
+    @Setter
+    private int unlockBlockHeight;
+    @Setter
+    private TempTx tempTx; //TODO remove
+    @Setter
+    @Getter
+    private Optional<TxOutput> optionalSpentLockupTxOutput = Optional.empty();
+
+    @Getter
+    private boolean bsqOutputFound;
+    @Getter
+    private Optional<OpReturnType> optionalOpReturnTypeCandidate = Optional.empty();
+    @Getter
+    private Optional<OpReturnType> optionalVerifiedOpReturnType = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalIssuanceCandidate = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalBlindVoteLockStakeOutput = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalVoteRevealUnlockStakeOutput = Optional.empty();
+    @Getter
+    private Optional<TempTxOutput> optionalLockupOutput = Optional.empty();
+
+    TxOutputParser(BsqStateService bsqStateService) {
         this.bsqStateService = bsqStateService;
-        this.opReturnParser = opReturnParser;
     }
 
     public void processGenesisTxOutput(TempTx genesisTx) {
@@ -51,55 +81,34 @@ public class TxOutputParser {
         }
     }
 
-    void processOpReturnCandidate(TempTxOutput txOutput, ParsingModel parsingModel) {
-        opReturnParser.processOpReturnCandidate(txOutput, parsingModel);
+    void processOpReturnCandidate(TempTxOutput txOutput) {
+        optionalOpReturnTypeCandidate = OpReturnParser.getOptionalOpReturnTypeCandidate(txOutput);
     }
 
     /**
      * Process a transaction output.
      *
-     * @param blockHeight
-     * @param lastOutput
-     * @param txOutput
-     * @param index
-     * @param parsingModel
+     * @param isLastOutput  If it is the last output
+     * @param tempTxOutput  The TempTxOutput we are parsing
+     * @param index         The index in the outputs
      */
-    void processTxOutput(int blockHeight, boolean lastOutput, TempTxOutput txOutput, int index, ParsingModel parsingModel) {
-        final long bsqInputBalanceValue = parsingModel.getAvailableInputValue();
+    void processTxOutput(boolean isLastOutput, TempTxOutput tempTxOutput, int index) {
         // We do not check for pubKeyScript.scriptType.NULL_DATA because that is only set if dumpBlockchainData is true
-        final byte[] opReturnData = txOutput.getOpReturnData();
+        byte[] opReturnData = tempTxOutput.getOpReturnData();
         if (opReturnData == null) {
-            final long txOutputValue = txOutput.getValue();
-            if (TxOutputParser.isUnlockBondTx(txOutput.getValue(), index, parsingModel)) {
+            long txOutputValue = tempTxOutput.getValue();
+            if (isUnlockBondTx(tempTxOutput.getValue(), index)) {
                 // We need to handle UNLOCK transactions separately as they don't follow the pattern on spending BSQ
                 // The LOCKUP BSQ is burnt unless the output exactly matches the input, that would cause the
                 // output to not be BSQ output at all
-                handleUnlockBondTx(txOutput, parsingModel);
-            } else if (bsqInputBalanceValue > 0 && bsqInputBalanceValue >= txOutputValue) {
-                handleBsqOutput(txOutput, index, parsingModel, txOutputValue);
+                handleUnlockBondTx(tempTxOutput);
+            } else if (availableInputValue > 0 && availableInputValue >= txOutputValue) {
+                handleBsqOutput(tempTxOutput, index, txOutputValue);
             } else {
-                handleBtcOutput(txOutput, index, parsingModel);
+                handleBtcOutput(tempTxOutput, index);
             }
         } else {
-            TxOutputType outputType = opReturnParser.parseAndValidate(
-                    txOutput,
-                    lastOutput,
-                    blockHeight
-            );
-
-            if (outputType == TxOutputType.PROPOSAL_OP_RETURN_OUTPUT) {
-                parsingModel.setVerifiedOpReturnType(OpReturnType.PROPOSAL);
-            } else if (outputType == TxOutputType.COMP_REQ_OP_RETURN_OUTPUT) {
-                parsingModel.setVerifiedOpReturnType(OpReturnType.COMPENSATION_REQUEST);
-            } else if (outputType == TxOutputType.BLIND_VOTE_OP_RETURN_OUTPUT) {
-                parsingModel.setVerifiedOpReturnType(OpReturnType.BLIND_VOTE);
-            } else if (outputType == TxOutputType.VOTE_REVEAL_OP_RETURN_OUTPUT) {
-                parsingModel.setVerifiedOpReturnType(OpReturnType.VOTE_REVEAL);
-            } else if (outputType == TxOutputType.LOCKUP_OP_RETURN_OUTPUT) {
-                parsingModel.setVerifiedOpReturnType(OpReturnType.LOCKUP);
-            }
-
-            txOutput.setTxOutputType(outputType);
+            handleOpReturnOutput(tempTxOutput, isLastOutput);
         }
     }
 
@@ -112,66 +121,105 @@ public class TxOutputParser {
      *
      * @param txOutputValue The value of the current output, in satoshi.
      * @param index         The index of the output.
-     * @param parsingModel  The parsing model.
      * @return True if the transaction is an unlock transaction, false otherwise.
      */
-    private static boolean isUnlockBondTx(long txOutputValue, int index, ParsingModel parsingModel) {
+    private boolean isUnlockBondTx(long txOutputValue, int index) {
         // We require that the input value is exact the available value and the output value
-        return parsingModel.getSpentLockupTxOutput() != null &&
-                index == 0 &&
-                parsingModel.getSpentLockupTxOutput().getValue() == txOutputValue &&
-                parsingModel.getAvailableInputValue() == txOutputValue;
+        return index == 0 &&
+                availableInputValue == txOutputValue &&
+                optionalSpentLockupTxOutput.isPresent() &&
+                optionalSpentLockupTxOutput.get().getValue() == txOutputValue;
     }
 
-    private void handleUnlockBondTx(TempTxOutput txOutput, ParsingModel parsingModel) {
-        TxOutput spentLockupTxOutput = parsingModel.getSpentLockupTxOutput();
-        checkNotNull(spentLockupTxOutput, "spentLockupTxOutput must not be null");
-        parsingModel.subtractFromInputValue(spentLockupTxOutput.getValue());
+    private void handleUnlockBondTx(TempTxOutput txOutput) {
+        checkArgument(optionalSpentLockupTxOutput.isPresent(), "optionalSpentLockupTxOutput must be present");
+        availableInputValue -= optionalSpentLockupTxOutput.get().getValue();
 
         txOutput.setTxOutputType(TxOutputType.UNLOCK);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
-        parsingModel.getTx().setUnlockBlockHeight(parsingModel.getUnlockBlockHeight());
-        parsingModel.setBsqOutputFound(true);
+        //TODO move up to TxParser
+        // We should add unlockBlockHeight to TempTxOutput and remove unlockBlockHeight from tempTx
+        tempTx.setUnlockBlockHeight(unlockBlockHeight);
+
+        bsqOutputFound = true;
     }
 
-    private void handleBsqOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel, long txOutputValue) {
+    private void handleBsqOutput(TempTxOutput txOutput, int index, long txOutputValue) {
         // Update the input balance.
-        parsingModel.subtractFromInputValue(txOutputValue);
+        availableInputValue -= txOutputValue;
 
         boolean isFirstOutput = index == 0;
-        OpReturnType candidate = parsingModel.getOpReturnTypeCandidate();
+
+        OpReturnType opReturnTypeCandidate = null;
+        if (optionalOpReturnTypeCandidate.isPresent())
+            opReturnTypeCandidate = optionalOpReturnTypeCandidate.get();
 
         TxOutputType bsqOutput;
-        if (isFirstOutput && candidate == OpReturnType.BLIND_VOTE) {
+        if (isFirstOutput && opReturnTypeCandidate == OpReturnType.BLIND_VOTE) {
             bsqOutput = TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT;
-            parsingModel.setBlindVoteLockStakeOutput(txOutput);
-        } else if (isFirstOutput && candidate == OpReturnType.VOTE_REVEAL) {
+            optionalBlindVoteLockStakeOutput = Optional.of(txOutput);
+        } else if (isFirstOutput && opReturnTypeCandidate == OpReturnType.VOTE_REVEAL) {
             bsqOutput = TxOutputType.VOTE_REVEAL_UNLOCK_STAKE_OUTPUT;
-            parsingModel.setVoteRevealUnlockStakeOutput(txOutput);
-        } else if (isFirstOutput && candidate == OpReturnType.LOCKUP) {
+            optionalVoteRevealUnlockStakeOutput = Optional.of(txOutput);
+        } else if (isFirstOutput && opReturnTypeCandidate == OpReturnType.LOCKUP) {
             bsqOutput = TxOutputType.LOCKUP;
-            parsingModel.setLockupOutput(txOutput);
+            optionalLockupOutput = Optional.of(txOutput);
         } else {
             bsqOutput = TxOutputType.BSQ_OUTPUT;
         }
         txOutput.setTxOutputType(bsqOutput);
         bsqStateService.addUnspentTxOutput(TxOutput.fromTempOutput(txOutput));
 
-        parsingModel.setBsqOutputFound(true);
+        bsqOutputFound = true;
     }
 
-    private void handleBtcOutput(TempTxOutput txOutput, int index, ParsingModel parsingModel) {
+    private void handleBtcOutput(TempTxOutput txOutput, int index) {
         // If we have BSQ left for burning and at the second output a compensation request output we set the
         // candidate to the parsingModel and we don't apply the TxOutputType as we do that later as the OpReturn check.
-        if (parsingModel.isInputValuePositive() &&
+        if (availableInputValue > 0 &&
                 index == 1 &&
-                parsingModel.getOpReturnTypeCandidate() == OpReturnType.COMPENSATION_REQUEST) {
+                optionalOpReturnTypeCandidate.isPresent() &&
+                optionalOpReturnTypeCandidate.get() == OpReturnType.COMPENSATION_REQUEST) {
             // We don't set the txOutputType yet as we have not fully validated the tx but put the candidate
-            // into our parsingModel.
-            parsingModel.setIssuanceCandidate(txOutput);
+            // into our local optionalIssuanceCandidate.
+
+            optionalIssuanceCandidate = Optional.of(txOutput);
         } else {
             txOutput.setTxOutputType(TxOutputType.BTC_OUTPUT);
+        }
+    }
+
+    private void handleOpReturnOutput(TempTxOutput tempTxOutput, boolean isLastOutput) {
+        TxOutputType txOutputType = OpReturnParser.getTxOutputType(tempTxOutput, isLastOutput);
+        tempTxOutput.setTxOutputType(txOutputType);
+
+        optionalVerifiedOpReturnType = getMappedOpReturnType(txOutputType);
+        optionalVerifiedOpReturnType.filter(verifiedOpReturnType -> verifiedOpReturnType == OpReturnType.LOCKUP)
+                .ifPresent(verifiedOpReturnType -> {
+                    byte[] opReturnData = tempTxOutput.getOpReturnData();
+                    checkNotNull(opReturnData, "opReturnData must not be null");
+                    int lockTime = BondingConsensus.getLockTime(opReturnData);
+                    tempTxOutput.setLockTime(lockTime);
+                });
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @VisibleForTesting
+    static Optional<OpReturnType> getMappedOpReturnType(TxOutputType outputType) {
+        switch (outputType) {
+            case PROPOSAL_OP_RETURN_OUTPUT:
+                return Optional.of(OpReturnType.PROPOSAL);
+            case COMP_REQ_OP_RETURN_OUTPUT:
+                return Optional.of(OpReturnType.COMPENSATION_REQUEST);
+            case BLIND_VOTE_OP_RETURN_OUTPUT:
+                return Optional.of(OpReturnType.BLIND_VOTE);
+            case VOTE_REVEAL_OP_RETURN_OUTPUT:
+                return Optional.of(OpReturnType.VOTE_REVEAL);
+            case LOCKUP_OP_RETURN_OUTPUT:
+                return Optional.of(OpReturnType.LOCKUP);
+            default:
+                return Optional.empty();
         }
     }
 }

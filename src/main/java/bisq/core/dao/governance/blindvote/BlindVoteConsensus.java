@@ -49,6 +49,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BlindVoteConsensus {
+    public static boolean hasOpReturnDataValidLength(byte[] opReturnData) {
+        return opReturnData.length == 22;
+    }
+
     public static BallotList getSortedBallotList(BallotListService ballotListService) {
         final List<Ballot> ballotList = ballotListService.getBallotList().stream()
                 .sorted(Comparator.comparing(Ballot::getTxId))
