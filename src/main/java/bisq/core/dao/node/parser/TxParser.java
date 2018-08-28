@@ -294,7 +294,7 @@ public class TxParser {
     TxType getTxType(TempTx tx) {
         TxType txType;
         // We need to have at least one BSQ output
-        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType(tx);
+        Optional<OpReturnType> optionalOpReturnType = getOptionalOpReturnType();
 
         if (optionalOpReturnType.isPresent()) {
             txType = getTxTypeForOpReturn(tx, optionalOpReturnType.get());
@@ -346,7 +346,12 @@ public class TxParser {
         return txType;
     }
 
-    private Optional<OpReturnType> getOptionalOpReturnType(TempTx tx) {
+    /**
+     * The type of the OP_RETURN value of the transaction, if it has such a BSQ output.
+     *
+     * @return The OP_RETURN type if applicable, otherwise Optional.empty().
+     */
+    private Optional<OpReturnType> getOptionalOpReturnType() {
         if (txOutputParser.isBsqOutputFound()) {
             // We want to be sure that the initial assumption of the opReturn type was matching the result after full
             // validation.
@@ -364,13 +369,12 @@ public class TxParser {
 
             String msg = "We got a different opReturn type after validation as we expected initially. " +
                     "optionalOpReturnTypeCandidate=" + optionalOpReturnTypeCandidate +
-                    ", optionalVerifiedOpReturnType=" + txOutputParser.getOptionalVerifiedOpReturnType() +
-                    ", txId=" + tx.getId();
+                    ", optionalVerifiedOpReturnType=" + txOutputParser.getOptionalVerifiedOpReturnType();
             log.error(msg);
 
         } else {
             String msg = "We got a tx without any valid BSQ output but with burned BSQ. " +
-                    "Burned fee=" + remainingInputValue / 100D + " BSQ. tx=" + tx;
+                    "Burned fee=" + remainingInputValue / 100D + " BSQ.";
             log.warn(msg);
         }
         return Optional.empty();
