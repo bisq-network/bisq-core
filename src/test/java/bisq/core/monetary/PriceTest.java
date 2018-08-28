@@ -39,7 +39,7 @@ public class PriceTest {
         );
 
         try {
-            result = Price.parse("EUR", "0.12345");
+            Price.parse("EUR", "0.12345");
             Assert.fail("Expected IllegalArgumentException to be thrown when too many decimals are used.");
         } catch (IllegalArgumentException iae) {
             Assert.assertEquals(
@@ -80,7 +80,7 @@ public class PriceTest {
         );
 
         try {
-            result = Price.parse("XMR", "56789.123456789");
+            Price.parse("XMR", "56789.123456789");
             Assert.fail("Expected IllegalArgumentException to be thrown when too many decimals are used.");
         } catch (IllegalArgumentException iae) {
             Assert.assertEquals(
