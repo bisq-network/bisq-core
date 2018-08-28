@@ -243,6 +243,16 @@ public class TxParser {
         }
     }
 
+    /**
+     * Whether the BSQ fee and phase is valid for a transaction.
+     *
+     * @param blockHeight  The height of the block that the transaction is in.
+     * @param tempTx       The temporary transaction.
+     * @param bsqFee       The fee in BSQ, in satoshi.
+     * @param phase        The current phase of the DAO, e.g {@code DaoPhase.Phase.PROPOSAL}.
+     * @param param        The parameter for the fee, e.g {@code Param.PROPOSAL_FEE}.
+     * @return             True if the fee and phase was valid, false otherwise.
+     */
     private boolean isFeeAndPhaseValid(int blockHeight, TempTx tempTx, long bsqFee, DaoPhase.Phase phase, Param param) {
         // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
 
@@ -257,11 +267,8 @@ public class TxParser {
             //TODO move outside
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
-
-            return false;
         }
-
-        return true;
+        return isFeeCorrect;
     }
 
     private boolean isPhaseValid(int blockHeight, TempTx tempTx, DaoPhase.Phase phase) {
@@ -272,9 +279,8 @@ public class TxParser {
             //TODO move outside
             tempTx.setTxType(TxType.INVALID);
             // TODO should we return already?
-            return false;
         }
-        return true;
+        return isInPhase;
     }
 
     /*
