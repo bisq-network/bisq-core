@@ -137,6 +137,8 @@ public class TxParser {
                 boolean isAnyTxOutputTypeUndefined = tempTx.getTempTxOutputs().stream()
                         .anyMatch(txOutput -> TxOutputType.UNDEFINED == txOutput.getTxOutputType());
                 if (!isAnyTxOutputTypeUndefined) {
+                    // TODO(chirhonul): we don't modify the tempTx within the call below, so maybe we should
+                    // use RawTx?
                     TxType txType = TxParser.getTxType(
                             tempTx,
                             txOutputParser.getOptionalOpReturnTypeCandidate().isPresent(),
@@ -300,12 +302,16 @@ public class TxParser {
      * @param optionalOpReturnType  If present, the OP_RETURN type of the transaction.
      * @return                      The type of the transaction, if it is relevant to bisq.
      */
-    private static TxType getTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
+    @VisibleForTesting
+    static TxType getTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
         TxType txType;
         // We need to have at least one BSQ output
         if (optionalOpReturnType.isPresent()) {
+            log.debug("Optional OP_RETURN type is present for tx.");
             txType = TxParser.getTxTypeForOpReturn(tx, optionalOpReturnType.get());
         } else if (!hasOpReturnCandidate) {
+            log.debug("No optional OP_RETURN type and no OP_RETURN candidate is present for tx.");
+
             boolean bsqFeesBurnt = remainingInputValue > 0;
             if (bsqFeesBurnt) {
                 // Burned fee but no opReturn
@@ -313,11 +319,11 @@ public class TxParser {
             } else if (tx.getTempTxOutputs().get(0).getTxOutputType() == TxOutputType.UNLOCK) {
                 txType = TxType.UNLOCK;
             } else {
-                // No burned fee and no opReturn.
+                log.debug("No burned fee and no OP_RETURN, so this is a TRANSFER_BSQ tx.");
                 txType = TxType.TRANSFER_BSQ;
             }
         } else {
-            // We got some OP_RETURN type candidate but it failed at validation
+            log.debug("No optional OP_RETURN type is present for tx but we do have an OP_RETURN candidate, so it failed validation.");
             txType = TxType.INVALID;
         }
 
