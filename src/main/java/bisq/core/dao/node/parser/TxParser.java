@@ -179,8 +179,10 @@ public class TxParser {
             boolean isFeeAndPhaseValid;
             switch (verifiedOpReturnType) {
                 case PROPOSAL:
-                    // todo(chirhonul): not using return value?
-                    isFeeAndPhaseValid(blockHeight, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+                    isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
+                    if (!isFeeAndPhaseValid) {
+                        tempTx.setTxType(TxType.INVALID);
+                    }
                     break;
                 case COMPENSATION_REQUEST:
                     isFeeAndPhaseValid = isFeeAndPhaseValid(blockHeight, bsqFee, DaoPhase.Phase.PROPOSAL, Param.PROPOSAL_FEE);
