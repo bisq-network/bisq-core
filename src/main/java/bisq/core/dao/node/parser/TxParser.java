@@ -279,8 +279,6 @@ public class TxParser {
 
     /*
     TODO add tests
-    todo(chirhonul): would be nice to make this not need parsingModel; can the midstate checked within
-    be deduced from tx, or otherwise explicitly passed in?
     */
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
