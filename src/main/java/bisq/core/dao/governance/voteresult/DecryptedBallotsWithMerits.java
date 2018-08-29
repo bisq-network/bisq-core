@@ -31,10 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Holds all data from a decrypted vote item.
  */
-//TODO rename  DecryptedBallotsWithMerits
 @Slf4j
 @Value
-public class DecryptedVote {
+public class DecryptedBallotsWithMerits {
     private final byte[] hashOfBlindVoteList;
     private final String voteRevealTxId; // not used yet but keep it for now
     private final String blindVoteTxId; // not used yet but keep it for now
@@ -42,8 +41,8 @@ public class DecryptedVote {
     private final BallotList ballotList;
     private final MeritList meritList;
 
-    DecryptedVote(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake,
-                  BallotList ballotList, MeritList meritList) {
+    DecryptedBallotsWithMerits(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake,
+                               BallotList ballotList, MeritList meritList) {
         this.hashOfBlindVoteList = hashOfBlindVoteList;
         this.voteRevealTxId = voteRevealTxId;
         this.blindVoteTxId = blindVoteTxId;
