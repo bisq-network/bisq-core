@@ -32,12 +32,12 @@ import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.governance.merit.Merit;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.myvote.MyVoteListService;
 import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
-import bisq.core.dao.governance.voteresult.VoteResultConsensus;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -234,7 +234,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     public long getCurrentlyAvailableMerit() {
         MeritList meritList = getMerits(null);
-        return VoteResultConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
+        return MeritConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
     }
 
 

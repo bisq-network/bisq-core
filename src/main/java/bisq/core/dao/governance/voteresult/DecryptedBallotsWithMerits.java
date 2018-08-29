@@ -20,6 +20,7 @@ package bisq.core.dao.governance.voteresult;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.vote.Vote;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
 
@@ -59,6 +60,6 @@ public class DecryptedBallotsWithMerits {
     }
 
     public long getMerit(BsqStateService bsqStateService) {
-        return VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
+        return MeritConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
     }
 }

@@ -27,6 +27,7 @@ import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
 import bisq.core.dao.governance.blindvote.BlindVoteListService;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalListPresentation;
@@ -272,7 +273,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.decryptVotes(blindVote.getEncryptedVotes(), secretKey);
-                            MeritList meritList = VoteResultConsensus.decryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
+                            MeritList meritList = MeritConsensus.decryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
 
                             // We lookup for the proposals we have in our local list which match the txId from the
                             // voteWithProposalTxIdList and create a ballot list with the proposal and the vote from
@@ -493,7 +494,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                         Proposal proposal = ballot.getProposal();
                         voteWithStakeByProposalMap.putIfAbsent(proposal, new ArrayList<>());
                         List<VoteWithStake> voteWithStakeList = voteWithStakeByProposalMap.get(proposal);
-                        long sumOfAllMerits = VoteResultConsensus.getMeritStake(decryptedBallotsWithMerits.getBlindVoteTxId(),
+                        long sumOfAllMerits = MeritConsensus.getMeritStake(decryptedBallotsWithMerits.getBlindVoteTxId(),
                                 decryptedBallotsWithMerits.getMeritList(), bsqStateService);
                         VoteWithStake voteWithStake = new VoteWithStake(ballot.getVote(), decryptedBallotsWithMerits.getStake(), sumOfAllMerits);
                         voteWithStakeList.add(voteWithStake);
