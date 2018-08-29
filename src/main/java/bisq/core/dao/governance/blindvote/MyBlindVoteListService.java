@@ -27,6 +27,7 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.DaoSetupService;
+import bisq.core.dao.exceptions.PublishToP2PNetworkException;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
@@ -217,8 +218,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
             addToP2PNetwork(blindVote, errorMessage -> {
                 log.error(errorMessage);
-                //TODO define specific exception
-                exceptionHandler.handleException(new Exception(errorMessage));
+                exceptionHandler.handleException(new PublishToP2PNetworkException(errorMessage));
             });
 
             // We store our source data for the blind vote in myVoteList
