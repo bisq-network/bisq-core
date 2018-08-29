@@ -277,7 +277,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
-        // TODO sort merit list to make it consensus safe
+        // TODO MK sort merit list to make it consensus safe
         return new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
@@ -304,8 +304,12 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                         // We sign the txId so we be sure that the signature could not be used by anyone else
                         // In the verification the txId will be checked as well.
-                        // TODO BitcoinJ parts here are consensus critical parts
-                        // Consider using our non EC Sig
+
+                        // As we use BitcoinJ EC keys we extend our consensus dependency to BitcoinJ.
+                        // Alternative would be to use our own Sig Key but then we need to share the key separately.
+                        // The EC key is in the blockchain already. We prefer here to stick with EC key. If any change
+                        // in BitcoinJ would break our consensus we would need to fall back to the old BitcoinJ EC
+                        // implementation.
                         ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
                         signatureAsBytes = signature.toCanonicalised().encodeToDER();
                     } else {
