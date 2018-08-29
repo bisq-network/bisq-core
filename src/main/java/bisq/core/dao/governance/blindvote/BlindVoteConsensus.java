@@ -61,9 +61,9 @@ public class BlindVoteConsensus {
         return new BallotList(ballotList);
     }
 
-    // TODO pass blindVoteService.getBlindVotesInPhaseAndCycle()
-    public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteService blindVoteService) {
-        final List<BlindVote> list = blindVoteService.getBlindVotesInPhaseAndCycle().stream()
+    // TODO MK pass blindVoteListService.getBlindVotesInPhaseAndCycle()
+    public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteListService blindVoteListService) {
+        final List<BlindVote> list = blindVoteListService.getBlindVotesInPhaseAndCycle().stream()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
                 .collect(Collectors.toList());
         log.info("Sorted blindVote txId list: " + list.stream()

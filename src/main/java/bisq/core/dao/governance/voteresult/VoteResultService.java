@@ -24,7 +24,7 @@ import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
-import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteListService;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
 import bisq.core.dao.governance.merit.MeritList;
@@ -94,7 +94,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
-    private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
     private final BondedRolesService bondedRolesService;
     private final IssuanceService issuanceService;
     @Getter
@@ -118,7 +118,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                              BsqStateService bsqStateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
-                             BlindVoteService blindVoteService,
+                             BlindVoteListService blindVoteListService,
                              BondedRolesService bondedRolesService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
@@ -126,7 +126,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
-        this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.bondedRolesService = bondedRolesService;
         this.issuanceService = issuanceService;
     }
@@ -265,7 +265,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
                         // Here we deal with eventual consistency of the p2p network data!
                         // TODO make more clear we are in p2p domain now
-                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
                         Optional<BlindVote> optionalBlindVote = blindVoteList.stream()
                                 .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                                 .findAny();
@@ -399,7 +399,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     }
 
     private List<BlindVote> findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...
             list.remove(0);
