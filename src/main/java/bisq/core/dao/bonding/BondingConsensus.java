@@ -93,8 +93,7 @@ public class BondingConsensus {
         if (lockupType == LockupType.BONDED_ROLE) {
             return bondedRole.getHash();
         } else {
-            //TODO trade bonds not impl yet
-            return new byte[0];
+            throw new RuntimeException("Trade bonds not implemented yet");
         }
     }
 }
