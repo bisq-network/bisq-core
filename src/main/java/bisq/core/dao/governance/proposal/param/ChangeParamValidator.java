@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.proposal.param;
 
-import bisq.core.dao.governance.ValidationException;
+import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalValidator;
 import bisq.core.dao.state.BsqStateService;
