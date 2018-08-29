@@ -24,6 +24,8 @@ import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
 
+import bisq.common.util.Utilities;
+
 import java.util.Optional;
 
 import lombok.Value;
@@ -61,5 +63,17 @@ public class DecryptedBallotsWithMerits {
 
     public long getMerit(BsqStateService bsqStateService) {
         return MeritConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
+    }
+
+    @Override
+    public String toString() {
+        return "DecryptedBallotsWithMerits{" +
+                "\n     hashOfBlindVoteList=" + Utilities.bytesAsHexString(hashOfBlindVoteList) +
+                ",\n     voteRevealTxId='" + voteRevealTxId + '\'' +
+                ",\n     blindVoteTxId='" + blindVoteTxId + '\'' +
+                ",\n     stake=" + stake +
+                ",\n     ballotList=" + ballotList +
+                ",\n     meritList=" + meritList +
+                "\n}";
     }
 }
