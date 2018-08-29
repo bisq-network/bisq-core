@@ -87,7 +87,6 @@ public abstract class Proposal implements PersistablePayload, NetworkPayload, Co
         return getProposalBuilder().build();
     }
 
-    //TODO add other proposal types
     public static Proposal fromProto(PB.Proposal proto) {
         switch (proto.getMessageCase()) {
             case COMPENSATION_PROPOSAL:

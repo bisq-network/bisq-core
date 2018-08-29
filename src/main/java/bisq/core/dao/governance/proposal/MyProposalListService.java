@@ -154,13 +154,11 @@ public class MyProposalListService implements PersistedDataHost, BsqStateListene
 
             @Override
             public void onTxMalleability(TxMalleabilityException exception) {
-                // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
 
             @Override
             public void onFailure(TxBroadcastException exception) {
-                // TODO handle
                 errorMessageHandler.handleErrorMessage(exception.getMessage());
             }
         });

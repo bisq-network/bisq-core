@@ -105,7 +105,6 @@ public final class BondedRole implements PersistablePayload, NetworkPayload {
         this.revokeDate = revokeDate;
         this.unlockTxId = unlockTxId;
     }
-    // TODO  signaturePubKey = Sig.getPublicKeyFromBytes(signaturePubKeyBytes);
 
     @Override
     public PB.BondedRole toProtoMessage() {
