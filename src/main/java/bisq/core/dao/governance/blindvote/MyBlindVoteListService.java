@@ -206,9 +206,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
             Transaction blindVoteTx = getBlindVoteTx(stake, blindVoteFee, opReturnData);
             String blindVoteTxId = blindVoteTx.getHashAsString();
 
-            //TODO move at end of method?
-            publishTx(resultHandler, exceptionHandler, blindVoteTx);
-
             byte[] encryptedMeritList = getEncryptedMeritList(blindVoteTxId, secretKey);
 
             // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
@@ -226,6 +223,8 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
             // We store our source data for the blind vote in myVoteList
             myVoteListService.createAndAddMyVote(sortedBallotList, secretKey, blindVote);
+
+            publishTx(resultHandler, exceptionHandler, blindVoteTx);
         } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
                 WalletException | IOException exception) {
             exceptionHandler.handleException(exception);
