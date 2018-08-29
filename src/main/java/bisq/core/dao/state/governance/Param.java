@@ -71,7 +71,7 @@ public enum Param {
     // Period phase (16 blocks atm)
     PHASE_UNDEFINED(0),
     PHASE_PROPOSAL(2),      // 24 days
-    PHASE_BREAK1(21),        // 10 blocks
+    PHASE_BREAK1(1),        // 10 blocks
     PHASE_BLIND_VOTE(2),    // 4 days
     PHASE_BREAK2(1),        // 10 blocks
     PHASE_VOTE_REVEAL(1),   // 2 days
