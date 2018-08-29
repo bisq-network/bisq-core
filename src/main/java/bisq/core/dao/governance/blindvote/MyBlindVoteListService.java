@@ -72,6 +72,7 @@ import javax.crypto.SecretKey;
 
 import java.io.IOException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -276,7 +277,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
-        // TODO MK sort merit list to make it consensus safe
         return new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
@@ -319,6 +319,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                 })
                 .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(Merit::getIssuanceTxId))
                 .collect(Collectors.toList()));
     }
 
