@@ -49,9 +49,9 @@ public class ProposalVoteResult {
     }
 
     public long getQuorum() {
+        // Quorum is sum of all votes independent if accepted or rejected.
         log.info("Quorum: proposalTxId: {}, totalStake: {}, stakeOfAcceptedVotes: {}, stakeOfRejectedVotes: {}",
                 proposal.getTxId(), getTotalStake(), stakeOfAcceptedVotes, stakeOfRejectedVotes);
-        // TODO use only accepted???
         return getTotalStake();
     }
 

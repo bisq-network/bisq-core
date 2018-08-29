@@ -36,6 +36,8 @@ import bisq.common.util.Utilities;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import javax.crypto.SecretKey;
 
 import java.util.Arrays;
@@ -106,10 +108,14 @@ public class VoteResultConsensus {
     }
 
     public static long getMeritStake(String blindVoteTxId, MeritList meritList, BsqStateService bsqStateService) {
+        int txChainHeight = bsqStateService.getTx(blindVoteTxId).map(Tx::getBlockHeight).orElse(0);
+        return getMeritStake(blindVoteTxId, meritList, txChainHeight);
+    }
+
+    @VisibleForTesting
+    static long getMeritStake(String blindVoteTxId, MeritList meritList, int txChainHeight) {
         // We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
         // later blocks (merit decreases with each block).
-        //TODO move to caller
-        int txChainHeight = bsqStateService.getTx(blindVoteTxId).map(Tx::getBlockHeight).orElse(0);
         if (txChainHeight == 0) {
             log.error("Error at getMeritStake: blindVoteTx not found in bsqStateService. blindVoteTxId=" + blindVoteTxId);
             return 0;
@@ -187,7 +193,6 @@ public class VoteResultConsensus {
                 .sum();
     }
 
-    //TODO add tests
     // We compare first by stake and in case we have multiple entries with same stake we use the
     // hex encoded hashOfProposalList for comparision
     @Nullable

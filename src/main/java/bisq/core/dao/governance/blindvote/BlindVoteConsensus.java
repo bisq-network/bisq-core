@@ -33,6 +33,8 @@ import bisq.common.util.Utilities;
 
 import org.bitcoinj.core.Coin;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import javax.crypto.SecretKey;
 
 import java.io.ByteArrayOutputStream;
@@ -61,9 +63,13 @@ public class BlindVoteConsensus {
         return new BallotList(ballotList);
     }
 
-    // TODO MK pass blindVoteListService.getBlindVotesInPhaseAndCycle()
     public static List<BlindVote> getSortedBlindVoteListOfCycle(BlindVoteListService blindVoteListService) {
-        final List<BlindVote> list = blindVoteListService.getBlindVotesInPhaseAndCycle().stream()
+        return getSortedBlindVoteListOfCycle(blindVoteListService.getBlindVotesInPhaseAndCycle());
+    }
+
+    @VisibleForTesting
+    static List<BlindVote> getSortedBlindVoteListOfCycle(List<BlindVote> blindVoteList) {
+        final List<BlindVote> list = blindVoteList.stream()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
                 .collect(Collectors.toList());
         log.info("Sorted blindVote txId list: " + list.stream()
