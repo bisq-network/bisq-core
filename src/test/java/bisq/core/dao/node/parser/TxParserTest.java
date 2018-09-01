@@ -31,7 +31,6 @@ import org.bitcoinj.core.Coin;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,7 +72,7 @@ public class TxParserTest {
                 hasOpReturnCandidate,
                 remainingInputValue,
                 optionalOpReturnType);
-       TxType want = TxType.INVALID;
+        TxType want = TxType.INVALID;
         Assert.assertEquals(
                 "With an OP_RETURN candidate but no optional OP_RETURN type, this tx should be invalid.",
                 want,
@@ -152,20 +151,17 @@ public class TxParserTest {
 
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
-        try {
-            TxParser.getBisqTxType(
-                    tempTx,
-                    hasOpReturnCandidate,
-                    remainingInputValue,
-                    optionalOpReturnType);
-            Assert.fail("Expected IllegalArgumentException to be thrown when COMPENSATION_REQUEST has fewer than three outputs.");
-        } catch (IllegalArgumentException iae) {
-            Assert.assertEquals(
-                    "Unexpected exception message.",
-                    "Compensation request tx need to have at least 3 outputs",
-                    iae.getMessage()
-            );
-        }
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.INVALID;
+        Assert.assertEquals(
+                "COMPENSATION_REQUEST has fewer than three outputs, this should be a INVALID tx.",
+                want,
+                result
+        );
 
         RawTxOutput output1 = new RawTxOutput(
                 0,
@@ -205,20 +201,18 @@ public class TxParserTest {
         tempTx = TempTx.fromRawTx(rawTx);
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
-        try {
-            TxParser.getBisqTxType(
-                    tempTx,
-                    hasOpReturnCandidate,
-                    remainingInputValue,
-                    optionalOpReturnType);
-            Assert.fail("Expected IllegalArgumentException to be thrown when COMPENSATION_REQUEST has outputs that are not issuance candidates.");
-        } catch (IllegalArgumentException iae) {
-            Assert.assertEquals(
-                    "Unexpected exception message.",
-                    "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT",
-                    iae.getMessage()
-            );
-        }
+
+        result = TxParser.getBisqTxType(
+                tempTx,
+                hasOpReturnCandidate,
+                remainingInputValue,
+                optionalOpReturnType);
+        want = TxType.INVALID;
+        Assert.assertEquals(
+                "Output 1 at COMPENSATION_REQUEST has to be a ISSUANCE_CANDIDATE_OUTPUT, this should be a INVALID tx.",
+                want,
+                result
+        );
 
         hasOpReturnCandidate = true;
         optionalOpReturnType = Optional.of(OpReturnType.COMPENSATION_REQUEST);
