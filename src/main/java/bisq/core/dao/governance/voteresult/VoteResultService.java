@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -104,9 +105,9 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
     // TODO persist, PB
     @Getter
-    private final List<EvaluatedProposal> allEvaluatedProposals = new ArrayList<>();
+    private final Set<EvaluatedProposal> allEvaluatedProposals = new HashSet<>();
     @Getter
-    private final List<DecryptedBallotsWithMerits> allDecryptedBallotsWithMerits = new ArrayList<>();
+    private final Set<DecryptedBallotsWithMerits> allDecryptedBallotsWithMerits = new HashSet<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -152,11 +153,11 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public List<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
+    public Set<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
         return getAcceptedEvaluatedProposals(allEvaluatedProposals);
     }
 
-    public List<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
+    public Set<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
         return getRejectedEvaluatedProposals(allEvaluatedProposals);
     }
 
@@ -209,8 +210,10 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                     if (isBlindVoteListMatchingMajority(majorityBlindVoteListHash)) {
                         //TODO should we write the decryptedBallotsWithMerits here into the state?
 
-                        List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedBallotsWithMeritsSet, chainHeight);
-                        List<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
+                        //TODO we get duplicated items in evaluatedProposals with diff. merit values
+                        Set<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedBallotsWithMeritsSet, chainHeight);
+
+                        Set<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
                         applyAcceptedProposals(acceptedEvaluatedProposals, chainHeight);
 
                         allEvaluatedProposals.addAll(evaluatedProposals);
@@ -417,12 +420,12 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         //TODO impl
     }
 
-    private List<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet, int chainHeight) {
+    private Set<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet, int chainHeight) {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
         Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedBallotsWithMeritsSet);
 
         // TODO breakup
-        List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
+        Set<EvaluatedProposal> evaluatedProposals = new HashSet<>();
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
             long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
             long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
@@ -534,21 +537,21 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         return new ProposalVoteResult(proposal, stakeOfAcceptedVotes, stakeOfRejectedVotes, numAcceptedVotes, numRejectedVotes, numIgnoredVotes);
     }
 
-    private void applyAcceptedProposals(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyAcceptedProposals(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         applyIssuance(acceptedEvaluatedProposals, chainHeight);
         applyParamChange(acceptedEvaluatedProposals, chainHeight);
         applyBondedRole(acceptedEvaluatedProposals, chainHeight);
         applyConfiscateBond(acceptedEvaluatedProposals, chainHeight);
     }
 
-    private void applyIssuance(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyIssuance(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.stream()
                 .map(EvaluatedProposal::getProposal)
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .forEach(proposal -> issuanceService.issueBsq((CompensationProposal) proposal, chainHeight));
     }
 
-    private void applyParamChange(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyParamChange(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         Map<String, List<EvaluatedProposal>> evaluatedProposalsByParam = new HashMap<>();
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ChangeParamProposal) {
@@ -608,7 +611,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                 .orElse(null);
     }
 
-    private void applyBondedRole(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyBondedRole(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof BondedRoleProposal) {
                 BondedRoleProposal bondedRoleProposal = (BondedRoleProposal) evaluatedProposal.getProposal();
@@ -625,7 +628,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         });
     }
 
-    private void applyConfiscateBond(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyConfiscateBond(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
                 ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
@@ -642,16 +645,16 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         });
     }
 
-    private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {
+    private Set<EvaluatedProposal> getAcceptedEvaluatedProposals(Set<EvaluatedProposal> evaluatedProposals) {
         return evaluatedProposals.stream()
                 .filter(EvaluatedProposal::isAccepted)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
-    private List<EvaluatedProposal> getRejectedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {
+    private Set<EvaluatedProposal> getRejectedEvaluatedProposals(Set<EvaluatedProposal> evaluatedProposals) {
         return evaluatedProposals.stream()
                 .filter(evaluatedProposal -> !evaluatedProposal.isAccepted())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private boolean isInVoteResultPhase(int chainHeight) {
