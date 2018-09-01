@@ -28,7 +28,7 @@ import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.DaoSetupService;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
-import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteListService;
 import bisq.core.dao.governance.blindvote.BlindVoteValidator;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.governance.myvote.MyVote;
@@ -75,7 +75,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VoteRevealService implements BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
-    private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
     private final BlindVoteValidator blindVoteValidator;
     private final PeriodService periodService;
     private final MyVoteListService myVoteListService;
@@ -95,7 +95,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
 
     @Inject
     public VoteRevealService(BsqStateService bsqStateService,
-                             BlindVoteService blindVoteService,
+                             BlindVoteListService blindVoteListService,
                              BlindVoteValidator blindVoteValidator,
                              PeriodService periodService,
                              MyVoteListService myVoteListService,
@@ -104,7 +104,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
                              P2PService p2PService,
                              WalletsManager walletsManager) {
         this.bsqStateService = bsqStateService;
-        this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.blindVoteValidator = blindVoteValidator;
         this.periodService = periodService;
         this.myVoteListService = myVoteListService;
@@ -140,7 +140,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public byte[] getHashOfBlindVoteList() {
-        List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+        List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
         return VoteRevealConsensus.getHashOfBlindVoteList(blindVotes);
     }
 
@@ -204,7 +204,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
         // The voters "vote" with their stake at the reveal tx for their version of the blind vote collection.
 
         // TODO make more clear by using param like here:
-       /* List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+       /* List<BlindVote> blindVotes = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
          VoteRevealConsensus.getHashOfBlindVoteList(blindVotes);*/
 
         byte[] hashOfBlindVoteList = getHashOfBlindVoteList();
@@ -233,7 +233,7 @@ public class VoteRevealService implements BsqStateListener, DaoSetupService {
             myVoteListService.applyRevealTxId(myVote, voteRevealTx.getHashAsString());
 
             // Just for additional resilience we republish our blind votes
-            final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+            final List<BlindVote> sortedBlindVoteListOfCycle = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
             rePublishBlindVotePayloadList(sortedBlindVoteListOfCycle);
         } else {
             final String msg = "Tx of stake out put is not in our cycle. That must not happen.";

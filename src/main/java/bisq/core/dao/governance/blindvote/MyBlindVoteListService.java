@@ -27,16 +27,17 @@ import bisq.core.btc.wallet.TxBroadcaster;
 import bisq.core.btc.wallet.TxMalleabilityException;
 import bisq.core.btc.wallet.WalletsManager;
 import bisq.core.dao.DaoSetupService;
+import bisq.core.dao.exceptions.PublishToP2PNetworkException;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.blindvote.storage.BlindVotePayload;
 import bisq.core.dao.governance.merit.Merit;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.myvote.MyVoteListService;
 import bisq.core.dao.governance.proposal.MyProposalListService;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.compensation.CompensationProposal;
-import bisq.core.dao.governance.voteresult.VoteResultConsensus;
 import bisq.core.dao.state.BsqStateListener;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Block;
@@ -71,6 +72,7 @@ import javax.crypto.SecretKey;
 
 import java.io.IOException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -206,9 +208,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
             Transaction blindVoteTx = getBlindVoteTx(stake, blindVoteFee, opReturnData);
             String blindVoteTxId = blindVoteTx.getHashAsString();
 
-            //TODO move at end of method?
-            publishTx(resultHandler, exceptionHandler, blindVoteTx);
-
             byte[] encryptedMeritList = getEncryptedMeritList(blindVoteTxId, secretKey);
 
             // We prefer to not wait for the tx broadcast as if the tx broadcast would fail we still prefer to have our
@@ -220,12 +219,13 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
             addToP2PNetwork(blindVote, errorMessage -> {
                 log.error(errorMessage);
-                //TODO define specific exception
-                exceptionHandler.handleException(new Exception(errorMessage));
+                exceptionHandler.handleException(new PublishToP2PNetworkException(errorMessage));
             });
 
             // We store our source data for the blind vote in myVoteList
             myVoteListService.createAndAddMyVote(sortedBallotList, secretKey, blindVote);
+
+            publishTx(resultHandler, exceptionHandler, blindVoteTx);
         } catch (CryptoException | TransactionVerificationException | InsufficientMoneyException |
                 WalletException | IOException exception) {
             exceptionHandler.handleException(exception);
@@ -234,7 +234,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
     public long getCurrentlyAvailableMerit() {
         MeritList meritList = getMerits(null);
-        return VoteResultConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
+        return MeritConsensus.getCurrentlyAvailableMerit(meritList, bsqStateService.getChainHeight());
     }
 
 
@@ -277,7 +277,6 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
                 .map(Proposal::getTxId)
                 .collect(Collectors.toSet());
 
-        // TODO sort merit list to make it consensus safe
         return new MeritList(bsqStateService.getIssuanceSet().stream()
                 .map(issuance -> {
                     // We check if it is our proposal
@@ -304,8 +303,12 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                         // We sign the txId so we be sure that the signature could not be used by anyone else
                         // In the verification the txId will be checked as well.
-                        // TODO BitcoinJ parts here are consensus critical parts
-                        // Consider using our non EC Sig
+
+                        // As we use BitcoinJ EC keys we extend our consensus dependency to BitcoinJ.
+                        // Alternative would be to use our own Sig Key but then we need to share the key separately.
+                        // The EC key is in the blockchain already. We prefer here to stick with EC key. If any change
+                        // in BitcoinJ would break our consensus we would need to fall back to the old BitcoinJ EC
+                        // implementation.
                         ECKey.ECDSASignature signature = key.sign(Sha256Hash.wrap(blindVoteTxId));
                         signatureAsBytes = signature.toCanonicalised().encodeToDER();
                     } else {
@@ -316,6 +319,7 @@ public class MyBlindVoteListService implements PersistedDataHost, BsqStateListen
 
                 })
                 .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(Merit::getIssuanceTxId))
                 .collect(Collectors.toList()));
     }
 

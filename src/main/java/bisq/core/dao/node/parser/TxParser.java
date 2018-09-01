@@ -268,7 +268,7 @@ public class TxParser {
      * @param bsqFee       The fee in BSQ, in satoshi.
      * @param phase        The current phase of the DAO, e.g {@code DaoPhase.Phase.PROPOSAL}.
      * @param param        The parameter for the fee, e.g {@code Param.PROPOSAL_FEE}.
-     * @return             True if the fee and phase was valid, false otherwise.
+     * @return True if the fee and phase was valid, false otherwise.
      */
     private boolean isFeeAndPhaseValid(int blockHeight, long bsqFee, DaoPhase.Phase phase, Param param) {
         // The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
@@ -300,7 +300,7 @@ public class TxParser {
      * @param hasOpReturnCandidate  True if we have a candidate for an OP_RETURN.
      * @param remainingInputValue   The remaining value of inputs not yet accounted for, in satoshi.
      * @param optionalOpReturnType  If present, the OP_RETURN type of the transaction.
-     * @return                      The type of the transaction, if it is relevant to bisq.
+     * @return The type of the transaction, if it is relevant to bisq.
      */
     @VisibleForTesting
     static TxType getBisqTxType(TempTx tx, boolean hasOpReturnCandidate, long remainingInputValue, Optional<OpReturnType> optionalOpReturnType) {
@@ -331,32 +331,35 @@ public class TxParser {
     }
 
     private static TxType getTxTypeForOpReturn(TempTx tx, OpReturnType opReturnType) {
-        TxType txType;
         switch (opReturnType) {
             case COMPENSATION_REQUEST:
-                checkArgument(tx.getTempTxOutputs().size() >= 3, "Compensation request tx need to have at least 3 outputs");
+                boolean hasCorrectNumOutputs = tx.getTempTxOutputs().size() >= 3;
+                if (!hasCorrectNumOutputs) {
+                    log.warn("Compensation request tx need to have at least 3 outputs");
+                    return TxType.INVALID;
+                }
+
                 TempTxOutput issuanceTxOutput = tx.getTempTxOutputs().get(1);
-                checkArgument(issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT,
-                        "Compensation request txOutput type need to be ISSUANCE_CANDIDATE_OUTPUT");
-                txType = TxType.COMPENSATION_REQUEST;
-                break;
+                boolean hasIssuanceOutput = issuanceTxOutput.getTxOutputType() == TxOutputType.ISSUANCE_CANDIDATE_OUTPUT;
+                if (!hasIssuanceOutput) {
+                    log.warn("Compensation request txOutput type of output at index 1 need to be ISSUANCE_CANDIDATE_OUTPUT. " +
+                            "TxOutputType={}", issuanceTxOutput.getTxOutputType());
+                    return TxType.INVALID;
+                }
+
+                return TxType.COMPENSATION_REQUEST;
             case PROPOSAL:
-                txType = TxType.PROPOSAL;
-                break;
+                return TxType.PROPOSAL;
             case BLIND_VOTE:
-                txType = TxType.BLIND_VOTE;
-                break;
+                return TxType.BLIND_VOTE;
             case VOTE_REVEAL:
-                txType = TxType.VOTE_REVEAL;
-                break;
+                return TxType.VOTE_REVEAL;
             case LOCKUP:
-                txType = TxType.LOCKUP;
-                break;
+                return TxType.LOCKUP;
             default:
                 log.warn("We got a BSQ tx with fee and unknown OP_RETURN. tx={}", tx);
-                txType = TxType.INVALID;
+                return TxType.INVALID;
         }
-        return txType;
     }
 
     /**
@@ -400,7 +403,7 @@ public class TxParser {
      * @param genesisBlockHeight  The block height of the bisq genesis transaction.
      * @param genesisTotalSupply  The total supply of the genesis issuance for bisq.
      * @param rawTx               The candidate transaction.
-     * @return                    The genesis transaction if applicable, or Optional.empty() otherwise.
+     * @return The genesis transaction if applicable, or Optional.empty() otherwise.
      */
     public static Optional<TempTx> findGenesisTx(String genesisTxId, int genesisBlockHeight, Coin genesisTotalSupply,
                                                  RawTx rawTx) {

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.governance.blindvote;
 
-import bisq.core.dao.governance.ValidationException;
+import bisq.core.dao.exceptions.ValidationException;
 import bisq.core.dao.state.BsqStateService;
 import bisq.core.dao.state.blockchain.Tx;
 import bisq.core.dao.state.period.DaoPhase;

@@ -17,7 +17,7 @@
 
 package bisq.core.dao.voting.voteresult;
 
-import bisq.core.dao.governance.voteresult.VoteResultConsensus;
+import bisq.core.dao.governance.merit.MeritConsensus;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,41 +43,41 @@ public class VoteResultConsensusTest {
         int blocksPerYear = 50_000; // 144*365=51264;
         currentChainHeight = 1_000_000;
 
-        assertEquals("fresh issuance", 100000, VoteResultConsensus.getWeightedMeritAmount(100_000, 1_000_000,
+        assertEquals("fresh issuance", 100000, MeritConsensus.getWeightedMeritAmount(100_000, 1_000_000,
                 currentChainHeight, blocksPerYear));
-        assertEquals("0.5 year old issuance", 75000, VoteResultConsensus.getWeightedMeritAmount(100_000, 975_000,
+        assertEquals("0.5 year old issuance", 75000, MeritConsensus.getWeightedMeritAmount(100_000, 975_000,
                 currentChainHeight, blocksPerYear));
-        assertEquals("1 year old issuance", 50000, VoteResultConsensus.getWeightedMeritAmount(100_000, 950_000,
+        assertEquals("1 year old issuance", 50000, MeritConsensus.getWeightedMeritAmount(100_000, 950_000,
                 currentChainHeight, blocksPerYear));
-        assertEquals("1.5 year old issuance", 25000, VoteResultConsensus.getWeightedMeritAmount(100_000, 925_000,
+        assertEquals("1.5 year old issuance", 25000, MeritConsensus.getWeightedMeritAmount(100_000, 925_000,
                 currentChainHeight, blocksPerYear));
-        assertEquals("2 year old issuance", 0, VoteResultConsensus.getWeightedMeritAmount(100_000, 900_000,
+        assertEquals("2 year old issuance", 0, MeritConsensus.getWeightedMeritAmount(100_000, 900_000,
                 currentChainHeight, blocksPerYear));
-        assertEquals("3 year old issuance", 0, VoteResultConsensus.getWeightedMeritAmount(100_000, 850_000,
+        assertEquals("3 year old issuance", 0, MeritConsensus.getWeightedMeritAmount(100_000, 850_000,
                 currentChainHeight, blocksPerYear));
     }
 
     @Test
     public void testInvalidChainHeight() {
         exception.expect(IllegalArgumentException.class);
-        VoteResultConsensus.getWeightedMeritAmount(100_000, 2_000_000, 1_000_000, 1_000_000);
+        MeritConsensus.getWeightedMeritAmount(100_000, 2_000_000, 1_000_000, 1_000_000);
     }
 
     @Test
     public void testInvalidAmount() {
         exception.expect(IllegalArgumentException.class);
-        VoteResultConsensus.getWeightedMeritAmount(-100_000, 1, 1_000_000, 1_000_000);
+        MeritConsensus.getWeightedMeritAmount(-100_000, 1, 1_000_000, 1_000_000);
     }
 
     @Test
     public void testInvalidCurrentChainHeight() {
         exception.expect(IllegalArgumentException.class);
-        VoteResultConsensus.getWeightedMeritAmount(100_000, 1, -1, 1_000_000);
+        MeritConsensus.getWeightedMeritAmount(100_000, 1, -1, 1_000_000);
     }
 
     @Test
     public void testInvalidBlockPerYear() {
         exception.expect(IllegalArgumentException.class);
-        VoteResultConsensus.getWeightedMeritAmount(100_000, 1, 11, -1);
+        MeritConsensus.getWeightedMeritAmount(100_000, 1, 11, -1);
     }
 }

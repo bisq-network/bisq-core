@@ -41,12 +41,11 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-// TODO rename to list service
 /**
  * Listens for new BlindVotePayload and adds it to appendOnlyStoreList.
  */
 @Slf4j
-public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateListener, DaoSetupService {
+public class BlindVoteListService implements AppendOnlyDataStoreListener, BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final P2PService p2PService;
     private final BlindVoteValidator blindVoteValidator;
@@ -59,12 +58,12 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
-    public BlindVoteService(BsqStateService bsqStateService,
-                            P2PService p2PService,
-                            BlindVoteStorageService blindVoteStorageService,
-                            AppendOnlyDataStoreService appendOnlyDataStoreService,
-                            BlindVoteValidator blindVoteValidator,
-                            @Named(DaoOptionKeys.DAO_ACTIVATED) boolean daoActivated) {
+    public BlindVoteListService(BsqStateService bsqStateService,
+                                P2PService p2PService,
+                                BlindVoteStorageService blindVoteStorageService,
+                                AppendOnlyDataStoreService appendOnlyDataStoreService,
+                                BlindVoteValidator blindVoteValidator,
+                                @Named(DaoOptionKeys.DAO_ACTIVATED) boolean daoActivated) {
         this.bsqStateService = bsqStateService;
         this.p2PService = p2PService;
         this.blindVoteValidator = blindVoteValidator;
@@ -122,7 +121,7 @@ public class BlindVoteService implements AppendOnlyDataStoreListener, BsqStateLi
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO check if cycle and phase should be passed
+    // TODO MK check if cycle and phase should be passed
     public List<BlindVote> getBlindVotesInPhaseAndCycle() {
         return appendOnlyStoreList.stream()
                 .filter(blindVotePayload -> blindVoteValidator.isTxInPhaseAndCycle(blindVotePayload.getBlindVote()))

@@ -59,4 +59,8 @@ public class Merit implements PersistablePayload, NetworkPayload, ConsensusCriti
         return new Merit(Issuance.fromProto(proto.getIssuance()),
                 proto.getSignature().toByteArray());
     }
+
+    public String getIssuanceTxId() {
+        return issuance.getTxId();
+    }
 }

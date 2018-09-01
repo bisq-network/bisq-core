@@ -20,8 +20,11 @@ package bisq.core.dao.governance.voteresult;
 import bisq.core.dao.governance.ballot.Ballot;
 import bisq.core.dao.governance.ballot.BallotList;
 import bisq.core.dao.governance.ballot.vote.Vote;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.state.BsqStateService;
+
+import bisq.common.util.Utilities;
 
 import java.util.Optional;
 
@@ -31,10 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Holds all data from a decrypted vote item.
  */
-//TODO rename  DecryptedBallotsWithMerits
 @Slf4j
 @Value
-public class DecryptedVote {
+public class DecryptedBallotsWithMerits {
     private final byte[] hashOfBlindVoteList;
     private final String voteRevealTxId; // not used yet but keep it for now
     private final String blindVoteTxId; // not used yet but keep it for now
@@ -42,8 +44,8 @@ public class DecryptedVote {
     private final BallotList ballotList;
     private final MeritList meritList;
 
-    DecryptedVote(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake,
-                  BallotList ballotList, MeritList meritList) {
+    DecryptedBallotsWithMerits(byte[] hashOfBlindVoteList, String voteRevealTxId, String blindVoteTxId, long stake,
+                               BallotList ballotList, MeritList meritList) {
         this.hashOfBlindVoteList = hashOfBlindVoteList;
         this.voteRevealTxId = voteRevealTxId;
         this.blindVoteTxId = blindVoteTxId;
@@ -60,6 +62,18 @@ public class DecryptedVote {
     }
 
     public long getMerit(BsqStateService bsqStateService) {
-        return VoteResultConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
+        return MeritConsensus.getMeritStake(blindVoteTxId, meritList, bsqStateService);
+    }
+
+    @Override
+    public String toString() {
+        return "DecryptedBallotsWithMerits{" +
+                "\n     hashOfBlindVoteList=" + Utilities.bytesAsHexString(hashOfBlindVoteList) +
+                ",\n     voteRevealTxId='" + voteRevealTxId + '\'' +
+                ",\n     blindVoteTxId='" + blindVoteTxId + '\'' +
+                ",\n     stake=" + stake +
+                ",\n     ballotList=" + ballotList +
+                ",\n     meritList=" + meritList +
+                "\n}";
     }
 }

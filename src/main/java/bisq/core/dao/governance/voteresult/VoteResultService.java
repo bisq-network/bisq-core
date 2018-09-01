@@ -24,9 +24,10 @@ import bisq.core.dao.governance.ballot.BallotListService;
 import bisq.core.dao.governance.ballot.vote.Vote;
 import bisq.core.dao.governance.blindvote.BlindVote;
 import bisq.core.dao.governance.blindvote.BlindVoteConsensus;
-import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteListService;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxId;
 import bisq.core.dao.governance.blindvote.VoteWithProposalTxIdList;
+import bisq.core.dao.governance.merit.MeritConsensus;
 import bisq.core.dao.governance.merit.MeritList;
 import bisq.core.dao.governance.proposal.Proposal;
 import bisq.core.dao.governance.proposal.ProposalListPresentation;
@@ -65,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,7 +96,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     private final BsqStateService bsqStateService;
     private final PeriodService periodService;
     private final BallotListService ballotListService;
-    private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
     private final BondedRolesService bondedRolesService;
     private final IssuanceService issuanceService;
     @Getter
@@ -103,9 +105,9 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
     // TODO persist, PB
     @Getter
-    private final List<EvaluatedProposal> allEvaluatedProposals = new ArrayList<>();
+    private final Set<EvaluatedProposal> allEvaluatedProposals = new HashSet<>();
     @Getter
-    private final List<DecryptedVote> allDecryptedVotes = new ArrayList<>();
+    private final Set<DecryptedBallotsWithMerits> allDecryptedBallotsWithMerits = new HashSet<>();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +120,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                              BsqStateService bsqStateService,
                              PeriodService periodService,
                              BallotListService ballotListService,
-                             BlindVoteService blindVoteService,
+                             BlindVoteListService blindVoteListService,
                              BondedRolesService bondedRolesService,
                              IssuanceService issuanceService) {
         this.voteRevealService = voteRevealService;
@@ -126,7 +128,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         this.bsqStateService = bsqStateService;
         this.periodService = periodService;
         this.ballotListService = ballotListService;
-        this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.bondedRolesService = bondedRolesService;
         this.issuanceService = issuanceService;
     }
@@ -151,11 +153,11 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public List<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
+    public Set<EvaluatedProposal> getAllAcceptedEvaluatedProposals() {
         return getAcceptedEvaluatedProposals(allEvaluatedProposals);
     }
 
-    public List<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
+    public Set<EvaluatedProposal> getAllRejectedEvaluatedProposals() {
         return getRejectedEvaluatedProposals(allEvaluatedProposals);
     }
 
@@ -185,11 +187,11 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
     private void maybeCalculateVoteResult(int chainHeight) {
         if (isInVoteResultPhase(chainHeight)) {
-            Set<DecryptedVote> decryptedVotes = getDecryptedVotes(chainHeight);
-            allDecryptedVotes.addAll(decryptedVotes);
+            Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet = getDecryptedBallotsWithMeritsSet(chainHeight);
+            allDecryptedBallotsWithMerits.addAll(decryptedBallotsWithMeritsSet);
 
-            if (!decryptedVotes.isEmpty()) {
-                // From the decryptedVotes we create a map with the hash of the blind vote list as key and the
+            if (!decryptedBallotsWithMeritsSet.isEmpty()) {
+                // From the decryptedBallotsWithMerits we create a map with the hash of the blind vote list as key and the
                 // aggregated stake+merit as value. That map is used for calculating the majority of the blind vote lists.
                 // There might be conflicting versions due the eventually consistency of the P2P network (if some blind
                 // votes do not arrive at all voters) which would lead to consensus failure in the result calculation.
@@ -198,7 +200,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                 // blind vote hash and use the first one in the sorted list as winner.
                 // A node which has a local blindVote list which does not match the winner data view need to recover it's
                 // local blindVote list by requesting the correct list from other peers.
-                Map<P2PDataStorage.ByteArray, Long> stakeByHashOfBlindVoteListMap = getStakeByHashOfBlindVoteListMap(decryptedVotes);
+                Map<P2PDataStorage.ByteArray, Long> stakeByHashOfBlindVoteListMap = getStakeByHashOfBlindVoteListMap(decryptedBallotsWithMeritsSet);
 
                 try {
                     // Get majority hash
@@ -206,10 +208,12 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
                     // Is our local list matching the majority data view?
                     if (isBlindVoteListMatchingMajority(majorityBlindVoteListHash)) {
-                        //TODO should we write the decryptedVotes here into the state?
+                        //TODO should we write the decryptedBallotsWithMerits here into the state?
 
-                        List<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedVotes, chainHeight);
-                        List<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
+                        //TODO we get duplicated items in evaluatedProposals with diff. merit values
+                        Set<EvaluatedProposal> evaluatedProposals = getEvaluatedProposals(decryptedBallotsWithMeritsSet, chainHeight);
+
+                        Set<EvaluatedProposal> acceptedEvaluatedProposals = getAcceptedEvaluatedProposals(evaluatedProposals);
                         applyAcceptedProposals(acceptedEvaluatedProposals, chainHeight);
 
                         allEvaluatedProposals.addAll(evaluatedProposals);
@@ -238,7 +242,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         }
     }
 
-    private Set<DecryptedVote> getDecryptedVotes(int chainHeight) {
+    private Set<DecryptedBallotsWithMerits> getDecryptedBallotsWithMeritsSet(int chainHeight) {
         // We want all voteRevealTxOutputs which are in current cycle we are processing.
         return bsqStateService.getVoteRevealOpReturnTxOutputs().stream()
                 .filter(txOutput -> periodService.isTxInCorrectCycle(txOutput.getTxId(), chainHeight))
@@ -265,20 +269,20 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
 
                         // Here we deal with eventual consistency of the p2p network data!
                         // TODO make more clear we are in p2p domain now
-                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+                        List<BlindVote> blindVoteList = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
                         Optional<BlindVote> optionalBlindVote = blindVoteList.stream()
                                 .filter(blindVote -> blindVote.getTxId().equals(blindVoteTxId))
                                 .findAny();
                         if (optionalBlindVote.isPresent()) {
                             BlindVote blindVote = optionalBlindVote.get();
                             VoteWithProposalTxIdList voteWithProposalTxIdList = VoteResultConsensus.decryptVotes(blindVote.getEncryptedVotes(), secretKey);
-                            MeritList meritList = VoteResultConsensus.decryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
+                            MeritList meritList = MeritConsensus.decryptMeritList(blindVote.getEncryptedMeritList(), secretKey);
 
                             // We lookup for the proposals we have in our local list which match the txId from the
                             // voteWithProposalTxIdList and create a ballot list with the proposal and the vote from
                             // the voteWithProposalTxIdList
                             BallotList ballotList = createBallotList(voteWithProposalTxIdList);
-                            return new DecryptedVote(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, blindVoteStake, ballotList, meritList);
+                            return new DecryptedBallotsWithMerits(hashOfBlindVoteList, voteRevealTxId, blindVoteTxId, blindVoteStake, ballotList, meritList);
                         } else {
                             //TODO handle recovering
                             log.warn("We have a blindVoteTx but we do not have the corresponding blindVote in our local list.\n" +
@@ -292,7 +296,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                         log.error("We are missing proposals to create the vote result: " + e.toString());
                         return null;
                     } catch (Throwable e) {
-                        log.error("Could not create DecryptedVote: " + e.toString());
+                        log.error("Could not create DecryptedBallotsWithMerits: " + e.toString());
                         return null;
                     }
                 })
@@ -339,22 +343,22 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         return new BallotList(ballots);
     }
 
-    private Map<P2PDataStorage.ByteArray, Long> getStakeByHashOfBlindVoteListMap(Set<DecryptedVote> decryptedVotes) {
+    private Map<P2PDataStorage.ByteArray, Long> getStakeByHashOfBlindVoteListMap(Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet) {
         // Don't use byte[] as key as byte[] uses object identity for equals and hashCode
         Map<P2PDataStorage.ByteArray, Long> map = new HashMap<>();
-        decryptedVotes.forEach(decryptedVote -> {
-            P2PDataStorage.ByteArray hash = new P2PDataStorage.ByteArray(decryptedVote.getHashOfBlindVoteList());
+        decryptedBallotsWithMeritsSet.forEach(decryptedBallotsWithMerits -> {
+            P2PDataStorage.ByteArray hash = new P2PDataStorage.ByteArray(decryptedBallotsWithMerits.getHashOfBlindVoteList());
             map.putIfAbsent(hash, 0L);
             long aggregatedStake = map.get(hash);
             //TODO move to consensus class
-            long merit = decryptedVote.getMerit(bsqStateService);
-            long stake = decryptedVote.getStake();
+            long merit = decryptedBallotsWithMerits.getMerit(bsqStateService);
+            long stake = decryptedBallotsWithMerits.getStake();
             long combinedStake = stake + merit;
             aggregatedStake += combinedStake;
             map.put(hash, aggregatedStake);
 
             log.debug("blindVoteTxId={}, meritStake={}, stake={}, combinedStake={}",
-                    decryptedVote.getBlindVoteTxId(), merit, stake, combinedStake);
+                    decryptedBallotsWithMerits.getBlindVoteTxId(), merit, stake, combinedStake);
         });
         return map;
     }
@@ -399,7 +403,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
     }
 
     private List<BlindVote> findPermutatedListMatchingMajority(byte[] majorityVoteListHash) {
-        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteService);
+        List<BlindVote> list = BlindVoteConsensus.getSortedBlindVoteListOfCycle(blindVoteListService);
         while (!list.isEmpty() && !isListMatchingMajority(majorityVoteListHash, list)) {
             // We remove first item as it will be sorted anyway...
             list.remove(0);
@@ -416,12 +420,12 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         //TODO impl
     }
 
-    private List<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedVote> decryptedVotes, int chainHeight) {
+    private Set<EvaluatedProposal> getEvaluatedProposals(Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet, int chainHeight) {
         // We reorganize the data structure to have a map of proposals with a list of VoteWithStake objects
-        Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedVotes);
+        Map<Proposal, List<VoteWithStake>> resultListByProposalMap = getVoteWithStakeListByProposalMap(decryptedBallotsWithMeritsSet);
 
         // TODO breakup
-        List<EvaluatedProposal> evaluatedProposals = new ArrayList<>();
+        Set<EvaluatedProposal> evaluatedProposals = new HashSet<>();
         resultListByProposalMap.forEach((proposal, voteWithStakeList) -> {
             long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
             long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
@@ -474,7 +478,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                     long requiredQuorum = bsqStateService.getParamValue(proposal.getQuorumParam(), chainHeight);
                     long requiredVoteThreshold = bsqStateService.getParamValue(proposal.getThresholdParam(), chainHeight);
                     ProposalVoteResult proposalVoteResult = new ProposalVoteResult(proposal, 0,
-                            0, 0, 0, decryptedVotes.size());
+                            0, 0, 0, decryptedBallotsWithMeritsSet.size());
                     EvaluatedProposal evaluatedProposal = new EvaluatedProposal(false,
                             proposalVoteResult,
                             requiredQuorum,
@@ -485,17 +489,17 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         return evaluatedProposals;
     }
 
-    private Map<Proposal, List<VoteWithStake>> getVoteWithStakeListByProposalMap(Set<DecryptedVote> decryptedVotes) {
+    private Map<Proposal, List<VoteWithStake>> getVoteWithStakeListByProposalMap(Set<DecryptedBallotsWithMerits> decryptedBallotsWithMeritsSet) {
         Map<Proposal, List<VoteWithStake>> voteWithStakeByProposalMap = new HashMap<>();
-        decryptedVotes.forEach(decryptedVote -> {
-            decryptedVote.getBallotList()
+        decryptedBallotsWithMeritsSet.forEach(decryptedBallotsWithMerits -> {
+            decryptedBallotsWithMerits.getBallotList()
                     .forEach(ballot -> {
                         Proposal proposal = ballot.getProposal();
                         voteWithStakeByProposalMap.putIfAbsent(proposal, new ArrayList<>());
                         List<VoteWithStake> voteWithStakeList = voteWithStakeByProposalMap.get(proposal);
-                        long sumOfAllMerits = VoteResultConsensus.getMeritStake(decryptedVote.getBlindVoteTxId(),
-                                decryptedVote.getMeritList(), bsqStateService);
-                        VoteWithStake voteWithStake = new VoteWithStake(ballot.getVote(), decryptedVote.getStake(), sumOfAllMerits);
+                        long sumOfAllMerits = MeritConsensus.getMeritStake(decryptedBallotsWithMerits.getBlindVoteTxId(),
+                                decryptedBallotsWithMerits.getMeritList(), bsqStateService);
+                        VoteWithStake voteWithStake = new VoteWithStake(ballot.getVote(), decryptedBallotsWithMerits.getStake(), sumOfAllMerits);
                         voteWithStakeList.add(voteWithStake);
                     });
         });
@@ -533,21 +537,21 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         return new ProposalVoteResult(proposal, stakeOfAcceptedVotes, stakeOfRejectedVotes, numAcceptedVotes, numRejectedVotes, numIgnoredVotes);
     }
 
-    private void applyAcceptedProposals(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyAcceptedProposals(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         applyIssuance(acceptedEvaluatedProposals, chainHeight);
         applyParamChange(acceptedEvaluatedProposals, chainHeight);
         applyBondedRole(acceptedEvaluatedProposals, chainHeight);
         applyConfiscateBond(acceptedEvaluatedProposals, chainHeight);
     }
 
-    private void applyIssuance(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyIssuance(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.stream()
                 .map(EvaluatedProposal::getProposal)
                 .filter(proposal -> proposal instanceof CompensationProposal)
                 .forEach(proposal -> issuanceService.issueBsq((CompensationProposal) proposal, chainHeight));
     }
 
-    private void applyParamChange(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyParamChange(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         Map<String, List<EvaluatedProposal>> evaluatedProposalsByParam = new HashMap<>();
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ChangeParamProposal) {
@@ -607,7 +611,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                 .orElse(null);
     }
 
-    private void applyBondedRole(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyBondedRole(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof BondedRoleProposal) {
                 BondedRoleProposal bondedRoleProposal = (BondedRoleProposal) evaluatedProposal.getProposal();
@@ -624,7 +628,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         });
     }
 
-    private void applyConfiscateBond(List<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
+    private void applyConfiscateBond(Set<EvaluatedProposal> acceptedEvaluatedProposals, int chainHeight) {
         acceptedEvaluatedProposals.forEach(evaluatedProposal -> {
             if (evaluatedProposal.getProposal() instanceof ConfiscateBondProposal) {
                 ConfiscateBondProposal confiscateBondProposal = (ConfiscateBondProposal) evaluatedProposal.getProposal();
@@ -641,16 +645,16 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         });
     }
 
-    private List<EvaluatedProposal> getAcceptedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {
+    private Set<EvaluatedProposal> getAcceptedEvaluatedProposals(Set<EvaluatedProposal> evaluatedProposals) {
         return evaluatedProposals.stream()
                 .filter(EvaluatedProposal::isAccepted)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
-    private List<EvaluatedProposal> getRejectedEvaluatedProposals(List<EvaluatedProposal> evaluatedProposals) {
+    private Set<EvaluatedProposal> getRejectedEvaluatedProposals(Set<EvaluatedProposal> evaluatedProposals) {
         return evaluatedProposals.stream()
                 .filter(evaluatedProposal -> !evaluatedProposal.isAccepted())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private boolean isInVoteResultPhase(int chainHeight) {

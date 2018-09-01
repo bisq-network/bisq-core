@@ -18,7 +18,7 @@
 package bisq.core.dao;
 
 import bisq.core.dao.governance.ballot.BallotListService;
-import bisq.core.dao.governance.blindvote.BlindVoteService;
+import bisq.core.dao.governance.blindvote.BlindVoteListService;
 import bisq.core.dao.governance.blindvote.MyBlindVoteListService;
 import bisq.core.dao.governance.proposal.ProposalService;
 import bisq.core.dao.governance.voteresult.VoteResultService;
@@ -42,7 +42,7 @@ public class DaoSetup {
     private final CycleService cycleService;
     private final ProposalService proposalService;
     private final BallotListService ballotListService;
-    private final BlindVoteService blindVoteService;
+    private final BlindVoteListService blindVoteListService;
     private final MyBlindVoteListService myBlindVoteListService;
     private final VoteRevealService voteRevealService;
     private final VoteResultService voteResultService;
@@ -54,7 +54,7 @@ public class DaoSetup {
                     CycleService cycleService,
                     ProposalService proposalService,
                     BallotListService ballotListService,
-                    BlindVoteService blindVoteService,
+                    BlindVoteListService blindVoteListService,
                     MyBlindVoteListService myBlindVoteListService,
                     VoteRevealService voteRevealService,
                     VoteResultService voteResultService) {
@@ -62,7 +62,7 @@ public class DaoSetup {
         this.cycleService = cycleService;
         this.proposalService = proposalService;
         this.ballotListService = ballotListService;
-        this.blindVoteService = blindVoteService;
+        this.blindVoteListService = blindVoteListService;
         this.myBlindVoteListService = myBlindVoteListService;
         this.voteRevealService = voteRevealService;
         this.voteResultService = voteResultService;
@@ -77,7 +77,7 @@ public class DaoSetup {
         cycleService.addListeners();
         proposalService.addListeners();
         ballotListService.addListeners();
-        blindVoteService.addListeners();
+        blindVoteListService.addListeners();
         myBlindVoteListService.addListeners();
         voteRevealService.addListeners();
         voteResultService.addListeners();
@@ -86,7 +86,7 @@ public class DaoSetup {
         cycleService.start();
         proposalService.start();
         ballotListService.start();
-        blindVoteService.start();
+        blindVoteListService.start();
         myBlindVoteListService.start();
         voteRevealService.start();
         voteResultService.start();
