@@ -29,6 +29,8 @@ import bisq.common.util.Utilities;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import javax.crypto.SecretKey;
 
 import lombok.extern.slf4j.Slf4j;
@@ -62,52 +64,48 @@ public class MeritConsensus {
         }
 
         return meritList.getList().stream()
-                .filter(merit -> {
-                    // TODO make method
-                    // We verify if signature of hash of blindVoteTxId is correct. EC key from first input for blind vote tx is
-                    // used for signature.
-                    String pubKeyAsHex = merit.getIssuance().getPubKey();
-                    if (pubKeyAsHex == null) {
-                        log.error("Error at getMeritStake: pubKeyAsHex is null");
-                        return false;
-                    }
-
-                    // TODO Check if a sig key was used multiple times for different voters
-                    // At the moment we don't impl. that to not add too much complexity and as we consider that
-                    // risk very low.
-
-                    boolean result = false;
-                    try {
-                        ECKey pubKey = ECKey.fromPublicOnly(Utilities.decodeFromHex(pubKeyAsHex));
-                        ECKey.ECDSASignature signature = ECKey.ECDSASignature.decodeFromDER(merit.getSignature()).toCanonicalised();
-                        Sha256Hash msg = Sha256Hash.wrap(blindVoteTxId);
-                        result = pubKey.verify(msg, signature);
-                    } catch (Throwable t) {
-                        log.error("Signature verification of issuance failed: " + t.toString());
-                    }
-                    if (!result) {
-                        log.error("Signature verification of issuance failed: blindVoteTxId={}, pubKeyAsHex={}",
-                                blindVoteTxId, pubKeyAsHex);
-                    }
-                    return result;
-                })
+                .filter(merit -> isSignatureValid(merit.getSignature(), merit.getIssuance().getPubKey(), blindVoteTxId))
                 .mapToLong(merit -> {
                     try {
-                        int issuanceHeight = merit.getIssuance().getChainHeight();
-                        if (issuanceHeight <= txChainHeight) {
-                            return getWeightedMeritAmount(merit.getIssuance().getAmount(),
-                                    issuanceHeight,
-                                    txChainHeight,
-                                    BLOCKS_PER_YEAR);
-                        } else {
-                            return 0;
-                        }
+                        return getWeightedMeritAmount(merit.getIssuance().getAmount(),
+                                merit.getIssuance().getChainHeight(),
+                                txChainHeight,
+                                BLOCKS_PER_YEAR);
                     } catch (Throwable t) {
-                        log.error("Error at getMeritStake: " + t.toString());
+                        log.error("Error at getMeritStake: error={}, merit={}", t.toString(), merit);
                         return 0;
                     }
                 })
                 .sum();
+    }
+
+    @VisibleForTesting
+    static boolean isSignatureValid(byte[] signatureFromMerit, String pubKeyAsHex, String blindVoteTxId) {
+        // We verify if signature of hash of blindVoteTxId is correct. EC key from first input for blind vote tx is
+        // used for signature.
+        if (pubKeyAsHex == null) {
+            log.error("Error at getMeritStake: pubKeyAsHex is null");
+            return false;
+        }
+
+        // TODO Check if a sig key was used multiple times for different voters
+        // At the moment we don't impl. that to not add too much complexity and as we consider that
+        // risk very low.
+
+        boolean result = false;
+        try {
+            ECKey pubKey = ECKey.fromPublicOnly(Utilities.decodeFromHex(pubKeyAsHex));
+            ECKey.ECDSASignature signature = ECKey.ECDSASignature.decodeFromDER(signatureFromMerit).toCanonicalised();
+            Sha256Hash msg = Sha256Hash.wrap(blindVoteTxId);
+            result = pubKey.verify(msg, signature);
+        } catch (Throwable t) {
+            log.error("Signature verification of issuance failed: " + t.toString());
+        }
+        if (!result) {
+            log.error("Signature verification of issuance failed: blindVoteTxId={}, pubKeyAsHex={}",
+                    blindVoteTxId, pubKeyAsHex);
+        }
+        return result;
     }
 
     public static long getWeightedMeritAmount(long amount, int issuanceHeight, int blockHeight, int blocksPerYear) {
@@ -119,6 +117,7 @@ public class MeritConsensus {
             throw new IllegalArgumentException("amount must not be negative");
         if (blocksPerYear < 0)
             throw new IllegalArgumentException("blocksPerYear must not be negative");
+
 
         // We use a linear function  to apply a factor for the issuance amount of 1 if the issuance was recent and 0
         // if the issuance was 2 years old or older.
