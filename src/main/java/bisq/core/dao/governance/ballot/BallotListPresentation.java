@@ -41,7 +41,6 @@ import lombok.extern.slf4j.Slf4j;
 public class BallotListPresentation implements BallotListService.BallotListChangeListener, BsqStateListener {
     private final BallotListService ballotListService;
     private final PeriodService periodService;
-    private final BsqStateService bsqStateService;
 
     @Getter
     private final ObservableList<Ballot> ballots = FXCollections.observableArrayList();
@@ -60,7 +59,6 @@ public class BallotListPresentation implements BallotListService.BallotListChang
                                   ProposalValidator proposalValidator) {
         this.ballotListService = ballotListService;
         this.periodService = periodService;
-        this.bsqStateService = bsqStateService;
 
         bsqStateService.addBsqStateListener(this);
         ballotListService.addListener(this);

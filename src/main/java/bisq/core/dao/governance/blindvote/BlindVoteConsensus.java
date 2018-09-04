@@ -56,7 +56,7 @@ public class BlindVoteConsensus {
     }
 
     public static BallotList getSortedBallotList(BallotListService ballotListService) {
-        final List<Ballot> ballotList = ballotListService.getBallotList().stream()
+        List<Ballot> ballotList = ballotListService.getBallotList().stream()
                 .sorted(Comparator.comparing(Ballot::getTxId))
                 .collect(Collectors.toList());
         log.info("Sorted ballotList: " + ballotList);
@@ -69,7 +69,7 @@ public class BlindVoteConsensus {
 
     @VisibleForTesting
     static List<BlindVote> getSortedBlindVoteListOfCycle(List<BlindVote> blindVoteList) {
-        final List<BlindVote> list = blindVoteList.stream()
+        List<BlindVote> list = blindVoteList.stream()
                 .sorted(Comparator.comparing(BlindVote::getTxId))
                 .collect(Collectors.toList());
         log.info("Sorted blindVote txId list: " + list.stream()
@@ -84,14 +84,14 @@ public class BlindVoteConsensus {
     }
 
     public static byte[] getEncryptedVotes(VoteWithProposalTxIdList voteWithProposalTxIdList, SecretKey secretKey) throws CryptoException {
-        final byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
-        final byte[] encrypted = Encryption.encrypt(bytes, secretKey);
+        byte[] bytes = voteWithProposalTxIdList.toProtoMessage().toByteArray();
+        byte[] encrypted = Encryption.encrypt(bytes, secretKey);
         log.info("EncryptedVotes: " + Utilities.bytesAsHexString(encrypted));
         return encrypted;
     }
 
     public static byte[] getEncryptedMeritList(MeritList meritList, SecretKey secretKey) throws CryptoException {
-        final byte[] bytes = meritList.toProtoMessage().toByteArray();
+        byte[] bytes = meritList.toProtoMessage().toByteArray();
         return Encryption.encrypt(bytes, secretKey);
     }
 
@@ -116,7 +116,7 @@ public class BlindVoteConsensus {
     }
 
     public static Coin getFee(BsqStateService bsqStateService, int chainHeadHeight) {
-        final Coin fee = Coin.valueOf(bsqStateService.getParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
+        Coin fee = Coin.valueOf(bsqStateService.getParamValue(Param.BLIND_VOTE_FEE, chainHeadHeight));
         log.info("Fee for blind vote: " + fee);
         return fee;
     }
