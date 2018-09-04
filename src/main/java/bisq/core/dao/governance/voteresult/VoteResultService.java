@@ -63,7 +63,6 @@ import javax.crypto.SecretKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -317,13 +316,16 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         List<String> missingBallots = new ArrayList<>();
         List<Ballot> ballots = voteByTxIdMap.entrySet().stream()
                 .map(entry -> {
-                    final String txId = entry.getKey();
+                    String txId = entry.getKey();
                     if (ballotByTxIdMap.containsKey(txId)) {
                         // why not use proposalList?
-                        final Ballot ballot = ballotByTxIdMap.get(txId);
+                        Ballot ballot = ballotByTxIdMap.get(txId);
                         // We create a new Ballot with the proposal from the ballot list and the vote from our decrypted votes
                         Vote vote = entry.getValue();
-                        // TODO why we dont apply it to existing ballot?
+                        // We clone the ballot instead applying the vote to the existing ballot from ballotListService
+                        // The items from ballotListService.getBallotList() contains my votes.
+                        // Maybe we should cross verify if the vote we had in our local list matches my own vote we
+                        // received from the network?
                         return new Ballot(ballot.getProposal(), vote);
                     } else {
                         // We got a vote but we don't have the ballot (which includes the proposal)
@@ -339,7 +341,8 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
         if (!missingBallots.isEmpty())
             throw new MissingBallotException(ballots, missingBallots);
 
-        // TODO maybe add sort
+        // Let's keep the data more deterministic by sorting it by txId. Though we are not using the sorting.
+        ballots.sort(Comparator.comparing(Ballot::getTxId));
         return new BallotList(ballots);
     }
 
@@ -569,10 +572,14 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
             if (list.size() == 1) {
                 applyAcceptedChangeParamProposal((ChangeParamProposal) list.get(0).getProposal(), chainHeight);
             } else if (list.size() > 1) {
+                log.warn("There have been multiple winning param change proposals with the same item. " +
+                        "This is a sign of a social consensus failure. " +
+                        "We treat all requests as failed in such a case.");
+
+                // TODO remove code once we are 100% sure we stick with the above solution.
                 // We got multiple proposals for the same parameter. We check which one got the higher stake and that
                 // one will be the winner. If both have same stake none will be the winner.
-                // TODO should we reject all as it shows a weird social consensus state
-                list.sort(Comparator.comparing(ev -> ev.getProposalVoteResult().getStakeOfAcceptedVotes()));
+                /*list.sort(Comparator.comparing(ev -> ev.getProposalVoteResult().getStakeOfAcceptedVotes()));
                 Collections.reverse(list);
                 EvaluatedProposal first = list.get(0);
                 EvaluatedProposal second = list.get(1);
@@ -585,7 +592,7 @@ public class VoteResultService implements BsqStateListener, DaoSetupService {
                     log.warn("We got the rare case that multiple changeParamProposals have received the same stake. " +
                             "None will be accepted in such a case.\n" +
                             "EvaluatedProposal={}", list);
-                }
+                }*/
             }
         });
     }

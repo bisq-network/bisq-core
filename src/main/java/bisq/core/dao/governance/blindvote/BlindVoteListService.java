@@ -121,7 +121,6 @@ public class BlindVoteListService implements AppendOnlyDataStoreListener, BsqSta
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO MK check if cycle and phase should be passed
     public List<BlindVote> getBlindVotesInPhaseAndCycle() {
         return appendOnlyStoreList.stream()
                 .filter(blindVotePayload -> blindVoteValidator.isTxInPhaseAndCycle(blindVotePayload.getBlindVote()))
